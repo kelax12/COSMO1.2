@@ -366,7 +366,6 @@
       "noProjectToAssign": "No other project",
       "noTaskToAssign": "No other open task",
       "needProject": "This team has no project yet",
-      "moveTo": "Into project",
       "projectAssigned": "Project assigned to {{team}}",
       "taskAssigned": "Task moved to {{project}}",
       "delete": "Delete team"
@@ -773,8 +772,10 @@
     "loadMore_one": "+{{count}} more",
     "loadMore_other": "+{{count}} more"
   },
+  "dataImport": {
+    "open": "Import tasks"
+  },
   "glossary": {
-    "open": "Glossary",
     "termHelp": "Definition: {{term}}"
   },
   "picker": {

@@ -5,7 +5,6 @@ import {
   DropdownMenuSub,
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
-  DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 import type { OrgTeam } from '@/modules/org-teams';
 import {
@@ -134,28 +133,13 @@ const TeamAssignMenus = ({ orgId, team, projects, onNewProject, onNewTask }: Tea
                 <>
                   <SearchBox value={taskQuery} onChange={setTaskQuery} placeholder={t('assign.searchPlaceholder')} />
                   {!loadingTasks && otherTasks.length === 0 && empty(t('team.menu.noTaskToAssign'))}
-                  {otherTasks.slice(0, LIST_LIMIT).map((task) =>
-                    own.length === 1 ? (
-                      <DropdownMenuItem key={task.id} onClick={() => moveTask(task.id, task.projectId, own[0])}>
-                        <span className={itemClass}>{task.name}</span>
-                      </DropdownMenuItem>
-                    ) : (
-                      <DropdownMenuSub key={task.id}>
-                        <DropdownMenuSubTrigger>
-                          <span className={itemClass}>{task.name}</span>
-                        </DropdownMenuSubTrigger>
-                        <DropdownMenuSubContent className="w-56">
-                          <DropdownMenuLabel>{t('team.menu.moveTo')}</DropdownMenuLabel>
-                          {own.map((p) => (
-                            <DropdownMenuItem key={p.id} onClick={() => moveTask(task.id, task.projectId, p)}>
-                              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: p.color }} aria-hidden="true" />
-                              <span className={itemClass}>{p.name}</span>
-                            </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuSubContent>
-                      </DropdownMenuSub>
-                    ),
-                  )}
+                  {/* Un clic choisit la tâche : elle rejoint le premier projet de l'équipe,
+                      sans panneau de choix de projet par-dessus (2026-10-31). */}
+                  {otherTasks.slice(0, LIST_LIMIT).map((task) => (
+                    <DropdownMenuItem key={task.id} onClick={() => moveTask(task.id, task.projectId, own[0])}>
+                      <span className={itemClass}>{task.name}</span>
+                    </DropdownMenuItem>
+                  ))}
                 </>
               )}
             </DropdownMenuSubContent>

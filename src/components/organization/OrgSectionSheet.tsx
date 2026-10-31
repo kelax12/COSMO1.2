@@ -7,7 +7,7 @@
 // tient son geste, C-07) et `useModalA11y` (piège de focus, Échap, C-53).
 import React from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useSheetMotion } from '@/components/mobile/mobile-motion';
@@ -22,12 +22,10 @@ export interface SheetProps {
   onSelect: (id: string) => void;
   onGo: (href: string) => void;
   onSearch?: () => void;
-  onGlossary?: () => void;
 }
 
-const SectionSheet: React.FC<SheetProps> = ({ items, activeId, shortcuts, onClose, onSelect, onGo, onSearch, onGlossary }) => {
+const SectionSheet: React.FC<SheetProps> = ({ items, activeId, shortcuts, onClose, onSelect, onGo, onSearch }) => {
   const { t: tOrgAdmin } = useT('orgAdmin');
-  const { t: tOrg } = useT('org');
   const sheetMotion = useSheetMotion();
   const { sheetRef, backdropOpacity, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
   const { ref: panelRef, dialogProps } = useModalA11y<HTMLDivElement>({
@@ -116,16 +114,6 @@ const SectionSheet: React.FC<SheetProps> = ({ items, activeId, shortcuts, onClos
             );
           })}
 
-          {onGlossary && (
-            <button
-              type="button"
-              onClick={onGlossary}
-              className="w-full flex items-center gap-2.5 px-4 min-h-touch rounded-2xl bg-[rgb(var(--color-surface))] text-body text-[rgb(var(--color-text-secondary))] active:bg-[rgb(var(--color-hover))]"
-            >
-              <BookOpen size={18} aria-hidden="true" />
-              {tOrg('glossary.open')}
-            </button>
-          )}
           {shortcuts && shortcuts.items.length > 0 && (
             <div>
               <p className="px-1 pt-1 pb-1.5 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">

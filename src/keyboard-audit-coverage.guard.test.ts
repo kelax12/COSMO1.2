@@ -87,7 +87,6 @@ const MESUREES: Record<string, string> = {
   // (hors démo : `FirstRunSetup`, `ShareInviteClaimer`).
   'components/organization/TemplatePicker.tsx': 'MESURE · TemplatePicker',
   'components/organization/AddWidgetPage.tsx': 'MESURE · AddWidgetPage',
-  'components/organization/OrgGlossarySheet.tsx': 'MESURE · OrgGlossarySheet',
   'components/organization/InviteModeDialog.tsx': 'MESURE · InviteModeDialog',
   'components/organization/MemberBulkPicker.tsx': 'MESURE · MemberBulkPicker',
   'components/organization/ProjectEditDialog.tsx': 'MESURE · ProjectEditDialog',
@@ -227,7 +226,7 @@ describe('C-96 — couverture clavier des surfaces modales', () => {
     expect(muettes).toEqual([]);
   });
 
-  it('L ECART, CHIFFRE · 61 mesurees sur 63 cablees au 2026-10-23', () => {
+  it('L ECART, CHIFFRE · 60 mesurees au 2026-10-31', () => {
     // 🔴 Ce cas n'est pas décoratif : il est le seul endroit du dépôt où le
     // chiffre existe. Il change quand le produit change, et c'est voulu — on
     // le relit alors, au lieu de recopier « 10 sur 53 » d'un document plus
@@ -239,11 +238,13 @@ describe('C-96 — couverture clavier des surfaces modales', () => {
     // Un CLIQUET : la couverture ne peut que monter. 10 au 2026-09-20, 12 au
     // 2026-10-22 (rôles personnalisés mesurés), 23 le même jour (AM-2, dix
     // surfaces de plus et ColorSettingsModal reclassée), 61 le 2026-10-23
-    // (AM-2, les 38 surfaces atteignables restantes).
+    // (AM-2, les 38 surfaces atteignables restantes). 60 le 2026-10-31 : le
+    // glossaire entreprise est SUPPRIMÉ (demande d'Axel), sa surface mesurée avec lui.
+    // Une surface retirée n'est pas une couverture perdue.
     expect(
       mesurees,
       `Couverture clavier en BAISSE : ${mesurees} surfaces mesurées sur ${total}.`,
-    ).toBeGreaterThanOrEqual(61);
+    ).toBeGreaterThanOrEqual(60);
     // …et le chiffre est imprimé, pour qu'il soit lisible sans ouvrir ce fichier.
     console.log(
       `::notice title=c96::${mesurees} surface(s) modale(s) mesurée(s) au clavier sur `

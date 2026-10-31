@@ -60,12 +60,6 @@ test('MESURE · InviteOrJoinModal (« Créer ou rejoindre une entreprise »)', a
 
 // ── Espace entreprise : coque et Aperçu ─────────────────────────────
 
-test('MESURE · OrgGlossarySheet (bouton « Glossaire »)', async ({ demoPage: page }) => {
-  await ouvrirEntreprise(page);
-  await ouvrirAuClavier(page, visible(page.getByRole('button', { name: /^glossaire$/i })));
-  await mesurerSurface(page, 'OrgGlossarySheet', page.getByRole('dialog', { name: /^glossaire de l.entreprise$/i }));
-});
-
 test('MESURE · OrgSectionSheet (sélecteur de section, mobile)', async ({ demoPage: page }) => {
   await passerEnMobile(page);
   await ouvrirEntreprise(page);

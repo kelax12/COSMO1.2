@@ -1,4 +1,4 @@
-import { Users, Network, X, ListChecks, PauseCircle, PlayCircle } from 'lucide-react';
+import { Users, X, ListChecks, PauseCircle, PlayCircle } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 
 interface MemberBulkBarProps {
@@ -7,10 +7,8 @@ interface MemberBulkBarProps {
   visibleCount: number;
   allVisibleSelected: boolean;
   canAddToTeam: boolean;
-  canChangeManager: boolean;
   onToggleAll: () => void;
   onAddToTeam: () => void;
-  onChangeManager: () => void;
   /** Admin : suspendre ou réactiver l'accès de la sélection (mig. 161). */
   canRestrictAccess?: boolean;
   accessPending?: boolean;
@@ -29,8 +27,8 @@ const ACTION =
  * sortie du mode.
  */
 const MemberBulkBar = ({
-  count, visibleCount, allVisibleSelected, canAddToTeam, canChangeManager,
-  onToggleAll, onAddToTeam, onChangeManager, canRestrictAccess = false, accessPending = false,
+  count, visibleCount, allVisibleSelected, canAddToTeam,
+  onToggleAll, onAddToTeam, canRestrictAccess = false, accessPending = false,
   onSuspend, onReactivate, onExit,
 }: MemberBulkBarProps) => {
   const { t: ta, tp: tpOrgAdmin } = useT('orgAdmin');
@@ -60,11 +58,6 @@ const MemberBulkBar = ({
       {canAddToTeam && (
         <button type="button" onClick={onAddToTeam} disabled={count === 0} className={ACTION}>
           <Users size={15} aria-hidden="true" /> {ta('directory.bulk.addToTeam')}
-        </button>
-      )}
-      {canChangeManager && (
-        <button type="button" onClick={onChangeManager} disabled={count === 0} className={ACTION}>
-          <Network size={15} aria-hidden="true" /> {ta('directory.bulk.changeManager')}
         </button>
       )}
 

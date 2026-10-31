@@ -10,9 +10,11 @@
 // ═══════════════════════════════════════════════════════════════════
 import { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { getCategoriesRepository, getTasksRepository } from '@/lib/repository.factory';
+import { getCategoriesRepository, getTasksRepository, getTeamCategoriesRepository, getTeamProjectsRepository } from '@/lib/repository.factory';
 import { categoryKeys, DEFAULT_CATEGORY_COLOR, useCategories } from '@/modules/categories';
 import { taskKeys } from '@/modules/tasks';
+import { teamCategoryKeys, TEAM_CATEGORY_COLORS, useTeamCategories } from '@/modules/team-categories';
+import { teamProjectKeys } from '@/modules/team-projects/constants';
 import { deadlineFromDayKey } from '@/lib/deadline';
 import { parseCsv } from '@/lib/task-import/csv';
 import { detectFormat } from '@/lib/task-import/detect';
@@ -35,10 +37,18 @@ export interface LoadedFile {
 
 export type ImportStep = 'files' | 'mapping' | 'preview' | 'running' | 'done';
 
-export function useTaskImport() {
+/**
+ * Cible ENTREPRISE (2026-10-31) : les tâches naissent dans `projectId`, les
+ * catégories dans l'arbre de l'organisation (mig. 148). Sans cible : le perso.
+ */
+export interface OrgImportTarget { orgId: string; projectId: string }
+
+export function useTaskImport(target?: OrgImportTarget) {
   const { t } = useT('settings');
   const queryClient = useQueryClient();
-  const { data: categories = [] } = useCategories();
+  const { data: personalCategories = [] } = useCategories();
+  const { data: teamCategories = [] } = useTeamCategories(target?.orgId);
+  const categories = target ? teamCategories : personalCategories;
   const [step, setStep] = useState<ImportStep>('files');
   const [files, setFiles] = useState<LoadedFile[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
@@ -62,6 +72,30 @@ export function useTaskImport() {
   const completedAvailable = useMemo(() => parsed.reduce((n, p) => n + p.tasks.filter((x) => x.completed).length, 0), [parsed]);
 
   const deps: ImportDeps = useMemo(() => {
+    if (target) {
+      const teamRepo = getTeamProjectsRepository();
+      const catRepo = getTeamCategoriesRepository();
+      const colorById = new Map(categories.map((c) => [c.id, c.color]));
+      return {
+        createCategory: ({ name, parentId }) => catRepo.createCategory(target.orgId, {
+          name, parentId, color: (parentId && colorById.get(parentId)) || TEAM_CATEGORY_COLORS[0],
+        }),
+        // Une tâche d'entreprise n'a ni récurrence ni sous-tâches à la création :
+        // le reste du plan (nom, description, priorité, échéance, statut) passe.
+        createTask: (input) => teamRepo.createTask(target.orgId, {
+          projectId: target.projectId,
+          name: input.name,
+          description: input.description,
+          priority: input.priority,
+          deadline: input.deadline || undefined,
+          status: input.completed ? 'done' : 'todo',
+          categoryId: input.category || null,
+        }),
+        deleteTask: (id) => teamRepo.deleteTask(id),
+        deleteCategory: (id) => catRepo.deleteCategory(id),
+        toDeadline: (day) => deadlineFromDayKey(day),
+      };
+    }
     const tasksRepo = getTasksRepository();
     const categoriesRepo = getCategoriesRepository();
     const colorById = new Map(categories.map((c) => [c.id, c.color]));
@@ -75,9 +109,14 @@ export function useTaskImport() {
       deleteCategory: (id) => categoriesRepo.delete(id),
       toDeadline: (day) => deadlineFromDayKey(day),
     };
-  }, [categories]);
+  }, [categories, target]);
 
   const refresh = () => {
+    if (target) {
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.all });
+      queryClient.invalidateQueries({ queryKey: teamCategoryKeys.all });
+      return;
+    }
     queryClient.invalidateQueries({ queryKey: taskKeys.all });
     queryClient.invalidateQueries({ queryKey: categoryKeys.all });
   };

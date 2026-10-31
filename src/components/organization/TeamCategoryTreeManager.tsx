@@ -307,9 +307,14 @@ const TeamCategoryTreeManager = ({ orgId }: { orgId: string }) => {
           onCancel={() => setCreatingUnder(null)}
         />
       ) : (
-        <Button type="button" variant="outline" size="sm" className="mt-3" onClick={() => setCreatingUnder('root')}>
+        // En haut à droite de la carte des paramètres (section `relative`), en lien bleu.
+        <button
+          type="button"
+          onClick={() => setCreatingUnder('root')}
+          className="absolute top-3 right-4 inline-flex items-center gap-1 text-sm font-semibold text-[rgb(var(--color-accent))] hover:underline"
+        >
           <Plus size={14} aria-hidden="true" /> {t('okrCategory.new')}
-        </Button>
+        </button>
       )}
 
       <DeleteTeamCategoryConfirm

@@ -1,7 +1,6 @@
 import { Check } from 'lucide-react';
 import { ENTERPRISE_PRICING_TIERS, displayedMonthlyEur, yearlyTotalEur } from '@/modules/billing/premium-config';
 import type { OrgBillingInterval, OrgTierKey } from '@/modules/billing/premium-config';
-import { ORG_TIER_LABEL_KEYS } from '@/modules/billing/org-tier-labels';
 import { formatCurrency, formatPrice } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 
@@ -50,7 +49,6 @@ export function EnterpriseTierGrid({
   interval = 'monthly',
 }: Props) {
   const { t: tOrgAdmin } = useT('orgAdmin');
-  const { t: tc } = useT('common');
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -84,17 +82,9 @@ export function EnterpriseTierGrid({
           >
             <div className="flex items-center justify-between gap-3">
               <div className="flex flex-col">
-                {/* Le nom porte le palier, l'effectif le qualifie : « Équipe »
-                    seul ne dit pas à qui il s'adresse, « 5 à 10 membres » seul
-                    n'est pas un nom qu'on prononce. Sauf pour le palier gratuit,
-                    dont le nom EST déjà le prix affiché juste dessous — l'écrire
-                    deux fois ne le rend pas plus gratuit. */}
-                {!isFree && (
-                  <span className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">
-                    {tc(ORG_TIER_LABEL_KEYS[tier.key])}
-                  </span>
-                )}
-                <span className="text-xs text-[rgb(var(--color-text-secondary))]">{range}</span>
+                {/* Plus de nom de palier (« Équipe », « Département »…) depuis le
+                    2026-10-31 : l'effectif EST le titre. */}
+                <span className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{range}</span>
               </div>
 
               {/* Coin droit de l'en-tête : réservé au palier actif — le prix
