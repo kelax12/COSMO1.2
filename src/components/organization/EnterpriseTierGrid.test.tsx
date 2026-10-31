@@ -42,8 +42,8 @@ describe('EnterpriseTierGrid — périodicité', () => {
 
   it('en annuel, le débit réel est dit sous chaque prix', () => {
     render(<EnterpriseTierGrid interval="yearly" />);
-    expect(screen.getByText('par mois, facturé 630,00 € par an')).toBeTruthy();
-    expect(screen.getByText('par mois, facturé 9 000,00 € par an')).toBeTruthy();
+    expect(screen.getByText('par mois, facturé 630,00 € TTC par an')).toBeTruthy();
+    expect(screen.getByText('par mois, facturé 9 000,00 € TTC par an')).toBeTruthy();
     // « par mois » nu n'apparaît plus : il laisserait croire à un débit mensuel.
     expect(screen.queryByText('par mois')).toBeNull();
   });
@@ -58,7 +58,7 @@ describe('EnterpriseTierGrid — périodicité', () => {
 
   it('pendant l’offre de lancement, le prix barré suit la périodicité', () => {
     render(<EnterpriseTierGrid interval="yearly" dormant />);
-    expect(screen.getByText('au lieu de 52,50 €')).toBeTruthy();
-    expect(screen.queryByText('au lieu de 70 €')).toBeNull();
+    expect(screen.getByText('au lieu de 52,50 € TTC')).toBeTruthy();
+    expect(screen.queryByText('au lieu de 70 € TTC')).toBeNull();
   });
 });

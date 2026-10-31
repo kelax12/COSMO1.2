@@ -49,13 +49,10 @@ export function OrgBillingSeats({ members, ownerId, quota, orgId = '', currentUs
 
   return (
     <section
-      aria-labelledby="org-billing-seats"
+      aria-label={t('seatsGaugeAria')}
       className="rounded-xl border border-[rgb(var(--color-border))] p-4 flex flex-col gap-3"
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 id="org-billing-seats" className="flex items-center gap-2 text-sm font-semibold text-[rgb(var(--color-text-primary))]">
-          {t('seatsTitle')}
-        </h3>
         <span className="text-xs text-[rgb(var(--color-text-secondary))]">
           {quota === null
             ? tp('seatsCountUnlimited', members.length)
@@ -87,7 +84,6 @@ export function OrgBillingSeats({ members, ownerId, quota, orgId = '', currentUs
           </div>
         );
       })()}
-      <p className="text-xs text-[rgb(var(--color-text-secondary))]">{t('seatsRule')}</p>
 
       <ul className="divide-y divide-[rgb(var(--color-border))]">
         {visible.map((m) => (
