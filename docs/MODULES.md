@@ -44,13 +44,13 @@ Tous suivent la même forme. Partir de `index.ts` (exports publics), puis :
 
 | Module | Tables | RPC | À savoir |
 |---|---|---|---|
-| `organizations` | `organizations`, `organization_members`, `org_invitations`, `org_invite_links`, `org_member_permissions`, `org_roles`, `org_member_roles`, `org_notifications`, `org_audit_log`, `org_weekly_reviews`, `organization_join_requests` | 23 | org active (`ActiveOrgContext.tsx`), permissions (`permissions.ts`, `use-my-permissions.ts`), rôles personnalisés (`roles.*`, mig. 219), gouvernance (`governance.*`), boîte de réception (`inbox.*`) · [CLAUDE.md](../src/modules/organizations/CLAUDE.md) |
+| `organizations` | `organizations`, `organization_members`, `org_invitations`, `org_invite_links`, `org_member_permissions`, `org_roles`, `org_member_roles`, `org_notifications`, `org_notification_settings`, `org_audit_log`, `org_weekly_reviews`, `organization_join_requests` | 23 | org active (`ActiveOrgContext.tsx`), permissions (`permissions.ts`, `use-my-permissions.ts`, défaut d'un membre `use-member-defaults.ts`, mig. 232), rôles personnalisés (`roles.*`, mig. 219, rôle d'office mig. 230), gouvernance (`governance.*`), boîte de réception (`inbox.*`) · [CLAUDE.md](../src/modules/organizations/CLAUDE.md) |
 | `org-teams` | `org_teams`, `org_team_members` | 2 | équipes |
-| `team-projects` | `team_projects`, `team_tasks` et leurs tables `team_task_*` / `team_project_*` | 13 | 2ᵉ plus gros module après `organizations` : accès, portefeuille, abonnements, activité, sous-tâches, corbeille ; implémentations découpées `supabase.*.ts` / `local.*.ts` · [CLAUDE.md](../src/modules/team-projects/CLAUDE.md) |
+| `team-projects` | `team_projects`, `team_tasks` et leurs tables `team_task_*` / `team_project_*` | 13 | 2ᵉ plus gros module après `organizations` : accès, portefeuille, abonnements, activité, sous-tâches, corbeille, validateur d'une tâche (`validator_id`, mig. 233-235) ; implémentations découpées `supabase.*.ts` / `local.*.ts` · [CLAUDE.md](../src/modules/team-projects/CLAUDE.md) |
 | `team-okrs` | `team_okrs`, `team_key_results`, `team_kr_checkins`, `team_okr_members`, `team_okr_teams`, `team_kr_projects` | 7 | exécution (`execution.*`), audience des OKR confidentiels |
 | `team-categories` | `team_categories` | 0 | table unique (mig. `148`) · [CLAUDE.md](../src/modules/team-categories/CLAUDE.md) |
 | `team-lists` | `team_lists`, `team_list_tasks` | 0 | épinglage par défaut (`default-pin.ts`) |
-| `org-config` | `org_settings`, `org_verified_domains`, `org_webhooks`, `team_automations`, `team_project_statuses` | 0 | automatisations, webhooks sortants |
+| `org-config` | `org_settings`, `org_verified_domains`, `org_webhooks`, `team_automations`, `team_project_statuses` | 0 | automatisations, webhooks sortants ; `org_settings` porte aussi `member_default_perms` (mig. 232) et `default_role_id` (mig. 230) |
 | `org-reports` | `org_activity_reports` | 0 | rapports d'activité (mig. `202`) |
 | `billing` | `subscriptions`, `org_subscriptions`, `org_billing_contacts` | 1 | Stripe, paliers entreprise · [CLAUDE.md](../src/modules/billing/CLAUDE.md) |
 | `admin` | aucune (RPC) | 5 | console `/admin`, garde `is_admin()` (aal2) |

@@ -6,7 +6,7 @@ import {
   Rocket, ArrowRight, ChevronRight, ChevronLeft, ChevronDown,
   BookOpen, Clock, Flag, Bookmark, Users, TrendingUp,
   Flame, Layers, Filter, Inbox, List,
-  GripVertical, Building2, Network, FolderKanban, ListTodo,
+  GripVertical, Building2, BadgeCheck, FolderKanban, ListTodo,
   ShieldCheck, UserPlus, BarChart3, Columns3, ListChecks, Link2,
   Sparkles, Pin, Share2, CalendarCheck, PauseCircle, Image, UsersRound
 } from 'lucide-react';
@@ -523,12 +523,12 @@ const GuidePage: React.FC = () => {
               </div>
 
               <div className="mt-8 space-y-0 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl overflow-hidden divide-y divide-[rgb(var(--color-border-muted))]">
-                <FeatureRow icon={<Network size={15} />}      label={t('entreprise.featPyramid')}     desc={t('entreprise.featPyramidDesc')} />
                 <FeatureRow icon={<Users size={15} />}        label={t('entreprise.featRoles')}       desc={t('entreprise.featRolesDesc')} />
                 <FeatureRow icon={<ShieldCheck size={15} />}  label={t('entreprise.featPermissions')} desc={t('entreprise.featPermissionsDesc')} />
                 <FeatureRow icon={<UsersRound size={15} />}   label={t('entreprise.featTeams')}       desc={t('entreprise.featTeamsDesc')} />
                 <FeatureRow icon={<FolderKanban size={15} />} label={t('entreprise.featProjects')}    desc={t('entreprise.featProjectsDesc')} />
                 <FeatureRow icon={<ListTodo size={15} />}     label={t('entreprise.featTasks')}       desc={t('entreprise.featTasksDesc')} />
+                <FeatureRow icon={<BadgeCheck size={15} />}   label={t('entreprise.featValidation')}  desc={t('entreprise.featValidationDesc')} />
                 <FeatureRow icon={<Target size={15} />}       label={t('entreprise.featOkr')}         desc={t('entreprise.featOkrDesc')} />
                 <FeatureRow icon={<BarChart3 size={15} />}    label={t('entreprise.featReports')}     desc={t('entreprise.featReportsDesc')} />
                 <FeatureRow icon={<UserPlus size={15} />}     label={t('entreprise.featInvite')}      desc={t('entreprise.featInviteDesc')} />

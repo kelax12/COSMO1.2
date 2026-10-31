@@ -89,7 +89,7 @@ vu vert en CI** ; une garde posée mais jamais jouée ne rapporte rien.
 | [Sécurité](../faille.md) | 87 | **84** | **−3** | SV-1, SV-2, SV-3, SV-8 (🟠) ouverts en production tant que les fonctions ne sont pas redéployées (−4) ; checklist SQL en onze règles de `validate:migrations`, verte (+1, AM-4) |
 | [Tests / CI](./TESTING.md) | 96 | **96** | 0 | dépendances de dev débloquées, axe-core 4.14 (+1, AM-6) ; `main` rouge sur le journal légal (−1). Stryker posé mais jamais joué : AM-3 non crédité |
 | [Performance](./PERFORMANCE.md) | 95 | **97** | **+2** | LCP mobile des pages de contenu 4,5 à 5,6 s → 1,5 à 1,7 s, rendu bloquant à 2 000 ms (PR n° 149) : le −2 du 10-22 est remboursé |
-| [Accessibilité](./ACCESSIBILITY.md) | 82 | **84** | **+2** | **61 surfaces modales sur 63** mesurées au clavier (PR n° 132, vert après n° 145) : AM-2 remboursé. VoiceOver et NVDA restent à jouer (échéance datée, PR n° 137) |
+| [Accessibilité](./ACCESSIBILITY.md) | 82 | **84** | **+2** | **61 surfaces modales sur 63** mesurées au clavier (PR n° 132, vert après n° 145) : AM-2 remboursé. **59 au 2026-10-31**, deux surfaces retirées du produit (glossaire, organigramme). VoiceOver et NVDA restent à jouer (échéance datée, PR n° 137) |
 | [UI / UX](./UI-PATTERNS.md) | 86 | **87** | **+1** | manifeste des promesses de la landing et garde des chiffres (PR n° 138, AM-4) |
 | [Architecture](./ARCHITECTURE.md) | 93 | **94** | **+1** | React 19 et `react-router` 8 (PR n° 129) : la dette de version est soldée, `Visual` vert sans régénérer |
 | [Scalabilité](./SCALABILITY.md) | 91 | **91** | 0 | index des 40 FK appliqués (mig. `227`, 2026-10-26, ledger `20261026124018`) ; advisors de performance lus par `Posture`, recalée le 2026-10-26 |

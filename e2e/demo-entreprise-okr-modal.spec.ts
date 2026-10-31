@@ -1,4 +1,4 @@
-import { test, expect, navTo, openOrgSection, expectOrgSectionOffered } from './fixtures';
+import { test, expect, navTo, openOrgSection, expectOrgSectionAbsent } from './fixtures';
 
 /**
  * Modal « Nouvel objectif d'équipe » (TeamOKRModal) — mode démo, org « Nova
@@ -48,12 +48,19 @@ test.describe('Entreprise — modal OKR (démo)', () => {
 
   // « Pyramide » s'appelle « Organigramme » depuis le 2026-09-28 (93a4ad91,
   // décision produit) ; la route reste `/entreprise/pyramid`.
-  test('Organigramme reste visible pour l\'admin (régression du masquage managerOnly)', async ({ demoPage: page }) => {
+  // Depuis la mig. 229 (2026-10-30, décision d'Axel : plus de « manager »),
+  // l'organigramme est MASQUÉ de la navigation, admin compris (`hidden: true`
+  // dans org-sections.ts), et `/entreprise/pyramid` renvoie à l'Aperçu
+  // (OrganizationPage). Ce cas exigeait l'inverse.
+  test('Organigramme retiré : absent de la navigation, son adresse mène à l\'Aperçu', async ({ demoPage: page }) => {
     await navTo(page, /entreprise/i, /\/entreprise/);
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
 
-    // L'admin (compte démo, propriétaire de Nova Studio) reste manager par
-    // construction (isAdmin || isManagerOf) — l'onglet ne doit pas disparaître.
-    await expectOrgSectionOffered(page, /^organigramme/i);
+    await expectOrgSectionAbsent(page, /^organigramme/i, /^okr/i);
+
+    await page.goto('/entreprise/pyramid');
+    // L'Aperçu est peint (un widget nommé), et rien de l'organigramme.
+    await expect(page.getByRole('region', { name: /^mes tâches/i }).first()).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole('button', { name: /afficher la charge/i })).toHaveCount(0);
   });
 });

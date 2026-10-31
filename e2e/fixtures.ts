@@ -543,6 +543,26 @@ export async function openOrgSection(page: Page, label: RegExp): Promise<void> {
 }
 
 /**
+ * La section est-elle ABSENTE de la navigation, alors qu'une section `witness`
+ * y est proposée ? Le témoin est obligatoire : sans lui, une navigation pas
+ * encore peinte donnerait une absence vraie pour une mauvaise raison.
+ */
+export async function expectOrgSectionAbsent(page: Page, label: RegExp, witness: RegExp): Promise<void> {
+  if ((await orgNavKind(page)) === 'desktop') {
+    const nav = page.getByRole('navigation', { name: ORG_NAV });
+    await expect(nav.getByRole('link', { name: witness })).toBeVisible();
+    await expect(nav.getByRole('link', { name: label })).toHaveCount(0);
+    return;
+  }
+  await page.locator('[data-org-section-switcher]').click();
+  const sheet = page.locator('[data-org-section-sheet]');
+  await expect(sheet.getByRole('button', { name: witness })).toBeVisible();
+  await expect(sheet.getByRole('button', { name: label })).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await expect(sheet).toHaveCount(0, { timeout: 10_000 });
+}
+
+/**
  * La section est-elle PROPOSÉE à ce compte ? Sur mobile, ouvre la feuille pour
  * le vérifier, puis la referme (Échap, `useModalA11y`).
  */

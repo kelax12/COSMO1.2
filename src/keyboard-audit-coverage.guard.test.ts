@@ -101,7 +101,6 @@ const MESUREES: Record<string, string> = {
   'components/organization/MemberPermissionsSheet.tsx': 'MESURE · MemberPermissionsSheet',
   'components/organization/MemberSheet.tsx': 'MESURE · MemberSheet',
   'components/organization/OffboardMemberDialog.tsx': 'MESURE · OffboardMemberDialog',
-  'components/organization/PyramidPlacementSheet.tsx': 'MESURE · PyramidPlacementSheet',
   'components/organization/WeeklyReviewSheet.tsx': 'MESURE · WeeklyReviewSheet',
   'components/organization/OrgSectionSheet.tsx': 'MESURE · OrgSectionSheet',
   'components/BugReportModal.tsx': 'MESURE · BugReportModal',
@@ -137,6 +136,9 @@ const MESUREES: Record<string, string> = {
  *   · NON MESURÉE, SANS OBSTACLE — la dette. Elle est nommée comme telle.
  */
 const NON_MESUREES: Record<string, string> = {
+  'components/organization/PyramidPlacementSheet.tsx':
+    'inatteignable : l organigramme est retiré depuis la mig. 229 (2026-10-30), '
+    + '`PyramidTab` n est plus monté et `/entreprise/pyramid` renvoie à l Aperçu. Code conservé.',
   'components/organization/TeamBulkAddToListDialog.tsx':
     'dette : « Liste » de la barre de sélection multiple d entreprise (2026-10-30), '
     + 'câblée par useModalA11y, pas encore couverte par e2e/a11y-keyboard-audit.spec.ts.',
@@ -226,7 +228,7 @@ describe('C-96 — couverture clavier des surfaces modales', () => {
     expect(muettes).toEqual([]);
   });
 
-  it('L ECART, CHIFFRE · 60 mesurees au 2026-10-31', () => {
+  it('L ECART, CHIFFRE · 59 mesurees au 2026-10-31', () => {
     // 🔴 Ce cas n'est pas décoratif : il est le seul endroit du dépôt où le
     // chiffre existe. Il change quand le produit change, et c'est voulu — on
     // le relit alors, au lieu de recopier « 10 sur 53 » d'un document plus
@@ -240,11 +242,12 @@ describe('C-96 — couverture clavier des surfaces modales', () => {
     // surfaces de plus et ColorSettingsModal reclassée), 61 le 2026-10-23
     // (AM-2, les 38 surfaces atteignables restantes). 60 le 2026-10-31 : le
     // glossaire entreprise est SUPPRIMÉ (demande d'Axel), sa surface mesurée avec lui.
-    // Une surface retirée n'est pas une couverture perdue.
+    // 59 le même jour : l'organigramme n'est plus monté (mig. 229), sa feuille
+    // « Placer » ne s'ouvre plus. Une surface retirée n'est pas une couverture perdue.
     expect(
       mesurees,
       `Couverture clavier en BAISSE : ${mesurees} surfaces mesurées sur ${total}.`,
-    ).toBeGreaterThanOrEqual(60);
+    ).toBeGreaterThanOrEqual(59);
     // …et le chiffre est imprimé, pour qu'il soit lisible sans ouvrir ce fichier.
     console.log(
       `::notice title=c96::${mesurees} surface(s) modale(s) mesurée(s) au clavier sur `
