@@ -57,7 +57,8 @@ compilait, la suite passait.
   en prod, ledger `20261031191036`, relue au catalogue (colonne, quatre résolveurs sur `org_member_default_perm`, EXECUTE refusé à `authenticated`).
   `233` (validateur de tâche d'entreprise, 2026-10-31) en prod, ledger `20261031200520`, relue au
   catalogue (colonne `validator_id`, trigger `trg_team_task_validation_gate` INVOKER, prouvée en 5 cas).
-  Prochain numéro libre : **`234`**.
+  `234` (porte de la 233 sûre face à un `created_by` NULL) en prod, ledger `20261031200845`.
+  Prochain numéro libre : **`235`**.
 
   Journal daté de chaque application (`150` → `223`) :
   [`docs/SECURITY.md`](../../docs/SECURITY.md) § « Journal d'application des migrations ».
