@@ -247,6 +247,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     const matched = this.getTasksArray().filter((tk) => {
       if (ids && !ids.has(tk.id)) return false;
       if (filters?.createdBy && tk.createdBy !== filters.createdBy) return false;
+      if (filters?.validatorId && tk.validatorId !== filters.validatorId) return false;
       if (filters?.status && tk.status !== filters.status) return false;
       if (filters?.deadlineFrom && (!tk.deadline || tk.deadline < filters.deadlineFrom)) return false;
       if (filters?.createdSince && tk.createdAt < filters.createdSince) return false;
@@ -294,6 +295,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
       createdAt: now,
       updatedAt: now,
       categoryId: input.categoryId ?? null,
+      validatorId: input.validatorId ?? null,
     };
     // Règles « à la création » (mig. 198), avant l'enregistrement comme en base.
     const saved = applyDemoTaskRules(task, null);
@@ -338,6 +340,15 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     // Statut propre (mig. 197) puis règles (mig. 198), comme les triggers.
     if (input.customStatusId !== undefined) task.customStatusId = input.customStatusId;
     if (input.health !== undefined) task.health = input.health;
+    if (input.validatorId !== undefined) task.validatorId = input.validatorId;
+    // Miroir de `trg_team_task_validation_gate` (mig. 233) : terminée par un
+    // autre que son validateur, la tâche part en `review`.
+    if (task.validatorId && task.completed && !before.completed && task.validatorId !== DEMO_USER_ID) {
+      task.completed = false;
+      task.completedAt = null;
+      task.status = 'review';
+      task.customStatusId = null;
+    }
     Object.assign(task, applyDemoTaskRules(task, before));
     task.updatedAt = new Date().toISOString();
     this.saveTasks(tasks);

@@ -83,6 +83,8 @@ export const createTeamTaskSchema = z.object({
   assigneeIds: z.array(z.string()).max(20, 'validation.teamProject.tooManyAssignees').optional(),
   status: z.enum(TEAM_TASK_STATUSES).optional(),
   categoryId: z.string().nullable().optional(),
+  // Validateur (mig. 233), absent d'ici, zod le stripperait.
+  validatorId: z.string().nullable().optional(),
 });
 
 export const updateTeamTaskSchema = createTeamTaskSchema.partial().extend({

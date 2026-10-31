@@ -209,6 +209,11 @@ export interface TeamTask {
   customStatusId?: string | null;
   /** État déclaré (mig. 204), même vocabulaire que les KR. null = aucun. */
   health?: TeamProjectHealth | null;
+  /**
+   * Qui valide la tâche (mig. 233). null = aucune validation : cochée, elle
+   * est terminée. Renseigné : terminée par un autre, elle passe en `review`.
+   */
+  validatorId?: string | null;
 }
 
 export interface CreateTeamTaskInput {
@@ -222,6 +227,8 @@ export interface CreateTeamTaskInput {
   assigneeIds?: string[];
   status?: TeamTaskStatus;
   categoryId?: string | null;
+  /** Validateur (mig. 233), null = aucune validation. */
+  validatorId?: string | null;
 }
 
 /** Champs modifiables — jamais orgId/createdBy (whitelist mapToDb). */
@@ -241,6 +248,8 @@ export interface UpdateTeamTaskInput {
   customStatusId?: string | null;
   /** État déclaré (mig. 204). */
   health?: TeamProjectHealth | null;
+  /** Validateur (mig. 233), null = aucune validation. */
+  validatorId?: string | null;
 }
 
 /** Commentaire sur une tâche d'équipe (journal immuable, mig. 082). */
@@ -282,6 +291,8 @@ export interface TeamTaskFilters {
   /** Tâches précises (noms du fil d'activité, tâches qui attendent les miennes). */
   ids?: string[];
   createdBy?: string;
+  /** Tâches que cette personne doit valider (mig. 233). */
+  validatorId?: string;
   status?: TeamTaskStatus;
   /** Échéance ≥ cette date locale 'YYYY-MM-DD'. */
   deadlineFrom?: string;

@@ -310,6 +310,11 @@
     "timePlaceholder": "e.g. 45",
     "hasDescription": "Has a description",
     "assignTask": "Assign task",
+    "validation": {
+      "required": "Requires approval",
+      "validator": "Approved by",
+      "hint": "When someone else completes it, the task goes to this person for approval."
+    },
     "nameRequired": "The task name is required",
     "projectRequired": "Choose a project",
     "createProjectAria": "Create a project",
