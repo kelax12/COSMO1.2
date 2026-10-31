@@ -89,12 +89,12 @@ describe('computeBlocking', () => {
 });
 
 describe('reviewsForMe', () => {
-  it('garde les tâches en revue que j ai créées pour quelqu un d autre', () => {
+  it('garde les tâches en revue dont je suis le validateur, pas celles que j ai seulement créées', () => {
     const out = reviewsForMe(
       [
-        task({ id: 'r1', status: 'review', createdBy: ME, assigneeIds: ['bob'] }),
-        task({ id: 'r2', status: 'review', createdBy: ME, assigneeIds: [ME] }),
-        task({ id: 'r3', status: 'in_progress', createdBy: ME, assigneeIds: ['bob'] }),
+        task({ id: 'r1', status: 'review', createdBy: 'bob', validatorId: ME, assigneeIds: ['bob'] }),
+        task({ id: 'r2', status: 'review', createdBy: ME, validatorId: null, assigneeIds: ['bob'] }),
+        task({ id: 'r3', status: 'in_progress', createdBy: ME, validatorId: ME, assigneeIds: ['bob'] }),
       ],
       ME,
     );

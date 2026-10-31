@@ -15,6 +15,7 @@ import { priorityLabelOf } from './team-projects.helpers';
 import MemberPickList from './MemberPickList';
 import TeamTaskFields from './TeamTaskFields';
 import TeamTaskBlockedNote from './TeamTaskBlockedNote';
+import TeamTaskValidationField from './TeamTaskValidationField';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import PreCreateCommentComposer from './PreCreateCommentComposer';
 import { OrgCreateBoundary } from './org-create.context';
@@ -116,6 +117,7 @@ const TeamTaskModal = ({
     () => task?.categoryId ?? (task ? null : projects.find((p) => p.id === (defaultProjectId ?? (requireProjectChoice ? '' : projects[0]?.id)))?.categoryId ?? null),
   );
   const [assigneeIds, setAssigneeIds] = useState<string[]>(task?.assigneeIds ?? defaultAssigneeIds ?? []);
+  const [validatorId, setValidatorId] = useState<string | null>(task?.validatorId ?? null);
   const [showAssignees, setShowAssignees] = useState(isCreating ? (defaultAssigneeIds?.length ?? 0) > 0 : (task?.assigneeIds.length ?? 0) > 0);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -200,10 +202,11 @@ const TeamTaskModal = ({
       (minutes ?? 0) !== (ref.estimatedTime ?? 0) ||
       projectId !== ref.projectId ||
       categoryId !== (ref.categoryId ?? null) ||
+      validatorId !== (ref.validatorId ?? null) ||
       !sameSet(assigneeIds, ref.assigneeIds) ||
       (baseListIds !== null && !sameSet(listIds, baseListIds))
     );
-  }, [creating, liveTask, status, name, description, priority, deadline, startDate, estimatedTime, projectId, categoryId, assigneeIds, listIds, baseListIds]);
+  }, [creating, liveTask, status, name, description, priority, deadline, startDate, estimatedTime, projectId, categoryId, validatorId, assigneeIds, listIds, baseListIds]);
 
   // Portée d'assignation (mig. 115) : on ne propose que les membres à portée,
   // en gardant ceux DÉJÀ assignés — le serveur ne contrôle que les ajouts.
@@ -223,6 +226,7 @@ const TeamTaskModal = ({
       ...(minutes !== undefined && !Number.isNaN(minutes) ? { estimatedTime: minutes } : {}),
       assigneeIds,
       categoryId,
+      validatorId,
     };
   };
 
@@ -488,6 +492,7 @@ const TeamTaskModal = ({
                 onSubmit={handleSave}
                 section={tab}
               />
+              {tab === 'details' && <TeamTaskValidationField members={members} task={liveTask} me={user?.id} value={validatorId} onChange={setValidatorId} />}
               {/* Sous `lg`, les commentaires vivent ici ; au-delà, dans le panneau de droite. */}
               {tab === 'details' && !isWide && comments}
             </>

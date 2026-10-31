@@ -90,14 +90,12 @@ export const dependentIdsOf = (myOpen: TeamTask[], deps: TeamTaskDependency[]): 
 // ─── En attente de moi ──────────────────────────────────────────────
 
 /**
- * Tâches passées en revue qui attendent MA validation : je les ai créées et
- * ce n'est pas moi qui les fais. Celles que je me suis assignées ne
- * m'attendent pas, c'est moi qui les ai rendues.
+ * Tâches en revue qui attendent MA validation : j'en suis le validateur
+ * (mig. 233). Être le créateur ne suffit plus : une tâche sans validateur,
+ * une fois cochée, est terminée et ne revient à personne.
  */
-export const reviewsForMe = (createdInReview: TeamTask[], me: string): TeamTask[] =>
-  createdInReview.filter(
-    (t) => t.status === 'review' && t.createdBy === me && !(t.assigneeIds.length === 1 && t.assigneeIds[0] === me),
-  );
+export const reviewsForMe = (toValidate: TeamTask[], me: string): TeamTask[] =>
+  toValidate.filter((t) => t.status === 'review' && t.validatorId === me);
 
 /** Mentions non lues, une par tâche (la plus récente), sur l'organisation. */
 export const unreadMentions = (notifications: OrgNotification[]): OrgNotification[] => {

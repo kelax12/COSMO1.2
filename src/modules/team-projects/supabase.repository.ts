@@ -219,6 +219,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     }
     if (filters?.ids) query = query.in('id', filters.ids);
     if (filters?.createdBy) query = query.eq('created_by', filters.createdBy);
+    if (filters?.validatorId) query = query.eq('validator_id', filters.validatorId);
     if (filters?.status) query = query.eq('status', filters.status);
     if (filters?.deadlineFrom) query = query.gte('deadline', filters.deadlineFrom);
     if (filters?.createdSince) query = query.gte('created_at', filters.createdSince);
@@ -265,6 +266,8 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
         assignee_ids: input.assigneeIds ?? [],
         status: input.status ?? 'todo',
         category_id: input.categoryId ?? null,
+        // N'envoie la colonne que si elle est renseignée (mig. 233).
+        ...(input.validatorId ? { validator_id: input.validatorId } : {}),
       })
       .select('*')
       .single();
@@ -288,6 +291,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     // Statut propre (mig. 197) : le trigger en déduit `status`, puis `completed`.
     if (input.customStatusId !== undefined) patch.custom_status_id = input.customStatusId;
     if (input.health !== undefined) patch.health = input.health;
+    if (input.validatorId !== undefined) patch.validator_id = input.validatorId;
     // `status` et `completed` sont synchronisés par le trigger de la mig. 091.
     // On n'envoie donc JAMAIS les deux dans le même patch : le trigger traite
     // `status` en priorité, et un `completed` contradictoire serait écrasé
