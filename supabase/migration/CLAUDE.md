@@ -60,7 +60,11 @@ compilait, la suite passait.
   `234` (porte de la 233 sûre face à un `created_by` NULL) en prod, ledger `20261031200845`.
   `235` (`REVOKE` de `team_task_validation_gate()` pour `authenticated`, oublié par la 233) en
   prod, ledger `20261031212233`, relue au catalogue (`EXECUTE` refusé à `anon` et `authenticated`,
-  trigger toujours actif). Prochain numéro libre : **`236`**.
+  trigger toujours actif).
+  `236` (affiliation par lien, 2026-10-31) en prod, ledger `20261031223810`, relue au catalogue
+  (7 tables `affiliate_*` sous RLS sans policy, colonnes `profiles.affiliate_*` et `org_subscriptions.purchased_by`,
+  `handle_new_user_profile` INVOKER → `create_profile_for_new_user` DEFINER, `EXECUTE` pour `supabase_auth_admin`).
+  Preuves : `proofs/236`. Prochain numéro libre : **`237`**.
 
   Journal daté de chaque application (`150` → `223`) :
   [`docs/SECURITY.md`](../../docs/SECURITY.md) § « Journal d'application des migrations ».
