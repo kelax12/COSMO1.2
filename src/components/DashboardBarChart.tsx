@@ -17,6 +17,7 @@ import { calculateWorkTimeForPeriod } from '@/lib/workTimeCalculator';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import { type ViewMode } from '@/lib/view-mode';
+import { useDocumentTheme } from '@/hooks/useDocumentTheme';
 
 interface DashboardBarChartProps {
   viewMode: ViewMode;
@@ -33,6 +34,14 @@ const SERIES_COLORS = {
   events: '#ef4444',
   okrs:   '#22c55e',
   habits: '#eab308',
+} as const;
+
+/** Thème Noir : la palette monochrome de COSMO Analytics. */
+const SERIES_COLORS_NOIR = {
+  tasks:  '#ededed',
+  events: '#bdbdbd',
+  okrs:   '#8a8a8a',
+  habits: '#5c5c5c',
 } as const;
 
 /** Séries du graphique, dans l'ordre d'affichage. */
@@ -56,14 +65,15 @@ interface ChartPoint {
 
 const DashboardBarChart: React.FC<DashboardBarChartProps> = ({ viewMode }) => {
   const { t } = useT('dashboard');
+  const colors = useDocumentTheme() === 'noir' ? SERIES_COLORS_NOIR : SERIES_COLORS;
   // Config shadcn reconstruite à chaque changement de langue — c'est elle qui
   // porte les libellés de la légende et de l'infobulle.
   const chartConfig = useMemo(
     () =>
       Object.fromEntries(
-        SERIES_KEYS.map((key) => [key, { label: t(`chart.series.${key}`), color: SERIES_COLORS[key] }])
+        SERIES_KEYS.map((key) => [key, { label: t(`chart.series.${key}`), color: colors[key] }])
       ) as ChartConfig,
-    [t]
+    [t, colors]
   );
   const { data: tasks = [] } = useTasks();
   const { data: events = [] } = useEvents();
@@ -140,7 +150,7 @@ const DashboardBarChart: React.FC<DashboardBarChartProps> = ({ viewMode }) => {
       {/* Background blobs */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-[rgb(var(--color-accent-solid))]/5 dark:bg-[rgb(var(--color-accent-solid))]/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-indigo-500/5 dark:bg-indigo-500/10 rounded-full blur-3xl" />
+        <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-indigo-500/5 dark:bg-indigo-500/10 noir:hidden rounded-full blur-3xl" />
       </div>
 
       {/* Header */}

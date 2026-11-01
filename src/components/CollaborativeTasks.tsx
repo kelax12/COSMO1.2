@@ -169,8 +169,8 @@ const CollaborativeTasks = ({ compact = false }: { compact?: boolean }) => {
               {/* Icône retirée sur mobile (demande utilisateur), même choix
                   que DeleteTaskConfirm / ConfirmDeleteSheet / ConfirmDiscardDialog :
                   le titre porte déjà toute l'information. Desktop inchangé. */}
-              <div className="hidden sm:flex w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 items-center justify-center mb-4">
-                <Trash2 className="text-red-600 dark:text-red-400" size={24} />
+              <div className="hidden sm:flex w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 noir:bg-[rgb(var(--color-error)/0.12)] items-center justify-center mb-4">
+                <Trash2 className="text-red-600 dark:text-red-400 noir:text-[rgb(var(--color-danger-text))]" size={24} />
               </div>
               <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('todayTasks.deleteDialog.title')}</h3>
               <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6">
@@ -185,7 +185,7 @@ const CollaborativeTasks = ({ compact = false }: { compact?: boolean }) => {
                 </button>
                 <button
                   onClick={confirmDelete}
-                  className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all shadow-md shadow-red-500/20"
+                  className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 noir:bg-[rgb(var(--color-error))] noir:hover:bg-[rgb(var(--color-danger-text))] noir:text-[rgb(var(--color-background))] noir:shadow-none transition-all shadow-md shadow-red-500/20"
                 >
                   {t('todayTasks.deleteDialog.confirm')}
                 </button>

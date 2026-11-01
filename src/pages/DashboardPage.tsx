@@ -192,7 +192,7 @@ const DashboardPage: React.FC = () => {
                     className={cn(
                       'px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 outline-none',
                       viewMode === mode
-                        ? 'bg-[#1f6feb] text-white shadow-sm' // bleu foncé dédié : --color-accent (#58a6ff) ne passe pas le contraste AA (2.5:1) avec du texte blanc
+                        ? 'bg-[#1f6feb] text-white shadow-sm noir:bg-[rgb(var(--color-hover))] noir:text-[rgb(var(--color-text-primary))] noir:shadow-none' // Noir : onglet actif d'analytics (#1c1c1c). Ailleurs, bleu foncé dédié : --color-accent (#58a6ff) ne passe pas le contraste AA (2.5:1) avec du texte blanc
                         : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'
                     )}
                   >
@@ -419,7 +419,7 @@ const DashboardPage: React.FC = () => {
                   const remainingHabits = habits.filter(h => !h.completions[today]).length;
 
                   if (remainingTasks === 0 && !nextEvent && remainingHabits === 0 && (tasks.length > 0 || habits.length > 0)) {
-                    return <span className="font-medium text-emerald-600 dark:text-emerald-400">{t('summary.allDone')}</span>;
+                    return <span className="font-medium text-emerald-600 dark:text-emerald-400 noir:text-[rgb(var(--color-success))]">{t('summary.allDone')}</span>;
                   }
 
                   const parts: React.ReactNode[] = [];

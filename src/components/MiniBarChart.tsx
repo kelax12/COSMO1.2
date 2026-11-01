@@ -10,6 +10,7 @@
 import React from 'react';
 import { formatDate } from '@/i18n/format';
 import { useT, type Translator } from '@/i18n/useT';
+import { useDocumentTheme } from '@/hooks/useDocumentTheme';
 
 /**
  * Étiquette d'une barre du mini-graphique.
@@ -33,6 +34,8 @@ const formatBarDate = (raw: string, t: Translator<'dashboard'>['t']): string => 
 
 export const MiniBarChart: React.FC<{ data: { value: number; label?: string; date?: string }[]; color?: string; ariaLabel?: string }> = ({ data, color = '#2563EB', ariaLabel }) => {
   const { t } = useT('dashboard');
+  // Noir : barres monochromes d'analytics (#bdbdbd, jours vides #3a3a3a).
+  const noir = useDocumentTheme() === 'noir';
   const [hovered, setHovered] = React.useState<number | null>(null);
   const max = Math.max(...data.map(d => d.value), 1);
 
@@ -89,7 +92,9 @@ export const MiniBarChart: React.FC<{ data: { value: number; label?: string; dat
               }`}
               style={{
                 height: `${Math.max((d.value / max) * 100, 8)}%`,
-                backgroundColor: hovered === i ? darken(color) : color,
+                backgroundColor: noir
+                  ? (hovered === i ? '#f0f0f0' : d.value === 0 ? '#3a3a3a' : '#bdbdbd')
+                  : (hovered === i ? darken(color) : color),
               }}
             />
           </div>

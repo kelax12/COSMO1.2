@@ -176,7 +176,7 @@ const TodayUnified = ({ compact = false }: TodayUnifiedProps) => {
             type="button"
             onClick={replanAll}
             title={t('today.replanAll')}
-            className="shrink-0 px-3 min-h-touch sm:min-h-0 sm:py-1.5 rounded-lg text-label sm:text-sm font-semibold bg-red-600 hover:bg-red-700 text-white transition-colors"
+            className="shrink-0 px-3 min-h-touch sm:min-h-0 sm:py-1.5 rounded-lg text-label sm:text-sm font-semibold bg-red-600 hover:bg-red-700 text-white noir:bg-[rgb(var(--color-error))] noir:hover:bg-[rgb(var(--color-danger-text))] noir:text-[rgb(var(--color-background))] transition-colors"
           >
             {tt('table.rescheduleAllBtn')}
           </button>

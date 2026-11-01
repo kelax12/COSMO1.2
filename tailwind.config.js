@@ -159,5 +159,9 @@ export default {
 	},
 	plugins: [
 		require("tailwindcss-animate"),
+		// `noir:` — thème Noir (palette COSMO Analytics). Le thème pose `.dark` ET
+		// `.noir` sur <html> : `.dark.noir` pèse une classe de plus que `dark:`,
+		// et l'emporte quel que soit l'ordre des règles.
+		({ addVariant }) => addVariant("noir", ".dark.noir &"),
 	],
 };
