@@ -117,6 +117,7 @@ describe('index de affiliation-api (texte)', () => {
     expect(src).toContain('callerIp(req)')
     expect(src).toMatch(/limit:\s*5,\s*window:\s*'15 minutes'/)
     expect(src).toMatch(/limit:\s*60,\s*window:\s*'1 hour'/)
+    expect(src).toMatch(/'affiliation-session-global', value: 'all', limit: 50/)
   })
   it('changer le code régénère token_secret', () => {
     expect(src).toMatch(/token_secret:\s*newTokenSecret\(\)/)

@@ -168,7 +168,12 @@ async function loadDataset(db: SupabaseClient, affiliateIds: string[]): Promise<
 async function handleSession(req: Request, db: SupabaseClient): Promise<Response> {
   // Un jeton par tentative, AVANT la vérification : un IP bloquée ne peut plus
   // apprendre qu'un code est bon. Le compteur RPC ne rend pas son reste.
-  const verdict = await consumeRateLimits(FN, [{ domain: 'affiliation-session', value: callerIp(req), limit: 5, window: '15 minutes' }])
+  // Le seau global borne celui qui change d'adresse à chaque essai. Atteint, il
+  // ne ferme que le code commun : l'admin entre par son mot de passe (spec, Accès).
+  const verdict = await consumeRateLimits(FN, [
+    { domain: 'affiliation-session', value: callerIp(req), limit: 5, window: '15 minutes' },
+    { domain: 'affiliation-session-global', value: 'all', limit: 50, window: '1 hour' },
+  ])
   if (!verdict.allowed) {
     if (verdict.misconfigured) return unavailable(req)
     return json({ error: 'rate_limited', retry_after_s: 900 }, 429, req)
