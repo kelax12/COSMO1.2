@@ -65,8 +65,14 @@ test.describe('collaboration (demo)', () => {
     // de Playwright vise la position D'AVANT le réajustement et atterrit sous
     // la tab bar mobile fixe (« <nav aria-label="Navigation mobile"> subtree
     // intercepts pointer events »).
-    await firstTask.scrollIntoViewIfNeeded();
-    await firstTask.click();
+    // Sur desktop, on vise le NOM de la tâche, jamais le centre de la ligne :
+    // le centre tombait sur la cellule « État » (`TaskHealthCell`, qui arrête
+    // la propagation et ouvre son menu), et la modale ne s'ouvrait jamais.
+    const isRow = await firstTask.evaluate((el) => el.tagName === 'TR');
+    const rowName = isRow ? await firstTask.getAttribute('aria-label') : null;
+    const target = rowName ? firstTask.getByText(rowName, { exact: true }).first() : firstTask;
+    await target.scrollIntoViewIfNeeded();
+    await target.click();
 
     const modal = demoPage.getByRole('dialog');
     await expect(modal).toBeVisible({ timeout: 10_000 });
