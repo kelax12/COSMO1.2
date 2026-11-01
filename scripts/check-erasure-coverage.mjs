@@ -86,6 +86,7 @@ const DECISIONS = {
 
   // ── Effacées par Postgres, clause vérifiée ci-dessous ───────────
   admin_users: { decision: 'cascade' },
+  affiliate_contacts: { decision: 'cascade' },
   email_lookup_quota: { decision: 'cascade' },
   org_member_permissions: { decision: 'cascade' },
   org_notifications: { decision: 'cascade' },
