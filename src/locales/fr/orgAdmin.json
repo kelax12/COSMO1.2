@@ -789,6 +789,7 @@
     "rangeFrom": "{{min}} membres et plus",
     "perMonth": "par mois",
     "vatSuffix": "TTC",
+    "precontractual": "Abonnement à durée indéterminée, prix TTC, reconduit automatiquement à chaque échéance jusqu'à résiliation. Résiliable à tout moment depuis cet écran, sans motif ni frais.",
     "intervalLegend": "Périodicité de facturation",
     "intervalMonthly": "Mensuel",
     "intervalYearly": "Annuel",
