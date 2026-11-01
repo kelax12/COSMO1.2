@@ -4,6 +4,7 @@ import { useEvents, expandRecurringEvents } from '@/modules/events';
 import { formatTime } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import { DashboardCardSkeleton } from '@/components/skeletons';
+import { useDocumentTheme } from '@/hooks/useDocumentTheme';
 
 const DEFAULT_COLOR = '#3B82F6';
 
@@ -16,6 +17,8 @@ const AgendaTodayWidget = () => {
   const { t, tp } = useT('dashboard');
   const navigate = useNavigate();
   const { data: events = [], isLoading } = useEvents();
+  // Noir : un rendez-vous sans couleur prend le gris clair d'analytics.
+  const fallbackColor = useDocumentTheme() === 'noir' ? '#bdbdbd' : DEFAULT_COLOR;
 
   const today = useMemo(() => {
     const from = new Date(); from.setHours(0, 0, 0, 0);
@@ -55,7 +58,7 @@ const AgendaTodayWidget = () => {
                   <span className="w-[5.5rem] shrink-0 text-xs tabular-nums text-[rgb(var(--color-text-secondary))]">
                     {hm(e.start)} – {hm(e.end)}
                   </span>
-                  <span aria-hidden="true" className="h-4 w-1 shrink-0 rounded-full" style={{ backgroundColor: e.color || DEFAULT_COLOR }} />
+                  <span aria-hidden="true" className="h-4 w-1 shrink-0 rounded-full" style={{ backgroundColor: e.color || fallbackColor }} />
                   <span className={`flex-1 min-w-0 truncate text-sm font-medium text-[rgb(var(--color-text-primary))] ${past ? 'line-through' : ''}`}>
                     {e.title}
                   </span>
