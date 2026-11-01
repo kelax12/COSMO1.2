@@ -1,29 +1,15 @@
 // ═══════════════════════════════════════════════════════════════════
-// GARDE — le remboursement du mois en cours (C-65), et sa borne
+// GARDE — rétractation, résiliation, remboursement (décision du 2026-11-01)
 // ═══════════════════════════════════════════════════════════════════
 //
-// 🔴 POURQUOI. Décision d'Axel du 2026-09-03 : « l'utilisateur doit pouvoir se
-// faire rembourser le mois en cours à tout moment, mais que le mois en cours. »
-// Avant, le produit n'avait AUCUN chemin de remboursement : `stripe-org-portal`
-// ouvre le portail Stripe, qui sait résilier et ne rembourse pas, et rien
-// n'appelait `refunds.create`. Une règle sans mécanisme est une phrase.
+// Consigne : `Documents/analytics/docs/REMBOURSEMENT-RESILIATION.md`. Elle
+// remplace « rembourser le mois en cours à tout moment » (2026-09-03).
 //
-// L'item est explicite sur l'ordre de livraison : « ❌ Ne pas livrer le bouton
-// avant la borne : un remboursement rejouable est une perte d'argent, pas un
-// défaut d'UX. » Cette garde vérifie que la borne est là, et qu'elle est là
-// SOUS SES TROIS FORMES — chacune couvre un mode de panne différent.
-//
-// ── CE QU'ELLE NE PROUVE PAS ─────────────────────────────────────────
-//
-// ⚠️ Elle est TEXTUELLE, comme les autres gardes d'Edge Function : pas de
-// Docker, pas de stack locale, une clé Stripe de TEST et zéro abonnement. Rien
-// ici n'a été joué contre Stripe.
-//
-// Ce qui EST réellement exécuté, c'est le calcul du MONTANT
-// (`src/modules/billing/refund-amount.test.ts`, 12 cas) — c'est-à-dire la
-// seule partie qui décide d'un chiffre, et donc la seule qui peut coûter de
-// l'argent en se trompant. Le reste attend le parcours E2E que C-27 exige
-// explicitement pour C-65.
+// ⚠️ Garde TEXTUELLE, comme les autres gardes d'Edge Function : rien ici n'est
+// joué contre Stripe. Ce qui EST exécuté : le montant
+// (`src/modules/billing/refund-amount.test.ts`), le verrou anti-rejeu
+// (`refund-replay.test.ts`), les textes d'emails (`billing-mail-text.test.ts`)
+// et le parcours d'écran (`OrgBillingTab.retractation.parcours.test.tsx`).
 
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -43,22 +29,8 @@ function codeOnly(source: string): string {
     .join(String.fromCharCode(10));
 }
 
-/**
- * Assertion d'ORDRE entre deux extraits, qui exige d'abord qu'ils EXISTENT.
- *
- * 🔴 POURQUOI CE HELPER, ET PAS `indexOf` NU. Deux `indexOf` comparés
- * directement passent quand le premier extrait est ABSENT : `indexOf` rend
- * `-1`, et `-1 < n` est vrai. L'assertion « A vient avant B » est alors verte
- * précisément dans le cas le plus grave — celui où A a disparu.
- *
- * Trouvé par mutation le 2026-09-04 : renommer `refund.mutate` laissait le
- * test au VERT. C'est exactement « une garde qui répond sans mesurer », et
- * cette fois dans une garde que je venais d'écrire pour ça.
- */
+/** Ordre entre deux TOKENS, qui exige d'abord qu'ils EXISTENT (un `-1` passerait). */
 function expectOrder(source: string, first: string, second: string, why: string): void {
-  // ⚠️ Position d'un TOKEN, pas d'une sous-chaine. `indexOf('refund.mutate')`
-  // matche aussi `zzrefund.mutate` : un renommage passerait inapercu. On exige
-  // que le caractere precedent ne fasse pas partie d'un identifiant.
   const at = (needle: string): number => {
     const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, (c) => '\\' + c);
     const m = new RegExp(`(?<![A-Za-z0-9_$])${escaped}`).exec(source);
@@ -71,154 +43,152 @@ function expectOrder(source: string, first: string, second: string, why: string)
   expect(a, why).toBeLessThan(b);
 }
 
-const refundFn = read('supabase/functions/stripe-org-refund/index.ts');
-const webhook = read('supabase/functions/stripe-webhook/index.ts');
+const refundFn = codeOnly(read('supabase/functions/stripe-org-refund/index.ts'));
+const subFn = codeOnly(read('supabase/functions/stripe-org-subscription/index.ts'));
+const checkoutFn = codeOnly(read('supabase/functions/stripe-org-checkout/index.ts'));
+const webhook = codeOnly(read('supabase/functions/stripe-webhook/index.ts'));
+const mutations = codeOnly(read('src/modules/billing/org-billing.mutations.ts'));
 const billingTab = read('src/components/organization/OrgBillingTab.tsx');
-// ⚠️ L'enchainement a ete EXTRAIT de `OrganizationPage` quand celle-ci a
-// franchi les 600 lignes (cliquet gele, arbitrage C-09 : « un fichier se
-// decoupe quand on a de toute facon a le modifier »). La garde suit le code :
-// une garde qui continue de lire l'ancien fichier passe au vert en ne
-// regardant plus rien.
-const deleteFlow = read('src/pages/organization/useDeleteOrgFlow.ts');
-// ⚠️ Meme raison, seconde occurrence : l'ARITHMETIQUE du verrou anti-rejeu a
-// ete extraite de l'entrypoint le 2026-09-14 (C-65), parce qu'au milieu des
-// appels Stripe elle n'etait executable par AUCUN test. Elle a desormais les
-// siens (`src/modules/billing/refund-replay.test.ts`, 10 cas dont un temoin).
-// La garde suit le code : continuer a la chercher dans `index.ts` la rendrait
-// verte en ne regardant plus rien — et c'est litteralement ce qu'elle a fait
-// echouer ici, ce qui est le comportement qu'on lui demande.
-const refundReplay = read('supabase/functions/_shared/refund-replay.ts');
+const deleteFlow = codeOnly(read('src/pages/organization/useDeleteOrgFlow.ts'));
+const refundReplay = codeOnly(read('supabase/functions/_shared/refund-replay.ts'));
 
-describe('la BORNE — un remboursement rejouable est une perte d argent', () => {
-  it('porte une cle d idempotence DERIVEE DE LA FACTURE, pas un booleen', () => {
-    // L'item l'exige nommement : « la garde est une CLE D IDEMPOTENCE derivee
-    // de l `invoice_id`, pas un booleen en base ». Un booleen se desynchronise
-    // de Stripe ; la cle est portee par Stripe lui-meme.
-    expect(codeOnly(refundFn)).toMatch(/idempotencyKey:\s*`org-refund:\$\{invoice\.id\}`/);
+describe('le remboursement est réservé à l ADMIN', () => {
+  it('stripe-org-refund exige is_admin() et lit son erreur', () => {
+    expect(refundFn).toMatch(/rpc\('is_admin'\)/);
+    expect(refundFn).toMatch(/if \(adminError\) throw adminError/);
+    expect(refundFn).toMatch(/isAdmin !== true/);
+    expectOrder(refundFn, "rpc('is_admin')", 'stripe.refunds.create', 'la garde admin passe AVANT tout remboursement');
   });
 
-  it('verifie les remboursements DEJA poses avant d en creer un', () => {
-    const code = codeOnly(refundFn);
-    // L'entrypoint LIT ce qui existe deja chez Stripe...
-    expect(code).toContain('stripe.refunds.list');
-    // ...et le passe a la borne, au lieu d'en faire quoi que ce soit lui-meme.
-    expect(code).toMatch(/remainingRefundableCents\(/);
-    expect(code).toMatch(/priorRefunds:\s*existing\.data/);
-    // Et la borne RETRANCHE ce qui a deja ete rendu, au lieu de comparer a
-    // zero : un remboursement PARTIEL laisse un reste, et l'ignorer rendrait
-    // deux fois.
-    expect(codeOnly(refundReplay)).toMatch(/already/);
+  it('jamais admin_allowlisted() (affichage seul)', () => {
+    expect(refundFn).not.toContain('admin_allowlisted');
   });
 
-  it('ne rembourse JAMAIS plus que ce qui a ete encaisse', () => {
-    // Deux bornes independantes : celle du calcul (testee pour de vrai dans
-    // refund-amount.test.ts) et ce clamp au moment de l'appel, desormais dans
-    // `_shared/refund-replay.ts` et couvert par refund-replay.test.ts.
-    const replay = codeOnly(refundReplay);
-    expect(replay).toMatch(/Math\.min\(/);
-    expect(replay).toMatch(/amountPaidCents/);
-    // L'entrypoint doit lui DONNER l'encaisse : sans cet argument, la borne ne
-    // borne rien et le clamp porterait sur une valeur que personne ne fournit.
-    expect(codeOnly(refundFn)).toMatch(/amountPaidCents:\s*invoice\.amount_paid/);
+  it('aucun chemin de l interface utilisateur n appelle stripe-org-refund', () => {
+    expect(mutations).not.toContain('stripe-org-refund');
+    expect(codeOnly(billingTab)).not.toContain('stripe-org-refund');
+    expect(deleteFlow).not.toContain('stripe-org-refund');
+    expect(mutations).not.toContain('useCancelAndRefundOrg');
   });
 
-  it("l arithmetique du verrou n est PAS recopiee dans l entrypoint", () => {
-    // 🔴 La raison d'etre de l'extraction : melangee aux appels Stripe, cette
-    // arithmetique n'est executable par aucun test, et elle ne l'a pas ete
-    // pendant tout le temps ou C-65 declarait avoir une borne. La reecrire sur
-    // place la rendrait intestable a nouveau, en silence, et les tests de
-    // `refund-replay.test.ts` mesureraient alors un module que plus personne
-    // n'appelle.
-    const code = codeOnly(refundFn);
-    expect(code).not.toMatch(/existing\.data\.reduce/);
-    expect(code).not.toMatch(/Math\.min\(decision\.amountCents/);
+  it('aperçu sans `confirm: true` : l admin valide un montant calculé, jamais saisi', () => {
+    expect(refundFn).toMatch(/if \(confirm !== true\)/);
+    expectOrder(refundFn, 'confirm !== true', 'stripe.refunds.create', 'l aperçu sort AVANT tout remboursement');
+    expect(refundFn).not.toMatch(/amountCents\s*[:=]\s*body|req\.json\(\)[^\n]*amount/);
+  });
+
+  it('les exceptions hors fenêtre sont nommées, et le rappel manqué doit être MARQUÉ', () => {
+    expect(refundFn).toContain("'conformity'");
+    expect(refundFn).toContain("'renewal_notice_missed'");
+    expect(refundFn).toMatch(/renewal_notice_missed_at/);
   });
 });
 
-describe('l ORDRE des deux actions', () => {
-  it('rembourse AVANT de resilier', () => {
-    // Les deux ordres ont un mode de panne et ils ne se valent pas : rembourser
-    // puis echouer a resilier laisse la personne avec son argent et un acces
-    // de trop (a son avantage) ; resilier puis echouer a rembourser lui prend
-    // les deux. C'est exactement la discussion que la decision supprime.
-    expectOrder(
-      codeOnly(refundFn),
-      'stripe.refunds.create',
-      'stripe.subscriptions.cancel',
-      'on rembourse AVANT de resilier',
-    );
+describe('la BORNE — un remboursement rejouable est une perte d argent', () => {
+  it('clé d idempotence dérivée de la facture', () => {
+    expect(refundFn).toMatch(/idempotencyKey:\s*`org-refund:\$\{invoice\.id\}`/);
   });
 
-  it('resilie IMMEDIATEMENT, pas en fin de periode', () => {
-    // On rembourse la periode : la laisser courir reviendrait a l'offrir.
-    const code = codeOnly(refundFn);
-    expect(code).toContain('stripe.subscriptions.cancel');
-    expect(code).not.toMatch(/cancel_at_period_end:\s*true/);
+  it('pré-contrôle des remboursements déjà posés, arithmétique dans _shared', () => {
+    expect(refundFn).toContain('stripe.refunds.list');
+    expect(refundFn).toMatch(/remainingRefundableCents\(/);
+    expect(refundFn).toMatch(/priorRefunds:\s*existing\.data/);
+    expect(refundReplay).toMatch(/already/);
+    expect(refundFn).not.toMatch(/existing\.data\.reduce/);
   });
 
-  it('la suppression d organisation rembourse AVANT de supprimer (C-39)', () => {
-    // « Un seul geste, aucun debit orphelin. » L'ordre inverse ferait perdre
-    // l'identifiant Stripe avec la cascade sur `org_subscriptions`.
-    const code = codeOnly(deleteFlow);
-    expectOrder(code, 'refund.mutate', 'remove.mutate', 'on rembourse AVANT de supprimer');
-    // Et la suppression n'a lieu QUE si le remboursement a reussi : mieux vaut
-    // une organisation encore la qu'une organisation detruite et un debit qui
-    // continue.
-    expect(code).toMatch(/onSuccess:\s*\(\)\s*=>\s*remove\.mutate/);
+  it('jamais plus que l encaissé', () => {
+    expect(refundReplay).toMatch(/Math\.min\(/);
+    expect(refundFn).toMatch(/amountPaidCents:\s*invoice\.amount_paid/);
+  });
+
+  it('une rétractation déjà remboursée n est pas rejouée', () => {
+    expect(refundFn).toMatch(/if \(w\.refunded_at\) return json\(\{ error: 'already_refunded' \}/);
+  });
+});
+
+describe('la RÉTRACTATION — 14 jours, arrêt immédiat, aucun remboursement automatique', () => {
+  it('refuse hors fenêtre, à partir de la conclusion du contrat', () => {
+    expect(subFn).toMatch(/withinWithdrawalWindow\(contractStart, now\)/);
+    expect(subFn).toMatch(/const contractStart = subscription\.start_date/);
+    expect(subFn).toContain("'withdrawal_window_closed'");
+  });
+
+  it('arrête l abonnement, enregistre, accuse réception, alerte', () => {
+    expectOrder(subFn, 'stripe.subscriptions.cancel', "from('org_withdrawals').insert", 'arrêt puis trace');
+    expect(subFn).toMatch(/withdrawalAckMail\(/);
+    expect(subFn).toMatch(/RETRACTATION org/);
+  });
+
+  it('n appelle JAMAIS refunds.create', () => {
+    expect(subFn).not.toContain('refunds.create');
+  });
+
+  it('le prorata n est retenu qu avec la demande expresse d accès immédiat', () => {
+    expect(subFn).toMatch(/immediateAccessRequested:\s*!!acceptance\?\.immediate_access_at/);
+  });
+});
+
+describe('la RÉSILIATION — fin de période, sans remboursement', () => {
+  it('cancel_at_period_end, et un email de confirmation', () => {
+    expect(subFn).toMatch(/cancel_at_period_end:\s*action === 'cancel'/);
+    expect(subFn).toMatch(/cancellationMail\(/);
+  });
+
+  it('la suppression d organisation arrête l abonnement AVANT de supprimer, sans rembourser', () => {
+    expectOrder(deleteFlow, 'stop.mutate', 'remove.mutate', 'on arrête l abonnement AVANT de supprimer');
+    expect(deleteFlow).toMatch(/action: 'cancel_now'/);
+    expect(deleteFlow).toMatch(/onSuccess:\s*\(\)\s*=>\s*remove\.mutate/);
+  });
+
+  it('aucun rejeu automatique sur une action d abonnement', () => {
+    expect(mutations).toMatch(/useOrgSubscriptionAction[^]*?retry:\s*0/);
+  });
+});
+
+describe('le PAIEMENT — demande expresse d accès immédiat et version des CGV', () => {
+  it('le checkout refuse sans la case, et trace l acceptation AVANT la session', () => {
+    expect(checkoutFn).toMatch(/if \(immediateAccess !== true\) return json\(\{ error: 'immediate_access_required' \}/);
+    expect(checkoutFn).toMatch(/if \(cgvVersion !== CGV_VERSION\)/);
+    expectOrder(checkoutFn, "from('billing_acceptances').insert", 'stripe.checkout.sessions.create', 'preuve avant paiement');
+  });
+
+  it('l écran conditionne le paiement à la case', () => {
+    expect(billingTab).toMatch(/canPay && immediateAccess/);
+    expect(billingTab).toContain('billing.immediateAccessLabel');
   });
 });
 
 describe('le JOURNAL — une ligne compensatoire, jamais une modification', () => {
-  it('la fonction de remboursement n ecrit RIEN dans payment_records', () => {
-    // La table est scellee par `row_hash` et n'a qu'un seul ecrivain. Deux
-    // ecrivains sur un journal chaine, c'est la chaine cassee.
-    expect(codeOnly(refundFn)).not.toContain('payment_records');
+  it('les fonctions de remboursement et d abonnement n écrivent rien dans payment_records', () => {
+    expect(refundFn).not.toContain('payment_records');
+    expect(subFn).not.toContain('payment_records');
   });
 
-  it('le webhook ecrit un montant NEGATIF sur `charge.refunded`', () => {
-    const code = codeOnly(webhook);
-    expect(code).toContain("case 'charge.refunded'");
-    expect(code).toMatch(/amount_cents:\s*-\(charge\.amount_refunded/);
-  });
-
-  it('utilise `amount_refunded` et non `amount`', () => {
-    // Un remboursement PARTIEL (le prorata annuel en est un) ne rend pas la
-    // totalite de la charge : ecrire `amount` compenserait plus que le
-    // remboursement reel, et le journal cesserait de correspondre a la banque.
-    expect(codeOnly(webhook)).not.toMatch(/amount_cents:\s*-\(charge\.amount\s/);
+  it('le webhook écrit un montant NÉGATIF sur charge.refunded, depuis amount_refunded', () => {
+    expect(webhook).toContain("case 'charge.refunded'");
+    expect(webhook).toMatch(/amount_cents:\s*-\(charge\.amount_refunded/);
+    expect(webhook).not.toMatch(/amount_cents:\s*-\(charge\.amount\s/);
   });
 });
 
-describe('QUI peut demander, et ce que la personne LIT', () => {
-  it('proprietaire uniquement, comme le checkout et le portail', () => {
-    const code = codeOnly(refundFn);
-    expect(code).toMatch(/org\.owner_id !== user\.id/);
-    expect(code).toContain("'forbidden'");
-  });
-
-  it('les lectures qui decident d un routage ne sont PAS avalees', () => {
-    // Regle ecrite apres l audit Stripe du 2026-09-02 : on fait retenter
-    // plutot que deviner.
-    const code = codeOnly(refundFn);
-    expect(code).toMatch(/if \(orgError\) throw orgError/);
-    expect(code).toMatch(/if \(subError\) throw subError/);
-  });
-
-  it('le bouton existe la ou la personne peut l exercer', () => {
-    expect(billingTab).toContain('billing.refundCta');
-    expect(billingTab).toContain('useCancelAndRefundOrg');
-  });
-
-  it('la garantie est ECRITE dans les CGU, pas seulement dans le code', () => {
-    // « Une garantie plus favorable que la loi doit etre ecrite, sans quoi
-    // personne ne sait qu elle existe et elle ne desamorce rien. »
+describe('les CGV le disent', () => {
+  it('rétractation 14 jours, bouton, formulaire type, pas de remboursement après, sauf exceptions', () => {
     const cgu = read('src/pages/CGUPage.tsx');
-    expect(cgu).toContain('terms.s5.li5bis');
+    for (const key of ['terms.s5.li4bis', 'terms.s5.li5bis', 'terms.s5bis.p3bis', 'terms.s5ter.title']) {
+      expect(cgu).toContain(key);
+    }
     for (const locale of ['fr', 'en']) {
       const legal = JSON.parse(read(`src/locales/${locale}/legalTerms.json`)) as {
-        terms: { s5: Record<string, string> };
+        terms: { s5: Record<string, string>; s5bis: Record<string, string>; updatedAt: string };
       };
-      expect(legal.terms.s5.li5bis, `${locale} → terms.s5.li5bis`).toBeTruthy();
+      expect(legal.terms.updatedAt).toContain('2026-11-01');
+      expect(legal.terms.s5bis.p4.length).toBeGreaterThan(200);
+      expect(legal.terms.s5.li5).toBeTruthy();
     }
+    const fr = JSON.parse(read('src/locales/fr/legalTerms.json')) as { terms: { s5: Record<string, string>; s5bis: Record<string, string> } };
+    expect(fr.terms.s5bis.p3).toContain('Se rétracter du contrat ici');
+    expect(fr.terms.s5.li5).toContain('aucun remboursement');
+    expect(fr.terms.s5.li5bis).toContain('défaut de conformité');
   });
 });

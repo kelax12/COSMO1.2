@@ -16,6 +16,8 @@ const sub = (over: Partial<OrgSubscription> = {}): OrgSubscription => ({
   billingInterval: 'monthly',
   currentPeriodEnd: '2026-09-16T00:00:00.000Z',
   discountCode: null,
+  startedAt: null,
+  cancelAtPeriodEnd: false,
   ...over,
 });
 

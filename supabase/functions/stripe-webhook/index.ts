@@ -4,6 +4,11 @@ import { opsAlert } from '../_shared/alert.ts'
 import { tierFromPriceId, FREE_TIER_MAX_MEMBERS } from '../_shared/org-tiers.ts'
 import { resolveTierMatch } from '../_shared/org-stripe-prices.ts'
 import { payerToRecord } from '../_shared/org-payer.ts'
+import { receiptMail, subscriptionConfirmationMail } from '../_shared/billing-mail-text.ts'
+import { sendBillingMail } from '../_shared/billing-mail.ts'
+import { withdrawalDeadline } from '../_shared/refund-amount.ts'
+
+const APP_URL = Deno.env.get('APP_URL') ?? 'https://thecosmo.app'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
   apiVersion: '2024-06-20',
@@ -596,6 +601,32 @@ async function handleOrgCheckoutCompleted(session: Stripe.Checkout.Session) {
   await applyOrgSubscription(orgId, subscription, session.customer as string, discountCode)
 
   await recordOrgPayer(orgId, session.metadata)
+
+  // Confirmation de commande (§6) : CGV, droit de rétractation, formulaire
+  // type, et confirmation de la demande d'accès immédiat (L221-13). EN
+  // DERNIER, sans jamais lever.
+  try {
+    const owner = await orgOwnerContact(orgId)
+    if (owner?.email) {
+      const { data: acceptance } = await supabaseAdmin
+        .from('billing_acceptances')
+        .select('immediate_access_at')
+        .eq('org_id', orgId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      await sendBillingMail('stripe-webhook', owner.email, subscriptionConfirmationMail({
+        orgName: owner.orgName,
+        amountCents: session.amount_total ?? 0,
+        interval: subscription.items.data[0]?.price?.recurring?.interval === 'year' ? 'yearly' : 'monthly',
+        immediateAccessAt: acceptance?.immediate_access_at ?? null,
+        withdrawalDeadline: withdrawalDeadline(subscription.start_date),
+        appUrl: APP_URL,
+      }))
+    }
+  } catch (err) {
+    console.error('org confirmation mail failed:', err)
+  }
 }
 
 // Affiliation (B4) : qui a payé l'organisation, posé une seule fois. Le
@@ -654,6 +685,36 @@ async function handleOrgInvoicePaid(orgId: string, invoice: Stripe.Invoice) {
   if (!invoice.subscription) return
   const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string)
   await applyOrgSubscription(orgId, subscription, invoice.customer as string, undefined)
+
+  // Reçu à chaque prélèvement, avec le lien de résiliation (§5 mensuel, §6).
+  // EN DERNIER et sans jamais lever : un email raté ne fait pas retenter Stripe.
+  try {
+    const owner = await orgOwnerContact(orgId)
+    if (owner?.email && (invoice.amount_paid ?? 0) > 0) {
+      await sendBillingMail('stripe-webhook', owner.email, receiptMail({
+        orgName: owner.orgName,
+        amountCents: invoice.amount_paid ?? 0,
+        paidAt: invoice.status_transitions?.paid_at ?? invoice.created,
+        appUrl: APP_URL,
+        invoiceUrl: invoice.hosted_invoice_url,
+      }))
+    }
+  } catch (err) {
+    console.error('org receipt mail failed:', err)
+  }
+}
+
+/** Nom de l'organisation et email du propriétaire, pour les emails de facturation. */
+async function orgOwnerContact(orgId: string): Promise<{ email: string; orgName: string } | null> {
+  const { data: org, error } = await supabaseAdmin
+    .from('organizations')
+    .select('name, owner_id')
+    .eq('id', orgId)
+    .maybeSingle()
+  if (error || !org?.owner_id) return null
+  const { data } = await supabaseAdmin.auth.admin.getUserById(org.owner_id)
+  const email = data?.user?.email
+  return email ? { email, orgName: org.name ?? '' } : null
 }
 
 async function handleOrgInvoiceFailed(orgId: string, invoice: Stripe.Invoice) {
@@ -838,6 +899,10 @@ async function applyOrgSubscription(
     payload.max_members = match.tier.maxMembers
     payload.billing_interval = match.interval
     payload.current_period_end = new Date(subscription.current_period_end * 1000).toISOString()
+    // Mig. 237 : conclusion du contrat (départ des 14 jours de rétractation,
+    // L221-18) et résiliation programmée en fin de période.
+    payload.started_at = new Date(subscription.start_date * 1000).toISOString()
+    payload.cancel_at_period_end = subscription.cancel_at_period_end === true
   } else if (intent === 'cancelled') {
     payload.tier_key = 'free'
     payload.max_members = FREE_TIER_MAX_MEMBERS

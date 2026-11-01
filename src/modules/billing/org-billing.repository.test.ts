@@ -30,7 +30,7 @@ describe('getOrgSubscription', () => {
     await getOrgSubscription('org-1');
 
     expect(supabaseMock.argsOf('org_subscriptions', 'select')).toEqual([
-      'org_id, tier_key, max_members, status, billing_interval, current_period_end, discount_code',
+      'org_id, tier_key, max_members, status, billing_interval, current_period_end, discount_code, started_at, cancel_at_period_end',
     ]);
     expect(supabaseMock.argsOf('org_subscriptions', 'eq')).toEqual(['org_id', 'org-1']);
     expect(supabaseMock.callsFor('org_subscriptions').map((c) => c.method)).toEqual([
@@ -51,6 +51,8 @@ describe('getOrgSubscription', () => {
       billingInterval: 'yearly',
       currentPeriodEnd: '2027-01-01T00:00:00Z',
       discountCode: 'LAUNCH',
+      startedAt: null,
+      cancelAtPeriodEnd: false,
     });
   });
 

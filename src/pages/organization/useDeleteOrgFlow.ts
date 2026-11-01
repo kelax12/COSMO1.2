@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// Supprimer une entreprise : résilier, rembourser, PUIS supprimer
+// Supprimer une entreprise : arrêter l'abonnement, PUIS supprimer
 // ═══════════════════════════════════════════════════════════════════
 //
 // 🔴 POURQUOI CE FICHIER EXISTE, ET POURQUOI MAINTENANT.
@@ -34,12 +34,12 @@
 //    Un contrôle qui ne vit que dans l'écran n'est pas un contrôle — la RPC
 //    est la seule porte vers un DELETE sur `organizations`.
 
-import { useCancelAndRefundOrg } from '@/modules/billing/org-billing.mutations';
+import { useOrgSubscriptionAction } from '@/modules/billing/org-billing.mutations';
 import { useOrgSubscription } from '@/modules/billing/org-billing.hooks';
 import { useDeleteOrganization } from '@/modules/organizations';
 
 export interface DeleteOrgFlow {
-  /** Enchaîne résiliation + remboursement + suppression, dans cet ordre. */
+  /** Enchaîne arrêt de l'abonnement + suppression, dans cet ordre. */
   run: (orgId: string) => void;
   /** Vrai pendant n'importe laquelle des deux étapes. */
   isPending: boolean;
@@ -51,7 +51,10 @@ export interface DeleteOrgFlow {
  *   remboursement a échoué.
  */
 export function useDeleteOrgFlow(orgId: string | undefined, onDeleted: () => void): DeleteOrgFlow {
-  const refund = useCancelAndRefundOrg();
+  // Arrêt IMMÉDIAT sans remboursement (décision du 2026-11-01) : supprimer
+  // l'entreprise met fin au contrat. Pendant les 14 jours, la rétractation de
+  // l'onglet Facturation reste le chemin qui rembourse.
+  const stop = useOrgSubscriptionAction();
   const remove = useDeleteOrganization();
   // 🔴 Une entreprise SANS abonnement (palier gratuit, ou déjà résilié) n'a
   // rien à rembourser. Appeler `stripe-org-refund` quand même rendait
@@ -65,14 +68,14 @@ export function useDeleteOrgFlow(orgId: string | undefined, onDeleted: () => voi
   return {
     run: (id: string) => {
       if (hasPaidSubscription) {
-        refund.mutate(
-          { orgId: id },
+        stop.mutate(
+          { orgId: id, action: 'cancel_now' },
           { onSuccess: () => remove.mutate(id, { onSuccess: onDeleted }) },
         );
         return;
       }
       remove.mutate(id, { onSuccess: onDeleted });
     },
-    isPending: subLoading || refund.isPending || remove.isPending,
+    isPending: subLoading || stop.isPending || remove.isPending,
   };
 }

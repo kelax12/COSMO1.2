@@ -1,165 +1,106 @@
 // ═══════════════════════════════════════════════════════════════════
-// C-65 — combien on rembourse. La seule ligne qui décide d'un montant.
+// Combien on rembourse une rétractation (décision du 2026-11-01).
 // ═══════════════════════════════════════════════════════════════════
 //
-// 🔴 POURQUOI CES TESTS EXISTENT ET POURQUOI ILS SONT ICI.
-//
-// `CLAUDE.md` porte la règle en toutes lettres : « Ne jamais faire deviner un
-// prix […] c'est le seul endroit où COSMO choisit un prix au lieu de se le
-// faire désigner, donc le seul endroit où il peut se tromper de montant. »
-// Un remboursement est le même risque dans l'autre sens : on rend de l'argent,
-// et se tromper coûte directement.
-//
-// L'import relatif hors de `src/` est délibéré, exactement comme
-// `org-tiers.parity.test.ts` : `_shared/refund-amount.ts` est du TS pur sans
-// API Deno, et ce fichier de test n'entre jamais dans le bundle Vite. C'est le
-// seul moyen d'exécuter réellement une logique d'Edge Function ici — le reste
-// des fonctions n'a que des gardes textuelles.
+// L'import relatif hors de `src/` est délibéré, comme `org-tiers.parity.test.ts` :
+// `_shared/refund-amount.ts` est du TS pur sans API Deno, et ce fichier de test
+// n'entre jamais dans le bundle Vite.
 import { describe, it, expect } from 'vitest';
-import { refundAmount } from '../../../supabase/functions/_shared/refund-amount';
+import {
+  refundAmount,
+  withinWithdrawalWindow,
+  withdrawalDeadline,
+  WITHDRAWAL_DAYS,
+} from '../../../supabase/functions/_shared/refund-amount';
 
 const DAY = 24 * 60 * 60;
-const NOW = 1_800_000_000;
+const START = 1_800_000_000;
 
-describe('mensuel — « le mois en cours », litteralement', () => {
-  it('rend la derniere echeance EN ENTIER', () => {
-    // Decision d'Axel du 2026-09-03. C'est aussi exactement le remede que
-    // l'art. L215-1 accorde : la regle commerciale RECOUVRE l'obligation.
+describe('prorata journalier, jour en cours compté comme utilisé', () => {
+  it('mensuel de 30 jours, rétractation au jour 1 : 29/30 rendus, arrondi inférieur', () => {
     const d = refundAmount({
       amountPaidCents: 2000,
-      interval: 'monthly',
-      periodStart: NOW - 10 * DAY,
-      periodEnd: NOW + 20 * DAY,
-      now: NOW,
+      periodStart: START,
+      periodEnd: START + 30 * DAY,
+      now: START + 3600,
+      immediateAccessRequested: true,
     });
-    expect(d).toEqual({ amountCents: 2000, reason: 'monthly_full', monthsRemaining: 0 });
+    // 2000 × 29 / 30 = 1933,33… → 1933
+    expect(d).toEqual({ amountCents: 1933, reason: 'daily_prorata', daysRemaining: 29, daysInPeriod: 30 });
   });
 
-  it('rend la meme chose le premier jour et l avant-dernier', () => {
-    // « A tout moment » : le montant ne depend pas de quand on demande.
-    const base = { amountPaidCents: 5000, interval: 'monthly' as const, periodStart: NOW, now: NOW };
-    const debut = refundAmount({ ...base, periodEnd: NOW + 30 * DAY });
-    const fin = refundAmount({ ...base, periodEnd: NOW + 1 * DAY });
-    expect(debut.amountCents).toBe(5000);
-    expect(fin.amountCents).toBe(5000);
+  it('le jour entamé compte : 10 jours et 1 seconde écoulés = 11 jours utilisés', () => {
+    const d = refundAmount({
+      amountPaidCents: 3000,
+      periodStart: START,
+      periodEnd: START + 30 * DAY,
+      now: START + 10 * DAY + 1,
+      immediateAccessRequested: true,
+    });
+    expect(d.daysRemaining).toBe(19);
+    expect(d.amountCents).toBe(1900);
   });
-});
 
-describe('annuel — prorata des mois NON CONSOMMES', () => {
-  // Arbitrage du §0 : « Annuel rembourse au prorata des mois non consommes.
-  // Transposition litterale de la regle mensuelle. »
-
-  it('rend 11/12 apres un mois consomme', () => {
+  it('annuel de 365 jours, rétractation au jour 14', () => {
     const d = refundAmount({
       amountPaidCents: 16_800_00,
-      interval: 'yearly',
-      periodStart: NOW - 30 * DAY,
-      periodEnd: NOW + 335 * DAY,
-      now: NOW,
+      periodStart: START,
+      periodEnd: START + 365 * DAY,
+      now: START + 13 * DAY + 5,
+      immediateAccessRequested: true,
     });
-    expect(d.monthsRemaining).toBe(11);
-    expect(d.amountCents).toBe(Math.round((16_800_00 * 11) / 12));
-    expect(d.reason).toBe('yearly_prorata');
+    expect(d.daysRemaining).toBe(351);
+    expect(d.amountCents).toBe(Math.floor((16_800_00 * 351) / 365));
   });
 
-  it('rend la moitie a mi-parcours', () => {
+  it('sans demande expresse d accès immédiat : remboursement INTÉGRAL', () => {
     const d = refundAmount({
-      amountPaidCents: 84_000,
-      interval: 'yearly',
-      periodStart: NOW - 180 * DAY,
-      periodEnd: NOW + 180 * DAY,
-      now: NOW,
+      amountPaidCents: 2000,
+      periodStart: START,
+      periodEnd: START + 30 * DAY,
+      now: START + 12 * DAY,
+      immediateAccessRequested: false,
     });
-    expect(d.monthsRemaining).toBe(6);
-    expect(d.amountCents).toBe(42_000);
-  });
-
-  it('ne rend RIEN quand il ne reste pas un mois entier', () => {
-    // 🔴 « Les mois ENTAMES NON CONSOMMES » : un mois commence est consomme.
-    // C'est la lecture la moins favorable des deux, et c'est celle qui
-    // correspond a la regle mensuelle.
-    const d = refundAmount({
-      amountPaidCents: 84_000,
-      interval: 'yearly',
-      periodStart: NOW - 340 * DAY,
-      periodEnd: NOW + 20 * DAY,
-      now: NOW,
-    });
-    expect(d.monthsRemaining).toBe(0);
-    expect(d.amountCents).toBe(0);
-    expect(d.reason).toBe('nothing_to_refund');
+    expect(d.amountCents).toBe(2000);
+    expect(d.reason).toBe('full_no_immediate_access');
   });
 });
 
-describe('les bornes — on ne rend jamais plus que ce qu on a encaisse', () => {
-  it('ne depasse JAMAIS le montant paye, meme sur une periode aberrante', () => {
-    // Le clamp final est redondant avec le calcul, et c'est voulu : si un jour
-    // ce calcul change et se trompe, on ne rendra pas plus que l'encaisse.
-    const paid = 10_000;
-    const d = refundAmount({
-      amountPaidCents: paid,
-      interval: 'yearly',
-      periodStart: NOW,
-      // Une periode de dix ans : 120 mois restants, donc 10x le montant si
-      // rien ne bornait.
-      periodEnd: NOW + 3650 * DAY,
-      now: NOW,
-    });
-    expect(d.amountCents).toBeLessThanOrEqual(paid);
+describe('bornes', () => {
+  const base = { periodStart: START, periodEnd: START + 30 * DAY, immediateAccessRequested: true };
+
+  it('rien d encaissé, rien rendu', () => {
+    expect(refundAmount({ ...base, amountPaidCents: 0, now: START }).amountCents).toBe(0);
+    expect(refundAmount({ ...base, amountPaidCents: Number.NaN, now: START }).amountCents).toBe(0);
   });
 
-  it('ne rend jamais un montant negatif', () => {
-    for (const interval of ['monthly', 'yearly'] as const) {
-      const d = refundAmount({
-        amountPaidCents: 5000,
-        interval,
-        periodStart: NOW - 400 * DAY,
-        periodEnd: NOW - 40 * DAY, // periode terminee
-        now: NOW,
-      });
-      expect(d.amountCents).toBe(0);
-      expect(d.reason).toBe('nothing_to_refund');
-    }
+  it('période terminée ou dernier jour : zéro, jamais négatif', () => {
+    expect(refundAmount({ ...base, amountPaidCents: 2000, now: START + 30 * DAY }).amountCents).toBe(0);
+    expect(refundAmount({ ...base, amountPaidCents: 2000, now: START + 29 * DAY + 1 }).amountCents).toBe(0);
   });
 
-  it('une periode qui se termine A L INSTANT de la demande ne rend rien', () => {
-    // Borne exacte : `periodEnd === now`, la periode est consommee en entier.
-    for (const interval of ['monthly', 'yearly'] as const) {
-      const d = refundAmount({
-        amountPaidCents: 5000,
-        interval,
-        periodStart: NOW - 30 * DAY,
-        periodEnd: NOW,
-        now: NOW,
-      });
-      expect(d).toEqual({ amountCents: 0, reason: 'nothing_to_refund', monthsRemaining: 0 });
-    }
+  it('jamais plus que l encaissé, même avec une horloge avant la période', () => {
+    const d = refundAmount({ ...base, amountPaidCents: 2000, now: START - 10 * DAY });
+    expect(d.amountCents).toBeLessThanOrEqual(2000);
+    expect(d.amountCents).toBeGreaterThanOrEqual(0);
   });
 
-  it('un essai gratuit (rien encaisse) ne rend rien, sans lever', () => {
-    // On resilie quand meme : c'est l'autre moitie du geste.
-    for (const amountPaidCents of [0, -1, Number.NaN]) {
-      const d = refundAmount({
-        amountPaidCents,
-        interval: 'monthly',
-        periodStart: NOW,
-        periodEnd: NOW + 30 * DAY,
-        now: NOW,
-      });
-      expect(d.amountCents).toBe(0);
-      expect(d.reason).toBe('nothing_to_refund');
-    }
+  it('période incohérente : zéro', () => {
+    expect(refundAmount({ ...base, periodEnd: START, amountPaidCents: 2000, now: START }).amountCents).toBe(0);
   });
 });
 
-describe('les quatre paliers annuels reels', () => {
-  // 168 / 420 / 840 / 1 680 € — cf. docs/STRIPE-LIVE.md.
-  it.each([16_800, 42_000, 84_000, 168_000])(
-    '%d centimes : la somme des douze douziemes ne depasse pas le paye',
-    (paid) => {
-      let total = 0;
-      for (let m = 1; m <= 12; m++) total = Math.max(total, Math.round((paid * m) / 12));
-      expect(total).toBeLessThanOrEqual(paid);
-    },
-  );
+describe('fenêtre de 14 jours à compter de la conclusion', () => {
+  it('ouverte du premier instant à J+14 exclu', () => {
+    expect(WITHDRAWAL_DAYS).toBe(14);
+    expect(withinWithdrawalWindow(START, START)).toBe(true);
+    expect(withinWithdrawalWindow(START, START + 14 * DAY - 1)).toBe(true);
+    expect(withinWithdrawalWindow(START, START + 14 * DAY)).toBe(false);
+    expect(withinWithdrawalWindow(START, START - 1)).toBe(false);
+    expect(withdrawalDeadline(START)).toBe(START + 14 * DAY);
+  });
+
+  it('témoin : une date invalide ferme la fenêtre', () => {
+    expect(withinWithdrawalWindow(Number.NaN, START)).toBe(false);
+  });
 });

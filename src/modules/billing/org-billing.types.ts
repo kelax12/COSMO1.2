@@ -22,6 +22,10 @@ export interface OrgSubscription {
    */
   billingInterval: OrgBillingInterval;
   currentPeriodEnd: string | null;
+  /** Conclusion du contrat (mig. 237) : départ des 14 jours de rétractation. */
+  startedAt: string | null;
+  /** Résiliation programmée en fin de période (mig. 237). */
+  cancelAtPeriodEnd: boolean;
   /** Code promo appliqué — informatif, jamais utilisé pour un calcul. */
   discountCode: string | null;
 }

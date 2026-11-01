@@ -4,123 +4,116 @@
 //
 // 🔴 POURQUOI CE FICHIER EST SÉPARÉ, ET SANS AUCUNE API DENO.
 //
-// `CLAUDE.md` porte une règle en toutes lettres : « Ne jamais faire deviner un
-// prix […] c'est le seul endroit où COSMO choisit un prix au lieu de se le
-// faire désigner, donc le seul endroit où il peut se tromper de montant. »
-// Elle visait la résolution du prix annuel ; un remboursement est le MÊME
-// risque dans l'autre sens — on rend de l'argent, et se tromper coûte
-// directement.
+// Un remboursement est le seul endroit où COSMO choisit un montant au lieu de
+// se le faire désigner par Stripe : se tromper coûte directement. Ces
+// fonctions sont donc du TS pur, exécutables par vitest
+// (`src/modules/billing/refund-amount.test.ts`), même montage que
+// `_shared/org-tiers.ts`.
 //
-// Ces fonctions sont donc du TS pur, sans `Deno.*`, pour être exécutables par
-// vitest. C'est le même montage que `_shared/org-tiers.ts`, verrouillé par
-// `org-tiers.parity.test.ts` : une Edge Function ne lit pas `src/`, mais un
-// test peut lire `_shared/`.
+// ── LA RÈGLE (décision d'Axel du 2026-11-01) ────────────────────────
 //
-// ── LA RÈGLE, TELLE QU'ELLE A ÉTÉ DÉCIDÉE ───────────────────────────
+// Source : `Documents/analytics/docs/REMBOURSEMENT-RESILIATION.md`. Elle
+// REMPLACE la décision du 2026-09-03 (« rembourser le mois en cours à tout
+// moment »), qui n'existe plus.
 //
-// Décision d'Axel du 2026-09-03 : « l'utilisateur doit pouvoir se faire
-// rembourser le mois en cours à tout moment, mais que le mois en cours ».
+//   1. Rétractation (art. L221-18) : 14 jours à compter de la CONCLUSION du
+//      contrat, c'est-à-dire de la première souscription payée. Un
+//      renouvellement n'ouvre pas de nouveau délai.
+//   2. Montant (art. L221-25) : prorata JOURNALIER de la période non utilisée.
+//      Le jour de la rétractation compte comme utilisé. Arrondi au centime
+//      INFÉRIEUR. Jamais plus que l'encaissé, jamais négatif.
+//   3. Ce prorata n'est opposable que si le client a DEMANDÉ EXPRESSÉMENT
+//      l'accès immédiat au paiement (case cochée, `billing_acceptances`).
+//      Sans cette demande : remboursement INTÉGRAL.
+//   4. Après 14 jours : aucun remboursement, sauf exceptions légales traitées
+//      par l'admin (défaut de conformité, rappel de renouvellement non
+//      envoyé), au même prorata journalier.
 //
-// Sur un abonnement MENSUEL, c'est littéral : on rend la dernière échéance
-// payée, en entier. C'est aussi exactement le remède que l'art. L215-1 accorde
-// au consommateur qu'on n'a pas prévenu de sa reconduction — la règle
-// commerciale RECOUVRE l'obligation légale au lieu de s'y ajouter.
-//
-// Sur un abonnement ANNUEL, « le mois en cours » ne désigne rien : la
-// reconduction est annuelle et le remède légal porte sur tout ce qui a été
-// versé depuis l'anniversaire. L'arbitrage du §0 a tranché pour le **prorata
-// des mois non consommés**, seule lecture qui referme l'exposition annuelle
-// comme la règle mensuelle referme la sienne.
-//
-// ── CE QU'ON NE FAIT JAMAIS ─────────────────────────────────────────
-//
-// ❌ On ne rembourse jamais plus que ce qui a été encaissé. Le montant est
-//    borné par `amountPaidCents`, deux fois : par le calcul, et par un clamp
-//    final qui existe pour le cas où le calcul se tromperait.
-// ❌ On ne rembourse jamais un montant négatif. Une période déjà terminée rend
-//    zéro, pas une dette.
-// ❌ On ne calcule pas le mois « entamé » comme consommable. La décision dit
-//    « les mois ENTAMÉS NON CONSOMMÉS » : un mois commencé est consommé, donc
-//    on ne le rend pas. C'est le sens le moins favorable au client des deux
-//    lectures possibles, et c'est celui qui correspond à la règle mensuelle —
-//    où le mois en cours est rendu ENTIER parce qu'il EST la dernière échéance.
+// ❌ Aucuns frais de rétractation, jamais.
 
 /** Périodicité facturée, telle que `org_subscriptions.billing_interval` la porte. */
 export type BillingInterval = 'monthly' | 'yearly';
 
+/** Durée du droit de rétractation, en jours (art. L221-18). */
+export const WITHDRAWAL_DAYS = 14;
+
+const DAY_SECONDS = 24 * 60 * 60;
+
+/** Exceptions légales au « pas de remboursement après 14 jours » (§3). */
+export type RefundException = 'conformity' | 'renewal_notice_missed';
+
 export interface RefundInput {
-  /** Ce que Stripe a réellement encaissé sur la dernière facture payée. */
+  /** Ce que Stripe a réellement encaissé sur la facture de la période. */
   amountPaidCents: number;
-  interval: BillingInterval;
-  /** Début de la période courante (secondes epoch, comme Stripe les rend). */
+  /** Début de la période payée (secondes epoch, comme Stripe les rend). */
   periodStart: number;
-  /** Fin de la période courante (secondes epoch). */
+  /** Fin de la période payée (secondes epoch). */
   periodEnd: number;
-  /** Instant de la demande (secondes epoch). Injecté pour être testable. */
+  /** Instant de la rétractation ou de la demande (secondes epoch). */
   now: number;
+  /**
+   * Le client a-t-il demandé expressément l'accès immédiat au paiement ?
+   * `false` = remboursement intégral (art. L221-25 al. 2).
+   */
+  immediateAccessRequested: boolean;
 }
 
 export interface RefundDecision {
   amountCents: number;
-  /** Pour la ligne de journal et pour l'écran : d'où vient ce chiffre. */
-  reason: 'monthly_full' | 'yearly_prorata' | 'nothing_to_refund';
-  /** Mois entiers restants — 0 pour un mensuel, informatif pour un annuel. */
-  monthsRemaining: number;
+  reason: 'full_no_immediate_access' | 'daily_prorata' | 'nothing_to_refund';
+  /** Jours non utilisés remboursés (informatif, pour l'écran et le journal). */
+  daysRemaining: number;
+  /** Jours de la période (informatif). */
+  daysInPeriod: number;
 }
 
-/** Trente jours en secondes. Voir la note sur le choix d'unité plus bas. */
-const MONTH_SECONDS = 30 * 24 * 60 * 60;
+/** Le délai de 14 jours est-il encore ouvert ? `contractStart` = conclusion (secondes epoch). */
+export function withinWithdrawalWindow(contractStart: number, now: number): boolean {
+  if (!Number.isFinite(contractStart) || !Number.isFinite(now)) return false;
+  return now >= contractStart && now < contractStart + WITHDRAWAL_DAYS * DAY_SECONDS;
+}
+
+/** Fin du délai de rétractation (secondes epoch). */
+export function withdrawalDeadline(contractStart: number): number {
+  return contractStart + WITHDRAWAL_DAYS * DAY_SECONDS;
+}
 
 /**
  * Combien rendre, et pourquoi.
  *
- * ⚠️ LE MOIS EST COMPTÉ EN TRANCHES DE 30 JOURS, pas en mois calendaires.
- * C'est un choix, et il est du côté du client : sur une année, douze tranches
- * de 30 jours font 360 jours, donc la dernière tranche est toujours entamée
- * avant l'anniversaire, et le compte de mois restants ne peut pas SUR-estimer.
- * Compter en mois calendaires demanderait de savoir de quels mois il s'agit,
- * ce qui ferait dépendre le montant du calendrier plutôt que du contrat.
+ * `remboursement = payé × (jours restants / jours de la période)`, où le jour
+ * en cours est compté comme utilisé : jours utilisés = jours entamés depuis le
+ * début de période.
  */
 export function refundAmount(input: RefundInput): RefundDecision {
-  const { amountPaidCents, interval, periodEnd, now } = input;
+  const { amountPaidCents, periodStart, periodEnd, now, immediateAccessRequested } = input;
+  const nothing: RefundDecision = { amountCents: 0, reason: 'nothing_to_refund', daysRemaining: 0, daysInPeriod: 0 };
 
-  // Rien d'encaissé (essai gratuit, facture à zéro) : rien à rendre. On
-  // résilie quand même, c'est l'autre moitié du geste.
-  if (!Number.isFinite(amountPaidCents) || amountPaidCents <= 0) {
-    return { amountCents: 0, reason: 'nothing_to_refund', monthsRemaining: 0 };
+  if (!Number.isFinite(amountPaidCents) || amountPaidCents <= 0) return nothing;
+  if (!Number.isFinite(periodStart) || !Number.isFinite(periodEnd) || periodEnd <= periodStart) return nothing;
+
+  const daysInPeriod = Math.max(1, Math.round((periodEnd - periodStart) / DAY_SECONDS));
+
+  // Sans demande expresse d'accès immédiat, la période utilisée ne peut pas
+  // être facturée : on rend tout.
+  if (!immediateAccessRequested) {
+    return { amountCents: amountPaidCents, reason: 'full_no_immediate_access', daysRemaining: daysInPeriod, daysInPeriod };
   }
 
-  // Période déjà terminée : il n'y a plus de « en cours » à rendre.
-  if (!Number.isFinite(periodEnd) || periodEnd <= now) {
-    return { amountCents: 0, reason: 'nothing_to_refund', monthsRemaining: 0 };
-  }
+  if (!Number.isFinite(now) || now >= periodEnd) return { ...nothing, daysInPeriod };
 
-  if (interval === 'monthly') {
-    // « Le mois en cours », littéralement : la dernière échéance, en entier.
-    return {
-      amountCents: amountPaidCents,
-      reason: 'monthly_full',
-      monthsRemaining: 0,
-    };
-  }
+  // Jours entamés : le jour de la rétractation compte comme utilisé.
+  const daysUsed = Math.min(daysInPeriod, Math.max(1, Math.floor((now - periodStart) / DAY_SECONDS) + 1));
+  const daysRemaining = daysInPeriod - daysUsed;
+  if (daysRemaining <= 0) return { ...nothing, daysInPeriod };
 
-  // Annuel : les mois ENTIERS qui restent. Un mois entamé est consommé.
-  const monthsRemaining = Math.max(0, Math.floor((periodEnd - now) / MONTH_SECONDS));
-  if (monthsRemaining === 0) {
-    return { amountCents: 0, reason: 'nothing_to_refund', monthsRemaining: 0 };
-  }
-
-  // ⚠️ `Math.round` et pas `floor` : arrondir systématiquement vers le bas
-  // ferait perdre au client jusqu'à 1 centime par remboursement, sans raison.
-  const prorata = Math.round((amountPaidCents * monthsRemaining) / 12);
+  const prorata = Math.floor((amountPaidCents * daysRemaining) / daysInPeriod);
 
   return {
-    // 🔴 CLAMP FINAL. Il est redondant avec le calcul ci-dessus, et c'est
-    //    voulu : si un jour ce calcul change et se trompe, on ne rendra jamais
-    //    plus que ce qui a été encaissé. Une garde qui ne sert jamais est ce
-    //    qu'on veut sur un chemin qui déplace de l'argent.
+    // 🔴 CLAMP FINAL, redondant exprès : on ne rend jamais plus que l'encaissé.
     amountCents: Math.min(Math.max(prorata, 0), amountPaidCents),
-    reason: 'yearly_prorata',
-    monthsRemaining,
+    reason: 'daily_prorata',
+    daysRemaining,
+    daysInPeriod,
   };
 }
