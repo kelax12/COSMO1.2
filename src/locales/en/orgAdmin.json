@@ -726,6 +726,7 @@
     "rangeFrom": "{{min}} members and up",
     "perMonth": "per month",
     "vatSuffix": "incl. VAT",
+    "precontractual": "Open-ended subscription, prices include VAT, renewed automatically at each term until cancelled. Cancel any time from this screen, no reason or fee required.",
     "intervalLegend": "Billing period",
     "intervalMonthly": "Monthly",
     "intervalYearly": "Yearly",

@@ -31,6 +31,9 @@ test.describe('Facturation entreprise armée (démo)', () => {
     // sont retirées le 2026-10-31 (9eedd3ca) : « TTC » suit désormais CHAQUE prix.
     await expect(page.getByRole('heading', { name: /^abonnement de l.organisation$/i })).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText(/^TTC$/).first()).toBeVisible();
+    // Information précontractuelle (LEGAL.md E2), remise le 2026-11-01 :
+    // durée, reconduction et résiliation AVANT le choix d'un palier.
+    await expect(page.getByText(/abonnement à durée indéterminée, prix ttc/i)).toBeVisible();
     // La phrase de la facturation dormante ne doit plus jamais revenir à côté
     // d'une grille qui encaisse.
     await expect(page.getByText(/la facturation entreprise n.est pas encore activée/i)).toHaveCount(0);
