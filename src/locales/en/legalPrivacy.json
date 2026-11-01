@@ -76,8 +76,7 @@
       "outro": "No data is sold to third parties. Nothing is shared for advertising or marketing purposes.",
       "li8": "**Resend**: sending service emails (bug reports, notices before a subscription renews)",
       "li9": "**Cloudflare Turnstile**: bot protection on the sign-in and sign-up forms, when enabled. Processes your IP address and technical browser signals, with no advertising purpose",
-      "li10": "**GitHub**: storage of the daily database backups, encrypted before they are uploaded. GitHub does not hold the decryption key",
-      "li11": "**Affiliate partners**: if you sign up through an affiliate partner's link, that partner sees your name, email address and phone number, to track the customers they brought us and calculate their commission"
+      "li10": "**GitHub**: storage of the daily database backups, encrypted before they are uploaded. GitHub does not hold the decryption key"
     },
     "s7bis": {
       "title": "7 bis. Transfers outside the European Union",
@@ -124,8 +123,7 @@
       "note2": "Our audience measurement tool (Vercel Analytics), where your sign-up came from and counting demo trials all require your consent: **none of this is loaded or stored until you click “Accept”** in the banner, and if you refuse, it never is. Your choice is kept on your device for six months, after which you are asked again. You can change it at any time with the button below or the “Manage cookies” link: if you withdraw your consent, the identifiers and sign-up origin stored on your device are erased.",
       "consentLi2": "Where your sign-up came from (campaign link or demo), kept for 30 days in the browser's local storage",
       "consentLi3": "A random device identifier stored when the demo starts, to count trials",
-      "consentLi4": "Two demo counters (time spent and number of items created), which choose when to suggest an account. Without your consent, they stay in memory and disappear when the page is reloaded",
-      "li4": "An affiliate partner's link (the `aff` parameter), kept 30 days in the browser's local storage so that a sign-up can be credited to that partner. It is stored as soon as you arrive through that link, without waiting for your choice on the banner, and a refusal does not erase it"
+      "consentLi4": "Two demo counters (time spent and number of items created), which choose when to suggest an account. Without your consent, they stay in memory and disappear when the page is reloaded"
     },
     "s11": {
       "title": "11. Changes",

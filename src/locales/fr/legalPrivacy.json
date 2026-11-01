@@ -76,8 +76,7 @@
       "outro": "Aucune donnée n'est vendue à des tiers. Aucun partage à des fins publicitaires ou marketing.",
       "li8": "**Resend** : envoi des e-mails de service (signalements de bug, avis avant la reconduction d'un abonnement)",
       "li9": "**Cloudflare Turnstile** : protection anti-robot des formulaires de connexion et d'inscription, lorsqu'elle est activée. Traite votre adresse IP et des signaux techniques du navigateur, sans finalité publicitaire",
-      "li10": "**GitHub** : conservation des sauvegardes quotidiennes de la base, chiffrées avant leur dépôt. GitHub ne détient pas la clé de déchiffrement",
-      "li11": "**Partenaires affiliés** : si vous vous inscrivez via le lien d'un partenaire affilié, ce partenaire voit votre nom, votre adresse e-mail et votre numéro de téléphone, pour suivre les clients qu'il nous a apportés et le calcul de sa commission"
+      "li10": "**GitHub** : conservation des sauvegardes quotidiennes de la base, chiffrées avant leur dépôt. GitHub ne détient pas la clé de déchiffrement"
     },
     "s7bis": {
       "title": "7 bis. Transferts hors de l'Union européenne",
@@ -124,8 +123,7 @@
       "note2": "Notre outil de mesure d'audience (Vercel Analytics), l'origine de votre inscription et le comptage des essais de la démonstration sont soumis à votre consentement : **rien de tout cela n'est chargé ni déposé tant que vous n'avez pas cliqué sur « Accepter »** dans le bandeau, et si vous refusez, rien ne l'est jamais. Votre choix est conservé six mois sur votre appareil, puis la question vous est reposée. Vous pouvez le modifier à tout moment avec le bouton ci-dessous ou le lien « Gérer les cookies » : si vous retirez votre accord, les identifiants et l'origine enregistrés sur votre appareil sont effacés.",
       "consentLi2": "L'origine de votre inscription (lien de campagne ou démo), gardée 30 jours dans le stockage local du navigateur",
       "consentLi3": "Un identifiant aléatoire d'appareil posé au lancement de la démonstration, pour compter les essais",
-      "consentLi4": "Deux compteurs de la démonstration (durée et nombre de créations), qui choisissent le moment de vous proposer un compte. Sans votre accord, ils restent en mémoire et disparaissent au rechargement de la page",
-      "li4": "Le lien d'un partenaire affilié (paramètre `aff`), gardé 30 jours dans le stockage local du navigateur pour attribuer votre éventuelle inscription à ce partenaire. Il est déposé dès l'arrivée par ce lien, sans attendre votre choix sur le bandeau, et n'est pas effacé par un refus"
+      "consentLi4": "Deux compteurs de la démonstration (durée et nombre de créations), qui choisissent le moment de vous proposer un compte. Sans votre accord, ils restent en mémoire et disparaissent au rechargement de la page"
     },
     "s11": {
       "title": "11. Modifications",
