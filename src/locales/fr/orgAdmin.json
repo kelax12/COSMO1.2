@@ -848,7 +848,10 @@
     "cancelScheduled": "Résiliation confirmée. Accès jusqu'au {{date}}, un email de confirmation vous est envoyé.",
     "cancelPending": "Résiliation programmée : votre accès prend fin le {{date}}.",
     "resumeCta": "Annuler la résiliation",
-    "resumeDone": "Résiliation annulée, l'abonnement continue."
+    "resumeDone": "Résiliation annulée, l'abonnement continue.",
+    "confirmTierTitle": "Palier choisi",
+    "goToPayment": "Continuer vers le paiement",
+    "confirmTierCancel": "Changer de palier"
   },
   "overview": {
     "completed": "Terminées",

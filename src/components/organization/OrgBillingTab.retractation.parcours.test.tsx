@@ -180,24 +180,33 @@ describe('résiliation : une seule confirmation, jamais de remboursement', () =>
   });
 });
 
-describe('paiement : case d accès immédiat obligatoire', () => {
+describe('paiement : case d accès immédiat, une fois le palier choisi', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     appModeStore.setDemo(false);
   });
 
-  it('la case est décochée par défaut et son libellé reprend la consigne', async () => {
+  const BOX = /je demande l'accès immédiat au service/i;
+  const PAY = /continuer vers le paiement/i;
+
+  it('aucune case avant le choix du palier ; choisir un palier n appelle pas Stripe', async () => {
     renderTab();
-    const box = await screen.findByRole('checkbox', { name: /je demande l'accès immédiat au service/i });
+    const choose = await screen.findAllByRole('button', { name: /choisir ce palier/i });
+    expect(screen.queryByRole('checkbox', { name: BOX })).toBeNull();
+    fireEvent.click(choose[0]);
+    const box = await screen.findByRole('checkbox', { name: BOX });
     expect((box as HTMLInputElement).checked).toBe(false);
+    expect((screen.getByRole('button', { name: PAY }) as HTMLButtonElement).disabled).toBe(true);
+    expect(invoke).not.toHaveBeenCalled();
   });
 
   it('case cochée : le checkout part avec immediateAccess et la version des CGV', async () => {
     invoke.mockResolvedValue({ data: { url: 'https://checkout.stripe.test/x' }, error: null });
     renderTab();
-    fireEvent.click(await screen.findByRole('checkbox', { name: /je demande l'accès immédiat au service/i }));
     const choose = await screen.findAllByRole('button', { name: /choisir ce palier/i });
     fireEvent.click(choose[0]);
+    fireEvent.click(await screen.findByRole('checkbox', { name: BOX }));
+    fireEvent.click(screen.getByRole('button', { name: PAY }));
     await waitFor(() => expect(invoke).toHaveBeenCalled());
     const [fn, opts] = invoke.mock.calls[0] as [string, { body: Record<string, unknown> }];
     expect(fn).toBe('stripe-org-checkout');

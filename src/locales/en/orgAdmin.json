@@ -785,7 +785,10 @@
     "cancelScheduled": "Cancellation confirmed. Access until {{date}}, a confirmation email is on its way.",
     "cancelPending": "Cancellation scheduled: your access ends on {{date}}.",
     "resumeCta": "Undo cancellation",
-    "resumeDone": "Cancellation undone, the subscription continues."
+    "resumeDone": "Cancellation undone, the subscription continues.",
+    "confirmTierTitle": "Selected tier",
+    "goToPayment": "Continue to payment",
+    "confirmTierCancel": "Change tier"
   },
   "overview": {
     "completed": "Completed",
