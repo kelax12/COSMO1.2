@@ -154,7 +154,9 @@ describe('le PAIEMENT — demande expresse d accès immédiat et version des CGV
   });
 
   it('l écran conditionne le paiement à la case', () => {
-    expect(billingTab).toMatch(/canPay && immediateAccess/);
+    // La case n'apparaît qu'une fois le palier choisi, et le bouton de paiement en dépend.
+    expect(billingTab).toMatch(/canPay && selectedTier/);
+    expect(billingTab).toMatch(/disabled=\{!immediateAccess/);
     expect(billingTab).toContain('billing.immediateAccessLabel');
   });
 });
