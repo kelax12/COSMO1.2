@@ -5,7 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { formatDate } from '@/i18n/format';
 import { ENTERPRISE_BILLING_ENFORCED, PRICES_VISIBLE } from '@/modules/billing/premium-config';
-import type { OrgBillingInterval } from '@/modules/billing/premium-config';
+import type { OrgBillingInterval, OrgTierKey } from '@/modules/billing/premium-config';
 import { useOrgSubscription } from '@/modules/billing/org-billing.hooks';
 import { useStartOrgCheckout, useOpenOrgPortal } from '@/modules/billing/org-billing.mutations';
 import { OrgWithdrawCancel } from './OrgWithdrawCancel';
@@ -58,7 +58,9 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
   const [billingInterval, setBillingInterval] = useState<OrgBillingInterval>('monthly');
 
   // Demande expresse d'accès immédiat (L221-13, L221-25) : case NON cochée par
-  // défaut, obligatoire pour payer. Le serveur la revérifie et la trace.
+  // défaut, posée UNE FOIS LE PALIER CHOISI, obligatoire pour payer. Le
+  // serveur la revérifie et la trace.
+  const [selectedTier, setSelectedTier] = useState<OrgTierKey | null>(null);
   const [immediateAccess, setImmediateAccess] = useState(false);
 
   // Retour de Stripe : on consomme le paramètre pour qu'un rafraîchissement ne
@@ -205,52 +207,75 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
         </p>
       )}
 
-      {canPay && (
-        <label className="flex items-start gap-2 text-xs text-[rgb(var(--color-text-primary))]">
-          <input
-            type="checkbox"
-            checked={immediateAccess}
-            onChange={(e) => setImmediateAccess(e.target.checked)}
-            className="mt-0.5"
-          />
-          <span>
-            {tOrgAdmin('billing.immediateAccessLabel')}{' '}
-            <a href="/cgu" target="_blank" rel="noreferrer" className="underline">
-              {tOrgAdmin('billing.cgvLink')}
-            </a>
-          </span>
-        </label>
-      )}
-
       {showPrices && (
       <EnterpriseTierGrid
         currentTier={subscription?.tierKey}
         onSelect={
-          canPay && immediateAccess
-            ? (tierKey) =>
-                checkout.mutate(
-                  {
-                    orgId,
-                    tierKey,
-                    interval: billingInterval,
-                    immediateAccess,
-                  },
-                  {
-                    // L'annuel indisponible ramène la grille sur le mensuel :
-                    // le message dit qu'il fonctionne, l'écran doit le montrer
-                    // au lieu de laisser l'utilisateur re-cliquer sur le même
-                    // bouton en échec.
-                    onError: (err: Error) => {
-                      if (err.message === 'yearly_unavailable') setBillingInterval('monthly');
-                    },
-                  },
-                )
+          canPay
+            ? (tierKey) => {
+                // Le choix du palier n'envoie PAS au paiement : il ouvre la
+                // vérification d'accès immédiat juste en dessous.
+                setSelectedTier(tierKey);
+                setImmediateAccess(false);
+              }
             : undefined
         }
         isPending={checkout.isPending}
         dormant={!ENTERPRISE_BILLING_ENFORCED}
         interval={billingInterval}
       />
+      )}
+
+      {canPay && selectedTier && (
+        <div
+          role="region"
+          aria-label={tOrgAdmin('billing.confirmTierTitle')}
+          className="flex flex-col gap-3 rounded-xl border border-[rgb(var(--color-border))] p-4"
+        >
+          <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">
+            {tOrgAdmin('billing.confirmTierTitle')} :{' '}
+            {tc(ORG_TIER_LABEL_KEYS[selectedTier])},{' '}
+            {billingInterval === 'yearly' ? tOrgAdmin('billing.billedYearly') : tOrgAdmin('billing.billedMonthly')}
+          </p>
+          <label className="flex items-start gap-2 text-sm text-[rgb(var(--color-text-primary))]">
+            <input
+              type="checkbox"
+              checked={immediateAccess}
+              onChange={(e) => setImmediateAccess(e.target.checked)}
+              className="mt-1"
+            />
+            <span>
+              {tOrgAdmin('billing.immediateAccessLabel')}{' '}
+              <a href="/cgu" target="_blank" rel="noreferrer" className="underline">
+                {tOrgAdmin('billing.cgvLink')}
+              </a>
+            </span>
+          </label>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={!immediateAccess || checkout.isPending}
+              onClick={() =>
+                checkout.mutate(
+                  { orgId, tierKey: selectedTier, interval: billingInterval, immediateAccess },
+                  {
+                    // L'annuel indisponible ramène la grille sur le mensuel :
+                    // le message dit qu'il fonctionne, l'écran doit le montrer.
+                    onError: (err: Error) => {
+                      if (err.message === 'yearly_unavailable') setBillingInterval('monthly');
+                    },
+                  },
+                )
+              }
+              className="rounded-lg border-2 border-[rgb(var(--color-text-primary))] px-3 py-2 text-sm font-semibold disabled:opacity-50"
+            >
+              {tOrgAdmin('billing.goToPayment')}
+            </button>
+            <button type="button" onClick={() => setSelectedTier(null)} className="px-3 py-2 text-sm">
+              {tOrgAdmin('billing.confirmTierCancel')}
+            </button>
+          </div>
+        </div>
       )}
 
       {canPay && subscription && (
