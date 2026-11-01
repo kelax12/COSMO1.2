@@ -335,22 +335,3 @@ la garde tenait `lint-test-build` rouge entre-temps) :
 une renonciation et une retenue. Le préavis de l'art. 11 protège le client contre une modification
 qu'il subit ; celle-ci ne peut que lui profiter. ⚠️ Qualification posée par la session de nettoyage
 du 2026-10-31, **à confirmer par Axel**.
-
-### 2026-11-01 · affiliation par lien · **FOND (information sur un nouveau traitement)** · **préavis à confirmer par Axel**
-
-| Document | Empreinte |
-|---|---|
-| `src/locales/fr/{legal,legalTerms,legalPrivacy}.json` | `862edfba3dc47a80` |
-| `src/locales/en/{legal,legalTerms,legalPrivacy}.json` | `09e19fd81ce462de` |
-
-**Ce qui a changé** (commit `762c3295`, fusionné dans `main` en `da0ac6d5`), politique de
-confidentialité seulement, en `fr` et en `en` :
-
-- Nouveau destinataire : un partenaire affilié voit le nom, l'adresse e-mail et le téléphone des
-  clients inscrits par son lien, pour suivre ses clients et sa commission.
-- Nouveau stockage local : le lien d'un partenaire (`aff`) est gardé 30 jours, déposé dès l'arrivée
-  sans attendre le bandeau. Écart assumé par Axel le 2026-10-31 (risque CNIL accepté).
-
-Les CGU ne changent pas. ⚠️ Qualification posée par la session d'affiliation du 2026-11-01 : la
-politique de confidentialité informe, elle n'impose rien au client ; **préavis de l'art. 11 à
-confirmer par Axel**.
