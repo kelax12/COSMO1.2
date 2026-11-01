@@ -207,6 +207,16 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
         </p>
       )}
 
+      {/* Information précontractuelle (Conso. art. L111-1, L221-5), remise le
+          2026-11-01 après son retrait du 2026-10-31 (LEGAL.md E2) : durée,
+          reconduction et résiliation sous les yeux AVANT le choix d'un palier,
+          pas seulement dans les CGU. Le montant exact est sur chaque carte. */}
+      {canPay && (
+        <p className="text-xs text-[rgb(var(--color-text-secondary))]">
+          {tOrgAdmin('billing.precontractual')}
+        </p>
+      )}
+
       {showPrices && (
       <EnterpriseTierGrid
         currentTier={subscription?.tierKey}

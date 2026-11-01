@@ -236,7 +236,7 @@ Par l'effet de la décision structurante ci-dessous : aucun client n'est vérifi
 | # | Obligation | Statut | Ce qui manque exactement |
 |---|---|:--:|---|
 | E1 | CGV communiquées avant le contrat | 🟡 | Section 5 réécrite le 2026-08-26 : elle décrit enfin **l'offre réellement vendue** (forfaits entreprise et non un « premium » inexistant), l'affichage TTC, la reconduction, la résiliation et le retour au forfait gratuit sans retrait de membre. Section 5 bis ajoutée pour la rétractation. Coordonnées du médiateur ajoutées le 2026-10-25 (CGU 12 bis, cf. E4). ❌ Reste : une relecture juridique. |
-| E2 | Information précontractuelle | 🟡 | **Régressé le 2026-10-31** (commit `9eedd3ca`, relevé le même jour par la session de nettoyage) : la phrase posée le 2026-08-26 au-dessus de la grille d'`OrgBillingTab` (« Abonnement à durée indéterminée, prix TTC, reconduit automatiquement… résiliable à tout moment… sans motif ni frais ») est retirée avec ses clés `billing.precontractual`. Le prix TTC reste sur chaque carte, et Stripe annonce reconduction et résiliation avant le clic (E8). ❌ Reste à trancher par Axel : remettre la durée, la reconduction et la résiliation sous les yeux AVANT le choix d'un palier (C. conso L221-5), ou acter que la page Stripe et les CGU suffisent. |
+| E2 | Information précontractuelle | ✅ | **Remise le 2026-11-01** (décision d'Axel) au-dessus de la grille d'`OrgBillingTab`, pour tout propriétaire qui peut payer : « Abonnement à durée indéterminée, prix TTC, reconduit automatiquement à chaque échéance jusqu'à résiliation. Résiliable à tout moment depuis cet écran, sans motif ni frais. » (fr/en, clé `billing.precontractual`). Elle avait été retirée le 2026-10-31 (`9eedd3ca`). Le montant exact est sur chaque carte, et Stripe répète reconduction et résiliation au-dessus de son bouton (E8). Témoin : `e2e/demo-billing-consent.spec.ts`. |
 | E3 | Rétractation 14 jours | ✅ | **Aucune renonciation recueillie depuis le 2026-10-30** (décision d'Axel) : les deux cases sont retirées d'`OrgBillingTab` et `stripe-org-checkout` ne les exige plus. Le client garde ses 14 jours et est remboursé en entier s'il se rétracte. CGU 5 bis réécrite le même jour. Avant cette date : double consentement, preuves gardées dans `withdrawal_consents`. |
 | E4 | Médiateur de la consommation | 🟡 | **Adhésion faite** : Société Médiation Professionnelle (CPMN), courrier reçu le 2026-10-25 (texte intégral au § Médiateur de la consommation). Publié le 2026-10-25 dans les CGU (article 12 bis, texte imposé repris mot pour mot) et dans les mentions légales (5.p2). ❌ Reste : **le pied de facture Stripe**, action Dashboard d'Axel (Settings → Billing → Invoices → Default footer), sur le compte live. |
 | E5 | Résiliation en ligne (L215-1-1) | ✅ | **Repassé au vert le 2026-10-31**, sur deux chemins. (1) Dans l'app : « Résilier et être remboursé de la période en cours » (`OrgBillingTab`, Edge Function `stripe-org-refund`), sans motif ni courrier, montré à tout propriétaire d'un palier payant ; parcours joué par `e2e/stubbed/refund.spec.ts` (mensuel, annuel, échec Stripe, non-propriétaire), vert en local le 2026-10-31, et la fonction répond en prod (sonde `check:edge-smoke`). (2) Portail Stripe : configuration par défaut posée sur le compte live le 2026-09-01 (`bpc_1UAv9vHJLweDSN4F4xssO3OQ`, `subscription_cancel` actif), relue par l'API le 2026-10-20 ([`STRIPE-LIVE.md`](./STRIPE-LIVE.md)). ⚠️ Non relue par l'API le 2026-10-31 (aucune clé Stripe sur le poste) : la garde `Grille Stripe` ne lit pas le portail. Le constat du 2026-08-26 (« portail vide ») est périmé. |
@@ -289,12 +289,14 @@ Par l'effet de la décision structurante ci-dessous : aucun client n'est vérifi
 
 | Statut | Nombre |
 |---|---|
-| ✅ Bon | **19** |
-| 🟡 Partiellement bon | **22** |
+| ✅ Bon | **20** |
+| 🟡 Partiellement bon | **21** |
 | ❌ À faire | **15** |
 | ⬜ Sans objet aujourd'hui | **5** |
 | **Total** | **61** |
 
+> 🔎 **2026-11-01** : E2 remonte à ✅ (phrase précontractuelle remise).
+>
 > 🔎 **Recompté le 2026-10-31** (`npm run check:legal`) : la garde était rouge en arrivant, 18 / 21 / 16
 > contre une synthèse à 19 / 20 / 17, et E2 vient de redescendre à 🟡 (retrait de l'information
 > précontractuelle, `9eedd3ca`). ⚠️ **À remesurer depuis l'armement de la facturation (2026-10-20)** :
