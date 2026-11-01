@@ -144,7 +144,7 @@ export const MobileSettingsBack: React.FC<{ onBack: () => void }> = ({ onBack })
 export const MobileThemeList: React.FC = () => {
   const { t } = useT('common');
   const { theme, setTheme } = useDarkMode();
-  const swatches: Record<Theme, string> = { light: '#ffffff', dark: '#1e293b', gris: '#2b3137', noir: '#080808' };
+  const swatches: Record<Theme, string> = { light: '#ffffff', dark: '#1e293b', gris: '#2b3137', noir: '#0a0a0a' };
   return (
     <ul role="radiogroup" aria-label={t('theme.label')} className="rounded-2xl bg-[rgb(var(--color-surface))] px-4">
       {(Object.keys(THEME_LABEL) as Theme[]).map((id) => (
