@@ -3,7 +3,7 @@
     "seoTitle": "Terms of Use – Cosmo App",
     "seoDescription": "Terms of use for Cosmo, an app for tasks, habits and OKRs. Free access, rules of use and responsibilities.",
     "title": "Terms of Use",
-    "updatedAt": "25 October 2026",
+    "updatedAt": "November 1, 2026 (version 2026-11-01)",
     "s1": {
       "title": "1. Purpose",
       "p1": "These Terms of Use govern access to and use of **Cosmo**, a web platform for managing tasks, habits, objectives (OKRs) and a calendar.",
@@ -35,22 +35,24 @@
       "li6": "Use bots or automated scripts to interact with the application"
     },
     "s5": {
-      "title": "5. Paid subscription",
-      "intro": "Cosmo's company workspace comes in several plans, one of which is free. Paid plans differ in the number of members allowed in the organisation. Current prices are shown in the application and on the presentation page.",
-      "li1": "**All prices include tax**: the amount displayed is the amount charged",
-      "li2": "Payment is processed securely through **Stripe**. Cosmo never has access to your bank details",
-      "li3": "The subscription is taken out by the owner of the organisation, on behalf of the whole organisation",
-      "li4": "It renews automatically at the chosen frequency, monthly or yearly, until it is cancelled",
-      "li5": "You can cancel it **at any time** from your company workspace, in a minimal number of steps. Cancellation takes effect at the end of the period already paid for",
-      "li5bis": "**Refund guarantee, more favourable than the law.** You can at any time cancel AND get the current period refunded, from your company workspace, with no reason to give and without writing to us. On a monthly subscription that is the last instalment paid, in full; on a yearly one, the pro rata of whole unconsumed months. Access stops immediately, since the period is refunded.",
-      "li6": "If your subscription stops being active, your organisation returns to the free plan. **No member is ever removed**: only the ability to add new ones is suspended"
+      "title": "5. Paid subscription (terms of sale)",
+      "intro": "Cosmo's enterprise workspace comes in several plans, including a free plan. Paid plans differ by the number of members allowed in the organization. Current prices are shown in the app and on the presentation page. Articles 5 to 5 ter are Cosmo's terms of sale.",
+      "li1": "**All prices include all taxes**: the amount shown is the amount charged. VAT not applicable, article 293 B of the French tax code, for as long as Cosmo is under the VAT franchise scheme",
+      "li2": "Payments are processed securely by **Stripe**. Cosmo never has access to your bank details",
+      "li3": "The subscription is taken out by the organization's owner, for the whole organization. Before paying, the owner expressly requests immediate access to the service (article 5 bis) and accepts the current version of these terms, whose date appears at the top. Cosmo keeps the version accepted by each customer",
+      "li4": "**Term.** The **monthly** subscription has no commitment and can be cancelled at any time. The **yearly** subscription is entered into for one year and renewed automatically at each term. A receipt is emailed to you with every charge, with a link to manage or cancel the subscription",
+      "li4bis": "**Reminder before renewal.** For a yearly subscription, Cosmo sends you a dedicated email about **45 days** before the term, and no later than one month before, stating the renewal date, its amount and your right not to renew by cancelling from the Billing page until the day before that date (French consumer code, article L215-1). If this reminder was not sent to you, you may cancel free of charge at any time from the renewal onwards, and the share of the remaining period is refunded within 30 days",
+      "li5": "**Cancellation.** You can cancel **at any time**, in a few clicks, from the Billing page of your enterprise workspace: the \"Cancel my subscription\" button, then a single confirmation. Cancellation takes effect **at the end of the period already paid**; access continues until then and **no refund is made**. An email confirms the cancellation and the end-of-access date. You can undo it as long as the period has not ended",
+      "li5bis": "**No refund after the withdrawal period**, on either a monthly or a yearly subscription, **except** in the cases required by law, which these terms do not exclude: lack of conformity of the service (article 9), renewal reminder not sent (above), and a change to the contract or the price (article 11). Such requests go to [contact@thecosmo.app](mailto:contact@thecosmo.app)",
+      "li6": "If your subscription stops being active, your organization goes back to the free plan. **No member is ever removed**: only the ability to add new ones is suspended"
     },
     "s5bis": {
       "title": "5 bis. Right of withdrawal",
-      "p1": "If you subscribe as a consumer, you have **fourteen days** from the date of subscription to withdraw, without having to give a reason.",
-      "p2": "The subscription starts as soon as you pay, and you keep your right of withdrawal for the full fourteen days: you are not asked to waive it. If you withdraw within that period, the current period is refunded in full, with no deduction for the service already supplied.",
-      "p3": "To withdraw, simply write to us at [contact@thecosmo.app](mailto:contact@thecosmo.app) stating your request. Any refund is made within fourteen days of our receiving it at the latest.",
-      "p4": "You may use the following template, but you are not required to: \"To Cosmo, contact@thecosmo.app. I hereby give notice that I withdraw from the contract for the subscription below. Plan subscribed on: [date]. Name: [your name]. Account email address: [address]. Date: [date].\""
+      "p1": "If you subscribe as a **consumer**, or as a **business with five employees or fewer** for a contract outside the scope of your main activity (French consumer code, article L221-3), you have **fourteen days** from the conclusion of the contract, that is the first paid subscription, to withdraw without giving any reason and without paying any penalty. An automatic renewal does not open a new period.",
+      "p2": "**Immediate access and pro rata.** The service starts as soon as you pay, at your express request: before paying, you tick the box \"I request immediate access to the service and acknowledge that if I withdraw, the period already used will be charged pro rata\". This request is confirmed to you by email together with the order confirmation. If you withdraw, you pay for the service provided **up to and including the day of withdrawal**, and the rest is refunded: amount paid × remaining days ÷ days in the period, rounded down to the cent (article L221-25). Without this express request, the refund is in full. No withdrawal fee is ever charged.",
+      "p3": "**How to withdraw.** During the fourteen days, the Billing page of your enterprise workspace shows the **\"Withdraw from the contract here\"** button. It opens a pre-filled summary (name, email, subscription, amount refunded), which you validate with the \"Confirm withdrawal\" button. An acknowledgement is emailed to you right away, with the date and time of withdrawal. Any other unambiguous statement is also accepted, in particular by email to [contact@thecosmo.app](mailto:contact@thecosmo.app) or by post to the address given in article 1, for example using the form below.",
+      "p3bis": "**Effects.** Withdrawal ends the subscription immediately. The refund is made **no later than fourteen days** after the date of withdrawal, using the same payment method as the one used for the subscription, at no cost to you.",
+      "p4": "**Model withdrawal form** (annex to article R221-1 of the French consumer code; complete and return this form only if you wish to withdraw from the contract): \"To Axel Longatte, EI, trading as COSMO, 138 avenue Victor Hugo, 75116 Paris, France, contact@thecosmo.app: I/We (*) hereby give notice that I/We (*) withdraw from my/our (*) contract for the provision of the following service: COSMO Enterprise subscription. Ordered on (*): [date]. Name of consumer(s): [name]. Address of consumer(s): [address]. Signature of consumer(s) (only if this form is notified on paper). Date: [date]. (*) Delete as appropriate.\""
     },
     "s6": {
       "title": "6. Ownership of your data",
@@ -72,17 +74,17 @@
       "p1": "Cosmo has an obligation of means. It is not liable for damage resulting from use of the service that does not comply with these terms, from force majeure, or from the unforeseeable and insurmountable act of a third party unconnected with the supply of the service.",
       "p2": "**Towards a business user**, and except in cases of gross negligence or wilful misconduct, Cosmo's liability is limited to direct damage and to the amounts paid over the last 12 months.",
       "p3": "**Towards a consumer**, no clause in these terms limits or excludes Cosmo's liability beyond what the law allows, and the **statutory guarantee of conformity and the guarantee against hidden defects** remain owed in all circumstances.",
-      "p4": "**Legal guarantee of conformity.** If you are a consumer, the service must conform to the contract for as long as it is supplied (French Consumer Code, Articles L224-25-1 et seq.). If it does not, you can have it brought into conformity or, failing that, obtain a price reduction or the termination of the contract. This right is exercised free of charge, by writing to [contact@thecosmo.app](mailto:contact@thecosmo.app)."
+      "p4": "**Legal guarantee of conformity for digital content and services.** If you are a consumer, the service must conform to the contract throughout the period it is supplied (French consumer code, articles L224-25-12 et seq.). In the event of a lack of conformity, in particular unavailability or failure to match what was promised, you can have it brought into conformity or, failing that, obtain a price reduction or the termination of the contract, with a pro rata refund for the period during which the service did not conform. This right is free of charge and is exercised by writing to [contact@thecosmo.app](mailto:contact@thecosmo.app). No provision of these terms excludes or limits it."
     },
     "s10": {
       "title": "10. Termination",
-      "p1": "You can delete your account at any time from the application settings. Deletion causes all your data to be permanently erased within 90 days.",
+      "p1": "You can delete your account at any time from the app settings. Deletion permanently erases all your data within 90 days. Deleting a subscribed organization ends its subscription immediately, with no refund; during the withdrawal period, please use the withdrawal button instead (article 5 bis).",
       "p2": "Cosmo may terminate your access in the event of a breach of these Terms of Use, after notice by email except in an emergency."
     },
     "s11": {
       "title": "11. Changes to these Terms",
-      "p1": "Cosmo may update these Terms of Use, in particular to follow changes to the service or to the law. Any substantial change is notified to you by email **30 days before it takes effect**. Purely formal changes take effect as soon as they are published. The date of the last update is shown at the top of this document.",
-      "p2": "If you refuse a change, you can delete your account at any time before it takes effect, free of charge, after exporting your data. Otherwise, the change applies from that date."
+      "p1": "Cosmo may update these terms, in particular to follow changes to the service or the law. Any substantial change, and **any change to the price of a subscription**, is notified to you by email **at least one month before it takes effect**. Purely formal changes take effect on publication. The date and version of the latest update appear at the top of this document.",
+      "p2": "If you refuse a change, you can cancel your subscription, and delete your account, free of charge at any time before it takes effect, after exporting your data. The period already paid is not refunded. Otherwise, the change applies from that date."
     },
     "s12": {
       "title": "12. Governing law and jurisdiction",
@@ -109,6 +111,12 @@
       "p1": "If you come across content on Cosmo that you consider illegal, for example in a task or a comment shared with you, report it to [contact@thecosmo.app](mailto:contact@thecosmo.app), stating: why you consider it illegal, exactly where it is (name of the task, project or organisation), your name and email address, and a statement confirming that your report is made in good faith.",
       "p2": "We acknowledge receipt of the report, review it diligently and objectively, and tell you what we decided. If we restrict content or an account, the person concerned receives the reasons for that decision and may challenge it by replying to the message notifying them.",
       "p3": "The single point of contact provided for in Articles 11 and 12 of Regulation (EU) 2022/2065 on digital services, for authorities and users alike, is [contact@thecosmo.app](mailto:contact@thecosmo.app), in French or English."
+    },
+    "s5ter": {
+      "title": "5 ter. Business customers",
+      "p1": "This article applies to customers acting for purposes within their trade or profession, other than the business with five employees or fewer referred to in article 5 bis. By subscribing, the customer declares that it is acting in a professional capacity and states the size of its workforce.",
+      "p2": "Business customers have **no right of withdrawal**. **No refund**, even partial, is owed, unless Cosmo has failed to meet its obligations. Cancellation takes effect at the end of the paid period. The yearly subscription commits the customer for **twelve months** and renews automatically for the same term unless cancelled before the renewal date; the reminder sent about 45 days before that date is also sent to business customers.",
+      "p3": "Cosmo's liability towards a business customer is limited as set out in article 9."
     }
   }
 }

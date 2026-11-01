@@ -139,6 +139,15 @@ export const SONDES = [
       + 'Cette fonction REMBOURSE : jamais en POST.',
   },
   {
+    fonction: 'stripe-org-subscription',
+    methode: 'GET',
+    statut: [405],
+    marqueur: 'method_not_allowed',
+    prouve:
+      'Le corps de la fonction répond. Elle RÉTRACTE et RÉSILIE un abonnement '
+      + 'payé : jamais en POST.',
+  },
+  {
     fonction: 'stripe-webhook',
     methode: 'POST',
     corps: '{}',

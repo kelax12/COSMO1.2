@@ -1,19 +1,20 @@
 // ═══════════════════════════════════════════════════════════════════
-// BILLING ORG — mutations (paiement, portail, remboursement).
+// BILLING ORG — mutations (paiement, portail, rétractation, résiliation).
 //
 // Séparées de `org-billing.hooks.ts` le 2026-10-01 : la page /entreprise
 // n'a besoin que de la lecture d'abonnement, et ce code ne sert qu'à l'onglet
 // Facturation et à la section Paramètres, tous deux chargés à la demande.
 // ❌ AUCUN REJEU AUTOMATIQUE sur une mutation qui déplace de l'argent : voir
-//    `useCancelAndRefundOrg` et src/modules/billing/CLAUDE.md.
+//    `useOrgSubscriptionAction` et src/modules/billing/CLAUDE.md.
 // ═══════════════════════════════════════════════════════════════════
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from '@/lib/toast';
 import { supabase } from '@/lib/supabase';
 import { translator } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
 import type { OrgBillingInterval, OrgTierKey } from './premium-config';
 import { ApiError, makeApiError } from '@/lib/normalizeApiError';
+import { CGV_VERSION } from './cgv-version';
 
 /** Invoque une Edge Function Stripe et redirige vers l'URL renvoyée. */
 async function redirectToStripe(
@@ -83,9 +84,11 @@ const CHECKOUT_ERROR_KEYS: Record<string, KeyOf<'orgAdmin'>> = {
   already_subscribed: 'billing.alreadySubscribed',
   yearly_unavailable: 'billing.yearlyUnavailable',
   forbidden: 'billing.ownerOnly',
-  // C-65 — les refus propres au remboursement.
   no_subscription: 'billing.noSubscription',
-  refund_failed: 'billing.refundFailed',
+  immediate_access_required: 'billing.immediateAccessRequired',
+  cgv_outdated: 'billing.cgvOutdated',
+  withdrawal_window_closed: 'billing.withdrawalClosed',
+  subscription_action_failed: 'billing.actionFailed',
 };
 
 export const useStartOrgCheckout = () =>
@@ -94,6 +97,7 @@ export const useStartOrgCheckout = () =>
       orgId,
       tierKey,
       interval,
+      immediateAccess,
     }: {
       orgId: string;
       tierKey: OrgTierKey;
@@ -104,11 +108,15 @@ export const useStartOrgCheckout = () =>
        * mensuel, comme avant l'existence du sélecteur.
        */
       interval?: OrgBillingInterval;
+      /** Case « accès immédiat » cochée (L221-25). Le serveur l'exige. */
+      immediateAccess: boolean;
     }) =>
       redirectToStripe('stripe-org-checkout', {
         orgId,
         tierKey,
         interval,
+        immediateAccess,
+        cgvVersion: CGV_VERSION,
       }),
     onError: (err: Error) => {
       // `translator(ns).t(key)` — forme vérifiée dans src/i18n/useT.ts et
@@ -119,56 +127,67 @@ export const useStartOrgCheckout = () =>
     },
   });
 
-/**
- * Résilier ET se faire rembourser la période en cours, en un geste (C-65).
- *
- * 🔴 POURQUOI CE HOOK N'UTILISE PAS `redirectToStripe`. Celui-là attend une
- * `url` et navigue dessus ; ici il n'y a nulle part où aller — l'action se
- * termine sur place, et la personne doit VOIR ce qui s'est passé. Une
- * redirection vers Stripe reviendrait à lui redemander de faire elle-même ce
- * qu'on vient de lui promettre en un clic.
- *
- * ⚠️ Le montant rendu vient du SERVEUR (`refundedCents`), il n'est jamais
- * recalculé ici : deux calculs d'un même montant finissent par diverger, et
- * celui qu'on afficherait ne serait pas celui qu'on a viré.
- */
-export const useCancelAndRefundOrg = (onDone?: () => void) =>
-  useMutation({
-    // 🔴 AUCUN REJEU AUTOMATIQUE. Le `QueryClient` de l'app pose
-    // `mutations: { retry: 1 }` pour tout le monde : un `refund_failed` faisait
-    // donc repartir un SECOND appel a `stripe-org-refund`, sans que personne ne
-    // clique et sans que rien ne le dise. Mesure du 2026-09-08, dans
-    // `e2e/stubbed/refund.spec.ts` : deux appels pour un clic.
-    //
-    // Ce que la borne serveur absorbe (cle d'idempotence sur l'`invoice_id`,
-    // pre-controle qui retranche) ne rend pas ce rejeu anodin : l'echec arrive
-    // APRES le point de non-retour, donc le second appel peut trouver le
-    // remboursement deja pose et resilier un abonnement dont l'ecran vient
-    // d'annoncer que rien n'avait ete resilie. Sur un chemin qui deplace de
-    // l'argent, on fait retenter la PERSONNE, jamais le navigateur.
-    retry: 0,
-    mutationFn: async ({ orgId }: { orgId: string }) => {
-      if (!supabase) throw new Error('Supabase not configured');
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw makeApiError('not_authenticated');
+/** Action sur l'abonnement, servie par `stripe-org-subscription`. */
+export type OrgSubscriptionAction = 'withdraw' | 'cancel' | 'resume' | 'cancel_now';
 
-      const { data, error } = await supabase.functions.invoke('stripe-org-refund', {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-        body: { orgId },
-      });
-      // Même extraction que `redirectToStripe` : le code métier est dans le
-      // CORPS, pas dans le message de l'erreur.
-      if (error) throw new Error((await edgeErrorCode(error)) ?? 'invoke_failed');
-      if (data?.error) throw new Error(data.error as string);
-      return { refundedCents: Number(data?.refundedCents ?? 0) };
+async function invokeSubscription(orgId: string, action: OrgSubscriptionAction | 'withdrawal_preview') {
+  if (!supabase) throw new Error('Supabase not configured');
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw makeApiError('not_authenticated');
+
+  const { data, error } = await supabase.functions.invoke('stripe-org-subscription', {
+    headers: { Authorization: `Bearer ${session.access_token}` },
+    body: { orgId, action },
+  });
+  // Même extraction que `redirectToStripe` : le code métier est dans le CORPS.
+  if (error) throw makeApiError((await edgeErrorCode(error)) ?? 'invoke_failed');
+  if (data?.error) throw makeApiError(data.error as string);
+  return data as Record<string, unknown>;
+}
+
+export interface WithdrawalPreview {
+  amountCents: number;
+  deadline: string;
+  recipient: string;
+}
+
+/**
+ * Récapitulatif de l'écran de rétractation (§2) : montant qui sera remboursé,
+ * calculé par le SERVEUR (`refund-amount.ts`), jamais ici. `enabled` ne vaut
+ * que pendant les 14 jours : hors délai, le serveur refuse de toute façon.
+ */
+export const useWithdrawalPreview = (orgId: string, enabled: boolean) =>
+  useQuery({
+    queryKey: ['org-billing', 'withdrawal-preview', orgId],
+    enabled,
+    staleTime: 60_000,
+    retry: false,
+    queryFn: async (): Promise<WithdrawalPreview> => {
+      const data = await invokeSubscription(orgId, 'withdrawal_preview');
+      return {
+        amountCents: Number(data.amountCents ?? 0),
+        deadline: String(data.deadline ?? ''),
+        recipient: String(data.recipient ?? ''),
+      };
     },
-    onSuccess: ({ refundedCents }) => {
-      toast.success(
-        refundedCents > 0
-          ? translator('orgAdmin').t('billing.refundDone', { amount: (refundedCents / 100).toFixed(2) })
-          : translator('orgAdmin').t('billing.cancelDone'),
-      );
-      onDone?.();
+  });
+
+/**
+ * Rétractation, résiliation, annulation de résiliation (décision du
+ * 2026-11-01). ❌ AUCUNE ne rembourse : le remboursement d'une rétractation est
+ * fait à la main par l'admin (`stripe-org-refund`).
+ */
+export const useOrgSubscriptionAction = (onDone?: (action: OrgSubscriptionAction) => void) =>
+  useMutation({
+    // 🔴 AUCUN REJEU AUTOMATIQUE : on fait retenter la PERSONNE, jamais le
+    // navigateur, sur un chemin qui arrête un contrat payé.
+    retry: 0,
+    mutationFn: async ({ orgId, action }: { orgId: string; action: OrgSubscriptionAction }) => {
+      const data = await invokeSubscription(orgId, action);
+      return { action, amountCents: Number(data.amountCents ?? 0), accessUntil: String(data.accessUntil ?? '') };
+    },
+    onSuccess: ({ action }) => {
+      onDone?.(action);
     },
     onError: (err: Error) => {
       const { t } = translator('orgAdmin');

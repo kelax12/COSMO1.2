@@ -14,7 +14,7 @@ import type { KeyOf } from '@/i18n/catalog';
  * ⚠️ Ajouter une section, c'est modifier un CONTRAT. Deux conséquences que le
  * code ne rappellera pas tout seul :
  *   - la date `terms.updatedAt` doit être avancée dans les DEUX catalogues ;
- *   - l'article 11 prévoit un préavis de 30 jours par e-mail pour toute
+ *   - l'article 11 prévoit un préavis d'un mois par e-mail pour toute
  *     modification substantielle.
  */
 const SECTIONS: LegalSection<KeyOf<'legalTerms'>>[] = [
@@ -74,7 +74,7 @@ const SECTIONS: LegalSection<KeyOf<'legalTerms'>>[] = [
         kind: 'ul',
         items: [
           'terms.s5.li1', 'terms.s5.li2', 'terms.s5.li3',
-          'terms.s5.li4', 'terms.s5.li5', 'terms.s5.li5bis', 'terms.s5.li6',
+          'terms.s5.li4', 'terms.s5.li4bis', 'terms.s5.li5', 'terms.s5.li5bis', 'terms.s5.li6',
         ],
       },
     ],
@@ -85,8 +85,18 @@ const SECTIONS: LegalSection<KeyOf<'legalTerms'>>[] = [
       { kind: 'p', key: 'terms.s5bis.p1' },
       { kind: 'p', key: 'terms.s5bis.p2' },
       { kind: 'p', key: 'terms.s5bis.p3' },
+      { kind: 'p', key: 'terms.s5bis.p3bis' },
       // Modèle de formulaire de rétractation (C. conso L221-5, annexe R221-1).
       { kind: 'note', key: 'terms.s5bis.p4' },
+    ],
+  },
+  {
+    // Clients professionnels hors L221-3 (REMBOURSEMENT-RESILIATION.md §7).
+    title: 'terms.s5ter.title',
+    blocks: [
+      { kind: 'p', key: 'terms.s5ter.p1' },
+      { kind: 'p', key: 'terms.s5ter.p2' },
+      { kind: 'p', key: 'terms.s5ter.p3' },
     ],
   },
   {

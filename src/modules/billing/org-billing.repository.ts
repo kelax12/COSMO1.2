@@ -18,6 +18,8 @@ interface OrgSubscriptionRow {
   billing_interval: OrgBillingInterval | null;
   current_period_end: string | null;
   discount_code: string | null;
+  started_at: string | null;
+  cancel_at_period_end: boolean | null;
 }
 
 /** `null` = aucune ligne, c'est-à-dire palier gratuit. Pas une erreur. */
@@ -26,7 +28,7 @@ export async function getOrgSubscription(orgId: string): Promise<OrgSubscription
 
   const { data, error } = await supabase
     .from('org_subscriptions')
-    .select('org_id, tier_key, max_members, status, billing_interval, current_period_end, discount_code')
+    .select('org_id, tier_key, max_members, status, billing_interval, current_period_end, discount_code, started_at, cancel_at_period_end')
     .eq('org_id', orgId)
     .maybeSingle();
 
@@ -44,5 +46,7 @@ export async function getOrgSubscription(orgId: string): Promise<OrgSubscription
     billingInterval: row.billing_interval ?? 'monthly',
     currentPeriodEnd: row.current_period_end,
     discountCode: row.discount_code,
+    startedAt: row.started_at ?? null,
+    cancelAtPeriodEnd: row.cancel_at_period_end === true,
   };
 }
