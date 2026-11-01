@@ -223,6 +223,17 @@ export const SONDES = [
       + 'qui bloque tous les webhooks depuis leur création (A-3, vu le 2026-09-30 : '
       + '`UNAUTHORIZED_NO_AUTH_HEADER`), ne porte pas ce marqueur. Rouge jusqu au redéploiement.',
   },
+  // B3 (2026-11-01) : API affiliation. Sondée sur une route inconnue : le
+  // 404 vient du routage du CORPS, avant toute lecture, toute écriture.
+  {
+    fonction: 'affiliation-api',
+    methode: 'GET',
+    statut: [404],
+    marqueur: '"error":"not_found"',
+    prouve:
+      'Le module se charge et son routage refuse une route inconnue. Aucune '
+      + 'lecture des tables 236, aucun clic compté, aucun essai de code consommé.',
+  },
 ];
 
 /** Joue une sonde. Rend `{ ok, statut, extrait, raison }`. */

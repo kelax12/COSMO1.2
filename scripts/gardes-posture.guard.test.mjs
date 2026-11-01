@@ -400,11 +400,12 @@ describe('témoin — coût serveur (C-87)', () => {
 
 // ═══════════════════════════════════════════════════════════════════
 describe('témoin — sondes de fumée des Edge Functions (C-91)', () => {
-  it('les treize fonctions sont sondées, et aucune en écriture', () => {
+  it('les quatorze fonctions sont sondées, et aucune en écriture', () => {
     // 8 jusqu'au 2026-09-30 : les quatre fonctions du mode entreprise
-    // n'étaient sondées par rien (A-2). Une par dossier de supabase/functions/.
-    expect(SONDES).toHaveLength(13);
-    expect(new Set(SONDES.map((s) => s.fonction)).size).toBe(13);
+    // n'étaient sondées par rien (A-2). Une par dossier de supabase/functions/ ;
+    // 14 depuis affiliation-api (2026-11-01).
+    expect(SONDES).toHaveLength(14);
+    expect(new Set(SONDES.map((s) => s.fonction)).size).toBe(14);
     for (const s of SONDES) {
       expect(s.prouve.length).toBeGreaterThan(30);
       expect(s.statut.length).toBeGreaterThan(0);
