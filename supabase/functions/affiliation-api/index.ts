@@ -180,7 +180,9 @@ async function handleSession(req: Request, db: SupabaseClient): Promise<Response
   const global = await consumeRateLimits(FN, [{ domain: 'affiliation-session-global', value: 'all', limit: 200, window: '1 hour' }])
   if (!global.allowed) {
     if (global.misconfigured) return unavailable(req)
-    await opsAlert(FN, 'plafond global de /session atteint : code commun ferme pour l heure')
+    // Une alerte par heure au plus : sinon chaque refus inonderait le canal.
+    const gate = await consumeRateLimits(FN, [{ domain: 'affiliation-session-alert', value: 'all', limit: 1, window: '1 hour' }])
+    if (gate.allowed) await opsAlert(FN, 'plafond global de /session atteint : code commun ferme pour l heure')
     return json({ error: 'rate_limited', retry_after_s: 3600 }, 429, req)
   }
   const body = await readBody(req) as { code?: unknown } | undefined
