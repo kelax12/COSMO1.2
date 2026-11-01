@@ -19,6 +19,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2'
 import { consumeRateLimits, callerIp } from '../_shared/rate-limit.ts'
+import { opsAlert } from '../_shared/alert.ts'
 import { signAffiliateToken, verifyAffiliateToken, AFFILIATE_TOKEN_TTL_MS } from '../_shared/affiliation-token.ts'
 import { hashAffiliateCode, verifyAffiliateCode } from '../_shared/affiliation-code.ts'
 import {
@@ -168,15 +169,19 @@ async function loadDataset(db: SupabaseClient, affiliateIds: string[]): Promise<
 async function handleSession(req: Request, db: SupabaseClient): Promise<Response> {
   // Un jeton par tentative, AVANT la vérification : un IP bloquée ne peut plus
   // apprendre qu'un code est bon. Le compteur RPC ne rend pas son reste.
-  // Le seau global borne celui qui change d'adresse à chaque essai. Atteint, il
-  // ne ferme que le code commun : l'admin entre par son mot de passe (spec, Accès).
-  const verdict = await consumeRateLimits(FN, [
-    { domain: 'affiliation-session', value: callerIp(req), limit: 5, window: '15 minutes' },
-    { domain: 'affiliation-session-global', value: 'all', limit: 50, window: '1 hour' },
-  ])
-  if (!verdict.allowed) {
-    if (verdict.misconfigured) return unavailable(req)
+  const perIp = await consumeRateLimits(FN, [{ domain: 'affiliation-session', value: callerIp(req), limit: 5, window: '15 minutes' }])
+  if (!perIp.allowed) {
+    if (perIp.misconfigured) return unavailable(req)
     return json({ error: 'rate_limited', retry_after_s: 900 }, 429, req)
+  }
+  // Le seau global borne celui qui change d'adresse à chaque essai. Large exprès :
+  // n'importe qui peut le remplir, et il ferme alors le code commun pour tous
+  // (l'admin entre toujours par son mot de passe, spec § Accès). Atteint, on alerte.
+  const global = await consumeRateLimits(FN, [{ domain: 'affiliation-session-global', value: 'all', limit: 200, window: '1 hour' }])
+  if (!global.allowed) {
+    if (global.misconfigured) return unavailable(req)
+    await opsAlert(FN, 'plafond global de /session atteint : code commun ferme pour l heure')
+    return json({ error: 'rate_limited', retry_after_s: 3600 }, 429, req)
   }
   const body = await readBody(req) as { code?: unknown } | undefined
   const code = typeof body?.code === 'string' ? body.code : ''
