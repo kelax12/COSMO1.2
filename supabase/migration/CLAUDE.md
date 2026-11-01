@@ -64,7 +64,7 @@ compilait, la suite passait.
   `236` (affiliation par lien, 2026-10-31) en prod, ledger `20261031223810`, relue au catalogue
   (7 tables `affiliate_*` sous RLS sans policy, colonnes `profiles.affiliate_*` et `org_subscriptions.purchased_by`,
   `handle_new_user_profile` INVOKER → `create_profile_for_new_user` DEFINER, `EXECUTE` pour `supabase_auth_admin`).
-  Preuves : `proofs/236`. `237` (rétractation, résiliation, CGV acceptées, 2026-11-01) : **au dépôt, PAS appliquée**, à appliquer AVANT le déploiement des Edge Functions et du front. Prochain numéro libre : **`238`**.
+  Preuves : `proofs/236`. `237` (rétractation, résiliation, CGV acceptées, 2026-11-01) en prod, ledger `20261101143758`, prouvée avant en transaction annulée puis relue au catalogue (2 tables sous RLS sans policy, 3 colonnes `org_subscriptions`, trigger append-only, `EXECUTE` refusé à `authenticated`). `238` (affiliation : commission 50 % × (payé − 25,6 % − frais Stripe), 2026-11-01) en prod, ledger `20261101143700`, relue au catalogue (réglages 5000/2560, `affiliate_compute` à 6 taux, 2000 c → 717). Indépendante de `237`. Prochain numéro libre : **`239`**.
 
   Journal daté de chaque application (`150` → `223`) :
   [`docs/SECURITY.md`](../../docs/SECURITY.md) § « Journal d'application des migrations ».
