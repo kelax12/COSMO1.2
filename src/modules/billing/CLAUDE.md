@@ -52,7 +52,7 @@ Elles ne partagent aucune colonne. Le client ne peut écrire ni l'une ni l'autre
   d'idempotence qui empêche toute re-livraison. **En cas de doute, faire retenter Stripe.**
 - ❌ **Un event Stripe qui DÉGRADE ne s'applique qu'à l'abonnement enregistré.** La garde
   d'`applyOrgSubscription` est asymétrique, et c'est voulu.
-- ❌ **AUCUN REJEU AUTOMATIQUE sur une mutation qui déplace de l'argent.** `useCancelAndRefundOrg`
+- ❌ **AUCUN REJEU AUTOMATIQUE sur une mutation qui arrête un contrat payé.** `useOrgSubscriptionAction`
   pose `retry: 0` contre le `retry: 1` global. **On fait retenter la PERSONNE, jamais le navigateur.**
 - 🔴 **Les deux verrous anti-rejeu du remboursement ne se remplacent pas.** La clé d'idempotence
   Stripe **expire** et n'arrête que deux appels concurrents ; seul le pré-contrôle qui RETRANCHE le
@@ -62,9 +62,15 @@ Elles ne partagent aucune colonne. Le client ne peut écrire ni l'une ni l'autre
   mélangée aux appels Stripe elle n'est exécutable par aucun test.
   ⚠️ Un remboursement `pending` compte comme rendu, un `failed` ou `canceled` ne compte pas.
   ❌ Ne jamais l'écrire par exclusion (`status !== 'succeeded'`) : `pending` serait ignoré.
-- 🟢 **Aucune renonciation au droit de rétractation n'est recueillie** (décision d'Axel du
-  2026-10-30) : le client garde ses 14 jours, remboursement intégral. `withdrawal_consents` n'est
-  plus écrite ; ❌ ne jamais purger ses lignes passées (preuve append-only, mig. 135/138).
+- 🔴 **Rétractation, résiliation, remboursement : décision du 2026-11-01**
+  (`Documents/analytics/docs/REMBOURSEMENT-RESILIATION.md`). Rétractation 14 jours depuis
+  `started_at` (arrêt immédiat, `stripe-org-subscription`), résiliation en fin de période
+  (`cancel_at_period_end`), **jamais de remboursement depuis l'interface** : `stripe-org-refund`
+  est ADMIN seul (`is_admin()`). Montant : prorata journalier, jour en cours utilisé, centime
+  inférieur (`_shared/refund-amount.ts`), intégral sans demande d'accès immédiat.
+  ❌ Ne jamais réintroduire un bouton qui résilie ET rembourse. ❌ Ne jamais payer sans la case
+  d'accès immédiat ni `CGV_VERSION` (`billing_acceptances`, mig. 237, append-only).
+  `withdrawal_consents` : ❌ ne jamais purger ses lignes passées (preuve, mig. 135/138).
 - ❌ **Ne jamais laisser un event d'organisation retomber sur la branche particulier.**
 - ⚠️ Les **noms** des paliers vivent dans le namespace `common` (`orgTier.*`), pas dans `org` :
   la landing et le produit doivent dire le même mot pour le même palier.

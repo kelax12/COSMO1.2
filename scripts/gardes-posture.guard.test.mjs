@@ -400,19 +400,19 @@ describe('témoin — coût serveur (C-87)', () => {
 
 // ═══════════════════════════════════════════════════════════════════
 describe('témoin — sondes de fumée des Edge Functions (C-91)', () => {
-  it('les quatorze fonctions sont sondées, et aucune en écriture', () => {
+  it('les quinze fonctions sont sondées, et aucune en écriture', () => {
     // 8 jusqu'au 2026-09-30 : les quatre fonctions du mode entreprise
     // n'étaient sondées par rien (A-2). Une par dossier de supabase/functions/ ;
-    // 14 depuis affiliation-api (2026-11-01).
-    expect(SONDES).toHaveLength(14);
-    expect(new Set(SONDES.map((s) => s.fonction)).size).toBe(14);
+    // 14 depuis affiliation-api, 15 depuis stripe-org-subscription (2026-11-01).
+    expect(SONDES).toHaveLength(15);
+    expect(new Set(SONDES.map((s) => s.fonction)).size).toBe(15);
     for (const s of SONDES) {
       expect(s.prouve.length).toBeGreaterThan(30);
       expect(s.statut.length).toBeGreaterThan(0);
     }
     // 🔴 Les deux fonctions DESTRUCTRICES ne sont jamais appelées en POST.
-    const destructrices = SONDES.filter((s) => ['delete-account', 'stripe-org-refund'].includes(s.fonction));
-    expect(destructrices).toHaveLength(2);
+    const destructrices = SONDES.filter((s) => ['delete-account', 'stripe-org-refund', 'stripe-org-subscription'].includes(s.fonction));
+    expect(destructrices).toHaveLength(3);
     for (const s of destructrices) expect(s.methode).toBe('GET');
     // Celles qui ENVOIENT (e-mail, webhook) ne sont jamais sondées au-delà d'un refus.
     const emettrices = SONDES.filter((s) => ['send-org-invite', 'org-digest', 'org-webhook-dispatch', 'inactive-accounts'].includes(s.fonction));

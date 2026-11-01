@@ -335,3 +335,38 @@ la garde tenait `lint-test-build` rouge entre-temps) :
 une renonciation et une retenue. Le préavis de l'art. 11 protège le client contre une modification
 qu'il subit ; celle-ci ne peut que lui profiter. ⚠️ Qualification posée par la session de nettoyage
 du 2026-10-31, **à confirmer par Axel**.
+
+### 2026-11-01 · rétractation au prorata, résiliation sans remboursement, CGV de vente réécrites · **FOND (moins favorable au client sur le remboursement)** · **préavis dû aux abonnés existants**
+
+| Document | Empreinte |
+|---|---|
+| `src/locales/fr/{legal,legalTerms,legalPrivacy}.json` | `ad6a82563e89e438` |
+| `src/locales/en/{legal,legalTerms,legalPrivacy}.json` | `e4a0d4a9193c6b75` |
+
+**Consigne** : `Documents/analytics/docs/REMBOURSEMENT-RESILIATION.md` (décision d'Axel du 2026-11-01).
+
+**Ce qui a changé**, en `fr` et en `en` (version `2026-11-01`, portée en tête du document) :
+
+- **Art. 5** devient les conditions générales de vente : TVA non applicable (art. 293 B du CGI),
+  demande expresse d'accès immédiat et version acceptée conservée, mensuel sans engagement, annuel
+  reconduit avec rappel à J-45 (L215-1) et remède en cas de rappel manqué, résiliation en quelques
+  clics depuis la page Facturation, effective en fin de période, **sans remboursement**.
+  La « garantie de remboursement à tout moment » (li5bis) est **retirée** : plus aucun
+  remboursement après 14 jours, sauf conformité, rappel manqué, modification du contrat.
+- **Art. 5 bis** : délai de 14 jours depuis la conclusion (première souscription), étendu au
+  professionnel de 5 salariés au plus (L221-3) ; prorata journalier si accès immédiat demandé
+  (L221-25), intégral sinon ; bouton « Se rétracter du contrat ici » (L221-21) ; remboursement
+  sous 14 jours par le même moyen de paiement ; formulaire type de l'annexe R221-1.
+- **Art. 5 ter** (nouveau) : clients professionnels, sans rétractation ni remboursement, annuel
+  engagé 12 mois, déclaration du statut et de l'effectif.
+- **Art. 9 p4** : garantie de conformité des services numériques (L224-25-12 et s.), avec
+  remboursement au prorata en cas de résolution.
+- **Art. 10 p1** : la suppression d'une organisation abonnée arrête l'abonnement sans remboursement.
+- **Art. 11** : préavis porté à **un mois** par e-mail, y compris pour une hausse de prix, et
+  droit de résilier sans frais avant l'entrée en vigueur.
+
+**Préavis** : les nouvelles souscriptions sont soumises à cette version dès sa mise en ligne. Pour
+les abonnés existants, le retrait de la garantie de remboursement est une modification
+substantielle qui leur est défavorable : **e-mail de préavis d'un mois à envoyer (geste d'Axel)**,
+l'ancienne garantie restant due jusqu'à son entrée en vigueur. Relecture par un juriste à faire
+avant publication (consigne §11).

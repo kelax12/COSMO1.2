@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router';
 import { toast } from '@/lib/toast';
 import { ArrowLeft } from 'lucide-react';
@@ -7,8 +6,9 @@ import { useT } from '@/i18n/useT';
 import { formatDate } from '@/i18n/format';
 import { ENTERPRISE_BILLING_ENFORCED, PRICES_VISIBLE } from '@/modules/billing/premium-config';
 import type { OrgBillingInterval } from '@/modules/billing/premium-config';
-import { useOrgSubscription, orgBillingKeys } from '@/modules/billing/org-billing.hooks';
-import { useStartOrgCheckout, useOpenOrgPortal, useCancelAndRefundOrg } from '@/modules/billing/org-billing.mutations';
+import { useOrgSubscription } from '@/modules/billing/org-billing.hooks';
+import { useStartOrgCheckout, useOpenOrgPortal } from '@/modules/billing/org-billing.mutations';
+import { OrgWithdrawCancel } from './OrgWithdrawCancel';
 import { effectiveQuota, effectiveTierKey } from '@/modules/billing/org-billing.logic';
 import { ORG_TIER_LABEL_KEYS } from '@/modules/billing/org-tier-labels';
 import { EnterpriseTierGrid } from './EnterpriseTierGrid';
@@ -51,27 +51,15 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
   const { data: subscription } = useOrgSubscription(orgId);
   const checkout = useStartOrgCheckout();
   const portal = useOpenOrgPortal();
-  // C-65 — resilier ET se faire rembourser, en un geste.
-  //
-  // 🔴 L'ABONNEMENT EST RELU APRES COUP, et ce n'est pas un confort. Le serveur
-  // resilie dans la foulee du remboursement ; sans cette relecture l'ecran
-  // continuait d'afficher le forfait payant ET son bouton de remboursement,
-  // donc invitait exactement le rejeu que la borne serveur existe pour
-  // absorber. Mesure dans `e2e/stubbed/refund.spec.ts` : apres un
-  // remboursement, l'ecran doit dire que l'abonnement est resilie sans qu'on
-  // ait rechargé la page.
-  const queryClient = useQueryClient();
-  const refund = useCancelAndRefundOrg(() => {
-    void queryClient.invalidateQueries({ queryKey: orgBillingKeys.subscription(orgId) });
-  });
   // Périodicité affichée dans la grille. État LOCAL, jamais persisté : c'est
   // une question posée avant l'achat, pas une préférence de l'utilisateur. La
   // périodicité qui compte après coup est celle de l'abonnement, et elle vient
   // de Stripe via le webhook (`subscription.billingInterval`).
   const [billingInterval, setBillingInterval] = useState<OrgBillingInterval>('monthly');
 
-  // Rétractation : aucune renonciation demandée depuis le 2026-10-30, le
-  // client garde ses 14 jours (remboursement intégral, `stripe-org-refund`).
+  // Demande expresse d'accès immédiat (L221-13, L221-25) : case NON cochée par
+  // défaut, obligatoire pour payer. Le serveur la revérifie et la trace.
+  const [immediateAccess, setImmediateAccess] = useState(false);
 
   // Retour de Stripe : on consomme le paramètre pour qu'un rafraîchissement ne
   // rejoue pas le toast.
@@ -217,17 +205,35 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
         </p>
       )}
 
+      {canPay && (
+        <label className="flex items-start gap-2 text-xs text-[rgb(var(--color-text-primary))]">
+          <input
+            type="checkbox"
+            checked={immediateAccess}
+            onChange={(e) => setImmediateAccess(e.target.checked)}
+            className="mt-0.5"
+          />
+          <span>
+            {tOrgAdmin('billing.immediateAccessLabel')}{' '}
+            <a href="/cgu" target="_blank" rel="noreferrer" className="underline">
+              {tOrgAdmin('billing.cgvLink')}
+            </a>
+          </span>
+        </label>
+      )}
+
       {showPrices && (
       <EnterpriseTierGrid
         currentTier={subscription?.tierKey}
         onSelect={
-          canPay
+          canPay && immediateAccess
             ? (tierKey) =>
                 checkout.mutate(
                   {
                     orgId,
                     tierKey,
                     interval: billingInterval,
+                    immediateAccess,
                   },
                   {
                     // L'annuel indisponible ramène la grille sur le mensuel :
@@ -261,45 +267,10 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
         </div>
       )}
 
-      {/* ═══════════════════════════════════════════════════════════════
-          C-65 — LA GARANTIE, LA OU ON PEUT L'EXERCER
-          ═══════════════════════════════════════════════════════════════
-
-          🔴 Decision d'Axel du 2026-09-03 : « l'utilisateur doit pouvoir se
-          faire rembourser le mois en cours a tout moment, mais que le mois en
-          cours. » Une regle sans mecanisme est une phrase : avant ce bouton,
-          `stripe-org-portal` ouvrait le portail Stripe, qui sait resilier et
-          NE REMBOURSE PAS. Il fallait nous ecrire — donc exactement la
-          discussion au cas par cas que la decision voulait supprimer.
-
-          ⚠️ Le texte est ICI, et pas seulement dans les CGU : « une garantie
-          plus favorable que la loi doit etre ecrite, sans quoi personne ne
-          sait qu'elle existe et elle ne desamorce rien. »
-
-          Meme drapeau que le CTA de paiement : proposer un remboursement quand
-          rien n'est encaisse n'aurait aucun sens. */}
-      {/* ⚠️ `effectiveTierKey` et non `subscription.tierKey` : c'est le palier
-          REELLEMENT accorde, celui que la pastille et le titre annoncent deja.
-          Un abonnement resilie ou impaye retombe a « Gratuit » — proposer d'y
-          resilier quelque chose n'aurait plus d'objet, et remettrait le bouton
-          sous le doigt de quelqu'un qui vient de s'en servir. */}
+      {/* Rétractation (14 jours) et résiliation (fin de période, sans
+          remboursement) : REMBOURSEMENT-RESILIATION.md §2 et §4. */}
       {canPay && subscription && effectiveTierKey(subscription) !== 'free' && (
-        <div className="flex flex-col gap-2 rounded-lg border border-[rgb(var(--color-border))] p-3">
-          <h3 className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">
-            {tOrgAdmin('billing.refundTitle')}
-          </h3>
-          <p className="text-xs text-[rgb(var(--color-text-secondary))]">
-            {tOrgAdmin('billing.refundExplain')}
-          </p>
-          <button
-            type="button"
-            disabled={refund.isPending}
-            onClick={() => refund.mutate({ orgId })}
-            className="self-start rounded-lg border border-[rgb(var(--color-border))] px-3 py-2 text-sm disabled:opacity-60 hover:border-red-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-          >
-            {refund.isPending ? tOrgAdmin('billing.refundPending') : tOrgAdmin('billing.refundCta')}
-          </button>
-        </div>
+        <OrgWithdrawCancel orgId={orgId} subscription={subscription} />
       )}
 
       {/* Historique et destinataire des factures : propriétaire seul, les

@@ -13,11 +13,13 @@
 // dashboard Stripe ; COSMO n'en valide aucun et n'en recalcule aucun montant,
 // donc aucune surface de brute-force n'est ouverte de notre côté.
 //
-// RÉTRACTATION : depuis le 2026-10-30, aucune renonciation n'est recueillie
-// ni exigée ; le client garde ses 14 jours. `withdrawal_consents` n'est plus
-// écrite (les lignes passées restent, preuve append-only).
+// RÉTRACTATION (décision du 2026-11-01) : aucune renonciation, le client garde
+// ses 14 jours. Mais la demande EXPRESSE d'accès immédiat et la version des
+// CGV sont exigées et tracées (`billing_acceptances`, mig. 237) : c'est ce
+// qui rend opposable le prorata de la période utilisée (L221-25).
 // ═══════════════════════════════════════════════════════════════════
 import Stripe from 'npm:stripe@14.21.0'
+import { CGV_VERSION } from '../_shared/billing-mail-text.ts'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from '../_shared/alert.ts'
 import { customerContactFields } from '../_shared/org-billing-contact.ts'
@@ -64,16 +66,17 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authError } = await supabaseUser.auth.getUser()
     if (authError || !user) return json({ error: 'Unauthorized' }, 401)
 
-    const { orgId, tierKey, interval } =
+    const { orgId, tierKey, interval, immediateAccess, cgvVersion } =
       await req.json().catch(() => ({}))
     if (typeof orgId !== 'string' || typeof tierKey !== 'string') {
       return json({ error: 'bad_request' }, 400)
     }
 
-    // Rétractation (décision du 2026-10-30) : plus aucune renonciation n'est
-    // demandée. Le client garde ses 14 jours entiers et se fait rembourser
-    // intégralement s'il se rétracte (`stripe-org-refund`). Les anciennes
-    // lignes de `withdrawal_consents` restent : c'est une preuve append-only.
+    // Case non cochée par défaut, obligatoire pour payer (L221-13, L221-25).
+    if (immediateAccess !== true) return json({ error: 'immediate_access_required' }, 400)
+    // Un onglet resté sur d'anciennes CGV ne paie pas sous une version qu'il
+    // n'a pas lue.
+    if (cgvVersion !== CGV_VERSION) return json({ error: 'cgv_outdated' }, 409)
 
     // Périodicité : le client n'envoie qu'un mot d'une liste fermée, jamais un
     // montant ni un price ID. Absente = mensuel, pour que les appels écrits
@@ -256,6 +259,18 @@ Deno.serve(async (req) => {
       return json({ error: 'tier_unavailable' }, 500)
     }
 
+    // Preuve AVANT la session : sans trace de la demande d'accès immédiat, le
+    // prorata serait inopposable (remboursement intégral).
+    const { error: accError } = await supabaseAdmin.from('billing_acceptances').insert({
+      org_id: orgId,
+      user_id: user.id,
+      cgv_version: CGV_VERSION,
+      immediate_access_at: new Date().toISOString(),
+      tier_key: tier.key,
+      billing_interval: billingInterval,
+    })
+    if (accError) throw accError
+
     const dayKey = new Date().toISOString().slice(0, 10)
     const session = await stripe.checkout.sessions.create(
       {
@@ -297,7 +312,10 @@ Deno.serve(async (req) => {
             message:
               'En validant, vous passez une commande avec obligation de paiement : '
               + "l'abonnement est payant et reconduit automatiquement jusqu'à sa résiliation, "
-              + "possible à tout moment depuis votre espace entreprise.",
+              + 'possible à tout moment depuis votre espace entreprise. '
+              + 'Droit de rétractation de 14 jours : ayant demandé l’accès immédiat, '
+              + 'la période déjà utilisée vous serait facturée au prorata. '
+              + `Conditions générales de vente : ${APP_URL}/cgu`,
           },
         },
       },

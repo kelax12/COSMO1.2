@@ -32,7 +32,8 @@ vi.mock('@/i18n/useT', () => ({
   }),
 }));
 
-import { useStartOrgCheckout, useCancelAndRefundOrg, useOpenOrgPortal } from './org-billing.mutations';
+import { useStartOrgCheckout, useOrgSubscriptionAction, useOpenOrgPortal } from './org-billing.mutations';
+import { CGV_VERSION } from './cgv-version';
 
 /** Le `QueryClient` de l'app rejoue les mutations une fois : on le reproduit. */
 function makeWrapper() {
@@ -52,6 +53,7 @@ const httpError = (body: unknown) => ({
 const checkoutInput = {
   orgId: 'org-1',
   tierKey: 'team' as never,
+  immediateAccess: true,
 };
 
 let hrefSet: ReturnType<typeof vi.fn<(url: string) => void>>;
@@ -81,7 +83,7 @@ describe('useStartOrgCheckout', () => {
 
     expect(invoke).toHaveBeenCalledWith('stripe-org-checkout', {
       headers: { Authorization: 'Bearer tok' },
-      body: { orgId: 'org-1', tierKey: 'team', interval: 'year' },
+      body: { orgId: 'org-1', tierKey: 'team', interval: 'year', immediateAccess: true, cgvVersion: CGV_VERSION },
     });
     expect(hrefSet).toHaveBeenCalledWith('https://checkout.stripe.com/x');
   });
@@ -142,50 +144,40 @@ describe('useStartOrgCheckout', () => {
   });
 });
 
-describe('useCancelAndRefundOrg', () => {
-  it('🔴 un échec n’appelle stripe-org-refund qu’UNE fois, malgré retry: 1 global', async () => {
-    invoke.mockResolvedValue({ data: null, error: httpError({ error: 'refund_failed' }) });
-    const { result } = renderHook(() => useCancelAndRefundOrg(), { wrapper: makeWrapper() });
+describe('useOrgSubscriptionAction', () => {
+  it('🔴 un échec n’appelle stripe-org-subscription qu’UNE fois, malgré retry: 1 global', async () => {
+    invoke.mockResolvedValue({ data: null, error: httpError({ error: 'subscription_action_failed' }) });
+    const { result } = renderHook(() => useOrgSubscriptionAction(), { wrapper: makeWrapper() });
 
-    await act(async () => { result.current.mutate({ orgId: 'org-1' }); });
+    await act(async () => { result.current.mutate({ orgId: 'org-1', action: 'withdraw' }); });
     await waitFor(() => expect(result.current.isError).toBe(true));
 
     expect(invoke).toHaveBeenCalledTimes(1);
-    expect(toastError).toHaveBeenCalledWith('billing.refundFailed');
+    expect(toastError).toHaveBeenCalledWith('billing.actionFailed');
   });
 
-  it('affiche le montant rendu par le SERVEUR, en euros', async () => {
-    invoke.mockResolvedValue({ data: { refundedCents: 2150 }, error: null });
+  it('résilier envoie l action seule, jamais un montant, et jamais à stripe-org-refund', async () => {
+    invoke.mockResolvedValue({ data: { ok: true }, error: null });
     const onDone = vi.fn();
-    const { result } = renderHook(() => useCancelAndRefundOrg(onDone), { wrapper: makeWrapper() });
+    const { result } = renderHook(() => useOrgSubscriptionAction(onDone), { wrapper: makeWrapper() });
 
-    await act(() => result.current.mutateAsync({ orgId: 'org-1' }));
+    await act(() => result.current.mutateAsync({ orgId: 'org-1', action: 'cancel' }));
 
-    expect(invoke).toHaveBeenCalledWith('stripe-org-refund', {
+    expect(invoke).toHaveBeenCalledWith('stripe-org-subscription', {
       headers: { Authorization: 'Bearer tok' },
-      body: { orgId: 'org-1' },
+      body: { orgId: 'org-1', action: 'cancel' },
     });
-    expect(toastSuccess).toHaveBeenCalledWith('billing.refundDone:{"amount":"21.50"}');
-    expect(onDone).toHaveBeenCalledTimes(1);
+    expect(onDone).toHaveBeenCalledWith('cancel');
   });
 
-  it('rien à rendre : annonce une résiliation, jamais un remboursement de 0,00', async () => {
-    invoke.mockResolvedValue({ data: { refundedCents: 0 }, error: null });
-    const { result } = renderHook(() => useCancelAndRefundOrg(), { wrapper: makeWrapper() });
+  it('hors délai, le refus a son propre message', async () => {
+    invoke.mockResolvedValue({ data: { error: 'withdrawal_window_closed' }, error: null });
+    const { result } = renderHook(() => useOrgSubscriptionAction(), { wrapper: makeWrapper() });
 
-    await act(() => result.current.mutateAsync({ orgId: 'org-1' }));
-
-    expect(toastSuccess).toHaveBeenCalledWith('billing.cancelDone');
-  });
-
-  it('un refus `no_subscription` a son propre message', async () => {
-    invoke.mockResolvedValue({ data: { error: 'no_subscription' }, error: null });
-    const { result } = renderHook(() => useCancelAndRefundOrg(), { wrapper: makeWrapper() });
-
-    await act(async () => { result.current.mutate({ orgId: 'org-1' }); });
+    await act(async () => { result.current.mutate({ orgId: 'org-1', action: 'withdraw' }); });
     await waitFor(() => expect(result.current.isError).toBe(true));
 
-    expect(toastError).toHaveBeenCalledWith('billing.noSubscription');
+    expect(toastError).toHaveBeenCalledWith('billing.withdrawalClosed');
   });
 });
 

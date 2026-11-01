@@ -167,8 +167,8 @@ test.describe('C-39 — supprimer une entreprise : rembourser, puis supprimer', 
     // Mesuré : la première version de ce cas expirait là-dessus, sur un produit
     // qui faisait exactement ce qu'il fallait.
     let refundRequests = 0;
-    stub.reply('functions/v1/stripe-org-refund', { ok: true, refundedCents: 2000 });
-    await page.route('**/functions/v1/stripe-org-refund', async (route) => {
+    stub.reply('functions/v1/stripe-org-subscription', { ok: true });
+    await page.route('**/functions/v1/stripe-org-subscription', async (route) => {
       refundRequests += 1;
       await held;
       // On délègue au gestionnaire du stub : répondre ici ferait deux
@@ -211,9 +211,9 @@ test.describe('C-39 — supprimer une entreprise : rembourser, puis supprimer', 
     // Et c'est bien le remboursement qui est parti en premier, authentifié et
     // sans aucun montant : le client ne choisit jamais un prix.
     expect(stub.functionCalls).toHaveLength(1);
-    expect(stub.functionCalls[0].name).toBe('stripe-org-refund');
+    expect(stub.functionCalls[0].name).toBe('stripe-org-subscription');
     expect(stub.functionCalls[0].authorized).toBe(true);
-    expect(stub.functionCalls[0].body).toEqual({ orgId: ORG_ID });
+    expect(stub.functionCalls[0].body).toEqual({ orgId: ORG_ID, action: 'cancel_now' });
 
     // 5. Et elle ne part qu'une fois : un second DELETE sur une organisation
     //    déjà supprimée trouverait une ligne absente, pas un rejeu inoffensif.
@@ -225,7 +225,7 @@ test.describe('C-39 — supprimer une entreprise : rembourser, puis supprimer', 
     const stub = await openMembers(page);
     // `refund_failed` est la seule sortie d'erreur possible après le point de
     // non-retour côté serveur.
-    stub.reply('functions/v1/stripe-org-refund', { error: 'refund_failed' });
+    stub.reply('functions/v1/stripe-org-subscription', { error: 'subscription_action_failed' });
     stub.reply('rpc/delete_organization', null);
 
     await page.getByRole('button', { name: DELETE_CTA }).click();
@@ -286,7 +286,7 @@ test.describe('C-39 — supprimer une entreprise : rembourser, puis supprimer', 
     // C'est le défaut que ce dépôt a attrapé quatre fois en cinq jours : un
     // détecteur qui ne détecte plus rien répond « tout va bien ».
     const stub = await openMembers(page);
-    stub.reply('functions/v1/stripe-org-refund', { ok: true, refundedCents: 2000 });
+    stub.reply('functions/v1/stripe-org-subscription', { ok: true });
     stub.reply('rpc/delete_organization', null);
 
     await page.getByRole('button', { name: DELETE_CTA }).click();

@@ -74,9 +74,14 @@ verify_jwt = false
 [functions.org-webhook-dispatch]
 verify_jwt = false
 
-# stripe-org-refund resolves the caller from the JWT and checks they are the
-# organization owner before any Stripe call.
+# stripe-org-refund (2026-11-01) is ADMIN ONLY: it resolves the caller from the
+# JWT and requires is_admin() (allowlist + aal2) before any Stripe call.
 [functions.stripe-org-refund]
+verify_jwt = true
+
+# stripe-org-subscription (2026-11-01): withdrawal and cancellation, owner only,
+# resolved from the JWT.
+[functions.stripe-org-subscription]
 verify_jwt = true
 
 # verify-org-domain (mig. 195) resolves the caller from the JWT and checks they

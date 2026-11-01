@@ -141,7 +141,7 @@ describe('SV-5 · le nom d organisation est échappé dans l avis L215-1', () =>
     expect(mail.html).not.toContain('<a href');
     expect(mail.html).toContain('&lt;a href=&quot;https://x.test&quot;&gt;');
     expect(mail.text).toContain('« Acme <a href="https://x.test">payez ici</a> »');
-    expect(mail.subject).toBe('Votre abonnement Cosmo se reconduit le 30/11/2026');
+    expect(mail.subject).toBe('Votre abonnement COSMO sera renouvelé le 30/11/2026');
     expect(mail.text).toContain('https://thecosmo.app/entreprise?tab=billing');
   });
 
