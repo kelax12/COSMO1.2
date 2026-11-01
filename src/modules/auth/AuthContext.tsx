@@ -11,6 +11,8 @@ import { recordDemoVisit, recordDemoConversionIfAny } from '@/lib/demo-metrics';
 import { resetDemoEngagementMemory } from '@/lib/demo-engagement';
 import { readFirstTouch } from '@/lib/attribution';
 import { claimAcquisitionSource } from './acquisition-claim';
+import { claimAffiliate } from './affiliate-claim';
+import { readAffiliateSlug } from '@/lib/affiliation';
 import { recordSeedLocale, seedLocaleMatchesCurrent } from '@/lib/seed-i18n';
 import {
   DEMO_SENTINEL_EMAIL,
@@ -240,6 +242,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(mapSupabaseUserToAppUser(session.user));
           touchLastSeen(session.user.id);
           claimAcquisitionSource(session.user);
+          claimAffiliate(session.user);
           dlog('initializeAuth: calling restoreAndRefresh()');
           restoreAndRefresh(session.user.id, !!cacheWriteUnsub);
           dlog('initializeAuth: restoreAndRefresh() returned');
@@ -325,6 +328,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(mapSupabaseUserToAppUser(session.user));
           touchLastSeen(session.user.id);
           claimAcquisitionSource(session.user);
+          claimAffiliate(session.user);
           restoreAndRefresh(session.user.id, !!cacheWriteUnsub);
         }
         setIsLoading(false);
@@ -352,6 +356,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Inscription Google : `signInWithOAuth` ne porte pas la source
         // first-touch, on la rattache ici (mig. 217, acquisition-claim.ts).
         claimAcquisitionSource(session.user);
+        claimAffiliate(session.user);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
         // Un re-login dans le même chargement de page doit re-pinger last_seen_at.
@@ -425,6 +430,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // et validée : le trigger la re-valide de son côté (mig. 097), la metadata
     // étant contrôlée par le client.
     const firstTouch = readFirstTouch();
+    const affiliateSlug = readAffiliateSlug();
     try {
       const { data, error } = await supabase.auth.signUp({
         email: cleanEmail,
@@ -436,6 +442,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Lu par le trigger handle_new_user_profile (mig. 060) avec garde
             // stricte : toute valeur ≠ 'business' retombe en 'personal'.
             account_type: accountType === 'business' ? 'business' : 'personal',
+            ...(affiliateSlug ? { affiliate_slug: affiliateSlug } : {}),
             ...(firstTouch
               ? {
                   acquisition_source: firstTouch.source,
