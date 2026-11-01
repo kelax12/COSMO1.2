@@ -7,6 +7,7 @@ import { RootErrorBoundary } from './components/RootErrorBoundary';
 import { installEarlyHandlers, startMonitoring } from './lib/monitoring';
 import { applyTheme, resolveInitialTheme } from './lib/theme';
 import { captureFirstTouch } from './lib/attribution';
+import { captureAffiliate } from './lib/affiliation';
 import { startTrafficMeasurement } from './lib/traffic';
 // Import direct du module de locale (et non du barrel `@/i18n`) : le barrel
 // ré-exporte `format.ts`, qui tire les locales `date-fns` — inutile ici et
@@ -125,6 +126,7 @@ try {
 // le visiteur a réellement ouverte.
 try {
   captureFirstTouch();
+  captureAffiliate();
 } catch { /* l'analytics ne doit jamais empêcher l'app de démarrer */ }
 
 // ──────────────────────────────────────────────────────────────────

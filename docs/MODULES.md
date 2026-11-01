@@ -68,3 +68,4 @@ Tous suivent la même forme. Partir de `index.ts` (exports publics), puis :
 | Gardes CI | `scripts/` · [CLAUDE.md](../scripts/CLAUDE.md) |
 | CLI sur les vraies données | `scripts/cosmo/` · [`COSMO-CLI.md`](./COSMO-CLI.md) |
 | Import de tâches (Todoist, TickTick, Notion, CSV) | `src/lib/task-import/` (analyse, plan, exécution), écran `pages/settings/ImportTasksDialog.tsx` · ajouté à cette carte le 2026-10-15 |
+| Affiliation (lien `?aff=<slug>`, last-click 30 j, hors consentement par décision d'Axel) | `src/lib/affiliation.ts` (capture, clé `cosmo_aff` préservée par la démo, ping `affiliation-api/click`), `src/modules/auth/affiliate-claim.ts` (RPC `claim_affiliate`, inscription Google) ; metadata `affiliate_slug` lue par le trigger (mig. 236) · ajouté le 2026-11-01 |
