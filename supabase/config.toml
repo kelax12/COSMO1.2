@@ -83,3 +83,10 @@ verify_jwt = true
 # are an active admin of the domain's organization.
 [functions.verify-org-domain]
 verify_jwt = true
+
+# affiliation-api (mig. 236) is called by cosmo-analytics with either an
+# X-Affiliation-Token (shared code) or an admin JWT (is_admin(), aal2); /session
+# and /click are public. The function checks auth itself, so the gateway must
+# not demand a JWT.
+[functions.affiliation-api]
+verify_jwt = false
