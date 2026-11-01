@@ -113,7 +113,7 @@ export class RootErrorBoundary extends Component<Props, State> {
             style={{
               padding: '11px 22px',
               background: '#f0f0f0',
-              color: '#080808',
+              color: '#0a0a0a',
               border: 'none',
               borderRadius: '10px',
               cursor: 'pointer',
