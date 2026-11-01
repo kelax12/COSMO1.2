@@ -1,5 +1,5 @@
 <!-- note-audit: non-note -->
-> Non noté : c'est un support commercial qui recense ce que fait le code, aucun audit ne le note.
+> **Note d'audit** — non noté : c'est un support commercial qui recense ce que fait le code, aucun audit ne le note.
 
 # Mode entreprise : liste des fonctionnalités
 
