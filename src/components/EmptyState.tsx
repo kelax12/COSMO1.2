@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { LucideIcon } from 'lucide-react';
+import { useDocumentTheme } from '@/hooks/useDocumentTheme';
 
 interface EmptyStateProps {
   /** Icône lucide-react principale (ex. Inbox, Calendar, Target) */
@@ -34,9 +35,11 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   description,
   actionLabel,
   onAction,
-  accentColor = '#3B82F6',
+  accentColor: accentProp = '#3B82F6',
   compact = false,
 }) => {
+  // Noir : l'accent de l'appelant (bleu, vert…) devient le quasi-blanc du thème.
+  const accentColor = useDocumentTheme() === 'noir' ? '#f0f0f0' : accentProp;
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -77,7 +80,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
         <button
           type="button"
           onClick={onAction}
-          className="mt-4 px-5 py-2.5 rounded-xl font-semibold text-sm text-white shadow-md hover:shadow-lg transition-all hover:scale-[1.02] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+          className="mt-4 px-5 py-2.5 rounded-xl font-semibold text-sm text-white noir:text-[rgb(var(--color-background))] shadow-md hover:shadow-lg transition-all hover:scale-[1.02] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
           style={{ backgroundColor: accentColor }}
         >
           {actionLabel}

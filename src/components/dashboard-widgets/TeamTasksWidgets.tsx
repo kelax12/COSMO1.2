@@ -118,7 +118,7 @@ export const ReviewWidget = ({ orgId }: { orgId: string }) => {
                   type="button"
                   onClick={() => update.mutate({ taskId: task.id, input: { completed: true, status: 'done' } })}
                   aria-label={t('dw.review.approveName', { name: task.name })}
-                  className="inline-flex items-center gap-1 rounded-lg bg-emerald-500/12 px-2.5 py-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20"
+                  className="inline-flex items-center gap-1 rounded-lg bg-emerald-500/12 px-2.5 py-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 noir:text-[rgb(var(--color-success))] hover:bg-emerald-500/20"
                 >
                   <Check size={14} aria-hidden="true" />{t('dw.review.approve')}
                 </button>

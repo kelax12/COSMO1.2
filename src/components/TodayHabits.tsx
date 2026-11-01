@@ -92,7 +92,7 @@ const TodayHabits: React.FC = () => {
             <Clock size={12} aria-hidden="true" />
             {formatDurationMinutes(habit.estimatedTime)}
           </span>
-          <span className="flex items-center gap-1 font-medium text-orange-600 dark:text-orange-400">
+          <span className="flex items-center gap-1 font-medium text-orange-600 dark:text-orange-400 noir:text-[rgb(var(--color-warning))]">
             <span aria-hidden="true">🔥</span>
             {/* Une SEULE logique de streak dans l'app : celle de
                 modules/habits/streak.ts. */}
@@ -129,7 +129,7 @@ const TodayHabits: React.FC = () => {
         <p className="text-[rgb(var(--color-text-secondary))] text-sm">
           {/* Célébration (#39) : récompenser le zéro restant, pas juste le compter */}
           {todayHabits.length > 0 && completedCount === todayHabits.length ? (
-            <span className="font-medium text-emerald-600 dark:text-emerald-400">
+            <span className="font-medium text-emerald-600 dark:text-emerald-400 noir:text-[rgb(var(--color-success))]">
               {t('habits.allDone', { done: completedCount, total: todayHabits.length })}
             </span>
           ) : (
@@ -178,8 +178,8 @@ const TodayHabits: React.FC = () => {
           key={habit.id}
             className={`p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer hover:scale-105 hover:shadow-lg ${
               habit.completedToday ?
-              'bg-[rgb(var(--color-accent-solid))] dark:bg-blue-900 border-[rgb(var(--color-accent-solid))] dark:border-[rgb(var(--color-accent-solid))] shadow-md' :
-              'bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent-solid-hover))] hover:bg-blue-50/50 dark:hover:bg-slate-700/50'}`
+              'bg-[rgb(var(--color-accent-solid))] dark:bg-blue-900 border-[rgb(var(--color-accent-solid))] dark:border-[rgb(var(--color-accent-solid))] shadow-md noir:bg-[rgb(var(--color-hover))] noir:border-[rgb(var(--color-success))] noir:shadow-none' :
+              'bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent-solid-hover))] hover:bg-blue-50/50 dark:hover:bg-slate-700/50 noir:hover:bg-[rgb(var(--color-hover))]'}`
               }
             onClick={() => handleToggle(habit.id)}>
 
@@ -189,8 +189,8 @@ const TodayHabits: React.FC = () => {
                         onClick={() => handleToggle(habit.id)}
                         className={`h-11 w-11 md:h-7 md:w-7 rounded-full border flex items-center justify-center transition-all cursor-pointer ${
                           habit.completedToday
-                            ? 'bg-white text-blue-600 border-white dark:bg-[rgb(var(--color-accent-solid))] dark:text-[rgb(var(--color-accent-solid-foreground))] dark:border-[rgb(var(--color-accent-solid))] shadow-md'
-                            : 'bg-[rgb(var(--color-hover))] border-[rgb(var(--color-border-strong))] text-transparent hover:border-[rgb(var(--color-accent-solid-hover))] hover:bg-blue-100'
+                            ? 'bg-white text-blue-600 border-white dark:bg-[rgb(var(--color-accent-solid))] dark:text-[rgb(var(--color-accent-solid-foreground))] dark:border-[rgb(var(--color-accent-solid))] shadow-md noir:bg-[rgb(var(--color-success))] noir:text-[rgb(var(--color-background))] noir:border-[rgb(var(--color-success))]'
+                            : 'bg-[rgb(var(--color-hover))] border-[rgb(var(--color-border-strong))] text-transparent hover:border-[rgb(var(--color-accent-solid-hover))] hover:bg-blue-100 noir:hover:bg-[rgb(var(--color-active))]'
                         }`}
                       >
                       <Check className="h-4 w-4" strokeWidth={4} />
@@ -198,15 +198,15 @@ const TodayHabits: React.FC = () => {
                   </div>
 
                   <div className="flex-1">
-                    <h3 className={`font-bold text-body sm:text-base ${habit.completedToday ? 'text-white dark:text-blue-300 line-through' : 'text-[rgb(var(--color-text-primary))]'}`}>
+                    <h3 className={`font-bold text-body sm:text-base ${habit.completedToday ? 'text-white dark:text-blue-300 noir:text-[rgb(var(--color-text-muted))] line-through' : 'text-[rgb(var(--color-text-primary))]'}`}>
                       {habit.name}
                     </h3>
                 <div className="flex items-center gap-4 mt-1">
-                  <div className={`flex items-center gap-1 text-label sm:text-sm ${habit.completedToday ? 'text-blue-50 dark:text-blue-400/80' : 'text-[rgb(var(--color-text-secondary))]'}`}>
+                  <div className={`flex items-center gap-1 text-label sm:text-sm ${habit.completedToday ? 'text-blue-50 dark:text-blue-400/80 noir:text-[rgb(var(--color-text-muted))]' : 'text-[rgb(var(--color-text-secondary))]'}`}>
                     <Clock size={14} />
                     <span>{formatDurationMinutes(habit.estimatedTime)}</span>
                   </div>
-                  <div className={`flex items-center gap-1 text-label sm:text-sm font-medium ${habit.completedToday ? 'text-white dark:text-orange-400' : 'text-orange-600 dark:text-orange-400'}`}>
+                  <div className={`flex items-center gap-1 text-label sm:text-sm font-medium ${habit.completedToday ? 'text-white dark:text-orange-400 noir:text-[rgb(var(--color-warning))]' : 'text-orange-600 dark:text-orange-400 noir:text-[rgb(var(--color-warning))]'}`}>
                     <span>🔥</span>
                     {/* Une SEULE logique de streak dans l'app : celle de
                         modules/habits/streak.ts, déjà utilisée par HabitCard et
@@ -230,7 +230,7 @@ const TodayHabits: React.FC = () => {
             </p>
             <button
               onClick={() => navigate('/habits')}
-              className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline underline-offset-2"
+              className="text-sm font-medium text-blue-600 dark:text-blue-400 noir:text-[rgb(var(--color-accent-text))] hover:underline underline-offset-2"
             >
               {t('habits.create')}
             </button>
