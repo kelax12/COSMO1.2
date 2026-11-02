@@ -804,6 +804,7 @@
     "dormant": "La facturation entreprise n'est pas encore activée. Tout est gratuit pour le moment.",
     "checkoutCancelled": "Paiement annulé, rien n'a été débité.",
     "alreadySubscribed": "Cette organisation a déjà un abonnement actif. Utilisez « Gérer l'abonnement » pour changer de palier.",
+    "subscriptionPastDue": "Le dernier paiement de l'abonnement n'est pas passé. Mettez à jour votre carte depuis « Gérer l'abonnement » : un nouvel abonnement vous ferait payer deux fois.",
     "yearlyUnavailable": "La facturation annuelle n'est pas encore disponible. Le paiement mensuel, lui, fonctionne : la grille vient de revenir dessus.",
     "error": "Impossible de contacter Stripe. Réessayez dans un instant.",
     "back": "Espace entreprise",
