@@ -21,6 +21,15 @@ describe('pending-checkout', () => {
     expect(readPendingCheckout('org-1', 30 * 60 * 1000 + 1)).toBeNull();
     sessionStorage.setItem(PENDING_CHECKOUT_KEY, JSON.stringify({ orgId: 'org-1', tierKey: 'gold', interval: 'monthly', at: 0 }));
     expect(readPendingCheckout('org-1', 1)).toBeNull();
+    sessionStorage.setItem(PENDING_CHECKOUT_KEY, JSON.stringify({ orgId: 'org-1', tierKey: 'free', interval: 'monthly', at: 0 }));
+    expect(readPendingCheckout('org-1', 1)).toBeNull();
+    sessionStorage.setItem(PENDING_CHECKOUT_KEY, JSON.stringify({ orgId: 'org-1', tierKey: 't20', interval: 'weekly', at: 0 }));
+    expect(readPendingCheckout('org-1', 1)).toBeNull();
+  });
+
+  it('une trace datée dans le futur ne vit pas indéfiniment', () => {
+    writePendingCheckout({ orgId: 'org-1', tierKey: 't20', interval: 'monthly', at: 5_000 });
+    expect(readPendingCheckout('org-1', 1_000)).toBeNull();
   });
 
   it('survit à une valeur corrompue', () => {
