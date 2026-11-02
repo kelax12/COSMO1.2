@@ -17,18 +17,35 @@ import { useQuery } from '@tanstack/react-query';
 import { useIsDemo } from '@/lib/app-mode.store';
 import { getOrgSubscription } from './org-billing.repository';
 import type { OrgSubscription } from './org-billing.types';
+import { activationPollInterval } from './org-billing.logic';
+import type { OrgTierKey } from './premium-config';
 
 export const orgBillingKeys = {
   all: ['org-billing'] as const,
   subscription: (orgId: string) => [...orgBillingKeys.all, 'subscription', orgId] as const,
 };
 
-export const useOrgSubscription = (orgId: string | undefined) => {
+/** Attente d'activation au retour de Stripe (spec 2026-11-02 § 5.1). */
+export interface AwaitActivation {
+  tierKey: OrgTierKey | null;
+  deadline: number;
+}
+
+export const useOrgSubscription = (
+  orgId: string | undefined,
+  options?: { awaitActivation?: AwaitActivation | null },
+) => {
   const isDemo = useIsDemo();
+  const awaiting = options?.awaitActivation ?? null;
   return useQuery<OrgSubscription | null>({
     queryKey: orgBillingKeys.subscription(orgId ?? ''),
     queryFn: () => (isDemo ? Promise.resolve(null) : getOrgSubscription(orgId as string)),
     enabled: !!orgId,
     staleTime: 1000 * 60 * 5,
+    // Sondage BORNÉ, seulement pendant l'attente d'activation : 1,5 s, arrêt dès
+    // que l'abonnement correspond ou 20 s après le retour. Hors attente : aucun.
+    refetchInterval: awaiting
+      ? (query) => activationPollInterval(query.state.data, awaiting.tierKey, awaiting.deadline)
+      : false,
   });
 };

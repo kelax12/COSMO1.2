@@ -168,7 +168,7 @@ demandes d'amis reçues/envoyées, listes partagées).
 Ensemble, ils ont remplacé **huit** sondages permanents, soit environ 30 requêtes par minute et
 par utilisateur connecté avant toute interaction.
 
-**Il reste QUATRE déclarations de `refetchInterval`, et aucune n'est permanente** (vérifié le
+**Il reste CINQ déclarations de `refetchInterval`, et aucune n'est permanente** (vérifié le
 2026-08-25) :
 
 | Où | Nature |
@@ -177,6 +177,7 @@ par utilisateur connecté avant toute interaction.
 | `team-projects/hooks.ts` · `useTeamTasks` | conditionnelle (`live`) |
 | `team-okrs/hooks.ts` · `useTeamOKRs` | conditionnelle (`live`) |
 | `tasks/hooks.ts` · `useTasks` | filet à 5 min, et seulement si une collaboration est active |
+| `billing/org-billing.hooks.ts` · `useOrgSubscription` | bornée : 1,5 s pendant 20 s au plus, au retour de Stripe seulement |
 
 > ⚠️ **Compter les `refetchInterval` ne suffit pas : il faut qualifier chacun.** Une première
 > version de ce paragraphe annonçait « aucun permanent » alors que deux l'étaient encore, dont
@@ -197,7 +198,7 @@ de sécurité à 5 min.
   `supabase_realtime` **et** passée en `REPLICA IDENTITY FULL` (sinon les DELETE ne portent que
   la clé primaire et les filtres client ne matchent jamais) — cf. mig. 087.
 - ✅ **Le décompte nominatif est MÉCANISÉ depuis le 2026-09-02** : `src/modules/polling.guard.test.ts`
-  nomme les quatre fichiers qui doivent garder un `refetchInterval` conditionnel, et embarque un
+  nomme les cinq fichiers qui doivent garder un `refetchInterval` conditionnel, et embarque un
   témoin qui refuse une détection qui ne détecterait plus rien. Un checkpoint qu'on rejoue à la
   main est un checkpoint qu'on oubliera, et **celui-ci a déjà été faux une fois**.
 - 🔴 **Ces canaux ont été COUPÉS en production sans que rien ne le dise**, du fait d'un `wss://`
