@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 import { toast } from '@/lib/toast';
@@ -9,7 +9,15 @@ import { ENTERPRISE_BILLING_ENFORCED, ENTERPRISE_PRICING_TIERS, PRICES_VISIBLE }
 import type { OrgBillingInterval, OrgTierKey } from '@/modules/billing/premium-config';
 import { useOrgSubscription, type AwaitActivation } from '@/modules/billing/org-billing.hooks';
 import { useStartOrgCheckout, useOpenOrgPortal } from '@/modules/billing/org-billing.mutations';
-import { ACTIVATION_TIMEOUT_MS, effectiveQuota, effectiveTierKey, isActivated, recommendedTier } from '@/modules/billing/org-billing.logic';
+import {
+  ACTIVATION_TIMEOUT_MS,
+  effectiveQuota,
+  effectiveTierKey,
+  isActivated,
+  needsPaymentAttention,
+  recommendedTier,
+} from '@/modules/billing/org-billing.logic';
+import { ORG_TIER_LABEL_KEYS } from '@/modules/billing/org-tier-labels';
 import { clearPendingCheckout, readPendingCheckout, writePendingCheckout } from '@/modules/billing/pending-checkout';
 import { OrgWithdrawCancel } from './OrgWithdrawCancel';
 import { EnterpriseTierGrid } from './EnterpriseTierGrid';
@@ -21,7 +29,6 @@ import { OrgPlanCard } from './OrgPlanCard';
 import { OrgPrecontractualPictos } from './OrgPrecontractualPictos';
 import { OrgCheckoutRecap } from './OrgCheckoutRecap';
 import { OrgActivationState, type ActivationPhase } from './OrgActivationState';
-import { useTierRangeLabel } from './billing-ui';
 import { buildOrgLink } from './deep-link.helpers';
 import { useActiveOrganization, useOrgMembers } from '@/modules/organizations';
 import { useAuth } from '@/modules/auth/AuthContext';
@@ -56,7 +63,7 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
   const { activeOrg } = useActiveOrganization();
   const ownerId = activeOrg?.ownerId ?? '';
   const { t: tOrgAdmin } = useT('orgAdmin');
-  const rangeLabel = useTierRangeLabel();
+  const { t: tc } = useT('common');
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [awaiting, setAwaiting] = useState<AwaitActivation | null>(null);
@@ -76,6 +83,14 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
   const [immediateAccess, setImmediateAccess] = useState(false);
 
   const canPay = ENTERPRISE_BILLING_ENFORCED && isOwner;
+  // Impayé : le serveur ne refuse un checkout que sur un abonnement actif. En
+  // `past_due`, un checkout créerait un SECOND abonnement : double facturation.
+  const pastDue = needsPaymentAttention(subscription ?? null);
+  // Palier payant ACTIF : changer de palier passe par le portail Stripe
+  // (prorata), jamais par un checkout (`already_subscribed`, montant faux).
+  const activePaid = subscription?.status === 'active' && subscription.tierKey !== 'free';
+  // Verrou de double clic : posé AVANT `mutate`, levé en erreur ou au retour.
+  const payingRef = useRef(false);
   // On ne vend pas sans afficher de prix : facturation active = grille visible.
   const showPrices = PRICES_VISIBLE || ENTERPRISE_BILLING_ENFORCED;
 
@@ -84,8 +99,9 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
   // supérieur » du flux d'invitation, qui ouvre le récapitulatif).
   const checkoutResult = searchParams.get('checkout');
   const tierParam = searchParams.get('tier');
-  // `tier` attend que l'abonnement soit lu : le palier déjà souscrit n'ouvre
-  // aucun récapitulatif (il n'y a rien à payer), même pas un instant.
+  // `tier` attend que l'abonnement soit lu, puis n'ouvre le récapitulatif que
+  // sans abonnement payant actif ni impayé : sinon, ni récapitulatif ni
+  // redirection automatique vers le portail.
   const subscriptionStatus = subscription?.status;
   const subscriptionTier = subscription?.tierKey;
   useEffect(() => {
@@ -100,8 +116,8 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
       clearPendingCheckout();
       toast.info(tOrgAdmin('billing.checkoutCancelled'));
     }
-    const alreadyOnTier = subscriptionStatus === 'active' && subscriptionTier === tierParam;
-    if (consumeTier && tierParam && canPay && PAID_TIER_KEYS.has(tierParam) && !alreadyOnTier) {
+    const blocked = subscriptionStatus === 'past_due' || (subscriptionStatus === 'active' && subscriptionTier !== 'free');
+    if (consumeTier && tierParam && canPay && PAID_TIER_KEYS.has(tierParam) && !blocked) {
       setSelectedTier(tierParam as OrgTierKey);
       setImmediateAccess(false);
     }
@@ -124,9 +140,9 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
   }, [activated]);
 
   const phase: ActivationPhase | null = !awaiting ? null : activated ? 'welcome' : timedOut ? 'timeout' : 'waiting';
-  // Tant qu'un paiement est en cours d'activation, aucun palier ne se choisit :
-  // sinon un second paiement part avant que le premier soit lu.
-  const canChoose = canPay && (phase === null || phase === 'welcome');
+  // Tant qu'un paiement est en cours d'activation, ou impayé, aucun palier ne
+  // se choisit : sinon un second paiement part avant que le premier soit réglé.
+  const canChoose = canPay && !pastDue && (phase === null || phase === 'welcome');
 
   // `isSuccess` reste vrai après la redirection : retour arrière depuis Stripe
   // (page restaurée du bfcache), le panneau « redirection » resterait figé.
@@ -134,6 +150,7 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
   useEffect(() => {
     const onPageShow = (e: PageTransitionEvent) => {
       if (!e.persisted) return;
+      payingRef.current = false;
       resetCheckout();
       clearPendingCheckout();
       // La demande expresse se repose, elle n'est jamais reprise d'office.
@@ -143,25 +160,49 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
     return () => window.removeEventListener('pageshow', onPageShow);
   }, [resetCheckout]);
 
-  // Filet : un palier choisi AVANT la lecture de l'abonnement (clic sur la
-  // grille encore sans palier actuel) qui se révèle être le palier souscrit.
+  // Filet : un palier choisi AVANT la lecture de l'abonnement (grille encore
+  // sans palier actuel), qui se révèle payant actif ou impayé.
   useEffect(() => {
-    if (selectedTier && subscription?.status === 'active' && subscription.tierKey === selectedTier) {
-      setSelectedTier(null);
+    if (selectedTier && (pastDue || activePaid)) setSelectedTier(null);
+  }, [selectedTier, pastDue, activePaid]);
+
+  // La case vaut pour les conditions À L'ÉCRAN : changer de périodicité la repose.
+  const changeInterval = (next: OrgBillingInterval) => {
+    setBillingInterval(next);
+    if (selectedTier) setImmediateAccess(false);
+  };
+
+  const closeRecap = () => {
+    payingRef.current = false;
+    resetCheckout();
+    setSelectedTier(null);
+  };
+
+  const chooseTier = (tierKey: OrgTierKey) => {
+    if (activePaid) {
+      portal.mutate({ orgId });
+      return;
     }
-  }, [selectedTier, subscription?.status, subscription?.tierKey]);
+    // Choisir n'envoie PAS au paiement : le récapitulatif s'ouvre.
+    payingRef.current = false;
+    resetCheckout();
+    setSelectedTier(tierKey);
+    setImmediateAccess(false);
+  };
 
   const pay = () => {
-    if (!selectedTier) return;
+    if (!selectedTier || payingRef.current) return;
+    payingRef.current = true;
     writePendingCheckout({ orgId, tierKey: selectedTier, interval: billingInterval, at: Date.now() });
     checkout.mutate(
       { orgId, tierKey: selectedTier, interval: billingInterval, immediateAccess },
       {
         onError: (err: Error) => {
+          payingRef.current = false;
           clearPendingCheckout();
           // Le CODE de l'erreur, jamais son texte traduit (C-62) : l'annuel
           // indisponible ramène la grille sur le mensuel, qui fonctionne.
-          if (errorCode(err) === 'yearly_unavailable') setBillingInterval('monthly');
+          if (errorCode(err) === 'yearly_unavailable') changeInterval('monthly');
         },
       },
     );
@@ -186,7 +227,7 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
       {phase && (
         <OrgActivationState
           phase={phase}
-          tierLabel={rangeLabel(subscription?.tierKey ?? awaiting?.tierKey ?? 'free')}
+          tierLabel={tc(ORG_TIER_LABEL_KEYS[subscription?.tierKey ?? awaiting?.tierKey ?? 'free'])}
           membersHref={buildOrgLink('members')}
           onClose={() => setAwaiting(null)}
         />
@@ -209,10 +250,15 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
             <h3 id="org-change-tier" className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">
               {tOrgAdmin('billing.changeTierTitle')}
             </h3>
-            {/* Masqué tant que la facturation dort : un choix annuel sur une offre
-                gratuite laisserait croire qu'on fige un tarif réduit d'avance. */}
-            {ENTERPRISE_BILLING_ENFORCED && (
-              <BillingIntervalToggle value={billingInterval} onChange={setBillingInterval} disabled={checkout.isPending} />
+            {/* Masqué tant que la facturation dort (un choix annuel sur une offre
+                gratuite laisserait croire qu'on fige un tarif réduit d'avance), et
+                tant qu'aucun palier ne se choisit (activation, impayé). */}
+            {canChoose && (
+              <BillingIntervalToggle
+                value={billingInterval}
+                onChange={changeInterval}
+                disabled={checkout.isPending || checkout.isSuccess}
+              />
             )}
           </div>
 
@@ -229,7 +275,7 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
           {ENTERPRISE_BILLING_ENFORCED && !isOwner && (
             <p className="text-sm text-[rgb(var(--color-text-secondary))]">{tOrgAdmin('billing.ownerOnly')}</p>
           )}
-          {ENTERPRISE_BILLING_ENFORCED && billingInterval === 'yearly' && (
+          {canChoose && billingInterval === 'yearly' && (
             <p className="-mt-1 text-xs text-[rgb(var(--color-text-secondary))]">{tOrgAdmin('billing.intervalYearlyHint')}</p>
           )}
 
@@ -253,30 +299,20 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
                       immediateAccess={immediateAccess}
                       onImmediateAccessChange={setImmediateAccess}
                       onPay={pay}
-                      onCancel={() => {
-                        checkout.reset();
-                        setSelectedTier(null);
-                      }}
+                      onCancel={closeRecap}
                     />
                   </div>
                 ) : (
                   <motion.div key="grid" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                     {/* Facturation en sommeil : la grille reste, elle informe des
                         tarifs, mais sans aucun CTA (`onSelect` absent). */}
+                    {/* Palier ACTUEL = palier en vigueur : un payant impayé ou
+                        résilié n'est pas « actuel », il redevient choisissable. */}
                     <EnterpriseTierGrid
-                      currentTier={subscription?.tierKey}
+                      currentTier={effectiveTierKey(subscription ?? null)}
                       recommendedKey={canChoose ? recommendedTier(memberCount).key : undefined}
-                      onSelect={
-                        canChoose
-                          ? (tierKey) => {
-                              // Choisir n'envoie PAS au paiement : le récapitulatif s'ouvre.
-                              checkout.reset();
-                              setSelectedTier(tierKey);
-                              setImmediateAccess(false);
-                            }
-                          : undefined
-                      }
-                      isPending={checkout.isPending}
+                      onSelect={canChoose ? chooseTier : undefined}
+                      isPending={checkout.isPending || portal.isPending}
                       dormant={!ENTERPRISE_BILLING_ENFORCED}
                       interval={billingInterval}
                     />

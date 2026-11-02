@@ -7,7 +7,7 @@ import { OrgActivationState } from './OrgActivationState';
 const renderPhase = (phase: 'waiting' | 'timeout' | 'welcome', onClose = vi.fn()) =>
   render(
     <MemoryRouter>
-      <OrgActivationState phase={phase} tierLabel="5 à 10 membres" membersHref="/entreprise/members" onClose={onClose} />
+      <OrgActivationState phase={phase} tierLabel="Équipe" membersHref="/entreprise/members" onClose={onClose} />
     </MemoryRouter>,
   );
 
@@ -26,7 +26,7 @@ describe('OrgActivationState', () => {
   it('bienvenue : nomme le palier, mène aux membres, se ferme', () => {
     const onClose = vi.fn();
     renderPhase('welcome', onClose);
-    expect(screen.getByText('Bienvenue dans le palier 5 à 10 membres')).toBeTruthy();
+    expect(screen.getByText('Bienvenue dans le plan Équipe')).toBeTruthy();
     expect(screen.getByRole('link', { name: /inviter des membres/i }).getAttribute('href')).toBe('/entreprise/members');
     fireEvent.click(screen.getByRole('button', { name: /fermer/i }));
     expect(onClose).toHaveBeenCalled();

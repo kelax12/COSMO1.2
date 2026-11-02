@@ -25,6 +25,12 @@ describe('OrgPlanCard', () => {
     expect(screen.getByText(/prochaine échéance le .*150,00 €/i)).toBeTruthy();
   });
 
+  it('code de réduction : la date seule, jamais un montant dérivé du tarif plein', () => {
+    render(<OrgPlanCard subscription={sub({ discountCode: 'ASSO50' })} memberCount={14} />);
+    const due = screen.getByText(/prochaine échéance le/i);
+    expect(due.textContent).not.toMatch(/€/);
+  });
+
   it('impayé : pastille Paiement en attente, pas d échéance annoncée', () => {
     render(<OrgPlanCard subscription={sub({ status: 'past_due' })} memberCount={14} />);
     expect(screen.getByText('Paiement en attente')).toBeTruthy();
