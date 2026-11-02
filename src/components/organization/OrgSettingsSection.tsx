@@ -65,6 +65,8 @@ interface OrgSettingsSectionProps {
   seatsFull: boolean;
   /** Places du forfait en vigueur (`effectiveQuota`), `null` = illimité. */
   seatsQuota: number | null;
+  /** Abonnement impayé : la rubrique Inviter ne propose aucune mise à niveau. */
+  pastDue?: boolean;
   /** Droit de lire au moins un rapport d'activité (entreprise ou équipe). */
   canReports?: boolean;
   /** Panneau ouvert à l'arrivée (ancienne adresse `/entreprise/reports`). */
@@ -109,6 +111,7 @@ const OrgSettingsSection = ({
   canInvite,
   seatsFull,
   seatsQuota,
+  pastDue = false,
   canReports = false,
   initialPanel,
 }: OrgSettingsSectionProps) => {
@@ -406,6 +409,7 @@ const OrgSettingsSection = ({
             seatsQuota={seatsQuota}
             memberCount={members.length}
             isOwner={isOwner}
+            pastDue={pastDue}
             onInviteByEmail={(emails) => { setQuickEmails(emails); setInvitingByEmail(true); }}
           />
         </Suspense>

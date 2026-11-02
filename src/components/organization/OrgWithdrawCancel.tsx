@@ -37,7 +37,7 @@ interface Props {
  * page de confirmation », sans piège de focus à câbler.
  */
 export function OrgWithdrawCancel({ orgId, subscription, memberCount }: Props) {
-  const { t } = useT('orgAdmin');
+  const { t, tp } = useT('orgAdmin');
   const { t: tc } = useT('common');
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -92,7 +92,7 @@ export function OrgWithdrawCancel({ orgId, subscription, memberCount }: Props) {
           )}
           {periodEnd && memberCount > ORG_FREE_SEATS && (
             <p className="rounded-lg bg-[rgb(var(--color-hover))] p-3 text-xs text-[rgb(var(--color-text-secondary))]">
-              {t('billing.endsOverQuota', { date: periodEnd, quota: ORG_FREE_SEATS, count: memberCount })}
+              {tp('billing.endsOverQuota', memberCount, { date: periodEnd, quota: ORG_FREE_SEATS })}
             </p>
           )}
           <div className="flex flex-wrap items-center gap-3">

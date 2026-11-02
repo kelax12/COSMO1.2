@@ -169,7 +169,7 @@ Ensemble, ils ont remplacé **huit** sondages permanents, soit environ 30 requê
 par utilisateur connecté avant toute interaction.
 
 **Il reste CINQ déclarations de `refetchInterval`, et aucune n'est permanente** (vérifié le
-2026-08-25) :
+2026-11-02) :
 
 | Où | Nature |
 |---|---|

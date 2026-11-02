@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useT } from '@/i18n/useT';
 import type { OrgBillingInterval } from '@/modules/billing/premium-config';
 
@@ -27,6 +27,7 @@ const INTERVALS: OrgBillingInterval[] = ['monthly', 'yearly'];
  */
 export function BillingIntervalToggle({ value, onChange, disabled }: Props) {
   const { t: tOrgAdmin } = useT('orgAdmin');
+  const reduce = useReducedMotion();
 
   return (
     <div
@@ -51,11 +52,12 @@ export function BillingIntervalToggle({ value, onChange, disabled }: Props) {
             }`}
           >
             {/* Pastille partagée (`layoutId`) : elle glisse d'une option à l'autre.
-                Sous mouvement réduit, Framer coupe l'animation de layout et la pastille
-                se pose directement : aucune position ne dépend du mouvement. */}
+                Sous mouvement réduit, PAS de `layoutId` : Framer ne la poserait pas
+                directement, il la replacerait une frame à l'ancienne position
+                (constat de `ApercuWidgetGrid`). Sans lui, elle naît sous l'option. */}
             {isActive && (
               <motion.span
-                layoutId="billing-interval-pill"
+                layoutId={reduce ? undefined : 'billing-interval-pill'}
                 aria-hidden
                 className="absolute inset-0 rounded-full bg-[rgb(var(--color-accent-solid))]"
                 transition={{ type: 'spring', stiffness: 500, damping: 40 }}

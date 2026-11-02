@@ -479,6 +479,7 @@ const OrganizationPage = () => {
           canInvite={canInvite}
           seatsFull={seatsFull}
           seatsQuota={seatsQuota}
+          pastDue={needsPaymentAttention(orgSubscription ?? null)}
           canReports={canReports && !teamsLoading && !myPermissions.isLoading}
           initialPanel={urlTab === 'reports' ? 'reports' : undefined}
         />

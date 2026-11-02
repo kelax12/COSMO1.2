@@ -1,5 +1,5 @@
 import { useId, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Lock, ShieldCheck } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { formatCurrency, formatDate } from '@/i18n/format';
@@ -26,6 +26,9 @@ interface Props {
 /**
  * Récapitulatif avant paiement (spec 2026-11-02 § 3.3). La carte de la grille
  * s'y déploie : même `layoutId` (`org-tier-<palier>`).
+ * Sous mouvement réduit, PAS de `layoutId` : Framer rendrait l'animation de
+ * layout instantanée puis replacerait l'élément à l'ancienne position pour une
+ * frame (même constat que `ApercuWidgetGrid`, CI du 2026-10-22).
  *
  * La case d'accès immédiat ne change pas sur le fond (L221-13, L221-25) : non
  * cochée par défaut, obligatoire, revérifiée par le serveur. Ce qui change :
@@ -47,6 +50,7 @@ export function OrgCheckoutRecap({
 }: Props) {
   const { t } = useT('orgAdmin');
   const rangeLabel = useTierRangeLabel();
+  const reduce = useReducedMotion();
   const [showRequired, setShowRequired] = useState(false);
   const titleId = useId();
   const alertId = useId();
@@ -85,7 +89,7 @@ export function OrgCheckoutRecap({
 
   return (
     <motion.section
-      layoutId={`org-tier-${tierKey}`}
+      layoutId={reduce ? undefined : `org-tier-${tierKey}`}
       aria-labelledby={titleId}
       exit={{ opacity: 0 }}
       className="flex flex-col gap-3 rounded-xl border-2 border-[rgb(var(--color-accent))] p-4"

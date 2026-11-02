@@ -1,6 +1,6 @@
 import { useId } from 'react';
 import { Check } from 'lucide-react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ENTERPRISE_PRICING_TIERS, displayedMonthlyEur, yearlyTotalEur } from '@/modules/billing/premium-config';
 import type { OrgBillingInterval, OrgTierKey } from '@/modules/billing/premium-config';
 import { formatCurrency, formatPrice } from '@/i18n/format';
@@ -37,6 +37,9 @@ interface Props {
  *
  * Depuis le 2026-11-02, la carte entière se clique (spec § 3.2) et porte un
  * `layoutId` : le récapitulatif reprend le même, la carte s'y déploie.
+ * Sous mouvement réduit, PAS de `layoutId` : Framer rendrait l'animation de
+ * layout instantanée puis replacerait l'élément à l'ancienne position pour une
+ * frame (même constat que `ApercuWidgetGrid`, CI du 2026-10-22).
  *
  * Facturation éteinte (`dormant`) : le prix d'un palier payant est REMPLACÉ par
  * « Gratuit », le tarif d'après barré dessous, comme sur la landing.
@@ -52,6 +55,7 @@ export function EnterpriseTierGrid({
   const { t: tOrgAdmin } = useT('orgAdmin');
   const rangeLabel = useTierRangeLabel();
   const uid = useId();
+  const reduce = useReducedMotion();
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -144,7 +148,7 @@ export function EnterpriseTierGrid({
           <motion.button
             key={tier.key}
             type="button"
-            layoutId={`org-tier-${tier.key}`}
+            layoutId={reduce ? undefined : `org-tier-${tier.key}`}
             disabled={isPending}
             onClick={() => onSelect?.(tier.key)}
             aria-labelledby={labelId}
@@ -155,7 +159,7 @@ export function EnterpriseTierGrid({
             {body}
           </motion.button>
         ) : (
-          <motion.div key={tier.key} layoutId={`org-tier-${tier.key}`} className={frame}>
+          <motion.div key={tier.key} layoutId={reduce ? undefined : `org-tier-${tier.key}`} className={frame}>
             {body}
           </motion.div>
         );

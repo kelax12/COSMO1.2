@@ -18,7 +18,7 @@ interface Props {
  * `role="status"` n'enveloppe que le texte, jamais le bouton.
  */
 export function OrgPastDueBanner({ orgId, memberCount }: Props) {
-  const { t } = useT('orgAdmin');
+  const { t, tp } = useT('orgAdmin');
   const { data: history = [], isPending } = useOrgBillingHistory(orgId, true);
   const portal = useOpenOrgPortal();
   const failedAt = lastFailedPaymentAt(history);
@@ -33,7 +33,7 @@ export function OrgPastDueBanner({ orgId, memberCount }: Props) {
         <p className="min-h-5 text-sm font-semibold text-amber-800 dark:text-amber-300">
           {isPending ? null : failedAt ? t('billing.pastDueTitle', { date: formatDate(new Date(failedAt)) }) : t('billing.pastDueTitleNoDate')}
         </p>
-        <p className="mt-0.5 text-xs text-amber-800 dark:text-amber-300">{t('billing.pastDueBody', { count: memberCount })}</p>
+        <p className="mt-0.5 text-xs text-amber-800 dark:text-amber-300">{tp('billing.pastDueBody', memberCount)}</p>
       </div>
       <button
         type="button"
