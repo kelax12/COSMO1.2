@@ -93,6 +93,9 @@ const CHECKOUT_ERROR_KEYS: Record<string, KeyOf<'orgAdmin'>> = {
 
 export const useStartOrgCheckout = () =>
   useMutation({
+    // 🔴 AUCUN REJEU AUTOMATIQUE sur un chemin qui mène au paiement : on fait
+    // retenter la PERSONNE, jamais le navigateur.
+    retry: 0,
     mutationFn: ({
       orgId,
       tierKey,

@@ -66,28 +66,31 @@ export function OrgWithdrawCancel({ orgId, subscription, memberCount }: Props) {
         <div className="flex flex-col gap-3">
           <div>
             <h3 className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">
-              {t('billing.endsTitle', { date: periodEnd })}
+              {periodEnd ? t('billing.endsTitle', { date: periodEnd }) : t('billing.endsTitleNoDate')}
             </h3>
             <p className="text-xs text-[rgb(var(--color-text-secondary))]">{t('billing.endsBody')}</p>
           </div>
           {/* Frise en liste ordonnée : lisible sans le dessin. La date de
-              résiliation n'est pas lue (aucune colonne), le jalon est omis. */}
-          <ol
-            aria-label={t('billing.timelineLabel')}
-            className="relative grid grid-cols-3 gap-2 text-xs before:absolute before:left-0 before:right-0 before:top-[5px] before:h-0.5 before:bg-[rgb(var(--color-border))]"
-          >
-            {[
-              { label: t('billing.timelineToday'), dot: 'bg-[rgb(var(--color-accent))]', text: 'text-[rgb(var(--color-accent))]' },
-              { label: t('billing.timelineEnd', { date: periodEnd }), dot: 'bg-[rgb(var(--color-text-primary))]', text: 'text-[rgb(var(--color-text-primary))]' },
-              { label: t('billing.timelineFree'), dot: 'bg-[rgb(var(--color-border-strong))]', text: 'text-[rgb(var(--color-text-secondary))]' },
-            ].map((step) => (
-              <li key={step.label} className={`relative flex flex-col gap-1.5 ${step.text}`}>
-                <span aria-hidden className={`h-3 w-3 rounded-full ${step.dot}`} />
-                {step.label}
-              </li>
-            ))}
-          </ol>
-          {memberCount > ORG_FREE_SEATS && (
+              résiliation n'est pas lue (aucune colonne), le jalon est omis.
+              Sans date de fin lue, ni frise ni avis datés : jamais de date vide. */}
+          {periodEnd && (
+            <ol
+              aria-label={t('billing.timelineLabel')}
+              className="relative grid grid-cols-3 gap-2 text-xs before:absolute before:left-0 before:right-0 before:top-[5px] before:h-0.5 before:bg-[rgb(var(--color-border))]"
+            >
+              {[
+                { label: t('billing.timelineToday'), dot: 'bg-[rgb(var(--color-accent))]', text: 'text-[rgb(var(--color-accent))]' },
+                { label: t('billing.timelineEnd', { date: periodEnd }), dot: 'bg-[rgb(var(--color-text-primary))]', text: 'text-[rgb(var(--color-text-primary))]' },
+                { label: t('billing.timelineFree'), dot: 'bg-[rgb(var(--color-border-strong))]', text: 'text-[rgb(var(--color-text-secondary))]' },
+              ].map((step) => (
+                <li key={step.label} className={`relative flex flex-col gap-1.5 ${step.text}`}>
+                  <span aria-hidden className={`h-3 w-3 rounded-full ${step.dot}`} />
+                  {step.label}
+                </li>
+              ))}
+            </ol>
+          )}
+          {periodEnd && memberCount > ORG_FREE_SEATS && (
             <p className="rounded-lg bg-[rgb(var(--color-hover))] p-3 text-xs text-[rgb(var(--color-text-secondary))]">
               {t('billing.endsOverQuota', { date: periodEnd, quota: ORG_FREE_SEATS, count: memberCount })}
             </p>
