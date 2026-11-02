@@ -266,6 +266,8 @@ const TABLES_NON_EXPORTEES = {
   subscriptions: "État d'abonnement, fourni par Stripe et non par la personne. Les pièces comptables relèvent de `payment_records`, conservé.",
   payment_records: "Journal fiscal inaltérable (CGI art. 286-I-3° bis). Les factures se réclament par le portail Stripe.",
   withdrawal_consents: 'Preuve du consentement (Conso. L221-28). Produite en litige, pas exportée en vrac.',
+  billing_acceptances: "Preuve de l'acceptation des CGV et de la demande d'accès immédiat (Conso. L221-25, mig. 237). Produite en litige, pas exportée en vrac.",
+  org_withdrawals: "Dossier de rétractation tenu par COSMO pour le remboursement (Conso. L221-24, mig. 237), produit par le système et non fourni par la personne.",
   user_activity_days: 'Compteur de présence agrégé, dérivé, jamais saisi.',
   account_inactivity_notices: "Date d'un avertissement de suppression pour inactivité (mig. 226, C-121), produite par le système. Un compte qui peut demander son export est, par définition, revenu : la ligne n'ouvre alors plus rien.",
   admin_users: "Allowlist d'administration, pas une donnée de compte.",
