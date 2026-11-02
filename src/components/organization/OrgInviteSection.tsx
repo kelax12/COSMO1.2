@@ -4,7 +4,10 @@ import type { MyOrganization } from '@/modules/organizations';
 import { Link } from 'react-router';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { useT } from '@/i18n/useT';
+import { formatCurrency } from '@/i18n/format';
+import { recommendedTier, tierByQuota } from '@/modules/billing/org-billing.logic';
 import { buildOrgLink } from './deep-link.helpers';
+import { useTierRangeLabel } from './billing-ui';
 
 // Même règle que dans `OrgSettingsSection` : pas de catalogue demandé ici,
 // ceux de l'espace entreprise sont déclarés par la ROUTE.
@@ -47,6 +50,10 @@ const OrgInviteSection = ({
   const { t: tOrgAdmin } = useT('orgAdmin');
   const [quickEmails, setQuickEmails] = useState('');
   const [showContacts, setShowContacts] = useState(false);
+  const rangeLabel = useTierRangeLabel();
+  const nextTier = recommendedTier(memberCount);
+  const currentTier = tierByQuota(seatsQuota);
+  const who = quickEmails.trim() || t('invite.someoneMore');
 
   return (
         <section aria-labelledby="org-invite-title" className="space-y-4">
@@ -165,6 +172,48 @@ const OrgInviteSection = ({
                 </button>
               </p>
             </form>
+          )}
+
+          {/* Plus de place (spec 2026-11-02 § 5.4) : la solution sur place,
+              palier suivant présélectionné dans l'onglet Abonnement. Le champ
+              reste saisissable, seul l'envoi est retenu. `role="status"` ne
+              porte que le texte, jamais les liens. */}
+          {seatsFull && seatsQuota !== null && (
+            isOwner ? (
+              <div className="rounded-2xl border border-[rgb(var(--color-accent))] bg-[rgb(var(--color-accent)/0.06)] p-4">
+                <p role="status" className="text-sm text-[rgb(var(--color-text-primary))]">
+                  {currentTier.priceEurPerMonth > 0
+                    ? t('invite.seatsFullOwner', {
+                        quota: seatsQuota,
+                        who,
+                        tier: rangeLabel(nextTier.key),
+                        price: formatCurrency(nextTier.priceEurPerMonth),
+                        current: formatCurrency(currentTier.priceEurPerMonth),
+                      })
+                    : t('invite.seatsFullOwnerFromFree', {
+                        quota: seatsQuota,
+                        who,
+                        tier: rangeLabel(nextTier.key),
+                        price: formatCurrency(nextTier.priceEurPerMonth),
+                      })}
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Link
+                    to={buildOrgLink('billing', undefined, { tier: nextTier.key })}
+                    className="inline-flex items-center rounded-lg bg-[rgb(var(--color-accent-solid))] px-3 py-2 text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))]"
+                  >
+                    {t('invite.upgradeCta')}
+                  </Link>
+                  <Link to={buildOrgLink('members')} className="inline-flex items-center px-3 py-2 text-sm text-[rgb(var(--color-accent))] hover:underline">
+                    {t('invite.freeSeatCta')}
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <p role="status" className="rounded-2xl bg-[rgb(var(--color-hover))] p-4 text-sm text-[rgb(var(--color-text-secondary))]">
+                {t('invite.seatsFullMember')}
+              </p>
+            )
           )}
 
           {/* Par code (validation admin), par lien direct, ou en faisant venir
