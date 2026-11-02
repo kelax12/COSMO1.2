@@ -93,8 +93,15 @@ describe('Facturation entreprise : sièges, historique, contact', () => {
     renderTab();
     const section = screen.getByRole('region', { name: /historique/i });
     await waitFor(() => expect(within(section).getByText(/ACME-0001/)).toBeTruthy());
+    expect(within(section).getByText('Remboursée')).toBeTruthy();
+    expect(within(section).getByText(/envoyées à/i)).toBeTruthy();
     expect(within(section).getByText(/remboursement/i)).toBeTruthy();
-    const links = within(section).getAllByRole('link');
+    // « Modifier » est une ancre dans la page, vers la carte de contact : seuls
+    // les liens de facture sortent, et un seul est https.
+    expect(within(section).getByRole('link', { name: /modifier/i }).getAttribute('href')).toBe('#org-billing-contact');
+    const links = within(section)
+      .getAllByRole('link')
+      .filter((a) => !a.getAttribute('href')?.startsWith('#'));
     expect(links).toHaveLength(1);
     expect(links[0].getAttribute('href')).toBe('https://invoice.stripe.com/i/abc');
   });
