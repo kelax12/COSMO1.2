@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { Check } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ENTERPRISE_PRICING_TIERS, displayedMonthlyEur, yearlyTotalEur } from '@/modules/billing/premium-config';
@@ -50,6 +51,7 @@ export function EnterpriseTierGrid({
 }: Props) {
   const { t: tOrgAdmin } = useT('orgAdmin');
   const rangeLabel = useTierRangeLabel();
+  const uid = useId();
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -61,31 +63,42 @@ export function EnterpriseTierGrid({
         const label = rangeLabel(tier.key);
         const isRecommended = recommendedKey === tier.key && !isCurrent;
         const clickable = !isFree && !isCurrent && !dormant && !!onSelect;
+        const labelId = `${uid}-${tier.key}-label`;
+        const pillId = `${uid}-${tier.key}-pill`;
+        const priceId = `${uid}-${tier.key}-price`;
 
         const body = (
           <>
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{label}</span>
+            <span className="flex items-center justify-between gap-3">
+              <span id={labelId} className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">
+                {clickable && (
+                  <>
+                    <span className="sr-only">{tOrgAdmin('billing.chooseTierPrefix')}</span>{' '}
+                  </>
+                )}
+                {label}
+              </span>
               {isCurrent && <Check size={16} className="shrink-0 text-[rgb(var(--color-accent))]" aria-hidden />}
-            </div>
+            </span>
             {isRecommended && (
-              <span className={`${PILL_BASE} bg-[rgb(var(--color-accent)/0.12)] text-[rgb(var(--color-accent))]`}>
+              <span id={pillId} className={`${PILL_BASE} bg-[rgb(var(--color-accent)/0.12)] text-[rgb(var(--color-accent))]`}>
                 {tOrgAdmin('billing.recommended')}
               </span>
             )}
 
             {isFree || isPromo ? (
               <>
-                <div className="text-2xl font-semibold text-amber-600 dark:text-amber-400">{tOrgAdmin('billing.free')}</div>
+                <span className="block text-2xl font-semibold text-amber-600 dark:text-amber-400">{tOrgAdmin('billing.free')}</span>
                 {isPromo && (
-                  <s className="text-xs text-[rgb(var(--color-text-muted))] decoration-[rgb(var(--color-border-strong))]">
+                  <s className="block text-xs text-[rgb(var(--color-text-muted))] decoration-[rgb(var(--color-border-strong))]">
                     {tOrgAdmin('billing.insteadOf', { price: formatPrice(monthlyShown) })}
                   </s>
                 )}
               </>
             ) : (
               <AnimatePresence mode="wait" initial={false}>
-                <motion.div
+                <motion.span
+                  id={priceId}
                   key={interval}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -93,7 +106,7 @@ export function EnterpriseTierGrid({
                   transition={{ duration: 0.18 }}
                   className="flex flex-col gap-0.5"
                 >
-                  <div className="flex items-center gap-2">
+                  <span className="flex items-center gap-2">
                     <span className="text-2xl font-semibold tabular-nums text-[rgb(var(--color-text-primary))]">
                       {formatCurrency(monthlyShown)}{' '}
                       <span className="text-sm font-medium text-[rgb(var(--color-text-secondary))]">
@@ -105,15 +118,15 @@ export function EnterpriseTierGrid({
                         {tOrgAdmin('billing.intervalSave')}
                       </span>
                     )}
-                  </div>
-                  <div className="text-xs text-[rgb(var(--color-text-secondary))]">
+                  </span>
+                  <span className="block text-xs text-[rgb(var(--color-text-secondary))]">
                     {interval === 'yearly'
                       ? tOrgAdmin('billing.perMonthBilledYearly', {
                           total: `${formatCurrency(yearlyTotalEur(tier.priceEurPerMonth))} ${tOrgAdmin('billing.vatSuffix')}`,
                         })
                       : tOrgAdmin('billing.perMonth')}
-                  </div>
-                </motion.div>
+                  </span>
+                </motion.span>
               </AnimatePresence>
             )}
           </>
@@ -134,11 +147,10 @@ export function EnterpriseTierGrid({
             layoutId={`org-tier-${tier.key}`}
             disabled={isPending}
             onClick={() => onSelect?.(tier.key)}
-            aria-label={tOrgAdmin('billing.chooseTierAria', {
-              range: label,
-              price: `${formatCurrency(monthlyShown)} ${tOrgAdmin('billing.vatSuffix')}`,
-            })}
-            className={`${frame} transition-[border-color,transform] hover:-translate-y-0.5 hover:border-[rgb(var(--color-border-strong))] motion-reduce:hover:translate-y-0 disabled:opacity-60`}
+            aria-labelledby={labelId}
+            aria-describedby={isRecommended ? `${pillId} ${priceId}` : priceId}
+            whileHover={{ y: -2 }}
+            className={`${frame} transition-colors hover:border-[rgb(var(--color-border-strong))] disabled:opacity-60`}
           >
             {body}
           </motion.button>

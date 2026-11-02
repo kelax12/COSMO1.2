@@ -18,10 +18,12 @@ const INTERVALS: OrgBillingInterval[] = ['monthly', 'yearly'];
  * remise de 30 % doit être LISIBLE sans ouvrir quoi que ce soit — c'est le seul
  * argument qui fait basculer quelqu'un vers l'annuel.
  *
- * `role="radiogroup"` plutôt que deux `<button>` nus : au clavier, les flèches
- * parcourent le groupe et un lecteur d'écran annonce « 1 sur 2 ». Le montant
- * affiché change au même instant dans toute la grille, donc l'état coché doit
- * être annoncé, pas seulement peint.
+ * `role="radiogroup"` plutôt que deux `<button>` nus : un lecteur d'écran
+ * annonce « 1 sur 2 » et l'état coché. Le montant affiché change au même
+ * instant dans toute la grille, donc cet état doit être annoncé, pas
+ * seulement peint. Au clavier, chaque radio est un `<button>` : Tab pour
+ * l'atteindre, puis Espace ou Entrée pour la choisir. Les flèches ne parcourent
+ * PAS le groupe (pas de focus itinérant implémenté).
  */
 export function BillingIntervalToggle({ value, onChange, disabled }: Props) {
   const { t: tOrgAdmin } = useT('orgAdmin');

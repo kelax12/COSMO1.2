@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useT } from '@/i18n/useT';
 import { formatCurrency, formatDate } from '@/i18n/format';
@@ -24,6 +25,8 @@ export function OrgPlanCard({ subscription, memberCount }: Props) {
   const { t } = useT('orgAdmin');
   const { t: tc } = useT('common');
   const reduce = useReducedMotion();
+  const titleId = useId();
+  const gaugeLabelId = useId();
 
   const quota = effectiveQuota(subscription);
   const planName = t('billing.planNamed', { name: tc(ORG_TIER_LABEL_KEYS[effectiveTierKey(subscription)]) });
@@ -47,12 +50,12 @@ export function OrgPlanCard({ subscription, memberCount }: Props) {
 
   return (
     <section
-      aria-labelledby="org-plan-card-title"
+      aria-labelledby={titleId}
       className="rounded-xl border border-[rgb(var(--color-border))] p-4 flex flex-col gap-3"
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col">
-          <p id="org-plan-card-title" className="text-xs text-[rgb(var(--color-text-secondary))]">
+          <p id={titleId} className="text-xs text-[rgb(var(--color-text-secondary))]">
             {t('billing.planCardLabel')}
           </p>
           <p className="text-xl font-semibold text-[rgb(var(--color-text-primary))]">{planName}</p>
@@ -67,12 +70,13 @@ export function OrgPlanCard({ subscription, memberCount }: Props) {
       ) : (
         <div>
           <div className="mb-1.5 flex justify-between text-xs text-[rgb(var(--color-text-secondary))]">
-            <span>{t('billing.seatsGaugeLabel')}</span>
+            <span id={gaugeLabelId}>{t('billing.seatsGaugeLabel')}</span>
             <span className="tabular-nums">{t('billing.seatsGauge', { count: memberCount, quota })}</span>
           </div>
           <div
             role="meter"
-            aria-label={t('billing.seatsGaugeLabel')}
+            aria-labelledby={gaugeLabelId}
+            aria-valuetext={t('billing.seatsGauge', { count: memberCount, quota })}
             aria-valuemin={0}
             aria-valuemax={quota}
             aria-valuenow={Math.min(memberCount, quota)}
