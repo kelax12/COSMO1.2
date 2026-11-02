@@ -8,8 +8,8 @@
 // `ENTERPRISE_BILLING_ENFORCED` — un drapeau de production qu'on ne touche pas
 // pour regarder un rendu.
 // ═══════════════════════════════════════════════════════════════════
-import { describe, it, expect, beforeAll } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { ensureNamespaces } from '@/i18n/catalog';
 import { EnterpriseTierGrid } from './EnterpriseTierGrid';
 
@@ -60,5 +60,26 @@ describe('EnterpriseTierGrid — périodicité', () => {
     render(<EnterpriseTierGrid interval="yearly" dormant />);
     expect(screen.getByText('au lieu de 52,50 € TTC')).toBeTruthy();
     expect(screen.queryByText('au lieu de 70 € TTC')).toBeNull();
+  });
+});
+
+describe('carte cliquable et palier conseillé', () => {
+  it('la carte entière choisit le palier, nommée pour un lecteur d écran', () => {
+    const onSelect = vi.fn();
+    render(<EnterpriseTierGrid onSelect={onSelect} interval="monthly" />);
+    fireEvent.click(screen.getByRole('button', { name: /choisir ce palier : 10 à 20 membres/i }));
+    expect(onSelect).toHaveBeenCalledWith('t20');
+  });
+
+  it('la pastille « Conseillé » suit recommendedKey, jamais le palier actif', () => {
+    const { rerender } = render(<EnterpriseTierGrid onSelect={vi.fn()} recommendedKey="t20" />);
+    expect(screen.getAllByText('Conseillé pour votre équipe')).toHaveLength(1);
+    rerender(<EnterpriseTierGrid onSelect={vi.fn()} recommendedKey="t20" currentTier="t20" />);
+    expect(screen.queryByText('Conseillé pour votre équipe')).toBeNull();
+  });
+
+  it('sans onSelect (non propriétaire), aucune carte n est un bouton', () => {
+    render(<EnterpriseTierGrid />);
+    expect(screen.queryAllByRole('button')).toHaveLength(0);
   });
 });
