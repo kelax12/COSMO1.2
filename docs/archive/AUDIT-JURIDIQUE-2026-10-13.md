@@ -1,3 +1,8 @@
+> ⚠️ **ARCHIVE : instantané daté du 2026-10-13, non maintenu.** Archivé le 2026-11-02.
+> Ce document décrit l'état du projet **à cette date**. Il n'a pas été mis à jour depuis
+> et ne doit **pas** être lu comme l'état courant du code.
+> Sources vivantes : [`CLAUDE.md`](../../CLAUDE.md) · [`faille.md`](../../faille.md) · [`docs/`](../../docs/README.md).
+
 <!-- note-audit: couvert-par=LEGAL.md -->
 # Audit juridique avant déploiement · 2026-10-13
 

@@ -100,7 +100,7 @@ cause n'est pas dans le dépôt.
 > |---|---|---|
 > | ✅ LCP mobile « mauvais » sur 8 URLs sur 8 (−1 le 09-22) | **+1** | **3,26 à 3,40 s** sur les 8 URLs, Lighthouse mobile en CI à `HEAD` (cf. [`PERFORMANCE.md`](./PERFORMANCE.md)). Signal *page experience* toujours sans donnée terrain |
 > | SEO Lighthouse | 0 | **100 sur les 8 URLs**, desktop et mobile. `/en/` passe de 92 à 100 (lien du bandeau cookies, `dc243383`) |
-> | Coquille `app.html` indexable ; canonical de `/entreprise-presentation` réécrit vers `/` par React | 0 | trouvés par l'audit externe du 2026-10-09 ([`audits/seo-thecosmo-app-2026-10-09/`](./audits/seo-thecosmo-app-2026-10-09/FULL-AUDIT-REPORT.md)), refermés le 10-09 (`69a972d0`) et le 10-12 (`dc243383`), **relus en production** ce soir : `noindex` servi par `app.html`, canonical et `og:image` propres à la page entreprise. Trouvés et refermés entre deux passes : ni débit ni crédit |
+> | Coquille `app.html` indexable ; canonical de `/entreprise-presentation` réécrit vers `/` par React | 0 | trouvés par l'audit externe du 2026-10-09 ([`archive/AUDIT-SEO-EXTERNE-2026-10-09/`](./archive/AUDIT-SEO-EXTERNE-2026-10-09/FULL-AUDIT-REPORT.md)), refermés le 10-09 (`69a972d0`) et le 10-12 (`dc243383`), **relus en production** ce soir : `noindex` servi par `app.html`, canonical et `og:image` propres à la page entreprise. Trouvés et refermés entre deux passes : ni débit ni crédit |
 > | `check:seo` | 0 | vert en local à `HEAD` : 50 pages prérendues, 40 URLs au sitemap, 150 `hreflang` réciproques |
 > | AM-4 · le résultat n'est pas mesuré | 0 | toujours vrai, `M-24` et `M-55` |
 >

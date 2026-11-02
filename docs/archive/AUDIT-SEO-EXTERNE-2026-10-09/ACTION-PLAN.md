@@ -1,3 +1,8 @@
+> ⚠️ **ARCHIVE : instantané daté du 2026-10-12, non maintenu.** Archivé le 2026-11-02.
+> Ce document décrit l'état du projet **à cette date**. Il n'a pas été mis à jour depuis
+> et ne doit **pas** être lu comme l'état courant du code.
+> Sources vivantes : [`CLAUDE.md`](../../../CLAUDE.md) · [`faille.md`](../../../faille.md) · [`docs/`](../../../docs/README.md).
+
 # Plan d'action SEO, thecosmo.app (2026-10-09, mis à jour le 2026-10-12)
 
 Note actuelle : **81 / 100** (76 le 2026-10-09, 78 après `69a972d0`, 81 après `dc243383`).
