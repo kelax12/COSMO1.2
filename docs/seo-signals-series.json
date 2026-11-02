@@ -66,6 +66,102 @@
         "tronque": false
       },
       "rouges": []
+    },
+    {
+      "date": "2026-11-02",
+      "periode": {
+        "debut": "2026-10-03",
+        "fin": "2026-10-30"
+      },
+      "gsc": {
+        "propriete": "sc-domain:thecosmo.app",
+        "toutes": {
+          "clics": 7,
+          "impressions": 398,
+          "ctr": 0.0176,
+          "position": 9.1
+        },
+        "non_marque": {
+          "clics": 0,
+          "impressions": 12,
+          "ctr": 0,
+          "position": 10.6
+        },
+        "requetes_non_marque": [
+          {
+            "requete": "cosmapp",
+            "clics": 0,
+            "impressions": 3,
+            "position": 5
+          },
+          {
+            "requete": "### triples",
+            "clics": 0,
+            "impressions": 1,
+            "position": 3
+          },
+          {
+            "requete": "is triples a kpop group",
+            "clics": 0,
+            "impressions": 1,
+            "position": 1
+          },
+          {
+            "requete": "kosmoapp",
+            "clics": 0,
+            "impressions": 1,
+            "position": 2
+          },
+          {
+            "requete": "tableaux de bord de productivité",
+            "clics": 0,
+            "impressions": 1,
+            "position": 92
+          },
+          {
+            "requete": "triple s kpop",
+            "clics": 0,
+            "impressions": 1,
+            "position": 2
+          },
+          {
+            "requete": "triples",
+            "clics": 0,
+            "impressions": 1,
+            "position": 3
+          },
+          {
+            "requete": "triples concept",
+            "clics": 0,
+            "impressions": 1,
+            "position": 3
+          },
+          {
+            "requete": "triples member profile",
+            "clics": 0,
+            "impressions": 1,
+            "position": 3
+          },
+          {
+            "requete": "triples members",
+            "clics": 0,
+            "impressions": 1,
+            "position": 3
+          }
+        ]
+      },
+      "backlinks": {
+        "declares_faits": 0,
+        "verifies": []
+      },
+      "autorite": {
+        "source": "bing-webmaster",
+        "liens_entrants": 0,
+        "domaines_referents": 0,
+        "domaines": [],
+        "tronque": false
+      },
+      "rouges": []
     }
   ]
 }
