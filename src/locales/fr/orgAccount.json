@@ -142,5 +142,11 @@
       "role_extended": "{{actor}} a modifié la durée du rôle « {{object}} » de {{person}}",
       "role_expired": "Le rôle « {{object}} » de {{person}} a pris fin"
     }
-  }
+  },
+  "historySentTo": "Envoyées à {{email}}",
+  "historyEdit": "Modifier",
+  "historyPillPaid": "Payée",
+  "historyPillFailed": "Échouée",
+  "historyPillRefund": "Remboursée",
+  "historyPillOther": "Autre"
 }

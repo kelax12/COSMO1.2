@@ -100,7 +100,13 @@
     "seatsOverBy_many": "+{{count}} au-delà, rien ne change aujourd'hui",
     "seatsOverBy_other": "+{{count}} au-delà, rien ne change aujourd'hui",
     "seatsFullNow": "Plus de place : faites évoluer le forfait.",
-    "changePlan": "Changer de forfait"
+    "changePlan": "Changer de forfait",
+    "seatsFullOwner": "Les {{quota}} places sont prises. Pour inviter {{who}}, passez au palier {{tier}} : {{price}} TTC par mois, au lieu de {{current}}.",
+    "seatsFullOwnerFromFree": "Les {{quota}} places sont prises. Pour inviter {{who}}, passez au palier {{tier}} : {{price}} TTC par mois.",
+    "someoneMore": "une personne de plus",
+    "upgradeCta": "Passer au palier supérieur",
+    "freeSeatCta": "Libérer une place",
+    "seatsFullMember": "Les places sont prises. Seul le propriétaire peut changer de palier."
   },
   "projects": {
     "taskDeleted": "Tâche supprimée",
