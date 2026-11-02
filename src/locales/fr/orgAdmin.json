@@ -870,7 +870,7 @@
     "pictoCancel": "Résiliable en 1 clic",
     "pictoTax": "Prix TTC, sans TVA",
     "recommended": "Conseillé pour votre équipe",
-    "chooseTierAria": "Choisir ce palier : {{range}}, {{price}}",
+    "chooseTierPrefix": "Choisir ce palier :",
     "recapTitle": "Vérifier avant de payer",
     "recapTier": "Palier",
     "recapInterval": "Périodicité",
