@@ -27,6 +27,7 @@ import { priceIdForTier, tierByKey, FREE_TIER_MAX_MEMBERS } from '../_shared/org
 import type { OrgBillingInterval } from '../_shared/org-tiers.ts'
 import { resolveYearlyPriceId } from '../_shared/org-stripe-prices.ts'
 import { isResourceMissing } from '../_shared/stripe-errors.ts'
+import { checkoutBlockFor } from '../_shared/org-checkout-gate.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'http://localhost:5173'
 const ALLOWED_ORIGINS = new Set([APP_URL])
@@ -145,10 +146,11 @@ Deno.serve(async (req) => {
       } catch (err) {
         if (!isResourceMissing(err)) throw err
       }
-      if (existing && (existing.status === 'active' || existing.status === 'trialing')) {
-        // Changement de palier = portail Stripe, pas un second checkout.
-        return json({ error: 'already_subscribed' }, 400)
-      }
+      // Changement de palier = portail Stripe, pas un second checkout. Un
+      // impayé (`past_due`, `unpaid`) aussi : Stripe retente encore le premier
+      // abonnement, un second ferait prélever deux fois.
+      const blocked = checkoutBlockFor(existing?.status)
+      if (blocked) return json({ error: blocked }, 400)
     }
 
     // ── Contact de facturation (mig. 180) ──

@@ -82,6 +82,9 @@ const errorCode = (err: Error): string => (err instanceof ApiError ? err.code : 
 
 const CHECKOUT_ERROR_KEYS: Record<string, KeyOf<'orgAdmin'>> = {
   already_subscribed: 'billing.alreadySubscribed',
+  // Impayé en cours : la sortie est la carte, dans le portail, jamais un
+  // second abonnement (`_shared/org-checkout-gate.ts`).
+  subscription_past_due: 'billing.subscriptionPastDue',
   yearly_unavailable: 'billing.yearlyUnavailable',
   forbidden: 'billing.ownerOnly',
   no_subscription: 'billing.noSubscription',

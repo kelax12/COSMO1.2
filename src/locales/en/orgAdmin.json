@@ -741,6 +741,7 @@
     "dormant": "Company billing is not active yet. Everything is free for now.",
     "checkoutCancelled": "Payment cancelled, nothing was charged.",
     "alreadySubscribed": "This organization already has an active subscription. Use \"Manage subscription\" to change tier.",
+    "subscriptionPastDue": "The last subscription payment did not go through. Update your card from \"Manage subscription\": a new subscription would charge you twice.",
     "yearlyUnavailable": "Yearly billing is not available yet. Monthly billing works, and the pricing grid has switched back to it.",
     "error": "Could not reach Stripe. Please try again shortly.",
     "back": "Company space",

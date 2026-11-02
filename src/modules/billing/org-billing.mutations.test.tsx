@@ -123,6 +123,17 @@ describe('useStartOrgCheckout', () => {
     expect(hrefSet).not.toHaveBeenCalled();
   });
 
+  it('un impayé en cours dit de passer par la carte, pas de repayer', async () => {
+    invoke.mockResolvedValue({ data: { error: 'subscription_past_due' }, error: null });
+    const { result } = renderHook(() => useStartOrgCheckout(), { wrapper: makeWrapper() });
+
+    await act(async () => { result.current.mutate(checkoutInput); });
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    expect(toastError).toHaveBeenCalledWith('billing.subscriptionPastDue');
+    expect(hrefSet).not.toHaveBeenCalled();
+  });
+
   it('une réponse sans URL ne redirige nulle part', async () => {
     invoke.mockResolvedValue({ data: {}, error: null });
     const { result } = renderHook(() => useStartOrgCheckout(), { wrapper: makeWrapper() });
