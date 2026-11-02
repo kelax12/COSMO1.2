@@ -563,6 +563,7 @@ Relancer `npm run check:edge` et `check:edge-smoke` juste après.
 | **SV-10** | `x-cron-secret` comparé par `!==` (temps non constant) dans cinq fonctions | 🟢 | ⏳ **ouvert** : comparaison à temps constant à poser avec la rotation des secrets |
 | **SV-11** | 7 fonctions `DEFINER` antérieures à `213` en `search_path = public, pg_temp` | ⚪ | information : `authenticated` n'a pas `CREATE` sur `public`, non exploitable |
 | **SV-12** | Le plafond global de `track_hit` se sature depuis un client qui forge `Origin` | ⚪ | information : conséquence assumée de `TR-1` |
+| **SV-13** | `stripe-org-checkout` ne refusait un second checkout qu'en `active`/`trialing` : une organisation en `past_due` ou `unpaid` ouvrait un second abonnement pendant que Stripe retentait le premier (double prélèvement). Revue finale du lot 1 facturation, 2026-11-02 | 🟠 | ✅ dépôt (`258fdd6e`, `_shared/org-checkout-gate.ts`, code `subscription_past_due`) · ✅ **déployé le 2026-11-03**, `stripe-org-checkout` **v36**, 9 fichiers identiques à `main` (`a1377767`), sonde `401 {"error":"Unauthorized"}` |
 
 **Effet sur la note : −3** (quatre 🟠 ouverts en production, `TR-1` avait coûté −1 pour un seul),
 **+1** (`SECURITY.md` AM-4 : la checklist SQL devient onze règles de `validate:migrations`,
