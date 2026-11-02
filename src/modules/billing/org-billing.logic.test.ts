@@ -5,8 +5,17 @@ import {
   isQuotaReached,
   effectiveTierKey,
   needsPaymentAttention,
+  recommendedTier,
+  tierByQuota,
+  chargedTodayEur,
+  nextDueDate,
+  withdrawalDeadline,
+  isActivated,
+  activationPollInterval,
+  lastFailedPaymentAt,
+  ACTIVATION_POLL_MS,
 } from './org-billing.logic';
-import type { OrgSubscription } from './org-billing.types';
+import type { OrgBillingHistoryEntry, OrgSubscription } from './org-billing.types';
 
 const sub = (over: Partial<OrgSubscription> = {}): OrgSubscription => ({
   orgId: 'org-1',
@@ -135,5 +144,78 @@ describe('isQuotaReached', () => {
 
   it('sans abonnement, 5 membres → atteint', () => {
     expect(isQuotaReached(5, null)).toBe(true);
+  });
+});
+
+describe('recommendedTier : le plus petit palier payant qui laisse une place', () => {
+  it('organisation vide ou à 5 → premier palier payant', () => {
+    expect(recommendedTier(0).key).toBe('t10');
+    expect(recommendedTier(5).key).toBe('t10');
+  });
+  it('pile au plafond d un palier → le suivant', () => {
+    expect(recommendedTier(10).key).toBe('t20');
+    expect(recommendedTier(20).key).toBe('t50');
+    expect(recommendedTier(100).key).toBe('tmax');
+  });
+  it('sous le plafond → ce palier', () => {
+    expect(recommendedTier(14).key).toBe('t20');
+    expect(recommendedTier(99).key).toBe('t100');
+  });
+});
+
+describe('tierByQuota', () => {
+  it('retrouve le palier par son plafond, illimité compris', () => {
+    expect(tierByQuota(5).key).toBe('free');
+    expect(tierByQuota(20).key).toBe('t20');
+    expect(tierByQuota(null).key).toBe('tmax');
+  });
+});
+
+describe('montants et dates', () => {
+  it('chargedTodayEur : mensuel = tarif, annuel = total dérivé', () => {
+    expect(chargedTodayEur(70, 'monthly')).toBe(70);
+    expect(chargedTodayEur(70, 'yearly')).toBe(630);
+  });
+  it('nextDueDate : fin de mois et 29 février', () => {
+    expect(nextDueDate(new Date(2026, 0, 31), 'monthly')).toEqual(new Date(2026, 1, 28));
+    expect(nextDueDate(new Date(2028, 1, 29), 'yearly')).toEqual(new Date(2029, 1, 28));
+  });
+  it('withdrawalDeadline : quatorze jours', () => {
+    expect(withdrawalDeadline(new Date(2026, 10, 2))).toEqual(new Date(2026, 10, 16));
+  });
+});
+
+describe('activation après paiement', () => {
+  it('isActivated : palier attendu, ou n importe quel payant sans attente précise', () => {
+    expect(isActivated(sub({ tierKey: 't20' }), 't20')).toBe(true);
+    expect(isActivated(sub({ tierKey: 't10' }), 't20')).toBe(false);
+    expect(isActivated(sub({ tierKey: 't10' }), null)).toBe(true);
+    expect(isActivated(sub({ tierKey: 'free' }), null)).toBe(false);
+    expect(isActivated(sub({ status: 'past_due' }), 't20')).toBe(false);
+    expect(isActivated(null, null)).toBe(false);
+  });
+  it('activationPollInterval : sonde avant l échéance, jamais après (la borne)', () => {
+    const deadline = 10_000;
+    expect(activationPollInterval(null, 't20', deadline, 9_999)).toBe(ACTIVATION_POLL_MS);
+    expect(activationPollInterval(null, 't20', deadline, 10_000)).toBe(false);
+    expect(activationPollInterval(sub({ tierKey: 't20' }), 't20', deadline, 0)).toBe(false);
+  });
+});
+
+describe('lastFailedPaymentAt', () => {
+  const entry = (eventType: string, occurredAt: string): OrgBillingHistoryEntry => ({
+    id: 1, eventType, invoiceNumber: null, hostedInvoiceUrl: null, amountCents: 0, currency: 'eur', occurredAt,
+  });
+  it('rend le plus récent échec, quel que soit l ordre', () => {
+    expect(
+      lastFailedPaymentAt([
+        entry('invoice.payment_failed', '2026-10-02T10:00:00Z'),
+        entry('invoice.payment_succeeded', '2026-11-03T10:00:00Z'),
+        entry('invoice.payment_failed', '2026-11-02T10:00:00Z'),
+      ]),
+    ).toBe('2026-11-02T10:00:00Z');
+  });
+  it('null sans échec', () => {
+    expect(lastFailedPaymentAt([entry('invoice.payment_succeeded', '2026-11-02T10:00:00Z')])).toBeNull();
   });
 });
