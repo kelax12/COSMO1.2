@@ -92,6 +92,41 @@ function renderTab() {
   );
 }
 
+function renderTabAt(url: string) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  return render(
+    <MemoryRouter initialEntries={[url]}>
+      <QueryClientProvider client={qc}>
+        <OrgBillingTab orgId="org-1" isOwner />
+      </QueryClientProvider>
+    </MemoryRouter>,
+  );
+}
+
+describe('retour de Stripe', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    appModeStore.setDemo(false);
+    sessionStorage.clear();
+    startedAt = new Date(Date.now() - 2 * DAY).toISOString();
+    cancelAtPeriodEnd = false;
+  });
+
+  it('abonnement déjà actif sur le palier attendu : bienvenue, sans toast', async () => {
+    sessionStorage.setItem('cosmo_pending_checkout', JSON.stringify({ orgId: 'org-1', tierKey: 't10', interval: 'monthly', at: Date.now() }));
+    renderTabAt('/?checkout=success');
+    expect(await screen.findByText(/bienvenue dans le palier/i)).toBeTruthy();
+    expect(toastSuccess).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem('cosmo_pending_checkout')).toBeNull();
+  });
+
+  it('palier attendu pas encore actif : activation en cours', async () => {
+    sessionStorage.setItem('cosmo_pending_checkout', JSON.stringify({ orgId: 'org-1', tierKey: 't50', interval: 'monthly', at: Date.now() }));
+    renderTabAt('/?checkout=success');
+    expect(await screen.findByText(/activation en cours/i)).toBeTruthy();
+  });
+});
+
 const WITHDRAW = /se rétracter du contrat ici/i;
 const CANCEL = /résilier mon abonnement/i;
 
@@ -174,7 +209,7 @@ describe('résiliation : une seule confirmation, jamais de remboursement', () =>
     cancelAtPeriodEnd = true;
     invoke.mockResolvedValue({ data: { ok: true }, error: null });
     renderTab();
-    fireEvent.click(await screen.findByRole('button', { name: /annuler la résiliation/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /reprendre mon abonnement/i }));
     await waitFor(() => expect(invoke).toHaveBeenCalledTimes(1));
     expect((invoke.mock.calls[0][1] as { body: unknown }).body).toEqual({ orgId: 'org-1', action: 'resume' });
   });
@@ -187,7 +222,7 @@ describe('paiement : case d accès immédiat, une fois le palier choisi', () => 
   });
 
   const BOX = /je demande l'accès immédiat au service/i;
-  const PAY = /continuer vers le paiement/i;
+  const PAY = /payer .* avec stripe/i;
 
   it('aucune case avant le choix du palier ; choisir un palier n appelle pas Stripe', async () => {
     renderTab();
@@ -196,7 +231,9 @@ describe('paiement : case d accès immédiat, une fois le palier choisi', () => 
     fireEvent.click(choose[0]);
     const box = await screen.findByRole('checkbox', { name: BOX });
     expect((box as HTMLInputElement).checked).toBe(false);
-    expect((screen.getByRole('button', { name: PAY }) as HTMLButtonElement).disabled).toBe(true);
+    // Le bouton n'est plus grisé en silence : il explique, et ne paie pas.
+    fireEvent.click(screen.getByRole('button', { name: PAY }));
+    expect(screen.getByRole('alert').textContent).toMatch(/cochez la case/i);
     expect(invoke).not.toHaveBeenCalled();
   });
 
@@ -212,5 +249,17 @@ describe('paiement : case d accès immédiat, une fois le palier choisi', () => 
     expect(fn).toBe('stripe-org-checkout');
     expect(opts.body.immediateAccess).toBe(true);
     expect(opts.body.cgvVersion).toBe(CGV_VERSION);
+  });
+
+  it('avant la redirection, la trace du palier attendu est écrite', async () => {
+    invoke.mockResolvedValue({ data: { url: 'https://checkout.stripe.test/x' }, error: null });
+    renderTab();
+    const choose = await screen.findAllByRole('button', { name: /choisir ce palier/i });
+    fireEvent.click(choose[0]);
+    fireEvent.click(await screen.findByRole('checkbox', { name: BOX }));
+    fireEvent.click(screen.getByRole('button', { name: PAY }));
+    await waitFor(() => expect(invoke).toHaveBeenCalled());
+    const trace = JSON.parse(sessionStorage.getItem('cosmo_pending_checkout') ?? 'null');
+    expect(trace?.orgId).toBe('org-1');
   });
 });
