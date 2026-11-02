@@ -70,8 +70,9 @@ Remplace la `<section>` actuelle de `OrgBillingTab`.
   ❌ Ni repli, ni info-bulle, ni « en savoir plus » : il doit être sous les yeux.
 - Grille : `EnterpriseTierGrid` garde ses règles (montants dérivés, jamais de compteur sur un
   prix). Ajouts : la carte entière est cliquable (plus de petit bouton « S'abonner » dans le coin),
-  pastille « Conseillé pour votre équipe » sur le palier défini en § 2, ligne secondaire
-  « soit {total} débités une fois par an » en annuel, « débité chaque mois » en mensuel.
+  pastille « Conseillé pour votre équipe » sur le palier défini en § 2. Les lignes secondaires
+  existantes (« par mois », « par mois, facturé {total} TTC par an ») sont conservées : elles disent
+  déjà le débit réel.
 
 ### 3.3 Récapitulatif avant paiement (`OrgCheckoutRecap`, nouveau)
 
