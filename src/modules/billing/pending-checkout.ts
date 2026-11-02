@@ -13,7 +13,10 @@ import type { OrgBillingInterval, OrgTierKey } from './premium-config';
 
 export const PENDING_CHECKOUT_KEY = 'cosmo_pending_checkout';
 const MAX_AGE_MS = 30 * 60 * 1000;
-const TIER_KEYS = new Set<string>(ENTERPRISE_PRICING_TIERS.map((t) => t.key));
+// Paliers payants seuls : aucun paiement ne vise le palier gratuit.
+const TIER_KEYS = new Set<string>(
+  ENTERPRISE_PRICING_TIERS.filter((t) => t.priceEurPerMonth > 0).map((t) => t.key),
+);
 
 export interface PendingCheckout {
   orgId: string;
@@ -39,8 +42,11 @@ export function readPendingCheckout(orgId: string, now = Date.now()): PendingChe
     return null;
   }
   const p = safeParse<PendingCheckout>(raw);
-  if (!p || p.orgId !== orgId || !TIER_KEYS.has(p.tierKey) || typeof p.at !== 'number') return null;
-  if (now - p.at > MAX_AGE_MS) return null;
+  if (!p || p.orgId !== orgId || !TIER_KEYS.has(p.tierKey)) return null;
+  if (p.interval !== 'monthly' && p.interval !== 'yearly') return null;
+  if (typeof p.at !== 'number' || !Number.isFinite(p.at)) return null;
+  const age = now - p.at;
+  if (!Number.isFinite(age) || age < 0 || age > MAX_AGE_MS) return null;
   return p;
 }
 
