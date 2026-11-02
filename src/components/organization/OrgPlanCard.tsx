@@ -86,7 +86,7 @@ export function OrgPlanCard({ subscription, memberCount }: Props) {
               className={`h-full rounded-full ${full || near ? 'bg-amber-500' : 'bg-[rgb(var(--color-accent))]'}`}
               initial={reduce ? false : { width: 0 }}
               animate={{ width: `${ratio * 100}%` }}
-              transition={{ duration: reduce ? 0 : 1, ease: [0.2, 0.8, 0.2, 1] }}
+              transition={{ duration: reduce ? 0 : 0.6, ease: [0.2, 0.8, 0.2, 1] }}
             />
           </div>
           {full && (
@@ -108,10 +108,14 @@ export function OrgPlanCard({ subscription, memberCount }: Props) {
 
       {showNextDue && subscription?.currentPeriodEnd && tier && (
         <p className="border-t border-[rgb(var(--color-border))] pt-3 text-sm text-[rgb(var(--color-text-secondary))]">
-          {t('billing.nextDue', {
-            date: formatDate(new Date(subscription.currentPeriodEnd)),
-            amount: formatCurrency(chargedTodayEur(tier.priceEurPerMonth, subscription.billingInterval)),
-          })}
+          {/* Un code de réduction change le montant réel, qui n'est pas lu ici :
+              la date seule, jamais un montant dérivé du tarif plein. */}
+          {subscription.discountCode
+            ? t('billing.nextDueDateOnly', { date: formatDate(new Date(subscription.currentPeriodEnd)) })
+            : t('billing.nextDue', {
+                date: formatDate(new Date(subscription.currentPeriodEnd)),
+                amount: formatCurrency(chargedTodayEur(tier.priceEurPerMonth, subscription.billingInterval)),
+              })}
         </p>
       )}
     </section>

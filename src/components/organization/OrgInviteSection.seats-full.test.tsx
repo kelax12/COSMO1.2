@@ -26,9 +26,10 @@ interface Opts {
   seatsFull?: boolean;
   seatsQuota?: number | null;
   memberCount?: number;
+  pastDue?: boolean;
 }
 
-function renderSection({ isOwner = true, seatsFull = true, seatsQuota = 5, memberCount = 5 }: Opts = {}) {
+function renderSection({ isOwner = true, seatsFull = true, seatsQuota = 5, memberCount = 5, pastDue = false }: Opts = {}) {
   return render(
     <MemoryRouter>
       <OrgInviteSection
@@ -41,6 +42,7 @@ function renderSection({ isOwner = true, seatsFull = true, seatsQuota = 5, membe
         seatsQuota={seatsQuota}
         memberCount={memberCount}
         isOwner={isOwner}
+        pastDue={pastDue}
         onInviteByEmail={() => {}}
       />
     </MemoryRouter>,
@@ -72,6 +74,15 @@ describe('OrgInviteSection, plus de place', () => {
     renderSection({ seatsQuota: 5, memberCount: 7 });
     const link = screen.getByRole('link', { name: /passer au palier supérieur/i });
     expect(link.getAttribute('href')).toContain('tier=t10');
+  });
+
+  it('impayé : jamais de mise à niveau (second abonnement), la carte à régulariser', () => {
+    renderSection({ pastDue: true, seatsQuota: 5, memberCount: 12 });
+    expect(screen.queryByRole('link', { name: /passer au palier supérieur/i })).toBeNull();
+    expect(screen.getByText(/le dernier paiement n'est pas passé/i)).toBeTruthy();
+    const link = screen.getByRole('link', { name: /mettre à jour ma carte/i });
+    expect(link.getAttribute('href')).not.toContain('tier=');
+    expect(link.getAttribute('href')).toContain('billing');
   });
 
   it('places disponibles : aucun bloc', () => {

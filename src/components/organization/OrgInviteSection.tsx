@@ -30,6 +30,12 @@ interface OrgInviteSectionProps {
   memberCount: number;
   /** Seul le propriétaire gère le forfait (onglet Facturation). */
   isOwner: boolean;
+  /**
+   * Abonnement impayé (`past_due`) : AUCUNE mise à niveau proposée. Le serveur
+   * n'empêche un checkout que sur un abonnement actif : en impayé, il en
+   * créerait un second, donc une double facturation. On renvoie à la carte.
+   */
+  pastDue?: boolean;
   /** Ouvre la fenêtre d'invitation par e-mail, adresses déjà saisies. */
   onInviteByEmail: (emails: string) => void;
 }
@@ -44,10 +50,10 @@ const HINT = 'text-xs text-[rgb(var(--color-text-muted))] mt-0.5';
  * réponse. Personnes et Équipes restent atteignables par la barre latérale.
  */
 const OrgInviteSection = ({
-  org, isAdmin, canInvite, canInviteByEmail, seatsFull, seatsQuota, memberCount, isOwner, onInviteByEmail,
+  org, isAdmin, canInvite, canInviteByEmail, seatsFull, seatsQuota, memberCount, isOwner, pastDue = false, onInviteByEmail,
 }: OrgInviteSectionProps) => {
   const { t, tp } = useT('org');
-  const { t: tOrgAdmin } = useT('orgAdmin');
+  const { t: tOrgAdmin, tp: tpOrgAdmin } = useT('orgAdmin');
   const [quickEmails, setQuickEmails] = useState('');
   const [showContacts, setShowContacts] = useState(false);
   const rangeLabel = useTierRangeLabel();
@@ -180,7 +186,18 @@ const OrgInviteSection = ({
               sur la phrase du propriétaire : elle reprend l'adresse en cours
               de frappe, un lecteur d'écran la relirait à chaque touche. */}
           {seatsFull && seatsQuota !== null && (
-            isOwner ? (
+            isOwner && pastDue ? (
+              <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-700/60 dark:bg-amber-900/20">
+                <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">{tOrgAdmin('billing.pastDueTitleNoDate')}</p>
+                <p className="mt-0.5 text-xs text-amber-800 dark:text-amber-300">{tpOrgAdmin('billing.pastDueBody', memberCount)}</p>
+                <Link
+                  to={buildOrgLink('billing')}
+                  className="mt-3 inline-flex items-center rounded-lg border border-amber-400 bg-white px-3 py-2 text-sm font-semibold text-amber-800 dark:border-amber-700 dark:bg-transparent dark:text-amber-300"
+                >
+                  {tOrgAdmin('billing.pastDueCta')}
+                </Link>
+              </div>
+            ) : isOwner ? (
               <div className="rounded-2xl border border-[rgb(var(--color-accent))] bg-[rgb(var(--color-accent)/0.06)] p-4">
                 <p className="break-words text-sm text-[rgb(var(--color-text-primary))]">
                   {currentTier.priceEurPerMonth > 0

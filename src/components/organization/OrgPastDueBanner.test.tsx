@@ -28,11 +28,11 @@ const FAILED = {
   occurredAt: '2026-11-02T10:00:00Z',
 };
 
-function renderBanner() {
+function renderBanner(memberCount = 14) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
-      <OrgPastDueBanner orgId="org-1" memberCount={14} />
+      <OrgPastDueBanner orgId="org-1" memberCount={memberCount} />
     </QueryClientProvider>,
   );
 }
@@ -67,5 +67,11 @@ describe('OrgPastDueBanner', () => {
     renderBanner();
     expect(screen.queryByText(/n'est pas passé/i)).toBeNull();
     expect(screen.getByText(/vos 14 membres gardent tous leurs accès/i)).toBeTruthy();
+  });
+
+  it('un seul membre : la phrase est au singulier', () => {
+    historyRef.current = [];
+    renderBanner(1);
+    expect(screen.getByText(/votre membre garde tous ses accès/i)).toBeTruthy();
   });
 });
