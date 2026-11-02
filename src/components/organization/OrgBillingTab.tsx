@@ -1,88 +1,137 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
+import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 import { toast } from '@/lib/toast';
 import { ArrowLeft } from 'lucide-react';
 import { useT } from '@/i18n/useT';
-import { formatDate } from '@/i18n/format';
-import { ENTERPRISE_BILLING_ENFORCED, PRICES_VISIBLE } from '@/modules/billing/premium-config';
+import { ENTERPRISE_BILLING_ENFORCED, ENTERPRISE_PRICING_TIERS, PRICES_VISIBLE } from '@/modules/billing/premium-config';
 import type { OrgBillingInterval, OrgTierKey } from '@/modules/billing/premium-config';
-import { useOrgSubscription } from '@/modules/billing/org-billing.hooks';
+import { useOrgSubscription, type AwaitActivation } from '@/modules/billing/org-billing.hooks';
 import { useStartOrgCheckout, useOpenOrgPortal } from '@/modules/billing/org-billing.mutations';
+import { ACTIVATION_TIMEOUT_MS, effectiveQuota, effectiveTierKey, isActivated, recommendedTier } from '@/modules/billing/org-billing.logic';
+import { clearPendingCheckout, readPendingCheckout, writePendingCheckout } from '@/modules/billing/pending-checkout';
 import { OrgWithdrawCancel } from './OrgWithdrawCancel';
-import { effectiveQuota, effectiveTierKey } from '@/modules/billing/org-billing.logic';
-import { ORG_TIER_LABEL_KEYS } from '@/modules/billing/org-tier-labels';
 import { EnterpriseTierGrid } from './EnterpriseTierGrid';
 import { BillingIntervalToggle } from './BillingIntervalToggle';
 import { OrgBillingSeats } from './OrgBillingSeats';
 import { OrgBillingHistory } from './OrgBillingHistory';
 import { OrgBillingContactCard } from './OrgBillingContactCard';
+import { OrgPlanCard } from './OrgPlanCard';
+import { OrgPrecontractualPictos } from './OrgPrecontractualPictos';
+import { OrgCheckoutRecap } from './OrgCheckoutRecap';
+import { OrgActivationState, type ActivationPhase } from './OrgActivationState';
+import { useTierRangeLabel } from './billing-ui';
+import { buildOrgLink } from './deep-link.helpers';
 import { useActiveOrganization, useOrgMembers } from '@/modules/organizations';
 import { useAuth } from '@/modules/auth/AuthContext';
 
 interface Props {
   orgId: string;
   isOwner: boolean;
-  /** Retour à l'espace entreprise — cette vue n'a plus d'onglet actif. */
+  /** Retour à l'espace entreprise : cette vue n'a plus d'onglet actif. */
   onBack?: () => void;
 }
 
+const PAID_TIER_KEYS = new Set<string>(
+  ENTERPRISE_PRICING_TIERS.filter((t) => t.priceEurPerMonth > 0).map((t) => t.key),
+);
+
 /**
- * Onglet Abonnement de l'espace entreprise.
+ * Onglet Abonnement de l'espace entreprise (spec 2026-11-02, lot 1).
  *
  * Tant que `ENTERPRISE_BILLING_ENFORCED` est `false`, la grille reste visible
  * (elle informe) mais AUCUN CTA de paiement n'est monté. Le flag est la seule
- * condition — pas « actif si les variables d'environnement existent » : on doit
- * pouvoir dire d'un coup d'œil si le produit facture ou non.
+ * condition : on doit pouvoir dire d'un coup d'œil si le produit facture.
+ *
+ * Retour de Stripe (`?checkout=success`) : plus de toast. L'onglet attend que
+ * l'abonnement lu soit celui qu'on vient de payer (sondage BORNÉ, § 5.1), parce
+ * que le webhook peut arriver après le client.
  */
 export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
-  // Lus ici plutôt que passés par la page : le chunk `OrganizationPage` est à
-  // son cliquet (18 ko), et ces valeurs ne servent qu'à cet écran. Les membres
-  // viennent du cache que la page a déjà rempli (même clé React Query) :
-  // aucune requête de plus. Chaque membre occupe un siège.
+  // Membres lus depuis le cache que la page a déjà rempli : aucune requête de plus.
   const { data: members = [] } = useOrgMembers(orgId);
   const memberCount = members.length;
   const { user } = useAuth();
   const { activeOrg } = useActiveOrganization();
   const ownerId = activeOrg?.ownerId ?? '';
-  const { t } = useT('org');
   const { t: tOrgAdmin } = useT('orgAdmin');
-  const { t: tc } = useT('common');
+  const rangeLabel = useTierRangeLabel();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { data: subscription } = useOrgSubscription(orgId);
+
+  const [awaiting, setAwaiting] = useState<AwaitActivation | null>(null);
+  const [timedOut, setTimedOut] = useState(false);
+  const { data: subscription } = useOrgSubscription(orgId, {
+    awaitActivation: awaiting && !timedOut ? awaiting : null,
+  });
   const checkout = useStartOrgCheckout();
   const portal = useOpenOrgPortal();
-  // Périodicité affichée dans la grille. État LOCAL, jamais persisté : c'est
-  // une question posée avant l'achat, pas une préférence de l'utilisateur. La
-  // périodicité qui compte après coup est celle de l'abonnement, et elle vient
-  // de Stripe via le webhook (`subscription.billingInterval`).
-  const [billingInterval, setBillingInterval] = useState<OrgBillingInterval>('monthly');
 
-  // Demande expresse d'accès immédiat (L221-13, L221-25) : case NON cochée par
-  // défaut, posée UNE FOIS LE PALIER CHOISI, obligatoire pour payer. Le
-  // serveur la revérifie et la trace.
+  // Périodicité affichée : état LOCAL, jamais persisté. Celle qui compte après
+  // coup vient de Stripe via le webhook (`subscription.billingInterval`).
+  const [billingInterval, setBillingInterval] = useState<OrgBillingInterval>('monthly');
+  // Demande expresse d'accès immédiat (L221-13, L221-25) : NON cochée par
+  // défaut, posée une fois le palier choisi, obligatoire pour payer.
   const [selectedTier, setSelectedTier] = useState<OrgTierKey | null>(null);
   const [immediateAccess, setImmediateAccess] = useState(false);
 
-  // Retour de Stripe : on consomme le paramètre pour qu'un rafraîchissement ne
-  // rejoue pas le toast.
+  const canPay = ENTERPRISE_BILLING_ENFORCED && isOwner;
+  const showPrices = PRICES_VISIBLE || ENTERPRISE_BILLING_ENFORCED;
+
+  // Paramètres consommés une fois, pour qu'un rafraîchissement ne rejoue rien :
+  // `checkout` (retour de Stripe) et `tier` (lien « Passer au palier
+  // supérieur » du flux d'invitation, qui ouvre le récapitulatif).
   const checkoutResult = searchParams.get('checkout');
+  const tierParam = searchParams.get('tier');
   useEffect(() => {
-    if (!checkoutResult) return;
-    if (checkoutResult === 'success') toast.success(tOrgAdmin('billing.checkoutSuccess'));
-    if (checkoutResult === 'cancelled') toast.info(tOrgAdmin('billing.checkoutCancelled'));
+    if (!checkoutResult && !tierParam) return;
+    if (checkoutResult === 'success') {
+      const pending = readPendingCheckout(orgId);
+      setAwaiting({ tierKey: pending?.tierKey ?? null, deadline: Date.now() + ACTIVATION_TIMEOUT_MS });
+      setTimedOut(false);
+    }
+    if (checkoutResult === 'cancelled') {
+      clearPendingCheckout();
+      toast.info(tOrgAdmin('billing.checkoutCancelled'));
+    }
+    if (tierParam && canPay && PAID_TIER_KEYS.has(tierParam)) {
+      setSelectedTier(tierParam as OrgTierKey);
+      setImmediateAccess(false);
+    }
     const next = new URLSearchParams(searchParams);
     next.delete('checkout');
+    next.delete('tier');
     setSearchParams(next, { replace: true });
-  }, [checkoutResult, searchParams, setSearchParams, t, tOrgAdmin]);
+  }, [checkoutResult, tierParam, canPay, orgId, searchParams, setSearchParams, tOrgAdmin]);
 
-  const quota = effectiveQuota(subscription ?? null);
-  const planName = tOrgAdmin('billing.planNamed', {
-    name: tc(ORG_TIER_LABEL_KEYS[effectiveTierKey(subscription ?? null)]),
-  });
-  const canPay = ENTERPRISE_BILLING_ENFORCED && isOwner;
-  // Grille de paliers masquée depuis le 2026-10-16 (`PRICES_VISIBLE`), sauf si
-  // la facturation est réactivée : on ne vend pas sans afficher de prix.
-  const showPrices = PRICES_VISIBLE || ENTERPRISE_BILLING_ENFORCED;
+  // La borne de 20 s : passé ce délai, plus de sondage, un message.
+  useEffect(() => {
+    if (!awaiting) return;
+    const id = window.setTimeout(() => setTimedOut(true), Math.max(0, awaiting.deadline - Date.now()));
+    return () => window.clearTimeout(id);
+  }, [awaiting]);
+
+  const activated = awaiting ? isActivated(subscription, awaiting.tierKey) : false;
+  useEffect(() => {
+    if (activated) clearPendingCheckout();
+  }, [activated]);
+
+  const phase: ActivationPhase | null = !awaiting ? null : activated ? 'welcome' : timedOut ? 'timeout' : 'waiting';
+
+  const pay = () => {
+    if (!selectedTier) return;
+    writePendingCheckout({ orgId, tierKey: selectedTier, interval: billingInterval, at: Date.now() });
+    checkout.mutate(
+      { orgId, tierKey: selectedTier, interval: billingInterval, immediateAccess },
+      {
+        onError: (err: Error) => {
+          clearPendingCheckout();
+          // Le CODE de l'erreur, jamais son texte traduit (C-62) : l'annuel
+          // indisponible ramène la grille sur le mensuel, qui fonctionne.
+          if ('code' in err && err.code === 'yearly_unavailable') setBillingInterval('monthly');
+        },
+      },
+    );
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -96,186 +145,95 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
             <ArrowLeft size={15} aria-hidden /> {tOrgAdmin('billing.back')}
           </button>
         )}
-        <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))]">
-          {tOrgAdmin('billing.title')}
-        </h2>
+        <h2 className="text-lg font-semibold text-[rgb(var(--color-text-primary))]">{tOrgAdmin('billing.title')}</h2>
         <p className="text-sm text-[rgb(var(--color-text-secondary))]">{tOrgAdmin('billing.subtitle')}</p>
       </header>
 
-      <section className="rounded-xl border border-[rgb(var(--color-border))] p-4 flex flex-col gap-2">
-        <span className="text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-secondary))]">
-          {tOrgAdmin('billing.currentTier')}
-        </span>
-        {/* Le nom du forfait est ce que la pastille de l'en-tête annonce : les
-            deux doivent dire le même mot, sinon le clic donne l'impression
-            d'avoir changé d'objet. */}
-        <p className="text-xl font-semibold text-[rgb(var(--color-text-primary))]">{planName}</p>
-        <p className="text-sm text-[rgb(var(--color-text-primary))]">
-          {quota === null
-            ? tOrgAdmin('billing.seatsUnlimited', { count: memberCount })
-            : tOrgAdmin('billing.seatsUsed', { count: memberCount, quota })}
-        </p>
-        {subscription?.status === 'active' && subscription.currentPeriodEnd && (
-          <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-            {tOrgAdmin('billing.renewsOn', { date: formatDate(new Date(subscription.currentPeriodEnd)) })}
-          </p>
-        )}
-        {/* La périodicité est dite explicitement : « Renouvellement le 12
-            septembre » seul ne distingue pas un mois d'un an, et c'est
-            exactement l'information qu'un propriétaire vient chercher ici.
-            Elle n'est montrée que sur un abonnement réellement facturé — le
-            palier gratuit n'a pas de périodicité. */}
-        {subscription?.status === 'active' && subscription.tierKey !== 'free' && (
-          <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-            {subscription.billingInterval === 'yearly'
-              ? tOrgAdmin('billing.billedYearly')
-              : tOrgAdmin('billing.billedMonthly')}
-          </p>
-        )}
-        {subscription?.status === 'past_due' && (
-          <p className="text-sm text-[rgb(var(--color-text-primary))]">{tOrgAdmin('billing.statusPastDue')}</p>
-        )}
-        {subscription?.status === 'cancelled' && (
-          <p className="text-sm text-[rgb(var(--color-text-primary))]">{tOrgAdmin('billing.statusCancelled')}</p>
-        )}
-        {subscription?.discountCode && (
-          <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-            {tOrgAdmin('billing.discountApplied', { code: subscription.discountCode })}
-          </p>
-        )}
-      </section>
+      {phase && (
+        <OrgActivationState
+          phase={phase}
+          tierLabel={rangeLabel(subscription?.tierKey ?? awaiting?.tierKey ?? 'free')}
+          membersHref={buildOrgLink('members')}
+          onClose={() => setAwaiting(null)}
+        />
+      )}
 
-      {/* Qui compte : les sièges nommés, pas seulement leur nombre. Visible
-          de tout ce qui atteint cet écran (le propriétaire, cf. la page) :
-          l'annuaire les montre déjà à tous les membres. */}
-      <OrgBillingSeats members={members} ownerId={ownerId} quota={quota} orgId={orgId} currentUserId={user?.id} isAdmin={isOwner || members.some((m) => m.userId === user?.id && m.role === 'admin')} />
+      <OrgPlanCard subscription={subscription ?? null} memberCount={memberCount} />
 
-      {/* Une seule rangée au-dessus de la grille : le statut de l'offre à
-          gauche, le sélecteur de périodicité à droite. Les deux commentent le
-          même objet — les montants juste en dessous — donc les séparer en deux
-          blocs empilés éloignerait le sélecteur de ce qu'il pilote. */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
+      <OrgBillingSeats
+        members={members}
+        ownerId={ownerId}
+        quota={effectiveQuota(subscription ?? null)}
+        orgId={orgId}
+        currentUserId={user?.id}
+        isAdmin={isOwner || members.some((m) => m.userId === user?.id && m.role === 'admin')}
+      />
+
+      {showPrices && (
+        <section aria-labelledby="org-change-tier" className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h3 id="org-change-tier" className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">
+              {tOrgAdmin('billing.changeTierTitle')}
+            </h3>
+            {ENTERPRISE_BILLING_ENFORCED && (
+              <BillingIntervalToggle value={billingInterval} onChange={setBillingInterval} disabled={checkout.isPending} />
+            )}
+          </div>
+
           {!ENTERPRISE_BILLING_ENFORCED && (
-            <>
-              {/* Même badge que la landing entreprise (`PricingSection.tsx`) :
-                  annoncer la nature temporaire de l'offre AVANT le premier prix
-                  barré, pas seulement dans la phrase qui suit. */}
+            <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex w-fit items-center rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-caption font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
                 {tOrgAdmin('billing.promoBadge')}
               </span>
-              <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-                {tOrgAdmin('billing.dormant')}
-              </p>
-            </>
+              <p className="text-sm text-[rgb(var(--color-text-secondary))]">{tOrgAdmin('billing.dormant')}</p>
+            </div>
           )}
           {ENTERPRISE_BILLING_ENFORCED && !isOwner && (
-            <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-              {tOrgAdmin('billing.ownerOnly')}
-            </p>
+            <p className="text-sm text-[rgb(var(--color-text-secondary))]">{tOrgAdmin('billing.ownerOnly')}</p>
           )}
-        </div>
+          {ENTERPRISE_BILLING_ENFORCED && billingInterval === 'yearly' && (
+            <p className="-mt-1 text-xs text-[rgb(var(--color-text-secondary))]">{tOrgAdmin('billing.intervalYearlyHint')}</p>
+          )}
 
-        {/* Masqué tant que la facturation dort : afficher un choix annuel sur
-            une offre gratuite reviendrait à laisser croire qu'on peut figer un
-            tarif réduit avant même que la facturation existe. La feature
-            n'est pas supprimée : `billingInterval` reste utilisable, il ne
-            reste juste plus qu'à la valeur par défaut `monthly` tant que le
-            flag est bas. */}
-        {ENTERPRISE_BILLING_ENFORCED && (
-          <BillingIntervalToggle
-            value={billingInterval}
-            onChange={setBillingInterval}
-            disabled={checkout.isPending}
-          />
-        )}
-      </div>
+          {canPay && <OrgPrecontractualPictos interval={billingInterval} />}
 
-      {ENTERPRISE_BILLING_ENFORCED && billingInterval === 'yearly' && (
-        <p className="-mt-3 text-xs text-[rgb(var(--color-text-secondary))]">
-          {tOrgAdmin('billing.intervalYearlyHint')}
-        </p>
-      )}
-
-      {/* Information précontractuelle (Conso. art. L111-1, L221-5), remise le
-          2026-11-01 après son retrait du 2026-10-31 (LEGAL.md E2) : durée,
-          reconduction et résiliation sous les yeux AVANT le choix d'un palier,
-          pas seulement dans les CGU. Le montant exact est sur chaque carte. */}
-      {canPay && (
-        <p className="text-xs text-[rgb(var(--color-text-secondary))]">
-          {tOrgAdmin('billing.precontractual')}
-        </p>
-      )}
-
-      {showPrices && (
-      <EnterpriseTierGrid
-        currentTier={subscription?.tierKey}
-        onSelect={
-          canPay
-            ? (tierKey) => {
-                // Le choix du palier n'envoie PAS au paiement : il ouvre la
-                // vérification d'accès immédiat juste en dessous.
-                setSelectedTier(tierKey);
-                setImmediateAccess(false);
-              }
-            : undefined
-        }
-        isPending={checkout.isPending}
-        dormant={!ENTERPRISE_BILLING_ENFORCED}
-        interval={billingInterval}
-      />
-      )}
-
-      {canPay && selectedTier && (
-        <div
-          role="region"
-          aria-label={tOrgAdmin('billing.confirmTierTitle')}
-          className="flex flex-col gap-3 rounded-xl border border-[rgb(var(--color-border))] p-4"
-        >
-          <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">
-            {tOrgAdmin('billing.confirmTierTitle')} :{' '}
-            {tc(ORG_TIER_LABEL_KEYS[selectedTier])},{' '}
-            {billingInterval === 'yearly' ? tOrgAdmin('billing.billedYearly') : tOrgAdmin('billing.billedMonthly')}
-          </p>
-          <label className="flex items-start gap-2 text-sm text-[rgb(var(--color-text-primary))]">
-            <input
-              type="checkbox"
-              checked={immediateAccess}
-              onChange={(e) => setImmediateAccess(e.target.checked)}
-              className="mt-1"
-            />
-            <span>
-              {tOrgAdmin('billing.immediateAccessLabel')}{' '}
-              <a href="/cgu" target="_blank" rel="noreferrer" className="underline">
-                {tOrgAdmin('billing.cgvLink')}
-              </a>
-            </span>
-          </label>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              disabled={!immediateAccess || checkout.isPending}
-              onClick={() =>
-                checkout.mutate(
-                  { orgId, tierKey: selectedTier, interval: billingInterval, immediateAccess },
-                  {
-                    // L'annuel indisponible ramène la grille sur le mensuel :
-                    // le message dit qu'il fonctionne, l'écran doit le montrer.
-                    onError: (err: Error) => {
-                      if (err.message === 'yearly_unavailable') setBillingInterval('monthly');
-                    },
-                  },
-                )
-              }
-              className="rounded-lg border-2 border-[rgb(var(--color-text-primary))] px-3 py-2 text-sm font-semibold disabled:opacity-50"
-            >
-              {tOrgAdmin('billing.goToPayment')}
-            </button>
-            <button type="button" onClick={() => setSelectedTier(null)} className="px-3 py-2 text-sm">
-              {tOrgAdmin('billing.confirmTierCancel')}
-            </button>
-          </div>
-        </div>
+          <LayoutGroup>
+            <AnimatePresence initial={false}>
+              {canPay && selectedTier ? (
+                <OrgCheckoutRecap
+                  key="recap"
+                  tierKey={selectedTier}
+                  interval={billingInterval}
+                  isPending={checkout.isPending}
+                  isRedirecting={checkout.isSuccess}
+                  immediateAccess={immediateAccess}
+                  onImmediateAccessChange={setImmediateAccess}
+                  onPay={pay}
+                  onCancel={() => setSelectedTier(null)}
+                />
+              ) : (
+                <motion.div key="grid" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <EnterpriseTierGrid
+                    currentTier={subscription?.tierKey}
+                    recommendedKey={canPay ? recommendedTier(memberCount).key : undefined}
+                    onSelect={
+                      canPay
+                        ? (tierKey) => {
+                            // Choisir n'envoie PAS au paiement : le récapitulatif s'ouvre.
+                            setSelectedTier(tierKey);
+                            setImmediateAccess(false);
+                          }
+                        : undefined
+                    }
+                    isPending={checkout.isPending}
+                    dormant={!ENTERPRISE_BILLING_ENFORCED}
+                    interval={billingInterval}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </LayoutGroup>
+        </section>
       )}
 
       {canPay && subscription && (
@@ -295,13 +253,10 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
       {/* Rétractation (14 jours) et résiliation (fin de période, sans
           remboursement) : REMBOURSEMENT-RESILIATION.md §2 et §4. */}
       {canPay && subscription && effectiveTierKey(subscription) !== 'free' && (
-        <OrgWithdrawCancel orgId={orgId} subscription={subscription} />
+        <OrgWithdrawCancel orgId={orgId} subscription={subscription} memberCount={memberCount} />
       )}
 
-      {/* Historique et destinataire des factures : propriétaire seul, les
-          deux lectures le refusent à tout autre compte (mig. 180). Montés
-          même quand la facturation dort : l'historique dit alors « aucun
-          paiement », ce qui est exact, et le contact se prépare d'avance. */}
+      {/* Historique et destinataire des factures : propriétaire seul (mig. 180). */}
       {isOwner && (
         <div className="grid gap-4 md:grid-cols-2 items-start">
           <OrgBillingHistory orgId={orgId} />
