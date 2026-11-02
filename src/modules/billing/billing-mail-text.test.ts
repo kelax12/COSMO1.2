@@ -4,6 +4,7 @@ import {
   CGV_VERSION as SERVER_CGV,
   cancellationMail,
   receiptMail,
+  refundDoneMail,
   subscriptionConfirmationMail,
   withdrawalAckMail,
 } from '../../../supabase/functions/_shared/billing-mail-text';
@@ -21,23 +22,28 @@ describe('emails de facturation', () => {
       orgName: 'Acme',
       amountCents: 2900,
       interval: 'monthly',
+      tierKey: 't10',
+      paidAt: Date.parse('2026-11-02T10:00:00Z') / 1000,
+      nextDueAt: Date.parse('2026-12-02T10:00:00Z') / 1000,
       immediateAccessAt: '2026-11-01T10:00:00Z',
       withdrawalDeadline: Date.parse('2026-11-15T10:00:00Z') / 1000,
+      invoiceUrl: null,
       appUrl: APP,
     });
     expect(m.text).toContain('14 jours');
     expect(m.text).toContain('15/11/2026');
     expect(m.text).toContain('formulaire type');
-    expect(m.text).toContain('acces immediat');
+    expect(m.text).toContain('accès immédiat');
     expect(m.text).toContain(CGV_VERSION);
     expect(m.text).toContain('293 B');
   });
 
   it('sans demande d accès immédiat, la confirmation promet un remboursement intégral', () => {
     const m = subscriptionConfirmationMail({
-      orgName: 'Acme', amountCents: 2900, interval: 'yearly', immediateAccessAt: null, withdrawalDeadline: 0, appUrl: APP,
+      orgName: 'Acme', amountCents: 2900, interval: 'yearly', tierKey: 't10', paidAt: 0, nextDueAt: null,
+      immediateAccessAt: null, withdrawalDeadline: 0, invoiceUrl: null, appUrl: APP,
     });
-    expect(m.text).toContain('integralement');
+    expect(m.text).toContain('intégralement');
   });
 
   it('accusé de rétractation : date, heure, montant, délai', () => {
@@ -55,7 +61,56 @@ describe('emails de facturation', () => {
 
   it('reçu : lien de résiliation, et le nom d organisation est échappé dans le HTML', () => {
     const m = receiptMail({ orgName: '<a href="x">', amountCents: 2900, paidAt: 1_800_000_000, appUrl: APP });
-    expect(m.text).toContain(`${APP}/entreprise?tab=billing`);
-    expect(m.html).not.toContain('<a href');
+    expect(m.text).toContain(`${APP}/entreprise/billing`);
+    expect(m.html).not.toContain('<a href="x">');
+  });
+});
+
+describe('e-mails sur le gabarit commun', () => {
+  it('bienvenue : encadré, bouton vers les membres, lien de facture https seul', () => {
+    const m = subscriptionConfirmationMail({
+      orgName: 'Acme', amountCents: 7000, interval: 'monthly', tierKey: 't10',
+      paidAt: Date.parse('2026-11-02T10:00:00Z') / 1000, nextDueAt: Date.parse('2026-12-02T10:00:00Z') / 1000,
+      immediateAccessAt: '2026-11-02T10:00:00Z', withdrawalDeadline: Date.parse('2026-11-16T10:00:00Z') / 1000,
+      invoiceUrl: 'https://invoice.stripe.com/i/abc', appUrl: APP,
+    });
+    expect(m.subject).toBe('Votre abonnement COSMO Entreprise est actif');
+    expect(m.text).toContain('Palier : 5 à 10 membres');
+    expect(m.text).toContain('Montant : 70,00 € TTC / mois');
+    expect(m.text).toContain('Prochaine échéance : 02/12/2026');
+    expect(m.html).toContain('href="https://thecosmo.app/entreprise/members"');
+    expect(m.html).toContain('href="https://invoice.stripe.com/i/abc"');
+    // La date limite reste dans le paragraphe légal, pas dans l'encadré.
+    expect(m.text).not.toMatch(/Changer d.avis :/);
+    expect(m.text).toContain('16/11/2026');
+  });
+
+  it('bienvenue : une facture non https est ignorée', () => {
+    const m = subscriptionConfirmationMail({
+      orgName: 'Acme', amountCents: 7000, interval: 'yearly', tierKey: 't10', paidAt: 0, nextDueAt: null,
+      immediateAccessAt: null, withdrawalDeadline: 0, invoiceUrl: 'javascript:alert(1)', appUrl: APP,
+    });
+    expect(m.html).not.toContain('javascript:');
+    expect(m.text).toContain('Montant : 70,00 € TTC / an');
+  });
+
+  it('résiliation : fin d accès, aucun prélèvement, reprise possible, aucun remboursement', () => {
+    const m = cancellationMail({ orgName: 'Acme', accessUntil: '2026-12-02T00:00:00Z', appUrl: APP });
+    expect(m.text).toContain('Fin d’accès : 02/12/2026');
+    expect(m.html).toContain('href="https://thecosmo.app/entreprise/billing"');
+    expect(m.text).toContain('Aucun remboursement');
+  });
+
+  it('chaque e-mail porte le logo et le nom d organisation échappé', () => {
+    const evil = 'Acme <img src=x onerror=alert(1)>';
+    for (const m of [
+      receiptMail({ orgName: evil, amountCents: 7000, paidAt: 0, appUrl: APP, invoiceUrl: null }),
+      cancellationMail({ orgName: evil, accessUntil: '2026-12-02T00:00:00Z', appUrl: APP }),
+      withdrawalAckMail({ orgName: evil, withdrawnAt: '2026-11-03T10:00:00Z', amountCents: 1933 }),
+      refundDoneMail({ orgName: evil, amountCents: 1933, refundedAt: '2026-11-04T10:00:00Z' }),
+    ]) {
+      expect(m.html).toContain('alt="Cosmo"');
+      expect(m.html).not.toContain('<img src=x');
+    }
   });
 });
