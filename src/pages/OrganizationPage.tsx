@@ -13,7 +13,7 @@ import {
 } from '@/modules/organizations';
 import { ENTERPRISE_BILLING_ENFORCED } from '@/modules/billing/premium-config';
 import { useOrgSubscription } from '@/modules/billing/org-billing.hooks';
-import { isQuotaReached, effectiveQuota } from '@/modules/billing/org-billing.logic';
+import { isQuotaReached, effectiveQuota, needsPaymentAttention } from '@/modules/billing/org-billing.logic';
 import { PageHeading } from '@/components/ui/typography';
 import { MobileHeader } from '@/components/mobile';
 import OrgNotificationsBell from '@/components/organization/OrgNotificationsBell';
@@ -68,6 +68,7 @@ const TeamTasksTab = lazyWithRetry(() => import('@/components/organization/TeamT
 const TeamOKRTab = lazyWithRetry(() => import('@/components/organization/TeamOKRTab'), ['okr', 'org', 'orgAdmin', 'overlays', 'portfolio']);
 const TeamOverviewTab = lazyWithRetry(() => import('@/components/organization/TeamOverviewTab'));
 const OrgBillingTab = lazyWithRetry(() => import('@/components/organization/OrgBillingTab'), ['org', 'orgAccount', 'orgAdmin', 'overlays']);
+const OrgPastDueBanner = lazyWithRetry(() => import('@/components/organization/OrgPastDueBanner'));
 // Section Membres : sortie de la page le 2026-09-24, et LAZY pour la même
 // raison que les onglets ci-dessus. Importée en dur, elle restait dans ce
 // chunk, qui dépassait son cliquet (18,3 ko pour 18,0) : seul qui ouvre
@@ -392,6 +393,14 @@ const OrganizationPage = () => {
             dans `org_notifications` sans qu'aucun ecran ne les lise. */}
         <OrgNotificationsBell orgId={myOrg.id} members={members} />
       </header>
+
+      {/* Impayé : propriétaire seul, au-dessus de tout (spec 2026-11-02 § 5.2).
+          Chunk chargé seulement quand l'abonnement est `past_due`. */}
+      {isOwner && !isDemo && needsPaymentAttention(orgSubscription ?? null) && (
+        <Suspense fallback={null}>
+          <OrgPastDueBanner orgId={myOrg.id} memberCount={members.length} />
+        </Suspense>
+      )}
 
       {/* Bannière sièges : affichée UNIQUEMENT quand il faut changer de plan
           (facturation active ET quota atteint). Le simple constat « gratuit
