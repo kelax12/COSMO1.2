@@ -176,12 +176,13 @@ const OrgInviteSection = ({
 
           {/* Plus de place (spec 2026-11-02 § 5.4) : la solution sur place,
               palier suivant présélectionné dans l'onglet Abonnement. Le champ
-              reste saisissable, seul l'envoi est retenu. `role="status"` ne
-              porte que le texte, jamais les liens. */}
+              reste saisissable, seul l'envoi est retenu. Pas de `role="status"`
+              sur la phrase du propriétaire : elle reprend l'adresse en cours
+              de frappe, un lecteur d'écran la relirait à chaque touche. */}
           {seatsFull && seatsQuota !== null && (
             isOwner ? (
               <div className="rounded-2xl border border-[rgb(var(--color-accent))] bg-[rgb(var(--color-accent)/0.06)] p-4">
-                <p role="status" className="text-sm text-[rgb(var(--color-text-primary))]">
+                <p className="break-words text-sm text-[rgb(var(--color-text-primary))]">
                   {currentTier.priceEurPerMonth > 0
                     ? t('invite.seatsFullOwner', {
                         quota: seatsQuota,

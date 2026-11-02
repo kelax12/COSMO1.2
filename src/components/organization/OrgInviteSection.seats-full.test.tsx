@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import type { MyOrganization } from '@/modules/organizations';
 
@@ -21,7 +21,14 @@ const org: MyOrganization = {
   myRole: 'admin',
 };
 
-function renderSection(isOwner: boolean) {
+interface Opts {
+  isOwner?: boolean;
+  seatsFull?: boolean;
+  seatsQuota?: number | null;
+  memberCount?: number;
+}
+
+function renderSection({ isOwner = true, seatsFull = true, seatsQuota = 5, memberCount = 5 }: Opts = {}) {
   return render(
     <MemoryRouter>
       <OrgInviteSection
@@ -30,9 +37,9 @@ function renderSection(isOwner: boolean) {
         isAdmin
         canInvite
         canInviteByEmail
-        seatsFull
-        seatsQuota={5}
-        memberCount={5}
+        seatsFull={seatsFull}
+        seatsQuota={seatsQuota}
+        memberCount={memberCount}
         isOwner={isOwner}
         onInviteByEmail={() => {}}
       />
@@ -42,15 +49,42 @@ function renderSection(isOwner: boolean) {
 
 describe('OrgInviteSection, plus de place', () => {
   it('propriétaire sur le palier gratuit : phrase du palier suivant et lien présélectionné', () => {
-    renderSection(true);
+    renderSection();
     expect(screen.getByText(/passez au palier 5 à 10 membres/i)).toBeTruthy();
     const link = screen.getByRole('link', { name: /passer au palier supérieur/i });
     expect(link.getAttribute('href')).toContain('tier=t10');
   });
 
   it('non propriétaire : renvoyé au propriétaire, aucun lien de mise à niveau', () => {
-    renderSection(false);
+    renderSection({ isOwner: false });
     expect(screen.getByText(/seul le propriétaire peut changer de palier/i)).toBeTruthy();
     expect(screen.queryByRole('link', { name: /passer au palier supérieur/i })).toBeNull();
+  });
+
+  it('palier payant plein : prix actuel rappelé et palier suivant présélectionné', () => {
+    renderSection({ seatsQuota: 10, memberCount: 10 });
+    expect(screen.getByText(/au lieu de/i)).toBeTruthy();
+    const link = screen.getByRole('link', { name: /passer au palier supérieur/i });
+    expect(link.getAttribute('href')).toContain('tier=t20');
+  });
+
+  it('au-delà du quota : le palier conseillé tient compte de l effectif', () => {
+    renderSection({ seatsQuota: 5, memberCount: 7 });
+    const link = screen.getByRole('link', { name: /passer au palier supérieur/i });
+    expect(link.getAttribute('href')).toContain('tier=t10');
+  });
+
+  it('places disponibles : aucun bloc', () => {
+    renderSection({ seatsFull: false, memberCount: 3 });
+    expect(screen.queryByRole('link', { name: /passer au palier supérieur/i })).toBeNull();
+    expect(screen.queryByText(/seul le propriétaire peut changer de palier/i)).toBeNull();
+  });
+
+  it('l adresse saisie est reprise dans la phrase', () => {
+    renderSection();
+    fireEvent.change(document.getElementById('invite-quick-emails') as HTMLInputElement, {
+      target: { value: 'ada@acme.fr' },
+    });
+    expect(screen.getByText(/pour inviter ada@acme\.fr/i)).toBeTruthy();
   });
 });
