@@ -49,6 +49,7 @@ const checkoutFn = codeOnly(read('supabase/functions/stripe-org-checkout/index.t
 const webhook = codeOnly(read('supabase/functions/stripe-webhook/index.ts'));
 const mutations = codeOnly(read('src/modules/billing/org-billing.mutations.ts'));
 const billingTab = read('src/components/organization/OrgBillingTab.tsx');
+const checkoutRecap = read('src/components/organization/OrgCheckoutRecap.tsx');
 const deleteFlow = codeOnly(read('src/pages/organization/useDeleteOrgFlow.ts'));
 const refundReplay = codeOnly(read('supabase/functions/_shared/refund-replay.ts'));
 
@@ -154,10 +155,12 @@ describe('le PAIEMENT — demande expresse d accès immédiat et version des CGV
   });
 
   it('l écran conditionne le paiement à la case', () => {
-    // La case n'apparaît qu'une fois le palier choisi, et le bouton de paiement en dépend.
-    expect(billingTab).toMatch(/canPay && selectedTier/);
-    expect(billingTab).toMatch(/disabled=\{!immediateAccess/);
-    expect(billingTab).toContain('billing.immediateAccessLabel');
+    // La case n'apparaît qu'une fois le palier choisi (récapitulatif, lot 1 du
+    // 2026-11-02), et le bouton ne paie que case cochée : sinon il explique.
+    expect(billingTab).toMatch(/const canChoose = canPay &&/);
+    expect(billingTab).toMatch(/canChoose && selectedTier/);
+    expect(checkoutRecap).toMatch(/if \(immediateAccess\) \{\s*onPay\(\);/);
+    expect(checkoutRecap).toContain('billing.immediateAccessLabel');
   });
 });
 
