@@ -65,7 +65,7 @@ et les **règles durables** tirées des audits.
   et par `check:edge-smoke`, alertes CodeQL et Dependabot). Passes précédentes contre la prod :
   2026-09-22 (advisors, RLS, `C-77`), 2026-09-14 (gardes et isolation), 2026-09-02 (Edge
   Functions Stripe, `S-1` à `S-6`). ⚠️ Advisors **non relus** le 2026-09-30 : `11 / 78 / 2 / 1`
-  est le relevé du même jour par la session d'audit (`prompt-audit-failles-acquisition-2026-09-30.md`).
+  est le relevé du même jour par la session d'audit (`docs/archive/prompts/prompt-audit-failles-acquisition-2026-09-30.md`).
 
 Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 

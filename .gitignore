@@ -148,3 +148,10 @@ coverage-tooling
 # Test de mutation (AM-3) : rapport Stryker et bac a sable.
 /reports
 .stryker-tmp
+
+# Documents prives (depot PUBLIC) : prospection et business plan restent en local.
+/leads-*.csv
+/docs/business-plan/
+
+# Etat des seances de brainstorm superpowers.
+/.superpowers/
