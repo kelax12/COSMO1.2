@@ -95,7 +95,13 @@
     "seatsOverBy_one": "+{{count}} over, nothing changes today",
     "seatsOverBy_other": "+{{count}} over, nothing changes today",
     "seatsFullNow": "No seats left: upgrade the plan.",
-    "changePlan": "Change plan"
+    "changePlan": "Change plan",
+    "seatsFullOwner": "All {{quota}} seats are taken. To invite {{who}}, move to the {{tier}} tier: {{price}} per month incl. VAT, instead of {{current}}.",
+    "seatsFullOwnerFromFree": "All {{quota}} seats are taken. To invite {{who}}, move to the {{tier}} tier: {{price}} per month incl. VAT.",
+    "someoneMore": "one more person",
+    "upgradeCta": "Upgrade tier",
+    "freeSeatCta": "Free up a seat",
+    "seatsFullMember": "All seats are taken. Only the owner can change the tier."
   },
   "projects": {
     "taskDeleted": "Task deleted",
