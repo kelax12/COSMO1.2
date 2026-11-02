@@ -312,7 +312,7 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
           Montés même facturation en sommeil : « aucun paiement » est exact. */}
       {isOwner && (
         <div className="grid gap-4 md:grid-cols-2 items-start">
-          <OrgBillingHistory orgId={orgId} />
+          <OrgBillingHistory orgId={orgId} ownerEmail={user?.email} />
           <OrgBillingContactCard orgId={orgId} ownerEmail={user?.email} userId={user?.id} />
         </div>
       )}
