@@ -6,6 +6,10 @@
 // ici sert à l'AFFICHAGE — proposer le bon palier, prévenir avant le blocage.
 // Les deux doivent dire la même chose, d'où la sémantique identique
 // (`COUNT(membres) < quota`).
+//
+// Les fonctions ajoutées pour le parcours de facturation (palier conseillé,
+// échéances, activation, dernier échec) servent à l'affichage seul : aucune
+// n'est reprise côté serveur, aucune n'est la frontière de sécurité.
 // ═══════════════════════════════════════════════════════════════════
 import { addDays, addMonths, addYears } from 'date-fns';
 import { ENTERPRISE_PRICING_TIERS, ORG_FREE_SEATS, yearlyTotalEur } from './premium-config';
@@ -72,9 +76,19 @@ export function recommendedTier(memberCount: number): Tier {
   );
 }
 
-/** Le palier dont le plafond vaut `quota` (`null` = illimité). */
+/**
+ * Le palier dont le plafond vaut `quota` (`null` = illimité). Un plafond inconnu
+ * ne retombe jamais sur le gratuit : on rend le plus petit palier qui le couvre,
+ * à défaut le dernier.
+ */
 export function tierByQuota(quota: number | null): Tier {
-  return ENTERPRISE_PRICING_TIERS.find((t) => t.maxMembers === quota) ?? ENTERPRISE_PRICING_TIERS[0];
+  const exact = ENTERPRISE_PRICING_TIERS.find((t) => t.maxMembers === quota);
+  if (exact) return exact;
+  if (quota === null) return ENTERPRISE_PRICING_TIERS[ENTERPRISE_PRICING_TIERS.length - 1];
+  return (
+    ENTERPRISE_PRICING_TIERS.find((t) => t.maxMembers !== null && t.maxMembers >= quota) ??
+    ENTERPRISE_PRICING_TIERS[ENTERPRISE_PRICING_TIERS.length - 1]
+  );
 }
 
 /** Montant débité au paiement : le mois, ou l'année entière dérivée du mensuel. */
@@ -87,7 +101,12 @@ export function nextDueDate(from: Date, interval: OrgBillingInterval): Date {
   return interval === 'yearly' ? addYears(from, 1) : addMonths(from, 1);
 }
 
-/** Fin du délai de rétractation (L221-18), pour l'AFFICHAGE du récapitulatif. */
+/**
+ * Fin du délai de rétractation (L221-18), pour l'AFFICHAGE du récapitulatif.
+ * Compte en jours calendaires (date-fns) alors que `withdrawal-window.ts` compte
+ * 14 x 24 h : les deux peuvent différer d'une heure autour d'un changement
+ * d'heure. Le serveur (`_shared/refund-amount.ts`) reste la référence.
+ */
 export function withdrawalDeadline(from: Date): Date {
   return addDays(from, 14);
 }
@@ -121,10 +140,15 @@ export function activationPollInterval(
 
 /** Date du dernier paiement échoué du journal, quel que soit son ordre. */
 export function lastFailedPaymentAt(entries: OrgBillingHistoryEntry[]): string | null {
+  let lastMs = -Infinity;
   let last: string | null = null;
   for (const e of entries) {
     if (e.eventType !== 'invoice.payment_failed') continue;
-    if (!last || new Date(e.occurredAt).getTime() > new Date(last).getTime()) last = e.occurredAt;
+    const ms = new Date(e.occurredAt).getTime();
+    if (Number.isFinite(ms) && ms > lastMs) {
+      lastMs = ms;
+      last = e.occurredAt;
+    }
   }
   return last;
 }

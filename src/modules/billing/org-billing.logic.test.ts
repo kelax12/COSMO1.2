@@ -169,6 +169,9 @@ describe('tierByQuota', () => {
     expect(tierByQuota(20).key).toBe('t20');
     expect(tierByQuota(null).key).toBe('tmax');
   });
+  it('un plafond inconnu rend le plus petit palier qui le couvre, jamais le gratuit', () => {
+    expect(tierByQuota(15).key).toBe('t20');
+  });
 });
 
 describe('montants et dates', () => {
@@ -217,5 +220,16 @@ describe('lastFailedPaymentAt', () => {
   });
   it('null sans échec', () => {
     expect(lastFailedPaymentAt([entry('invoice.payment_succeeded', '2026-11-02T10:00:00Z')])).toBeNull();
+  });
+  it('une date illisible placée en premier n empoisonne pas le résultat', () => {
+    expect(
+      lastFailedPaymentAt([
+        entry('invoice.payment_failed', 'pas une date'),
+        entry('invoice.payment_failed', '2026-11-02T10:00:00Z'),
+      ]),
+    ).toBe('2026-11-02T10:00:00Z');
+  });
+  it('liste vide → null', () => {
+    expect(lastFailedPaymentAt([])).toBeNull();
   });
 });
