@@ -13,10 +13,13 @@ import type { OrgSubscription } from '@/modules/billing/org-billing.types';
 import { ORG_TIER_LABEL_KEYS } from '@/modules/billing/org-tier-labels';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { withdrawalOpen } from '@/modules/billing/withdrawal-window';
+import { ORG_FREE_SEATS } from '@/modules/billing/premium-config';
 
 interface Props {
   orgId: string;
   subscription: OrgSubscription;
+  /** Membres actuels : au-delà des places gratuites, la fin d'abonnement le dit. */
+  memberCount: number;
 }
 
 /**
@@ -33,7 +36,7 @@ interface Props {
  * Les confirmations sont des panneaux en ligne, pas des modales : « une seule
  * page de confirmation », sans piège de focus à câbler.
  */
-export function OrgWithdrawCancel({ orgId, subscription }: Props) {
+export function OrgWithdrawCancel({ orgId, subscription, memberCount }: Props) {
   const { t } = useT('orgAdmin');
   const { t: tc } = useT('common');
   const { user } = useAuth();
@@ -60,18 +63,46 @@ export function OrgWithdrawCancel({ orgId, subscription }: Props) {
   return (
     <section className="flex flex-col gap-3 rounded-lg border border-[rgb(var(--color-border))] p-3">
       {subscription.cancelAtPeriodEnd ? (
-        <div className="flex flex-col gap-2">
-          <p className="text-sm text-[rgb(var(--color-text-primary))]">
-            {t('billing.cancelPending', { date: periodEnd })}
-          </p>
-          <button
-            type="button"
-            disabled={action.isPending}
-            onClick={() => action.mutate({ orgId, action: 'resume' })}
-            className="self-start rounded-lg border border-[rgb(var(--color-border))] px-3 py-2 text-sm disabled:opacity-60"
+        <div className="flex flex-col gap-3">
+          <div>
+            <h3 className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">
+              {t('billing.endsTitle', { date: periodEnd })}
+            </h3>
+            <p className="text-xs text-[rgb(var(--color-text-secondary))]">{t('billing.endsBody')}</p>
+          </div>
+          {/* Frise en liste ordonnée : lisible sans le dessin. La date de
+              résiliation n'est pas lue (aucune colonne), le jalon est omis. */}
+          <ol
+            aria-label={t('billing.timelineLabel')}
+            className="relative grid grid-cols-3 gap-2 text-xs before:absolute before:left-0 before:right-0 before:top-[5px] before:h-0.5 before:bg-[rgb(var(--color-border))]"
           >
-            {t('billing.resumeCta')}
-          </button>
+            {[
+              { label: t('billing.timelineToday'), dot: 'bg-[rgb(var(--color-accent))]', text: 'text-[rgb(var(--color-accent))]' },
+              { label: t('billing.timelineEnd', { date: periodEnd }), dot: 'bg-[rgb(var(--color-text-primary))]', text: 'text-[rgb(var(--color-text-primary))]' },
+              { label: t('billing.timelineFree'), dot: 'bg-[rgb(var(--color-border-strong))]', text: 'text-[rgb(var(--color-text-secondary))]' },
+            ].map((step) => (
+              <li key={step.label} className={`relative flex flex-col gap-1.5 ${step.text}`}>
+                <span aria-hidden className={`h-3 w-3 rounded-full ${step.dot}`} />
+                {step.label}
+              </li>
+            ))}
+          </ol>
+          {memberCount > ORG_FREE_SEATS && (
+            <p className="rounded-lg bg-[rgb(var(--color-hover))] p-3 text-xs text-[rgb(var(--color-text-secondary))]">
+              {t('billing.endsOverQuota', { date: periodEnd, quota: ORG_FREE_SEATS, count: memberCount })}
+            </p>
+          )}
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              disabled={action.isPending}
+              onClick={() => action.mutate({ orgId, action: 'resume' })}
+              className="rounded-lg border-2 border-[rgb(var(--color-accent))] px-3 py-2 text-sm font-semibold text-[rgb(var(--color-accent))] disabled:opacity-60"
+            >
+              {t('billing.resumeCta')}
+            </button>
+            <span className="text-xs text-[rgb(var(--color-text-secondary))]">{t('billing.resumeHint')}</span>
+          </div>
         </div>
       ) : (
         <div className="flex flex-wrap gap-2">
