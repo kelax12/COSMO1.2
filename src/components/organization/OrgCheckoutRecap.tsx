@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Lock, ShieldCheck } from 'lucide-react';
 import { useT } from '@/i18n/useT';
@@ -6,7 +6,7 @@ import { formatCurrency, formatDate } from '@/i18n/format';
 import { ENTERPRISE_PRICING_TIERS } from '@/modules/billing/premium-config';
 import type { OrgBillingInterval, OrgTierKey } from '@/modules/billing/premium-config';
 import { chargedTodayEur, nextDueDate, withdrawalDeadline } from '@/modules/billing/org-billing.logic';
-import { PILL_BASE, useTierRangeLabel } from './billing-ui';
+import { useTierRangeLabel } from './billing-ui';
 
 interface Props {
   tierKey: OrgTierKey;
@@ -48,6 +48,9 @@ export function OrgCheckoutRecap({
   const { t } = useT('orgAdmin');
   const rangeLabel = useTierRangeLabel();
   const [showRequired, setShowRequired] = useState(false);
+  const titleId = useId();
+  const alertId = useId();
+  const checkboxRef = useRef<HTMLInputElement>(null);
   const tier = ENTERPRISE_PRICING_TIERS.find((x) => x.key === tierKey);
   if (!tier) return null;
 
@@ -72,38 +75,37 @@ export function OrgCheckoutRecap({
     );
   }
 
-  const rows: Array<[string, string]> = [
-    [t('billing.recapInterval'), interval === 'yearly' ? t('billing.recapYearly') : t('billing.recapMonthly')],
-    [t('billing.recapToday'), today],
-    [t('billing.recapNext'), t('billing.recapNextValue', { date: formatDate(nextDueDate(now, interval)) })],
-    [t('billing.recapWithdrawal'), t('billing.recapWithdrawalValue', { date: formatDate(withdrawalDeadline(now)) })],
+  const rows: Array<{ label: string; value: string; emphasis?: boolean }> = [
+    { label: t('billing.recapTier'), value: rangeLabel(tierKey) },
+    { label: t('billing.recapInterval'), value: interval === 'yearly' ? t('billing.recapYearly') : t('billing.recapMonthly') },
+    { label: t('billing.recapToday'), value: today, emphasis: true },
+    { label: t('billing.recapNext'), value: t('billing.recapNextValue', { date: formatDate(nextDueDate(now, interval)) }) },
+    { label: t('billing.recapWithdrawal'), value: t('billing.recapWithdrawalValue', { date: formatDate(withdrawalDeadline(now)) }) },
   ];
 
   return (
     <motion.section
       layoutId={`org-tier-${tierKey}`}
-      role="region"
-      aria-label={t('billing.recapTitle')}
+      aria-labelledby={titleId}
+      exit={{ opacity: 0 }}
       className="flex flex-col gap-3 rounded-xl border-2 border-[rgb(var(--color-accent))] p-4"
     >
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('billing.recapTitle')}</h3>
-        <span className={`${PILL_BASE} bg-[rgb(var(--color-accent)/0.12)] text-[rgb(var(--color-accent))]`}>
-          {rangeLabel(tierKey)}
-        </span>
-      </div>
+      <h3 id={titleId} className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">
+        {t('billing.recapTitle')}
+      </h3>
 
       <dl className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1.5 text-sm tabular-nums">
-        {rows.map(([label, value], i) => (
+        {rows.map(({ label, value, emphasis }) => (
           <div key={label} className="contents">
             <dt className="text-[rgb(var(--color-text-secondary))]">{label}</dt>
-            <dd className={`text-right text-[rgb(var(--color-text-primary))] ${i === 1 ? 'text-base font-semibold' : ''}`}>{value}</dd>
+            <dd className={`text-right text-[rgb(var(--color-text-primary))] ${emphasis ? 'text-base font-semibold' : ''}`}>{value}</dd>
           </div>
         ))}
       </dl>
 
       <label className="flex items-start gap-2 rounded-lg bg-[rgb(var(--color-hover))] p-3 text-sm text-[rgb(var(--color-text-primary))]">
         <input
+          ref={checkboxRef}
           type="checkbox"
           checked={immediateAccess}
           onChange={(e) => {
@@ -121,7 +123,7 @@ export function OrgCheckoutRecap({
       </label>
 
       {showRequired && (
-        <p role="alert" className="text-xs text-red-600 dark:text-red-400">
+        <p id={alertId} role="alert" className="text-xs text-red-600 dark:text-red-400">
           {t('billing.checkBoxRequired')}
         </p>
       )}
@@ -129,7 +131,15 @@ export function OrgCheckoutRecap({
       <div className="flex flex-wrap items-center gap-2">
         <motion.button
           type="button"
-          onClick={() => (immediateAccess ? onPay() : setShowRequired(true))}
+          onClick={() => {
+            if (immediateAccess) {
+              onPay();
+              return;
+            }
+            setShowRequired(true);
+            checkboxRef.current?.focus();
+          }}
+          aria-describedby={showRequired ? alertId : undefined}
           animate={immediateAccess ? { scale: [1, 1.03, 1] } : { scale: 1 }}
           transition={{ duration: 0.6 }}
           className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${

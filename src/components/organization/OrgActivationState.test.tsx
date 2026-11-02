@@ -31,4 +31,10 @@ describe('OrgActivationState', () => {
     fireEvent.click(screen.getByRole('button', { name: /fermer/i }));
     expect(onClose).toHaveBeenCalled();
   });
+
+  it('bienvenue : l orbite est décorative (aria-hidden) et seul le texte est annoncé', () => {
+    const { container } = renderPhase('welcome');
+    expect(container.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
+    expect(screen.getByRole('status').querySelector('a, button')).toBeNull();
+  });
 });
