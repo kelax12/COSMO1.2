@@ -145,6 +145,22 @@ const DECISIONS = {
       + 'droit de rétractation (Conso. art. L221-28). C\'est la pièce qu\'on produit '
       + 'si un client conteste. Table append-only, protégée par trigger (mig. 138).',
   },
+  billing_acceptances: {
+    decision: 'conserve',
+    raison:
+      'Preuve de la version des CGV acceptée et de la demande expresse d\'accès '
+      + 'immédiat (Conso. art. L221-25), qui fonde le montant d\'une rétractation. '
+      + 'Pièce produite si un client conteste (RGPD art. 17.3.e). Append-only par '
+      + 'trigger (mig. 237), sans FK vers `auth.users` : `delete-account` n\'y touche pas.',
+  },
+  org_withdrawals: {
+    decision: 'conserve',
+    raison:
+      'Trace de chaque rétractation (Conso. art. L221-21) et du remboursement dû '
+      + 'sous 14 jours (L221-24) : c\'est la preuve qu\'il a été fait. Conservée '
+      + 'pour la défense de droits en justice (RGPD art. 17.3.e). Sans FK vers '
+      + '`auth.users` (mig. 237) : `delete-account` n\'y touche pas.',
+  },
 };
 
 // ── Lecture du schéma ──────────────────────────────────────────────

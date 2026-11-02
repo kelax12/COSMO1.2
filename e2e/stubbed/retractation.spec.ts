@@ -161,11 +161,16 @@ test.describe('rétractation et résiliation (décision du 2026-11-01)', () => {
   });
 
   test('un non-propriétaire ne voit ni rétractation ni résiliation', async ({ page }) => {
+    // `?tab=billing` renvoie un non-propriétaire sur l'aperçu (OrganizationPage) :
+    // la vue Facturation, et son « géré par le propriétaire », n'est jamais peinte.
+    // Ancre : le titre de l'entreprise, pour ne pas conclure à une absence sur un
+    // écran vide.
     await openBilling(page, {
       ownerId: OTHER_USER_ID,
       subscription: { ...subscriptionRow({ interval: 'monthly' }), started_at: new Date().toISOString() },
-      shell: (p) => p.getByText(/géré par le propriétaire/i),
+      shell: (p) => p.getByRole('heading', { name: /nova e2e/i }),
     });
+    await expect(page.getByText(BILLING_ANCHOR)).toHaveCount(0);
     await expect(page.getByRole('button', { name: WITHDRAW })).toHaveCount(0);
     await expect(page.getByRole('button', { name: CANCEL })).toHaveCount(0);
   });
