@@ -14,8 +14,8 @@
 //     remboursement (`stripe-org-refund` n'est appelé par aucun parcours) ;
 //   • le paiement exige la case d'accès immédiat, et l'envoie avec la version
 //     des CGV.
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router';
 
@@ -46,30 +46,35 @@ vi.mock('@/modules/organizations', async (importOriginal) => ({
 
 const toastSuccess = vi.fn();
 const toastError = vi.fn();
+const toastInfo = vi.fn();
 vi.mock('sonner', () => ({
   toast: {
     success: (...a: unknown[]) => toastSuccess(...a),
     error: (...a: unknown[]) => toastError(...a),
     warning: vi.fn(),
-    info: vi.fn(),
+    info: (...a: unknown[]) => toastInfo(...a),
   },
 }));
 
 const DAY = 24 * 3600 * 1000;
 let startedAt = new Date(Date.now() - 2 * DAY).toISOString();
 let cancelAtPeriodEnd = false;
+let noPeriodEnd = false;
+// Un `vi.fn` : le test de délai compte les lectures pour prouver que le
+// sondage s'ARRÊTE. `vi.clearAllMocks` vide les appels, garde l'implémentation.
+const getOrgSubscription = vi.fn(async (_orgId: string) => ({
+  orgId: 'org-1',
+  tierKey: 't10',
+  status: 'active',
+  maxMembers: 10,
+  billingInterval: 'monthly',
+  currentPeriodEnd: noPeriodEnd ? null : new Date(Date.now() + 28 * DAY).toISOString(),
+  discountCode: null,
+  startedAt,
+  cancelAtPeriodEnd,
+}));
 vi.mock('@/modules/billing/org-billing.repository', () => ({
-  getOrgSubscription: async () => ({
-    orgId: 'org-1',
-    tierKey: 't10',
-    status: 'active',
-    maxMembers: 10,
-    billingInterval: 'monthly',
-    currentPeriodEnd: new Date(Date.now() + 28 * DAY).toISOString(),
-    discountCode: null,
-    startedAt,
-    cancelAtPeriodEnd,
-  }),
+  getOrgSubscription: (orgId: string) => getOrgSubscription(orgId),
 }));
 vi.mock('@/modules/billing/org-billing-account.repository', () => ({
   getOrgBillingHistory: async () => [],
@@ -77,6 +82,7 @@ vi.mock('@/modules/billing/org-billing-account.repository', () => ({
 }));
 
 import { appModeStore } from '@/lib/app-mode.store';
+import { loadSonner } from '@/lib/toast';
 import { OrgBillingTab } from './OrgBillingTab';
 import { withdrawalOpen } from '@/modules/billing/withdrawal-window';
 import { CGV_VERSION } from '@/modules/billing/cgv-version';
@@ -90,6 +96,16 @@ function renderTab() {
       </QueryClientProvider>
     </MemoryRouter>,
   );
+}
+
+const RECAP = /vérifier avant de payer/i;
+const BOX = /je demande l'accès immédiat au service/i;
+const PAY = /payer .* avec stripe/i;
+
+/** L'abonnement t10 est LU : la carte « Votre forfait » le dit actif. */
+async function waitForSubscription() {
+  const card = await screen.findByRole('region', { name: /votre forfait/i });
+  await within(card).findByText('Actif');
 }
 
 function renderTabAt(url: string) {
@@ -110,20 +126,78 @@ describe('retour de Stripe', () => {
     sessionStorage.clear();
     startedAt = new Date(Date.now() - 2 * DAY).toISOString();
     cancelAtPeriodEnd = false;
+    noPeriodEnd = false;
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('abonnement déjà actif sur le palier attendu : bienvenue, sans toast', async () => {
     sessionStorage.setItem('cosmo_pending_checkout', JSON.stringify({ orgId: 'org-1', tierKey: 't10', interval: 'monthly', at: Date.now() }));
     renderTabAt('/?checkout=success');
-    expect(await screen.findByText(/bienvenue dans le palier/i)).toBeTruthy();
+    await waitFor(() => expect(screen.getByText(/bienvenue dans le palier/i)).toBeTruthy());
+    // La façade charge sonner en différé : un toast demandé serait rejoué ici.
+    await loadSonner();
     expect(toastSuccess).not.toHaveBeenCalled();
     expect(sessionStorage.getItem('cosmo_pending_checkout')).toBeNull();
   });
 
-  it('palier attendu pas encore actif : activation en cours', async () => {
+  it('palier attendu pas encore actif : activation en cours, même abonnement lu', async () => {
     sessionStorage.setItem('cosmo_pending_checkout', JSON.stringify({ orgId: 'org-1', tierKey: 't50', interval: 'monthly', at: Date.now() }));
     renderTabAt('/?checkout=success');
-    expect(await screen.findByText(/activation en cours/i)).toBeTruthy();
+    await waitForSubscription();
+    expect(screen.getByText(/activation en cours/i)).toBeTruthy();
+  });
+
+  it('pendant l attente, aucun palier ne peut être choisi (pas de second paiement)', async () => {
+    sessionStorage.setItem('cosmo_pending_checkout', JSON.stringify({ orgId: 'org-1', tierKey: 't50', interval: 'monthly', at: Date.now() }));
+    renderTabAt('/?checkout=success');
+    await waitForSubscription();
+    await screen.findByText(/activation en cours/i);
+    expect(screen.queryAllByRole('button', { name: /choisir ce palier/i })).toHaveLength(0);
+    expect(screen.queryByRole('region', { name: RECAP })).toBeNull();
+  });
+
+  it('délai dépassé : un message, et le sondage s arrête', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    sessionStorage.setItem('cosmo_pending_checkout', JSON.stringify({ orgId: 'org-1', tierKey: 't50', interval: 'monthly', at: Date.now() }));
+    renderTabAt('/?checkout=success');
+    await screen.findByText(/activation en cours/i);
+    await vi.advanceTimersByTimeAsync(21_000);
+    expect(await screen.findByText(/rechargez la page/i)).toBeTruthy();
+    const reads = getOrgSubscription.mock.calls.length;
+    expect(reads).toBeGreaterThan(1);
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(getOrgSubscription.mock.calls.length).toBe(reads);
+  });
+
+  it('paiement abandonné : un toast d information, trace effacée', async () => {
+    sessionStorage.setItem('cosmo_pending_checkout', JSON.stringify({ orgId: 'org-1', tierKey: 't50', interval: 'monthly', at: Date.now() }));
+    renderTabAt('/?checkout=cancelled');
+    await waitFor(() => expect(toastInfo).toHaveBeenCalledTimes(1));
+    expect(sessionStorage.getItem('cosmo_pending_checkout')).toBeNull();
+  });
+
+  it('?tier=t50 ouvre le récapitulatif, case non cochée', async () => {
+    renderTabAt('/?tier=t50');
+    await waitForSubscription();
+    const recap = await screen.findByRole('region', { name: RECAP });
+    const box = within(recap).getByRole('checkbox', { name: BOX }) as HTMLInputElement;
+    expect(box.checked).toBe(false);
+  });
+
+  it('?tier=free n ouvre rien', async () => {
+    renderTabAt('/?tier=free');
+    await waitForSubscription();
+    await screen.findAllByRole('button', { name: /choisir ce palier/i });
+    expect(screen.queryByRole('region', { name: RECAP })).toBeNull();
+  });
+
+  it('?tier= sur le palier déjà souscrit n ouvre rien', async () => {
+    renderTabAt('/?tier=t10');
+    await waitForSubscription();
+    await waitFor(() => expect(screen.queryByRole('region', { name: RECAP })).toBeNull());
   });
 });
 
@@ -140,6 +214,7 @@ describe('rétractation : visible 14 jours, récapitulatif puis confirmation', (
     appModeStore.setDemo(false);
     startedAt = new Date(Date.now() - 2 * DAY).toISOString();
     cancelAtPeriodEnd = false;
+    noPeriodEnd = false;
   });
 
   it('withdrawalOpen : ouverte avant J+14, fermée après, fermée sans date', () => {
@@ -185,6 +260,7 @@ describe('résiliation : une seule confirmation, jamais de remboursement', () =>
     appModeStore.setDemo(false);
     startedAt = new Date(Date.now() - 40 * DAY).toISOString();
     cancelAtPeriodEnd = false;
+    noPeriodEnd = false;
   });
 
   it('un clic, une page qui dit « aucun remboursement », un bouton, un appel `cancel`', async () => {
@@ -213,22 +289,39 @@ describe('résiliation : une seule confirmation, jamais de remboursement', () =>
     await waitFor(() => expect(invoke).toHaveBeenCalledTimes(1));
     expect((invoke.mock.calls[0][1] as { body: unknown }).body).toEqual({ orgId: 'org-1', action: 'resume' });
   });
+
+  it('résiliation programmée sans date de fin lue : aucune date vide affichée', async () => {
+    cancelAtPeriodEnd = true;
+    noPeriodEnd = true;
+    renderTab();
+    expect(await screen.findByText(/s'arrête en fin de période/i)).toBeTruthy();
+    expect(screen.queryByRole('list', { name: /fin de l'abonnement/i })).toBeNull();
+    expect(screen.getByRole('button', { name: /reprendre mon abonnement/i })).toBeTruthy();
+  });
 });
 
 describe('paiement : case d accès immédiat, une fois le palier choisi', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     appModeStore.setDemo(false);
+    sessionStorage.clear();
+    startedAt = new Date(Date.now() - 2 * DAY).toISOString();
+    cancelAtPeriodEnd = false;
+    noPeriodEnd = false;
   });
 
-  const BOX = /je demande l'accès immédiat au service/i;
-  const PAY = /payer .* avec stripe/i;
+  /** Choisit le premier palier cliquable une fois l'abonnement t10 lu : t20. */
+  async function chooseFirstTier() {
+    await waitForSubscription();
+    const choose = await screen.findAllByRole('button', { name: /choisir ce palier/i });
+    fireEvent.click(choose[0]);
+  }
 
   it('aucune case avant le choix du palier ; choisir un palier n appelle pas Stripe', async () => {
     renderTab();
-    const choose = await screen.findAllByRole('button', { name: /choisir ce palier/i });
+    await screen.findAllByRole('button', { name: /choisir ce palier/i });
     expect(screen.queryByRole('checkbox', { name: BOX })).toBeNull();
-    fireEvent.click(choose[0]);
+    await chooseFirstTier();
     const box = await screen.findByRole('checkbox', { name: BOX });
     expect((box as HTMLInputElement).checked).toBe(false);
     // Le bouton n'est plus grisé en silence : il explique, et ne paie pas.
@@ -240,8 +333,7 @@ describe('paiement : case d accès immédiat, une fois le palier choisi', () => 
   it('case cochée : le checkout part avec immediateAccess et la version des CGV', async () => {
     invoke.mockResolvedValue({ data: { url: 'https://checkout.stripe.test/x' }, error: null });
     renderTab();
-    const choose = await screen.findAllByRole('button', { name: /choisir ce palier/i });
-    fireEvent.click(choose[0]);
+    await chooseFirstTier();
     fireEvent.click(await screen.findByRole('checkbox', { name: BOX }));
     fireEvent.click(screen.getByRole('button', { name: PAY }));
     await waitFor(() => expect(invoke).toHaveBeenCalled());
@@ -254,12 +346,28 @@ describe('paiement : case d accès immédiat, une fois le palier choisi', () => 
   it('avant la redirection, la trace du palier attendu est écrite', async () => {
     invoke.mockResolvedValue({ data: { url: 'https://checkout.stripe.test/x' }, error: null });
     renderTab();
-    const choose = await screen.findAllByRole('button', { name: /choisir ce palier/i });
-    fireEvent.click(choose[0]);
+    await chooseFirstTier();
     fireEvent.click(await screen.findByRole('checkbox', { name: BOX }));
     fireEvent.click(screen.getByRole('button', { name: PAY }));
     await waitFor(() => expect(invoke).toHaveBeenCalled());
     const trace = JSON.parse(sessionStorage.getItem('cosmo_pending_checkout') ?? 'null');
     expect(trace?.orgId).toBe('org-1');
+    expect(trace?.tierKey).toBe('t20');
+    expect(trace?.interval).toBe('monthly');
+  });
+
+  it('retour arrière depuis Stripe (bfcache) : le récapitulatif revient, la trace est effacée', async () => {
+    invoke.mockResolvedValue({ data: { url: 'https://checkout.stripe.test/x' }, error: null });
+    renderTab();
+    await chooseFirstTier();
+    fireEvent.click(await screen.findByRole('checkbox', { name: BOX }));
+    fireEvent.click(screen.getByRole('button', { name: PAY }));
+    // Panneau de redirection : le récapitulatif n'est plus là.
+    await waitFor(() => expect(screen.queryByRole('region', { name: RECAP })).toBeNull());
+    window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+    expect(await screen.findByRole('region', { name: RECAP })).toBeTruthy();
+    expect(sessionStorage.getItem('cosmo_pending_checkout')).toBeNull();
+    // Demande expresse : à reposer, jamais reprise d'office.
+    expect((screen.getByRole('checkbox', { name: BOX }) as HTMLInputElement).checked).toBe(false);
   });
 });
