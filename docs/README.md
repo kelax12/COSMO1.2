@@ -906,7 +906,7 @@ sur 186) : la garde ne reconnaissait pas les objets emportés par un `DROP TABLE
 ## Mise à jour du 2026-09-30 · **sécurité 83 → 78 : la note couvrait deux tiers de la surface**
 
 Une session d'audit a mesuré, en lecture seule, dix écarts entre les `.md` de sécurité et la réalité
-(`prompt-audit-failles-acquisition-2026-09-30.md`, partie A). Tous ont été **reconfirmés** contre la
+(`archive/prompts/prompt-audit-failles-acquisition-2026-09-30.md`, partie A). Tous ont été **reconfirmés** contre la
 prod ce jour, puis corrigés dans le dépôt. **Seule la note Sécurité bouge** ; les autres domaines
 n'ont pas été réaudités.
 
@@ -1145,7 +1145,7 @@ ont produit quelque chose**, ce qui mérite d'être écrit : un refus prudent n'
 
 | Refusé le matin | Fait l'après-midi | Ce que ça a rendu |
 |---|---|---|
-| **Recoter `a-faire-code-risques.md`** — il aurait fallu le chiffrage de `M-56` | ✅ **Recoté sur les 111 items** | 🔴 **44 items étaient CLOS dans leur corps sans que leur titre le dise.** Le décompte passe de « 58 ouverts sur 66 » à **8 ouverts sur 111**. Coter d'abord aurait produit un classement soigneux de **cinquante problèmes résolus** |
+| **Recoter `a-faire-code-risques.md`** (archivé : `archive/a-faire-code-risques-2026-09-21.md`) — il aurait fallu le chiffrage de `M-56` | ✅ **Recoté sur les 111 items** | 🔴 **44 items étaient CLOS dans leur corps sans que leur titre le dise.** Le décompte passe de « 58 ouverts sur 66 » à **8 ouverts sur 111**. Coter d'abord aurait produit un classement soigneux de **cinquante problèmes résolus** |
 | **Réécrire les 23 tableaux « Angles morts »** — leur date leur donne leur valeur | ✅ **95 lignes réécrites**, mais **seulement la 4ᵉ colonne** | Elle posait « Outillable ? », une **prédiction** du 09-16 ; elle porte maintenant l'état réel, la garde, et 🔴 ce qu'elle ne prouve pas. **L'énoncé, lui, n'est pas touché** : c'est ce qui explique pourquoi la garde existe. 73 lignes outillées, **22 toujours ouvertes**, dont **8 que rien ne porte** |
 | **Archiver le plan de pattern mobile** — `archive/` est pour les plans exécutés | ✅ **Archivé comme ABANDONNÉ**, avec sa raison | `docs/archive/` porte désormais les deux natures. 🔴 **Un plan abandonné se range, il ne se supprime pas** : ce qu'on a décidé de ne pas faire est une information, et sans elle le même plan se réécrit dans six mois |
 
