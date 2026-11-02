@@ -132,7 +132,7 @@ REVOKE EXECUTE ON FUNCTION public.orgs_missing_renewal_notice() FROM anon, authe
 -- Le rappel part à J-45 (au plus tôt) et se rattrape jusqu'à J-30 (au plus
 -- tard un mois avant, L215-1). Ajout du montant pour l'encadré du message.
 DROP FUNCTION IF EXISTS public.orgs_due_for_renewal_notice(INT, INT);
-CREATE FUNCTION public.orgs_due_for_renewal_notice(
+CREATE OR REPLACE FUNCTION public.orgs_due_for_renewal_notice(
   p_min_days INT DEFAULT 30,
   p_max_days INT DEFAULT 45
 )
