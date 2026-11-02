@@ -21,9 +21,11 @@ const OUTLINE = '#1a1744';
  * Orbite de bienvenue (animation 6). Une seule révolution, pas de boucle : rien
  * à mettre en pause (WCAG 2.2.2 ne s'applique qu'au mouvement qui dure).
  *
- * Le `motion.g` contient un cercle invisible de la taille de l'orbite : Framer
- * fait tourner un élément SVG autour du centre de sa boîte (`fill-box`), ce
- * cercle met ce centre sur la planète. Rotation de 0 à 360 : sous mouvement
+ * Par défaut Framer fait tourner un élément SVG autour du centre de sa boîte
+ * (`transform-box: fill-box`). Ici cette boîte n'est que celle du satellite
+ * (x 91 à 105) : le centre ne serait pas la planète. On fixe donc
+ * `transformBox: 'view-box'` et `transformOrigin: '60px 60px'`, le centre du
+ * viewBox, qui est celui de la planète. Rotation de 0 à 360 : sous mouvement
  * réduit elle ne joue pas et le satellite reste à sa place finale.
  */
 function Orbit() {
@@ -31,8 +33,12 @@ function Orbit() {
   return (
     <svg width="96" height="96" viewBox="0 0 120 120" aria-hidden className="shrink-0">
       <circle cx="60" cy="60" r="38" fill="none" stroke="rgb(var(--color-border-strong))" strokeDasharray="3 5" />
-      <motion.g initial={{ rotate: 0 }} animate={{ rotate: 360 }} transition={{ duration: 2.4, ease: [0.4, 0, 0.2, 1] }}>
-        <circle cx="60" cy="60" r="38" fill="none" />
+      <motion.g
+        initial={{ rotate: 0 }}
+        animate={{ rotate: 360 }}
+        transition={{ duration: 2.4, ease: [0.4, 0, 0.2, 1] }}
+        style={{ transformBox: 'view-box', transformOrigin: '60px 60px' }}
+      >
         <circle cx="98" cy="60" r="7" fill={RING} stroke={OUTLINE} strokeWidth="2" />
       </motion.g>
       <circle cx="60" cy="60" r="18" fill={PLANET} stroke={OUTLINE} strokeWidth="3" />
@@ -78,15 +84,16 @@ export function OrgActivationState({ phase, tierLabel, membersHref, onClose }: P
 
   return (
     <motion.div
-      role="status"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="flex flex-wrap items-center gap-4 rounded-xl border border-[rgb(var(--color-border))] p-4"
     >
       <Orbit />
       <div className="flex min-w-[220px] flex-1 flex-col gap-1">
-        <p className="text-lg font-semibold text-[rgb(var(--color-text-primary))]">{t('billing.welcomeTitle', { tier: tierLabel })}</p>
-        <p className="text-sm text-[rgb(var(--color-text-secondary))]">{t('billing.welcomeBody')}</p>
+        <div role="status" className="flex flex-col gap-1">
+          <p className="text-lg font-semibold text-[rgb(var(--color-text-primary))]">{t('billing.welcomeTitle', { tier: tierLabel })}</p>
+          <p className="text-sm text-[rgb(var(--color-text-secondary))]">{t('billing.welcomeBody')}</p>
+        </div>
         <div className="mt-2 flex flex-wrap gap-2">
           <Link
             to={membersHref}
