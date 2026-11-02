@@ -807,7 +807,7 @@
     "pictoCancel": "Cancel in one click",
     "pictoTax": "All taxes included",
     "recommended": "Recommended for your team",
-    "chooseTierAria": "Choose this tier: {{range}}, {{price}}",
+    "chooseTierPrefix": "Choose this tier:",
     "recapTitle": "Review before paying",
     "recapTier": "Tier",
     "recapInterval": "Billing",

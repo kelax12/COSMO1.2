@@ -83,3 +83,30 @@ describe('carte cliquable et palier conseillé', () => {
     expect(screen.queryAllByRole('button')).toHaveLength(0);
   });
 });
+
+describe('boutons de carte : nom, description, exclusions', () => {
+  const description = (el: HTMLElement) =>
+    (el.getAttribute('aria-describedby') ?? '')
+      .split(' ')
+      .map((id) => document.getElementById(id)?.textContent ?? '')
+      .join(' ');
+
+  it('en annuel, la description du bouton porte le débit réel et la pastille conseillée', () => {
+    render(<EnterpriseTierGrid onSelect={vi.fn()} interval="yearly" recommendedKey="t20" />);
+    const btn = screen.getByRole('button', { name: /choisir ce palier : 10 à 20 membres/i });
+    expect(description(btn)).toContain('par mois, facturé');
+    expect(description(btn)).toContain('Conseillé pour votre équipe');
+  });
+
+  it('le palier actif et le palier gratuit ne sont pas des boutons', () => {
+    render(<EnterpriseTierGrid onSelect={vi.fn()} currentTier="t20" />);
+    expect(screen.queryByRole('button', { name: /10 à 20 membres/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /0 à 5 membres/i })).toBeNull();
+    expect(screen.getAllByRole('button')).toHaveLength(4);
+  });
+
+  it('facturation éteinte (dormant) : aucun bouton, même avec onSelect', () => {
+    render(<EnterpriseTierGrid onSelect={vi.fn()} dormant />);
+    expect(screen.queryAllByRole('button')).toHaveLength(0);
+  });
+});
