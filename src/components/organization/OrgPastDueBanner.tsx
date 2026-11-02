@@ -19,7 +19,7 @@ interface Props {
  */
 export function OrgPastDueBanner({ orgId, memberCount }: Props) {
   const { t } = useT('orgAdmin');
-  const { data: history = [] } = useOrgBillingHistory(orgId, true);
+  const { data: history = [], isPending } = useOrgBillingHistory(orgId, true);
   const portal = useOpenOrgPortal();
   const failedAt = lastFailedPaymentAt(history);
 
@@ -27,8 +27,11 @@ export function OrgPastDueBanner({ orgId, memberCount }: Props) {
     <div className="mb-5 flex flex-wrap items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-700/60 dark:bg-amber-900/20">
       <CreditCard size={18} aria-hidden className="mt-0.5 shrink-0 text-amber-700 dark:text-amber-400" />
       <div role="status" className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
-          {failedAt ? t('billing.pastDueTitle', { date: formatDate(new Date(failedAt)) }) : t('billing.pastDueTitleNoDate')}
+        {/* Titre attendu avec le journal : sans lui, « dernier paiement »
+            laisserait place au titre daté dans la zone annoncée. La hauteur
+            est réservée pour que rien ne saute. */}
+        <p className="min-h-5 text-sm font-semibold text-amber-800 dark:text-amber-300">
+          {isPending ? null : failedAt ? t('billing.pastDueTitle', { date: formatDate(new Date(failedAt)) }) : t('billing.pastDueTitleNoDate')}
         </p>
         <p className="mt-0.5 text-xs text-amber-800 dark:text-amber-300">{t('billing.pastDueBody', { count: memberCount })}</p>
       </div>
