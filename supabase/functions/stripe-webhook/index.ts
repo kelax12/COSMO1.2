@@ -615,12 +615,33 @@ async function handleOrgCheckoutCompleted(session: Stripe.Checkout.Session) {
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle()
+      // Palier tel que `applyOrgSubscription` vient de l'enregistrer (dérivé du
+      // price ID, jamais des metadata), et lien de la première facture. Une
+      // lecture ratée retire seulement la ligne ou le lien, jamais l'e-mail.
+      const { data: saved } = await supabaseAdmin
+        .from('org_subscriptions')
+        .select('tier_key')
+        .eq('org_id', orgId)
+        .maybeSingle()
+      let invoiceUrl: string | null = null
+      if (session.invoice) {
+        try {
+          const invoice = await stripe.invoices.retrieve(session.invoice as string)
+          invoiceUrl = invoice.hosted_invoice_url ?? null
+        } catch (err) {
+          console.error('org welcome: invoice read failed:', err)
+        }
+      }
       await sendBillingMail('stripe-webhook', owner.email, subscriptionConfirmationMail({
         orgName: owner.orgName,
         amountCents: session.amount_total ?? 0,
         interval: subscription.items.data[0]?.price?.recurring?.interval === 'year' ? 'yearly' : 'monthly',
+        tierKey: saved?.tier_key ?? null,
+        paidAt: subscription.start_date,
+        nextDueAt: subscription.current_period_end ?? null,
         immediateAccessAt: acceptance?.immediate_access_at ?? null,
         withdrawalDeadline: withdrawalDeadline(subscription.start_date),
+        invoiceUrl,
         appUrl: APP_URL,
       }))
     }
@@ -690,7 +711,9 @@ async function handleOrgInvoicePaid(orgId: string, invoice: Stripe.Invoice) {
   // EN DERNIER et sans jamais lever : un email raté ne fait pas retenter Stripe.
   try {
     const owner = await orgOwnerContact(orgId)
-    if (owner?.email && (invoice.amount_paid ?? 0) > 0) {
+    // La première facture (souscription) est déjà dans l'e-mail de bienvenue,
+    // avec son lien : un reçu en plus ferait deux e-mails pour un seul achat.
+    if (owner?.email && (invoice.amount_paid ?? 0) > 0 && invoice.billing_reason !== 'subscription_create') {
       await sendBillingMail('stripe-webhook', owner.email, receiptMail({
         orgName: owner.orgName,
         amountCents: invoice.amount_paid ?? 0,
