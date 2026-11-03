@@ -138,7 +138,12 @@ describe('SV-5 · le nom d organisation est échappé dans l avis L215-1', () =>
       { org_name: 'Acme <a href="https://x.test">payez ici</a>', period_end: '2026-11-30' },
       'https://thecosmo.app',
     );
-    expect(mail.html).not.toContain('<a href');
+    // Le gabarit émet ses propres liens (Gérer, Résilier) : ce qui est interdit,
+    // c'est le lien INJECTÉ par le nom d'organisation.
+    expect(mail.html).not.toContain('<a href="https://x.test">');
+    const hrefs = [...mail.html.matchAll(/href="([^"]*)"/g)].map((m) => m[1]);
+    expect(hrefs.length).toBeGreaterThan(0);
+    for (const h of hrefs) expect(h.startsWith('https://thecosmo.app/')).toBe(true);
     expect(mail.html).toContain('&lt;a href=&quot;https://x.test&quot;&gt;');
     expect(mail.text).toContain('« Acme <a href="https://x.test">payez ici</a> »');
     expect(mail.subject).toBe('Votre abonnement COSMO sera renouvelé le 30/11/2026');
