@@ -52,7 +52,7 @@ Tous suivent la même forme. Partir de `index.ts` (exports publics), puis :
 | `team-lists` | `team_lists`, `team_list_tasks` | 0 | épinglage par défaut (`default-pin.ts`) |
 | `org-config` | `org_settings`, `org_verified_domains`, `org_webhooks`, `team_automations`, `team_project_statuses` | 0 | automatisations, webhooks sortants ; `org_settings` porte aussi `member_default_perms` (mig. 232) et `default_role_id` (mig. 230) |
 | `org-reports` | `org_activity_reports` | 0 | rapports d'activité (mig. `202`) |
-| `billing` | `subscriptions`, `org_subscriptions`, `org_billing_contacts` | 1 | Stripe, paliers entreprise · [CLAUDE.md](../src/modules/billing/CLAUDE.md) |
+| `billing` | `subscriptions`, `org_subscriptions`, `org_billing_contacts`, `org_seat_alerts` (mig. 240, Edge `seat-alert` : alerte 80 % des sièges, quotidienne) | 1 | Stripe, paliers entreprise · [CLAUDE.md](../src/modules/billing/CLAUDE.md) |
 | `admin` | aucune (RPC) | 5 | console `/admin`, garde `is_admin()` (aal2) |
 
 Écrans entreprise : `pages/OrganizationPage.tsx`, `pages/organization/`, `components/organization/`, `components/org-guide/` (guide entreprise).

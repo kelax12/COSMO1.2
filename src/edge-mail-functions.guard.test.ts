@@ -64,6 +64,8 @@ const renewalNotice = codeOnly(read('renewal-notice'));
 // soumises aux trois mêmes interdits dès leur naissance.
 const sendOrgInvite = codeOnly(read('send-org-invite'));
 const orgDigest = codeOnly(read('org-digest'));
+// Lot 3 facturation (2026-11-03) : l'alerte 80 % des sièges, mêmes interdits.
+const seatAlert = codeOnly(read('seat-alert'));
 
 /** Un `Deno.env.get('…FROM…')` muni d une valeur par defaut. */
 const SENDER_WITH_DEFAULT = /Deno[.]env[.]get[(]'[A-Z_]*FROM'[)]\s*[?][?]/;
@@ -96,6 +98,7 @@ describe('garde — report-bug et renewal-notice (C-36)', () => {
     ['renewal-notice', renewalNotice],
     ['send-org-invite', sendOrgInvite],
     ['org-digest', orgDigest],
+    ['seat-alert', seatAlert],
   ] as const) {
     describe(name, () => {
       it('n a AUCUNE valeur par defaut d expediteur', () => {

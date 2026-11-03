@@ -71,3 +71,28 @@ jobs:
           # workflow vert sur une fonction en erreur ferait passer un
           # manquement pour un jour normal.
           [ "$code" = "200" ]
+
+  # Alerte 80 % des sieges (spec 2026-11-02 § 6.3, mig. 240). Job a part : un
+  # echec de l un ne doit pas empecher l autre de partir.
+  seat-alert:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Declencher les alertes de sieges
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://ykeugqfgklejcdbrmawy.supabase.co' }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          # Secret absent = ECHEC, jamais un silence vert (C-34).
+          if [ -z "$SUPABASE_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "::error::CRON_SECRET absent des secrets Actions : aucune alerte de sieges ne part."
+            exit 1
+          fi
+          code=$(curl -s -o /tmp/out.json -w '%{http_code}' -X POST \
+            "$SUPABASE_URL/functions/v1/seat-alert" \
+            -H "x-cron-secret: $CRON_SECRET")
+          echo "HTTP $code"; cat /tmp/out.json; echo
+          case "$code" in
+            [0-9][0-9][0-9]) ;;
+            *) echo "::error::Aucun code HTTP : l appel n a pas eu lieu."; exit 1 ;;
+          esac
+          [ "$code" = "200" ]
