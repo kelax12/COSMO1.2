@@ -88,11 +88,11 @@ export function renderBillingMail(c: MailContent): BillingMail {
   const actions = cta || secondary
     ? `<tr><td style="padding:20px 28px 0">${
         cta
-          ? `<a style="display:inline-block;background:${BRAND};color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:11px 20px;border-radius:8px" href="${e(cta.url)}">${e(cta.label)}</a>`
+          ? `<a href="${e(cta.url)}" style="display:inline-block;background:${BRAND};color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:11px 20px;border-radius:8px">${e(cta.label)}</a>`
           : ''
       }${
         secondary
-          ? `<a style="${cta ? 'margin-left:14px;' : ''}font-size:13px;color:${BRAND};text-decoration:underline" href="${e(secondary.url)}">${e(secondary.label)}</a>`
+          ? `<a href="${e(secondary.url)}" style="${cta ? 'margin-left:14px;' : ''}font-size:13px;color:${BRAND};text-decoration:underline">${e(secondary.label)}</a>`
           : ''
       }</td></tr>`
     : ''
