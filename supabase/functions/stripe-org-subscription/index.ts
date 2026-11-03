@@ -219,7 +219,7 @@ Deno.serve(async (req) => {
       ackId = await sendBillingMail(
         'stripe-org-subscription',
         user.email,
-        withdrawalAckMail({ orgName: org.name ?? '', withdrawnAt, amountCents: decision.amountCents }),
+        withdrawalAckMail({ orgName: org.name ?? '', withdrawnAt, amountCents: decision.amountCents, appUrl: APP_URL }),
       )
       if (ackId) {
         await supabaseAdmin.from('org_withdrawals').update({ ack_message_id: ackId })
