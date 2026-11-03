@@ -11,6 +11,7 @@
 // n'importe quel admin et l'avis part au PROPRIÉTAIRE, signé par notre
 // domaine. Le HTML est donc échappé.
 import { tierByKey, yearlyTotalEur } from './org-tiers.ts'
+import { renderBillingMail } from './billing-mail-layout.ts'
 
 export interface RenewalNoticeOrg {
   org_name: string
@@ -30,43 +31,33 @@ export function dayBefore(iso: string): string {
   return d.toISOString().slice(0, 10)
 }
 
-function escapeHtml(s: string): string {
-  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string)
-}
-
 export function renewalNoticeMail(org: RenewalNoticeOrg, appUrl: string): { subject: string; text: string; html: string } {
   const date = frenchDate(org.period_end)
   const lastDay = frenchDate(dayBefore(org.period_end))
   const manage = `${appUrl}/entreprise?tab=billing`
   const tier = org.tier_key ? tierByKey(org.tier_key) : undefined
   const amount = tier ? `${yearlyTotalEur(tier.priceEurPerMonth).toFixed(2).replace('.', ',')} € TTC` : null
+  const range = tier ? (tier.maxMembers === null ? 'Illimité' : `${tier.minMembers} à ${tier.maxMembers} membres`) : null
 
-  const box = [
-    `Votre abonnement sera renouvele automatiquement le ${date}${amount ? `, pour un montant de ${amount}` : ''}.`,
-    `Vous pouvez refuser ce renouvellement en resiliant depuis la page Facturation, jusqu'au ${lastDay} inclus : ${manage}`,
-    `Sans resiliation, le montant sera preleve le ${date}.`,
-  ]
-  const before = [
-    `Bonjour,`,
-    ``,
-    `Conformement a l'article L215-1 du Code de la consommation, voici le rappel de renouvellement de l'abonnement COSMO Entreprise de l'organisation « ${org.org_name} ».`,
-    ``,
-  ]
-  const after = [
-    ``,
-    `La resiliation prend effet au terme de la periode deja payee, sans frais ni justification.`,
-    ``,
-    `L'equipe COSMO`,
-    `contact@thecosmo.app`,
-  ]
-  const lines = [...before, ...box.map((l) => `> ${l}`), ...after]
-  const para = (l: string) => (l === '' ? '<br>' : `<p style="margin:0 0 8px">${escapeHtml(l)}</p>`)
-  return {
+  return renderBillingMail({
     subject: `Votre abonnement COSMO sera renouvelé le ${date}`,
-    text: lines.join('\n'),
-    html:
-      before.map(para).join('')
-      + `<div style="border:2px solid #111;border-radius:8px;padding:12px 16px;margin:8px 0">${box.map((l) => `<p style="margin:0 0 8px"><strong>${escapeHtml(l)}</strong></p>`).join('')}</div>`
-      + after.map(para).join(''),
-  }
+    title: 'Renouvellement dans 45 jours',
+    intro: `L'abonnement annuel de « ${org.org_name} » sera reconduit automatiquement le ${date}. Rien à faire si vous souhaitez continuer.`,
+    rows: [
+      ['Renouvellement', date],
+      ...(amount ? [['Montant débité', `${amount} pour un an`] as [string, string]] : []),
+      ...(range ? [['Palier', range] as [string, string]] : []),
+    ],
+    cta: { label: 'Gérer mon abonnement', url: manage },
+    secondary: { label: `Résilier avant le ${lastDay} inclus`, url: manage },
+    legal: [
+      `Conformément à l'article L215-1 du Code de la consommation, voici le rappel de renouvellement de l'abonnement COSMO Entreprise de l'organisation « ${org.org_name} ».`,
+      `Votre abonnement sera renouvelé automatiquement le ${date}${amount ? `, pour un montant de ${amount}` : ''}.`,
+      `Vous pouvez refuser ce renouvellement en résiliant depuis la page Facturation, jusqu'au ${lastDay} inclus : ${manage}`,
+      `Sans résiliation, le montant sera prélevé le ${date}.`,
+      'La résiliation prend effet au terme de la période déjà payée, sans frais ni justification.',
+    ],
+    orgName: org.org_name,
+    appUrl,
+  })
 }
