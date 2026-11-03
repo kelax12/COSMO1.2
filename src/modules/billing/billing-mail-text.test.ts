@@ -8,6 +8,7 @@ import {
   subscriptionConfirmationMail,
   withdrawalAckMail,
 } from '../../../supabase/functions/_shared/billing-mail-text';
+import { renewalNoticeMail } from '../../../supabase/functions/_shared/renewal-notice-text';
 import { CGV_VERSION } from './cgv-version';
 
 const APP = 'https://thecosmo.app';
@@ -112,5 +113,18 @@ describe('e-mails sur le gabarit commun', () => {
       expect(m.html).toContain('alt="Cosmo"');
       expect(m.html).not.toContain('<img src=x');
     }
+  });
+});
+
+describe('rappel annuel L215-1 sur le gabarit', () => {
+  it('garde l article, la date, le dernier jour et le lien de résiliation', () => {
+    const m = renewalNoticeMail({ org_name: 'Acme', period_end: '2026-12-17', tier_key: 't20' }, 'https://thecosmo.app');
+    expect(m.subject).toBe('Votre abonnement COSMO sera renouvelé le 17/12/2026');
+    expect(m.text).toContain('L215-1');
+    expect(m.text).toContain('Renouvellement : 17/12/2026');
+    expect(m.text).toContain('Montant débité : 1350,00 € TTC pour un an');
+    expect(m.text).toContain('16/12/2026');
+    expect(m.html).toContain('href="https://thecosmo.app/entreprise?tab=billing"');
+    expect(m.html).toContain('alt="Cosmo"');
   });
 });

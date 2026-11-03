@@ -219,7 +219,7 @@ Deno.serve(async (req) => {
       await sendBillingMail(
         'stripe-org-refund',
         recipient,
-        refundDoneMail({ orgName: org?.name ?? '', amountCents: toRefund, refundedAt }),
+        refundDoneMail({ orgName: org?.name ?? '', amountCents: toRefund, refundedAt, appUrl: APP_URL }),
       )
     }
 
