@@ -829,8 +829,8 @@
     "timelineToday": "Today",
     "timelineEnd": "Access ends on {{date}}",
     "timelineFree": "Free tier",
-    "endsOverQuota_one": "After {{date}}, the free tier has {{quota}} seats. Your member stays, but you won't be able to invite more.",
-    "endsOverQuota_other": "After {{date}}, the free tier has {{quota}} seats. Your {{count}} members stay, but you won't be able to invite more.",
+    "endsOverQuota_one": "After {{date}}, the free tier has {{quota}} seats for your member: nothing changes for them.",
+    "endsOverQuota_other": "After {{date}}, the free tier has {{quota}} seats for your {{count}} members. The company space will be put on hold: tasks, projects, OKRs and teams closed until you remove members or pick a plan again.",
     "resumeHint": "Same tier, same price, nothing else to do."
   },
   "overview": {

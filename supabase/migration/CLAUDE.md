@@ -45,7 +45,7 @@ compilait, la suite passait.
   lit plus). `164`, `181`, `190`-`195`, `197`-`199` sont en prod **sans** ligne ; `196` est
   retirée par la `200`. ❌ **Ne jamais réappliquer la `164`** : elle retire la branche « membre du
   projet » de la `190`. Dernière entrée : `240_org_seat_alerts` (`20261103104517`). Prochain
-  numéro libre : **`241`**. Journal daté de chaque application (preuves, relectures au catalogue) :
+  numéro libre : **`242`** (`241`, motif des factures dans l'historique, est écrite le 2026-11-05 et NON appliquée ; le front tolère son absence). Journal daté de chaque application (preuves, relectures au catalogue) :
   [`docs/archive/SECURITY-journal-migrations-150-223.md`](../../docs/archive/SECURITY-journal-migrations-150-223.md).
 - ✅ **Forme de preuve à reprendre** : un seul bloc `DO` terminé par `RAISE EXCEPTION`
   (`proofs/208-210.proof.sql`). L'annulation n'est pas une instruction qu'on peut oublier, c'est la

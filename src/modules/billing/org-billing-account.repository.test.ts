@@ -35,7 +35,7 @@ describe('getOrgBillingHistory', () => {
     expect(rows).toEqual([{
       id: 7, eventType: 'invoice.paid', invoiceNumber: 'F-001',
       hostedInvoiceUrl: 'https://invoice.stripe.com/i', amountCents: 2000,
-      currency: 'eur', occurredAt: '2026-10-20T10:00:00Z',
+      currency: 'eur', occurredAt: '2026-10-20T10:00:00Z', billingReason: null,
     }]);
   });
 
