@@ -19,17 +19,19 @@
 - ❌ **Ne jamais se fier à une copie laissée sur le disque** (`.deploy-tmp/` et consorts) : elle
   périme en silence. La sienne était antérieure au correctif C-08.
 
-## ✅ Plus aucune dérive (2026-10-01)
+## ⚠️ Dérive au 2026-11-05
 
-Les six fonctions en retard ont été redéployées depuis `main` le 2026-10-01 (`org-webhook-dispatch`
-APRÈS la mig. `207`) : `Edge deploy drift` **vert** pour la première fois depuis le 09-21, 12 fonctions
-identiques, 12 sondes. Versions : [`faille.md`](../../faille.md) § « Ordre de priorité ».
+**15 fonctions déployées**, 15 sondes vertes. `Edge deploy drift` est **rouge** depuis les commits de
+facturation du 2026-11-03 : `stripe-webhook`, `stripe-org-refund`, `stripe-org-subscription`,
+`renewal-notice` et `seat-alert` portent en ligne une version antérieure (`_shared/billing-mail-*`).
+Les dix autres sont identiques à `main`. Redéployer : geste d'Axel. Le job dit l'état du jour,
+pas ce paragraphe.
 - 🔴 **Un module `_shared/` modifié fait dériver TOUTES les fonctions qui l'importent**, pas seulement
   celle qu'on visait : `verify-org-domain` embarquait l'ancienne `_shared/org-integrations.ts` après W-2.
   Avant de déployer : `grep -l "_shared/<module>" supabase/functions/*/index.ts`.
 - ✅ Déploiement sans Docker : `supabase functions deploy <slug> --use-api`, depuis la racine.
 
-## 🔴 Une fonction, une section, une sonde (2026-09-30 ; treize depuis le 2026-10-22)
+## 🔴 Une fonction, une section, une sonde (2026-09-30 ; quinze au 2026-11-05)
 
 - ❌ **Jamais une fonction sans sa section `[functions.<slug>]` dans `supabase/config.toml`.**
   `org-webhook-dispatch` y manquait : déployée en `verify_jwt = true`, elle rendait 401 à la CI

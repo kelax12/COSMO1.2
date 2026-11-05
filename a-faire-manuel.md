@@ -21,57 +21,48 @@ décision. Rien ici ne se corrige en écrivant du code.
 
 > 🔎 **Audit par mesure du 2026-10-16** (lecture seule : `gh secret list`, `supabase secrets list`, envs Vercel non déchiffrées, SELECT en prod, runs CI, git). Six lignes (sept avec `M-68`, fermée le même jour) dont le geste est **mesuré fait** sont parties **à l'identique** dans **[`docs/archive/a-faire-manuel-retires-2026-10-16.md`](./docs/archive/a-faire-manuel-retires-2026-10-16.md)**, avec la preuve de chacune : `M-29`, `M-41`, `M-42`, `M-58`, `M-59`, `M-61`. Les lignes restantes qui portaient un énoncé devenu faux ont été corrigées sur place (`M-14`, `M-60`, `M-68`, `M-69`, `M-71`). Tout ce qui se joue sur un appareil, une boîte mail, une console sans API ou une décision reste listé : **non vérifiable par agent** ne veut pas dire fait.
 
+> 🗂️ **Relu le 2026-11-05** contre la production (ledger, Edge Functions, mentions légales en ligne) : `M-01`, `M-02`, `M-03` (immatriculation RNE du 2026-10-20, domiciliation, médiateur CPMN), `M-06`, `M-07`, `M-09`, `M-43` (bascule live du 2026-10-20), `M-48` (répétition d’une bascule déjà jouée), `M-72`, `M-73` sont faits ; `M-37c` (endpoint live à six events, relu le 2026-10-20 et le 10-23, `docs/STRIPE-LIVE.md`) est fait ; `M-37b` (remboursement sur le compte de TEST par le bouton propriétaire) n'a plus d'objet depuis le 2026-11-01. Lignes d'origine, à l'identique : **[`docs/archive/a-faire-manuel-retires-2026-11-05.md`](./docs/archive/a-faire-manuel-retires-2026-11-05.md)**.
+
 ---
 
 ## Sommaire
 
 | § | Domaine | Nature |
 |---|---|---|
-| [1](./docs/archive/a-faire-manuel-jusqua-2026-10-11.md#1-bloquant-absolu--rien-ne-sencaisse-avant) | Guichet et statut juridique | administratif |
-| [2](./docs/archive/a-faire-manuel-jusqua-2026-10-11.md#2-bascule-stripe-live) | Stripe live | console + carte réelle |
-| [3](./docs/archive/a-faire-manuel-jusqua-2026-10-11.md#3-secrets-à-poser) | Secrets | console |
-| [4](./docs/archive/a-faire-manuel-jusqua-2026-10-11.md#4-réglages-de-console-supabase) | Supabase | clics |
-| [5](./docs/archive/a-faire-manuel-jusqua-2026-10-11.md#5-décisions-qui-nappartiennent-quà-toi) | Décisions produit | arbitrage |
-| [6](./docs/archive/a-faire-manuel-jusqua-2026-10-11.md#6-acquisition-et-seo) | Annuaires, Search Console | manuel, répétitif |
-| [7](./docs/archive/a-faire-manuel-jusqua-2026-10-11.md#7-vérifications-quaucune-gate-ne-peut-faire) | Ce qu'il faut ouvrir soi-même | appareil réel |
-| [8](./docs/archive/a-faire-manuel-jusqua-2026-10-11.md#8-déploiements-quun-git-push-ne-fait-pas) | 🔴 Edge Functions **et migrations** : le dépôt ≠ la production | ligne de commande |
-| [9](./docs/archive/a-faire-manuel-jusqua-2026-10-11.md#9-angles-morts-du-2026-09-16--ce-que-seules-tes-mains-ferment) | 🕳️ **Angles morts du 2026-09-16**, versés le 2026-09-20 | M-45 → M-56, **12 gestes neufs** |
-| [10](./docs/archive/a-faire-manuel-jusqua-2026-10-11.md#10-audit-juridique-du-2026-09-24--ce-que-le-code-ne-peut-pas-faire) | ⚖️ **Audit juridique du 2026-09-24** | M-62 → M-67, identité, préavis, DPA |
+| [1](#1-administratif-restant) | DPA, factures Stripe | administratif |
+| [2](#2-stripe-live--ce-qui-reste-après-la-bascule) | Recette réelle, endpoint live | console + carte réelle |
+| [3](#3-secrets-à-poser) | Secrets | console |
+| [4](#4-réglages-de-console-supabase) | Supabase | clics |
+| [5](#5-décisions-qui-nappartiennent-quà-toi) | Décisions produit | arbitrage |
+| [6](#6-acquisition-et-seo) | Annuaires, Search Console | manuel, répétitif |
+| [7](#7-vérifications-quaucune-gate-ne-peut-faire) | Ce qu'il faut ouvrir soi-même | appareil réel |
+| [8](#8-déploiements-quun-git-push-ne-fait-pas) | 🔴 Edge Functions **et migrations** : le dépôt ≠ la production | ligne de commande |
+| [9](#9-angles-morts-du-2026-09-16--ce-que-seules-tes-mains-ferment) | 🕳️ **Angles morts du 2026-09-16**, versés le 2026-09-20 | M-45 → M-56, **12 gestes neufs** |
+| [10](#10-audit-juridique-du-2026-09-24--ce-que-le-code-ne-peut-pas-faire) | ⚖️ **Audit juridique du 2026-09-24** | M-62 → M-67, identité, préavis, DPA |
 | [11](#11-audit-juridique-du-2026-10-13--violation-de-données-et-gestes-restants) | 🔴 **Audit juridique du 2026-10-13 : violation de données, délai 72 h** | M-68 → M-77 |
 
 ---
 
-## 1. Bloquant absolu · rien ne s'encaisse avant
+## 1. Administratif restant
 
 | # | À faire | Pourquoi c'est toi et pas le code | Statut tenu dans |
 |---|---|---|---|
-| M-01 | **Immatriculation micro-entreprise au guichet unique INPI** | Encaisser avant l'immatriculation est du travail dissimulé. Aucune ligne de code ne contourne ça | `ROADMAP-60J.md` T-32 |
-| M-02 | **Choisir et signer une société de domiciliation** | Décision prise le 2026-08-26, exécution en attente. Conditionne l'adresse des mentions légales | `ROADMAP-60J.md` T-33 |
-| M-03 | **Adhérer à un médiateur de la consommation**, puis publier ses coordonnées dans les CGV | Adhésion payante et obligatoire dès qu'on vend à un consommateur. Oubli classique, sanctionné par la DGCCRF. Et **tout client de COSMO est un consommateur** (décision du 2026-08-26) | `ROADMAP-60J.md` T-34 |
-| M-04 | **Collecter et archiver les DPA** des cinq sous-traitants : Supabase, Vercel, Sentry, Stripe et Resend | Un DPA ne s'obtient qu'en tant qu'entreprise, donc après M-01. | `ROADMAP-60J.md` T-43, `faille.md` V-1 |
-| M-05 | ✅ **Mentions légales complétées le 2026-10-21** (EI, SIREN, SIRET, RNE, APE, art. 293 B), reste la configuration des factures Stripe · **Compléter les mentions légales** : SIREN, RCS, TVA, directeur de publication, et configurer les factures Stripe pour la France (« TVA non applicable, art. 293 B du CGI », mentions L441-9, numérotation continue) | Le SIREN n'existe qu'après M-01. Une mention fausse est pire qu'une mention absente | `ROADMAP-60J.md` T-37 |
+| M-04 | **Collecter et archiver les DPA** des cinq sous-traitants : Supabase, Vercel, Sentry, Stripe et Resend | Acceptation dans chaque console, au nom de l'entreprise (immatriculée depuis le 2026-10-20). Sentry s'accepte en deux minutes par le propriétaire du compte | `docs/LEGAL.md` A5, `faille.md` V-1 |
+| M-05 | **Configurer les factures Stripe pour la France** : « TVA non applicable, art. 293 B du CGI », mentions L441-9, numérotation continue. Les mentions légales du site sont complètes depuis le 2026-10-21 (EI, SIREN, SIRET, RNE, APE) | Réglage de la console Stripe live | `docs/LEGAL.md` C1 |
 
 ---
 
-## 2. Bascule Stripe live
+## 2. Stripe live : ce qui reste après la bascule
 
-⚠️ **La production COSMO tourne sur une clé Stripe de TEST depuis le début.** Les customers des
-vrais utilisateurs vivent dans le sandbox ; le compte live est équipé (4 produits, 8 prix, tous en
-`tax_behavior: inclusive`) mais vide.
+✅ **Bascule faite le 2026-10-20** : secrets live, endpoint webhook live, mig. `140` (ledger
+`20261020204838`) et `224` (réarmement, ledger `20261020220252`). Ce qui reste n'a jamais été joué
+contre un vrai paiement.
 
 | # | À faire | Pourquoi c'est toi | Statut tenu dans |
 |---|---|---|---|
-| M-06 | Remplacer `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` et les **4** `STRIPE_ORG_PRICE_*` mensuels par leurs valeurs live | Ce sont des secrets de console. ✅ Il n'y a **aucun** secret annuel à poser : le prix annuel se dérive du mensuel | `ROADMAP-60J.md` T-36 |
-| M-07 | Réenregistrer un **endpoint webhook live**, avec les **SIX** events — `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_succeeded`, `invoice.payment_failed` et **`charge.refunded`** | Console Stripe. 🔴 **Cette ligne disait CINQ, et c'était faux.** Recompté dans le code le 2026-09-14 : `stripe-webhook` porte **six** branches `case`. La sixième, `charge.refunded`, est arrivée avec la v27 du 2026-09-06. **En réenregistrer cinq couperait le remboursement en silence** : la branche serait en ligne et ne recevrait jamais rien, et le journal fiscal montrerait un encaissement sans son remboursement — précisément le trou que `recordRefund` existe pour empêcher | `ROADMAP-60J.md` T-36 |
-| M-08 | **Recette de bout en bout avec une vraie carte** : souscription mensuelle, changement de palier depuis le portail, résiliation, **puis un REMBOURSEMENT et son REJEU**, puis vérification de `org_subscriptions` et du journal `payment_records`. ⚠️ **Le remboursement a été ajouté à cette recette le 2026-09-14** : le chemin existe désormais (`stripe-org-refund`, v6) et une recette qui ne l'emprunte pas laisserait sortir en live le seul geste du produit qui REND de l'argent, jamais éprouvé. Quatre points à relever : le montant, la **ligne compensatoire NÉGATIVE** au journal, `verify_payment_chain()` toujours vraie, et **un second appel qui ne rend RIEN de plus** | Le webhook et le checkout n'ont **jamais** traité un paiement réel. La résolution du prix annuel est le seul endroit où COSMO choisit un montant au lieu de se le faire désigner | `ROADMAP-60J.md` T-39 |
-| M-09 | **Réarmer la facturation** : `ENTERPRISE_BILLING_ENFORCED = true` **et** `UPDATE billing_flags SET enabled = true WHERE key = 'enterprise_seat_limit'`, dans le même déploiement | Les deux drapeaux se déplacent **ensemble**. Serveur seul = un propriétaire se voit refuser une invitation sans qu'aucun écran ne lui propose de payer. Client seul = on encaisse sans rien débloquer | `ROADMAP-60J.md` T-38 |
-| **M-43** 🆕 | 🔴 **DANS la fenêtre de bascule, jamais avant : appliquer la mig. `140` puis jouer `SELECT * FROM public.reset_stripe_identifiers(true);`** (à blanc d'abord, sans argument). Elle remet à zéro les identifiants Stripe de TEST restés en base | **Aucune ligne de ce fichier ne portait ce geste**, alors qu'il conditionne M-06 : `stripe-org-checkout` et `stripe-org-portal` réutilisent `stripe_customer_id` et `stripe_subscription_id` tels quels, et un identifiant de TEST présenté à une clé LIVE répond 404, donc 500. ⚠️ **Le geste a un objet réel** : « les tables sont vides » était faux d'une table sur deux — mesuré, `subscriptions` porte **5 `cus_…` et 2 `sub_…`** du compte de test. 🔴 **Jouer la migration AVANT la bascule ne sert à rien** : tant que la clé est une clé de test, chaque checkout réécrit un identifiant de test. ⚠️ La fonction **rétrograde au palier gratuit** les orgs payantes qu'elle nettoie, sinon elles garderaient leur quota sans rien pour le payer et un portail qui répond `no_subscription` : ni facturable, ni résiliable | `a-faire-code.md` C-08 |
+| M-08 | **Recette de bout en bout avec une vraie carte, en LIVE** : souscription mensuelle, changement de palier depuis le portail, résiliation en fin de période, rétractation sous 14 jours (`stripe-org-subscription`), puis un remboursement joué par l'admin (`stripe-org-refund`, `is_admin()` seul depuis le 2026-11-01) et son **rejeu**, qui ne doit rien rendre de plus. Relever : montant, **ligne compensatoire NÉGATIVE** au journal, `verify_payment_chain()` toujours vraie | Le webhook et le checkout n'ont encore traité aucun paiement réel, et la saisie d'une carte ne se délègue pas | `faille.md` § Audit des Edge Functions Stripe |
 | M-10 | ⚠️ **Tester le checkout entreprise depuis la PROD, jamais depuis `localhost:5173`** | `APP_URL` vaut `https://thecosmo.app` et c'est la seule origine CORS autorisée par les deux Edge Functions org | `CLAUDE.md` |
 
-🔴 **Trois dettes de CODE tombent pile pendant cette bascule** et doivent être payées avant :
-C-08 (remise à zéro des identifiants Stripe en base, invalidation du cache `productIndex`), C-30 et
-**C-39** (les preuves L215-1 / L221-28 disparaissent en cascade, et n'importe quel admin peut
-déclencher la cascade depuis l'écran). Détail dans [`a-faire-code.md`](./a-faire-code.md).
 
 ---
 
@@ -117,10 +108,10 @@ facteur TOTP y donne accès. Téléphone perdu, la seule porte de sortie est
 
 | # | Décision | Ce qui en dépend | Statut tenu dans |
 |---|---|---|---|
-| M-18 | **Plan Supabase** : rester en `free` (pas de PITR) ou passer en Pro | La sauvegarde ponctuelle. Le drill de restauration a été exécuté le 2026-09-01, donc le risque est connu et assumé, pas ignoré | `faille.md` A-9, `ROADMAP-60J.md` T-01 |
+| M-18 | **Plan Supabase** : rester en `free` (pas de PITR) ou passer en Pro | La sauvegarde ponctuelle. Le drill de restauration a été exécuté le 2026-09-01, donc le risque est connu et assumé, pas ignoré | `faille.md` A-9, `docs/archive/ROADMAP-60J-2026-08-28-au-10-26.md` T-01 |
 | M-19 | **Confirmations d'inscription par e-mail** : les réactiver ou non | Elles sont **désactivées**, par ta décision. Le DNS est vert (DKIM, SPF, MX du Return-Path), mais le DNS ne prouve pas qu'un e-mail arrive | `faille.md` G-2 |
 | M-20 | ~~Mesure d'audience tiers~~ : **débranchée le 2026-10-18**, analytics internalisé. Rien à faire | Clos | `faille.md` V-1 |
-| M-21 | **`vendor-sentry` sur le chemin critique** : le différer, ou pas | Ce n'est pas un arbitrage de performance : le différer revient à ne plus capturer les erreurs de démarrage, celles qui blanchissent l'écran. ⚠️ La mesure qui servait à trancher était fausse (build sans DSN) : il en faut une nouvelle avant de décider | `a-faire-code.md` C-13, `ROADMAP-60J.md` T-47 |
+| M-21 | **`vendor-sentry` sur le chemin critique** : le différer, ou pas | Ce n'est pas un arbitrage de performance : le différer revient à ne plus capturer les erreurs de démarrage, celles qui blanchissent l'écran. ⚠️ La mesure qui servait à trancher était fausse (build sans DSN) : il en faut une nouvelle avant de décider | `a-faire-code.md` C-13, `docs/archive/ROADMAP-60J-2026-08-28-au-10-26.md` T-47 |
 | **M-44** 🔴 | 🔴 **L'arbitrage a été rendu le 2026-09-15 CONTRE le retrait de la pastille « Aujourd'hui » du report rapide, et le retrait est entré dans `main` six jours plus tard.** Relu dans le code le **2026-09-21** : `src/components/task-table/OverdueQuickActions.tsx` à `HEAD` ne rend plus que « Demain » et « Choisir », et le commentaire qui porte l'argument démenti est commité (lignes 55-57), par `ab72cd39` (`feat(mobile): refonte UI mobile`, 2026-09-16) | ⚠️ **Ce n'est plus un geste manuel, et c'est précisément ce qu'il faut voir.** La ligne d'origine disait « défaire un fichier non commité d'une autre session » ; il n'y a plus rien à défaire dans l'arbre, il y a du **code à réécrire**. Ce qui reste à toi est la décision, parce que l'arbitrage du 09-15 portait sur un changement qui n'était alors dans aucun commit : soit on remet la pastille et on retire le commentaire, soit on rouvre l'arbitrage en sachant que `isOverdue` est **strictement** `< 0`, donc qu'une tâche qui affiche ces raccourcis n'est **jamais** due aujourd'hui. 🔴 **La leçon vaut plus que l'item** : un arbitrage rendu sur un fichier non suivi ne protège rien, et aucune garde ne pouvait le voir — le produit compile et la suite passe | `a-faire-code.md` C-72 |
 
 ---
@@ -130,7 +121,7 @@ facteur TOTP y donne accès. Téléphone perdu, la seule porte de sortie est
 | # | À faire | Pourquoi c'est le seul levier | Statut tenu dans |
 |---|---|---|---|
 | M-23 | **Soumettre COSMO aux 20 premiers annuaires**, dans l'ordre donné, et tenir le tableau de suivi | Position 88 sur les requêtes non-marque = 0 domaine référent. Aucun contenu ne compensera l'absence d'autorité de domaine | `ACQUISITION-BACKLINKS.md`, T-21 |
-| M-24 | **Relever dans Search Console** : type de propriété, nombre de pages réellement indexées ; connecter Ahrefs Webmaster Tools pour compter les domaines référents | On pilote le SEO sans savoir combien de pages sont indexées | `ROADMAP-60J.md` T-22 |
+| M-24 | **Relever dans Search Console** : type de propriété, nombre de pages réellement indexées ; connecter Ahrefs Webmaster Tools pour compter les domaines référents | On pilote le SEO sans savoir combien de pages sont indexées | `docs/archive/ROADMAP-60J-2026-08-28-au-10-26.md` T-22 |
 
 ---
 
@@ -161,8 +152,6 @@ ne pas exister pour les utilisateurs. La dérive des Edge Functions est mesurée
 | # | À faire | Pourquoi c'est toi | Statut tenu dans |
 |---|---|---|---|
 | M-32 | **Envoyer un vrai signalement de bug depuis l'app**, après M-29 et M-30, et vérifier qu'il arrive sur `contact@thecosmo.app` avec le `Reply-To` du compte et la pièce jointe lisible | Envoyer un e-mail réel depuis le domaine est une action sortante. Et aucune sonde ne prouve qu'un e-mail **arrive** : il faut ouvrir la boîte. Complète M-27 | `a-faire-code.md` C-35 |
-| **M-37b** | 🔴 **Jouer un remboursement réel contre le compte Stripe de TEST.** ✅ **Cible arbitrée le 2026-09-12 : `cosmoentreprise`** (7 membres, propriétaire `axellongatte2@gmail.com`), et les deux lignes définitives du journal fiscal sont **acceptées**. Deux gestes, dans cet ordre. **(1)** `npm run cosmo:login` **avec `axellongatte2@gmail.com`** — la session du CLI est **expirée**, et c'est ce qui bloque : sans elle je n'ai aucun jeton de propriétaire, donc aucun appel possible à `stripe-org-checkout` ni à `stripe-org-refund`, toutes deux réservées au propriétaire. ⚠️ Se connecter avec un AUTRE compte ne débloque rien : l'appel serait refusé en `403 forbidden`. **(2)** Ouvrir la session Stripe Checkout que je produirai et la payer avec la carte de test `4242 4242 4242 4242` : une saisie de numéro de carte ne se délègue pas à un agent, même en mode test. Ensuite je prends la suite et je vérifie **cinq** points : montant (mensuel entier / annuel au prorata), ligne compensatoire **négative** au journal + `verify_payment_chain()` toujours vraie, abonnement relu par l'écran, aucun second appel, et — **ajouté le 2026-09-14** — **un REJEU volontaire qui ne rend RIEN de plus**. Ce cinquième point est nouveau parce que le verrou qui le tient vient seulement d'être rendu testable et déployé (`_shared/refund-replay.ts`, v6, 10 cas dont un témoin) : son arithmétique est prouvée, son comportement **contre Stripe** ne l'est pas. ⚠️ La clé d'idempotence Stripe ne couvre PAS ce cas — elle expire, donc elle n'arrête que deux appels concurrents ; un rejeu à quelques minutes n'est arrêté que par ce verrou-là | La connexion attend un code reçu par e-mail (`CLAUDE.md` l'interdit explicitement à un agent), et la carte est une saisie de moyen de paiement | `a-faire-code.md` C-65, C-39 |
-| **M-37c** | ⚠️ **Vérifier au tableau de bord Stripe que `charge.refunded` est bien SOUSCRIT sur l'endpoint webhook de test.** Le code du webhook traite **six** types d'events ; ce dépôt décrit l'endpoint comme enregistré pour **cinq**, et `charge.refunded` n'est arrivé qu'avec la v27 du 2026-09-06. Si l'event n'a pas été ajouté à l'endpoint avec elle, la branche est en ligne et **ne recevra jamais rien** : le journal fiscal montrerait un encaissement sans son remboursement, précisément le trou que `recordRefund` existe pour empêcher. **Une branche déployée n'est pas un event délivré.** À faire **avant** M-37b, sinon le test passera en semblant réussir | La liste des events souscrits n'est lisible qu'au tableau de bord ou avec `STRIPE_SECRET_KEY`, qui n'est ni dans `.env` ni exposée par le MCP | `a-faire-code.md` C-65 |
 
 > **Règle de tenue de ce fichier.** Une ligne se retire quand le geste est fait, jamais quand il est
 > planifié.
@@ -204,7 +193,6 @@ inaccessible deux jours parce que le chemin d'enrôlement TOTP n'avait jamais é
 | # | À faire | Pourquoi c'est toi | Statut tenu dans |
 |---|---|---|---|
 | **M-47** | **Éprouver le ROLLBACK une fois**, pour de vrai : repromouvoir le déploiement Vercel précédent, et dérouler la contrepartie côté Supabase. Relever le temps réel, et ce qui a manqué dans le runbook. 🔎 **2026-10-16 : la moitié `git revert` est répétée (33 s du push à la production)** ; reste le « Promote » Vercel, pas à pas dans `docs/DEPLOYMENT.md` § 3 (5 min) | Le runbook le décrit et **personne ne l'a jamais parcouru**. La partie automatisable est `restore-drill.yml`, dont la planification est `C-86` ; la promotion d'un déploiement Vercel est un geste de console, et la décision de rollback n'appartient qu'à toi | `docs/DEPLOYMENT.md` AM-2 |
-| **M-48** | **Répéter à blanc la bascule Stripe live**, sur le compte de TEST : remettre à zéro les identifiants (mig. `140`), recréer les prix, réenregistrer le webhook avec ses **SIX** events, remplacer les secrets. Dans cet ordre, chronométré | La séquence n'a **jamais** été parcourue, et chaque étape manquante échoue **après** encaissement. Elle recoupe `M-43`, `M-06`, `M-07` et `M-08` : la répétition à blanc est ce qui transforme ces quatre lignes en une séquence éprouvée au lieu de quatre gestes espérés | `docs/STRIPE-LIVE.md` AM-4 |
 | **M-49** | **Jouer à blanc la procédure de violation RGPD des 72 h**, une fois, et dater l'exercice dans `RGPD-VIOLATION.md` | La procédure n'a jamais été éprouvée, et elle se parcourt **sous 72 heures, en situation de panique**. ⚠️ Son second angle mort ne se ferme pas par cet exercice : le délai court à partir d'une **détection** que rien ne mesure, et un registre des violations VIDE ne distingue pas « aucune violation » de « aucune détection » | `docs/RGPD-VIOLATION.md` AM-1, AM-2, AM-3 |
 
 ### 9.3 Quatre mesures qu'aucun script ne prendra jamais
@@ -254,8 +242,6 @@ Elles complètent le § 7. Comme lui, elles ne produisent pas de correctif : ell
 | # | Geste | Pourquoi | Ligne |
 |---|---|---|---|
 | **M-71** 🔴 | **Ranger la phrase secrète des sauvegardes** (`C:\Users\Axel\Documents\COSMO-coffre-hors-depot\BACKUP_PASSPHRASE.txt`) dans ton gestionnaire de mots de passe, en garder une copie hors ligne, puis **supprimer le fichier**. 🔎 **2026-10-16 : le fichier est toujours présent** dans le coffre | Sans elle, aucune sauvegarde ne se relit : elle est aussi le secret `BACKUP_PASSPHRASE` des Actions, mais un secret GitHub ne se relit pas | A9 |
-| **M-72** | ✅ **Fait le 2026-10-21** (domiciliation 75116 + téléphone) · **Publier l'adresse et le téléphone de l'éditeur** dans les mentions légales : soit ton domicile maintenant, soit l'adresse de domiciliation après `M-01`/`M-02`. Un numéro dédié suffit | LCEN art. 1-1 (ex-6-III, loi SREN du 21/05/2024) : nom, domicile **et téléphone** pour une personne physique. L'anonymat n'est ouvert qu'aux non-professionnels, et la page de tarifs t'en sort | A3, E14 |
-| **M-73** | **T'immatriculer avant de lancer l'acquisition** (`M-01`), même sans rien encaisser | Une activité annoncée avec publicité et tarifs est présumée lucrative (C. trav. L8221-4). Débloque aussi `M-72` (domiciliation) et la clause de juridiction des CGU (12.3) | B2 |
 | **M-74** | **Vérifier le plan Vercel** (équipe « axellongattepro-3874's projects ») et passer en **Pro** si c'est Hobby | Hobby est réservé à un usage non commercial et n'est pas couvert par le DPA de Vercel. Non lisible par l'API | F11, A5 |
 | **M-75** | **Glisser dans le préavis `M-63`** : la suppression des comptes inactifs depuis 3 ans, et un lien vers les CGU pour les comptes créés par Google depuis l'écran de connexion (ils ne les avaient jamais vues) | Rend le préavis plus utile, sans second e-mail | A15, E10 |
 | **M-76** | **Faire qualifier le médiateur de la consommation pour un service gratuit** (payé en données), au moment de `M-67` | Certain dès qu'il y a vente ; discuté pour un service gratuit | E4, E14 |

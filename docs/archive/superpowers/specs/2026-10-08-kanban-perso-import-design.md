@@ -1,3 +1,7 @@
+> ⚠️ **ARCHIVE — instantané daté du 2026-10-08, non maintenu.**
+> Ce document décrit un plan ou une conception **à cette date**. La fonctionnalité est livrée : le code fait foi.
+> Sources vivantes : [`CLAUDE.md`](../../../../CLAUDE.md) · [`docs/MODULES.md`](../../../MODULES.md) · [`faille.md`](../../../../faille.md).
+
 # Tâches perso : Statut, État, vue Tableau, conversion de sous-tâche, import · design
 
 Statut : validé avec Axel le 2026-10-08, **implémenté le 2026-10-09** (mig. `214` appliquée, ledger

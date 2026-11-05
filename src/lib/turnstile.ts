@@ -1,7 +1,7 @@
 // Cloudflare Turnstile — protection anti-robot des points d'entrée Auth.
 //
 // POURQUOI : l'audit du 2026-08-27 a trouvé qu'aucune protection anti-bot
-// n'existait sur l'inscription (finding AM-3 de `docs/ROADMAP-60J.md`). Le
+// n'existait sur l'inscription (finding AM-3 de `docs/archive/ROADMAP-60J-2026-08-28-au-10-26.md`). Le
 // risque n'est pas tant le faux compte que le **quota d'emails** : une vague de
 // robots vide le plafond d'envoi du projet, et les inscriptions légitimes
 // échouent alors avec « Trop de tentatives » sans que personne ne comprenne
