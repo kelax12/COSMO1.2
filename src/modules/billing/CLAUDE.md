@@ -42,7 +42,8 @@ Elles ne partagent aucune colonne. Le client ne peut écrire ni l'une ni l'autre
   `org-tiers.parity.test.ts`.
 - ❌ **Ne jamais dériver le palier des metadata Stripe.** Palier et périodicité se redérivent du
   **price ID** (`tierFromPriceId`). Un changement fait depuis le Billing Portal ne repasse pas par
-  notre checkout.
+  notre checkout. Le portail live permet de changer d'offre depuis le 2026-11-05 (prorata facturé
+  immédiatement, descentes immédiates) : `docs/STRIPE-LIVE.md` § Portail client.
 - ❌ **Ne jamais faire dépendre le quota de sièges de la périodicité.** `max_members` est porté par
   le palier seul.
 - ❌ **Ne jamais créer un prix Stripe sans `tax_behavior` explicite.** Il ne se modifie plus après
