@@ -101,7 +101,7 @@ chantier de migration.
 - ❌ **Ne jamais créer un prix live sans `tax_behavior` explicite.** Les 8 prix du compte de
   TEST sont sur `unspecified` : c'est la valeur à ne pas reproduire.
 
-## Portail client · configuré le 2026-09-01, changement d'offre ouvert sur le live (relevé le 2026-11-05)
+## Portail client · configuré le 2026-09-01, changement d'offre ouvert par Axel le 2026-11-05
 
 Sans configuration de portail, `billingPortal.sessions.create({ customer, return_url })`
 échoue : l'application n'envoie **aucun** paramètre `configuration`, donc Stripe cherche la
@@ -120,9 +120,12 @@ Réglages communs aux deux comptes (2026-09-01) :
   période payée : le client garde ce qu'il a acheté, et rien n'est remboursé au prorata.
 - `payment_method_update` et `invoice_history` : activés.
 - `default_return_url` : `https://thecosmo.app/entreprise?tab=billing`.
-- `subscription_update` : ✅ **activé sur le compte LIVE**, réglages relevés par Axel au tableau de
-  bord le 2026-11-05 (capture). C'est ce qu'attend le parcours du 2026-11-02 : un propriétaire
-  abonné qui choisit un autre palier est envoyé au portail (`OrgBillingTab`, `chooseTier`).
+- `subscription_update` : **désactivé du 2026-09-01 au 2026-11-05**, puis ✅ **activé sur le compte
+  LIVE par Axel le 2026-11-05** (réglages ci-dessous, capture du tableau de bord).
+  🔴 **Le défaut que cela referme** : depuis le 2026-11-02, un propriétaire abonné qui choisit un
+  autre palier est envoyé au portail (`OrgBillingTab`, `chooseTier`). Du 2026-11-02 au 2026-11-05,
+  ce portail ne proposait **aucun** changement d'offre : la montée en gamme était impossible en
+  libre-service. Le code et le portail ne s'accordaient pas, et rien ne le mesurait.
   - **Changement de plan : calcul au prorata des frais et des crédits**, facturé **immédiatement**
     au moment de la mise à jour (synchronisation de la charge). Une montée en gamme est donc
     débitée tout de suite pour le temps restant ; une descente émet un crédit sur le compte client.
