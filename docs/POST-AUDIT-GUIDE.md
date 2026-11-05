@@ -412,7 +412,7 @@ un document qu'on EXÉCUTE coûte l'opération.
 | Souscription palier 2 par le propriétaire | ligne `org_subscriptions` correcte, quota 20 |
 | Souscription tentée par un membre non propriétaire | 403, aucune session créée |
 | Souscription avec un promotion code | montant réduit chez Stripe, `discount_code` renseigné |
-| **Changement de palier depuis le portail** | `tier_key` **et** `max_members` suivent |
+| **Changement de palier depuis le portail** (ouvert le 2026-11-05, prorata facturé immédiatement) | `tier_key` **et** `max_members` suivent ; la facture de prorata arrive au journal |
 | Résiliation | `status='cancelled'`, quota 5, **aucun membre expulsé** |
 | Échec de paiement | `status='past_due'`, palier **préservé** (restauré tel quel au paiement) |
 | Paiement 3-D Secure | l'état `incomplete` n'écrit rien ; l'abonnement s'active au paiement |
