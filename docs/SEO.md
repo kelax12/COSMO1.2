@@ -27,6 +27,23 @@ cause n'est pas dans le dépôt.
 
 ## Note SEO : 73 → 73 → 75 → 80 → 75 → 78 → 78 → 78 → 79 → 78 → 79 → 79 → 79 → **79 / 100** (2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir) → 2026-10-18 → 2026-10-20 → **2026-10-22**) · inchangée au 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
 
+> ### 🟠 2026-11-05 · note maison NON rejouée : deux régressions trouvées par un audit externe
+>
+> Audit du skill `seo-audit` (bibliothèque d'Axel) : **75 / 100 à son propre barème**, qui ne se
+> compare pas à cette note. Rapport : [`archive/AUDIT-SEO-SKILL-2026-11-05.md`](./archive/AUDIT-SEO-SKILL-2026-11-05.md).
+> Ne sont repris ici que les constats **remesurés** le 2026-11-05 par `curl` sur la production.
+>
+> | Item | État | Mesuré le 2026-11-05 |
+> |---|---|---|
+> | Articles du blog | 🔴 nouveau | `/blog/tableau-de-bord-productivite` : **2** `<h1>` dans le HTML servi, l'article est rendu deux fois (régression attribuée à `66f76355`, 2026-10-24, par l'audit) |
+> | `/guide/` | 🔴 nouveau | **682 mots** dans le `<body>` servi (scripts et styles retirés), contre 1 932 le 2026-10-22 |
+> | Accueil, contenu sous la ligne de flottaison | ⚠️ à confirmer | HTML servi : 761 mots et 8 `<h2>`. Selon l'audit, le DOM hydraté retombe à 123 mots sans `<h2>` tant qu'aucun geste n'a lieu (`BelowFold.tsx`). Ce que Google retient : inspection d'URL Search Console |
+> | JSON-LD de `index.html` | 🟠 | l'offre annonce un « Accès Premium gratuit via publicité » (contredit « Aucune publicité ») ; clé `screenshot` en double |
+> | Autorité | inchangé | 0 domaine référent (Bing, 2026-11-02), `sameAs` vide |
+>
+> **79, en attente de renotation** : les deux 🔴 seront débités à la prochaine passe complète,
+> contre la CI et la production.
+
 > ### ⚪ 2026-10-22 · 0 : la première visite venue de Google
 >
 > **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-10-22 : CI de `main` à `d16de29a` (run `39843255180`, cinq jobs verts ; `main` rouge du 10-20 à 22:03 au 10-22 à 14:39, 19 runs), `Visual` vert à `fb83cd60`, production (advisors par l'API, catalogue, ledger, cron, Edge Functions, sondes HTTP), dépôt à `HEAD`. Tableau de bord : [`README.md`](./README.md).
