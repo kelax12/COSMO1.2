@@ -5,6 +5,7 @@ import {
   isQuotaReached,
   isOverQuota,
   membersOverQuota,
+  onboardingTier,
   sectionOpenWhileOverQuota,
   effectiveTierKey,
   needsPaymentAttention,
@@ -193,6 +194,21 @@ describe('sectionOpenWhileOverQuota : seul ce qui permet d’en sortir reste ouv
   it('le propriétaire garde en plus la facturation', () => {
     expect(sectionOpenWhileOverQuota('billing', proprio)).toBe(true);
     expect(sectionOpenWhileOverQuota('overview', proprio)).toBe(false);
+  });
+});
+
+describe('onboardingTier : le palier proposé à la création', () => {
+  it('jusqu’à 5 personnes → gratuit, rien à payer', () => {
+    expect(onboardingTier(1).key).toBe('free');
+    expect(onboardingTier(5).key).toBe('free');
+  });
+  it('au-delà → le plus petit palier qui laisse une place', () => {
+    expect(onboardingTier(6).key).toBe('t10');
+    expect(onboardingTier(10).key).toBe('t20');
+    expect(onboardingTier(20).key).toBe('t50');
+    expect(onboardingTier(99).key).toBe('t100');
+    expect(onboardingTier(100).key).toBe('tmax');
+    expect(onboardingTier(150).key).toBe('tmax');
   });
 });
 

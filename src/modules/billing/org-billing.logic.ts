@@ -98,6 +98,17 @@ export function sectionOpenWhileOverQuota(
 }
 
 /**
+ * Palier proposé à la CRÉATION d'une entreprise, d'après l'effectif annoncé
+ * (onboarding, 2026-11-05). Jusqu'au plafond du gratuit, rien à payer ; au-delà,
+ * `recommendedTier` : le plus petit palier payant qui laisse une place, pour ne
+ * pas faire payer un palier déjà plein le jour même.
+ */
+export function onboardingTier(memberCount: number): Tier {
+  if (memberCount <= ORG_FREE_SEATS) return ENTERPRISE_PRICING_TIERS[0];
+  return recommendedTier(memberCount);
+}
+
+/**
  * Le palier à CONSEILLER : le plus petit palier payant qui laisse au moins une
  * place libre à l'effectif actuel. Distinct de `tierForMemberCount`, qui rend
  * le palier qui COUVRE l'effectif (pile au plafond compris) : conseiller un

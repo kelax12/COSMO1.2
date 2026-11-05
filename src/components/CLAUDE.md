@@ -16,7 +16,9 @@ Récit, captures et historique : [`docs/UI-PATTERNS.md`](../../docs/UI-PATTERNS.
 - ❌ **Revenir en arrière ne recrée JAMAIS** : une étape faite s'affiche « enregistrée ». Compte VIDE, une fois par appareil
   (`cosmo_first_run_done`), jamais en démo, jamais sur `/entreprise`.
 - **Entreprise** (refait le 2026-10-14) : `/entreprise/onboarding` = `OrgChoice` seul (créer |
-  rejoindre). Une création mène droit à `/entreprise`. L'assistant de mise en place (équipe,
+  rejoindre). Une création passe par « Combien serez-vous ? » (`OrgSizeStep`, 2026-11-05, facturation
+  active et hors démo) : palier payant → `/entreprise/billing?tier=` (récapitulatif, jamais Stripe en direct),
+  gratuit ou « plus tard » → `/entreprise`. L'assistant de mise en place (équipe,
   invitations, projet, cap, constellation) est SUPPRIMÉ : ne pas le recréer.
   `OrgWelcomeVideo` (vidéo V2 `public/videos/onboarding-entreprise-v2.mp4`, sous-titres `.fr.vtt`) s'ouvre
   au premier passage, créateur comme membre : une fois par entreprise et par appareil, AUSSI en
