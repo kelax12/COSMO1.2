@@ -478,6 +478,8 @@ const OrganizationPage = () => {
           isAdmin={isAdmin}
           canInvite={canInvite}
           seatsFull={seatsFull}
+          seatsQuota={!isDemo && ENTERPRISE_BILLING_ENFORCED && !subscriptionPending ? seatsQuota : undefined}
+          onChangePlan={isOwner && !isDemo && ENTERPRISE_BILLING_ENFORCED ? () => setTab('billing') : undefined}
         />
       )}
       {tab === 'teams' && (teamId ? (

@@ -1027,6 +1027,10 @@
     "navRoles": "Rôles"
   },
   "page": {
+    "seatsUnlimited": "Places illimitées avec votre forfait.",
+    "seatsUsed_one": "{{count}} membre sur {{quota}} places maximum avec votre forfait.",
+    "seatsUsed_many": "{{count}} de membres sur {{quota}} places maximum avec votre forfait.",
+    "seatsUsed_other": "{{count}} membres sur {{quota}} places maximum avec votre forfait.",
     "overQuotaTitle": "Votre espace entreprise est en pause",
     "overQuotaCount_one": "{{count}} membre pour {{quota}} places : il y a un membre de trop.",
     "overQuotaCount_many": "{{count}} de membres pour {{quota}} places : il y a {{excess}} membres de trop.",
