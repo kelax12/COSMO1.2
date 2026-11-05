@@ -63,6 +63,41 @@ export function isQuotaReached(memberCount: number, sub: OrgSubscription | null)
 }
 
 /**
+ * L'effectif DÉPASSE le quota (strictement) : cas d'une organisation qui a
+ * baissé de palier, ou dont l'abonnement est tombé, avec plus de membres que
+ * le nouveau quota. Le serveur ne retire jamais de membre ; c'est l'espace
+ * entreprise qui se verrouille tant que l'effectif n'est pas rentré dans le
+ * quota (décision d'Axel du 2026-11-05). Pile au quota n'est PAS un dépassement.
+ */
+export function isOverQuota(memberCount: number, sub: OrgSubscription | null): boolean {
+  const quota = effectiveQuota(sub);
+  if (quota === null) return false;
+  return memberCount > quota;
+}
+
+/** Combien de membres retirer pour rentrer dans le quota (0 si rien à faire). */
+export function membersOverQuota(memberCount: number, sub: OrgSubscription | null): number {
+  const quota = effectiveQuota(sub);
+  if (quota === null) return 0;
+  return Math.max(0, memberCount - quota);
+}
+
+/**
+ * Sections encore ouvertes pendant un dépassement : ce qui permet d'en SORTIR,
+ * rien d'autre. Un admin retire des membres (`members`) et règle l'organisation
+ * (`settings`) ; le propriétaire remonte de palier (`billing`). Un membre sans
+ * ces droits ne peut rien y faire : tout lui est fermé.
+ */
+export function sectionOpenWhileOverQuota(
+  section: string,
+  viewer: { isAdmin: boolean; isOwner: boolean },
+): boolean {
+  if (section === 'billing') return viewer.isOwner;
+  if (section === 'members' || section === 'settings') return viewer.isAdmin || viewer.isOwner;
+  return false;
+}
+
+/**
  * Le palier à CONSEILLER : le plus petit palier payant qui laisse au moins une
  * place libre à l'effectif actuel. Distinct de `tierForMemberCount`, qui rend
  * le palier qui COUVRE l'effectif (pile au plafond compris) : conseiller un

@@ -132,8 +132,9 @@ Réglages du compte live (posés le 2026-09-01) :
     au moment de la mise à jour (synchronisation de la charge). Une montée en gamme est donc
     débitée tout de suite pour le temps restant ; une descente émet un crédit sur le compte client.
   - **Passage à un forfait moins cher : mis à jour immédiatement.** Le quota de sièges baisse le
-    jour même ; aucun membre n'est retiré (`org_seats_allowed`), mais les invitations se bloquent
-    au-dessus du nouveau quota.
+    jour même ; aucun membre n'est retiré (`org_seats_allowed`). Si l'effectif DÉPASSE le nouveau
+    quota, l'espace entreprise se verrouille (2026-11-05) : seuls Membres, Paramètres et, pour le
+    propriétaire, la facturation restent ouverts, jusqu'à ce que l'effectif rentre dans le quota.
   - **Passage à une période plus courte (annuel → mensuel) : mis à jour immédiatement.**
   - Fin des essais en cas de modification : activée. Codes promotionnels : activés.
 
