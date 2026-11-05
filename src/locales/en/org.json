@@ -1,5 +1,17 @@
 {
   "onboarding": {
+    "sizeTitle": "How many of you will there be?",
+    "sizeIntro": "Tell us how many people will join the company. You can change plans at any time.",
+    "sizeLabel": "People in the company",
+    "sizeValue_one": "{{count}} person",
+    "sizeValue_other": "{{count}} people",
+    "sizeFree": "Up to 5 people, COSMO is free.",
+    "sizePaid_one": "{{tier}} covers your person: {{seats}} seats, {{free}} available. {{price}} incl. VAT per month.",
+    "sizePaid_other": "{{tier}} covers your {{count}} people: {{seats}} seats, {{free}} available. {{price}} incl. VAT per month.",
+    "sizeUnlimited": "{{tier}}: unlimited seats. {{price}} incl. VAT per month.",
+    "sizeStartFree": "Start for free",
+    "sizePay": "Get {{tier}}, {{price}} per month",
+    "sizeSkip": "Later, start for free",
     "intro": "Create your company or join one to collaborate with your team.",
     "goToOrg": "Go to my company",
     "orCreateAnother": "or create/join another one",

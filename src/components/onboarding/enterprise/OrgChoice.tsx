@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ArrowRight } from 'lucide-react';
 import Logo from '@/components/Logo';
@@ -6,6 +7,9 @@ import { useActiveOrganization, useMySentJoinRequest } from '@/modules/organizat
 import { useT } from '@/i18n/useT';
 import { NAME_SLOT, splitAroundName } from '@/i18n/name-slot';
 import { setBusinessPending } from '../first-run';
+import { useIsDemo } from '@/lib/app-mode.store';
+import { ENTERPRISE_BILLING_ENFORCED } from '@/modules/billing/premium-config';
+import OrgSizeStep from './OrgSizeStep';
 
 /**
  * Choix « créer ou rejoindre » de l'accueil entreprise. C'est la carte
@@ -17,12 +21,21 @@ import { setBusinessPending } from '../first-run';
  * (`OrgWelcomeVideo`) s'ouvre au premier passage. L'assistant de mise en
  * place qui demandait équipe, invitations, projet et cap a été retiré le
  * 2026-10-14.
+ *
+ * Depuis le 2026-11-05, une création passe d'abord par « Combien serez-vous ? »
+ * (`OrgSizeStep`) quand la facturation est active : un palier payant ouvre
+ * le récapitulatif de paiement de l'onglet Facturation, le gratuit mène à
+ * l'espace. Jamais en démo (aucune facturation réelle).
  */
 const OrgChoice = () => {
   const { t, tp } = useT('org');
   const navigate = useNavigate();
   const { activeOrg, organizations, isLoading, setActiveOrgId } = useActiveOrganization();
   const { data: sentRequest } = useMySentJoinRequest();
+  const isDemo = useIsDemo();
+  // Entreprise tout juste créée : la carte bascule sur l'étape d'effectif.
+  const [sizing, setSizing] = useState(false);
+  const askSize = ENTERPRISE_BILLING_ENFORCED && !isDemo;
 
   const [orgSentenceBefore, orgSentenceAfter] = splitAroundName(
     t('onboarding.memberOfOrg', { name: NAME_SLOT }),
@@ -42,6 +55,12 @@ const OrgChoice = () => {
     >
       <Logo showText />
       <div className="w-full max-w-md bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl p-8 shadow-2xl">
+        {sizing ? (
+          <OrgSizeStep
+            onContinue={(tierKey) => navigate(tierKey === 'free' ? '/entreprise' : `/entreprise/billing?tier=${tierKey}`)}
+            onSkip={() => navigate('/entreprise')}
+          />
+        ) : (<>
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-[rgb(var(--color-text-primary))]">
             {t('onboarding.title')}
@@ -80,7 +99,8 @@ const OrgChoice = () => {
           onCreated={(org) => {
             setBusinessPending(false);
             setActiveOrgId(org.id);
-            navigate('/entreprise');
+            if (askSize) setSizing(true);
+            else navigate('/entreprise');
           }}
           onJoinRequested={() => setBusinessPending(false)}
         />
@@ -94,6 +114,7 @@ const OrgChoice = () => {
             {t('onboarding.later')}
           </button>
         </div>
+        </>)}
       </div>
     </main>
   );
