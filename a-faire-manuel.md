@@ -60,7 +60,7 @@ contre un vrai paiement.
 
 | # | À faire | Pourquoi c'est toi | Statut tenu dans |
 |---|---|---|---|
-| M-08 | **Recette de bout en bout avec une vraie carte, en LIVE** : souscription mensuelle, changement de palier depuis le portail, résiliation en fin de période, rétractation sous 14 jours (`stripe-org-subscription`), puis un remboursement joué par l'admin (`stripe-org-refund`, `is_admin()` seul depuis le 2026-11-01) et son **rejeu**, qui ne doit rien rendre de plus. Relever : montant, **ligne compensatoire NÉGATIVE** au journal, `verify_payment_chain()` toujours vraie | Le webhook et le checkout n'ont encore traité aucun paiement réel, et la saisie d'une carte ne se délègue pas | `faille.md` § Audit des Edge Functions Stripe |
+| M-08 | **Recette de bout en bout avec une vraie carte, en LIVE** : souscription mensuelle, changement de palier depuis le portail, montée puis descente de palier par le portail (prorata facturé immédiatement, réglage du 2026-11-05), résiliation en fin de période, rétractation sous 14 jours (`stripe-org-subscription`), puis un remboursement joué par l'admin (`stripe-org-refund`, `is_admin()` seul depuis le 2026-11-01) et son **rejeu**, qui ne doit rien rendre de plus. Relever : montant, **ligne compensatoire NÉGATIVE** au journal, `verify_payment_chain()` toujours vraie | Le webhook et le checkout n'ont encore traité aucun paiement réel, et la saisie d'une carte ne se délègue pas | `faille.md` § Audit des Edge Functions Stripe |
 | M-10 | ⚠️ **Tester le checkout entreprise depuis la PROD, jamais depuis `localhost:5173`** | `APP_URL` vaut `https://thecosmo.app` et c'est la seule origine CORS autorisée par les deux Edge Functions org | `CLAUDE.md` |
 
 

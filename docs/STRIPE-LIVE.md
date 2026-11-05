@@ -101,7 +101,7 @@ chantier de migration.
 - ❌ **Ne jamais créer un prix live sans `tax_behavior` explicite.** Les 8 prix du compte de
   TEST sont sur `unspecified` : c'est la valeur à ne pas reproduire.
 
-## Portail client · configuré sur les deux comptes (2026-09-01)
+## Portail client · configuré le 2026-09-01, changement d'offre ouvert sur le live (relevé le 2026-11-05)
 
 Sans configuration de portail, `billingPortal.sessions.create({ customer, return_url })`
 échoue : l'application n'envoie **aucun** paramètre `configuration`, donc Stripe cherche la
@@ -114,17 +114,24 @@ résilier**. La landing promet « résiliable à tout moment » (Conso. art. L21
 | `COSMO` (live) | `bpc_1UAv9vHJLweDSN4F4xssO3OQ` | `true` / `true` |
 | `Environnement de test COSMO` (sandbox) | `bpc_1UAvS2HEm0kmXgy9XO4s1MM6` | `true` / `true` |
 
-Les deux sont rigoureusement identiques :
+Réglages communs aux deux comptes (2026-09-01) :
 
 - `subscription_cancel` : **activé**, `mode: at_period_end`. On ne résilie pas au milieu d'une
   période payée : le client garde ce qu'il a acheté, et rien n'est remboursé au prorata.
 - `payment_method_update` et `invoice_history` : activés.
 - `default_return_url` : `https://thecosmo.app/entreprise?tab=billing`.
-- `subscription_update` : **désactivé**, volontairement (ci-dessous).
-  ⚠️ **À relire au tableau de bord live** : depuis le 2026-11-02, un propriétaire abonné qui
-  choisit un autre palier est **envoyé au portail** pour en changer (`OrgBillingTab`). Si
-  `subscription_update` est toujours désactivé, le portail ne lui propose rien. Non vérifié le
-  2026-11-05 : le connecteur Stripe de la session ne voit qu'un bac à sable.
+- `subscription_update` : ✅ **activé sur le compte LIVE**, réglages relevés par Axel au tableau de
+  bord le 2026-11-05 (capture). C'est ce qu'attend le parcours du 2026-11-02 : un propriétaire
+  abonné qui choisit un autre palier est envoyé au portail (`OrgBillingTab`, `chooseTier`).
+  - **Changement de plan : calcul au prorata des frais et des crédits**, facturé **immédiatement**
+    au moment de la mise à jour (synchronisation de la charge). Une montée en gamme est donc
+    débitée tout de suite pour le temps restant ; une descente émet un crédit sur le compte client.
+  - **Passage à un forfait moins cher : mis à jour immédiatement.** Le quota de sièges baisse le
+    jour même ; aucun membre n'est retiré (`org_seats_allowed`), mais les invitations se bloquent
+    au-dessus du nouveau quota.
+  - **Passage à une période plus courte (annuel → mensuel) : mis à jour immédiatement.**
+  - Fin des essais en cas de modification : activée. Codes promotionnels : activés.
+  - Le sandbox n'a pas été relu : il peut encore porter `subscription_update` désactivé.
 
 ### ❌ Ne jamais activer « modifier la quantité » dans le portail
 
@@ -133,10 +140,13 @@ Un client qui passerait la quantité de 1 à 3 paierait trois fois le prix et n'
 **aucun siège de plus**. C'est un bug de facturation en libre-service, et il serait de notre
 fait.
 
-Le changement d'offre (`subscription_update`) est légitime sur le fond : `tierFromPriceId`
+Le changement d'offre (`subscription_update`) est **ouvert depuis le 2026-11-05** : `tierFromPriceId`
 redérive le palier ET la périodicité depuis le price ID, précisément parce qu'un changement fait
-depuis le portail ne repasse pas par notre checkout. Il reste fermé tant qu'il n'a pas été
-éprouvé par la recette T-39 : il suppose aussi que le webhook applique le nouveau quota.
+depuis le portail ne repasse pas par notre checkout. ⚠️ **Jamais éprouvé contre un vrai
+paiement** : la recette `M-08` doit inclure une montée ET une descente de palier par le portail,
+et vérifier que le webhook (`customer.subscription.updated`) applique le nouveau quota, que la
+facture de prorata arrive au journal `payment_records`, et qu'un crédit de descente n'y passe pas
+pour un encaissement.
 
 ### ⚠️ Trois contextes Stripe, pas deux
 
