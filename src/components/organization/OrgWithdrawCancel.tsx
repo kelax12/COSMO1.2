@@ -91,7 +91,10 @@ export function OrgWithdrawCancel({ orgId, subscription, memberCount }: Props) {
             </ol>
           )}
           {periodEnd && memberCount > ORG_FREE_SEATS && (
-            <p className="rounded-lg bg-[rgb(var(--color-hover))] p-3 text-xs text-[rgb(var(--color-text-secondary))]">
+            // Effectif au-dessus du gratuit à la fin de l'accès : l'espace se
+            // mettra en pause (2026-11-05). Annoncé ici, au ton d'alerte, pour
+            // qu'il ne se découvre pas le jour même.
+            <p className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-700/60 dark:bg-amber-900/20 dark:text-amber-300">
               {tp('billing.endsOverQuota', memberCount, { date: periodEnd, quota: ORG_FREE_SEATS })}
             </p>
           )}

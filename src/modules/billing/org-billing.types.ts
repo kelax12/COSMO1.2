@@ -45,6 +45,12 @@ export interface OrgBillingHistoryEntry {
   amountCents: number;
   currency: string;
   occurredAt: string;
+  /**
+   * Motif Stripe de la facture (`subscription_create`, `subscription_cycle`,
+   * `subscription_update`…), mig. 241. `null` avant application ou pour un
+   * remboursement.
+   */
+  billingReason: string | null;
 }
 
 /** Contact de facturation distinct du propriétaire (mig. 180). */

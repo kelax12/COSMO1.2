@@ -256,7 +256,7 @@ describe('activation après paiement', () => {
 
 describe('lastFailedPaymentAt', () => {
   const entry = (eventType: string, occurredAt: string): OrgBillingHistoryEntry => ({
-    id: 1, eventType, invoiceNumber: null, hostedInvoiceUrl: null, amountCents: 0, currency: 'eur', occurredAt,
+    id: 1, eventType, invoiceNumber: null, hostedInvoiceUrl: null, amountCents: 0, currency: 'eur', occurredAt, billingReason: null,
   });
   it('rend le plus récent échec, quel que soit l ordre', () => {
     expect(

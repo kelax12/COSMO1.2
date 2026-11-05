@@ -893,9 +893,9 @@
     "timelineToday": "Aujourd'hui",
     "timelineEnd": "Fin d'accès le {{date}}",
     "timelineFree": "Palier gratuit",
-    "endsOverQuota_one": "Après le {{date}}, le palier gratuit compte {{quota}} places. Votre membre reste, mais vous ne pourrez plus en inviter.",
-    "endsOverQuota_many": "Après le {{date}}, le palier gratuit compte {{quota}} places. Vos {{count}} de membres restent, mais vous ne pourrez plus en inviter.",
-    "endsOverQuota_other": "Après le {{date}}, le palier gratuit compte {{quota}} places. Vos {{count}} membres restent, mais vous ne pourrez plus en inviter.",
+    "endsOverQuota_one": "Après le {{date}}, le palier gratuit compte {{quota}} places pour votre membre : rien ne change pour lui.",
+    "endsOverQuota_many": "Après le {{date}}, le palier gratuit compte {{quota}} places pour vos {{count}} de membres. L'espace entreprise sera mis en pause : tâches, projets, OKR et équipes fermés jusqu'à ce que vous retiriez des membres ou repreniez un forfait.",
+    "endsOverQuota_other": "Après le {{date}}, le palier gratuit compte {{quota}} places pour vos {{count}} membres. L'espace entreprise sera mis en pause : tâches, projets, OKR et équipes fermés jusqu'à ce que vous retiriez des membres ou repreniez un forfait.",
     "resumeHint": "Même palier, même prix, aucune démarche de plus."
   },
   "overview": {
