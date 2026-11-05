@@ -13,7 +13,7 @@ import {
 } from '@/modules/organizations';
 import { ENTERPRISE_BILLING_ENFORCED } from '@/modules/billing/premium-config';
 import { useOrgSubscription } from '@/modules/billing/org-billing.hooks';
-import { isQuotaReached, effectiveQuota, needsPaymentAttention } from '@/modules/billing/org-billing.logic';
+import { isQuotaReached, effectiveQuota, needsPaymentAttention, isOverQuota, membersOverQuota, sectionOpenWhileOverQuota } from '@/modules/billing/org-billing.logic';
 import { PageHeading } from '@/components/ui/typography';
 import { MobileHeader } from '@/components/mobile';
 import OrgNotificationsBell from '@/components/organization/OrgNotificationsBell';
@@ -69,6 +69,7 @@ const TeamOKRTab = lazyWithRetry(() => import('@/components/organization/TeamOKR
 const TeamOverviewTab = lazyWithRetry(() => import('@/components/organization/TeamOverviewTab'));
 const OrgBillingTab = lazyWithRetry(() => import('@/components/organization/OrgBillingTab'), ['org', 'orgAccount', 'orgAdmin', 'overlays']);
 const OrgPastDueBanner = lazyWithRetry(() => import('@/components/organization/OrgPastDueBanner'));
+const OrgOverQuotaLock = lazyWithRetry(() => import('@/components/organization/OrgOverQuotaLock'));
 // Section Membres : sortie de la page le 2026-09-24, et LAZY pour la même
 // raison que les onglets ci-dessus. Importée en dur, elle restait dans ce
 // chunk, qui dépassait son cliquet (18,3 ko pour 18,0) : seul qui ouvre
@@ -193,7 +194,7 @@ const OrganizationPage = () => {
     return () => markOrgSeen(orgId);
   }, [myOrg?.id]);
   // `live` : c'est LA page où l'on attend de voir un membre arriver.
-  const { data: members = [] } = useOrgMembers(myOrg?.id, { live: true });
+  const { data: members = [], isPending: membersPending } = useOrgMembers(myOrg?.id, { live: true });
   // Appelés avant les early returns, comme tous les hooks de la page.
   const { shortcuts, togglePin } = useOrgShortcuts(myOrg?.id, user?.id, urlTab, searchParams);
   // Droits explicites de l'utilisateur courant (mig. 115). Monté ici parce que
@@ -205,7 +206,7 @@ const OrganizationPage = () => {
   const { isError: rolesUnavailable } = useOrgRoles(myOrg?.id);
   // Appelé ICI, avant les early returns `isLoading` / `!myOrg` : un hook placé
   // plus bas ne serait pas monté sur tous les rendus.
-  const { data: orgSubscription } = useOrgSubscription(myOrg?.id);
+  const { data: orgSubscription, isPending: subscriptionPending } = useOrgSubscription(myOrg?.id);
   // Statistiques (M3) : ouvertes aussi aux responsables d'équipe, qui n'ont
   // pas forcément de subordonné dans la pyramide.
   const { data: teams = [], isLoading: teamsLoading } = useOrgTeams(myOrg?.id);
@@ -286,7 +287,17 @@ const OrganizationPage = () => {
     if (id === 'members') return { count: badges.members, items: badges.memberItems };
     return { count: extra?.count ?? 0, items: extraItems };
   };
-  const navItems: OrgNavItem[] = ORG_SECTIONS.filter((item) => !item.hidden).filter((item) => (item.id === 'stats' ? canStats : !item.managerOnly || isAdmin)).map(
+  // Effectif au-dessus du quota (baisse de palier, abonnement tombé) : l'espace
+  // se verrouille, seules restent les sections qui permettent d'en sortir
+  // (décision d'Axel du 2026-11-05). Jamais avant d'avoir lu l'abonnement ET
+  // les membres : pendant le chargement le quota retombe à 5 par défaut, et une
+  // organisation payante verrait le verrou clignoter.
+  // ⚠️ Verrou d'interface : la base sert toujours les données (pas une frontière).
+  const overQuota = !isDemo && ENTERPRISE_BILLING_ENFORCED && !membersPending && !subscriptionPending
+    && isOverQuota(members.length, orgSubscription ?? null);
+  const overQuotaViewer = { isAdmin, isOwner };
+  const sectionLocked = overQuota && !sectionOpenWhileOverQuota(tab, overQuotaViewer);
+  const navItems: OrgNavItem[] = ORG_SECTIONS.filter((item) => !item.hidden).filter((item) => (item.id === 'stats' ? canStats : !item.managerOnly || isAdmin)).filter((item) => !overQuota || sectionOpenWhileOverQuota(item.id, overQuotaViewer)).map(
     ({ id, labelKey, Icon, group }) => {
       const { count: badgeCount, items } = badgeOf(id);
       const badgeAriaLabel = badgeCount > 0 ? tpOrgAdmin('page.badgeCount', badgeCount) : undefined;
@@ -405,7 +416,7 @@ const OrganizationPage = () => {
       {/* Bannière sièges : affichée UNIQUEMENT quand il faut changer de plan
           (facturation active ET quota atteint). Le simple constat « gratuit
           jusqu'à 5, rien ne change » n'appelait aucune action : retiré. */}
-      {seatsFull && (
+      {seatsFull && !overQuota && (
         <div className="mb-5 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] px-4 py-3">
           <p className="text-xs text-[rgb(var(--color-text-secondary))]">
             <span className="font-semibold text-[rgb(var(--color-text-primary))]">{tpOrgAdmin('page.memberCountDot', members.length)}</span>{' '}
@@ -427,6 +438,17 @@ const OrganizationPage = () => {
           tuiles. Un fallback générique pour tous aurait fait clignoter une
           forme qui n'est pas celle qui arrive. */}
       <Suspense fallback={tabFallback(tab, tOrgAdmin)}>
+      {sectionLocked ? (
+        <OrgOverQuotaLock
+          memberCount={members.length}
+          quota={effectiveQuota(orgSubscription ?? null) ?? members.length}
+          excess={membersOverQuota(members.length, orgSubscription ?? null)}
+          canManageMembers={isAdmin || isOwner}
+          canChangePlan={isOwner}
+          onManageMembers={() => setTab('members')}
+          onChangePlan={() => setTab('billing')}
+        />
+      ) : (<>
       {tab === 'overview' && (
         <MyWorkTab orgId={myOrg.id} members={members} currentUserId={user?.id} canEditDependencies={canEditDependencies} />
       )}
@@ -484,6 +506,7 @@ const OrganizationPage = () => {
           initialPanel={urlTab === 'reports' ? 'reports' : undefined}
         />
       )}
+      </>)}
       </Suspense>
 
       {/* Feuilles et dialogues : leur propre frontière, avec un fallback nul.
@@ -532,7 +555,7 @@ const OrganizationPage = () => {
 
       {/* Liens profonds : `?task=`, `?member=`, `?project=`, `?okr=`, `?team=`
           ouvrent leur fiche quelle que soit la section affichée. */}
-      {hasEntityParam && (
+      {hasEntityParam && !overQuota && (
         <Suspense fallback={null}>
           <OrgPageOverlays
             deepLink={{ orgId: myOrg.id, section: teamId ? 'teams' : tab, members, currentUserId: user?.id, isAdmin, canEditDependencies }}

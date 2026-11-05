@@ -3,6 +3,9 @@ import {
   tierForMemberCount,
   effectiveQuota,
   isQuotaReached,
+  isOverQuota,
+  membersOverQuota,
+  sectionOpenWhileOverQuota,
   effectiveTierKey,
   needsPaymentAttention,
   recommendedTier,
@@ -144,6 +147,52 @@ describe('isQuotaReached', () => {
 
   it('sans abonnement, 5 membres → atteint', () => {
     expect(isQuotaReached(5, null)).toBe(true);
+  });
+});
+
+describe('isOverQuota / membersOverQuota : dépassement après une baisse de palier', () => {
+  it('pile au quota → pas de dépassement (inviter est bloqué, rien d’autre)', () => {
+    expect(isOverQuota(20, sub())).toBe(false);
+    expect(membersOverQuota(20, sub())).toBe(0);
+  });
+
+  it('un de plus que le quota → dépassement, un membre à retirer', () => {
+    expect(isOverQuota(21, sub())).toBe(true);
+    expect(membersOverQuota(21, sub())).toBe(1);
+  });
+
+  it('abonnement tombé (impayé) : le quota redevient celui du gratuit', () => {
+    expect(isOverQuota(12, sub({ status: 'past_due' }))).toBe(true);
+    expect(membersOverQuota(12, sub({ status: 'past_due' }))).toBe(7);
+  });
+
+  it('palier illimité → jamais de dépassement', () => {
+    expect(isOverQuota(9999, sub({ tierKey: 'tmax', maxMembers: null }))).toBe(false);
+    expect(membersOverQuota(9999, sub({ tierKey: 'tmax', maxMembers: null }))).toBe(0);
+  });
+});
+
+describe('sectionOpenWhileOverQuota : seul ce qui permet d’en sortir reste ouvert', () => {
+  const membre = { isAdmin: false, isOwner: false };
+  const admin = { isAdmin: true, isOwner: false };
+  const proprio = { isAdmin: true, isOwner: true };
+
+  it('un membre ordinaire n’a plus accès à rien', () => {
+    for (const s of ['overview', 'tasks', 'projects', 'okr', 'members', 'teams', 'settings', 'billing']) {
+      expect(sectionOpenWhileOverQuota(s, membre)).toBe(false);
+    }
+  });
+
+  it('un admin garde Membres et Paramètres, pas la facturation', () => {
+    expect(sectionOpenWhileOverQuota('members', admin)).toBe(true);
+    expect(sectionOpenWhileOverQuota('settings', admin)).toBe(true);
+    expect(sectionOpenWhileOverQuota('billing', admin)).toBe(false);
+    expect(sectionOpenWhileOverQuota('tasks', admin)).toBe(false);
+  });
+
+  it('le propriétaire garde en plus la facturation', () => {
+    expect(sectionOpenWhileOverQuota('billing', proprio)).toBe(true);
+    expect(sectionOpenWhileOverQuota('overview', proprio)).toBe(false);
   });
 });
 

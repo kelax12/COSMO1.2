@@ -1027,6 +1027,14 @@
     "navRoles": "Rôles"
   },
   "page": {
+    "overQuotaTitle": "Votre espace entreprise est en pause",
+    "overQuotaCount_one": "{{count}} membre pour {{quota}} places : il y a un membre de trop.",
+    "overQuotaCount_many": "{{count}} de membres pour {{quota}} places : il y a {{excess}} membres de trop.",
+    "overQuotaCount_other": "{{count}} membres pour {{quota}} places : il y a {{excess}} membres de trop.",
+    "overQuotaAdmin": "Retirez des membres ou passez à un forfait plus grand pour rouvrir les tâches, les projets, les OKR et les équipes.",
+    "overQuotaMember": "Les tâches, les projets, les OKR et les équipes rouvriront dès qu'un administrateur aura retiré des membres ou changé de forfait.",
+    "overQuotaMembersCta": "Gérer les membres",
+    "overQuotaBillingCta": "Changer de forfait",
     "overview": "Aperçu",
     "freemiumOver": "Au-delà de 5 collaborateurs, un abonnement entreprise est requis pour accepter de nouveaux membres.",
     "dangerZone": "Zone de danger",

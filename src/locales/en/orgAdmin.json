@@ -960,6 +960,14 @@
     "navRoles": "Roles"
   },
   "page": {
+    "overQuotaTitle": "Your company space is on hold",
+    "overQuotaCount_one": "{{count}} member for {{quota}} seats: one member too many.",
+    "overQuotaCount_many": "{{count}} members for {{quota}} seats: {{excess}} members too many.",
+    "overQuotaCount_other": "{{count}} members for {{quota}} seats: {{excess}} members too many.",
+    "overQuotaAdmin": "Remove members or move to a larger plan to reopen tasks, projects, OKRs and teams.",
+    "overQuotaMember": "Tasks, projects, OKRs and teams will reopen as soon as an administrator removes members or changes the plan.",
+    "overQuotaMembersCta": "Manage members",
+    "overQuotaBillingCta": "Change plan",
     "overview": "Overview",
     "freemiumOver": "Beyond 5 collaborators, a company subscription is required to accept new members.",
     "dangerZone": "Danger zone",

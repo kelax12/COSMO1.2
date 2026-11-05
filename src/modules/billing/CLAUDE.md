@@ -44,6 +44,11 @@ Elles ne partagent aucune colonne. Le client ne peut écrire ni l'une ni l'autre
   **price ID** (`tierFromPriceId`). Un changement fait depuis le Billing Portal ne repasse pas par
   notre checkout. Le portail live permet de changer d'offre depuis le 2026-11-05 (prorata facturé
   immédiatement, descentes immédiates) : `docs/STRIPE-LIVE.md` § Portail client.
+- 🔴 **Effectif au-dessus du quota = espace verrouillé** (décision du 2026-11-05) : `isOverQuota`
+  (strictement `>`, pile au quota n'est pas un dépassement) et `sectionOpenWhileOverQuota` dans
+  `org-billing.logic.ts`, écran `OrgOverQuotaLock`. Restent ouverts Membres et Paramètres (admin),
+  facturation (propriétaire). ❌ Ne jamais verrouiller avant d'avoir lu abonnement ET membres : en
+  chargement le quota retombe à 5. ⚠️ Verrou d'interface seul, la base sert toujours les données.
 - ❌ **Ne jamais faire dépendre le quota de sièges de la périodicité.** `max_members` est porté par
   le palier seul.
 - ❌ **Ne jamais créer un prix Stripe sans `tax_behavior` explicite.** Il ne se modifie plus après
