@@ -29,10 +29,17 @@ interface OrgMembersSectionProps {
   isAdmin: boolean;
   canInvite: boolean;
   seatsFull: boolean;
+  /**
+   * Places du palier en vigueur : un nombre, `null` = illimité, `undefined` =
+   * rien à afficher (démo, facturation dormante, abonnement pas encore lu).
+   */
+  seatsQuota?: number | null;
+  /** Propriétaire seul : ouvre la facturation. Absent, aucun bouton. */
+  onChangePlan?: () => void;
 }
 
-const OrgMembersSection = ({ org, members, currentUserId, isAdmin, canInvite, seatsFull }: OrgMembersSectionProps) => {
-  const { t: tOrgAdmin } = useT('orgAdmin');
+const OrgMembersSection = ({ org, members, currentUserId, isAdmin, canInvite, seatsFull, seatsQuota, onChangePlan }: OrgMembersSectionProps) => {
+  const { t: tOrgAdmin, tp: tpOrgAdmin } = useT('orgAdmin');
   const [choosingMode, setChoosingMode] = useState(false);
   const [invitingByEmail, setInvitingByEmail] = useState(false);
   const [quickEmails, setQuickEmails] = useState('');
@@ -41,9 +48,29 @@ const OrgMembersSection = ({ org, members, currentUserId, isAdmin, canInvite, se
 
   return (
     <div className="space-y-3">
-      <h2 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">
-        {tOrgAdmin('page.directoryTitle', { count: members.length })}
-      </h2>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="min-w-0">
+          <h2 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">
+            {tOrgAdmin('page.directoryTitle', { count: members.length })}
+          </h2>
+          {seatsQuota !== undefined && (
+            <p className="text-xs text-[rgb(var(--color-text-secondary))]">
+              {seatsQuota === null
+                ? tOrgAdmin('page.seatsUnlimited')
+                : tpOrgAdmin('page.seatsUsed', members.length, { quota: seatsQuota })}
+            </p>
+          )}
+        </div>
+        {onChangePlan && (
+          <button
+            type="button"
+            onClick={onChangePlan}
+            className="text-sm font-semibold text-[rgb(var(--color-accent))] underline-offset-4 hover:underline min-h-11 px-1"
+          >
+            {tOrgAdmin('page.overQuotaBillingCta')}
+          </button>
+        )}
+      </div>
 
       {canInviteByEmail && <PendingInvitesStrip orgId={org.id} />}
 
