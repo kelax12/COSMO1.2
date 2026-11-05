@@ -58,9 +58,11 @@
 | Compte | ID | Rôle |
 |---|---|---|
 | `COSMO` | `acct_1TQVVnHJLweDSN4F` | **live**, servi par la production depuis le 2026-10-20 |
-| `Environnement de test COSMO` | `acct_1TQVWFHEm0kmXgy9` | test, plus utilisé par la production |
+| `Environnement de test COSMO` | `acct_1TQVWFHEm0kmXgy9` | test, **clôturé par Axel** une fois les tests validés (relevé le 2026-11-05) |
 
-Bascule : § « Bascule live, jouée le 2026-10-20 » plus bas.
+Bascule : § « Bascule live, jouée le 2026-10-20 » plus bas. **Il n'existe plus qu'un compte**, le
+live : toute vérification Stripe se fait dessus. Un connecteur qui ne voit qu'un bac à sable ne
+voit donc rien de COSMO.
 
 ## Grille live — les 10 prix (créés le 2026-10-25)
 
@@ -112,9 +114,9 @@ résilier**. La landing promet « résiliable à tout moment » (Conso. art. L21
 | Compte | Configuration | `active` / `is_default` |
 |---|---|---|
 | `COSMO` (live) | `bpc_1UAv9vHJLweDSN4F4xssO3OQ` | `true` / `true` |
-| `Environnement de test COSMO` (sandbox) | `bpc_1UAvS2HEm0kmXgy9XO4s1MM6` | `true` / `true` |
+| ~~`Environnement de test COSMO` (sandbox)~~ | ~~`bpc_1UAvS2HEm0kmXgy9XO4s1MM6`~~ | compte clôturé |
 
-Réglages communs aux deux comptes (2026-09-01) :
+Réglages du compte live (posés le 2026-09-01) :
 
 - `subscription_cancel` : **activé**, `mode: at_period_end`. On ne résilie pas au milieu d'une
   période payée : le client garde ce qu'il a acheté, et rien n'est remboursé au prorata.
@@ -134,7 +136,6 @@ Réglages communs aux deux comptes (2026-09-01) :
     au-dessus du nouveau quota.
   - **Passage à une période plus courte (annuel → mensuel) : mis à jour immédiatement.**
   - Fin des essais en cas de modification : activée. Codes promotionnels : activés.
-  - Le sandbox n'a pas été relu : il peut encore porter `subscription_update` désactivé.
 
 ### ❌ Ne jamais activer « modifier la quantité » dans le portail
 
@@ -151,18 +152,11 @@ et vérifier que le webhook (`customer.subscription.updated`) applique le nouvea
 facture de prorata arrive au journal `payment_records`, et qu'un crédit de descente n'y passe pas
 pour un encaissement.
 
-### ⚠️ Trois contextes Stripe, pas deux
+### ⚠️ `dashboard.stripe.com/test/...` n'est pas un compte de test COSMO
 
-Piège qui a coûté un aller-retour le 2026-09-01. `dashboard.stripe.com/test/...` n'ouvre **pas**
-le sandbox : il ouvre le **mode test du compte live**, un troisième contexte, vide et sans
-intérêt. Le sandbox s'atteint par son identifiant de compte :
-
-```
-https://dashboard.stripe.com/acct_1TQVWFHEm0kmXgy9/test/settings/billing/portal
-```
-
-Rien n'est partagé entre ces contextes : une configuration de portail se pose **une fois par
-contexte**, et une configuration posée au mauvais endroit ne se voit nulle part.
+Le sandbox `acct_1TQVWFHEm0kmXgy9` est clôturé. `dashboard.stripe.com/test/...` ouvre le **mode test
+du compte live**, un contexte vide et sans intérêt : une configuration posée là ne s'applique pas à
+la production. Les réglages qui comptent se posent en mode **live**.
 
 ### ⚠️ Les deux liens juridiques ne sont pas confirmés
 
@@ -178,7 +172,7 @@ vérifiées contre `src/i18n/route-slugs.json` plutôt que de mémoire : `https:
 bloquant pour la résiliation, c'est un point de conformité.
 
 ✅ **Refermé sur le compte LIVE le 2026-10-20** : les deux URL ci-dessus ont été posées par l'API
-sur `bpc_1UAv9vHJLweDSN4F4xssO3OQ`, et la réponse les relit. Le sandbox n'a pas été touché.
+sur `bpc_1UAv9vHJLweDSN4F4xssO3OQ`, et la réponse les relit.
 
 ## Bascule live, jouée le 2026-10-20
 
@@ -429,21 +423,12 @@ Garde-fous propres à cette zone :
   réel est `billing_flags.enterprise_seat_limit`. Serveur `true` + client `false` = un
   propriétaire se voit refuser une invitation (`seat_limit_reached`) sans qu'aucun écran ne lui
   propose de payer : impasse. Client `true` + serveur `false` = on encaisse sans rien débloquer.
-- 🔴 **La grille branchée est celle du SANDBOX DE TEST.** `STRIPE_SECRET_KEY` en prod est une
-  clé de test — les customers des vrais utilisateurs vivent dans le compte « Environnement de
-  test COSMO », le compte live est vide. Un checkout n'accepte donc que des **cartes de test**
-  : le quota de sièges est réel, l'encaissement ne l'est pas. Passage en live = recréer les 8
-  prix sur le compte live (4 mensuels + 4 annuels), réenregistrer un endpoint webhook live (**SIX** events, recomptés dans le code le
-  2026-09-12 : `checkout.session.completed`, `customer.subscription.updated`,
-  `customer.subscription.deleted`, `invoice.payment_succeeded`, `invoice.payment_failed` et
-  `charge.refunded` — ce fichier a écrit « 5 » jusqu'à cette date, chiffre devenu faux avec la
-  v27 du webhook le 2026-09-06 ; en réenregistrer 5 couperait le remboursement en silence), puis
-  remplacer `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` et les 8 `STRIPE_ORG_PRICE_*`.
+- ✅ **La grille branchée est celle du compte LIVE** depuis le 2026-10-20 (secrets live, endpoint
+  webhook live à six events). Le sandbox de test, qui servait avant, est clôturé.
 - ⚠️ `APP_URL` vaut `https://thecosmo.app` et **est la seule origine CORS autorisée** par les
   deux Edge Functions org : le checkout entreprise **ne peut pas être testé depuis
   `localhost:5173`**. Tester depuis la prod, ou changer `APP_URL` le temps du test.
-- Réactivation (immédiate, réversible) : `ENTERPRISE_BILLING_ENFORCED = true` +
-  `UPDATE billing_flags SET enabled = true WHERE key = 'enterprise_seat_limit'` — **après** la
-  création de la micro-entreprise et le passage du compte Stripe en live.
+- Facturation armée depuis le 2026-10-20 : `ENTERPRISE_BILLING_ENFORCED = true` et
+  `billing_flags.enterprise_seat_limit = true` (mig. `224`).
   Contexte historique : [`POST-AUDIT-GUIDE.md`](./POST-AUDIT-GUIDE.md).
 
