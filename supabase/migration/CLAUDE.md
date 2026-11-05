@@ -40,12 +40,12 @@ compilait, la suite passait.
 - ⚠️ **Et citer la bonne entrée** : le numéro publié le 2026-09-20 pour la `136` était
   `20260920105113`, qui n'existe au ledger d **aucune** migration. Le vrai est `20260920104729`,
   relu en base le 09-21. Un numéro de ledger se copie depuis la base, jamais depuis une note.
-- ✅ **État au 2026-11-05, relu au ledger de production** : le dépôt va de `000` à `240`, et
+- ✅ **État au 2026-11-05, relu au ledger de production** : le dépôt va de `000` à `241`, et
   tout est en prod **sauf `206`** (suppression des jalons : à appliquer APRÈS le front qui ne les
   lit plus). `164`, `181`, `190`-`195`, `197`-`199` sont en prod **sans** ligne ; `196` est
   retirée par la `200`. ❌ **Ne jamais réappliquer la `164`** : elle retire la branche « membre du
-  projet » de la `190`. Dernière entrée : `240_org_seat_alerts` (`20261103104517`). Prochain
-  numéro libre : **`242`** (`241`, motif des factures dans l'historique, est écrite le 2026-11-05 et NON appliquée ; le front tolère son absence). Journal daté de chaque application (preuves, relectures au catalogue) :
+  projet » de la `190`. Dernière entrée : `241_billing_history_reason` (`20261105204321`, relue au catalogue : colonne `billing_reason`, DEFINER, `search_path` vide, `anon` sans EXECUTE). Prochain
+  numéro libre : **`242`**. Journal daté de chaque application (preuves, relectures au catalogue) :
   [`docs/archive/SECURITY-journal-migrations-150-223.md`](../../docs/archive/SECURITY-journal-migrations-150-223.md).
 - ✅ **Forme de preuve à reprendre** : un seul bloc `DO` terminé par `RAISE EXCEPTION`
   (`proofs/208-210.proof.sql`). L'annulation n'est pas une instruction qu'on peut oublier, c'est la
