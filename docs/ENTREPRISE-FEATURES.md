@@ -140,6 +140,7 @@ Prix TTC par mois, par organisation (et non par personne) :
 - Paiement annuel : 25 % de remise.
 - Toutes les fonctionnalités sont incluses dans tous les paliers, y compris le gratuit.
 - Paiement par Stripe, factures et historique dans l'application, contact de facturation modifiable.
+- Changement de palier en libre-service depuis le portail Stripe : une montée est facturée tout de suite au prorata du temps restant, une descente s'applique immédiatement et crédite le compte.
 - Au-delà de son palier, on ne peut plus inviter tant que le palier n'est pas relevé. Aucun membre n'est jamais retiré, et rien n'est perdu si l'on redescend de palier.
 - Droit de rétractation de 14 jours. Résiliation à tout moment, sans remboursement de la période en cours.
 
