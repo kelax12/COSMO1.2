@@ -20,6 +20,8 @@ interface OrgBillingHistoryRow {
   amount_cents: number;
   currency: string;
   occurred_at: string;
+  /** Absente tant que la mig. 241 n'est pas appliquée. */
+  billing_reason?: string | null;
 }
 
 /**
@@ -42,6 +44,7 @@ export async function getOrgBillingHistory(orgId: string): Promise<OrgBillingHis
     amountCents: Number(row.amount_cents),
     currency: row.currency,
     occurredAt: row.occurred_at,
+    billingReason: row.billing_reason ?? null,
   }));
 }
 

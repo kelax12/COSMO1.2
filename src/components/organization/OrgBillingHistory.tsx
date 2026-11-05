@@ -5,19 +5,13 @@ import { Download } from 'lucide-react';
 import { useOrgBillingContact, useOrgBillingHistory } from '@/modules/billing/org-billing-account.hooks';
 import type { OrgBillingHistoryEntry } from '@/modules/billing/org-billing.types';
 import { PILL_BASE, PILL_TONE, type PillTone } from './billing-ui';
+import { historyLabelKey } from './billing-history-labels';
 
 interface Props {
   orgId: string;
   /** Destinataire par défaut des factures quand aucun contact n'est enregistré. */
   ownerEmail?: string;
 }
-
-/** Libellé d'une ligne du journal. Un type inconnu reste lisible, jamais masqué. */
-const EVENT_KEYS: Record<string, KeyOf<'orgAccount'>> = {
-  'invoice.payment_succeeded': 'historyPaid',
-  'invoice.payment_failed': 'historyFailed',
-  'charge.refunded': 'historyRefund',
-};
 
 /** Pastille d'état d'une ligne. Un type inconnu prend la pastille neutre « Autre ». */
 const PILLS: Record<string, { key: KeyOf<'orgAccount'>; tone: PillTone }> = {
@@ -75,7 +69,7 @@ export function OrgBillingHistory({ orgId, ownerEmail }: Props) {
               <li key={e.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
                 <div className="min-w-0 flex-1">
                   <p className="text-sm text-[rgb(var(--color-text-primary))]">
-                    {t(EVENT_KEYS[e.eventType] ?? 'historyOther')}
+                    {t(historyLabelKey(e))}
                     {e.invoiceNumber && (
                       <span className="text-[rgb(var(--color-text-muted))]"> · {e.invoiceNumber}</span>
                     )}
