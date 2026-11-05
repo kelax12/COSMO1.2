@@ -493,12 +493,11 @@ argent après un échec bancaire, définitivement, sans qu'aucun écran ne le di
 
 🔴 **Ce qui reste NON PROUVÉ, et qu'aucun test de ce dépôt ne peut prouver** : `refunds.create`, la
 résiliation immédiate et la ligne compensatoire négative du journal **n'ont jamais tourné contre
-Stripe**. `org_subscriptions` et `payment_records` sont à zéro ligne, il n'existe aucune facture à
-rembourser. Et un doute mesurable reste ouvert : le webhook traite **six** types d'events, or
-`charge.refunded` n'est arrivé qu'avec la v27 du 09-06 — **rien ne dit que l'endpoint a été mis à
-jour avec elle**. Si l'event n'est pas souscrit, la branche est en ligne et ne reçoit jamais rien :
-le journal montrerait un encaissement sans son remboursement. Gestes : `a-faire-manuel.md`
-**M-37c** puis **M-37b**.
+Stripe** (relu le 2026-11-05). Le doute sur l'abonnement de l'endpoint à `charge.refunded` est
+levé pour le compte live : l'endpoint `we_1USka0…` créé le 2026-10-20 souscrit les six events
+(`docs/STRIPE-LIVE.md`). Depuis le 2026-11-01, `stripe-org-refund` est réservé à `is_admin()`
+(aperçu puis validation) : plus aucun propriétaire ne le déclenche. Geste : `a-faire-manuel.md`
+**M-08** (recette réelle en live).
 
 ---
 
@@ -536,30 +535,32 @@ le journal montrerait un encaissement sans son remboursement. Gestes : `a-faire-
 ---
 
 
-## 🟠 SV · audit du code serveur à froid (2026-10-24) · CORRIGÉ DANS LE DÉPÔT, NON DÉPLOYÉ
+## 🟢 SV · audit du code serveur à froid (2026-10-24) · CORRIGÉ ET DÉPLOYÉ, SV-10 ouvert
 
 PR n° 141 (`a9a1d1a8`, fusionnée le 2026-10-25). Périmètre : les 13 Edge Functions et leurs 11
 modules `_shared/`, `api/collect.ts`, les fonctions SQL des mig. `213` à `226`. Droits
 `EXECUTE` et `search_path` des 24 fonctions `DEFINER` de ces migrations relus en production,
 en lecture : égaux au dépôt, **0** fonction `DEFINER` sans `search_path` sur 148.
 
-🔴 **Aucun de ces correctifs ne protège encore personne** : la production exécute l'ancien code
-tant que les douze fonctions ne sont pas redéployées depuis `main` (geste d'Axel, ou fusion de la
-PR n° 123, déploiement continu). ⚠️ **Aucun `deno check`** n'existe ni sur le poste ni en CI : le
-premier déploiement est le premier passage de ces points d'entrée par un compilateur Deno.
-Relancer `npm run check:edge` et `check:edge-smoke` juste après.
+✅ **Déployés.** Les fonctions de SV-1 à SV-9 ont été redéployées depuis `main` les 2026-11-01 et 11-02.
+Relu le 2026-11-05 : `Edge deploy drift` trouve `send-org-invite`, `verify-org-domain`,
+`delete-account`, `report-bug`, `stripe-create-checkout`, `org-webhook-dispatch`,
+`stripe-org-checkout` et `inactive-accounts` **identiques** à `main` ; `renewal-notice` et
+`stripe-webhook` ne dérivent que des commits de facturation du 2026-11-03, et leur code en ligne
+porte bien l'échappement de SV-5 et le 503 + `opsAlert` de SV-6 (lu par `get_edge_function`).
+⚠️ SV-3 reste **à rejouer** en ligne (deux appels, deux en-têtes, même seau).
 
 | # | Finding | Gravité | État |
 |---|---|---|---|
-| **SV-1** | Un admin dont l'accès a **expiré** envoie encore des invitations et vérifie des domaines (`send-org-invite`, `verify-org-domain` ne testaient que `suspended_at`) | 🟠 | ✅ dépôt (`_shared/org-membership.ts`, même borne que `is_org_member`) · ⏳ non déployé |
-| **SV-2** | Le propriétaire qui efface son compte transmet l'organisation, donc sa facturation, à un membre **suspendu ou expiré** | 🟠 | ✅ dépôt (`pickOrgSuccessor` : admin actif, puis membre actif) · ⏳ non déployé · 🟡 **arbitrage d'Axel** : s'il ne reste QUE des inactifs, l'ancien choix est gardé, sinon `ON DELETE CASCADE` détruit l'organisation et les données des autres |
-| **SV-3** | Le plafond de `report-bug` (seul plafond d'un appelant anonyme) se contournait en forgeant `x-forwarded-for` : e-mails illimités avec la clé anon publique | 🟠 | ✅ dépôt (`cf-connecting-ip`, seau commun des anonymes 30/j, plafond de fonction 100/j) · ⏳ non déployé · ⚠️ **PLAUSIBLE, non rejoué** : à rejouer après déploiement (deux appels, deux en-têtes, même seau) |
-| **SV-4** | `stripe-create-checkout` (premium particulier) appelable avec la clé Stripe **live**, sans les consentements L221-28 | 🟡 | ✅ dépôt (`PERSONAL_CHECKOUT_ENABLED = false`, 403 avant tout appel Stripe, suit `PREMIUM_ENFORCED`) · ⏳ non déployé |
-| **SV-5** | Injection HTML dans l'avis de reconduction L215-1 par le nom de l'organisation | 🟡 | ✅ dépôt (`_shared/renewal-notice-text.ts`, échappement) · ⏳ non déployé |
-| **SV-6** | Sans `STRIPE_WEBHOOK_SECRET`, chaque event repart en 400 comme une requête forgée, sans alerte | 🟡 | ✅ dépôt (503 et `opsAlert` avant la signature) · ⏳ non déployé |
-| **SV-7** | `org-webhook-dispatch` remet le compteur d'échecs à 1 sur panne de lecture : une URL morte n'est jamais coupée | 🟢 | ✅ dépôt · ⏳ non déployé |
-| **SV-8** | `stripe-org-checkout` avalait l'erreur de la lecture « déjà abonné » : sur panne, un abonné part sur un **second checkout** et perd le lien de ses factures | 🟠 | ✅ dépôt (erreurs relancées, 500 et alerte ; garde `edge-swallowed-errors` étendue) · ⏳ non déployé |
-| **SV-9** | `inactive-accounts` envoyait des `user_id` en clair dans le salon d'alerte (tiers hors registre) | 🟡 | ✅ dépôt (codes HTTP seulement) · ⏳ non déployé |
+| **SV-1** | Un admin dont l'accès a **expiré** envoie encore des invitations et vérifie des domaines (`send-org-invite`, `verify-org-domain` ne testaient que `suspended_at`) | 🟠 | ✅ dépôt (`_shared/org-membership.ts`, même borne que `is_org_member`) · ✅ déployé (relu le 2026-11-05) |
+| **SV-2** | Le propriétaire qui efface son compte transmet l'organisation, donc sa facturation, à un membre **suspendu ou expiré** | 🟠 | ✅ dépôt (`pickOrgSuccessor` : admin actif, puis membre actif) · ✅ déployé (relu le 2026-11-05) · 🟡 **arbitrage d'Axel** : s'il ne reste QUE des inactifs, l'ancien choix est gardé, sinon `ON DELETE CASCADE` détruit l'organisation et les données des autres |
+| **SV-3** | Le plafond de `report-bug` (seul plafond d'un appelant anonyme) se contournait en forgeant `x-forwarded-for` : e-mails illimités avec la clé anon publique | 🟠 | ✅ dépôt (`cf-connecting-ip`, seau commun des anonymes 30/j, plafond de fonction 100/j) · ✅ déployé (relu le 2026-11-05) · ⚠️ **PLAUSIBLE, non rejoué** : à rejouer en ligne (deux appels, deux en-têtes, même seau) |
+| **SV-4** | `stripe-create-checkout` (premium particulier) appelable avec la clé Stripe **live**, sans les consentements L221-28 | 🟡 | ✅ dépôt (`PERSONAL_CHECKOUT_ENABLED = false`, 403 avant tout appel Stripe, suit `PREMIUM_ENFORCED`) · ✅ déployé (relu le 2026-11-05) |
+| **SV-5** | Injection HTML dans l'avis de reconduction L215-1 par le nom de l'organisation | 🟡 | ✅ dépôt (`_shared/renewal-notice-text.ts`, échappement) · ✅ déployé (relu le 2026-11-05) |
+| **SV-6** | Sans `STRIPE_WEBHOOK_SECRET`, chaque event repart en 400 comme une requête forgée, sans alerte | 🟡 | ✅ dépôt (503 et `opsAlert` avant la signature) · ✅ déployé (relu le 2026-11-05) |
+| **SV-7** | `org-webhook-dispatch` remet le compteur d'échecs à 1 sur panne de lecture : une URL morte n'est jamais coupée | 🟢 | ✅ dépôt · ✅ déployé (relu le 2026-11-05) |
+| **SV-8** | `stripe-org-checkout` avalait l'erreur de la lecture « déjà abonné » : sur panne, un abonné part sur un **second checkout** et perd le lien de ses factures | 🟠 | ✅ dépôt (erreurs relancées, 500 et alerte ; garde `edge-swallowed-errors` étendue) · ✅ déployé (relu le 2026-11-05) |
+| **SV-9** | `inactive-accounts` envoyait des `user_id` en clair dans le salon d'alerte (tiers hors registre) | 🟡 | ✅ dépôt (codes HTTP seulement) · ✅ déployé (relu le 2026-11-05) |
 | **SV-10** | `x-cron-secret` comparé par `!==` (temps non constant) dans cinq fonctions | 🟢 | ⏳ **ouvert** : comparaison à temps constant à poser avec la rotation des secrets |
 | **SV-11** | 7 fonctions `DEFINER` antérieures à `213` en `search_path = public, pg_temp` | ⚪ | information : `authenticated` n'a pas `CREATE` sur `public`, non exploitable |
 | **SV-12** | Le plafond global de `track_hit` se sature depuis un client qui forge `Origin` | ⚪ | information : conséquence assumée de `TR-1` |
@@ -567,7 +568,7 @@ Relancer `npm run check:edge` et `check:edge-smoke` juste après.
 
 **Effet sur la note : −3** (quatre 🟠 ouverts en production, `TR-1` avait coûté −1 pour un seul),
 **+1** (`SECURITY.md` AM-4 : la checklist SQL devient onze règles de `validate:migrations`,
-PR n° 135, verte en CI). Les −3 se remboursent au redéploiement vérifié par `Edge deploy drift` vert.
+PR n° 135, verte en CI). Le redéploiement est fait (relu le 2026-11-05) ; la note n'a pas été rejouée depuis, le remboursement des −3 attend la prochaine notation.
 
 ## 🔴 Ouvert — bloquant
 
@@ -590,7 +591,7 @@ jamais été exécuté. **RPO réel jusqu'à 24 h, RTO inconnu.**~~
   **seule** copie de la base qui existe.
 
 **Action restante** (compte, non scriptable) : passer en plan Pro puis activer PITR, aux seuils de
-réouverture nommés dans [`docs/ROADMAP-60J.md`](./docs/ROADMAP-60J.md).
+réouverture nommés dans [`docs/archive/ROADMAP-60J-2026-08-28-au-10-26.md`](./docs/archive/ROADMAP-60J-2026-08-28-au-10-26.md).
 
 ---
 
@@ -599,7 +600,7 @@ réouverture nommés dans [`docs/ROADMAP-60J.md`](./docs/ROADMAP-60J.md).
 Aucun ne bloque un déploiement ; tous sont des clics dans le Dashboard.
 
 **Relu ligne par ligne le 2026-09-03** : trois des cinq lignes étaient périmées. Ce tableau se
-relit contre la console et contre `docs/ROADMAP-60J.md`, jamais de mémoire.
+relit contre la console et contre `docs/archive/ROADMAP-60J-2026-08-28-au-10-26.md`, jamais de mémoire.
 
 | # | Action | Où | État au 2026-09-03 |
 |---|---|---|---|
@@ -651,7 +652,7 @@ documentaire du 2026-08-14, le lien pointait dans le vide. Restaurée ici.
 > ✅ **2026-10-19 : [`TR-1`](#-tr-1--track_hit-réservée-au-collecteur-refermé-2026-10-19) refermé** (collecteur à la clé
 > secrète, mig. `223` appliquée). Reste `Posture` à recaler par `--update` (Axel). La liste complète des
 > gestes avant l'acquisition, code et mains d'Axel, est dans
-> [`docs/README.md`](./docs/README.md) § « Mise à jour du 2026-10-18 ». Le bandeau `BK-1`
+> [`docs/archive/README-journal-des-notes-2026-08-25-au-10-25.md`](./docs/archive/README-journal-des-notes-2026-08-25-au-10-25.md) § « Mise à jour du 2026-10-18 ». Le bandeau `BK-1`
 > ci-dessous est à jour : `M-68`, `M-69` et `M-70` faits ou décidés le 2026-10-16, reste `M-71`.
 
 > 🔴 **EN TÊTE depuis le 2026-10-13 : [`BK-1`](#-bk-1--sauvegardes-de-la-base-en-clair-dans-un-dépôt-public--contenu-le-2026-10-13-2-gestes-ouverts).**
@@ -791,47 +792,34 @@ npm run check:rls             # invariants RLS (CI)
 npm run check:drift           # dérive repo ↔ prod, 2 étapes (cf. docs/DEPLOYMENT.md)
 ```
 
-### État au 2026-10-01 (relu au ledger ET au catalogue)
+### État au 2026-11-05 (relu au ledger de production)
 
-Dépôt : **186 fichiers**, dernière `210_invite_domain_only_closes_open_links.sql`. Ledger : **160
-entrées**, cinq de plus que la veille, toutes posées par `apply_migration` le 2026-10-01 :
+Dépôt : **216 fichiers**, dernier `240_org_seat_alerts.sql`. Ledger : dernières entrées `236` à `240`
+(2026-10-31 → 2026-11-03), toutes présentes. `Migration coverage` : **vert** les 2026-11-04 et 11-05.
 
-| Migration | Ledger | Vérifié au catalogue |
-|---|---|---|
-| `204_team_task_health` | `20261001100113` | colonne `text` nullable, `CHECK` sur trois valeurs |
-| `207_org_webhooks_hardening` | `20261001100535` | contrainte `NOT VALID` à TLD alphabétique ; garde `pg_trigger_depth()` en tête du corps |
-| `208_member_last_activity_respects_suspension` | `20261001102420` | corps vivant **identique octet pour octet** au fichier (comparateur vu rouge sur un corps différent) |
-| `209_kr_checkin_row_same_transaction` | `20261001102425` | idem |
-| `210_invite_domain_only_closes_open_links` | `20261001102453` | idem, pour les deux fonctions |
-
-✅ `npm run check:migration-coverage` contre la prod : **0 « absent des deux »** sur 186 fichiers.
-La `196` y était rouge à tort : la `200` fait `DROP TABLE` de ses deux tables, ce qui emporte
-index, policies, triggers et contraintes sans les nommer, et la garde ne savait pas le lire.
-Corrigé dans la garde, avec trois témoins dont deux qui refusent d'en faire trop (un `DROP
-TABLE` d'une autre table n'excuse rien, et une fonction survit à sa table).
-⚠️ Les onze migrations hors ledger (`164`, `181`, `190`-`195`, `197`-`199`) **n'ont pas été
-inscrites**, par décision d'Axel : une ligne écrite après coup, à une date fausse, ne prouve rien
-que le catalogue n'ait déjà prouvé, et la garde les range déjà en « objet en base ».
-✅ `212_okr_audience_and_suspended_notifications` : ledger `20261001132108`, cinq corps identiques au fichier (E-3, E-4).
-⏳ `206` (jalons) reste **non appliquée, délibérément** ; `211` appartient à une autre session.
+- Hors ledger mais **en base**, par décision d'Axel (une ligne écrite après coup à une date fausse
+  ne prouve rien) : `164`, `181`, `190`-`195`, `197`-`199`. ❌ **Ne jamais réappliquer la `164`.**
+- ⏳ `206` (jalons) reste **non appliquée, délibérément**.
+- L'état du 2026-10-01 (cinq migrations relues octet pour octet) est dans l'historique git de ce fichier.
 
 
 ## Stripe
 
-**Audité pour la première fois le 2026-09-02** — voir la section « Audit des Edge Functions
-Stripe » plus haut. La plomberie est complète et déployée ; ce qui manque n'est pas du code.
+**État relu le 2026-11-05.** Audit d'origine : section « Audit des Edge Functions Stripe » plus haut.
 
-- L'encaissement est **désarmé** : `ENTERPRISE_BILLING_ENFORCED = false` ET
-  `billing_flags.enterprise_seat_limit = false` (mig. `124`). Les deux drapeaux se déplacent
-  ensemble, cf. [`CLAUDE.md`](./CLAUDE.md).
-- `STRIPE_SECRET_KEY` est une clé de **TEST**. Les customers et abonnements enregistrés vivent donc
-  dans le compte de test.
-- 🔴 **Le basculement en compte live doit remettre à zéro les identifiants Stripe en base**
-  (`org_subscriptions.stripe_customer_id` / `stripe_subscription_id`, idem `subscriptions`) :
-  `stripe-org-checkout` et `stripe-org-portal` les réutilisent tels quels, et un identifiant de test
-  présenté à une clé live répond 404, donc 500. Les deux tables sont vides ou presque
-  aujourd'hui — c'est le moment le moins cher pour le faire.
-- Secrets nécessaires : `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID`
-  (particulier), les quatre `STRIPE_ORG_PRICE_*` mensuels (les annuels se dérivent, cf.
-  `_shared/org-stripe-prices.ts`), et l'endpoint webhook côté Stripe.
-  Détails : [`docs/POST-AUDIT-GUIDE.md`](./docs/POST-AUDIT-GUIDE.md).
+- 🟢 **Compte LIVE depuis le 2026-10-20** : secrets live, endpoint webhook live, mig. `140`
+  (identifiants de test remis à zéro, ledger `20261020204838`) et `224` (réarmement, ledger
+  `20261020220252`). `ENTERPRISE_BILLING_ENFORCED = true` et `billing_flags.enterprise_seat_limit
+  = true` : les deux drapeaux ont bougé ensemble. Récit : [`docs/STRIPE-LIVE.md`](./docs/STRIPE-LIVE.md).
+- 🟢 **Depuis le 2026-11-01** (`d765d9c5`, mig. `237` et `239` au ledger) : rétractation 14 jours et
+  résiliation en fin de période par `stripe-org-subscription` ; **aucun remboursement depuis
+  l'interface**, `stripe-org-refund` est réservé à `is_admin()`. Règles :
+  [`src/modules/billing/CLAUDE.md`](./src/modules/billing/CLAUDE.md).
+- 🟢 Premium particulier coupé : `PREMIUM_ENFORCED = false` et `PERSONAL_CHECKOUT_ENABLED = false`
+  (SV-4, déployé).
+- ⏳ **Jamais joué contre un vrai paiement** : souscription, portail, rétractation, remboursement
+  admin et son rejeu (`a-faire-manuel.md` `M-08`).
+- ⚠️ `Edge deploy drift` est rouge depuis le 2026-11-03 : `stripe-webhook`, `stripe-org-refund`,
+  `stripe-org-subscription`, `renewal-notice` et `seat-alert` portent en ligne une version
+  antérieure aux commits de facturation du 2026-11-03 (gabarit d'e-mails). Redéploiement : geste
+  d'Axel.

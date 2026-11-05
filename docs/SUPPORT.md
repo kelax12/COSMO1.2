@@ -12,7 +12,7 @@
 
 # Support — qui répond, sous quel délai, et avec quoi
 
-**Créé le 2026-08-28** (T-31 de [`ROADMAP-60J.md`](./ROADMAP-60J.md)). Document **vivant**.
+**Créé le 2026-08-28** (T-31 de [`ROADMAP-60J.md`](./archive/ROADMAP-60J-2026-08-28-au-10-26.md)). Document **vivant**.
 
 > **Pourquoi maintenant, alors qu'il n'y a presque personne.** Un canal de support sans procédure
 > devient un canal ignoré : le premier message arrive un soir, on se dit qu'on répondra demain, et
@@ -145,7 +145,7 @@ Deux chiffres suffisent à ce stade, à relever au même moment que les autres :
   n'est pas la procédure qu'il faut réécrire, c'est le temps qu'il faut y consacrer.
 
 > Ces chiffres ne sont **pas** instrumentés : il n'existe aucun outil de ticketing, et en installer
-> un aujourd'hui serait du sur-engineering — cf. `ROADMAP-60J.md` §4. Un décompte à la main dans la
+> un aujourd'hui serait du sur-engineering — cf. `archive/ROADMAP-60J-2026-08-28-au-10-26.md` §4. Un décompte à la main dans la
 > boîte mail suffit tant que le volume tient sur une main.
 
 ## 8. Ce qu'il faudra ajouter, et quand

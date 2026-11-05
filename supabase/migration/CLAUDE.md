@@ -40,34 +40,13 @@ compilait, la suite passait.
 - ⚠️ **Et citer la bonne entrée** : le numéro publié le 2026-09-20 pour la `136` était
   `20260920105113`, qui n'existe au ledger d **aucune** migration. Le vrai est `20260920104729`,
   relu en base le 09-21. Un numéro de ledger se copie depuis la base, jamais depuis une note.
-- ✅ **État au 2026-10-20, relu au ledger et au catalogue** : le dépôt va de `000` à `223`, et
-  tout est en prod **sauf `206`** (suppression des jalons : `team_project_milestones` existe
-  encore ; à appliquer APRÈS le front qui ne les lit plus). `211` → `223` ont chacune leur ligne
-  (ledger **173**, dernière `20261019122246`). `164`, `181`, `190`-`195`, `197`-`199` sont en
-  prod **sans** ligne ; `196` est retirée par la `200`. ❌ **Ne jamais réappliquer la `164`** :
-  elle retire la branche « membre du projet » de la `190`. `224` (2026-10-20) et `226` (2026-10-22,
-  ledger `20261021225038`, C-121) sont en prod ; `225` est pris par un fichier d'une autre session.
-  `227` (2026-10-26, ledger `20261026124018`) et `228` (ledger `20261025183015`) sont en prod.
-  `229` (fin du rôle « manager », ledger `20261030182812`) et `230` (rôle par défaut des
-  nouveaux membres, ledger `20261030182827`) sont en prod depuis le 2026-10-30, relues au
-  catalogue (`my_org_perm` sans `is_org_manager`, CHECK `self`/`everyone`, colonne
-  `default_role_id`, trigger `trg_assign_default_org_role`). Preuves : `proofs/229-230`.
-  `231` (`can_manage_team` exige un membre actif, revue de sécurité de la 229) en prod,
-  ledger `20261030190926`. `232` (droits par défaut d'un membre réglables, 2026-10-31) est
-  en prod, ledger `20261031191036`, relue au catalogue (colonne, quatre résolveurs sur `org_member_default_perm`, EXECUTE refusé à `authenticated`).
-  `233` (validateur de tâche d'entreprise, 2026-10-31) en prod, ledger `20261031200520`, relue au
-  catalogue (colonne `validator_id`, trigger `trg_team_task_validation_gate` INVOKER, prouvée en 5 cas).
-  `234` (porte de la 233 sûre face à un `created_by` NULL) en prod, ledger `20261031200845`.
-  `235` (`REVOKE` de `team_task_validation_gate()` pour `authenticated`, oublié par la 233) en
-  prod, ledger `20261031212233`, relue au catalogue (`EXECUTE` refusé à `anon` et `authenticated`,
-  trigger toujours actif).
-  `236` (affiliation par lien, 2026-10-31) en prod, ledger `20261031223810`, relue au catalogue
-  (7 tables `affiliate_*` sous RLS sans policy, colonnes `profiles.affiliate_*` et `org_subscriptions.purchased_by`,
-  `handle_new_user_profile` INVOKER → `create_profile_for_new_user` DEFINER, `EXECUTE` pour `supabase_auth_admin`).
-  Preuves : `proofs/236`. `237` (rétractation, résiliation, CGV acceptées, 2026-11-01) en prod, ledger `20261101143758`, prouvée avant en transaction annulée puis relue au catalogue (2 tables sous RLS sans policy, 3 colonnes `org_subscriptions`, trigger append-only, `EXECUTE` refusé à `authenticated`). `238` (affiliation : commission 50 % × (payé − 25,6 % − frais Stripe), 2026-11-01) en prod, ledger `20261101143700`, relue au catalogue (réglages 5000/2560, `affiliate_compute` à 6 taux, 2000 c → 717). Indépendante de `237`. `239` (`prevent_user_id_change` sur les deux tables de la `237`, 2026-11-02) en prod, ledger `20261102113239`, prouvée avant en transaction annulée (changement de `user_id` refusé sur les deux tables, remboursement toujours inscriptible, annulation vérifiée) puis relue au catalogue (deux triggers actifs). `240` (alerte 80 % des sièges, 2026-11-03) en prod, ledger `20261103104517`, prouvée avant en transaction annulée (`proofs/240.proof.sql` : doublon `(org, tier)` refusé en `23505`, lecture et `EXECUTE` refusés à `authenticated` en `42501`, RPC vide drapeau faux, annulation vérifiée) puis relue au catalogue (RLS sans policy, UNIQUE, RPC DEFINER `search_path=''`, `EXECUTE` refusé à `anon` et `authenticated`). Prochain numéro libre : **`241`**.
-
-  Journal daté de chaque application (`150` → `223`) :
-  [`docs/SECURITY.md`](../../docs/SECURITY.md) § « Journal d'application des migrations ».
+- ✅ **État au 2026-11-05, relu au ledger de production** : le dépôt va de `000` à `240`, et
+  tout est en prod **sauf `206`** (suppression des jalons : à appliquer APRÈS le front qui ne les
+  lit plus). `164`, `181`, `190`-`195`, `197`-`199` sont en prod **sans** ligne ; `196` est
+  retirée par la `200`. ❌ **Ne jamais réappliquer la `164`** : elle retire la branche « membre du
+  projet » de la `190`. Dernière entrée : `240_org_seat_alerts` (`20261103104517`). Prochain
+  numéro libre : **`241`**. Journal daté de chaque application (preuves, relectures au catalogue) :
+  [`docs/archive/SECURITY-journal-migrations-150-223.md`](../../docs/archive/SECURITY-journal-migrations-150-223.md).
 - ✅ **Forme de preuve à reprendre** : un seul bloc `DO` terminé par `RAISE EXCEPTION`
   (`proofs/208-210.proof.sql`). L'annulation n'est pas une instruction qu'on peut oublier, c'est la
   seule issue, et le verdict est le texte de l'exception. ⚠️ En PL/pgSQL `N` et `n`, `OK` et `ok`

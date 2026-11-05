@@ -780,8 +780,8 @@ pg_dump "$SUPABASE_DB_URL" --no-owner --format=custom -f cosmo-$(date +%F).dump
 supabase secrets set OPS_ALERT_WEBHOOK_URL=https://hooks.slack.com/services/…
 ```
 
-**Prérequis déploiement `delete-account`** (fonction PAS encore déployée au
-2026-06-10) : `supabase secrets set APP_URL=https://<domaine-prod>` d'abord —
+**Prérequis d'un (re)déploiement de `delete-account`** (déployée, v34 au 2026-11-05) :
+`supabase secrets set APP_URL=https://<domaine-prod>` d'abord —
 sans lui l'allowlist CORS ne contient que localhost et le bouton « Supprimer le
 compte » échoue au lieu de tomber sur le fallback email.
 

@@ -97,7 +97,7 @@ export function findPolling(source: string, file = '?'): Hit[] {
  * pendant l'attente d'activation au retour de Stripe, et il est BORNÉ à 20 s
  * par `activationPollInterval`, dont la borne est testée dans
  * `org-billing.logic.test.ts`. Décision de la spec
- * `docs/superpowers/specs/2026-11-02-facturation-experience-design.md` § 5.1.
+ * `docs/archive/superpowers/specs/2026-11-02-facturation-experience-design.md` § 5.1.
  */
 const ALLOWED = new Set([
   'src/modules/billing/org-billing.hooks.ts',

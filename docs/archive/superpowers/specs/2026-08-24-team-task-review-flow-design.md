@@ -1,3 +1,7 @@
+> ⚠️ **ARCHIVE — instantané daté du 2026-08-24, non maintenu.**
+> Ce document décrit un plan ou une conception **à cette date**. La fonctionnalité est livrée : le code fait foi.
+> Sources vivantes : [`CLAUDE.md`](../../../../CLAUDE.md) · [`docs/MODULES.md`](../../../MODULES.md) · [`faille.md`](../../../../faille.md).
+
 > # 🟠 TOUJOURS VIVANT, non implémenté — relu le 2026-09-21
 >
 > **Vérifié dans le code, pas dans un statut** : aucune trace de ce flux. Le statut `review` de la

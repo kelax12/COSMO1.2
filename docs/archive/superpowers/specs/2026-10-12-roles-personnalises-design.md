@@ -1,3 +1,7 @@
+> ⚠️ **ARCHIVE — instantané daté du 2026-10-12, non maintenu.**
+> Ce document décrit un plan ou une conception **à cette date**. La fonctionnalité est livrée : le code fait foi.
+> Sources vivantes : [`CLAUDE.md`](../../../../CLAUDE.md) · [`docs/MODULES.md`](../../../MODULES.md) · [`faille.md`](../../../../faille.md).
+
 # Mode entreprise : rôles personnalisés à durée limitée · design
 
 Statut : conçu avec Axel le 2026-10-12, **à valider avant plan d'implémentation**.

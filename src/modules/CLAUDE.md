@@ -66,7 +66,6 @@ src/modules/{module}/
 ├── local.repository.ts    # Implémentation LocalStorage (quand dédiée)
 ├── supabase.repository.ts # Implémentation Supabase
 ├── hooks.ts               # Hooks React Query (lecture + écriture)
-├── hooks.derived.ts       # Hooks calculés (useMemo) — quand pertinent
 └── index.ts               # Export public (barrel)
 ```
 
