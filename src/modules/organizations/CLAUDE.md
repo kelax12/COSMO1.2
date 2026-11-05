@@ -110,7 +110,7 @@ les permissions** (admin seul).
 - 🔴 **Modifier un projet = `project.edit`, OU responsable encore membre.** Plus `project.create`.
   Le responsable ne change ni `team_id` (audience, M5), ni `owner_id`, ni `is_template` : c'est le
   trigger `enforce_team_project_edit_scope` (INVOKER), une policy ne sait pas juger une colonne.
-- 🔴 **Créer un projet avec tâches ou jalons passe par `create_team_project_with_tasks`** (INVOKER,
+- 🔴 **Créer un projet avec tâches passe par `create_team_project_with_tasks`** (INVOKER,
   une transaction). ❌ Ne jamais revenir à une boucle de `mutateAsync` : un échec au milieu laissait
   un projet à moitié créé. Duplication et « partir d'un modèle » empruntent la même RPC.
 - ❌ **Un modèle ne contient JAMAIS de vraies tâches** : son contenu est `template_payload`
@@ -118,12 +118,10 @@ les permissions** (admin seul).
   `useTeamProjects` EXCLUT les modèles (`select`). Plus aucun écran ne les lit depuis ebf44b2b.
 - ❌ **La catégorie ne réécrit plus `color`.** Elle s'affiche en pastille à sa propre couleur ;
   `projectColorFromCategory` n'a plus d'appelant dans l'onglet Projets.
-- ⚠️ `my_org_perm` de la 153 part du corps de la **152** (`task.deleteAny` = manager) : appliquer
-  la 152 AVANT, sinon la 152 retirerait `project.edit`.
 
 ### 🏷️ Rôles personnalisés à durée limitée (mig. 219, 2026-10-12)
 
-Spec : [`docs/superpowers/specs/2026-10-12-roles-personnalises-design.md`](../../../docs/superpowers/specs/2026-10-12-roles-personnalises-design.md).
+Spec : [`docs/archive/superpowers/specs/2026-10-12-roles-personnalises-design.md`](../../../docs/archive/superpowers/specs/2026-10-12-roles-personnalises-design.md).
 `org_roles` (paquet nommé de droits) + `org_member_roles` (attribution, `ends_at` NULL = sans limite).
 Fichiers : `roles.*` ; écrans `OrgRolesSettings`, `RoleEditorSheet` (une modale centrée depuis le 2026-10-19, malgré son nom), `AssignRoleDialog` (crée aussi un rôle depuis l'attribution).
 

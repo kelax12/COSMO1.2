@@ -1,3 +1,7 @@
+> ⚠️ **ARCHIVE — instantané daté du 2026-10-12, non maintenu.**
+> Ce document décrit un plan ou une conception **à cette date**. La fonctionnalité est livrée : le code fait foi.
+> Sources vivantes : [`CLAUDE.md`](../../../../CLAUDE.md) · [`docs/MODULES.md`](../../../MODULES.md) · [`faille.md`](../../../../faille.md).
+
 # Guide entreprise : plan d'implémentation
 
 > **Pour les agents :** sous-skill requis : superpowers:subagent-driven-development (recommandé) ou superpowers:executing-plans. Les étapes utilisent des cases `- [ ]`.

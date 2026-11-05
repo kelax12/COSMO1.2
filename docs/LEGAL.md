@@ -142,7 +142,7 @@ européenne de règlement en ligne des litiges n'est **plus** exigé : elle a fe
 | Marché visé | France uniquement à court terme. |
 | Chiffre d'affaires visé | Non déterminé. Les trois scénarios sont traités plus bas. |
 | Expert-comptable | Aucun, et Axel envisage de s'en passer. Voir l'encadré dédié. |
-| Domiciliation | **Pas au domicile personnel.** Modalité exacte non arrêtée. |
+| Domiciliation | Société de domiciliation Les Tricolores, 75116 Paris (B5). Pas au domicile personnel. |
 
 ### ⚠️ Se passer d'expert-comptable
 
@@ -197,11 +197,11 @@ limité. Ce n'est pas la même dépense qu'une mission annuelle.
 
 | # | Obligation | Statut | Ce qui manque exactement |
 |---|---|:--:|---|
-| B1 | Choix de la forme juridique | 🟡 | **Micro-entreprise**, arbitré par Axel le 2026-08-26. Reste l'immatriculation elle-même (B2). Conséquences : franchise en base par défaut (C1), livre des recettes seul (C11), affiliation travailleur indépendant (D1). |
-| B2 | Immatriculation au guichet unique INPI | ❌ | Aucun SIREN. **Bloquant absolu de tout encaissement.** |
+| B1 | Choix de la forme juridique | ✅ | **Micro-entreprise** (entrepreneur individuel, nom commercial COSMO), arbitré par Axel le 2026-08-26, immatriculée le 2026-10-20 (B2), relu le 2026-11-05 aux mentions légales en ligne. Conséquences : franchise en base par défaut (C1), livre des recettes seul (C11), affiliation travailleur indépendant (D1). |
+| B2 | Immatriculation au guichet unique INPI | ✅ | **Immatriculé au RNE le 2026-10-20** : SIREN 131 769 317, SIRET 131 769 317 00010, publiés aux mentions légales le 2026-10-21 (`LEGAL-JOURNAL.md`), relu le 2026-11-05. |
 | B3 | Compte bancaire dédié | ❌ | Obligatoire pour une société ; en micro, au-delà de 10 000 € deux années de suite. |
 | B4 | Déclaration CFE initiale | ❌ | À déposer avant le 31 décembre de l'année de création. Exonération la 1re année mais **la déclaration reste due**. |
-| B5 | Domiciliation | 🟡 | **Société de domiciliation**, arbitré par Axel le 2026-08-26. Le domicile personnel est écarté, ce qui garde l'adresse privée hors du registre. Reste à choisir le prestataire et à signer. |
+| B5 | Domiciliation | ✅ | **Société de domiciliation Les Tricolores**, 138 avenue Victor Hugo, 75116 Paris, publiée aux mentions légales le 2026-10-21, relu le 2026-11-05. Le domicile personnel reste hors du registre. |
 | B6 | Assurance RC professionnelle | ❌ | Pas obligatoire légalement, mais exigée contractuellement par les acheteurs entreprise. |
 
 ### C. Fiscal et facturation — **se déclenche au premier euro**
@@ -239,7 +239,7 @@ Par l'effet de la décision structurante ci-dessous : aucun client n'est vérifi
 | E2 | Information précontractuelle | ✅ | **Remise le 2026-11-01** (décision d'Axel) au-dessus de la grille d'`OrgBillingTab`, pour tout propriétaire qui peut payer : « Abonnement à durée indéterminée, prix TTC, reconduit automatiquement à chaque échéance jusqu'à résiliation. Résiliable à tout moment depuis cet écran, sans motif ni frais. » (fr/en, clé `billing.precontractual`). Elle avait été retirée le 2026-10-31 (`9eedd3ca`). Le montant exact est sur chaque carte, et Stripe répète reconduction et résiliation au-dessus de son bouton (E8). Témoin : `e2e/demo-billing-consent.spec.ts`. |
 | E3 | Rétractation 14 jours | ✅ | **Aucune renonciation recueillie depuis le 2026-10-30** (décision d'Axel) : les deux cases sont retirées d'`OrgBillingTab` et `stripe-org-checkout` ne les exige plus. Le client garde ses 14 jours et est remboursé en entier s'il se rétracte. CGU 5 bis réécrite le même jour. Avant cette date : double consentement, preuves gardées dans `withdrawal_consents`. |
 | E4 | Médiateur de la consommation | 🟡 | **Adhésion faite** : Société Médiation Professionnelle (CPMN), courrier reçu le 2026-10-25 (texte intégral au § Médiateur de la consommation). Publié le 2026-10-25 dans les CGU (article 12 bis, texte imposé repris mot pour mot) et dans les mentions légales (5.p2). ❌ Reste : **le pied de facture Stripe**, action Dashboard d'Axel (Settings → Billing → Invoices → Default footer), sur le compte live. |
-| E5 | Résiliation en ligne (L215-1-1) | ✅ | **Repassé au vert le 2026-10-31**, sur deux chemins. (1) Dans l'app : « Résilier et être remboursé de la période en cours » (`OrgBillingTab`, Edge Function `stripe-org-refund`), sans motif ni courrier, montré à tout propriétaire d'un palier payant ; parcours joué par `e2e/stubbed/refund.spec.ts` (mensuel, annuel, échec Stripe, non-propriétaire), vert en local le 2026-10-31, et la fonction répond en prod (sonde `check:edge-smoke`). (2) Portail Stripe : configuration par défaut posée sur le compte live le 2026-09-01 (`bpc_1UAv9vHJLweDSN4F4xssO3OQ`, `subscription_cancel` actif), relue par l'API le 2026-10-20 ([`STRIPE-LIVE.md`](./STRIPE-LIVE.md)). ⚠️ Non relue par l'API le 2026-10-31 (aucune clé Stripe sur le poste) : la garde `Grille Stripe` ne lit pas le portail. Le constat du 2026-08-26 (« portail vide ») est périmé. |
+| E5 | Résiliation en ligne (L215-1-1) | ✅ | **Revu le 2026-11-05 après la refonte du 2026-11-01** (`d765d9c5`), sur deux chemins. (1) Dans l'app, onglet Facturation : « Résilier mon abonnement » (fin de période, `cancel_at_period_end`) et « Se rétracter du contrat ici » sous 14 jours, sans motif ni courrier, par l'Edge Function `stripe-org-subscription` (déployée, sonde `check:edge-smoke`) ; parcours joué par `e2e/stubbed/retractation.spec.ts`. Plus aucun bouton ne rembourse : `stripe-org-refund` est réservé à `is_admin()`. (2) Portail Stripe : configuration par défaut du compte live (`bpc_1UAv9vHJLweDSN4F4xssO3OQ`, `subscription_cancel` actif), relue par l'API le 2026-10-20 ([`STRIPE-LIVE.md`](./STRIPE-LIVE.md)). |
 | E6 | Information de reconduction tacite | 🟡 | Construit et **déployé** le 2026-08-26. Mig. 126 appliquée (`renewal_notices`, clé primaire `(org_id, period_end)` qui rend l'envoi idempotent) + Edge Function `renewal-notice` + workflow CI quotidien. Fenêtre J+30 à J+60, dans les bornes légales de 1 à 3 mois. Preuve enregistrée **après** l'envoi, jamais avant. ⚠️ **Passe au vert quand deux secrets sont posés** : `CRON_SECRET` (Supabase et GitHub) et `RESEND_API_KEY`. Sans eux la fonction refuse tout appel, en échec fermé. |
 | E7 | Affichage des prix TTC | ✅ | Les 8 prix live sont en `tax_behavior: inclusive`. Grille publique (`PricingSection.tsx`) : mention « Tous les prix sont affichés TTC » sous la grille. Grille produit (`EnterpriseTierGrid.tsx`) : depuis le 2026-10-31 (`9eedd3ca`), « TTC » suit **chaque** prix, mensuel, annuel et prix barré, et la mention globale d'`OrgBillingTab` est retirée. fr et en. |
 | E8 | Bouton de commande explicite | 🟡 | `custom_text.submit.message` ajouté dans `stripe-org-checkout` le 2026-08-26 : « commande avec obligation de paiement », reconduction et résiliation annoncées avant le clic. `submit_type` n'existe pas en `mode: 'subscription'`, le libellé du bouton Stripe n'est donc pas réécrivable. ⚠️ **Passe au vert au redéploiement de la fonction**, la prod tourne encore sur l'ancienne version. |
@@ -289,12 +289,14 @@ Par l'effet de la décision structurante ci-dessous : aucun client n'est vérifi
 
 | Statut | Nombre |
 |---|---|
-| ✅ Bon | **20** |
-| 🟡 Partiellement bon | **21** |
-| ❌ À faire | **15** |
+| ✅ Bon | **23** |
+| 🟡 Partiellement bon | **19** |
+| ❌ À faire | **14** |
 | ⬜ Sans objet aujourd'hui | **5** |
 | **Total** | **61** |
 
+> 🔎 **2026-11-05** : B1, B2 et B5 passent à ✅ (immatriculation RNE du 2026-10-20 et domiciliation, publiées le 2026-10-21) ; E5 réécrite après la refonte rétractation / résiliation du 2026-11-01.
+>
 > 🔎 **2026-11-01** : E2 remonte à ✅ (phrase précontractuelle remise).
 >
 > 🔎 **Recompté le 2026-10-31** (`npm run check:legal`) : la garde était rouge en arrivant, 18 / 21 / 16
@@ -325,13 +327,13 @@ A1, A2, A4, A7, A8, A9, C9, C10, E2, E3, E7, F3. **E9 les a rejointes le 2026-09
 
 | Famille | Lignes | Qui agit |
 |---|---|---|
-| Actes juridiques ou administratifs | A5, B2, B3, B4, B6, C2, C3, C12, D2, E4, F2 | **Axel seul.** Immatriculer, ouvrir un compte, adhérer, signer, déposer. Aucun code n'y change rien. |
+| Actes juridiques ou administratifs | A5, B3, B4, B6, C2, C3, C12, D2, E4, F2 | **Axel seul.** Immatriculer, ouvrir un compte, adhérer, signer, déposer. Aucun code n'y change rien. |
 | Réglages hors dépôt | C4, C5, C6, E5 | **Axel**, depuis le Dashboard Stripe. Deux minutes chacun, mais C4 à C6 supposent d'être immatriculé pour ne pas afficher une mention fausse. |
 | Développement restant | C7 | Facturation électronique, qui suppose une plateforme agréée. **E6 est sortie de cette colonne** : construite et déployée le 2026-08-26, elle n'attend plus que trois secrets. |
 
 **Les 11 lignes jaunes n'attendent aucun développement** : quatre sont des décisions déjà prises
-qui attendent leur exécution (B1, B5, C1, C11, D1), et les autres attendent le SIREN, un
-médiateur, ou un déploiement.
+qui attendent leur exécution (C1, C11, D1), et les autres un réglage de console, un contrat
+signé ou un déploiement.
 
 ---
 
@@ -423,19 +425,10 @@ consommateurs. Tout le §4 s'applique donc, à toute l'offre.
 ## 1. Actif aujourd'hui, sans structure
 
 Ces obligations ne dépendent ni d'une société ni d'un chiffre d'affaires. Elles se déclenchent
-parce qu'un service en ligne traite les données de personnes réelles. **Elles sont en défaut
-partiel aujourd'hui.**
+parce qu'un service en ligne traite les données de personnes réelles. Leur état courant est **uniquement** dans le tableau de conformité (famille A) plus haut. Le
+tableau de départ du 2026-08-26 qui figurait ici (registre « absent », procédure 72 h « à écrire »)
+était démenti par ce tableau ; il se relit dans l'historique git.
 
-| Obligation | Référence | État |
-|---|---|---|
-| Registre des activités de traitement | RGPD art. 30 | ❌ absent (`docs/RGPD.md` est technique, ce n'est pas un registre) |
-| Politique de confidentialité complète | RGPD art. 12 à 14 | ⚠️ à auditer contre les 12 mentions |
-| Mentions légales | LCEN art. 6-III | ⚠️ à compléter, et à reprendre après immatriculation |
-| Consentement aux traceurs | Loi I&L art. 82 | ⚠️ statut de l'analytics à trancher |
-| Contrats de sous-traitance | RGPD art. 28 | ❌ à collecter et archiver, voir §6 |
-| Encadrement des transferts hors UE | RGPD chap. V | ⚠️ voir §6 |
-| Procédure de violation sous 72 h | RGPD art. 33 | ❌ à écrire, à froid |
-| Exercice des droits | RGPD art. 15 à 22 | ⚠️ vérifier que l'export et la suppression couvrent toutes les tables |
 
 > Le risque de contrôle CNIL sur 27 utilisateurs est proche de zéro. La raison de traiter ce
 > bloc n'est pas la peur : ces documents sont **réclamés par les acheteurs B2B** dans leurs
@@ -709,7 +702,7 @@ le statut est « Enregistrée » ou « Déposée ».
 | Anti-clickjacking | `X-Frame-Options: DENY` **et** `frame-ancestors 'none'`. | `vercel.json` |
 | Durcissement navigateur | `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` fermant caméra, micro et géolocalisation. | `vercel.json` |
 | Minimisation dans le monitoring | `sendDefaultPii: false`, et `beforeSend` retire emails et UUID des messages, des exceptions **et** des breadcrumbs avant émission. | `src/main.tsx` |
-| Réduction de surface tierce | Un seul script tiers sur l'origine, et il n'est chargé **que hors session** pour qu'aucun jeton ne soit exposable. | `src/lib/audience.ts` |
+| Réduction de surface tierce | **Aucun script tiers de mesure** depuis le 2026-10-18 (`faille.md` V-1) : audience maison, revérifiée avant chaque envoi (consentement, page publique, hors session), postée à la même origine. | `src/lib/traffic.ts`, `api/collect.ts` |
 | Traçabilité des versions | `release` Sentry = SHA du commit, donc toute erreur est attribuable à un déploiement. | `src/main.tsx` |
 | Contrôle continu | Gates CI bloquantes : `check:rls` (invariants RLS), `validate:migrations`, `test:rls`, `i18n:check`, `check:bundle`. | `package.json` |
 | Effacement | Edge Function `delete-account`, et export CSV au titre de la portabilité. | `supabase/functions/delete-account`, `src/lib/csv-export.ts` |
@@ -719,9 +712,9 @@ le statut est « Enregistrée » ou « Déposée ».
 Un document article 32 qui ne recense que ses forces ne vaut rien en contrôle. Les suivantes
 sont connues et documentées dans le code :
 
-1. **Fenêtre du script de mesure d'audience.** Un visiteur qui se connecte sans recharger la
-   page conserve, pour la durée de l'onglet, un script tiers déjà évalué. On ne décharge pas du
-   JavaScript exécuté. Fenêtre étroite mais réelle, décrite dans `src/lib/audience.ts`.
+1. ~~**Fenêtre du script de mesure d'audience.**~~ **Levée le 2026-10-18** : le script tiers est
+   retiré (`faille.md` V-1). La mesure maison (`src/lib/traffic.ts`) ne charge aucun code tiers et
+   revérifie l'absence de session avant chaque envoi.
 2. **`style-src 'unsafe-inline'`** reste nécessaire à la chaîne de styles. C'est un
    assouplissement conscient de la CSP.
 3. ~~**La CSP autorise les domaines publicitaires Google.**~~ **Refermé le 2026-09-04** (C-04) :

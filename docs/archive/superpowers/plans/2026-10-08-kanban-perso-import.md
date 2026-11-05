@@ -1,3 +1,7 @@
+> ⚠️ **ARCHIVE — instantané daté du 2026-10-08, non maintenu.**
+> Ce document décrit un plan ou une conception **à cette date**. La fonctionnalité est livrée : le code fait foi.
+> Sources vivantes : [`CLAUDE.md`](../../../../CLAUDE.md) · [`docs/MODULES.md`](../../../MODULES.md) · [`faille.md`](../../../../faille.md).
+
 # Statut, État, vue Tableau perso, conversion de sous-tâche, import · plan d'implémentation
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

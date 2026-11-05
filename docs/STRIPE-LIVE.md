@@ -53,17 +53,14 @@
 
 ---
 
-## Le compte live n'est PAS celui qui sert aujourd'hui
-
-Deux comptes Stripe existent :
+## Deux comptes, la production est sur le LIVE depuis le 2026-10-20
 
 | Compte | ID | Rôle |
 |---|---|---|
-| `COSMO` | `acct_1TQVVnHJLweDSN4F` | **live**, aucun client, aucun encaissement |
-| `Environnement de test COSMO` | `acct_1TQVWFHEm0kmXgy9` | test, **c'est lui que la prod utilise** |
+| `COSMO` | `acct_1TQVVnHJLweDSN4F` | **live**, servi par la production depuis le 2026-10-20 |
+| `Environnement de test COSMO` | `acct_1TQVWFHEm0kmXgy9` | test, plus utilisé par la production |
 
-`STRIPE_SECRET_KEY` en prod est une clé de **test** : les customers des vrais utilisateurs
-vivent dans le compte de test. Le compte live ne contient que la grille tarifaire ci-dessous.
+Bascule : § « Bascule live, jouée le 2026-10-20 » plus bas.
 
 ## Grille live — les 10 prix (créés le 2026-10-25)
 
@@ -124,6 +121,10 @@ Les deux sont rigoureusement identiques :
 - `payment_method_update` et `invoice_history` : activés.
 - `default_return_url` : `https://thecosmo.app/entreprise?tab=billing`.
 - `subscription_update` : **désactivé**, volontairement (ci-dessous).
+  ⚠️ **À relire au tableau de bord live** : depuis le 2026-11-02, un propriétaire abonné qui
+  choisit un autre palier est **envoyé au portail** pour en changer (`OrgBillingTab`). Si
+  `subscription_update` est toujours désactivé, le portail ne lui propose rien. Non vérifié le
+  2026-11-05 : le connecteur Stripe de la session ne voit qu'un bac à sable.
 
 ### ❌ Ne jamais activer « modifier la quantité » dans le portail
 
@@ -166,7 +167,7 @@ bloquant pour la résiliation, c'est un point de conformité.
 ✅ **Refermé sur le compte LIVE le 2026-10-20** : les deux URL ci-dessus ont été posées par l'API
 sur `bpc_1UAv9vHJLweDSN4F4xssO3OQ`, et la réponse les relit. Le sandbox n'a pas été touché.
 
-## Ce qui reste à faire avant d'encaisser
+## Bascule live, jouée le 2026-10-20
 
 > 🔎 **Bascule ouverte le 2026-10-20** : SIREN obtenu (déclaré par Axel). Mig. `140` appliquée
 > (ledger `20261020204838`), essai à blanc : 5 customers de test à effacer. Endpoint webhook live
@@ -179,48 +180,12 @@ sur `bpc_1UAv9vHJLweDSN4F4xssO3OQ`, et la réponse les relit. Le sandbox n'a pas
 > webhook et les 4 prix), `reset_stripe_identifiers(true)` joué (5 customers effacés, journal
 > intact), mig. `224` + `ENTERPRISE_BILLING_ENFORCED = true` + `PRICES_VISIBLE = true`,
 > `stripe-prices.yml` planifié et ajouté à `ci-alert.yml`. Reste : recette réelle (paiement 20 €
-> puis remboursement), geste d'Axel. Mention 293 B : ✅ posée par le code le 2026-10-23 (point 4).
+> puis rétractation ou remboursement admin), geste d'Axel (`a-faire-manuel.md` `M-08`). Mention 293 B : ✅ posée par le code le 2026-10-23 (point 4).
 
-1. ~~**Créer la structure juridique.**~~ ✅ SIREN obtenu (2026-10-20). Encaisser sans
-   immatriculation aurait été du travail dissimulé.
-2. Poser les 8 secrets `STRIPE_ORG_PRICE_*` sur les IDs ci-dessus, et remplacer
-   `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` par ceux du compte live.
-3. Réenregistrer l'endpoint webhook sur le compte live. 🔴 **SIX events, pas cinq** — recomptés
-   dans `supabase/functions/stripe-webhook/index.ts` le 2026-09-12 :
-   `checkout.session.completed`, `customer.subscription.updated`,
-   `customer.subscription.deleted`, `invoice.payment_succeeded`, `invoice.payment_failed`,
-   `charge.refunded`. Cette ligne disait « mêmes 5 events » : le chiffre est devenu faux le
-   2026-09-06, quand la v27 du webhook a ajouté la branche de remboursement. En réenregistrer
-   cinq laisserait `charge.refunded` non souscrit, donc **aucune ligne compensatoire au journal
-   d'encaissement** : un remboursement réellement versé, et un journal qui ne montre que
-   l'encaissement. C'est ce qu'on produit en contrôle fiscal.
-   ⚠️ **Le même doute porte sur l'endpoint de TEST**, et il n'est pas refermé : rien ne dit que
-   `charge.refunded` y a été ajouté avec la v27. À vérifier au tableau de bord avant de conclure
-   d'un test de remboursement qu'il a marché (geste M-37c).
-3bis. **Effacer les identifiants Stripe du compte de TEST restés en base**, JUSTE APRÈS le
-   remplacement des secrets et AVANT de rebasculer les drapeaux de facturation :
+Les étapes 1 à 3bis de la séquence (structure juridique, secrets live, endpoint webhook à six
+events, `reset_stripe_identifiers(true)`) sont **jouées** : voir l'encart ci-dessus. Leur
+rédaction d'avant la bascule se relit dans l'historique git de ce fichier.
 
-   ```sql
-   SELECT * FROM public.reset_stripe_identifiers();      -- essai à blanc, ne compte que
-   SELECT * FROM public.reset_stripe_identifiers(true);  -- applique
-   ```
-
-   Sans ce geste, `stripe-org-checkout` et `stripe-org-portal` présentent un `cus_…` / `sub_…`
-   de test à une clé live : Stripe répond 404, les deux fonctions rendent 500, et un client
-   n'a plus ni bouton pour payer ni bouton pour résilier. Mesuré en base le 2026-09-04 :
-   `org_subscriptions` est vide, mais `subscriptions` porte 5 customers et 2 subscriptions du
-   compte de test. La fonction est installée par la mig. `140`, qui documente ce qu'elle
-   n'efface JAMAIS (journal fiscal, preuves de renonciation, marqueurs d'idempotence).
-
-   ✅ **Remesuré le 2026-09-14 au soir, inchangé** : toujours **5 `stripe_customer_id`** et
-   **2 `stripe_subscription_id`** sur 54 lignes de `subscriptions`, `org_subscriptions` toujours à
-   **0 ligne**, `payment_records` à **0**, et **8** events dans `processed_stripe_events`. La
-   fonction `reset_stripe_identifiers` est bien **absente de la base** (mig. `140` non appliquée),
-   ce qui est l'état voulu : elle se pose dans la fenêtre de bascule. ⚠️ Ce geste a donc un objet
-   réel et il n'a pas disparu avec le temps.
-
-   ⚠️ Ce geste ne s'anticipe pas : tant que la clé est une clé de test, chaque checkout
-   réécrit un identifiant de test. Il se joue DANS la fenêtre de bascule, pas avant.
 4. Mention « TVA non applicable, art. 293 B du CGI » sur les factures tant que la franchise
    en base s'applique.
    ✅ **Posée par le CODE le 2026-10-23** : `INVOICE_FOOTER` (`_shared/org-billing-contact.ts`) est
@@ -356,8 +321,9 @@ Garde-fous propres à cette zone :
 - ❌ **AUCUN REJEU AUTOMATIQUE sur une mutation qui déplace de l'argent.** Le `QueryClient` de
   l'app pose `mutations: { retry: 1 }` pour tout le monde : un `refund_failed` faisait donc repartir
   un **second** appel à `stripe-org-refund`, sans que personne ne clique et sans que rien ne le dise
-  (mesuré le 2026-09-08 par `e2e/stubbed/refund.spec.ts` : deux appels pour un clic).
-  `useCancelAndRefundOrg` pose `retry: 0`. Ce que la borne serveur absorbe (clé d'idempotence sur
+  (mesuré le 2026-09-08 sur l'ancien parcours « résilier et rembourser » : deux appels pour un clic).
+  Depuis le 2026-11-01 ce bouton n'existe plus ; `useOrgSubscriptionAction` (rétractation,
+  résiliation) pose `retry: 0`, et `stripe-org-refund` n'est appelé que par l'admin. Ce que la borne serveur absorbe (clé d'idempotence sur
   l'`invoice_id`, pré-contrôle qui retranche) ne rend pas ce rejeu anodin : l'échec arrive **après**
   le point de non-retour, donc le second appel peut trouver le remboursement déjà posé et résilier
   un abonnement dont l'écran vient d'annoncer que rien n'avait été résilié. **On fait retenter la
@@ -389,7 +355,7 @@ Garde-fous propres à cette zone :
 - 🔴 **Le passage en compte live doit remettre à zéro les identifiants Stripe en base.**
   `stripe-org-checkout` et `stripe-org-portal` réutilisent `stripe_customer_id` et
   `stripe_subscription_id` tels quels ; un identifiant du compte de TEST présenté à une clé live
-  répond 404, donc 500. Outillé par la mig. `140` (NON APPLIQUÉE) :
+  répond 404, donc 500. Outillé par la mig. `140`, ✅ **appliquée et jouée le 2026-10-20** (ledger `20261020204838`) :
   `SELECT * FROM public.reset_stripe_identifiers(true);`, à jouer **dans** la fenêtre de bascule,
   jamais avant : tant que la clé est une clé de test, chaque checkout réécrit un identifiant de
   test. À blanc sans argument.

@@ -1,3 +1,7 @@
+> ⚠️ **ARCHIVE — instantané daté du 2026-11-03, non maintenu.**
+> Ce document décrit un plan ou une conception **à cette date**. La fonctionnalité est livrée : le code fait foi.
+> Sources vivantes : [`CLAUDE.md`](../../../../CLAUDE.md) · [`docs/MODULES.md`](../../../MODULES.md) · [`faille.md`](../../../../faille.md).
+
 # Plan · Facturation lot 3, alerte 80 % des sièges
 
 Spec : `docs/superpowers/specs/2026-11-02-facturation-experience-design.md` § 6.3 (gabarit § 6.1).

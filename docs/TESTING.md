@@ -12,7 +12,7 @@
 
 # Tests — COSMO
 
-## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → 95 → 91 → 92 → 92 → 93 → 93 → 96 → 92 → 97 → 96 → 95 → **95 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → 2026-10-20 → **2026-10-22**)
+## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → 95 → 91 → 92 → 92 → 93 → 93 → 96 → 92 → 97 → 96 → 95 → 95 → **96 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → 2026-10-20 → 2026-10-22 → **2026-10-25**)
 
 > ### ⚪ 2026-10-22 · 0 : l'horloge figée rembourse, une garde laissée rouge 41 h reprend le point
 >
@@ -1205,7 +1205,13 @@ vide : **3,5 min**, puis 6 à 45 s par parcours.
 jusqu'à ce qu'il passe : ça déplace le seuil sans nommer la cause, et ça rend le
 détecteur muet le jour où l'écran est vraiment lent.
 
-#### C-65 — le parcours de REMBOURSEMENT (`e2e/stubbed/refund.spec.ts`, 5 cas)
+#### C-65 — le parcours de REMBOURSEMENT (`e2e/stubbed/refund.spec.ts`, 5 cas) · ❌ retiré le 2026-11-01
+
+> ⚠️ **Récit historique.** Le bouton « Résilier et être remboursé » et cette spec ont disparu le
+> 2026-11-01 (`d765d9c5`) : aucun remboursement ne part plus de l'interface. Le parcours vivant
+> est `e2e/stubbed/retractation.spec.ts` (rétractation 14 jours, résiliation en fin de période),
+> doublé de `OrgBillingTab.retractation.parcours.test.tsx`. Le mécanisme de substitution du
+> drapeau ci-dessous reste celui en usage.
 
 C-27 exigeait nommément ce parcours : « C-65 touche de l'argent, il ne part pas
 sans son parcours E2E ». Il manquait pour une raison **structurelle** : le bouton

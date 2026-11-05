@@ -1,5 +1,5 @@
 # ══════════════════════════════════════════════════════════════════
-# Sonde de disponibilite de la production (AM-4 de docs/ROADMAP-60J.md).
+# Sonde de disponibilite de la production (AM-4 de docs/archive/ROADMAP-60J-2026-08-28-au-10-26.md).
 #
 # POURQUOI : personne n'etait prevenu si `thecosmo.app` ou l'API Supabase
 # tombait. `OPS_ALERT_WEBHOOK_URL` n'est pas pose, donc `alert.ts` est un no-op

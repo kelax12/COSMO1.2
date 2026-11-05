@@ -170,11 +170,10 @@ par Row Level Security** ; le onzième (T11, 2026-10-18) vit dans un projet Supa
   sous-arbre seulement. ❌ Jamais la date de connexion (`auth.users.last_sign_in_at`, traitement
   T1) : un annuaire d'entreprise n'est pas un outil de surveillance des connexions. Aucune donnée
   nouvelle n'est stockée, la date est calculée à la lecture.
-- **Configuration d'organisation** (mig. 195-199, 2026-09-26, **non appliquées**) : réglages,
-  domaines vérifiés, capacité hebdomadaire (`org_member_capacity`), liens hiérarchiques
-  secondaires (`org_member_secondary_managers`), champs personnalisés et leurs valeurs, statuts
-  de projet, automatisations. Capacité et liens partent avec l'appartenance (clé étrangère en
-  cascade sur `organization_members`) et avec le compte.
+- **Configuration d'organisation** (mig. 195-199, en production, relu le 2026-11-05) : réglages,
+  domaines vérifiés, statuts de projet, automatisations. La capacité hebdomadaire et les liens
+  hiérarchiques secondaires ont été **supprimés avec leurs tables** par la mig. `200` (2026-09-28),
+  les champs personnalisés par la mig. `211` (2026-10-02) : ces données n'existent plus.
 - **Webhooks** (mig. 199) : un **admin** peut faire sortir, vers une adresse HTTPS **qu'il
   choisit** (Slack ou son propre service), le nom, le statut, la priorité et l'échéance des
   tâches et le nom du projet. Jamais d'e-mail, de description, de commentaire ni d'identifiant

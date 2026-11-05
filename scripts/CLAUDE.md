@@ -26,7 +26,7 @@
 | `check:drift` | dérive dépôt ↔ prod (2 étapes) | | `docs/SECURITY.md` |
 | `check:migration-coverage` | fichiers de migration ↔ ledger de PROD | | `docs/SECURITY.md` |
 | `check:edge` | code **déployé** des Edge Functions vs dépôt | `C-35` | `supabase/functions/CLAUDE.md` |
-| `check:edge-smoke` | le **comportement** en ligne, là où `check:edge` ne compare que le code : **12 sondes**, une par fonction, les cron **sans jeton** (A-2, W-1) | `C-91` | `supabase/functions/CLAUDE.md` |
+| `check:edge-smoke` | le **comportement** en ligne, là où `check:edge` ne compare que le code : **une sonde par fonction** (15 au 2026-11-05), les cron **sans jeton** (A-2, W-1) | `C-91` | `supabase/functions/CLAUDE.md` |
 | `check:deploy` | le commit **servi** en prod vs le dépôt | `T-8` | `docs/DEPLOYMENT.md` |
 | `check:supabase-posture` | advisors Supabase + réglages de Dashboard, lus par l'API | `C-88` | `docs/SECURITY.md` |
 | `check:env` | contrat des variables d'environnement Vercel | `C-105` | `docs/DEPLOYMENT.md` |
@@ -77,9 +77,9 @@ depuis le 2026-10-16 (`C-89`). Ce paragraphe a dit le contraire jusqu'au 2026-10
 liste NOMMÉE de ses objets. Un rouge = de nouveaux objets en base : les relire au catalogue
 (`pg_get_functiondef`, `has_function_privilege`, `relacl`) AVANT `--update`, et écrire leurs noms
 dans la `_note`. ❌ Jamais recaler pour faire taire.
-⚠️ **Rouge chaque matin depuis le 2026-10-18** : `13 / 84 / 2 / 1` contre une référence à
-`11 / 82 / 2 / 1`. Les quatre objets en plus (`traffic_hits`, `traffic_salts`, `get_admin_revenue`,
-`get_admin_traffic`, mig. `221`-`222`) ont été relus sains ; le `--update` reste à jouer (Axel).
+⚠️ **Rouge au 2026-11-05** (référence du 10-26) : `rls_enabled_no_policy` 24/14, DEFINER exposées
+87/84, `unindexed_foreign_keys` nouveau (3). Écarts nés des mig. `229` → `240` : relire au
+catalogue AVANT `--update`.
 
 ---
 

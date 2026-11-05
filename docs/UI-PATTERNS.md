@@ -12,7 +12,7 @@
 
 # Patterns UI — COSMO
 
-## Note UI / UX : 70 → 80 → 82 → 84 → 87 → 85 → 81 → 83 → 86 → 85 → 86 → 84 → 86 → 86 → 85 → 85 → **86 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → 2026-10-20 → 2026-10-22 → **2026-10-22 (passe)**)
+## Note UI / UX : 70 → 80 → 82 → 84 → 87 → 85 → 81 → 83 → 86 → 85 → 86 → 84 → 86 → 86 → 85 → 85 → 86 → **87 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → 2026-10-20 → 2026-10-22 → 2026-10-22 (passe) → **2026-10-25**)
 
 > ### 🟢 2026-10-22 (passe) · +1 : l'Aperçu en widgets a enfin sa référence visuelle
 >
@@ -839,8 +839,9 @@ entreprise : équipe AVANT invitations, pour que l'invitation emporte l'équipe 
 constellation redessinée depuis les vraies données après un rechargement ; tâches du modèle de
 projet visibles ; résultat clé manquant expliqué ; attente nommée et datée ; toasts sombres ;
 reprise de l'assistant à la première étape non faite depuis l'Aperçu.
-⚠️ **Mesure** : la mig. `213` (`get_admin_onboarding_funnel`, carte « Accueils » de la console
-admin) est ÉCRITE, NON appliquée. Tant qu'elle dort, la carte le dit au lieu d'afficher des zéros.
+✅ **Mesure** : la mig. `213` (`get_admin_onboarding_funnel`, carte « Accueils » de la console
+admin) est en production (ledger `20261008203135`). Si la fonction manque, la carte le dit au lieu
+d'afficher des zéros.
 
 Le sélecteur de modules a été supprimé le 2026-08-23 (`acf29b7`) : Agenda, Habitudes, OKR et
 Statistiques sont visibles par tout le monde. `cosmo_onboarding_examples_created` (ancien accueil à
@@ -989,8 +990,9 @@ Toute nouvelle modif doit s'ajouter dans cette table.
 ### 📁 Projet riche, portefeuille, page projet (mig. 153, M2, 2026-09-24)
 
 Un projet porte `description`, `owner_id` (responsable), `status`, `start_date`, `due_date`,
-`is_template` + `template_payload`. Une tâche porte `start_date` (≤ `deadline`, CHECK). Jalons
-(`team_project_milestones`) et dépendances entre projets (`team_project_dependencies`, même
+`is_template` + `template_payload`. Une tâche porte `start_date` (≤ `deadline`, CHECK). Les jalons
+sont **retirés du front** depuis le 2026-09-30 (la table `team_project_milestones` reste en base
+jusqu'à la mig. `206`, non appliquée). Dépendances entre projets (`team_project_dependencies`, même
 vocabulaire que les tâches : `project_id` est BLOQUÉ par `depends_on_id`). Page projet :
 `/entreprise/projects?project=<id>`, le paramètre RESTE dans l'URL (palette et panneau l'émettent).
 
@@ -1046,8 +1048,8 @@ En prod **sans ligne au ledger** (relu au catalogue le 2026-09-30, cf. `supabase
 - 🔴 **Namespace `orgAdmin`** : départs, invitations, lots, droits, pyramide, revue, corbeille.
   Chaque section/dialogue qui s'en sert le DÉCLARE dans `OrganizationPage` (`lazyWithRetry(…,
   [..., 'orgAdmin'])`). ❌ Ne pas remettre ces groupes dans `org` : plafond de 30 ko.
-- ⚠️ **Mig. `164` écrite le 2026-09-25, NON appliquée** : l'appliquer AVANT de déployer ce front
-  (équipes associées, purge, mode `transfer` en dépendent).
+- ✅ **Mig. `164`** (équipes associées, purge, mode `transfer`) est en production, sans ligne au
+  ledger (relu au catalogue le 2026-09-30). ❌ Ne jamais la réappliquer : `supabase/migration/CLAUDE.md`.
 
 ## Ne jamais faire — UI
 
