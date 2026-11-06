@@ -1,4 +1,4 @@
-<!-- note-audit: note=87 -->
+<!-- note-audit: note=86 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,22 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **86 / 100** au 2026-10-23, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **86 / 100** au 2026-11-06, au tableau de bord de [`README.md`](./README.md).
 
 # Patterns UI — COSMO
 
-## Note UI / UX : 70 → 80 → 82 → 84 → 87 → 85 → 81 → 83 → 86 → 85 → 86 → 84 → 86 → 86 → 85 → 85 → 86 → **87 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → 2026-10-20 → 2026-10-22 → 2026-10-22 (passe) → **2026-10-25**)
+## Note UI / UX : 70 → 80 → 82 → 84 → 87 → 85 → 81 → 83 → 86 → 85 → 86 → 84 → 86 → 86 → 85 → 85 → 86 → 87 → **86 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → 2026-10-20 → 2026-10-22 → 2026-10-22 (passe) → 2026-10-25 → **2026-11-06**)
+
+> ### 🟠 2026-11-06 · −1 : `Visual` rouge huit jours, quatorze références régénérées d'un geste
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-11-06 : CI de `main` du 2026-10-26 au 2026-11-06 (75 runs, dernier `e2e` complet vert à `ba169ba1`), workflows planifiés relus run par run, production (advisors par l'API, catalogue, Edge Functions), alertes GitHub, dépôt à `c3294936` puis `d938bc6e`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-11-06 |
+> |---|---|---|
+> | 🔴 `Visual` rouge du 2026-10-29 à 11:47 (`b89b0789`) au 2026-11-06 à 11:30 | **−1** | rouge sur chaque push pendant huit jours. Dans la même fenêtre : nav à libellés derrière un œil, OKR allégé, deux vagues d'interface entreprise, thème Noir, parcours de facturation (lots 1 à 3), étape « Combien serez-vous ? ». Aucune comparaison visuelle n'a protégé ces écrans. Remis au vert par `bd093937` (14 références régénérées par le workflow, `C-95`, les quatre thèmes de `/dashboard` et `/tasks`). ⚠️ Aucune revue des différences n'est tracée : le vert dit que les références sont celles d'aujourd'hui, pas qu'elles sont justes |
+> | Parcours de facturation | 0 | activation bornée, impayé, résiliation en frise, historique en pastilles : couverts par des tests de logique pure, **pas** par `Visual` (aucune capture d'onglet Abonnement) |
+>
+> **87 → 86.**
 
 > ### 🟢 2026-10-22 (passe) · +1 : l'Aperçu en widgets a enfin sa référence visuelle
 >

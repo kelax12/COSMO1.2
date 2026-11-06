@@ -38,6 +38,11 @@ et les **règles durables** tirées des audits.
   sont sur `main` et **pas en production** : `Edge deploy drift` rouge depuis le 10-25 12:38
   (douze fonctions divergent). Mig. `227` (index de FK) appliquée le 2026-10-26 (ledger `20261026124018`).
   `zod` 3 → 4 (`GHSA-mrhx-c7xc-m3w5`, haute, PR n° 136) : `npm audit --omit=dev` à **0**. Note **87 → 84**.
+  ✅ **Remesuré le 2026-11-06** (passe d'audit, 188 commits depuis le 10-25) : advisors **`24 / 87 / 2 / 1`**,
+  les trois fonctions DEFINER de l'affiliation relues au catalogue et légitimes ; **90** tables toutes
+  sous RLS, **205** policies, ledger **192** (mig. `241`), **16** Edge Functions. SV-1, SV-2, SV-3, SV-8
+  en production ; cinq fonctions de facturation en retard sur `main` (CI rouge, déploiement continu
+  suspendu). CodeQL **3** ouvertes dont la n° 19 `high`, Dependabot **1**. Note **84 → 87**.
   ✅ **Remesuré le 2026-10-19** (`TR-1`) : mig. `223` appliquée (ledger
   `20261019122246`, **173** entrées) et relue au catalogue, advisors **`13 / 84 / 2 / 1`**, sonde
   `anon` sur `track_hit` refusée. Note **86 → 87**.
@@ -79,7 +84,23 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 
 ---
 
-## Note de sécurité : 82 → 86 → 84 → 86 → 88 → 83 → 83 → 78 → 84 → 84 → 82 → 86 → 87 → 86 → 87 → 87 → 87 → 87 → **84 / 100** (2026-08-24 → 09-02 → 09-03 → 09-14 → 09-16 → 09-22 soir → 09-30 → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 soir → 2026-10-18 → 2026-10-19 → 2026-10-20 → 2026-10-22 → 2026-10-23 → **2026-10-25**)
+## Note de sécurité : 82 → 86 → 84 → 86 → 88 → 83 → 83 → 78 → 84 → 84 → 82 → 86 → 87 → 86 → 87 → 87 → 87 → 87 → 84 → **87 / 100** (2026-08-24 → 09-02 → 09-03 → 09-14 → 09-16 → 09-22 soir → 09-30 → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 soir → 2026-10-18 → 2026-10-19 → 2026-10-20 → 2026-10-22 → 2026-10-23 → 2026-10-25 → **2026-11-06**)
+
+> ### 🟢 2026-11-06 · +3 : les correctifs SV en production, une alerte `high` sans décision
+>
+> **Même règle** : un défaut ne se rembourse que corrigé et vérifié. Mesures du 2026-11-06 : CI de `main` du 2026-10-26 au 2026-11-06 (75 runs, dernier `e2e` complet vert à `ba169ba1`), workflows planifiés relus run par run, production (advisors par l'API, catalogue, Edge Functions), alertes GitHub, dépôt à `c3294936` puis `d938bc6e`. Tableau de bord : [`README.md`](./docs/README.md).
+>
+> | Item | Effet | Mesuré le 2026-11-06 |
+> |---|---|---|
+> | ✅ SV-1, SV-2, SV-3, SV-8 en production (−4 le 2026-10-25) | **+4** | déployés les 2026-11-01 et 2026-11-02 ; `Edge deploy drift` du 2026-11-05 (run `42070655428`) : seules cinq fonctions divergent de `main`, toutes par les lots de facturation du 2026-11-03 |
+> | 🔴 CodeQL n° 19 · `high` · `js/clear-text-storage-of-sensitive-data`, sans décision | **−1** | `src/modules/billing/pending-checkout.ts` (posée le 2026-11-02, trace `sessionStorage` du paiement en cours). S'y ajoutent n° 15 (`actions/untrusted-checkout`, `edge-deploy.yml`, `medium`, 2026-10-23) et n° 18 (`js/file-access-to-http`, `scripts/ops-alert.mjs`, `medium`). Session dédiée lancée le 2026-11-06 |
+> | 🟠 Dérive Edge des fonctions de facturation | 0 | `stripe-webhook`, `stripe-org-subscription`, `stripe-org-refund`, `seat-alert`, `renewal-notice` en retard sur les commits du 2026-11-03 (reçu en double, palier à la bienvenue, gabarit commun). Commits fonctionnels ; l'échappement SV-5 est en production (relu le 2026-11-05). Le déploiement continu attend une CI verte : débité dans [`TESTING.md`](./docs/TESTING.md) |
+> | Advisors | 0 | **`24 / 87 / 2 / 1`** (`14 / 84 / 2 / 1` le 2026-10-23). Les trois fonctions DEFINER neuves, relues au catalogue : `affiliate_attach` et `affiliate_backfill` exigent `is_admin()` ou `service_role` en tête ; `claim_affiliate` ne rattache que l'appelant, dans l'heure qui suit son inscription. `profiles.affiliate_*` : `UPDATE` refusé à `authenticated` par privilège de colonne, trigger `profiles_affiliation_frozen`. Les dix tables neuves sans policy sont fermées au client, comme voulu |
+> | Production | 0 | **90** tables toutes sous RLS, **205** policies, ledger **192** (dernière `20261105204321`, mig. `241`), **16** Edge Functions. **2** abonnements d'organisation et **3** lignes au journal de paiement : le chemin d'argent a tourné en réel. Détail non relu (lecture refusée à l'agent, à juste titre) |
+> | `Secrets age` rouge depuis sa pose (2026-10-26) | 0 | premier verdict d'une garde neuve : 9 dates de rotation inconnues (dont `SUPABASE_DB_URL`, `BACKUP_PASSPHRASE` et `STRIPE_SECRET_KEY`, critiques), une trentaine de secrets présents hors registre, un absent de Vercel (`VITE_TURNSTILE_SITE_KEY`). Le registre est du code, les dates sont un geste d'Axel |
+> | Alertes GitHub | 0 | Dependabot **1** (`minimatch`, moyenne, développement) ; secret scanning : la n° 1, connue, inerte |
+>
+> **84 → 87.**
 
 > ### ⚪ 2026-10-22 · 0 : la bascule live est faite proprement, son chemin d'argent reste à jouer
 >

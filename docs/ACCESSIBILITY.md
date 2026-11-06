@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **82 / 100** au 2026-10-23, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **84 / 100** au 2026-11-06, au tableau de bord de [`README.md`](./README.md).
 
 # Accessibilité (a11y) — COSMO
 
@@ -46,7 +46,20 @@ Conséquences pratiques, à tenir :
   La check-list est prête et se joue d'une traite :
   [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md).
 
-## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → 82 → 84 → 80 → 81 → 80 → 81 → 82 → 81 → 82 → 82 → 82 → 81 → 81 → 82 → 82 → **84 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir) → 2026-10-18 → 2026-10-20 → 2026-10-22 → 2026-10-22 (passe) → 2026-10-23 → **2026-10-25**)
+## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → 82 → 84 → 80 → 81 → 80 → 81 → 82 → 81 → 82 → 82 → 82 → 81 → 81 → 82 → 82 → 84 → **84 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir) → 2026-10-18 → 2026-10-20 → 2026-10-22 → 2026-10-22 (passe) → 2026-10-23 → 2026-10-25 → **2026-11-06**)
+
+> ### ⚪ 2026-11-06 · 0 : échéances tenues, un témoin non rejoué
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-11-06 : CI de `main` du 2026-10-26 au 2026-11-06 (75 runs, dernier `e2e` complet vert à `ba169ba1`), workflows planifiés relus run par run, production (advisors par l'API, catalogue, Edge Functions), alertes GitHub, dépôt à `c3294936` puis `d938bc6e`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-11-06 |
+> |---|---|---|
+> | `check:lecteurs-ecran` | 0 | VoiceOver iOS : 94 étapes, échéance **2026-12-15** ; NVDA et revue humaine WCAG : 33 étapes, échéance **2027-01-15** ; aucune séance jouée, dans les délais |
+> | `e2e` (axe-core, audits clavier, WebKit) | 0 | vert à `ba169ba1` |
+> | Parcours de facturation (lots 1 à 3) | 0 | livré avec ses corrections (`426f2687` nom accessible de la carte de palier et jauge nommée, `ac0b22a8` récapitulatif en région nommée et alerte reliée au bouton, `a841f9f1` phrase d'invitation sans région vivante). Non remesuré surface par surface par cette passe |
+> | ⚠️ Témoin de `use-modal-a11y.guard` | 0 | plus rejoué par `Sabotages` depuis le 2026-11-02 : débité une fois, dans [`TESTING.md`](./TESTING.md) |
+>
+> **84 → 84.**
 
 > ### ⚪ 2026-10-23 · 0 : AM-5 mesuré par axe dans les QUATRE thèmes, et ce que ça a trouvé
 >

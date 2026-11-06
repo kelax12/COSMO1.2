@@ -1,4 +1,4 @@
-<!-- note-audit: note=88 -->
+<!-- note-audit: note=86 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **87 / 100** au 2026-10-23, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **86 / 100** au 2026-11-06, au tableau de bord de [`README.md`](./README.md).
 
 # RGPD — inventaire, droits des personnes et dette
 
@@ -16,7 +16,19 @@
 119 : effacement et portabilité). Premier audit dédié de ce domaine. Jusqu'ici, la conformité était
 traitée par fragments dans les audits sécurité. Mesuré sur le schéma de prod et le code.
 
-## Note RGPD : 78 → 84 → 86 → 87 → 82 → 86 → 87 → 87 → 84 → 85 → 87 → 87 → 87 → 87 → **88 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 soir → 2026-10-18 → 2026-10-20 → 2026-10-22 → **2026-10-25**) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+## Note RGPD : 78 → 84 → 86 → 87 → 82 → 86 → 87 → 87 → 84 → 85 → 87 → 87 → 87 → 87 → 88 → **86 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 soir → 2026-10-18 → 2026-10-20 → 2026-10-22 → 2026-10-25 → **2026-11-06**) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+
+> ### 🟠 2026-11-06 · −2 : un traitement neuf hors registre, un signal de détection jamais trié
+>
+> **Même règle** : un défaut ne se rembourse que corrigé et vérifié. Mesures du 2026-11-06 : CI de `main` du 2026-10-26 au 2026-11-06 (75 runs, dernier `e2e` complet vert à `ba169ba1`), workflows planifiés relus run par run, production (advisors par l'API, catalogue, Edge Functions), alertes GitHub, dépôt à `c3294936` puis `d938bc6e`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-11-06 |
+> |---|---|---|
+> | 🔴 Affiliation (mig. `236`, 2026-10-31) **absente du registre** | **−1** | sept tables `affiliate_*` (affiliateurs, leurs contacts, liens, clics, commissions, versements, réglages), `profiles.affiliate_id` (le compte garde l'affiliateur qui l'a amené), capture de `?aff=` en dernier clic 30 jours. Rien dans [`RGPD-REGISTRE.md`](./RGPD-REGISTRE.md) (art. 30) ni dans ce document. Décisions d'Axel, non rediscutées ici : capture hors consentement ([`MODULES.md`](./MODULES.md)), aucune mention dans la politique de confidentialité (`8c49db7a`, 2026-11-01, « l'affiliation reste interne »). Le registre est un document interne : ces décisions ne l'en dispensent pas. Effacement et portabilité de `affiliate_contacts` décidés (`0ab9b432`) |
+> | 🟠 Signal du détecteur de violation du 2026-10-26, jamais trié | **−1** | run `40324226207` de la PR n° 125 (ouverte depuis le 2026-10-23, non fusionnée) : « lignes REST lues par un même compte : **82 839** sur 24 h, seuil 20 000 ». Aucune trace de tri dans [`RGPD-VIOLATION.md`](./RGPD-VIOLATION.md), et les journaux du plan Free ne gardent qu'un jour : le signal ne se requalifie plus. Un signal non trié ne fait pas courir les 72 h, mais c'est exactement l'angle mort AM-2 de la procédure |
+> | `C-121` (comptes inactifs) | 0 | `inactive-accounts.yml` vert chaque jour (dernier : 2026-11-05) |
+>
+> **88 → 86.**
 
 > ### ⚪ 2026-10-22 · 0 : `C-121` en production, T11 à moitié
 >
