@@ -1,0 +1,200 @@
+# ══════════════════════════════════════════════════════════════════
+# Controle de fumee de la PRODUCTION apres chaque mise en ligne (CI-02, audit
+# externe du 2026-11-06, plan de reprise point 3.3).
+#
+# POURQUOI : Vercel publie chaque push de `main` en ~40 s, sans attendre la CI
+# (docs/DEPLOYMENT.md, section Rollback). Avant ce fichier, rien ne regardait le
+# site APRES la mise en ligne. `uptime.yml` lit du HTML avec curl et ne tourne
+# que deux fois par heure ; il n'execute pas le bundle. Un bundle qui plante au
+# demarrage rend un HTML parfait et une page morte, et seul un navigateur le voit.
+#
+# DECLENCHEUR : l'evenement GitHub `deployment_status`, que Vercel emet pour
+# chaque deploiement. Retenu : environnement `Production` (nom exact emis par
+# Vercel, releve sur `gh api repos/kelax12/COSMO1.2/deployments`) ET etat
+# `success`. Les apercus (`Preview`) ne declenchent rien. `workflow_dispatch`
+# rejoue le controle a la main, et peut viser une autre URL (`base_url`).
+#
+# CE QUE JOUE LE NAVIGATEUR : `e2e/smoke/prod.smoke.ts`, config dediee SANS
+# webServer. Landing 200 + h1 rendu + aucune erreur JS + actifs `/assets/*`
+# charges ; page de connexion affichee ; `/api/collect` repond. LECTURE SEULE :
+# aucune connexion, aucune saisie, aucun compte.
+#
+# 🔴 AUCUN HIT D'AUDIENCE : le fichier de test explique les trois verrous (pas de
+# consentement donc pas de beacon, requetes de la page vers /api/collect servies
+# en local, sonde unique portant un user-agent de robot que `api/collect.ts`
+# ecarte en 204 avant tout appel a la base).
+#
+# CE QUE CE JOB NE FAIT PAS, dans cette version :
+#   · PAS de retour arriere automatique. Il viendra avec le deploiement par la
+#     CI. Aujourd'hui un rouge ouvre une issue `smoke-prod` ; le retour arriere
+#     reste le geste de docs/DEPLOYMENT.md section 3.
+#   · il ne bloque pas la mise en ligne : elle est deja faite quand il demarre.
+#     C'est une alarme rapide (~3 min), pas une porte.
+#   · il ne voit pas un deploiement Vercel qui ECHOUE (etat `failure`) : celui-ci
+#     ne remplace pas la prod, et `deploy-sha-drift.yml` voit l'ecart ensuite.
+#
+# ⚠️ Un evenement `deployment_status` execute le fichier de la branche PAR DEFAUT
+# mais avec `GITHUB_SHA` = tete de cette branche, pas le commit deploye : le
+# checkout vise donc explicitement `deployment.sha`.
+#
+# Aucun secret requis : seul `GITHUB_TOKEN` (issues: write), comme `uptime.yml`.
+# Pas d'artefact : la garde `artefacts-donnees-prod` tient la liste nominative
+# des depots d'artefacts, et l'erreur utile tient dans l'issue et le journal.
+# ══════════════════════════════════════════════════════════════════
+name: Smoke prod
+
+on:
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "URL a controler (vide = https://thecosmo.app)"
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+  issues: write
+
+# Deux deploiements rapproches : on les joue l'un apres l'autre, aucun n'est
+# annule, sinon un rouge pourrait disparaitre sous le run suivant.
+concurrency:
+  group: smoke-prod
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    name: Fumee production
+    # `deployment_status` part pour TOUS les environnements et TOUS les etats :
+    # le filtre est ici, pas dans `on:`.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.deployment_status.state == 'success' &&
+       github.event.deployment.environment == 'Production')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # Valeurs de l'evenement passees par l'environnement, JAMAIS interpolees
+      # dans un script : `environment_url` vient d'une charge utile externe.
+      DEPLOY_SHA: ${{ github.event.deployment.sha }}
+      DEPLOY_URL: ${{ github.event.deployment_status.environment_url }}
+      SMOKE_BASE_URL: ${{ github.event.inputs.base_url }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Le commit DEPLOYE (cf. en-tete). Vide en `workflow_dispatch` : la
+          # reference de l'execution.
+          ref: ${{ github.event.deployment.sha || github.sha }}
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Installer Chromium
+        run: npx playwright install --with-deps chromium
+
+      # Vercel affecte le domaine de production au moment du `success`, mais la
+      # propagation peut trainer quelques secondes. On attend (2 min au plus)
+      # que `/version.json` rende le commit deploye, pour que le test regarde
+      # CE deploiement et non le precedent. Un ecart n'echoue pas ici : un push
+      # plus recent peut legitimement avoir pris la place, et `Deploy SHA drift`
+      # juge cet ecart. C'est un avertissement, jamais un faux rouge.
+      - name: Attendre que la production serve le commit deploye
+        if: github.event_name == 'deployment_status' && github.event.inputs.base_url == ''
+        run: |
+          set -uo pipefail
+          ATTENDU="${DEPLOY_SHA:0:7}"
+          LU=""
+          for i in $(seq 1 24); do
+            LU=$(curl -sS --max-time 10 https://thecosmo.app/version.json 2>/dev/null \
+                  | sed -n 's/.*"release"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' || true)
+            if [ "$LU" = "$ATTENDU" ]; then
+              echo "La production sert $LU (tentative $i)."
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::warning::version.json rend '${LU:-rien}' au lieu de '$ATTENDU' apres 2 min : un push plus recent a peut-etre pris la place. Le test porte sur ce qui est servi."
+
+      - name: Jouer le controle de fumee
+        run: |
+          set +e
+          # Sortie dans un fichier PUIS affichee : `| tee` ferait lire a `$?` le
+          # code de `tee`, et un test rouge sortirait vert.
+          npx playwright test -c e2e/smoke/playwright.smoke.config.ts \
+            > "$RUNNER_TEMP/smoke.log" 2>&1
+          CODE=$?
+          cat "$RUNNER_TEMP/smoke.log"
+          exit "$CODE"
+
+      # `if: failure()` couvre aussi un `npm ci` ou une installation en echec :
+      # un controle qui ne peut pas tourner ne doit pas se taire.
+      - name: Ouvrir ou commenter l'issue smoke-prod
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          gh label create smoke-prod --repo "$REPO" --color d93f0b \
+            --description "Controle de fumee de production en echec" 2>/dev/null || true
+
+          CIBLE="${SMOKE_BASE_URL:-https://thecosmo.app}"
+          QUAND=$(date -u '+%Y-%m-%d %H:%M UTC')
+          # Les 60 dernieres lignes du journal Playwright, bornees : l'erreur
+          # utile (assertion, URL en cause) est en fin de rapport. Absent si
+          # l'echec est anterieur au test (installation).
+          if [ -s "$RUNNER_TEMP/smoke.log" ]; then
+            ERREUR=$(tail -n 60 "$RUNNER_TEMP/smoke.log" | tail -c 3500)
+          else
+            ERREUR="(aucun journal de test : l'echec est survenu avant son lancement, voir le run)"
+          fi
+          FENCE='```'
+          BODY=$(printf '%s\n' \
+            "Controle de fumee du $QUAND en echec." \
+            "" \
+            "- Cible controlee : $CIBLE" \
+            "- Deploiement : ${DEPLOY_URL:-(lancement manuel)}" \
+            "- Commit : \`${DEPLOY_SHA:-(lancement manuel)}\`" \
+            "- Run : $RUN_URL" \
+            "" \
+            "Erreur (fin du journal Playwright) :" \
+            "" \
+            "$FENCE" \
+            "$ERREUR" \
+            "$FENCE" \
+            "" \
+            "Pas de retour arriere automatique dans cette version : si la production est cassee," \
+            "promouvoir le deploiement vert precedent (docs/DEPLOYMENT.md, section 3)." \
+            "" \
+            "Cette issue se met a jour a chaque echec et **se referme seule** au prochain" \
+            "controle vert sur la production.")
+
+          EXISTING=$(gh issue list --repo "$REPO" --state open --label smoke-prod \
+                       --limit 1 --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --repo "$REPO" --body "$BODY"
+          else
+            gh issue create --repo "$REPO" \
+              --title "Controle de fumee de production en echec" \
+              --label smoke-prod --body "$BODY"
+          fi
+
+      # Meme mecanique que `uptime.yml` : sans refermeture, la premiere panne
+      # rendrait les suivantes muettes (de simples commentaires sur un incident
+      # que tout le monde croit clos). Seulement sur la production : un essai
+      # manuel sur une autre URL ne dit rien de l'etat de celle-ci.
+      - name: Refermer l'issue si la production est revenue
+        if: success() && github.event.inputs.base_url == ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          EXISTING=$(gh issue list --repo "$REPO" --state open --label smoke-prod \
+                       --limit 1 --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            gh issue close "$EXISTING" --repo "$REPO" \
+              --comment "Retabli : le controle de fumee du $(date -u '+%Y-%m-%d %H:%M UTC') passe sur la production."
+          fi
