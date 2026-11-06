@@ -27,7 +27,7 @@ import { applyRouterBootstrap } from './i18n/apply-bootstrap';
 import { dropPrerenderHeroIfLocaleDiffers } from './lib/prerender-hero';
 // Filet du spinner de démarrage : sans lui, une app qui ne monte pas laisse
 // `#boot-screen` tourner pour toujours (incident du 2026-11-06, en-tête du module).
-import { installBootWatchdog } from './lib/boot-watchdog';
+import { clearAssetRepairFlag, installBootWatchdog } from './lib/boot-watchdog';
 
 const bootWatchdog = installBootWatchdog();
 
@@ -40,9 +40,10 @@ const { locale } = applyRouterBootstrap();
 dropPrerenderHeroIfLocaleDiffers(locale);
 
 const charger = () => {
-  // Rejeté (chunk introuvable, module qui lève à l'évaluation) : la sortie
-  // s'affiche tout de suite, sans attendre le délai du filet.
-  import('./main').catch(() => bootWatchdog.fail());
+  // Rejeté (chunk introuvable, CSS refusé par une copie périmée du cache,
+  // module qui lève à l'évaluation) : réparation du cache puis rechargement,
+  // ou la sortie tout de suite si c'est déjà fait. Détail : boot-watchdog.ts.
+  import('./main').then(() => clearAssetRepairFlag(), () => bootWatchdog.fail());
 };
 
 // 🔴 PAGE PRÉRENDUE : les bibliothèques d'abord, chacune dans sa tâche, puis
