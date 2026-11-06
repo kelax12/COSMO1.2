@@ -400,12 +400,13 @@ describe('témoin — coût serveur (C-87)', () => {
 
 // ═══════════════════════════════════════════════════════════════════
 describe('témoin — sondes de fumée des Edge Functions (C-91)', () => {
-  it('les quinze fonctions sont sondées, et aucune en écriture', () => {
+  it('les seize fonctions sont sondées, et aucune en écriture', () => {
     // 8 jusqu'au 2026-09-30 : les quatre fonctions du mode entreprise
     // n'étaient sondées par rien (A-2). Une par dossier de supabase/functions/ ;
-    // 14 depuis affiliation-api, 15 depuis stripe-org-subscription (2026-11-01).
-    expect(SONDES).toHaveLength(15);
-    expect(new Set(SONDES.map((s) => s.fonction)).size).toBe(15);
+    // 14 depuis affiliation-api, 15 depuis stripe-org-subscription (2026-11-01),
+    // 16 depuis seat-alert (2026-11-06 : sans sonde, `Edge deploy` refusait tout).
+    expect(SONDES).toHaveLength(16);
+    expect(new Set(SONDES.map((s) => s.fonction)).size).toBe(16);
     for (const s of SONDES) {
       expect(s.prouve.length).toBeGreaterThan(30);
       expect(s.statut.length).toBeGreaterThan(0);
@@ -415,8 +416,8 @@ describe('témoin — sondes de fumée des Edge Functions (C-91)', () => {
     expect(destructrices).toHaveLength(3);
     for (const s of destructrices) expect(s.methode).toBe('GET');
     // Celles qui ENVOIENT (e-mail, webhook) ne sont jamais sondées au-delà d'un refus.
-    const emettrices = SONDES.filter((s) => ['send-org-invite', 'org-digest', 'org-webhook-dispatch', 'inactive-accounts'].includes(s.fonction));
-    expect(emettrices).toHaveLength(4);
+    const emettrices = SONDES.filter((s) => ['send-org-invite', 'org-digest', 'org-webhook-dispatch', 'inactive-accounts', 'seat-alert'].includes(s.fonction));
+    expect(emettrices).toHaveLength(5);
     for (const s of emettrices) expect(s.statut.every((c) => c >= 400)).toBe(true);
   });
 
