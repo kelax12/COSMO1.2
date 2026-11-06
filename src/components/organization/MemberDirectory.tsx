@@ -66,6 +66,8 @@ interface MemberDirectoryProps {
   isAdmin: boolean;
   /** Bouton Inviter : dans la barre, ou seul à droite quand la barre est masquée. */
   inviteAction?: ReactNode;
+  /** Bouton « Changer de forfait », posé avant Inviter. */
+  planAction?: ReactNode;
 }
 
 /**
@@ -77,7 +79,7 @@ interface MemberDirectoryProps {
  * Audit « passage à l'échelle » (2026-09-23) : filtres partageables par l'URL,
  * sélection + actions groupées, export CSV (admins), dernière activité.
  */
-const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, inviteAction }: MemberDirectoryProps) => {
+const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, inviteAction, planAction }: MemberDirectoryProps) => {
   const { t } = useT('org');
   const { t: tOrgAdmin } = useT('orgAdmin');
   const setRole = useSetMemberRole();
@@ -269,9 +271,10 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, invi
           onToggleSelectMode={bulk.toggleSelectMode}
           onExport={isAdmin ? exportCsv : undefined}
           inviteAction={inviteAction}
+          planAction={planAction}
         />
-      ) : inviteAction ? (
-        <div className="mb-3 flex justify-end">{inviteAction}</div>
+      ) : (inviteAction || planAction) ? (
+        <div className="mb-3 flex justify-end gap-2">{planAction}{inviteAction}</div>
       ) : null}
 
       {filteredMembers.length === 0 ? (

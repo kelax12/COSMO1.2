@@ -4,6 +4,7 @@ import type { Organization, OrgMember } from '@/modules/organizations';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { useT } from '@/i18n/useT';
 import PendingInvitesStrip from './PendingInvitesStrip';
+import OrgPlanSeatsButton from './OrgPlanSeatsButton';
 
 // Section Membres, `/entreprise/members`. Rendue seulement sur cette
 // section, donc jamais téléchargée par qui ne l'ouvre pas.
@@ -61,15 +62,6 @@ const OrgMembersSection = ({ org, members, currentUserId, isAdmin, canInvite, se
             </p>
           )}
         </div>
-        {onChangePlan && (
-          <button
-            type="button"
-            onClick={onChangePlan}
-            className="text-sm font-semibold text-[rgb(var(--color-accent))] underline-offset-4 hover:underline min-h-11 px-1"
-          >
-            {tOrgAdmin('page.overQuotaBillingCta')}
-          </button>
-        )}
       </div>
 
       {canInviteByEmail && <PendingInvitesStrip orgId={org.id} />}
@@ -80,6 +72,9 @@ const OrgMembersSection = ({ org, members, currentUserId, isAdmin, canInvite, se
         members={members}
         currentUserId={currentUserId}
         isAdmin={isAdmin}
+        planAction={onChangePlan ? (
+          <OrgPlanSeatsButton orgId={org.id} used={members.length} quota={seatsQuota} onClick={onChangePlan} />
+        ) : undefined}
         inviteAction={
           // Un seul bouton : la modale montre les quatre canaux en onglets.
           <button

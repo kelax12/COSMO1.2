@@ -480,6 +480,16 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, canEditDependencies, i
                 dependencies={projectDeps}
                 allProjects={allProjects}
                 onOpenProject={openProject}
+                rowActions={{
+                  canEdit: canEditProjectFor,
+                  canCreate: can['project.create'],
+                  canArchive: can['project.delete'],
+                  onEdit: (p) => setEditProjectId(p.id),
+                  onDuplicate: (p) => actions.duplicateProject(p),
+                  onSaveTemplate: (p) => actions.saveAsTemplate(p),
+                  onArchive: (p) => actions.archiveWithUndo(p),
+                  onRestore: (p) => void actions.patchProject(p, { archived: false }),
+                }}
                 canBulkEdit={can['project.edit']}
                 canBulkArchive={can['project.delete']}
                 selectMode={portfolioSelect}

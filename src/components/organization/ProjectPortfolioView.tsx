@@ -13,7 +13,13 @@
 
 import { useState } from 'react';
 import { format, parseISO } from 'date-fns';
-import { Link2, UserRound } from 'lucide-react';
+import {
+  Link2, UserRound, MoreHorizontal, ExternalLink, Settings2, Copy, LayoutTemplate, Archive, ArchiveRestore,
+} from 'lucide-react';
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import { SAVE_AS_TEMPLATE_ENABLED } from './projectTemplatesFlag';
 import { getDateLocale } from '@/i18n/format';
 import type { OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
@@ -30,7 +36,20 @@ import { useUpdateTeamProject } from '@/modules/team-projects';
 import { useT } from '@/i18n/useT';
 import TeamColorDot from './TeamColorDot';
 
+/** Menu ⋯ d'une ligne : mêmes entrées que celui de la carte projet (vue liste). */
+export interface PortfolioRowActions {
+  canEdit: (project: TeamProject) => boolean;
+  canCreate: boolean;
+  canArchive: boolean;
+  onEdit: (project: TeamProject) => void;
+  onDuplicate: (project: TeamProject) => void;
+  onSaveTemplate: (project: TeamProject) => void;
+  onArchive: (project: TeamProject) => void;
+  onRestore: (project: TeamProject) => void;
+}
+
 interface ProjectPortfolioViewProps {
+  rowActions?: PortfolioRowActions;
   projects: TeamProject[];
   tasks: TeamTask[];
   /** Avancement compté par le serveur (mig. 191) — prioritaire sur `tasks`. */
@@ -55,7 +74,7 @@ interface ProjectPortfolioViewProps {
 
 const ProjectPortfolioView = ({
   projects, tasks, statsById, members, teams, dependencies, allProjects, onOpenProject,
-  canBulkEdit = false, canBulkArchive = false, selectMode = false, onExitSelect,
+  canBulkEdit = false, canBulkArchive = false, selectMode = false, onExitSelect, rowActions,
 }: ProjectPortfolioViewProps) => {
   const { t } = useT('org');
   const { t: ta } = useT('orgAdmin');
@@ -86,6 +105,7 @@ const ProjectPortfolioView = ({
             <th scope="col" className="px-3 py-2.5">{pf('col.status')}</th>
             <th scope="col" className="px-3 py-2.5 hidden lg:table-cell">{pf('col.dates')}</th>
             <th scope="col" className="px-3 py-2.5">{pf('col.progress')}</th>
+            <th scope="col" className="px-2 py-2.5 w-10"><span className="sr-only">{pf('actions.open')}</span></th>
           </tr>
         </thead>
         <tbody>
@@ -187,6 +207,53 @@ const ProjectPortfolioView = ({
                     </span>
                     <span className="text-xs tabular-nums text-[rgb(var(--color-text-muted))]">{progress.percent} %</span>
                   </span>
+                </td>
+                <td className="px-2 py-2.5 text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      aria-label={t('project.actionsAria', { name: project.name })}
+                      className="w-8 h-8 rounded-lg inline-flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                    >
+                      <MoreHorizontal size={16} aria-hidden="true" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuItem onClick={() => onOpenProject(project.id)}>
+                        <ExternalLink size={14} aria-hidden="true" /> {pf('actions.open')}
+                      </DropdownMenuItem>
+                      {rowActions?.canEdit(project) && (
+                        <DropdownMenuItem onClick={() => rowActions.onEdit(project)}>
+                          <Settings2 size={14} aria-hidden="true" /> {pf('actions.edit')}
+                        </DropdownMenuItem>
+                      )}
+                      {rowActions?.canCreate && !project.archivedAt && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => rowActions.onDuplicate(project)}>
+                            <Copy size={14} aria-hidden="true" /> {pf('actions.duplicate')}
+                          </DropdownMenuItem>
+                          {SAVE_AS_TEMPLATE_ENABLED && (
+                            <DropdownMenuItem onClick={() => rowActions.onSaveTemplate(project)}>
+                              <LayoutTemplate size={14} aria-hidden="true" /> {pf('actions.saveTemplate')}
+                            </DropdownMenuItem>
+                          )}
+                        </>
+                      )}
+                      {rowActions?.canArchive && (
+                        <>
+                          <DropdownMenuSeparator />
+                          {project.archivedAt ? (
+                            <DropdownMenuItem onClick={() => rowActions.onRestore(project)}>
+                              <ArchiveRestore size={14} aria-hidden="true" /> {t('project.restore')}
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem onClick={() => rowActions.onArchive(project)}>
+                              <Archive size={14} aria-hidden="true" /> {t('project.archive')}
+                            </DropdownMenuItem>
+                          )}
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </td>
               </tr>
             );
