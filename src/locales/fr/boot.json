@@ -1,0 +1,8 @@
+{
+  "rescue": {
+    "title": "Cosmo ne parvient pas à démarrer.",
+    "body": "Rechargez la page : Cosmo retélécharge d’abord ses fichiers. Si cela se reproduit, réinitialisez la session enregistrée dans ce navigateur : il faudra vous reconnecter, vos données restent sur votre compte.",
+    "reload": "Recharger",
+    "reset": "Réinitialiser la session"
+  }
+}

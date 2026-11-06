@@ -370,3 +370,27 @@ les abonnés existants, le retrait de la garantie de remboursement est une modif
 substantielle qui leur est défavorable : **e-mail de préavis d'un mois à envoyer (geste d'Axel)**,
 l'ancienne garantie restant due jusqu'à son entrée en vigueur. Relecture par un juriste à faire
 avant publication (consigne §11).
+
+### 2026-11-06 · téléphone : privilégier l'e-mail, ou laisser un message vocal · **FORME** · aucun préavis
+
+| Document | Empreinte |
+|---|---|
+| `src/locales/fr/{legal,legalTerms,legalPrivacy}.json` | `d195006ce9f39d6f` |
+| `src/locales/en/{legal,legalTerms,legalPrivacy}.json` | `dbb94887ffe4e1ca` |
+
+Empreintes relevées par `node scripts/check-legal-journal.mjs` le 2026-11-06, pas recopiées.
+
+**Ce qui a changé** (commit `8033f2f1`, en `fr` et en `en`) : une précision est ajoutée après le
+numéro de téléphone de l'éditeur, dans `legal.json` (mentions légales, `liPhone`) et dans
+`legalTerms.json` (CGU, art. 1, `p3`) : « privilégiez l'e-mail, ou laissez un message vocal sur le
+répondeur » (« email is preferred, or leave a voicemail » en anglais). Le numéro, l'adresse
+e-mail et toutes les autres clauses sont inchangés.
+
+**Qualification : forme.** Aucun droit et aucune obligation ne change. L'éditeur reste joignable
+par téléphone et par e-mail ; la phrase indique seulement le canal à privilégier. Pas de
+modification substantielle au sens de l'art. 11 des CGU, donc **aucun préavis dû**.
+
+⚠️ Qualification posée par la session d'administration du 2026-11-06 après relecture du diff de
+`8033f2f1`, **à confirmer par Axel**. Elle n'a pas été rédigée par un juriste. Cette entrée
+arrive après le commit : la garde est restée rouge de `8033f2f1` à ce correctif, faute d'entrée
+écrite au moment de la modification.

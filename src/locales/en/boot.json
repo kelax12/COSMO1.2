@@ -1,0 +1,8 @@
+{
+  "rescue": {
+    "title": "Cosmo cannot start.",
+    "body": "Reload the page: Cosmo downloads its files again first. If it happens again, reset the session saved in this browser: you will need to log in again, your data stays on your account.",
+    "reload": "Reload",
+    "reset": "Reset the session"
+  }
+}

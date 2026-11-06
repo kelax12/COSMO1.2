@@ -367,7 +367,9 @@ function isNamespace(value: string): value is Namespace {
  * `ensureNamespaces()` en même temps que la page qui en a besoin.
  */
 const CATALOG_LOADERS = import.meta.glob(
-  ['../locales/*/*.json', '!../locales/fr/common.json', '!../locales/fr/errors.json'],
+  // `boot` : écran de secours d'avant React, importé statiquement par
+  // `lib/boot-watchdog.ts`, jamais chargé par ce registre.
+  ['../locales/*/*.json', '!../locales/fr/common.json', '!../locales/fr/errors.json', '!../locales/*/boot.json'],
   { import: 'default' }
 ) as Record<string, () => Promise<CatalogNode>>;
 
