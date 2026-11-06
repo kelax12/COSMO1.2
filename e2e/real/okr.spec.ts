@@ -24,7 +24,6 @@ test('créer un OKR et faire progresser un résultat clé', async ({ page, makeA
   await expect(dialog).toBeVisible({ timeout: 15_000 });
   await dialog.locator('#okr-title').fill(objective);
   await dialog.getByPlaceholder('Résultat clé mesurable').filter({ visible: true }).first().fill(keyResult);
-  await dialog.getByRole('spinbutton', { name: 'Cible' }).filter({ visible: true }).first().fill('10');
   await dialog.getByRole('button', { name: 'Créer', exact: true }).filter({ visible: true }).first().click();
   await expect(dialog).toBeHidden({ timeout: 15_000 });
 
@@ -35,7 +34,7 @@ test('créer un OKR et faire progresser un résultat clé', async ({ page, makeA
 
   // ── Faire progresser le résultat clé : deux crans ────────────────
   const plus = page.getByRole('button', { name: `Augmenter ${keyResult}` }).filter({ visible: true }).first();
-  const progress = page.getByRole('spinbutton', { name: `Avancement de ${keyResult} sur 10` }).filter({ visible: true }).first();
+  const progress = page.getByRole('spinbutton', { name: `Avancement de ${keyResult} sur 100` }).filter({ visible: true }).first();
   await expect(progress).toHaveValue('0');
   await plus.click();
   await expect(progress).toHaveValue('1');
@@ -50,7 +49,7 @@ test('créer un OKR et faire progresser un résultat clé', async ({ page, makeA
   // ── Rechargement : la progression est relue, pas rejouée ──────────
   await reload(page);
   await expect(
-    page.getByRole('spinbutton', { name: `Avancement de ${keyResult} sur 10` }).filter({ visible: true }).first(),
+    page.getByRole('spinbutton', { name: `Avancement de ${keyResult} sur 100` }).filter({ visible: true }).first(),
   ).toHaveValue('2', { timeout: 30_000 });
   await expectNoErrorToast(page);
 });

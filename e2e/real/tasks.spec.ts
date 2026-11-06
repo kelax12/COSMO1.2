@@ -1,12 +1,15 @@
 import {
-  test, expect, loginViaUi, createTaskViaUi, tasksList, reload, expectNoErrorToast,
+  test, expect, loginViaUi, seedTask, tasksList, reload, expectNoErrorToast,
 } from './helpers';
 
 const TOGGLE_UNCHECKED = '[aria-label="Marquer comme complétée"]';
 const TOGGLE_CHECKED = '[aria-label="Marquer comme non complétée"]';
 
 /**
- * Parcours 2 · creer, modifier, terminer une tache. Chaque ecriture est RELUE
+ * Parcours 2 · creer, modifier, terminer une tache. La CREATION par l'ecran est
+ * en `test.fixme` dans `schema-drift.spec.ts` (defaut de base rejouee) : ici la
+ * tache est posee par le client du compte, avec une echeance, puis modifiee et
+ * terminee par l'interface. Chaque ecriture est RELUE
  * apres un rechargement de page ET par le client authentifie du compte : le
  * cache React Query masquerait sinon une ecriture qui n'a jamais atteint Postgres.
  */
@@ -17,8 +20,8 @@ test('créer, modifier puis terminer une tâche', async ({ page, makeAccount }) 
   const created = `Tâche réelle ${Date.now()}`;
   const renamed = `${created} (modifiée)`;
 
-  // ── Créer ─────────────────────────────────────────────────────────
-  await createTaskViaUi(page, created);
+  // ── Créer (écriture réelle, sous la RLS du compte) ─────────────────
+  await seedTask(account, created);
   await reload(page);
   await expect(tasksList(page).getByText(created, { exact: true }).filter({ visible: true }).first())
     .toBeVisible({ timeout: 30_000 });
