@@ -384,9 +384,9 @@ supabase db push  # applique 017_processed_stripe_events.sql
 | 8 | Fonction citée par une policy : `EXECUTE`-able par `authenticated` | `check:rls` règle 3 (dont `get_subtree`, `has_subordinates`, `org_admin_count`, révoquées mig. `100`) | l'état réel en prod : requête ci-dessous |
 | 9 | Fonction `RETURNS trigger` : `SECURITY INVOKER` + `REVOKE ALL … FROM PUBLIC, anon, authenticated` | `validate:migrations` règle 5 (REVOKE, dès `109`) et règle 10 (DEFINER = **erreur** quel que soit le nom, dès `227`) | |
 | 10 | `auth.uid()` toujours wrappé en `(select auth.uid())` | `check:rls` règle 1 (dès `043`) | |
-| 11 | Une seule policy PERMISSIVE par rôle et par action | `check:rls` règle 2 (par table et action, donc plus strict que par rôle) | |
+| 11 | Une seule policy PERMISSIVE par rôle et par action | `check:rls` règle 2 (par table et action, donc plus strict que par rôle, dès `043`) ; sur TOUT l'historique, la matrice RLS lit `pg_policy` de la base rejouée (mig. `244`) | |
 | 12 | `GRANT EXECUTE` : précédé de `REVOKE … FROM PUBLIC, anon` | `validate:migrations` règle 16, pour toute fonction accordée ou `SECURITY DEFINER` ; un `GRANT … TO anon` explicite vaut choix | une fonction INVOKER jamais accordée (elle garde le GRANT par défaut, sans privilège élargi) |
-| 13 | Table créée : `ENABLE ROW LEVEL SECURITY` | `validate:migrations` règle 9, état final (un `DISABLE` ultérieur rougit) | une table créée hors du schéma `public` |
+| 13 | Table créée : `ENABLE ROW LEVEL SECURITY` **dans le même fichier** | `validate:migrations` règle 9 : même fichier, puis état final (un `DISABLE` ultérieur rougit). Les privilèges par défaut de `public` ne donnent plus rien à `anon` (mig. `242`), règle 17 si on les rouvre ; une table qu'`anon` doit lire porte son `GRANT` explicite | une table créée hors du schéma `public` |
 | 14 | Table à `user_id` : décision d'effacement | `check:erasure`, périmètre dérivé des migrations, sans liste en dur | une table créée hors migration (cf. `C-92`) |
 | 15 | `payment_records` / `payment_closures` : ni policy UPDATE/DELETE, ni purge ; `renewal_notices` : jamais purgée | `validate:migrations` règle 11 : policy, `DELETE`/`TRUNCATE`/`UPDATE`, trigger désarmé, `GRANT` de le faire | une écriture par SQL dynamique (`EXECUTE format(…)`) |
 | 16 | Surface admin gardée par `is_admin()`, jamais `admin_allowlisted()` | `validate:migrations` règle 12, pour les policies | une fonction `SECURITY DEFINER` gardée par `admin_allowlisted()` : **manuel** (l'affichage l'appelle légitimement) |
@@ -395,6 +395,7 @@ supabase db push  # applique 017_processed_stripe_events.sql
 | 19 | Jamais de colonne, GRANT ou policy depuis le Dashboard | **manuel** · `check:drift` voit l'effet après coup | tout, avant |
 | 20 | Lire le ledger AVANT d'appliquer | **manuel** · `check:migration-coverage` le relit après | tout, avant |
 | 21 | Prédicat de policy indépendant d'un argument pris dans la ligne (index) | **manuel** · seul `events` (mig. `128`) a un test dédié | toute autre table : une heuristique sur le texte se tromperait dans les deux sens |
+| 25 | Visibilité d'un projet d'équipe : une seule règle, `my_team_project_ids` (mig. `243`) ; `can_access_team_project` ne fait que la consulter | `e2e/rls/regle-unique-projet.test.ts` : lecture directe sous RLS = RPC `get_my_team_*`, huit acteurs types | une nouvelle RPC de lecture qui recalculerait son périmètre à la main : **manuel** |
 | 22 | Migration qui crée une dépendance à un chemin de récupération : le parcourir | **manuel** | tout |
 | 23 | Colonne écrite par le front : appliquer AVANT le déploiement du front | **manuel** (ordre de déploiement, pas un texte) | tout |
 | 24 | Se prouver AVANT, en transaction annulée, acteur par acteur | **manuel** · forme de preuve dans `supabase/migration/CLAUDE.md` | tout : aucune vérification statique n'exécute de SQL |

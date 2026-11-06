@@ -97,6 +97,48 @@ describe('RLS · matrice du catalogue : invariants', () => {
     expect(sansRls, 'tables exposées à anon/authenticated SANS row level security').toEqual([]);
   });
 
+  // Règle de la mig. 049, lue ici dans `pg_policy` de la base rejouée, pas dans
+  // le texte des migrations : `check:rls` a un cliquet à la 043 et n'a donc
+  // jamais vu les doubles « read own » / « view own » posées par 002 à 007
+  // (retirées par la 244). Même regroupement que lui : table et commande, une
+  // policy `FOR ALL` comptant à part.
+  it('une seule policy PERMISSIVE par table et par commande (mig. 049)', () => {
+    const doubles: string[] = [];
+    for (const n of nomsTables) {
+      const parCmd = new Map<string, string[]>();
+      for (const p of tables.get(n)!.policies.filter((x) => x.permissive)) {
+        parCmd.set(p.cmd, [...(parCmd.get(p.cmd) ?? []), p.nom]);
+      }
+      for (const [cmd, noms] of parCmd) if (noms.length > 1) doubles.push(`${n} [${cmd}] : ${noms.sort().join(' | ')}`);
+    }
+    expect(doubles, 'deux policies PERMISSIVE pour la même commande : élargir le OR, jamais en ajouter une').toEqual([]);
+  });
+
+  // SEC-10 (mig. 242) : le rôle qui rejoue les migrations est celui qui crée
+  // les tables. Ses privilèges par défaut sur `public` ne donnent plus rien à
+  // `anon` : une table future oubliée sans RLS ne naît plus ouverte à Internet.
+  it('les privilèges par défaut de public n’accordent rien à anon (mig. 242)', async () => {
+    const { rows } = await db.query<{ objet: string; privilege: string }>(
+      `SELECT d.defaclobjtype::text AS objet, a.privilege_type AS privilege
+         FROM pg_default_acl d CROSS JOIN LATERAL aclexplode(d.defaclacl) a
+        WHERE d.defaclrole = current_user::regrole
+          AND d.defaclnamespace IN (0, 'public'::regnamespace)
+          AND d.defaclobjtype IN ('r', 'S')
+          AND a.grantee = 'anon'::regrole`,
+    );
+    expect(rows.map((r) => `${r.objet}:${r.privilege}`), 'privilèges par défaut encore accordés à anon').toEqual([]);
+    // Témoin positif : la lecture voit bien les défauts, ceux d'authenticated sont là.
+    const { rows: auth } = await db.query<{ n: string }>(
+      `SELECT count(*)::text AS n
+         FROM pg_default_acl d CROSS JOIN LATERAL aclexplode(d.defaclacl) a
+        WHERE d.defaclrole = current_user::regrole
+          AND d.defaclnamespace = 'public'::regnamespace
+          AND d.defaclobjtype = 'r'
+          AND a.grantee = 'authenticated'::regrole`,
+    );
+    expect(Number(auth[0].n), 'aucun défaut lu pour authenticated : la requête ne voit rien').toBeGreaterThan(0);
+  });
+
   it('toute vue exposée est security_invoker, et aucune vue matérialisée ni table étrangère n’est exposée', () => {
     const fautives = exposees
       .filter((r) => (r.kind === 'v' && !r.securityInvoker) || r.kind === 'm' || r.kind === 'f')

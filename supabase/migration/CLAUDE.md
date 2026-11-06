@@ -44,8 +44,10 @@ compilait, la suite passait.
   tout est en prod **sauf `206`** (suppression des jalons : à appliquer APRÈS le front qui ne les
   lit plus). `164`, `181`, `190`-`195`, `197`-`199` sont en prod **sans** ligne ; `196` est
   retirée par la `200`. ❌ **Ne jamais réappliquer la `164`** : elle retire la branche « membre du
-  projet » de la `190`. Dernière entrée : `241_billing_history_reason` (`20261105204321`, relue au catalogue : colonne `billing_reason`, DEFINER, `search_path` vide, `anon` sans EXECUTE). Prochain
-  numéro libre : **`242`**. Journal daté de chaque application (preuves, relectures au catalogue) :
+  projet » de la `190`. Dernière entrée : `241_billing_history_reason` (`20261105204321`, relue au catalogue : colonne `billing_reason`, DEFINER, `search_path` vide, `anon` sans EXECUTE). ⚠️ **`242`
+  à `244`** (fermé par défaut pour `anon`, règle unique des projets d'équipe, SELECT permissive
+  unique) : écrites et prouvées en CI le 2026-11-07, **NON appliquées** (ordre et relecture dans
+  leurs en-têtes). Prochain numéro libre : **`245`**. Journal daté de chaque application (preuves, relectures au catalogue) :
   [`docs/archive/SECURITY-journal-migrations-150-223.md`](../../docs/archive/SECURITY-journal-migrations-150-223.md).
 - ✅ **Forme de preuve à reprendre** : un seul bloc `DO` terminé par `RAISE EXCEPTION`
   (`proofs/208-210.proof.sql`). L'annulation n'est pas une instruction qu'on peut oublier, c'est la
@@ -70,6 +72,8 @@ compilait, la suite passait.
   fichier déjà appliqué.
 - ⚠️ **Lire le ledger AVANT d'appliquer, pas seulement après.** Ce dépôt a plusieurs sessions
   actives : l'état de la prod n'est jamais celui qu'on a laissé.
+- 🔴 **Une table nouvelle n'a plus rien pour `anon`** (mig. 242) : sa RLS s'active dans le même
+  fichier, et ce qu'un visiteur doit lire porte son `GRANT … TO anon` explicite.
 - ❌ **Une seule policy PERMISSIVE par rôle et par action** (mig. 049). Élargir le `OR` existant,
   jamais en recréer une seconde. `npm run check:rls` est la gate.
 - ❌ **Ne jamais faire dépendre un prédicat de policy d'un argument pris dans la ligne** : il est

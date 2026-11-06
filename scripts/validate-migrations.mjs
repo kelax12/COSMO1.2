@@ -20,13 +20,14 @@
 //      `prevent_` (convention du depot pour une garde qui ne fait QUE valider,
 //      mig. 143) : la, DEFINER n'a jamais de justification, donc plus question
 //      d'avertissement.
-//   6-16. La checklist de docs/SECURITY.md (angle mort AM-4), CLIQUET a partir
+//   6-17. La checklist de docs/SECURITY.md (angle mort AM-4), CLIQUET a partir
 //      de la mig. 227 : idempotence (6), search_path des DEFINER (7), WITH
-//      CHECK en ERREUR (8), RLS activee (9), trigger jamais DEFINER (10),
+//      CHECK en ERREUR (8), RLS activee DANS LE FICHIER qui cree la table (9), trigger jamais DEFINER (10),
 //      journal fiscal et preuves inalterables (11), pas d'admin_allowlisted()
 //      en policy (12), auto-reference ON DELETE NO ACTION (13),
 //      sanitize_display_name() (14), prevent_user_id_change (15), REVOKE
-//      nomme a PUBLIC et anon (16). Detail en bas de fichier.
+//      nomme a PUBLIC et anon (16), aucun privilege par defaut rendu a anon
+//      (17, mig. 242). Detail en bas de fichier.
 //
 // Codes de sortie : 1 si au moins une ERREUR, 0 sinon (les WARN n'échouent pas).
 // ═══════════════════════════════════════════════════════════════════
@@ -296,9 +297,12 @@ for (const f of files) {
   const num = Number.parseInt(f.slice(0, 3), 10);
   const sql = sansCommentaires(readFileSync(join(DIR, f), 'utf8'));
   const neuve = num >= CHECKLIST_FLOOR;
+  const rlsIci = new Set(); // tables dont CE fichier active la RLS
 
   for (const m of sql.matchAll(new RegExp(String.raw`${ALTER_TABLE}\s+(ENABLE|DISABLE)\s+ROW\s+LEVEL\s+SECURITY`, 'gi'))) {
-    rlsActive.set(m[1].toLowerCase(), /^enable$/i.test(m[2]));
+    const active = /^enable$/i.test(m[2]);
+    rlsActive.set(m[1].toLowerCase(), active);
+    if (active) rlsIci.add(m[1].toLowerCase());
   }
   for (const m of sql.matchAll(/CREATE\s+(?:OR\s+REPLACE\s+)?(?:CONSTRAINT\s+)?TRIGGER\s+\w+([^;]*);/gi)) {
     const on = m[1].match(/\bON\s+(?:public\.)?(\w+)/i);
@@ -324,6 +328,13 @@ for (const f of files) {
     const ouvre = m.index + m[0].length - 1;
     const corps = sql.slice(ouvre + 1, Math.max(fermante(sql, ouvre), ouvre + 1));
     tablesNeuves.set(table, f);
+    // (9) RLS activee dans le MEME fichier (SEC-10, mig. 242). Entre deux
+    // fichiers, la table existe sans RLS ; si le second n'est jamais applique
+    // (session interrompue, ordre inverse), elle le reste. L'etat final ne
+    // voit pas cet intervalle.
+    if (!rlsIci.has(table)) {
+      err(f, `table ${table} creee sans ENABLE ROW LEVEL SECURITY dans le meme fichier : entre deux migrations, elle est lisible et ecrivable par tout role qui a le GRANT (authenticated garde le GRANT par defaut, mig. 242)`);
+    }
     if (/(?:^|[,(])\s*user_id\s+uuid\b/i.test(corps)) tablesUserId.set(table, f);
     // (13) auto-reference : ON DELETE NO ACTION, ni CASCADE ni RESTRICT.
     const autoRef = new RegExp(
@@ -340,6 +351,14 @@ for (const f of files) {
   }
   for (const m of sql.matchAll(new RegExp(String.raw`${ALTER_TABLE}\s+ADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?user_id\b`, 'gi'))) {
     tablesUserId.set(m[1].toLowerCase(), f);
+  }
+
+  // (17) privileges par defaut : jamais rendus a anon ni a PUBLIC (SEC-10,
+  // mig. 242). Toute table future naitrait ouverte a un visiteur anonyme.
+  for (const m of sql.matchAll(/ALTER\s+DEFAULT\s+PRIVILEGES\b[^;]*?\bGRANT\b[^;]*?\bTO\s+([^;]+);/gi)) {
+    if (/\b(anon|public)\b/i.test(m[1])) {
+      err(f, 'ALTER DEFAULT PRIVILEGES accorde a anon (ou PUBLIC) : toute table future naitrait lisible et ecrivable par un visiteur anonyme. Accorder explicitement, table par table, ce qu anon doit lire (mig. 242)');
+    }
   }
 
   // ── Fonctions creees ───────────────────────────────────────────────
@@ -403,10 +422,11 @@ for (const f of files) {
   }
 }
 
-// (9) RLS activee sur toute table creee, etat final.
+// (9) RLS activee sur toute table creee : dans son fichier (plus haut), et
+// jamais desactivee ensuite (etat final).
 for (const [table, f] of tablesNeuves) {
-  if (rlsActive.get(table) !== true) {
-    err(f, `table ${table} creee sans ENABLE ROW LEVEL SECURITY : sans elle, la table est lisible et ecrivable par tout role qui a le GRANT par defaut`);
+  if (rlsActive.get(table) === false) {
+    err(f, `table ${table} : RLS desactivee par une migration ulterieure : sans elle, la table est lisible et ecrivable par tout role qui a le GRANT`);
   }
 }
 // (15) user_id : trigger prevent_user_id_change, etat final.

@@ -356,6 +356,16 @@ export const CATALOGUE = [
       'Une règle 3 qui ne compare plus rien laisse revenir la policy de la mig. 107, '
       + 'qui rappelait `get_subtree` sept jours après sa révocation.',
   },
+  {
+    id: 'rls-detecteur-commentaires',
+    famille: 'detecteur',
+    garde: 'scripts/migration-guards.test.mjs',
+    modifs: [r('scripts/check-rls-advisors.mjs', "    .replace(/--[^\\n]*/g, '');", ';')],
+    attendu: ['PASSE quand la seconde policy n’existe que dans un commentaire de retour arrière'],
+    pourquoi:
+      'Lu avec ses commentaires, le script ressuscite les policies que les mig. 243 et 244 '
+      + 'sauvegardent en en-tête pour le retour arrière : rouge à tort, donc vite contourné.',
+  },
 
   // ── validate:migrations · garde statique des `.sql` ────────────────
   {
@@ -444,9 +454,18 @@ export const CATALOGUE = [
     ['with-check', "if (p.cmd === 'UPDATE' &&", 'if (false &&',
       'TÉMOIN : ÉCHOUE sur une policy FOR UPDATE sans WITH CHECK',
       'Sans WITH CHECK, la ligne modifiée n est pas re-vérifiée : faille N1, un UPDATE déplace une ligne hors de son propriétaire.'],
-    ['rls', 'if (rlsActive.get(table) !== true) {', 'if (false) {',
+    ['rls', 'if (!rlsIci.has(table)) {', 'if (false) {',
       'TÉMOIN : ÉCHOUE sur une table sans ENABLE ROW LEVEL SECURITY',
       'Un détecteur de RLS aveugle laisse passer une table ouverte à tout rôle qui a le GRANT par défaut.'],
+    ['rls-meme-fichier', 'if (!rlsIci.has(table)) {', 'if (!rlsIci.has(table) && !files.some((g) => g > f)) {',
+      'TÉMOIN : ÉCHOUE sur une table dont la RLS n’est activée que dans une migration suivante',
+      'Un détecteur qui se contente d une migration ULTÉRIEURE laisse la table sans RLS entre les deux fichiers (SEC-10, mig. 242).'],
+    ['rls-desactivee', 'if (rlsActive.get(table) === false) {', 'if (false) {',
+      'TÉMOIN : ÉCHOUE sur une table dont la RLS est désactivée par une migration suivante',
+      'Un DISABLE ROW LEVEL SECURITY ultérieur rouvre la table à tout rôle qui a le GRANT.'],
+    ['defaut-anon', String.raw`if (/\b(anon|public)\b/i.test(m[1])) {`, 'if (false) {',
+      'TÉMOIN : ÉCHOUE sur un privilège par défaut rendu à anon',
+      'Un privilège par défaut rendu à anon fait naître chaque table future ouverte à un visiteur (SEC-10, mig. 242).'],
     ['prevent-user-id', 'if (!tablesPreventUid.has(table)) {', 'if (false) {',
       'TÉMOIN : ÉCHOUE sur une table à user_id sans trigger prevent_user_id_change',
       'Sans prevent_user_id_change, un UPDATE peut transférer une ligne à un autre compte (mass-assignment V1).'],
