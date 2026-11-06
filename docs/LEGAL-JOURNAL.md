@@ -30,7 +30,7 @@ Or une modification de fond y déclenche le **préavis de 30 jours** de l'articl
 tout seul, et rien ne reliait le commit au geste.
 
 Ce journal est ce lien. Il ne remplace pas l'envoi du préavis, qui reste un geste
-([`a-faire-manuel.md`](../a-faire-manuel.md)) et laisse sa trace dans `renewal_notices` — une
+(`a-faire-manuel.md` (hors dépôt)) et laisse sa trace dans `renewal_notices` — une
 table qui est une **preuve**, et qu'on ne purge jamais.
 
 ---
@@ -145,7 +145,7 @@ un DPA séparé et signé.
 | `src/locales/fr/{legal,legalTerms,legalPrivacy}.json` | `7b98a53c54266c40` |
 | `src/locales/en/{legal,legalTerms,legalPrivacy}.json` | `227b1e35354d1039` |
 
-**Ce qui a changé** (ligne `M-62` d'[`a-faire-manuel.md`](../a-faire-manuel.md), lignes `A2` et
+**Ce qui a changé** (ligne `M-62` d'`a-faire-manuel.md` (hors dépôt), lignes `A2` et
 `A3` de [`LEGAL.md`](./LEGAL.md)) :
 
 - **Mentions légales**, s1 : « Dénomination : Cosmo » devient « Éditeur : Axel Longatte, personne

@@ -11,7 +11,7 @@
 //                          R-06, mais pas la purge symetrique de `friends`).
 //                          Elle echouerait a `src/rgpd-erasure.guard.test.ts`,
 //                          qui est vert.
-//   renewal-notice   v9  · le defaut S-4 que `faille.md` declare corrige.
+//   renewal-notice   v9  · le defaut S-4 que `faille.md` (hors depot) declare corrige.
 //   report-bug       v8  · le meme defaut S-4, jamais repere a l'epoque.
 //
 // Remesure du 2026-09-04 : `stripe-org-refund` n'existe pas en prod,
@@ -20,7 +20,7 @@
 //
 // Consequence, et c'est la seule qui compte : TOUTE conclusion tiree en
 // lisant `supabase/functions/` est fausse d'avance, y compris celles de
-// `faille.md`. Un « ✅ corrige » sur une Edge Function ne veut rien dire
+// `faille.md` (hors depot, `prive/` du checkout principal). Un « ✅ corrige » sur une Edge Function ne veut rien dire
 // sans sa date de deploiement. Aucune garde du depot ne regardait la prod.
 //
 // ── CE QUE CE SCRIPT REGARDE (cf. CLAUDE.md, § « une garde se verifie sur
@@ -769,8 +769,8 @@ async function main() {
       ),
       '',
       '🔴 Tant que cet ecart existe, **toute** conclusion tiree en lisant',
-      '`supabase/functions/` est fausse, y compris les statuts de `faille.md`.',
-      'Le redeploiement est un geste manuel : `a-faire-manuel.md`.',
+      '`supabase/functions/` est fausse, y compris les statuts de `faille.md` (hors depot).',
+      'Le redeploiement est un geste manuel : `a-faire-manuel.md` (hors depot, `prive/` du checkout principal).',
     ]);
   }
 

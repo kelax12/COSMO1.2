@@ -27,7 +27,7 @@ export const PREMIUM_ENFORCED = false;
 //  true  → les prix sont affichés comme avant.
 //
 // Pourquoi : acquisition sans monétisation. Une grille de prix publique fait
-// présumer une activité commerciale (cf. a-faire-manuel.md `M-72`, `M-73`).
+// présumer une activité commerciale (cf. `a-faire-manuel.md`, hors dépôt, `M-72`, `M-73`).
 //
 // 🔴 On ne vend pas sans afficher de prix : dès que `ENTERPRISE_BILLING_ENFORCED`
 // passe à `true`, les prix entreprise réapparaissent d'office (les surfaces

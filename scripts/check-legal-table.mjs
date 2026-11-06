@@ -171,5 +171,5 @@ console.log(`Lignes datées : ${datees} / ${rows.length} (plancher ${PLANCHER_DA
 console.log(
   '⚠️ Cette garde vérifie l ARITHMÉTIQUE et la DATATION, jamais la CONFORMITÉ.'
     + '\n   Une ligne ✅ à tort et datée reste verte ici. La conformité se vérifie'
-    + '\n   à la main (a-faire-manuel.md).\n',
+    + '\n   à la main (`a-faire-manuel.md`, hors dépôt).\n',
 );

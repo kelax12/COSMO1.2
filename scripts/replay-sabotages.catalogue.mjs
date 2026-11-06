@@ -1704,11 +1704,34 @@ export const CATALOGUE = [
     garde: 'scripts/check-fichiers-sensibles.guard.test.mjs',
     modifs: [r('scripts/check-fichiers-sensibles.mjs', "  ['.csv', 'export tabulaire (CSV)'],", "  ['.csv-aveugle', 'export tabulaire (CSV)'],")],
     attendu: [
-      'TÉMOIN : refuse leads-50.csv',
+      'TÉMOIN : refuse exports/prospects.csv',
       'TÉMOIN : un .csv indexé fait échouer `git commit`, un .ts passe',
     ],
     pourquoi:
       'L incident du 2026-10-30 : `leads-50.csv`, cinquante prospects nommés, poussé sur le '
       + 'dépôt public sans que le hook ni la CI ne bronchent.',
+  },
+  {
+    id: 'fichiers-sensibles-prive-aveugle',
+    famille: 'detecteur',
+    garde: 'scripts/check-fichiers-sensibles.guard.test.mjs',
+    modifs: [r('scripts/check-fichiers-sensibles.mjs', "  ['prive/**', ", "  ['prive-aveugle/**', ")],
+    attendu: [
+      'TÉMOIN : refuse prive/faille.md',
+      'TÉMOIN : un fichier de `prive/` indexé fait échouer `git commit`',
+    ],
+    pourquoi:
+      '`prive/` porte `faille.md` (findings ouverts), les procédures internes et la prospection, '
+      + 'dans le checkout d un dépôt PUBLIC : un `git add -f` le publierait sans un mot (SEC-02).',
+  },
+  {
+    id: 'pre-commit-vert-muet',
+    famille: 'detecteur',
+    garde: 'scripts/check-fichiers-sensibles.guard.test.mjs',
+    modifs: [r('.githooks/pre-commit', '  exit 1\n', '  exit 0\n')],
+    attendu: ['TÉMOIN : un hook privé de sa garde refuse le commit, jamais un vert muet'],
+    pourquoi:
+      'Un hook qui laisse passer quand il ne trouve pas sa garde n a rien vérifié : le motif de la '
+      + 'garde conditionnelle à la présence de son propre secret, interdit par `CLAUDE.md`.',
   },
 ];

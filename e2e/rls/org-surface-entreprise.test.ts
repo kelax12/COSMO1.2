@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // RLS · la surface entreprise (mig. 160 à 220), rejouée acteur par acteur.
 //
-// POURQUOI CE FICHIER EXISTE (angle mort AM-6 de `faille.md`)
+// POURQUOI CE FICHIER EXISTE (angle mort AM-6 de `faille.md` (hors dépôt, `prive/` du checkout principal))
 //
 // Le 2026-10-01, l'audit A-1 a relu ces tables en production, acteur par
 // acteur (`supabase/proofs/a1-tables-160-207.proof.sql`), et n'y a rien trouvé
@@ -40,7 +40,7 @@
 //   · policies RETIRÉES sur les 24 tables : toutes les cellules « accepté »
 //     sont devenues « refusé ».
 // Les deux sabotages ont été joués en CI, sur une migration de test d'une PR
-// brouillon, jamais en production. Détail daté : `faille.md` § « Surface
+// brouillon, jamais en production. Détail daté : `faille.md` (hors dépôt) § « Surface
 // entreprise ».
 // ═══════════════════════════════════════════════════════════════════
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';

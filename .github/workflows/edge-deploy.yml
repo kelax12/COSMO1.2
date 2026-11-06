@@ -55,7 +55,7 @@ on:
     # `CI noyau` porte ce qui teste le code Edge : lint, `tsc -b`, tests
     # unitaires et leurs seuils, couverture de `scripts/`, temoins des Edge
     # Functions. ❌ Ne rien changer aux quatre gardes du job `deploy` ni a la
-    # verification du SHA (`faille.md` § CodeQL n° 15) : elles valent pour
+    # verification du SHA (`faille.md` (hors depot, `prive/` du checkout principal) § CodeQL n° 15) : elles valent pour
     # ce workflow comme pour l'ancien.
     workflows: [CI noyau]
     types: [completed]

@@ -756,7 +756,7 @@ se restaure.
 > les artefacts d'un run exigent une authentification ».** C'est faux : sur un dépôt public,
 > **n'importe quel compte GitHub connecté** télécharge un artefact. Cette phrase, recopiée du
 > commentaire du workflow, est exactement ce qui a produit la violation **`BK-1`** (dumps en clair
-> exposés du 2026-08-29 au 2026-10-13, cf. [`../faille.md`](../faille.md)). Depuis `8c6a971d`
+> exposés du 2026-08-29 au 2026-10-13, cf. `faille.md` (hors dépôt)). Depuis `8c6a971d`
 > (2026-10-13), **seul un dump chiffré** (`gpg`, AES-256, phrase secrète `BACKUP_PASSPHRASE`) part
 > en artefact, relu à l'identique par sha256 avant dépôt ; sans la phrase secrète, le job
 > **échoue**. Ne **jamais** committer un dump. Pour une vraie copie longue durée, la télécharger et

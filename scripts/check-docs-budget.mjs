@@ -101,7 +101,10 @@ export function findLivingDocs(root) {
   } catch {
     /* pas de docs/ : rien a verifier */
   }
-  for (const f of ['faille.md', 'a-faire-code.md']) {
+  // `faille.md` retiré de la liste le 2026-11-06 : sorti du dépôt public
+  // (SEC-02), il vit hors dépôt (`prive/` du checkout principal). Le garder
+  // ici le ferait sauter en silence à chaque passe.
+  for (const f of ['a-faire-code.md']) {
     if (existsSync(join(root, f))) out.push(f)
   }
   return out.sort()

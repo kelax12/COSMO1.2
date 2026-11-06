@@ -11,8 +11,8 @@
 > `C-122` et suivants (le dernier attribué est `C-121`, le 2026-10-13).
 
 Classement : ce fichier porte ce qui se fait **avec du code, sans geste d'Axel**. Les gestes
-(console, appareil réel, décision) sont dans [`a-faire-manuel.md`](./a-faire-manuel.md).
-Sécurité : [`faille.md`](./faille.md) fait foi.
+(console, appareil réel, décision) sont dans `a-faire-manuel.md` (hors dépôt).
+Sécurité : `faille.md` (hors dépôt) fait foi.
 
 ---
 
@@ -264,7 +264,7 @@ avec le correctif en place.
 - **Où** : `src/modules/auth/AuthContext.tsx`, `loginWithGoogle` (le commentaire 🔴 le dit sur place).
 - **Fini quand** : l'allowlist est vérifiée dans la console Supabase, **et** une vraie connexion
   Google depuis `/en/login?redirect=/org-invite/<token>` atterrit sur la page d'invitation, en
-  anglais. Le geste console est dans [`a-faire-manuel.md`](./a-faire-manuel.md) ; la preuve
+  anglais. Le geste console est dans `a-faire-manuel.md` (hors dépôt) ; la preuve
   attendue est ce parcours, pas la capture du réglage.
 
 ### C-24 · Quatre audits d'accessibilité jamais faits · **P2 · L** · 🟠 trois sur quatre faits le 2026-09-03
@@ -339,7 +339,7 @@ trois corrigés dans la foulée.
 produit connecté sur un appareil RÉEL », et son livrable exige pour chaque finding **le modèle, la
 version d'OS et le navigateur**. Aucun appareil n'était accessible : son propre prompt tranche ce
 cas, un audit sans appareil devient « à refaire », pas « fait ». Le protocole de reprise, écran par
-écran, est dans [`a-faire-manuel.md`](./a-faire-manuel.md) §7 (M-25).
+écran, est dans `a-faire-manuel.md` (hors dépôt) §7 (M-25).
 
 Ce que la moitié **indépendante de l'appareil** a quand même rendu, mesuré en viewport émulé et par
 sonde, jamais déduit :

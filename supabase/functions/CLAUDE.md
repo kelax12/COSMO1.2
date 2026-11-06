@@ -3,7 +3,7 @@
 > Le code DÉPLOYÉ et le dépôt sont deux choses différentes. Détail, mesures et historique du
 > drift : [`docs/SECURITY.md`](../../docs/SECURITY.md). Stripe :
 > [`src/modules/billing/CLAUDE.md`](../../src/modules/billing/CLAUDE.md) et
-> [`docs/STRIPE-LIVE.md`](../../docs/STRIPE-LIVE.md). Findings : [`faille.md`](../../faille.md).
+> [`docs/STRIPE-LIVE.md`](../../docs/STRIPE-LIVE.md). Findings : `faille.md` (hors dépôt).
 
 ## 🔴 Le dépôt ne prouve pas ce qui s'exécute (C-35)
 

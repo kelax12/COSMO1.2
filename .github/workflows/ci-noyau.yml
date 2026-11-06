@@ -14,7 +14,7 @@
 # lint, typecheck, tests unitaires avec leurs seuils, couverture de
 # l'outillage (`scripts/`) et temoins des Edge Functions. `edge-deploy.yml`
 # se declenche sur LUI, avec les memes gardes de securite qu'avant
-# (`faille.md` § CodeQL n° 15).
+# (`faille.md` (hors depot, `prive/` du checkout principal) § CodeQL n° 15).
 #
 # ⚠️ Ces etapes ont QUITTE `lint-test-build` (`ci.yml`) : elles ne tournent
 # qu'une fois. Le hook `pre-push` et `ci-alert.yml` lisent `CI` ET `CI noyau`.
