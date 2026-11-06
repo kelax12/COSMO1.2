@@ -32,6 +32,8 @@ interface MemberDirectoryToolbarProps {
   onExport?: () => void;
   /** Bouton Inviter, posé à gauche de Sélectionner (arbitré par le parent). */
   inviteAction?: ReactNode;
+  /** Bouton « Changer de forfait » (propriétaire seul), posé avant Inviter. */
+  planAction?: ReactNode;
 }
 
 const ROLE_KEY = {
@@ -107,7 +109,7 @@ const TOOL_BUTTON =
  */
 const MemberDirectoryToolbar = ({
   filters, onChange, teams, customRoles, shown, total,
-  canSelect, selectMode, onToggleSelectMode, onExport, inviteAction,
+  canSelect, selectMode, onToggleSelectMode, onExport, inviteAction, planAction,
 }: MemberDirectoryToolbarProps) => {
   const { t } = useT('org');
   const { t: tOrgAdmin } = useT('orgAdmin');
@@ -160,16 +162,11 @@ const MemberDirectoryToolbar = ({
           )}
         </div>
         <div className="flex-1 hidden sm:block" aria-hidden="true" />
+        {planAction}
         {inviteAction}
         {/* Maquette 266 : sur mobile, cinq filtres sur deux rangées deviennent un bouton. */}
         <MobileFiltersButton activeCount={activeCount} onOpenChange={setSheetOpen} />
         <div className="hidden md:contents">
-        {canSelect && (
-          <button type="button" onClick={onToggleSelectMode} aria-pressed={selectMode} className={TOOL_BUTTON}>
-            <CheckSquare size={15} aria-hidden="true" />
-            {selectMode ? tOrgAdmin('directory.select.exit') : tOrgAdmin('directory.select.enter')}
-          </button>
-        )}
         {onExport && (
           <button
             type="button"
@@ -221,6 +218,20 @@ const MemberDirectoryToolbar = ({
           options={JOINED_PERIODS.map((p) => ({ value: p, label: tOrgAdmin(JOINED_KEY[p]) }))}
           anyLabel={tOrgAdmin('directory.filters.any')}
         />
+        {canSelect && (
+          <>
+            <span className="w-px h-5 mx-1 bg-[rgb(var(--color-border))]" aria-hidden="true" />
+            <button
+              type="button"
+              onClick={onToggleSelectMode}
+              aria-pressed={selectMode}
+              className={`${PILL} pr-3 ${selectMode ? PILL_ON : PILL_IDLE}`}
+            >
+              <CheckSquare size={13} aria-hidden="true" />
+              {selectMode ? tOrgAdmin('directory.select.exit') : tOrgAdmin('directory.select.enter')}
+            </button>
+          </>
+        )}
         {narrowed && (
           <>
             <span className="text-xs text-[rgb(var(--color-text-muted))] tabular-nums ml-1" aria-live="polite">
