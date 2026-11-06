@@ -11,8 +11,8 @@ import { test, expect, loginViaUi, createTaskViaUi, tasksList, reload } from './
  * qu'elle écrit en production. Les contraintes de la migration d'origine y ont
  * très probablement été assouplies HORS migration (cf. l'en-tête de
  * `012_friend_requests_align.sql` : « en prod, le schéma a évolué via le tableau
- * de bord », et `007_out_of_band_columns.sql`) : ⚠️ à CONFIRMER par un `d tasks`
- * et un `d friend_requests` en production, ce n'est pas vérifié ici. Quelle que
+ * de bord », et `007_out_of_band_columns.sql`) : ⚠️ à CONFIRMER par un `\d tasks`
+ * et un `\d friend_requests` en production, ce n'est pas vérifié ici. Quelle que
  * soit la réponse, toute base reconstruite depuis le dépôt
  * (restauration, préproduction, nouvelle région) refuse ces écritures.
  *

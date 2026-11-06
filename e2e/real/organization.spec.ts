@@ -9,7 +9,9 @@ import { test, expect, loginViaUi, newSession, goto, reload, expectNoErrorToast 
  */
 async function dismissOrgWelcome(page: Page): Promise<void> {
   const video = page.locator('video[src*="onboarding-entreprise"]');
-  if (await video.first().isVisible({ timeout: 8_000 }).catch(() => false)) {
+  // `isVisible({ timeout })` ignore son delai (il repond tout de suite) : on ATTEND.
+  const shown = await video.first().waitFor({ state: 'visible', timeout: 8_000 }).then(() => true, () => false);
+  if (shown) {
     await page.getByRole('button', { name: /commencer/i }).first().click({ force: true });
     await expect(video).toHaveCount(0, { timeout: 15_000 });
   }
