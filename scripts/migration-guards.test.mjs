@@ -103,6 +103,26 @@ describe('check-rls-advisors — règle 3 : fonction appelée par une policy (B-
   });
 });
 
+// Une migration sauvegarde en en-tête, en commentaire, le corps des policies
+// qu'elle retire (retour arrière, mig. 243 et 244). Lu comme du code, ce
+// commentaire ressuscitait la policy retirée : deux PERMISSIVE, rouge à tort.
+describe('check-rls-advisors — un CREATE POLICY en commentaire n’est pas du code', { timeout: 30_000 }, () => {
+  const VIVANTE = `DROP POLICY IF EXISTS "t_view" ON public.t;
+CREATE POLICY "t_view" ON public.t FOR SELECT USING ((select auth.uid()) = user_id);`;
+
+  it('PASSE quand la seconde policy n’existe que dans un commentaire de retour arrière', () => {
+    write('244_fusion.sql', `-- RETOUR ARRIÈRE :\n--   CREATE POLICY "t_read" ON public.t FOR SELECT USING (auth.uid() = user_id);\n${VIVANTE}`);
+    expect(run(CHECK_RLS).code).toBe(0);
+  });
+
+  it('TÉMOIN : ÉCHOUE toujours quand la seconde policy est du code', () => {
+    write('244_fusion.sql', `CREATE POLICY "t_read" ON public.t FOR SELECT USING ((select auth.uid()) = user_id);\n${VIVANTE}`);
+    const { code, out } = run(CHECK_RLS);
+    expect(out).toMatch(/t a 2 policies PERMISSIVE pour SELECT/);
+    expect(code).toBe(1);
+  });
+});
+
 describe('validate-migrations — règle 5 : fonctions de trigger (B-3)', { timeout: 30_000 }, () => {
   const TRIGGER_FN = (extra = '') => `
 CREATE OR REPLACE FUNCTION public.validate_thing()
@@ -201,7 +221,9 @@ describe('events, le prédicat de lecture reste hissable en InitPlan (mig. 128)'
   it('la dernière policy SELECT de `events` existe et est bien trouvée', () => {
     const p = finalReadPolicy();
     expect(p, 'aucune CREATE POLICY ... ON public.events FOR SELECT trouvée').not.toBeNull();
-    expect(p.file).toBe('128_events_managed_ids_indexable.sql');
+    // La 244 a retiré la seconde policy SELECT (« read own », mig. 004) et
+    // recréé celle de la 128 à l'identique : c'est elle, désormais, l'état final.
+    expect(p.file).toBe('244_select_permissive_unique.sql');
   });
 
   it("n'appelle plus de fonction sur la COLONNE `user_id` (coût par ligne)", () => {
@@ -452,6 +474,43 @@ GRANT EXECUTE ON FUNCTION public.notes_count() TO authenticated;
 
   it('TÉMOIN : ÉCHOUE sur une table sans ENABLE ROW LEVEL SECURITY', () => {
     rougit(saboter('ALTER TABLE public.notes ENABLE ROW LEVEL SECURITY;\n', ''), /table notes creee sans ENABLE ROW LEVEL SECURITY/);
+  });
+
+  // SEC-10 (mig. 242) : entre deux fichiers, la table existe sans RLS. Si le
+  // second n'est jamais appliqué (session interrompue, ordre inversé), elle le
+  // reste, ouverte à tout rôle qui a le GRANT. L'état final ne suffit pas.
+  it('TÉMOIN : ÉCHOUE sur une table dont la RLS n’est activée que dans une migration suivante', () => {
+    write('227_notes.sql', saboter('ALTER TABLE public.notes ENABLE ROW LEVEL SECURITY;\n', ''));
+    write('228_notes_rls.sql', 'ALTER TABLE public.notes ENABLE ROW LEVEL SECURITY;\n');
+    const { code, out } = run(VALIDATE);
+    expect(out).toMatch(/table notes creee sans ENABLE ROW LEVEL SECURITY dans le meme fichier/);
+    expect(code).toBe(1);
+  });
+
+  it('TÉMOIN : ÉCHOUE sur une table dont la RLS est désactivée par une migration suivante', () => {
+    write('227_notes.sql', CONFORME);
+    write('228_notes_rls.sql', 'ALTER TABLE public.notes DISABLE ROW LEVEL SECURITY;\n');
+    const { code, out } = run(VALIDATE);
+    expect(out).toMatch(/table notes : RLS desactivee par une migration ulterieure/);
+    expect(code).toBe(1);
+  });
+
+  // SEC-10 (mig. 242) : le défaut de `public` est fermé à `anon`. Le rouvrir
+  // rendrait chaque table future lisible et écrivable par un visiteur.
+  it('TÉMOIN : ÉCHOUE sur un privilège par défaut rendu à anon', () => {
+    write('227_notes.sql', `${CONFORME}\nALTER DEFAULT PRIVILEGES IN SCHEMA public\n  GRANT ALL ON TABLES TO anon, authenticated;\n`);
+    const { code, out } = run(VALIDATE);
+    expect(out).toMatch(/ALTER DEFAULT PRIVILEGES accorde a anon/);
+    expect(code).toBe(1);
+  });
+
+  it('PASSE sur la fermeture du défaut (REVOKE) et sur un défaut accordé à authenticated seul', () => {
+    write(
+      '227_notes.sql',
+      `${CONFORME}\nALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES FROM anon;\n` +
+        'ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO authenticated;\n',
+    );
+    expect(run(VALIDATE).code).toBe(0);
   });
 
   it('TÉMOIN : ÉCHOUE sur une table à user_id sans trigger prevent_user_id_change', () => {

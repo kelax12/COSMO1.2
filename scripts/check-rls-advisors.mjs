@@ -100,7 +100,13 @@ const finalState = new Map();
 const dropped = new Set();
 
 for (const file of files) {
-  const sql = readFileSync(join(DIR, file), 'utf8');
+  // Lu SANS ses commentaires, comme `validate-migrations.mjs` : une migration
+  // sauvegarde en en-tête le corps des policies qu'elle remplace (retour
+  // arrière, mig. 243 et 244). Un `CREATE POLICY` écrit dans un `--` n'est
+  // pas du code, et le compter ressusciterait la policy qu'on vient de retirer.
+  const sql = readFileSync(join(DIR, file), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/--[^\n]*/g, '');
 
   // DROP POLICY "x" ON t  → la policy disparaît (elle peut être recréée juste après)
   for (const m of sql.matchAll(/DROP\s+POLICY\s+(?:IF\s+EXISTS\s+)?"?([\w\s-]+?)"?\s+ON\s+(?:public\.)?(\w+)/gi)) {
