@@ -64,9 +64,18 @@ test('partager une tâche entre deux comptes', async ({ page, browser, baseURL, 
     await expect(tasksList(bobPage)).toBeVisible({ timeout: 30_000 });
     await expect(bobPage.getByText(taskName, { exact: true })).toHaveCount(0);
 
+    // La boîte de réception vit sur le tableau de bord, pas sur la page Tâches.
+    await goto(bobPage, '/dashboard');
     await bobPage.getByRole('button', { name: /boîte de réception/i }).filter({ visible: true }).first().click();
     await bobPage.getByRole('button', { name: `Accepter la tâche partagée ${taskName}` }).click();
 
+    // L'acceptation est écrite avant de quitter la page (sinon la requête est abandonnée).
+    await expect.poll(async () => {
+      const { data } = await bob.client.rpc('get_my_tasks');
+      return (data as Array<{ name: string }> | null)?.some((t) => t.name === taskName) ?? false;
+    }, { timeout: 20_000, message: 'la tâche acceptée n\'apparaît pas dans get_my_tasks() de Bob' }).toBe(true);
+
+    await goto(bobPage, '/tasks');
     await expect(tasksList(bobPage).getByText(taskName, { exact: true }).filter({ visible: true }).first())
       .toBeVisible({ timeout: 30_000 });
 
