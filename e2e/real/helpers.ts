@@ -131,7 +131,9 @@ export const test = base.extend<{ makeAccount: (label: string) => Promise<Accoun
     await context.addInitScript(NEUTRALISE);
     await use(context);
   },
-  trackAccount: async (_fixtures, use) => {
+  // Playwright exige un motif de destructuration, meme vide (une `_fixtures` echoue a l'analyse).
+  // eslint-disable-next-line no-empty-pattern
+  trackAccount: async ({}, use) => {
     // Comptes crees par l'INTERFACE : supprimes aussi, une fois le cas termine.
     const ids: string[] = [];
     await use((id) => { ids.push(id); });
