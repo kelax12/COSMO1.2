@@ -16,6 +16,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:changed": "node scripts/test-changed.mjs",
     "test:coverage": "vitest run --coverage",
     "test:mutation": "stryker run",
     "validate:migrations": "node scripts/validate-migrations.mjs",

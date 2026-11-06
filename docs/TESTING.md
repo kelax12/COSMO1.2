@@ -1395,29 +1395,54 @@ npx playwright test e2e/a11y-audit.spec.ts --project=chromium
   (roadmap A-7/A-8/A-10). Une régression `critical` casse donc la CI : c'est ce
   guard qui a détecté le `button-name` manquant sur l'avatar de `SettingsPage`.
 
-## CI (`.github/workflows/ci.yml`, 6 jobs, plus `ci-noyau.yml` et `gardes-calendrier.yml`)
+## CI : le noyau bloquant (`ci-noyau.yml`), et le reste qui ne bloque pas
 
-🔴 **Partage du 2026-11-06 (CI-01, CI-03).** `main` était rouge sur 49 des 60 derniers runs, en
-partie à cause de gardes qui jugent une date ou un document : un rouge permanent ne signalait
-plus rien, et `edge-deploy.yml`, suspendu à un `CI` entièrement vert, laissait cinq fonctions de
-facturation en retard depuis le 2026-11-03. Désormais :
+🔴 **Vague 2.2 (2026-11-06) : un seul verdict bloquant, le workflow `CI noyau`.** `main` était
+rouge sur 49 des 60 derniers runs : le job bloquant jugeait aussi des dates, des documents et des
+mesures variables, et un rouge permanent ne signalait plus rien. Le noyau juge le **commit et lui
+seul**. Sa conclusion, et elle seule, bloque la poussée (`.githooks/pre-push`), déclenche
+`edge-deploy.yml` et sonne `ci-alert.yml`.
 
-- `ci-noyau.yml` (`CI noyau`, push et PR) : lint, `tsc -b`, `check:edge-coverage`,
-  `test:coverage`, `test:coverage:tooling`. **Seul déclencheur d'`edge-deploy.yml`**, lu par le
-  hook `pre-push` et par `ci-alert.yml` comme `CI`.
+**Pourquoi un workflow, pas une liste de « jobs requis »** : le hook, `edge-deploy.yml` et
+`ci-alert.yml` lisent la conclusion d'un WORKFLOW (`gh run list --workflow`, `workflow_run`). Une
+liste de jobs devrait être recopiée dans les trois ; un job ajouté à l'une sans les autres
+bloquerait d'un côté et pas de l'autre.
+
+**Composition** : quatre jobs parallèles, sans `needs:`. Verdict au rythme du plus lent, `noyau`
+(4 min 30 mesurées le 2026-11-06 sur `081b477b`) ; cible < 15 min, donc pas de shards Vitest.
+
+- `noyau` : lint, `tsc -b`, `check:edge-coverage`, `test:coverage`, `test:coverage:tooling`.
+- `lint-test-build` (venu de `ci.yml`) : `check:docs`, `validate:migrations`, `check:rls`, gardes
+  statiques (cycles, plancher, effacement, sous-traitants, portabilité, env, journal des CGU),
+  `i18n:check` (parité), `i18n:scan` (chaînes en dur), `i18n:identical`, `i18n:pages` (pluriels),
+  `i18n:quality`, build, budget de bundle.
+- `fichiers-sensibles` (venu de `ci.yml`) : voir plus bas.
+- `rls-integration` (venu de `ci.yml`) : stack Supabase locale (`supabase start`), rejoue
+  **toutes** les migrations sur base vierge (`scripts/apply-migrations.mjs`), puis `npm run test:rls`.
+
+❌ **Rien dans le noyau ne juge une date, un document qui vieillit ou un état extérieur** : un
+verdict qui change sans commit rend `main` rouge un matin, et un noyau rouge bloque tout.
+`check:legal-journal` reste (empreinte des CGU contre le journal : ne bouge qu'avec un commit).
+Revus et gardés parce qu'aucun ne lit l'horloge ni le réseau : `check:docs`, `check:test-floor`,
+`check:subprocessors`, `check:env` (moitié statique).
+
+**Hors noyau, tournent encore, ne bloquent rien et ne sonnent plus** :
+
+- `ci.yml` (`CI etendue`) : `audit` (`npm audit` prod, peut rougir sans commit sur un avis publié ;
+  Dependabot couvre l'alerte), `e2e` (Playwright, 4 projects, ~30 min), `lighthouse`.
+- `visual.yml`, `mutation.yml`, `sabotages.yml`, `scalability-volume.yml`.
 - `gardes-calendrier.yml` (quotidien 06:29 UTC + `workflow_dispatch`) : `check:study`,
   `check:docs-scored`, `check:lecteurs-ecran`, `check:exercice-violation`,
-  `check:peremption-chantiers`, `check:acquisition`. Ouvre ou commente l'issue
-  `calendrier-red`, refermée seule au vert ; ne bloque aucune poussée. Pas dans `ci-alert.yml`.
-- Restés dans le job bloquant après examen : `check:legal-journal` (empreinte des CGU : ne bouge
-  qu'avec un commit, et une CGU modifiée sans journal est un défaut du commit), `check:docs`,
-  `check:test-floor`, `check:subprocessors`, `check:env` (moitié statique) : aucun ne lit l'horloge.
-  ⚠️ `audit` (`npm audit` prod) peut rougir sans commit (nouvel avis) ; gardé bloquant, c'est une
-  vulnérabilité livrée. Témoins : `ci-toutes-les-gardes.guard.test.mjs` (aucune garde de
-  calendrier dans `lint-test-build`, total des étapes ≥ 29) et `edge-deploy-select.guard.test.mjs`.
+  `check:peremption-chantiers`, `check:acquisition`. Issue `calendrier-red`, refermée seule au vert.
 
-- `lint-test-build` : `check:docs`, `validate:migrations`, `check:rls`, gardes statiques
-  (cycles, plancher, RGPD, sous-traitants, env, journal des CGU), `i18n:*`, build, budget de bundle.
+**Branches `noyau/**`** : le noyau y tourne sur `push`. C'est le chemin de réparation d'un noyau
+rouge (§ hook ci-dessous). `fichiers-sensibles` juge la première poussée d'une telle branche
+contre `origin/main`.
+
+Témoins : `noyau-ci.guard.test.mjs` (composition, aucune garde de calendrier ni job lent dans le
+noyau, aucun job du noyau dans `ci.yml`), `ci-toutes-les-gardes.guard.test.mjs` (chaque étape
+joue après un rouge, le résumé liste tous les rouges), `edge-deploy-select.guard.test.mjs`.
+
 - `fichiers-sensibles` (SEC-01, SEC-05, SEC-07) : `check:fichiers-sensibles --arbre --plage <poussée>`,
   historique complet. Refuse `prive/**`, `docs/business-plan/**`, `leads-*`, `supabase/.temp/**`,
   `.claude/settings.local.json`, csv, pdf, xls(x), docx, pptx, dumps, `.env*` (hors
@@ -1430,18 +1455,32 @@ facturation en retard depuis le 2026-11-03. Désormais :
   d'un `.csv` et d'un fichier de `prive/` refusés, hook sans garde refusé) et le témoin
   `--no-verify` de `fichiers-suivis` ; sabotages rejoués : `fichiers-sensibles-csv-aveugle`,
   `fichiers-sensibles-prive-aveugle`, `pre-commit-vert-muet`.
-- `audit` — `npm audit --omit=dev --audit-level=high` (bloque sur CVE prod)
-- `e2e` — Playwright, project `chromium` uniquement
-- `rls-integration` — stack Supabase locale (`supabase start`), rejoue **toutes**
-  les migrations sur base vierge (`scripts/apply-migrations.mjs`) puis `npm run test:rls`
 - `lighthouse` *(ajouté le 2026-08-25)*, `lighthouserc.json`, LCP / TBT / CLS / a11y / SEO sur
-  les 4 routes **prérendues** (`/`, `/guide`, `/blog`, `/pour-freelances`). Bloquant sur a11y,
-  SEO et CLS ; **avertissement** sur la performance, qui varie avec le runner.
-  ⚠️ **Seuils provisoires** : Lighthouse a besoin d'un Chrome exécutable, absent de la machine de
-  développement, ils n'ont donc pas pu être posés « au réel mesuré » comme tous les autres budgets
-  du dépôt. **À resserrer après le premier run réel**, un budget très au-dessus du réel ne mesure
-  rien.
-- `concurrency` : sur une PR, le push suivant annule le run en cours ; sur `main`, un groupe par commit, aucun run annulé (2026-10-16). `permissions: contents:read`. Dépendances : `.github/dependabot.yml`.
+  les routes **prérendues**. Ses assertions rougissent le job, pas le noyau.
+  ⚠️ **Seuils provisoires**, à resserrer sur le réel mesuré.
+- `concurrency` (les deux workflows) : sur une PR, le push suivant annule le run en cours ; sur
+  `main`, un groupe par commit, aucun run annulé (2026-10-16). `permissions: contents:read`.
+  Dépendances : `.github/dependabot.yml`.
+
+### Boucle locale : `npm run test:changed` (vague 2.4, DEV-01)
+
+La suite complète prend 54 min sur le poste de dev (4 cœurs, 8 Go). `test:changed`
+(`scripts/test-changed.mjs`) prend les fichiers modifiés depuis la base de fusion avec
+`origin/main` (commits locaux, arbre de travail, non suivis) et joue :
+
+1. `vitest related` sur les sources JS/TS modifiées : tout test qui les importe, et les tests
+   modifiés eux-mêmes ;
+2. tout test qui **nomme** un fichier modifié (chemin, ou nom de fichier pour un workflow, un
+   `.md`, un `.sql`) : les gardes qui lisent un fichier par `readFileSync` échappent au graphe.
+
+`--base <ref>` change la référence, `--liste` montre la sélection sans rien lancer. Base illisible
+(pas de `git fetch`) = échec, jamais « rien à tester ». Lockfile, `vitest.config.ts` ou
+`src/test/setup.ts` modifiés : le script le signale et conseille `npm test`. Il ne passe aucune
+option de parallélisme : `maxWorkers: 2` reste celui de `vitest.config.ts` (C-47).
+Témoin : `scripts/test-changed.test.mjs`.
+
+La boucle d'une session : `lint`, `typecheck`, `test:changed`, push ; puis le verdict du noyau
+sur son commit (`gh run watch`). La boucle locale ne juge rien : le noyau joue tout.
 
 ### `edge-deploy-drift.yml` · le code déployé contre le dépôt *(ajouté le 2026-09-04, finding C-35)*
 
@@ -1481,7 +1520,8 @@ depuis le 2026-10-16 (`C-89`). Ce paragraphe a dit le contraire jusqu'au 2026-10
 Avant `git push` sur `main` (qui déclenche le deploy Vercel) :
 
 1. ✅ `npm run lint` → **0 erreurs** (les warnings préexistants sont OK)
-2. ✅ `npm test` → **tous les tests unitaires Vitest passent** (bloquant CI)
+2. ✅ `npm run test:changed` → les tests liés au diff passent. La suite complète (`npm test`)
+   est jouée par le noyau CI, bloquant ; en local seulement si la configuration de test a bougé.
 3. ✅ `npm run build` → succès. Aucun chunk first-paint > **150 kB gzip** (sauf `vendor-charts` lazy attendu).
 4. ✅ `npm run test:e2e` → **joué par la CI après le push, pas en local** (règle du 2026-10-29,
    `CLAUDE.md` § Git). En local seulement sur demande d'Axel ou pour une spec modifiée.

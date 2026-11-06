@@ -13,6 +13,8 @@
   **2026-09-21** : le job `e2e` de `ci.yml` joue `chromium`, `supabase-stub`, `mobile-safari`
   (depuis `af0190bd`, 2026-09-16) et `mobile-chrome` (depuis `2b4c4304`, 09-20) ; le project
   `visual` a **son propre workflow**, `visual.yml`, et n'est pas dans `ci.yml`.
+  ⚠️ Depuis le 2026-11-06 (vague 2.2), `ci.yml` (`CI etendue`) et `visual.yml` **ne bloquent
+  rien** : seul `ci-noyau.yml` bloque. Un e2e rouge se lit, il ne sonne pas.
   ❌ Ne pas compter les trois projects `*-warmup` comme des parcours : ce sont des préalables de
   chauffe, et ils existent parce que le coût de compilation à froid de Vite tombait entièrement
   sur le premier cas du moteur.

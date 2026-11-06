@@ -156,8 +156,11 @@ Sentry · Vercel. Versions : `package.json`. Ce qu'il ne dit pas :
 
 `dev` (port 5173) · `start` (port 3000, celui de Playwright) · `build` · `preview` ·
 `lint` et `typecheck` (`tsc -b`), **0 erreur** chacun · `test` (Vitest, une passe) ·
-`test:coverage` (seuils par fichier) · `test:rls` (stack locale) · `test:e2e` (→ `e2e/CLAUDE.md`).
-Détail : `docs/TESTING.md`.
+`test:changed` (tests liés au diff contre `origin/main`) · `test:coverage` (seuils par fichier) ·
+`test:rls` (stack locale) · `test:e2e` (→ `e2e/CLAUDE.md`). Détail : `docs/TESTING.md`.
+
+**Boucle locale** : `lint` + `typecheck` + `test:changed` (des minutes, pas les 54 min de la
+suite). Le verdict est le **noyau CI** (`ci-noyau.yml`, ~5 min), qui joue tout après le push.
 
 > Le build prod **drope** `console.*` et `debugger` (`vite.config.ts → esbuild.pure/drop`).
 > Les erreurs remontent via Sentry (`VITE_SENTRY_DSN`).
@@ -180,12 +183,11 @@ Décision d'Axel du 2026-10-29. Les PR et les E2E locaux coûtaient trop de temp
 
 - 🔴 **Commit + push sur `main`.** ❌ Pas de branche ni de PR, **sauf si Axel le demande
   explicitement** dans la session.
-- Session ouverte dans un worktree (branche `claude/…`) : on ne pousse pas cette branche.
-  `git fetch origin && git rebase origin/main && git push origin HEAD:main`.
-- Checkout partagé : ne commiter **que ses fichiers** (`git commit -- <paths>`), d'autres
-  sessions y travaillent.
+- 🔴 **Une session = un worktree = une branche locale.** ❌ Jamais deux écrivains dans le même
+  arbre (ni le checkout principal partagé). On pousse sur `main` depuis le worktree, sans
+  pousser sa branche : `git fetch origin && git rebase origin/main && git push origin HEAD:main`.
 - ❌ **Pas de `npm run test:e2e` en local** pour une retouche d'UI. La vérification, c'est
-  `lint`, `typecheck`, les tests Vitest des fichiers touchés et un coup d'œil au preview. La
+  `lint`, `typecheck`, `test:changed` et un coup d'œil au preview. La
   CI joue l'E2E après le push. Exceptions : une spec `e2e/` modifiée (on ne lance qu'elle), ou
   une demande d'Axel.
 - Le hook `pre-push` refuse (CI de `main` rouge) : ❌ ne pas le contourner, ❌ ne pas ouvrir de

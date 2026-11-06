@@ -31,6 +31,8 @@ import {
 } from './ci-toutes-les-gardes.mjs';
 
 const CI = readFileSync(join(process.cwd(), '.github/workflows/ci.yml'), 'utf8');
+// Vague 2.2 (2026-11-06) : `lint-test-build` et `rls-integration` sont des jobs du noyau.
+const NOYAU = readFileSync(join(process.cwd(), '.github/workflows/ci-noyau.yml'), 'utf8');
 
 /** Un job conforme, minimal : la base de chaque sabotage ci-dessous. */
 const CONFORME = `name: CI
@@ -158,8 +160,8 @@ describe('verifierJob : chaque sabotage est refusé (témoins)', () => {
   });
 });
 
-describe('ci.yml réel', () => {
-  const etapes = lireEtapes(CI, 'lint-test-build');
+describe('ci.yml et ci-noyau.yml réels', () => {
+  const etapes = lireEtapes(NOYAU, 'lint-test-build');
 
   it('lint-test-build : chaque garde joue après un rouge, et le job finit par le résumé', () => {
     expect(verifierJob(etapes)).toEqual([]);
@@ -176,6 +178,7 @@ describe('ci.yml réel', () => {
     expect(verifierJob(noyau, { entrees: [] })).toEqual([]);
     expect(verifierJob(calendrier, { entrees: [] })).toEqual([]);
     expect(noyau.at(-1).run).toContain('--workflow .github/workflows/ci-noyau.yml --job noyau');
+    expect(etapes.at(-1).run).toContain('--workflow .github/workflows/ci-noyau.yml --job lint-test-build');
     expect(calendrier.at(-1).run).toContain('--workflow .github/workflows/gardes-calendrier.yml --job calendrier');
     const total = [etapes, noyau, calendrier].flat().filter((e) => e.if === CONDITION).length;
     expect(total).toBeGreaterThanOrEqual(29);
@@ -221,17 +224,17 @@ describe('ci.yml réel', () => {
   // Quatre sessions ont dû ouvrir une PR brouillon jetable (n° 71, 72, 74, 76)
   // pour obtenir un verdict. Sur `main`, un groupe PAR COMMIT : aucun run n'en
   // annule un autre. Sur une PR, le push suivant remplace toujours le précédent.
-  it('concurrency : TÉMOIN, un run de main n’est jamais annulé, une PR l’est encore', () => {
-    const bloc = CI.replace(/\r\n/g, '\n').match(/\nconcurrency:\n {2}group: (.*)\n {2}cancel-in-progress: (.*)\n/);
+  it.each([['ci.yml', CI], ['ci-noyau.yml', NOYAU]])('concurrency (%s) : TÉMOIN, un run de main n’est jamais annulé, une PR l’est encore', (_f, texte) => {
+    const bloc = texte.replace(/\r\n/g, '\n').match(/\nconcurrency:\n {2}group: (.*)\n {2}cancel-in-progress: (.*)\n/);
     expect(bloc, 'bloc `concurrency:` de premier niveau introuvable').not.toBeNull();
     const [, groupe, annule] = bloc;
     expect(groupe).toBe("ci-${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}");
     expect(annule).toBe("${{ github.event_name == 'pull_request' }}");
-    expect(CI.match(/^\s*concurrency:/gm)).toHaveLength(1);
+    expect(texte.match(/^\s*concurrency:/gm)).toHaveLength(1);
   });
 
   it('rls-integration : le diagnostic ne masque jamais les tests', () => {
-    const e = lireEtapes(CI, 'rls-integration');
+    const e = lireEtapes(NOYAU, 'rls-integration');
     const tests = e.find((x) => x.run?.includes('npm run test:rls'));
     expect(tests.if).toBe("${{ !cancelled() && steps.migrate.outcome == 'success' }}");
     expect(e.find((x) => x.id === 'migrate')).toBeDefined();

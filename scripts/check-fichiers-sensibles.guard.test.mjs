@@ -290,8 +290,8 @@ describe('le hook pre-commit, joué en vrai', () => {
   }, 30_000);
 });
 
-describe('ci.yml : la garde CI rejoue la même règle, sur l arbre ET sur la plage poussée', () => {
-  const ci = readFileSync(resolve(process.cwd(), '.github/workflows/ci.yml'), 'utf8');
+describe('ci-noyau.yml : la garde CI rejoue la même règle, sur l arbre ET sur la plage poussée', () => {
+  const ci = readFileSync(resolve(process.cwd(), '.github/workflows/ci-noyau.yml'), 'utf8');
 
   it('le job lit l historique complet et passe --arbre et --plage', () => {
     const job = ci.slice(ci.indexOf('\n  fichiers-sensibles:'));
