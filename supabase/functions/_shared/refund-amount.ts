@@ -69,7 +69,11 @@ export interface RefundDecision {
 
 /** Le délai de 14 jours est-il encore ouvert ? `contractStart` = conclusion (secondes epoch). */
 export function withinWithdrawalWindow(contractStart: number, now: number): boolean {
-  if (!Number.isFinite(contractStart) || !Number.isFinite(now)) return false;
+  // Aucune garde `Number.isFinite` : `NaN` et `±Infinity` ferment la fenêtre
+  // d'eux-mêmes, car `now >= contractStart` ou `now < contractStart + 14 j`
+  // est alors faux pour toute combinaison (vérifié cas par cas, 2026-11-06).
+  // Une garde ici serait équivalente à son absence, donc intestable (AM-3) ;
+  // `refund-amount.test.ts` fige le comportement pour NaN et ±Infinity.
   return now >= contractStart && now < contractStart + WITHDRAWAL_DAYS * DAY_SECONDS;
 }
 
@@ -100,7 +104,10 @@ export function refundAmount(input: RefundInput): RefundDecision {
     return { amountCents: amountPaidCents, reason: 'full_no_immediate_access', daysRemaining: daysInPeriod, daysInPeriod };
   }
 
-  if (!Number.isFinite(now) || now >= periodEnd) return { ...nothing, daysInPeriod };
+  // `now >= periodEnd` n'est pas testé ici : un instant à la fin de période ou
+  // après donne `daysUsed = daysInPeriod`, donc `daysRemaining = 0`, et la
+  // sortie « rien à rendre » de plus bas rend exactement la même décision.
+  if (!Number.isFinite(now)) return { ...nothing, daysInPeriod };
 
   // Jours entamés : le jour de la rétractation compte comme utilisé.
   const daysUsed = Math.min(daysInPeriod, Math.max(1, Math.floor((now - periodStart) / DAY_SECONDS) + 1));

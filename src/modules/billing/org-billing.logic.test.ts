@@ -75,6 +75,90 @@ describe('tierForMemberCount', () => {
   });
 });
 
+// AM-3 (2026-11-06) : sur la VRAIE grille, le palier illimité est le dernier et
+// le repli « dernier palier » rend le même résultat que sa détection explicite
+// (`maxMembers === null`) ; le repli lui-même (`length - 1`) n'est jamais atteint.
+// Ces branches ne se distinguent donc qu'avec une grille substituée, comme dans
+// le test « grille sans palier illimité » plus haut.
+type GridTier = { key: string; minMembers: number; maxMembers: number | null; priceEurPerMonth: number };
+async function withGrid<T>(
+  tiers: GridTier[],
+  run: (logic: typeof import('./org-billing.logic')) => T,
+): Promise<T> {
+  vi.resetModules();
+  vi.doMock('./premium-config', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('./premium-config')>()),
+    ENTERPRISE_PRICING_TIERS: tiers,
+  }));
+  try {
+    return run(await import('./org-billing.logic'));
+  } finally {
+    vi.doUnmock('./premium-config');
+    vi.resetModules();
+  }
+}
+
+/** Aucun palier illimité : tout effectif ou plafond hors grille retombe sur le dernier. */
+const GRID_SANS_ILLIMITE: GridTier[] = [
+  { key: 'free', minMembers: 0, maxMembers: 5, priceEurPerMonth: 0 },
+  { key: 't10', minMembers: 5, maxMembers: 10, priceEurPerMonth: 20 },
+];
+
+/** Le palier illimité EN TÊTE : il doit couvrir (ou nommer) ce qu'on lui demande où qu'il soit. */
+const GRID_ILLIMITE_EN_TETE: GridTier[] = [
+  { key: 'unl', minMembers: 0, maxMembers: null, priceEurPerMonth: 50 },
+  { key: 'free', minMembers: 0, maxMembers: 5, priceEurPerMonth: 0 },
+  { key: 't10', minMembers: 5, maxMembers: 10, priceEurPerMonth: 20 },
+];
+
+describe('grilles substituées : repli sur le dernier palier et palier illimité', () => {
+  it('sans palier illimité, recommendedTier hors grille rend le dernier palier, jamais undefined', async () => {
+    await withGrid(GRID_SANS_ILLIMITE, (logic) => {
+      expect(logic.recommendedTier(10).key).toBe('t10');
+      expect(logic.recommendedTier(11).key).toBe('t10');
+    });
+  });
+
+  it('sans palier illimité, tierByQuota(null) rend le dernier palier, pas le premier', async () => {
+    await withGrid(GRID_SANS_ILLIMITE, (logic) => {
+      expect(logic.tierByQuota(null).key).toBe('t10');
+    });
+  });
+
+  it('sans palier illimité, un plafond au-delà de la grille rend le dernier palier', async () => {
+    await withGrid(GRID_SANS_ILLIMITE, (logic) => {
+      expect(logic.tierByQuota(11).key).toBe('t10');
+      expect(logic.tierByQuota(10).key).toBe('t10');
+      expect(logic.tierByQuota(6).key).toBe('t10');
+    });
+  });
+
+  it('un palier illimité couvre tout effectif, même placé avant les paliers plafonnés', async () => {
+    await withGrid(GRID_ILLIMITE_EN_TETE, (logic) => {
+      expect(logic.tierForMemberCount(50).key).toBe('unl');
+    });
+  });
+
+  it('recommendedTier : un palier illimité payant laisse toujours une place, même placé en tête', async () => {
+    await withGrid(GRID_ILLIMITE_EN_TETE, (logic) => {
+      expect(logic.recommendedTier(50).key).toBe('unl');
+    });
+  });
+
+  it('tierByQuota(null) nomme le palier illimité où qu il soit dans la grille', async () => {
+    await withGrid(GRID_ILLIMITE_EN_TETE, (logic) => {
+      expect(logic.tierByQuota(null).key).toBe('unl');
+    });
+  });
+
+  it('tierByQuota : un plafond fini ne retombe jamais sur le palier illimité, même placé en tête', async () => {
+    await withGrid(GRID_ILLIMITE_EN_TETE, (logic) => {
+      expect(logic.tierByQuota(0).key).toBe('free');
+      expect(logic.tierByQuota(8).key).toBe('t10');
+    });
+  });
+});
+
 describe('effectiveQuota', () => {
   it('sans abonnement → 5 sièges', () => {
     expect(effectiveQuota(null)).toBe(5);
@@ -280,6 +364,31 @@ describe('lastFailedPaymentAt', () => {
         entry('invoice.payment_failed', '2026-10-02T10:00:00Z'),
         entry('invoice.payment_succeeded', '2026-11-03T10:00:00Z'),
         entry('invoice.payment_failed', '2026-11-02T10:00:00Z'),
+      ]),
+    ).toBe('2026-11-02T10:00:00Z');
+  });
+  it('le plus récent en premier : un échec plus ancien placé après ne le remplace pas', () => {
+    expect(
+      lastFailedPaymentAt([
+        entry('invoice.payment_failed', '2026-11-02T10:00:00Z'),
+        entry('invoice.payment_failed', '2026-10-02T10:00:00Z'),
+      ]),
+    ).toBe('2026-11-02T10:00:00Z');
+  });
+  it('une date illisible placée en dernier ne remplace pas un échec valide', () => {
+    expect(
+      lastFailedPaymentAt([
+        entry('invoice.payment_failed', '2026-11-02T10:00:00Z'),
+        entry('invoice.payment_failed', 'pas une date'),
+      ]),
+    ).toBe('2026-11-02T10:00:00Z');
+    expect(lastFailedPaymentAt([entry('invoice.payment_failed', 'pas une date')])).toBeNull();
+  });
+  it('deux échecs au même instant : le premier rencontré est gardé', () => {
+    expect(
+      lastFailedPaymentAt([
+        entry('invoice.payment_failed', '2026-11-02T10:00:00Z'),
+        entry('invoice.payment_failed', '2026-11-02T10:00:00.000Z'),
       ]),
     ).toBe('2026-11-02T10:00:00Z');
   });
