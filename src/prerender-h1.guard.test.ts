@@ -45,6 +45,11 @@ describe('le guide servi porte le guide entier', () => {
     expect(bodyWords('<head><title>a b c</title></head><body><script>x y z</script><style>p{}</style><p>un deux</p> trois &amp; quatre</body>')).toBe(4);
   });
 
+  it('accepte une balise fermante avec espaces ou casse mixte (CodeQL js/bad-tag-filter)', () => {
+    const page = '<body><script>un deux</script ><style>p{}</STYLE\t\n><p>trois</p></SCRIPT ></body>';
+    expect(bodyWords(page)).toBe(1);
+  });
+
   it('prerender.mjs fixe un plancher de mots pour /guide', () => {
     expect(prerender).toMatch(/MOTS_MIN = \{ '\/guide': \d{4} \}/);
   });

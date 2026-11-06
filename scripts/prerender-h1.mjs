@@ -21,8 +21,8 @@ export const countH1 = (html) => (html.match(/<h1(?=[\s>])/g) ?? []).length;
 export function bodyWords(html) {
   const body = html.match(/<body[\s\S]*<\/body>/i)?.[0] ?? html;
   return body
-    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<script\b[\s\S]*?<\/script\s*>/gi, ' ')
+    .replace(/<style\b[\s\S]*?<\/style\s*>/gi, ' ')
     .replace(/<[^>]+>/g, ' ')
     .replace(/&[a-z#0-9]+;/gi, ' ')
     .split(/\s+/)
