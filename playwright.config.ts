@@ -76,6 +76,9 @@ export default defineConfig({
       // d'un cas qui ne mesure rien, et ferait payer deux fois la meme chauffe.
       testIgnore: [
         '**/stubbed/**',
+        // TST-03 : parcours contre une VRAIE base locale, joues par leur propre
+        // config (`playwright.real.config.ts`) et leur propre workflow.
+        '**/real/**',
         '**/_warmup-mobile.spec.ts',
         // C-97 : specs qui n'ont de sens que sur un appareil mobile emule
         // (paysage, texte agrandi, CPU bride). Les jouer en Desktop Chrome
@@ -134,6 +137,8 @@ export default defineConfig({
       // silencieux l'aurait fait disparaître ; cette liste le nomme.
       testIgnore: [
         '**/stubbed/**',
+        // TST-03 : cf. le project `chromium`.
+        '**/real/**',
         '**/demo-calendar.spec.ts',
         '**/demo-task-dependencies.spec.ts',
         // C-97 : ce spec bride le CPU par CDP (`Emulation.setCPUThrottlingRate`),
