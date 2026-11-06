@@ -29,8 +29,8 @@ test('créer un OKR et faire progresser un résultat clé', async ({ page, makeA
 
   // ── Rechargement : l'objectif et son résultat clé viennent de la base ──
   await reload(page);
-  await expect(page.getByText(objective).first()).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByText(keyResult).first()).toBeVisible();
+  await expect(page.getByText(objective).filter({ visible: true }).first()).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText(keyResult).filter({ visible: true }).first()).toBeVisible();
 
   // ── Faire progresser le résultat clé : deux crans ────────────────
   const plus = page.getByRole('button', { name: `Augmenter ${keyResult}` }).filter({ visible: true }).first();
