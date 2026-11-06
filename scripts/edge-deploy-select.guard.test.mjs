@@ -265,8 +265,8 @@ describe('edge-deploy · le vrai depot', () => {
 describe('edge-deploy · le workflow appelle REELLEMENT ce selecteur', () => {
   const yml = readFileSync(resolve(process.cwd(), '.github/workflows/edge-deploy.yml'), 'utf8');
 
-  it('ne part qu apres une CI verte, sur un push de main', () => {
-    expect(yml).toMatch(/workflow_run:\s*\n\s*workflows:\s*\[CI\]/);
+  it('ne part qu apres un CI noyau vert, sur un push de main', () => {
+    expect(yml).toMatch(/workflow_run:\s*\n(\s*#.*\n)*\s*workflows:\s*\[CI noyau\]/);
     expect(yml).toContain("github.event.workflow_run.conclusion == 'success'");
     expect(yml).toContain("github.event.workflow_run.event == 'push'");
     expect(yml).toContain("github.event.workflow_run.head_branch == 'main'");
@@ -288,8 +288,20 @@ describe('edge-deploy · le workflow appelle REELLEMENT ce selecteur', () => {
     expect(yml).toContain('npm run check:edge-smoke');
   });
 
+  // CI-03 (2026-11-06) : le noyau dont depend le deploiement doit TESTER le
+  // code Edge. Un `CI noyau` vide serait toujours vert, et deploierait tout.
+  it('TEMOIN : CI noyau lance lint, typecheck, tests, couvertures et temoins Edge', () => {
+    const noyau = readFileSync(resolve(process.cwd(), '.github/workflows/ci-noyau.yml'), 'utf8').replace(/\r\n/g, '\n');
+    expect(noyau).toMatch(/^name: CI noyau$/m);
+    for (const commande of ['npm run lint\n', 'npx tsc -b\n', 'npm run test:coverage\n', 'npm run test:coverage:tooling\n', 'npm run check:edge-coverage\n']) {
+      expect(noyau, commande).toContain(`        run: ${commande}`);
+    }
+    expect(noyau).toMatch(/push:\s*\n\s*branches: \[main\]/);
+  });
+
   it('est branche sur ci-alert.yml', () => {
     const alerte = readFileSync(resolve(process.cwd(), '.github/workflows/ci-alert.yml'), 'utf8');
     expect(alerte).toMatch(/^\s*- Edge deploy$/m);
+    expect(alerte).toMatch(/^\s*- CI noyau$/m);
   });
 });

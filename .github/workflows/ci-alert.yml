@@ -41,6 +41,9 @@ on:
     # backlink perdu ou un secret absent n'a pas d'autre chemin vers un humain.
     workflows:
       - CI
+      # CI-03 (2026-11-06) : lint, typecheck et tests unitaires ont quitte `CI`
+      # pour lui. Absent d'ici, un lint rouge sur `main` ne sonnerait plus.
+      - CI noyau
       - Edge deploy drift
       # AM-6 (2026-10-23) : le deploiement continu des fonctions. Un rouge ici
       # est une fonction partie a moitie, ou pas partie du tout.
@@ -61,6 +64,8 @@ on:
       - Signaux SEO
       # `Mutation` (AM-3, 2026-10-23) : hebdomadaire, sans déclencheur humain.
       - Mutation
+      # ⚠️ `Gardes de calendrier` n'y est PAS, pour la meme raison qu'`Uptime`
+      # ci-dessous : sa propre issue `calendrier-red`, refermee seule.
       # ⚠️ `Uptime` n'y est PAS NON PLUS, et ce n'est pas un oubli : il ouvre
       # DÉJÀ sa propre issue, qui se referme seule au retour du vert.
       # L'ajouter ici doublerait chaque panne d'une seconde alerte, et deux

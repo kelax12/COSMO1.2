@@ -1683,4 +1683,32 @@ export const CATALOGUE = [
       'Un run ancien qui finit apres un recent redeploierait un code plus vieux '
       + 'par-dessus celui de `main` : la prod reculerait sur un run vert.',
   },
+  // CI-03 (2026-11-06) · le deploiement ne depend que du noyau.
+  {
+    id: 'edge-deploy-attend-toute-la-ci',
+    famille: 'produit',
+    garde: 'scripts/edge-deploy-select.guard.test.mjs',
+    modifs: [r('.github/workflows/edge-deploy.yml', '    workflows: [CI noyau]', '    workflows: [CI]')],
+    attendu: ['ne part qu apres un CI noyau vert, sur un push de main'],
+    pourquoi:
+      'Le deploiement suspendu a un `CI` entierement vert : un e2e ou une garde de document '
+      + 'rouge bloque les Edge Functions, cinq fonctions de facturation en retard le 2026-11-03.',
+  },
+
+  // ═════════════════════════════════════════════════════════════════
+  // SEC-01 · SEC-05 (2026-11-06) · AUCUN FICHIER DE DONNÉES SUR LE DÉPÔT PUBLIC
+  // ═════════════════════════════════════════════════════════════════
+  {
+    id: 'fichiers-sensibles-csv-aveugle',
+    famille: 'detecteur',
+    garde: 'scripts/check-fichiers-sensibles.guard.test.mjs',
+    modifs: [r('scripts/check-fichiers-sensibles.mjs', "  ['.csv', 'export tabulaire (CSV)'],", "  ['.csv-aveugle', 'export tabulaire (CSV)'],")],
+    attendu: [
+      'TÉMOIN : refuse leads-50.csv',
+      'TÉMOIN : un .csv indexé fait échouer `git commit`, un .ts passe',
+    ],
+    pourquoi:
+      'L incident du 2026-10-30 : `leads-50.csv`, cinquante prospects nommés, poussé sur le '
+      + 'dépôt public sans que le hook ni la CI ne bronchent.',
+  },
 ];

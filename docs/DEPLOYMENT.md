@@ -126,8 +126,9 @@ le dernier run `CI` de `main` est rouge. Il s'installe une fois par clone :
 les fonctions Deno, elles, partent par `.github/workflows/edge-deploy.yml` (AM-6,
 2026-10-23) :
 
-- **Quand** : après un run `CI` **vert** issu d'un push sur `main`, sur le SHA que
-  `CI` a validé. Un déploiement à la fois (`concurrency: edge-deploy`).
+- **Quand** : après un run `CI noyau` **vert** (lint, `tsc -b`, tests unitaires,
+  couvertures ; `ci-noyau.yml`, 2026-11-06) issu d'un push sur `main`, sur le SHA
+  qu'il a validé. Un déploiement à la fois (`concurrency: edge-deploy`).
 - **Quoi** : `scripts/edge-deploy-select.mjs` diffe le dernier SHA déployé (lu
   dans le titre du dernier run vert) contre ce SHA. Une fonction part si un de
   ses fichiers change, si un `_shared/` qu'elle embarque change (directement ou
@@ -137,8 +138,8 @@ les fonctions Deno, elles, partent par `.github/workflows/edge-deploy.yml` (AM-6
   et le run suivant repart de la dernière base **verte** : ce qui n'est pas parti
   repart.
 - **Secret** : `SUPABASE_ACCESS_TOKEN` (le même que `edge-deploy-drift.yml`).
-- ❌ Pas de déclenchement manuel du workflow : il contournerait « CI verte sur ce
-  SHA ». Un run rouge se rejoue par « Re-run ».
+- ❌ Pas de déclenchement manuel du workflow : il contournerait « `CI noyau` verte
+  sur ce SHA ». Un run rouge se rejoue par « Re-run ».
 
 Déploiement à la main (secours, depuis la racine, sur `main` à jour) :
 
