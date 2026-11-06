@@ -235,6 +235,18 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 > identifiés : le recalage est légitime. Un 81ᵉ ne le serait pas sans réponse à « quel objet ».
 
 
+## 🟢 CodeQL n° 15, 18, 19 · 2026-11-06
+
+Alertes ouvertes relues par l'API le 2026-11-06 (analyse CodeQL de `d938bc6e`), chemin de chaque
+alerte lu dans le SARIF de l'analyse, pas déduit du message. Dependabot n° 65 traité en même temps.
+
+| Alerte | Décision |
+|---|---|
+| n° 19 · `high` · `js/clear-text-storage-of-sensitive-data` · `src/modules/billing/pending-checkout.ts` | ✅ **Corrigée dans le code.** La source du chemin est le seul NOM `billingInterval` (`OrgBillingTab.tsx`) : CodeQL classe « billing » parmi les données privées. Ce qui est écrit en `sessionStorage` : `{ orgId, tierKey, interval, at }`, soit un identifiant d'organisation, un palier, `monthly` ou `yearly`, un horodatage. Rien de sensible. L'état local est renommé `selectedInterval` (comme `selectedTier`) : même valeur, même trace, même relecture au retour de Stripe |
+| n° 15 · `medium` · `actions/untrusted-checkout/medium` · `.github/workflows/edge-deploy.yml` | ⚪ **Faux positif, code inchangé.** Le motif visé : un `workflow_run` déclenché par la CI d'une PR de fork, qui extrait le code de la PR avec les secrets. Ici, `CI` part sur `push` et `pull_request` vers `main` ; le job n'avance que si `workflow_run.event == 'push'`, `head_branch == 'main'` et `head_repository.full_name == github.repository`. Une PR (fork ou non) est écartée par `event`, un fork par `head_repository`. Le SHA extrait est donc un commit poussé sur `main` de ce dépôt, ce qui exige le droit d'écriture : c'est le code que le job a pour métier de déployer, et `head_sha` n'est pas choisi par un tiers (l'objet partagé entre forks n'est atteignable qu'avec un SHA que ces gardes ne laissent pas passer). Pas de `workflow_dispatch` ; un Re-run garde l'évènement d'origine et exige le droit d'écriture. L'étape suivante refuse un `HEAD` différent du SHA validé |
+| n° 18 · `medium` · `js/file-access-to-http` · `scripts/ops-alert.mjs` | ⚪ **Voulu, code inchangé.** Chemin : `.env.mail` (local, ignoré par git, écrit par Axel) → `DISCORD_WEBHOOK` → URL du `fetch` de `deliver()`, appelé par `scripts/mail/mail.mjs report`. La seule donnée du fichier qui part sur le réseau est l'adresse de destination elle-même ; le corps est le compte des non lus (`buildReport`), pas le contenu du fichier. Aucun workflow ne lance ce script. Non restructuré : `scripts/mail/mail.mjs` est protégé en écriture par le hook `block-mail-send` d'Axel. Une remise en forme (`process.loadEnvFile`) ferait taire l'alerte sans rien changer au chemin : à Axel de décider |
+| Dependabot n° 65 · `minimatch` 10.2.6 · moyenne · développement | ✅ **Corrigé.** Seule version corrigée : `11.0.1` (GHSA-g3hv-75wg-m249), hors des plages `~10.2.4` (`@stryker-mutator/core`) et `^10.2.2` (`@typescript-eslint/typescript-estree`). `overrides` ciblés sur ces deux paquets → `11.0.5` ; le `minimatch` 3 de premier niveau n'est pas dans la plage vulnérable. Même API (`minimatch`, `Minimatch`, `match`, `negate`, `hasMagic`) : 1 404 comparaisons 10.2.6 / 11.0.5 sur les appels des deux paquets, 0 écart. `npm audit --omit=dev` : 0 ; `npm audit` : 0 |
+
 ## 🔴 BK-1 · sauvegardes de la base EN CLAIR dans un dépôt public · contenu le 2026-10-13, 2 gestes ouverts
 
 **Trouvé par l'audit juridique du 2026-10-13.** `db-backup.yml` déposait chaque jour un `pg_dump`
