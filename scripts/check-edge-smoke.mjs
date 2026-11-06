@@ -232,6 +232,22 @@ export const SONDES = [
       + 'qui bloque tous les webhooks depuis leur création (A-3, vu le 2026-09-30 : '
       + '`UNAUTHORIZED_NO_AUTH_HEADER`), ne porte pas ce marqueur. Rouge jusqu au redéploiement.',
   },
+  // Lot 3 facturation (mig. 240) : alerte des 80 % de sièges, cron quotidien
+  // de `renewal-notice.yml`. Absente de cette liste, elle bloquait `Edge deploy`
+  // (une fonction sans sonde n'est jamais déployée, C-91).
+  {
+    fonction: 'seat-alert',
+    methode: 'POST',
+    corps: '{}',
+    statut: [401, 503],
+    // Appelée par la CI SANS jeton : c'est ainsi qu'on voit un verify_jwt faux (A-3).
+    sansJeton: true,
+    marqueur: '"error":"(unauthorized|cron_secret_not_configured)"',
+    prouve:
+      "La garde `x-cron-secret` s'exécute et refuse AVANT toute lecture de "
+      + '`orgs_for_seat_alert` et tout e-mail. Même lecture du 503 que pour '
+      + '`renewal-notice`.',
+  },
   // B3 (2026-11-01) : API affiliation. Sondée sur une route inconnue : le
   // 404 vient du routage du CORPS, avant toute lecture, toute écriture.
   {
