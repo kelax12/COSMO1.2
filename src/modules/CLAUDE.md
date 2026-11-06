@@ -148,6 +148,10 @@ supabase.rpc('get_my_team_task_dependencies', { p_org: orgId }) // ✅ mig. 117
 - ❌ **Une RPC d'agrégat est `SECURITY INVOKER`.** Agréger des lectures, oui. Agréger des
   **autorisations**, jamais : en `DEFINER` on réécrit N autorisations à la main dans une fonction
   qui contourne la RLS.
+  ⚠️ **Seule exception, les lectures entreprise `get_my_team_*`** : DEFINER parce qu'en INVOKER la
+  policy reviendrait par ligne. Leur périmètre vient de `my_team_project_ids()` et de rien d'autre,
+  la règle que les policies consultent via `can_access_team_project` (mig. `243`). ❌ Jamais de
+  prédicat de visibilité réécrit dans une RPC. Témoin : `e2e/rls/regle-unique-projet.test.ts`.
 - Exception légitime : `getById` (accès par clé primaire). `task_dependencies` (mig. 132) se lit en
   direct, sa policy portant sur une colonne dénormalisée, donc indexable.
 

@@ -1,0 +1,67 @@
+-- ═══════════════════════════════════════════════════════════════════
+-- 242 · Fermé par défaut : plus aucun privilège implicite pour `anon`
+--       sur les tables et séquences FUTURES de `public` (SEC-10, V7.1)
+--
+-- LE DÉFAUT. `000_default_privileges.sql` (et, en production, la plateforme
+-- Supabase elle-même) pose :
+--
+--   ALTER DEFAULT PRIVILEGES IN SCHEMA public
+--     GRANT ALL ON TABLES    TO anon, authenticated, service_role;
+--   ALTER DEFAULT PRIVILEGES IN SCHEMA public
+--     GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
+--
+-- Toute table créée ensuite naît donc lisible ET écrivable par un visiteur
+-- anonyme. La seule barrière est la RLS : une table créée sans
+-- `ENABLE ROW LEVEL SECURITY` (oubli, migration écrite vite, table de
+-- travail) est ouverte à Internet par PostgREST, sans qu'aucun écran change.
+--
+-- LE CORRECTIF. Retirer `anon` des privilèges PAR DÉFAUT, pour les tables et
+-- les séquences. `authenticated` et `service_role` gardent les leurs : le
+-- modèle reste « la RLS est la frontière » pour les comptes connectés, et la
+-- garde statique de `validate-migrations.mjs` (règle 9, même fichier) refuse
+-- désormais une table créée sans sa RLS dans le même fichier.
+--
+-- 🔴 AUCUN ACCÈS ACTUEL NE CHANGE, et c'est pour ça qu'il n'y a aucun GRANT ici.
+--   · Un privilège par défaut ne s'applique qu'à la CRÉATION d'un objet.
+--     Les tables existantes gardent leur ACL telle quelle : `anon` conserve
+--     sur elles exactement ce qu'il avait (la preuve compare l'empreinte de
+--     toutes les ACL de `public` avant et après).
+--   · Un `GRANT … ON ALL TABLES IN SCHEMA public TO anon` « pour être sûr »
+--     ROUVRIRAIT ce que les mig. 055, 083, 084, 101 et suivantes ont retiré à
+--     `anon` table par table. C'est exactement l'erreur à ne pas faire.
+--
+-- 🔴 CONSÉQUENCE POUR LES MIGRATIONS SUIVANTES. Une table nouvelle qu'un
+--    visiteur anonyme doit pouvoir lire (rare : aujourd'hui, aucune) porte son
+--    `GRANT SELECT ON public.<table> TO anon` explicite, à côté de sa policy.
+--    Une séquence d'une table qu'`anon` alimente, de même (`GRANT USAGE`).
+--
+-- PORTÉE. `ALTER DEFAULT PRIVILEGES` sans `FOR ROLE` vise le rôle COURANT :
+-- c'est celui qui applique les migrations (`postgres`, en production comme
+-- dans le replay CI), donc celui qui crée les tables. Les objets créés par
+-- un autre rôle (`supabase_admin` : schémas `auth`, `storage`) ne sont pas
+-- concernés, et `postgres` ne peut pas modifier les défauts d'un autre rôle.
+-- Les FONCTIONS ne sont pas traitées ici : leur `EXECUTE` par défaut vient
+-- de `PUBLIC` (Postgres) autant que de Supabase, et chaque migration le
+-- retire nommément (règle 16 de `validate-migrations.mjs`).
+--
+-- RETOUR ARRIÈRE (rouvre le défaut, à ne faire qu'en connaissance de cause) :
+--   ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES    TO anon;
+--   ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO anon;
+--
+-- Relecture au catalogue après application (aucune ligne attendue) :
+--   SELECT d.defaclrole::regrole, d.defaclobjtype, a.privilege_type
+--     FROM pg_default_acl d CROSS JOIN LATERAL aclexplode(d.defaclacl) a
+--    WHERE d.defaclnamespace = 'public'::regnamespace
+--      AND d.defaclrole = 'postgres'::regrole
+--      AND d.defaclobjtype IN ('r', 'S')
+--      AND a.grantee = 'anon'::regrole;
+--
+-- Idempotente : rejouée, elle ne retire rien de plus.
+-- Preuve : `supabase/proofs/242.proof.sql`.
+-- ═══════════════════════════════════════════════════════════════════
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  REVOKE ALL ON TABLES FROM anon;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  REVOKE ALL ON SEQUENCES FROM anon;
