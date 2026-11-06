@@ -2,12 +2,16 @@ import { randomUUID } from 'node:crypto';
 import type { Page } from '@playwright/test';
 import { test, expect, loginViaUi, newSession, goto, reload, expectNoErrorToast } from './helpers';
 
-/** L'accueil d'un espace entreprise recouvre l'écran à la première visite. */
+/**
+ * L'accueil d'un espace entreprise (vidéo) recouvre l'écran à la première visite.
+ * Repéré par sa vidéo, pas par son titre : « Bienvenue chez <entreprise> » change
+ * d'une personne à l'autre.
+ */
 async function dismissOrgWelcome(page: Page): Promise<void> {
-  const welcome = page.getByRole('dialog', { name: /^bienvenue/i });
-  if (await welcome.isVisible({ timeout: 8_000 }).catch(() => false)) {
-    await welcome.getByRole('button', { name: /^commencer/i }).click();
-    await expect(welcome).toBeHidden();
+  const video = page.locator('video[src*="onboarding-entreprise"]');
+  if (await video.first().isVisible({ timeout: 8_000 }).catch(() => false)) {
+    await page.getByRole('button', { name: /commencer/i }).first().click({ force: true });
+    await expect(video).toHaveCount(0, { timeout: 15_000 });
   }
 }
 

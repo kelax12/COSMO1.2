@@ -209,16 +209,16 @@ export async function createTaskViaUi(page: Page, name: string): Promise<void> {
 /**
  * Tache posee en base par le client authentifie du compte, avec une echeance.
  *
- * 🔴 Une echeance est donnee exprès : sur une base REJOUEE depuis les migrations,
- * `tasks.deadline` est NOT NULL, alors que l'application envoie `null` pour
- * une tache sans echeance (cf. `schema-drift.spec.ts`). Les parcours qui ne
+ * 🔴 Echeance ET priorite 3 sont donnees exprès : sur une base REJOUEE depuis les
+ * migrations, `tasks.deadline` est NOT NULL et `priority` est limitee a 1..5, alors
+ * que l'application envoie `null` et `0` pour une tache neuve (cf. `schema-drift.spec.ts`). Les parcours qui ne
  * testent pas la creation partent donc d'une tache deja ecrite.
  */
 export async function seedTask(account: Account, name: string): Promise<string> {
   const { data, error } = await account.client
     .from('tasks')
     .insert([{
-      name, priority: 0, category: null, deadline: new Date(Date.now() + 86_400_000).toISOString(),
+      name, priority: 3, category: null, deadline: new Date(Date.now() + 86_400_000).toISOString(),
       estimated_time: 0, bookmarked: false, completed: false, recurrence: 'none',
       is_collaborative: false, pending_invites: [], user_id: account.id,
     }])
