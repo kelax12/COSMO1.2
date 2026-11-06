@@ -7,20 +7,30 @@
 // premier passage réel (BK-1, 2026-10-13) a révélé qu'elle n'avait pas de
 // minuterie.
 //
-// CE QUE CETTE GARDE EXIGE, dans `docs/RGPD-VIOLATION.md` :
+// 🔒 2026-11-06 (SEC-02) : la procédure, `RGPD-VIOLATION.md`, est sortie du
+// dépôt PUBLIC (hors dépôt, `prive/` du checkout principal) : elle décrit
+// les trous de la réponse à incident. La garde lit désormais le journal
+// public `docs/RGPD-VIOLATION-EXERCICES.md`, qui ne porte que les dates.
+// ❌ Jamais de lecture de `prive/` ici : la CI ne l'a pas, et une garde qui
+// sauterait en son absence répondrait sans mesurer.
+//
+// CE QUE CETTE GARDE EXIGE, dans `docs/RGPD-VIOLATION-EXERCICES.md` :
 //
 //   1. au moins un exercice daté dans « ## Exercice à blanc », et le plus
 //      récent a moins de 12 mois (et n'est pas dans le futur) ;
-//   2. chaque « trou » consigné porte un état (corrigé, ou ouvert avec son item) ;
-//   3. TOUT lien `.md` du document (et son ancre) existe ;
+//   2. (retiré le 2026-11-06) l'état des « trous » : ils décrivent les
+//      faiblesses de la procédure et restent hors dépôt avec elle ;
+//   3. TOUT lien `.md` du journal (et son ancre) existe ;
 //   4. TOUTE commande `npm run X` citée existe dans `package.json`, et
-//      `verify_payment_chain` existe dans une migration ;
+//      `verify_payment_chain` (étape « Qualifier ») existe dans une migration ;
 //   5. chaque gabarit exigé existe sous son titre dans
 //      `docs/RGPD-VIOLATION-GABARITS.md`.
 //
 // ⚠️ CE QU'ELLE NE PROUVE PAS : qu'un exercice a réellement eu lieu, ni qu'il
 // a été fait par la bonne personne. Elle prouve qu'il est CONSIGNÉ, récent, et
-// que la matière qu'il manipule (liens, commandes, gabarits) EXISTE encore.
+// que la matière publique qu'il manipule (gabarits, fonction) EXISTE encore.
+// Les liens et commandes de la procédure elle-même ne sont plus lus par
+// personne : ils se relisent à la main à chaque exercice.
 //
 // ❌ NE JAMAIS dater un exercice qui n'a pas eu lieu pour faire passer la CI.
 // ═══════════════════════════════════════════════════════════════════
@@ -31,7 +41,7 @@ import { join, dirname, resolve, sep } from 'node:path';
 const RACINE = process.cwd();
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 export const VALIDITE_MOIS = 12;
-export const DOC = 'docs/RGPD-VIOLATION.md';
+export const DOC = 'docs/RGPD-VIOLATION-EXERCICES.md';
 export const GABARITS = 'docs/RGPD-VIOLATION-GABARITS.md';
 
 /** Les gabarits que la procédure appelle, par titre (`##`). */
@@ -98,15 +108,7 @@ export function verifier(racine = RACINE, maintenant = new Date()) {
     }
   }
 
-  // 2 · les trous ont un état
-  const trous = lignesDeSection(texte, 'Trous trouvés par l\'exercice');
-  if (trous === null) {
-    erreurs.push('Section « ## Trous trouvés par l\'exercice » absente.');
-  } else {
-    const donnees = trous.filter((c) => /^T-\d+/.test(c[0]));
-    for (const c of donnees) if (!(c[3] ?? '').length) erreurs.push(`Trou ${c[0]} sans état (corrigé, ou ouvert avec son item).`);
-    resume.push(`${donnees.length} trou(s) consigné(s)`);
-  }
+  // 2 · (retiré le 2026-11-06) les trous : hors dépôt avec la procédure.
 
   // 3 · les liens et leurs ancres
   let nLiens = 0;

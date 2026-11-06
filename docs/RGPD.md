@@ -25,7 +25,7 @@ traitée par fragments dans les audits sécurité. Mesuré sur le schéma de pro
 > | Item | Effet | Mesuré le 2026-11-06 |
 > |---|---|---|
 > | 🔴 Affiliation (mig. `236`, 2026-10-31) **absente du registre** | **−1** | sept tables `affiliate_*` (affiliateurs, leurs contacts, liens, clics, commissions, versements, réglages), `profiles.affiliate_id` (le compte garde l'affiliateur qui l'a amené), capture de `?aff=` en dernier clic 30 jours. Rien dans [`RGPD-REGISTRE.md`](./RGPD-REGISTRE.md) (art. 30) ni dans ce document. Décisions d'Axel, non rediscutées ici : capture hors consentement ([`MODULES.md`](./MODULES.md)), aucune mention dans la politique de confidentialité (`8c49db7a`, 2026-11-01, « l'affiliation reste interne »). Le registre est un document interne : ces décisions ne l'en dispensent pas. Effacement et portabilité de `affiliate_contacts` décidés (`0ab9b432`) |
-> | 🟠 Signal du détecteur de violation du 2026-10-26, jamais trié | **−1** | run `40324226207` de la PR n° 125 (ouverte depuis le 2026-10-23, non fusionnée) : « lignes REST lues par un même compte : **82 839** sur 24 h, seuil 20 000 ». Aucune trace de tri dans [`RGPD-VIOLATION.md`](./RGPD-VIOLATION.md), et les journaux du plan Free ne gardent qu'un jour : le signal ne se requalifie plus. Un signal non trié ne fait pas courir les 72 h, mais c'est exactement l'angle mort AM-2 de la procédure |
+> | 🟠 Signal du détecteur de violation du 2026-10-26, jamais trié | **−1** | run `40324226207` de la PR n° 125 (ouverte depuis le 2026-10-23, non fusionnée) : « lignes REST lues par un même compte : **82 839** sur 24 h, seuil 20 000 ». Aucune trace de tri dans `RGPD-VIOLATION.md` (hors dépôt), et les journaux du plan Free ne gardent qu'un jour : le signal ne se requalifie plus. Un signal non trié ne fait pas courir les 72 h, mais c'est exactement l'angle mort AM-2 de la procédure |
 > | `C-121` (comptes inactifs) | 0 | `inactive-accounts.yml` vert chaque jour (dernier : 2026-11-05) |
 >
 > **88 → 86.**
@@ -113,7 +113,7 @@ traitée par fragments dans les audits sécurité. Mesuré sur le schéma de pro
 >
 > | Item | Effet | Mesuré le 2026-10-15 |
 > |---|---|---|
-> | 🔴 `BK-1` · dumps complets de la base, en clair, téléchargeables depuis un dépôt public, du 2026-08-29 au 2026-10-13 | **−2** | violation au sens de l'art. 4.12 (cf. [`../faille.md`](../faille.md) § `BK-1`). Le défaut technique est refermé et vérifié (`8c6a971d`). **Ouverts** : `M-69`, décision de notification à la CNIL (art. 33), **avant le 2026-10-16 vers 11 h UTC** ; `M-70`, information des personnes (art. 34) ; registre des violations tenu **hors dépôt**. [`RGPD-VIOLATION.md`](./RGPD-VIOLATION.md) a servi pour la première fois, en situation réelle et non à blanc |
+> | 🔴 `BK-1` · dumps complets de la base, en clair, téléchargeables depuis un dépôt public, du 2026-08-29 au 2026-10-13 | **−2** | violation au sens de l'art. 4.12 (cf. `faille.md` (hors dépôt) § `BK-1`). Le défaut technique est refermé et vérifié (`8c6a971d`). **Ouverts** : `M-69`, décision de notification à la CNIL (art. 33), **avant le 2026-10-16 vers 11 h UTC** ; `M-70`, information des personnes (art. 34) ; registre des violations tenu **hors dépôt**. `RGPD-VIOLATION.md` (hors dépôt) a servi pour la première fois, en situation réelle et non à blanc |
 > | 🔴 `org_member_roles` (mig. `219`, en production depuis le 10-13) | **−1** | porte `user_id` sans décision écrite : `check:erasure` et `check:portability` **rouges à `HEAD`**, vus rouges en CI une seule fois (effacement, `8b791715`, 10-12), puis masqués par `check:docs`. Dans les faits, la FK `user_id` est `ON DELETE CASCADE` (lu dans le fichier de la migration, la lecture du catalogue ayant été refusée à l'agent) : l'effacement a lieu, il n'est pas déclaré. L'**export**, lui, manque : les rôles attribués à une personne ne sortent pas de son export |
 > | `C-121` · suppression des comptes inactifs depuis 3 ans | 0 | promesse publiée le 10-13 sans traitement ; aucun compte n'atteint le seuil avant 2029 |
 > | Export enrichi | 0 | statut et état des tâches dans l'export (mig. `214`, `d0ffbf2e`) ; la garde d'effacement lit désormais chaque clause d'un `ALTER TABLE` (`7d98cf78`) |
@@ -281,7 +281,7 @@ traitée par fragments dans les audits sécurité. Mesuré sur le schéma de pro
 > Ce document décrit la purge par `delete-account` (12 tables) et sa garde de non-régression
 > (`src/rgpd-erasure.guard.test.ts`, 5 cas, rejouée aujourd'hui : verte), mais n'avait jamais dit
 > si le code **testé** est le code **en ligne**. C'est précisément le défaut que
-> [`faille.md`](../faille.md) documente ailleurs (« un ✅ corrigé qui ne dit pas déployé décrit un
+> `faille.md` (hors dépôt) documente ailleurs (« un ✅ corrigé qui ne dit pas déployé décrit un
 > commit, pas la production ») — jamais appliqué ici, sur le droit à l'effacement lui-même.
 >
 > **Vérifié aujourd'hui** : `delete-account` est en **v17** (2026-09-13, 10:16 UTC), et le job
@@ -334,7 +334,7 @@ traitée par fragments dans les audits sécurité. Mesuré sur le schéma de pro
 > est réécrit en phrases complètes. **Mais un écart de cette nature, resté quatre jours en
 > production et signalé sans être lu, retire ce que la journée avait gagné.** Et il reste ouvert
 > par un bout qui n'appartient qu'à Axel : **le DPA du fournisseur (art. 28) n'est pas obtenu**,
-> cf. finding `V-1` de [`../faille.md`](../faille.md).
+> cf. finding `V-1` de `faille.md` (hors dépôt).
 
 > ### 2026-08-29 · +2, les durées de conservation sont publiées
 >
@@ -363,7 +363,7 @@ traitée par fragments dans les audits sécurité. Mesuré sur le schéma de pro
 > **écrite dans le dépôt et non appliquée en production**. Une migration non appliquée ne referme
 > rien, donc rien ne bouge. Le point bloquant reste le même qu'au 25, et il n'est toujours pas
 > technique : **les durées de conservation ne sont pas publiées** dans la politique de
-> confidentialité. Détail : §1 et finding G-1 de [`../faille.md`](../faille.md).
+> confidentialité. Détail : §1 et finding G-1 de `faille.md` (hors dépôt).
 
 | Ce qui compose la note | 08-24 | 08-25 |
 |---|---|---|
@@ -434,14 +434,14 @@ rédaction, et c'est le seul point qui sépare le dossier d'une réponse tenable
 > date de péremption. Aligner sur la règle maison : *toute donnée personnelle conservée doit avoir
 > une date de péremption* (A-11). Piste minimale : purger les lignes `declined_at IS NOT NULL` de
 > plus de 30 jours, comme `processed_stripe_events`. Cf. finding B-2 de
-> [`../faille.md`](../faille.md).
+> `faille.md` (hors dépôt).
 >
 > 🟠 **2026-08-27 · la moitié manquante est écrite, pas appliquée (mig. `130`).** La purge traitait
 > la **durée**, pas le **public** : pendant les 30 jours de rétention, et pour toute invitation en
 > attente, l'organisation entière lit la ligne. La mig. `130` restreint la lecture au
 > destinataire, à l'inviteur et aux admins (minimisation, **art. 5.1.c**). Elle est dans le dépôt
 > et **n'a pas été appliquée en production** au 2026-08-27 : ce point reste donc **ouvert en
-> prod**. Suivi complet : finding G-1 de [`../faille.md`](../faille.md).
+> prod**. Suivi complet : finding G-1 de `faille.md` (hors dépôt).
 >
 > ⚠️ Leçon à garder au-delà de cette table : *borner la durée de vie d'une donnée personnelle et
 > borner son public sont deux gestes distincts.* Le premier a été fait le 24 et a donné, trois

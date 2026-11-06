@@ -1,7 +1,7 @@
 # `api/` · fonctions Vercel, seul code serveur du dépôt
 
 > Créé le 2026-10-20. Chargé dès qu'un fichier de ce dossier est touché. Règles transversales :
-> [`CLAUDE.md`](../CLAUDE.md) à la racine. Le pourquoi : [`faille.md`](../faille.md) § `TR-1`,
+> [`CLAUDE.md`](../CLAUDE.md) à la racine. Le pourquoi : `faille.md` (hors dépôt) § `TR-1`,
 > [`docs/DEPLOYMENT.md`](../docs/DEPLOYMENT.md) (variables serveur).
 
 Un seul fichier aujourd'hui : `collect.ts`, le collecteur de la mesure d'audience maison

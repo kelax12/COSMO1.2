@@ -31,7 +31,7 @@
 #     et un artefact d'un dépôt public se télécharge depuis N'IMPORTE QUEL
 #     compte GitHub connecté. Cette ligne affirmait l'inverse (« les artefacts
 #     ne le sont pas »), et 29 dumps EN CLAIR sont restés exposés du 2026-08-29
-#     au 2026-10-13 (violation de données, docs/RGPD-VIOLATION.md, registre).
+#     au 2026-10-13 (violation de données, `RGPD-VIOLATION.md` hors dépôt, registre).
 #     Seul `*.dump.gpg` (AES-256, phrase secrète `BACKUP_PASSPHRASE`) part en
 #     artefact ; le fichier en clair ne quitte jamais le runner ;
 #   • ❌ JAMAIS de repli « en clair » si la phrase secrète manque : le job

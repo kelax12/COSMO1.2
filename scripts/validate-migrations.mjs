@@ -100,7 +100,7 @@ for (const f of files) {
 // ─── (5) Fonctions de trigger : durcissement des droits ─────────────
 //
 // Regle posee par la mig. 064b, re-appliquee par la 094b, oubliee par la 108
-// (finding B-3 de faille.md). Une fonction `RETURNS trigger` n'est de toute
+// (finding B-3 de `faille.md` (hors dépôt, `prive/` du checkout principal)). Une fonction `RETURNS trigger` n'est de toute
 // facon pas appelable directement — Postgres refuse — mais tant qu'elle reste
 // executable par `anon` / `authenticated`, elle apparait dans les advisors
 // Supabase et NOIE le signal : c'est ce bruit qui a masque la vraie anomalie.

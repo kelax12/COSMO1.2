@@ -3,7 +3,7 @@
 //
 // Cause racine du pire finding de l'audit v2 : la prod tournait un
 // stripe-webhook périmé et la migration 017 n'avait jamais été appliquée,
-// alors que faille.md marquait ces fixes « corrigés ». Ce script rend la
+// alors que `faille.md` (hors dépôt) marquait ces fixes « corrigés ». Ce script rend la
 // dérive DÉTECTABLE : il parse les objets attendus depuis
 // supabase/migration/*.sql et les diffe contre une introspection LIVE.
 //

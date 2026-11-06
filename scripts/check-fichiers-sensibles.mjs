@@ -8,14 +8,21 @@
 // filtrait avant le commit, rien ne filtrait en CI. Retirer un fichier du
 // suivi n'efface pas l'historique : la seule défense utile est AVANT.
 //
-// ── CE QUE CETTE GARDE REFUSE ───────────────────────────────────────
+// ── CE QUE CETTE GARDE REFUSE (la liste UNIQUE, SEC-01 et SEC-07) ───
 //
+//   · des chemins, quel que soit le suffixe (`CHEMINS_INTERDITS`) :
+//     `prive/**`, `docs/business-plan/**`, `leads-*`, `supabase/.temp/**`,
+//     `.claude/settings.local.json` ;
 //   · les tableurs et exports : `*.csv`, `*.xlsx`, `*.xls` ;
-//   · les documents : `*.pdf` ;
+//   · les documents : `*.pdf`, `*.docx`, `*.pptx` ;
 //   · les dumps : `*.sql.gz`, `*.dump`, `*.backup` ;
 //   · les fichiers d'environnement `.env*`, sauf `.env.example` et
 //     `.env.e2e-stub` (gabarits sans secret, lus par le dépôt) ;
 //   · tout fichier de plus de 1 Mo.
+//
+// Le hook `.githooks/pre-commit`, le job CI `fichiers-sensibles` et la garde
+// Vitest `scripts/fichiers-suivis.guard.test.mjs` (`git ls-files`) lisent
+// tous CE module : un motif ajouté ici vaut aux trois endroits.
 //
 // Une exception se déclare UNE PAR UNE dans `EXCEPTIONS`, avec son chemin,
 // l'empreinte git (blob) de la version admise et le motif. Une autre version
@@ -31,6 +38,8 @@
 //   `--plage A..B`   tout fichier ajouté ou modifié par un commit de la
 //                    plage, même s'il a été retiré ensuite : l'historique
 //                    public le garde.
+//   `lireSuivis()`   tout ce que l'index suit (`git ls-files`), lu par la
+//                    garde Vitest : un `--no-verify` tombe à `npm test`.
 //
 // ⚠️ Pas de shebang : le témoin importe ce module (cf. `scripts/CLAUDE.md`).
 // Témoin : `scripts/check-fichiers-sensibles.guard.test.mjs`.
@@ -54,7 +63,39 @@ export const SUFFIXES = [
   ['.xlsx', 'tableur'],
   ['.xls', 'tableur'],
   ['.pdf', 'document PDF'],
+  ['.docx', 'document Word'],
+  ['.pptx', 'présentation'],
 ];
+
+/**
+ * Chemins refusés quel que soit leur suffixe, testés AVANT les suffixes (le
+ * motif le plus précis donne la raison). Forme glob, comparée au chemin en
+ * minuscules : `**` traverse les dossiers, `*` reste dans un nom.
+ * Le dépôt est PUBLIC : `prive/` est le dossier local des documents internes
+ * (`faille.md`, procédures, prospection), décision d'Axel du 2026-11-06.
+ */
+export const CHEMINS_INTERDITS = [
+  ['prive/**', 'dossier local `prive/` (documents internes, jamais publiés)'],
+  ['docs/business-plan/**', 'business plan (`docs/business-plan/`)'],
+  ['**/leads-*', 'fichier de prospection (`leads-*`)'],
+  ['supabase/.temp/**', 'état local du CLI Supabase (`supabase/.temp/`)'],
+  ['.claude/settings.local.json', 'réglages locaux d agent (`.claude/settings.local.json`)'],
+];
+
+/** Un glob de `CHEMINS_INTERDITS` en expression régulière ancrée. */
+export function globVersRegex(glob) {
+  let re = '';
+  for (let i = 0; i < glob.length; i++) {
+    const c = glob[i];
+    if (glob.startsWith('**/', i)) { re += '(?:.*/)?'; i += 2; }
+    else if (glob.startsWith('**', i)) { re += '.*'; i += 1; }
+    else if (c === '*') re += '[^/]*';
+    else re += c.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+  }
+  return new RegExp(`^${re}$`);
+}
+
+const CHEMINS_RE = CHEMINS_INTERDITS.map(([glob, nature]) => [globVersRegex(glob.toLowerCase()), nature]);
 
 /**
  * Les exceptions, une par une. `blob` = `git ls-tree HEAD <chemin>` : une
@@ -84,6 +125,10 @@ export const EXCEPTIONS = [
 export function raisonSensible(chemin, taille) {
   const nom = chemin.split('/').pop() ?? '';
   const bas = nom.toLowerCase();
+  const cheminBas = chemin.toLowerCase();
+  for (const [re, nature] of CHEMINS_RE) {
+    if (re.test(cheminBas)) return nature;
+  }
   if (/^\.env($|\.)/.test(bas) && !ENV_ADMIS.has(nom)) {
     return 'fichier d environnement (`.env*`), seuls `.env.example` et `.env.e2e-stub` sont admis';
   }
@@ -159,12 +204,26 @@ export function lireArbre(sortie) {
   }).filter((e) => e.type === 'blob').map(({ chemin, blob, taille }) => ({ chemin, blob, taille }));
 }
 
-const git = (args, entree) => execFileSync('git', args, {
+/** `git ls-files -s -z` : `mode sha étape\tchemin\0`, c'est-à-dire ce qui est SUIVI. */
+export function lireLsFiles(sortie) {
+  return sortie.split('\0').filter((j) => j !== '').map((ligne) => {
+    const tab = ligne.indexOf('\t');
+    const [mode, blob] = ligne.slice(0, tab).split(' ');
+    if (tab < 0 || !/^[0-9a-f]{40}$/.test(blob ?? '')) throw new Error(`sortie ls-files illisible : « ${ligne} »`);
+    return { mode, chemin: ligne.slice(tab + 1), blob };
+  }).filter((e) => e.mode !== '160000').map(({ chemin, blob }) => ({ chemin, blob }));
+}
+
+/** Un exécuteur git, dans `cwd` (le dossier courant par défaut). */
+export const executerGit = (cwd) => (args, entree) => execFileSync('git', args, {
+  cwd,
   encoding: 'utf8',
   input: entree,
   maxBuffer: 256 * 1024 * 1024,
   stdio: ['pipe', 'pipe', 'pipe'],
 });
+
+const git = executerGit(undefined);
 
 /** Ajoute la taille de chaque blob (`git cat-file --batch-check`). */
 function avecTailles(entrees, executer = git) {
@@ -199,11 +258,16 @@ export function lireArbreHead(executer = git) {
   return lireArbre(executer(['ls-tree', '-r', '-l', '-z', 'HEAD']));
 }
 
+/** Tout ce que l'index suit (`git ls-files`), lu depuis la racine du dépôt. */
+export function lireSuivis(executer = git) {
+  return avecTailles(lireLsFiles(executer(['ls-files', '-s', '-z', '--full-name', ':/'])), executer);
+}
+
 // ─── Point d'entrée ──────────────────────────────────────────────────
 
 const AIDE = [
-  'Le fichier n a rien à faire sur un dépôt public : le retirer de l index',
-  '(`git rm --cached <chemin>`) et le ranger hors du dépôt.',
+  'Le dépôt COSMO est PUBLIC : ce fichier n a rien à y faire. Le retirer de l index',
+  '(`git rm --cached <chemin>`) et le ranger hors du dépôt (`prive/` du checkout principal).',
   'Publication voulue : l ajouter à EXCEPTIONS dans scripts/check-fichiers-sensibles.mjs,',
   'avec son empreinte (`git ls-files -s <chemin>`) et son motif. Aucune variable ne contourne.',
 ];
@@ -248,7 +312,9 @@ export function run({ argv = process.argv.slice(2), env = process.env, executer 
   }
 
   if (fautes.length === 0) return 0;
-  erreur(`fichiers sensibles : ${fautes.length} refus`);
+  erreur(modes.includes('index')
+    ? `pre-commit : commit REFUSÉ, ${fautes.length} fichier(s) interdit(s) sur ce dépôt public`
+    : `fichiers sensibles : ${fautes.length} refus`);
   for (const f of fautes) signaler(f);
   for (const l of AIDE) erreur(`  ${l}`);
   return 1;

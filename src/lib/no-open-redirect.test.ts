@@ -3,7 +3,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 // ─────────────────────────────────────────────────────────────────────────
-// G-9 (faille.md) — garde d'invariant.
+// G-9 (`faille.md`, hors dépôt) — garde d'invariant.
 //
 // L'analyse de risque de l'open redirect react-router conclut « exploitabilite
 // nulle » sur un fait verifiable : AUCUNE destination de navigation n'est

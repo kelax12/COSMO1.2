@@ -2,7 +2,7 @@
 
 > **Le détail, les mesures et l'histoire sont dans [`docs/STRIPE-LIVE.md`](../../../docs/STRIPE-LIVE.md)**,
 > § « Règles et récits repris de CLAUDE.md ». Ce fichier ne porte que les interdits.
-> Sécurité et RLS : [`docs/SECURITY.md`](../../../docs/SECURITY.md). Findings : [`faille.md`](../../../faille.md).
+> Sécurité et RLS : [`docs/SECURITY.md`](../../../docs/SECURITY.md). Findings : `faille.md` (hors dépôt).
 
 ## Deux abonnements à ne jamais confondre
 

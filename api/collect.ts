@@ -4,7 +4,7 @@
 // seul le serveur connaît (pays/région/ville fournis par Vercel, famille de
 // navigateur), puis appelle la RPC `track_hit` avec la clé SECRÈTE du projet.
 //
-// 🔴 Depuis la mig. 223 (finding TR-1 de faille.md), `track_hit` n'est
+// 🔴 Depuis la mig. 223 (finding TR-1 de `faille.md` (hors dépôt, `prive/` du checkout principal)), `track_hit` n'est
 // exécutable que par `service_role` : ce collecteur est le SEUL chemin
 // d'écriture, et ses filtres (origine, taille, robots) ne se contournent plus
 // en appelant `/rest/v1/rpc/track_hit` avec la clé publique.

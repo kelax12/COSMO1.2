@@ -63,7 +63,7 @@ Toutes les mesures de ce document sont **reproductibles** : les requêtes sont e
 >
 > | Item | Effet | Mesuré le 2026-10-18 |
 > |---|---|---|
-> | 🟠 `traffic_hits` · croissance | 0 | débitée **une fois**, dans [`../faille.md`](../faille.md) (`TR-1`) : purge à 13 mois active, mais jusqu'à **4,3 M lignes par jour** acceptées d'un appelant anonyme, pour une base de **24 Mo** et un plafond de 500 Mo en plan Free |
+> | 🟠 `traffic_hits` · croissance | 0 | débitée **une fois**, dans `faille.md` (hors dépôt) (`TR-1`) : purge à 13 mois active, mais jusqu'à **4,3 M lignes par jour** acceptées d'un appelant anonyme, pour une base de **24 Mo** et un plafond de 500 Mo en plan Free |
 > | Requêtes de `track_hit` | 0 | deux `count(*)` sur la dernière minute, servis par `idx_traffic_hits_visitor` et `idx_traffic_hits_time` |
 > | `scalability-volume` | 0 | dernier run planifié (mensuel) vert le 2026-10-03 |
 >
@@ -938,7 +938,7 @@ Aucun advisor `multiple_permissive_policies` ni `auth_rls_initplan` : les acquis
 
 | Item | État | Action |
 |---|---|---|
-| **Plan Postgres** | Free — **bloquant A-9** (pas de PITR, restauration jamais testée) | Passer en Pro, cf. [`../faille.md`](../faille.md) |
+| **Plan Postgres** | Free — **bloquant A-9** (pas de PITR, restauration jamais testée) | Passer en Pro, cf. `faille.md` (hors dépôt) |
 | **Connection pooling** | ✅ **Vérifié le 2026-08-28 — et la question ne se posait pas comme on croyait** | **L'application n'ouvre AUCUNE connexion Postgres.** Mesuré dans `pg_stat_activity` : les 11 connexions applicatives viennent toutes de **PostgREST** (rôle `authenticator`), qui tient son propre pool derrière HTTPS. Leur nombre ne dépend donc pas du nombre d'utilisateurs connectés. Marge : **14 connexions sur 60**, dont une seule active. Le pooler ne concerne que les accès DIRECTS — `npm run test:rls`, l'application des migrations, un futur worker — jamais le chemin de l'app. Le frein de montée en charge n'est pas le nombre de connexions, c'est le pool PostgREST et le CPU de la base |
 | **Read replicas** | Non activées (plan) | À ×100 utilisateurs actifs. L'app est déjà compatible : lectures et écritures sont séparées dans les repos |
 | **CDN** | ✅ OK | Assets Vercel immuables (`max-age=31536000`) |
@@ -963,7 +963,7 @@ le projet tient largement dans le palier gratuit au vu du trafic mesuré.
 
 **Le problème n'est pas le coût, c'est ce que le plan gratuit ne fournit pas** : ni PITR, ni
 rétention de backup sérieuse, ni branches de base de données — c'est le bloquant **A-9** de
-[`../faille.md`](../faille.md). Le passage au plan payant n'est donc pas une décision de
+`faille.md` (hors dépôt). Le passage au plan payant n'est donc pas une décision de
 capacité mais de **résilience** : aujourd'hui, une erreur de manipulation en prod n'est pas
 rattrapable.
 

@@ -13,7 +13,7 @@
 # Gabarits de la procédure de violation
 
 Pièces à **copier hors dépôt** (dossier privé) au moment d'une violation, et à remplir dans l'ordre de
-[`RGPD-VIOLATION.md`](./RGPD-VIOLATION.md). Créés le 2026-10-24 après l'exercice à blanc, qui a trouvé
+`RGPD-VIOLATION.md` (hors dépôt). Créés le 2026-10-24 après l'exercice à blanc, qui a trouvé
 qu'aucun gabarit n'existait dans le dépôt : les brouillons de la violation `BK-1` vivaient dans un
 dossier privé et ne se retrouvaient pas à froid.
 

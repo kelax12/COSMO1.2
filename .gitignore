@@ -152,6 +152,15 @@ coverage-tooling
 # Documents prives (depot PUBLIC) : prospection et business plan restent en local.
 /leads-*.csv
 /docs/business-plan/
+# Depot PUBLIC : `prive/` est le dossier LOCAL du checkout principal (faille.md,
+# a-faire-manuel.md, RGPD-VIOLATION.md, prospection, audit). Jamais publie ;
+# le hook pre-commit et la CI le refusent aussi (check-fichiers-sensibles.mjs).
+/prive/
+
+# Fichiers locaux d'outillage (SEC-07) : reglages d'agent du poste, etat du CLI
+# Supabase (pooler, project-ref). Retires du suivi le 2026-11-06.
+/.claude/settings.local.json
+/supabase/.temp/
 
 # Etat des seances de brainstorm superpowers.
 /.superpowers/
