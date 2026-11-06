@@ -3,7 +3,6 @@ import {
 } from './helpers';
 
 const TOGGLE_UNCHECKED = '[aria-label="Marquer comme complétée"]';
-const TOGGLE_CHECKED = '[aria-label="Marquer comme non complétée"]';
 
 /**
  * Parcours 2 · creer, modifier, terminer une tache. La CREATION par l'ecran est
@@ -52,7 +51,8 @@ test('créer, modifier puis terminer une tâche', async ({ page, makeAccount }) 
   // ── Terminer ──────────────────────────────────────────────────────
   const row = tasksList(page).locator('tr').filter({ hasText: renamed });
   await row.locator(TOGGLE_UNCHECKED).first().click();
-  await expect(row.locator(TOGGLE_CHECKED).first()).toBeVisible({ timeout: 15_000 });
+  // Terminee, la ligne quitte la liste des taches a faire (ou porte la case cochee).
+  await expect(row.locator(TOGGLE_UNCHECKED)).toHaveCount(0, { timeout: 15_000 });
 
   // La base dit « terminee » avant meme le rechargement...
   await expect.poll(async () => {
