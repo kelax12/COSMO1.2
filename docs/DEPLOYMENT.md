@@ -113,12 +113,25 @@ appliquée). Un objet EN TROP est un simple avertissement (héritage dashboard).
 
 ---
 
-### Hook `pre-push` : pas de poussée sur un `main` rouge (2026-10-21)
+### Hook `pre-push` : pas de poussée sur un noyau rouge (2026-10-21, sans contournement depuis le 2026-11-06)
 
 `.githooks/pre-push` lance `scripts/pre-push-main-red.mjs` : une poussée vers `main` est refusée si
-le dernier run `CI` de `main` est rouge. Il s'installe une fois par clone :
-`git config core.hooksPath .githooks`. Le commit qui RÉPARE `main` passe avec
-`COSMO_PUSH_ON_RED=1 git push`, et seulement lui.
+le dernier run `CI noyau` de `main` est rouge, ou si son état est illisible (`gh` absent ou non
+authentifié). Il s'installe une fois par clone : `git config core.hooksPath .githooks`.
+
+🔴 **Aucun contournement** (vague 2.3) : la variable qui forçait la poussée, banalisée (CI-01), est
+retirée, et le script ne lit aucune variable d'environnement. Le seul chemin pour réparer un noyau
+rouge passe par un verdict vert sur le correctif lui-même :
+
+1. `git push origin HEAD:refs/heads/noyau/<nom>` : le noyau tourne sur la branche ;
+2. une fois ce run `CI noyau` vert, `git push origin HEAD:main` : le hook laisse passer ce SHA, et
+   lui seul, parce qu'il a déjà un verdict vert ;
+3. `git push origin --delete noyau/<nom>`.
+
+⚠️ `--no-verify` saute tout hook local : ❌ interdit (`CLAUDE.md`). Seule une protection de branche
+côté GitHub (statut `CI noyau` requis) fermerait ce dernier chemin ; c'est un réglage du dépôt.
+Témoins : `scripts/pre-push-main-red.test.mjs` (noyau rouge + ancienne variable posée = refus ;
+gh illisible = refus ; la variable n'existe plus hors `docs/archive/`).
 
 ## 2bis. Déployer les Edge Functions
 

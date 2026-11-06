@@ -89,6 +89,19 @@ describe('ci.yml : la CI étendue ne porte plus aucun job du noyau', () => {
     expect(jobsDe(ETENDUE)).toEqual(['audit', 'e2e', 'lighthouse']);
   });
 
+  // Vague 2.3 : une alerte quand le noyau est rouge, plus aucune pour un job
+  // de test non bloquant (CI-01 : un salon qui sonne à chaque run ne dit rien).
+  it('TÉMOIN ci-alert.yml : sonne sur le noyau, jamais sur un job de test non bloquant', () => {
+    const alerte = lire('ci-alert.yml');
+    const bloc = alerte.match(/\n {4}workflows:\n((?: {6}.*\n)+)/);
+    expect(bloc, 'liste `workflows:` introuvable').not.toBeNull();
+    const suivis = bloc[1].split('\n').map((l) => l.match(/^ {6}- (.+)$/)?.[1]).filter(Boolean);
+    expect(suivis).toContain('CI noyau');
+    for (const muet of ['CI', 'CI etendue', 'Visual', 'Mutation', 'Sabotages', 'scalability-volume', 'Gardes de calendrier']) {
+      expect(suivis, muet).not.toContain(muet);
+    }
+  });
+
   it('edge-deploy.yml ne part que sur le noyau', () => {
     const deploy = lire('edge-deploy.yml');
     expect(deploy).toMatch(/^\s*workflows: \[CI noyau\]$/m);

@@ -190,8 +190,9 @@ Décision d'Axel du 2026-10-29. Les PR et les E2E locaux coûtaient trop de temp
   `lint`, `typecheck`, `test:changed` et un coup d'œil au preview. La
   CI joue l'E2E après le push. Exceptions : une spec `e2e/` modifiée (on ne lance qu'elle), ou
   une demande d'Axel.
-- Le hook `pre-push` refuse (CI de `main` rouge) : ❌ ne pas le contourner, ❌ ne pas ouvrir de
-  PR d'office. Commit local gardé, prévenir Axel.
+- Le hook `pre-push` refuse un noyau (`CI noyau`) rouge sur `main` : **aucun contournement**,
+  ❌ `--no-verify`, ❌ PR d'office. Réparer : pousser le correctif sur `noyau/<nom>`, puis ce même
+  SHA sur `main` une fois son noyau vert → `docs/DEPLOYMENT.md` § Hook.
 
 ## Environnement et déploiement
 
