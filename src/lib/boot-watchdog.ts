@@ -38,6 +38,12 @@
 // derrière les deux boutons.
 
 import { hardSignOut } from './hard-sign-out';
+// Catalogue `boot` : lu ICI, avant que l'i18n de l'app existe (pas de `useT`,
+// pas de `translator`, rien n'est encore chargé). Import STATIQUE des deux
+// langues, quelques centaines d'octets ; exclu du chargeur à la demande de
+// `i18n/catalog.ts`, qui n'en a pas l'usage. `i18n:check` en garde la parité.
+import frBoot from '@/locales/fr/boot.json';
+import enBoot from '@/locales/en/boot.json';
 
 /** Délai au-delà duquel un spinner de démarrage est tenu pour bloqué. */
 export const BOOT_STALL_MS = 12_000;
@@ -135,19 +141,7 @@ export function showBootRescue(
   }
 
   const en = (doc.documentElement.lang || '').toLowerCase().startsWith('en');
-  const copy = en
-    ? {
-        title: 'Cosmo cannot start.',
-        body: 'Reload the page: Cosmo downloads its files again first. If it happens again, reset the session saved in this browser: you will need to log in again, your data stays on your account.',
-        reload: 'Reload',
-        reset: 'Reset the session',
-      }
-    : {
-        title: 'Cosmo ne parvient pas à démarrer.',
-        body: 'Rechargez la page : Cosmo retélécharge d’abord ses fichiers. Si cela se reproduit, réinitialisez la session enregistrée dans ce navigateur : il faudra vous reconnecter, vos données restent sur votre compte.',
-        reload: 'Recharger',
-        reset: 'Réinitialiser la session',
-      };
+  const copy = (en ? enBoot : frBoot).rescue;
 
   const panel = doc.createElement('div');
   panel.id = RESCUE_ID;
