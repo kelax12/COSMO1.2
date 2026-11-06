@@ -1276,6 +1276,33 @@ résilier, donc il ne mesure pas le serveur. Ce qu'il mesure est une propriété
 **client**, et elle n'était pas acquise : sur un échec, l'écran ne doit pas
 anticiper une résiliation qui n'a pas eu lieu.
 
+#### TST-03 — `e2e/real/` : les parcours contre une VRAIE base (workflow `e2e-supabase`)
+
+Jusqu'au 2026-11-06 aucun parcours Playwright ne parlait à une vraie base : la démo
+rejoue `localStorage`, le stub intercepte tout vers un hôte inexistant. Les défauts
+qui n'existent que contre Postgres (RLS, triggers, RPC, forme des réponses) y étaient
+hors de portée, `C-77` (`okrTime` à 0 en production 17 jours, juste en démo) en est
+l'exemple.
+
+- **Workflow** `.github/workflows/e2e-supabase.yml` (push sur `main`, `workflow_dispatch`) : monte
+  la pile comme `rls-integration` (`supabase start`, `node scripts/apply-migrations.mjs`), sert les
+  Edge Functions (`supabase functions serve`, `APP_URL` = l'origine de l'app), construit l'app avec
+  `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` de la pile, la sert (`vite preview`, port 3220) et joue
+  `npx playwright test -c playwright.real.config.ts`. ⚠️ Il n'est pas dans la liste de `ci-alert.yml`.
+- **Config à part** (`playwright.real.config.ts`), parce que `playwright.config.ts` démarre deux
+  `webServer` (démo et `e2e-stub`) qu'un `--project=` ne désactive pas. Les specs de `e2e/real/` sont
+  exclues (`testIgnore: '**/real/**'`) de `chromium` et `mobile-safari` : elles ne peuvent pas être
+  jouées sans pile.
+- **Huit parcours** : inscription et connexion, tâche (créer, modifier, terminer), habitude, événement
+  d'agenda, OKR et résultat clé, partage entre deux comptes, entreprise (invitation, tâche d'équipe
+  visible du membre, invisible d'un tiers), suppression de compte. Chaque écriture est relue après
+  un rechargement ET par le client authentifié du compte (RLS exercée). Pas de Stripe.
+- 🔴 **Local seulement** : `e2e/real/helpers.ts` refuse un hôte autre que `127.0.0.1` / `localhost`.
+  Comptes `@example.com` créés par le test (la `service_role` ne sert qu'à créer et supprimer), supprimés
+  en fin de cas. ❌ Jamais un vrai compte, jamais l'URL de production.
+- ⚠️ Ces cas ne comptent pas dans `playwright test --list` (config par défaut). Les recompter par
+  `npx playwright test -c playwright.real.config.ts --list`.
+
 #### Ce qui n'est PAS joué sur `mobile-safari`, et pourquoi
 
 `demo-calendar` et `demo-task-dependencies` visent un DOM qui n'est pas forké par

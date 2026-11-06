@@ -68,3 +68,14 @@
 - 🔴 **Un parcours voit ce qu'aucun test unitaire ne peut voir.** Un écran qui se referme sur son
   propre effet (`FirstRunSetup`, C-53) ne se détecte qu'en le parcourant, et seulement une fois que
   le test attend que les écritures atterrissent.
+
+- 🔴 **`e2e/real/` joue l'app contre une VRAIE base Supabase locale** (TST-03, 2026-11-06), par
+  `playwright.real.config.ts` et le workflow `e2e-supabase.yml`, jamais par `npm run test:e2e` :
+  `chromium` et `mobile-safari` les excluent (`testIgnore`). Sans Docker, la CI est le seul moyen de les
+  jouer ; ❌ ne pas les « essayer » contre un projet distant.
+  · ❌ `helpers.ts` refuse tout hôte autre que `127.0.0.1` / `localhost` : ne pas assouplir ce garde-fou.
+    Comptes `@example.com` créés par le test, supprimés en fin de cas, jamais un vrai compte.
+  · ✅ Chaque écriture se relit **après `reload()`** et par le client authentifié du compte (RLS exercée) :
+    le cache React Query masque sinon l'absence de persistance.
+  · 🔴 Un parcours rouge ici est un défaut de production jusqu'à preuve du contraire : le marquer
+    `test.fixme` avec le bug décrit, ❌ jamais relâcher l'assertion. Détail : `docs/TESTING.md` § TST-03.
