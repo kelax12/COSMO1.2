@@ -1,5 +1,5 @@
 import {
-  test, expect, loginViaUi, seedTask, tasksList, reload, expectNoErrorToast,
+  test, expect, loginViaUi, seedTask, tasksList, goto, reload, expectNoErrorToast,
 } from './helpers';
 
 const TOGGLE_UNCHECKED = '[aria-label="Marquer comme complétée"]';
@@ -22,7 +22,7 @@ test('créer, modifier puis terminer une tâche', async ({ page, makeAccount }) 
 
   // ── Créer (écriture réelle, sous la RLS du compte) ─────────────────
   await seedTask(account, created);
-  await reload(page);
+  await goto(page, '/tasks');
   await expect(tasksList(page).getByText(created, { exact: true }).filter({ visible: true }).first())
     .toBeVisible({ timeout: 30_000 });
   {

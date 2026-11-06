@@ -27,9 +27,9 @@ const PORT = 3220;
 export default defineConfig({
   testDir: './e2e/real',
   testMatch: '**/*.spec.ts',
-  // 90 s par parcours : chacun cree ses comptes, passe par plusieurs ecrans et
+  // 180 s par parcours (deux ou trois comptes pour le partage et l'entreprise) : chacun cree ses comptes, passe par plusieurs ecrans et
   // recharge la page apres chaque ecriture. Pas de compilation a froid ici.
-  timeout: 90_000,
+  timeout: 180_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
