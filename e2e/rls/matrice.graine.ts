@@ -25,8 +25,22 @@ export type Ligne = Record<string, unknown>;
 
 export interface ContexteGraine {
   proprietaire: string;
+  /**
+   * Un troisième compte, ni propriétaire ni tiers attaquant : pour une colonne
+   * qui doit désigner une autre personne que le propriétaire (`invitee_id`,
+   * CHECK `inviter_id <> invitee_id`) sans donner de droit de lecture au tiers.
+   */
+  figurant: string;
   /** Ligne graine d'une autre table (semée à la demande). */
   ligne(table: string): Promise<Ligne>;
+  /**
+   * Une AUTRE ligne de cette table, distincte de la graine : pour une table de
+   * liens `a -> b` qui refuse `a = b` (dépendances, cycle détecté par trigger).
+   * Elle partage les parents de la graine (même organisation, même projet).
+   * `valeurs` écrase des colonnes (texte casté au type de la colonne) : un
+   * second membre d'une organisation (`user_id` = le figurant, `role` = member).
+   */
+  autre(table: string, valeurs?: Record<string, string | null>): Promise<Ligne>;
 }
 
 /** Valeur forcée d'une colonne : texte (casté au type de la colonne) ou `null`. */
@@ -176,6 +190,7 @@ export class Semeur {
     private readonly db: Db,
     private readonly tables: Map<string, Table>,
     private readonly proprietaire: string,
+    private readonly figurant: string,
     private readonly options: (table: string) => OptionsGraine | undefined,
   ) {}
 
@@ -212,9 +227,24 @@ export class Semeur {
     }
   }
 
-  private async creer(t: Table): Promise<Graine> {
+  /** Seconde ligne d'une table, hors mémoire : voir `ContexteGraine.autre`. */
+  private async semerAutre(nom: string, valeurs?: Record<string, string | null>): Promise<Ligne> {
+    const t = this.tables.get(nom);
+    if (!t) throw new Error(`${nom} : table absente du catalogue exposé`);
+    await this.semer(nom);
+    const g = await this.creer(t, true, valeurs);
+    this.graines.set(`${nom}#autre${this.graines.size}`, g);
+    return g.ligne;
+  }
+
+  private async creer(t: Table, neuve = false, surcharge?: Record<string, string | null>): Promise<Graine> {
     const opts = this.options(t.nom) ?? {};
-    const ctx: ContexteGraine = { proprietaire: this.proprietaire, ligne: (x) => this.semer(x) };
+    const ctx: ContexteGraine = {
+      proprietaire: this.proprietaire,
+      figurant: this.figurant,
+      ligne: (x) => this.semer(x),
+      autre: (x, v) => this.semerAutre(x, v),
+    };
     const valeurs = new Map<string, string | null>();
     const utilisateurs = colonnesUtilisateur(t);
 
@@ -262,8 +292,13 @@ export class Semeur {
       valeurs.set(col, typeof v === 'function' ? await v(ctx) : v);
     }
 
+    for (const [col, v] of Object.entries(surcharge ?? {})) {
+      if (!t.colonnes.some((c) => c.nom === col)) throw new Error(`${t.nom} : colonne surchargée inconnue « ${col} »`);
+      valeurs.set(col, v);
+    }
+
     // 3. Ligne déjà présente pour le propriétaire (trigger d'inscription, effet d'une graine) ?
-    if (!opts.sansReutiliser && utilisateurs.length > 0) {
+    if (!neuve && !opts.sansReutiliser && utilisateurs.length > 0) {
       const { rows } = await this.db.query<{ ligne: Ligne }>(
         `SELECT to_jsonb(t.*) AS ligne FROM public."${t.nom}" t
           WHERE ${utilisateurs.map((c) => `(to_jsonb(t.*) ->> '${c}') = $1`).join(' OR ')}
