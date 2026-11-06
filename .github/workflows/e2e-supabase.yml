@@ -1,0 +1,156 @@
+name: e2e-supabase
+
+# TST-03 (audit externe 2026-11-06) : jusque-la, AUCUN parcours Playwright ne
+# parlait a une vraie base. 28 specs jouent la demo (`localStorage`), 6 jouent
+# le mode production avec Supabase intercepte vers un hote inexistant
+# (`e2e/supabase-stub.ts`). Une classe de defauts leur echappe par
+# construction : ceux qui n'existent que contre la vraie base (RLS, triggers,
+# RPC, forme reelle des reponses PostgREST). C-77 (`okrTime` a 0 en production
+# pendant 17 jours, juste en demo) en est l'exemple.
+#
+# Ce workflow monte la MEME pile locale que le job `rls-integration` de
+# `ci.yml` (etapes copiees, pas partagees : `ci.yml` est restructure ailleurs),
+# rejoue toutes les migrations, construit l'app contre cette pile, la sert, et
+# joue `e2e/real/` avec `playwright.real.config.ts`.
+#
+# 🔴 LA PILE EST LOCALE, ET SEULEMENT ELLE. Les comptes sont crees par les tests
+# sur `127.0.0.1`; `e2e/real/helpers.ts` refuse de tourner contre un autre hote.
+# Aucun secret du depot n'entre ici, et ce job n'appelle jamais Stripe.
+
+on:
+  push:
+    # Les branches `claude/e2e-supabase-*` servent a ITERER sur ce workflow
+    # avant la livraison sur `main` : sans Docker en local, la CI est le seul
+    # moyen de le jouer.
+    branches: [main, 'claude/e2e-supabase-**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-supabase-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e-supabase:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
+        with:
+          version: latest
+      - run: npm ci
+      - name: Start Supabase stack (local)
+        run: supabase start
+      - name: Export Supabase env
+        run: |
+          supabase status -o env > supabase.env
+          set -a; . ./supabase.env; set +a
+
+          # Meme garde que `rls-integration` : un remap qui ne trouve rien
+          # ecrit une valeur VIDE sans faire echouer l'etape.
+          if [ -z "$API_URL" ] || [ -z "$ANON_KEY" ] || [ -z "$SERVICE_ROLE_KEY" ]; then
+            KEYS=$(sed -n 's/^\([A-Z_][A-Z0-9_]*\)=.*/\1/p' supabase.env | paste -sd, -)
+            echo "::error::API_URL / ANON_KEY / SERVICE_ROLE_KEY absents de 'supabase status -o env' (cles vues : ${KEYS:-aucune})"
+            exit 1
+          fi
+          if [ -z "$DB_URL" ]; then
+            KEYS=$(sed -n 's/^\([A-Z_][A-Z0-9_]*\)=.*/\1/p' supabase.env | paste -sd, -)
+            echo "::warning::DB_URL absent de 'supabase status -o env' (cles vues : ${KEYS:-aucune}) — repli sur l'URL locale standard"
+            DB_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          fi
+
+          {
+            echo "DATABASE_URL=$DB_URL"
+            echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+          } >> "$GITHUB_ENV"
+      - name: Apply migrations on fresh DB
+        id: migrate
+        run: |
+          set -o pipefail
+          if node scripts/apply-migrations.mjs 2>&1 | tee migrate.log; then
+            exit 0
+          fi
+          {
+            echo '### ✖ Replay des migrations sur base vierge — échec'
+            echo ''
+            echo '```'
+            tail -n 60 migrate.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+
+      # La suppression de compte passe par l'Edge Function `delete-account`
+      # (elle seule peut retirer une ligne de `auth.users`). Elle n'autorise
+      # que l'origine `APP_URL` : sans cette variable, le navigateur du test
+      # (127.0.0.1:3220) est refuse par le CORS de la fonction.
+      - name: Serve Edge Functions (local)
+        run: |
+          printf 'APP_URL=http://127.0.0.1:3220\n' > "$RUNNER_TEMP/functions.env"
+          nohup supabase functions serve --env-file "$RUNNER_TEMP/functions.env" > functions.log 2>&1 &
+          echo "$!" > functions.pid
+          # Attente bornee : `functions serve` demarre un conteneur Deno.
+          for i in $(seq 1 60); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -X OPTIONS "$SUPABASE_URL/functions/v1/delete-account" || true)
+            if [ "$code" != "000" ] && [ "$code" != "404" ] && [ "$code" != "502" ] && [ "$code" != "503" ]; then
+              echo "Edge Functions prêtes (HTTP $code) après ${i} essai(s)"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::warning::Edge Functions injoignables apres 120 s (dernier code HTTP $code) — le parcours de suppression de compte echouera"
+          tail -n 30 functions.log || true
+
+      - name: Build app against the local stack
+        run: npx vite build
+        env:
+          VITE_SUPABASE_URL: ${{ env.SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ env.SUPABASE_ANON_KEY }}
+          VITE_SENTRY_DSN: ''
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E against the real local database
+        id: e2e
+        run: |
+          set -o pipefail
+          if npx playwright test -c playwright.real.config.ts 2>&1 | tee e2e-real.log; then
+            exit 0
+          fi
+          # Le resume de job est public, les logs exigent une connexion : on
+          # y laisse la fin du journal (meme raisonnement que `rls-integration`).
+          {
+            echo '### Parcours E2E contre la base locale — échec'
+            echo
+            echo '```'
+            tail -n 60 e2e-real.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          TAIL=$(tail -n 25 e2e-real.log | sed 's/%/%25/g; s/\r//g' | awk '{printf "%s%%0A", $0}')
+          echo "::error title=e2e-supabase-tail::${TAIL}"
+          exit 1
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-report-real
+          path: |
+            playwright-report-real/
+            test-results/
+          retention-days: 7
+      - name: Edge Functions log
+        if: ${{ failure() }}
+        run: tail -n 60 functions.log || true
+      - name: Stop Supabase stack
+        if: ${{ always() }}
+        run: |
+          if [ -f functions.pid ]; then kill "$(cat functions.pid)" 2>/dev/null || true; fi
+          supabase stop
