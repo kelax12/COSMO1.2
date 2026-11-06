@@ -164,3 +164,7 @@ coverage-tooling
 
 # Etat des seances de brainstorm superpowers.
 /.superpowers/
+
+# Sortie locale de scripts/contrat-donnees.mjs --verifier --sortie
+contrat-donnees-genere/
+supabase.env
