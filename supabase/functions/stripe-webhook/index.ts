@@ -7,6 +7,7 @@ import { payerToRecord } from '../_shared/org-payer.ts'
 import { receiptMail, subscriptionConfirmationMail } from '../_shared/billing-mail-text.ts'
 import { sendBillingMail } from '../_shared/billing-mail.ts'
 import { withdrawalDeadline } from '../_shared/refund-amount.ts'
+import { decideSubscriptionEvent, type SubscriptionEventType } from '../_shared/subscription-event.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'https://thecosmo.app'
 
@@ -104,16 +105,10 @@ Deno.serve(async (req) => {
         else await handleCheckoutCompleted(session)
         break
       }
-      case 'customer.subscription.updated': {
-        const subscription = event.data.object as Stripe.Subscription
-        if (subscription.metadata?.org_id) await handleOrgSubscriptionUpdated(subscription)
-        else await handleSubscriptionUpdated(subscription)
-        break
-      }
+      case 'customer.subscription.updated':
       case 'customer.subscription.deleted': {
-        const subscription = event.data.object as Stripe.Subscription
-        if (subscription.metadata?.org_id) await handleOrgSubscriptionDeleted(subscription)
-        else await handleSubscriptionDeleted(subscription)
+        // SEC-08 : l'événement désigne l'abonnement, il ne dit pas son état.
+        await handleSubscriptionEvent(event.type, event.data.object as Stripe.Subscription)
         break
       }
       case 'invoice.payment_succeeded': {
@@ -231,6 +226,38 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
   const subscription = await stripe.subscriptions.retrieve(session.subscription as string)
   await applySubscriptionToDb(supabaseUid, subscription, session.customer as string)
+}
+
+/**
+ * `customer.subscription.updated|deleted`, perso et organisation (SEC-08).
+ *
+ * 🔴 Stripe ne garantit pas l'ordre de livraison. Appliquer `event.data.object`
+ * faisait d'un `updated` ancien livré après le `deleted` une résurrection de
+ * l'abonnement résilié. On RELIT donc l'état courant, comme les handlers de
+ * checkout et de facture, et la décision (`_shared/subscription-event.ts`,
+ * testée) ne regarde que lui : deux événements dans n'importe quel ordre
+ * relisent le même état et convergent.
+ *
+ * ❌ Ne jamais retomber sur la charge de l'événement si la relecture échoue :
+ *    le `retrieve` qui lève produit un 500, Stripe retente. Une panne de
+ *    lecture n'est jamais un « pas de ligne », ni un « garde l'ancien état ».
+ */
+async function handleSubscriptionEvent(type: SubscriptionEventType, fromEvent: Stripe.Subscription) {
+  const current = await stripe.subscriptions.retrieve(fromEvent.id)
+  const decision = decideSubscriptionEvent(type, fromEvent.id, current)
+  if (decision.action === 'retry') {
+    // Le `catch` du routeur alerte et rend 500 : Stripe retente.
+    throw new Error(`subscription event ${type} not applicable: ${decision.reason}`)
+  }
+
+  // Routage sur l'état RELU : une organisation reste une organisation.
+  if (current.metadata?.org_id) {
+    if (decision.action === 'terminate') await handleOrgSubscriptionDeleted(current)
+    else await handleOrgSubscriptionUpdated(current)
+  } else {
+    if (decision.action === 'terminate') await handleSubscriptionDeleted(current)
+    else await handleSubscriptionUpdated(current)
+  }
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {

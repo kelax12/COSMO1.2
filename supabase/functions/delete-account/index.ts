@@ -26,27 +26,14 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from '../_shared/alert.ts'
 import { pickOrgSuccessor, type SuccessorCandidate } from '../_shared/org-membership.ts'
+import { corsHeadersFor, requireEnv } from '../_shared/env.ts'
 
-const APP_URL = Deno.env.get('APP_URL') ?? 'http://localhost:5173'
+// Origine CORS : `APP_URL`, obligatoire. Absente, la fonction refuse de démarrer
+// (échec fermé, `_shared/env.ts`) au lieu de répondre sans CORS.
+requireEnv('APP_URL')
 
 /** Secret partagé avec `inactive-accounts` (C-121). Voir le mode cron plus bas. */
 const CRON_SECRET = Deno.env.get('CRON_SECRET')
-
-// Allowlist of origins permitted to call this function. Same defense-in-depth
-// as stripe-create-checkout (faille N7): never echo back a wildcard for an
-// authenticated, destructive endpoint.
-const ALLOWED_ORIGINS = new Set([APP_URL])
-
-function corsHeadersFor(req: Request) {
-  const origin = req.headers.get('Origin') ?? ''
-  const allow = ALLOWED_ORIGINS.has(origin) ? origin : ''
-  const headers: Record<string, string> = {
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-    'Vary': 'Origin',
-  }
-  if (allow) headers['Access-Control-Allow-Origin'] = allow
-  return headers
-}
 
 // Tables owned by the user. Order matters where FKs without ON DELETE CASCADE
 // exist. `auth.admin.deleteUser` will cascade through `auth.users` references
