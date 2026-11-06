@@ -6,7 +6,7 @@
 #   · declenche `edge-deploy.yml` ;
 #   · sonne `ci-alert.yml` (issue `ci-red` + webhook).
 #
-# Quatre jobs PARALLELES, chacun juge le code du commit :
+# Cinq jobs PARALLELES, chacun juge le code du commit :
 #   · `noyau`            lint, `tsc -b`, temoins Edge, tests unitaires +
 #                        couverture, couverture de `scripts/` ;
 #   · `lint-test-build`  gardes statiques (migrations, RLS, cycles, plancher
@@ -15,7 +15,9 @@
 #                        valeurs recopiees, pluriels, glossaire), build et
 #                        budget de bundle ;
 #   · `fichiers-sensibles` l'arbre ET chaque version poussee ;
-#   · `rls-integration`  toutes les migrations sur base vierge + `test:rls`.
+#   · `rls-integration`  toutes les migrations sur base vierge + `test:rls` ;
+#   · `contrat-donnees`  schema, inventaire des RPC et types regeneres depuis
+#                        cette base vierge, comparés aux fichiers commites.
 # Mesure du 2026-11-06 (run 42296845035 et CI 42296844839, memes jobs) : le
 # plus long est `noyau`, 4 min 30 ; verdict sous 5 min, cible < 15 min.
 #
@@ -501,6 +503,79 @@ jobs:
           TAIL=$(tail -n 25 rls.log | sed 's/%/%25/g; s/\r//g' | awk '{printf "%s%%0A", $0}')
           echo "::error title=rls-tail::${TAIL}"
           exit 1
+      - name: Stop Supabase stack
+        if: ${{ always() }}
+        run: supabase stop
+
+  # ──────────────────────────────────────────────────────────────────
+  # CONTRAT DE DONNEES (MAI-01, API-01, ARC-07, 2026-11-06). Le schema vivant
+  # se lit depuis le depot : une stack Supabase locale vierge, toutes les
+  # migrations rejouees, puis trois fichiers COMMITES sont regeneres et
+  # compares : `supabase/schema.sql`, `supabase/rpc-inventory.md`,
+  # `src/generated/database.types.ts`. Un ecart fait echouer le job : une
+  # migration, un droit `EXECUTE` ou une colonne ne passent plus sans que le
+  # diff des trois fichiers soit relu.
+  #
+  # ⚠️ Job SEPARE de `rls-integration` et CLI EPINGLEE (pas `latest`) : le
+  # texte de `gen types` et la version de Postgres suivent la CLI. Avec
+  # `latest`, une release de la CLI rendrait le noyau rouge sans aucun commit,
+  # ce que ce workflow s'interdit. Monter la version = regenerer les fichiers.
+  # ⚠️ Pas de Docker en local sur le poste d'Axel : l'artefact `contrat-donnees`
+  # (envoye meme en cas d'ecart) porte les trois fichiers regeneres, a copier
+  # a leur place. Commande locale : supabase/migration/CLAUDE.md.
+  # Temoin : `scripts/contrat-donnees.guard.test.mjs`.
+  # ──────────────────────────────────────────────────────────────────
+  contrat-donnees:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
+        with:
+          version: 2.122.1
+      - run: npm ci
+      - name: Start Supabase stack (local)
+        run: supabase start
+      - name: Apply migrations on fresh DB
+        id: migrate
+        run: |
+          set -o pipefail
+          supabase status -o env > supabase.env
+          set -a; . ./supabase.env; set +a
+          if [ -z "$DB_URL" ]; then
+            echo "::warning::DB_URL absent de 'supabase status -o env', repli sur l'URL locale standard"
+            DB_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          fi
+          echo "DATABASE_URL=$DB_URL" >> "$GITHUB_ENV"
+          if DATABASE_URL="$DB_URL" node scripts/apply-migrations.mjs 2>&1 | tee migrate.log; then
+            exit 0
+          fi
+          {
+            echo '### ✖ Replay des migrations sur base vierge, echec'
+            echo ''
+            echo '```'
+            tail -n 60 migrate.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+      # Regenere les trois fichiers dans `contrat-donnees-genere/` (envoye en
+      # artefact) puis les compare aux fichiers commites. Sortie 1 au premier
+      # ecart, avec l'extrait du diff en annotation et dans le resume.
+      - name: Contrat de donnees (schema, RPC, types)
+        id: contrat
+        if: ${{ !cancelled() && steps.migrate.outcome == 'success' }}
+        run: node scripts/contrat-donnees.mjs --verifier --sortie contrat-donnees-genere
+      - name: Artefact contrat-donnees
+        if: ${{ !cancelled() && steps.migrate.outcome == 'success' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: contrat-donnees
+          path: contrat-donnees-genere/
+          if-no-files-found: error
+          retention-days: 14
       - name: Stop Supabase stack
         if: ${{ always() }}
         run: supabase stop

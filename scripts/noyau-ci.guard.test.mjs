@@ -36,8 +36,8 @@ const jobsDe = (yaml) => {
 const commandes = (job) => lireEtapes(NOYAU, job).map((e) => e.run ?? '').join('\n');
 
 describe('ci-noyau.yml : la composition du noyau', () => {
-  it('quatre jobs parallèles, sans `needs:` (le verdict tombe au rythme du plus lent)', () => {
-    expect(jobsDe(NOYAU)).toEqual(['noyau', 'lint-test-build', 'fichiers-sensibles', 'rls-integration']);
+  it('cinq jobs parallèles, sans `needs:` (le verdict tombe au rythme du plus lent)', () => {
+    expect(jobsDe(NOYAU)).toEqual(['noyau', 'lint-test-build', 'fichiers-sensibles', 'rls-integration', 'contrat-donnees']);
     expect(NOYAU).not.toMatch(/^\s+needs:/m);
   });
 
@@ -50,6 +50,7 @@ describe('ci-noyau.yml : la composition du noyau', () => {
     ]],
     ['fichiers-sensibles', ['node scripts/check-fichiers-sensibles.mjs --arbre --plage']],
     ['rls-integration', ['node scripts/apply-migrations.mjs', 'npm run test:rls']],
+    ['contrat-donnees', ['node scripts/apply-migrations.mjs', 'node scripts/contrat-donnees.mjs --verifier --sortie']],
   ])('TÉMOIN : le job `%s` lance ses gardes', (job, attendues) => {
     const texte = commandes(job);
     for (const c of attendues) expect(texte, `${job} : ${c}`).toContain(c);

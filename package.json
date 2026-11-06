@@ -43,6 +43,8 @@
     "check:mail": "node scripts/check-auth-email.mjs",
     "check:edge": "node scripts/check-edge-deploy.mjs",
     "check:docs": "node scripts/check-docs-budget.mjs",
+    "contrat:generer": "node scripts/contrat-donnees.mjs --ecrire",
+    "check:contrat": "node scripts/contrat-donnees.mjs --verifier",
     "check:deploy": "node scripts/check-deploy-sha.mjs",
     "test:coverage:tooling": "vitest run --config vitest.tooling.config.ts --coverage && node scripts/check-tooling-coverage.mjs",
     "check:edge-coverage": "node scripts/edge-function-coverage.mjs",
