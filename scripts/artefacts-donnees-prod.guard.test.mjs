@@ -228,6 +228,9 @@ export const CONTACTS_PROD = {
   'renewal-notice.yml › notify › Declencher les avis de reconduction': {
     affiche: 'code HTTP et réponse `{due, sent, failed}` : trois compteurs',
   },
+  'renewal-notice.yml › seat-alert › Declencher les alertes de sieges': {
+    affiche: 'code HTTP et réponse `{due, sent, failed, deferred}` (quatre compteurs) ou `{error}` (un code fixe)',
+  },
   'org-digest.yml › send › Envoyer les notifications par e-mail': {
     affiche: 'code HTTP et réponse `{mode, recipients, sent, failed}` : compteurs',
   },
