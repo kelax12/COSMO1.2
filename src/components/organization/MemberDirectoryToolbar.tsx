@@ -220,12 +220,11 @@ const MemberDirectoryToolbar = ({
         />
         {canSelect && (
           <>
-            <span className="w-px h-5 mx-1 bg-[rgb(var(--color-border))]" aria-hidden="true" />
             <button
               type="button"
               onClick={onToggleSelectMode}
               aria-pressed={selectMode}
-              className={`${PILL} pr-3 ${selectMode ? PILL_ON : PILL_IDLE}`}
+              className={`${PILL} pr-3 order-last ml-auto ${selectMode ? PILL_ON : PILL_IDLE}`}
             >
               <CheckSquare size={13} aria-hidden="true" />
               {selectMode ? tOrgAdmin('directory.select.exit') : tOrgAdmin('directory.select.enter')}
