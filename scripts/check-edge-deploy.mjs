@@ -227,8 +227,24 @@ export function cleRelative(chemin) {
   return relative(FUNCTIONS_DIR, chemin).split(sep).join('/');
 }
 
+/**
+ * Une instruction d'import ou de reexport de TYPES seuls, effacee a la compilation.
+ *
+ * 🔴 Mesure le 2026-11-06 (`Edge deploy` 42308483223) : `seat-alert` n'atteint
+ * `_shared/billing-mail-text.ts` que par `import type { BillingMail }` dans
+ * `billing-mail.ts`. Le CLI a televerse le fichier, le bundle en ligne ne le
+ * porte pas (l'import est efface), et la garde rendait « absent-de-la-prod » sur
+ * une fonction deployee a l'instant depuis ce depot. Un perimetre qui suit un
+ * import que le compilateur supprime mesure un fichier que la prod n'execute pas.
+ *
+ * ⚠️ Seule la forme `import type … from` / `export type … from` est retiree.
+ * `import { x, type Y } from` reste un import de VALEUR, et reste suivi.
+ */
+const IMPORT_DE_TYPES = /\b(?:import|export)\s+type\s+[^;'"]*?\sfrom\s+['"][^'"]+['"]/g;
+
 /** Specificateurs d'import RELATIFS d'un module Deno (`./x.ts`, `../y/z.ts`). */
-export function importsLocaux(source) {
+export function importsLocaux(texte) {
+  const source = String(texte).replace(IMPORT_DE_TYPES, '');
   const specs = [];
   const motifs = [
     /\bimport\s+(?:[\s\S]*?\sfrom\s+)?['"](\.[^'"]+)['"]/g,

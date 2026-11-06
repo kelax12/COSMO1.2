@@ -117,6 +117,20 @@ export const CATALOGUE = [
       'Une APP_URL absente ne ferait plus échouer la fonction : elle renverrait les '
       + 'clients du portail Stripe vers localhost (COD-03).',
   },
+  {
+    id: 'edge-drift-import-type',
+    famille: 'detecteur',
+    garde: 'scripts/check-edge-deploy.guard.test.mjs',
+    modifs: [r(
+      'scripts/check-edge-deploy.mjs',
+      "const source = String(texte).replace(IMPORT_DE_TYPES, '');",
+      'const source = String(texte);',
+    )],
+    attendu: ['TEMOIN : seat-alert n embarque billing-mail-text que si un import de VALEUR y mene'],
+    pourquoi:
+      'Un périmètre qui suit un `import type` attend en ligne un fichier que le bundle '
+      + 'n embarque pas : `Edge deploy` rougit sur une fonction déployée à l instant.',
+  },
   // ── Ordre des événements d'abonnement Stripe (SEC-08) ──────────────
   {
     id: 'webhook-subscription-charge',
