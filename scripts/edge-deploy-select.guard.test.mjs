@@ -296,7 +296,7 @@ describe('edge-deploy · le workflow appelle REELLEMENT ce selecteur', () => {
     for (const commande of ['npm run lint\n', 'npx tsc -b\n', 'npm run test:coverage\n', 'npm run test:coverage:tooling\n', 'npm run check:edge-coverage\n']) {
       expect(noyau, commande).toContain(`        run: ${commande}`);
     }
-    expect(noyau).toMatch(/push:\s*\n\s*branches: \[main\]/);
+    expect(noyau).toMatch(/push:\s*\n\s*branches: \[main, 'noyau\/\*\*'\]/);
   });
 
   it('est branche sur ci-alert.yml', () => {

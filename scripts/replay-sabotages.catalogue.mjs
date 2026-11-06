@@ -1453,7 +1453,7 @@ export const CATALOGUE = [
       "  group: ci-${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}",
       '  group: ci-${{ github.workflow }}-${{ github.ref }}',
     )],
-    attendu: ['concurrency : TÉMOIN, un run de main n’est jamais annulé, une PR l’est encore'],
+    attendu: ['concurrency (ci.yml) : TÉMOIN, un run de main n’est jamais annulé, une PR l’est encore'],
     pourquoi:
       'Un groupe par ref sur `main` : chaque push annule le run en cours. Le 2026-10-16, 108 runs '
       + 'de `main` sur 141 annulés, `e2e` le premier, et quatre PR brouillon jetables pour un verdict.',
