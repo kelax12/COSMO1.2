@@ -65,8 +65,10 @@ comment elle refuse, jamais qu'elle fait son travail.
 - ❌ **Ne jamais rendre une garde conditionnelle à la présence de son propre secret.**
   `if (SECRET && header !== SECRET)` laisse passer tout le monde tant que le secret n'est pas posé :
   on ne se protège que quand on est déjà protégé.
-- ⚠️ `APP_URL` (`https://thecosmo.app`) est la **seule** origine CORS autorisée par les deux
-  fonctions org : le checkout entreprise ne peut pas être testé depuis `localhost:5173`.
+- ❌ **Jamais un CORS écrit sur place ni un `?? 'http://localhost…'`** : `corsHeadersFor` et
+  `requireEnv` de `_shared/env.ts` (COD-03). `APP_URL` seule, origine locale par `CORS_DEV_ORIGINS`.
+  Garde : `src/edge-cors.guard.test.ts` (`affiliation-api` en exception nommée).
+- ❌ **Jamais `event.data.object` appliqué tel quel** pour un abonnement : relire (SEC-08).
 - ⚠️ `opsAlert()` pousse sur `OPS_ALERT_WEBHOOK_URL`. Un secret absent se solde par un **échec**,
   jamais par un `::warning::` dans un run vert.
 - ⚠️ **`_shared/refund-replay.ts` est un module TS pur, et doit le rester** : mélangé aux appels

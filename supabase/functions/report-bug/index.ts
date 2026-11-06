@@ -11,7 +11,7 @@
 //   défaut). Un visiteur non connecté passe avec la clé anon : c'est voulu,
 //   un bug se signale aussi depuis un compte cassé. Si le JWT porte un vrai
 //   utilisateur, son e-mail est mis en Reply-To pour pouvoir lui répondre.
-// - Origine restreinte (CORS) à APP_URL + les deux origines de dev.
+// - Origine restreinte (CORS) à APP_URL, politique unique de `_shared/cors.ts`.
 //
 // Secrets attendus :
 //   supabase secrets set RESEND_API_KEY=re_...
@@ -33,8 +33,11 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from '../_shared/alert.ts'
 import { REPORT_BUG_LIMITS, callerIp, consumeRateLimits } from '../_shared/rate-limit.ts'
+import { corsHeadersFor, requireEnv } from '../_shared/env.ts'
 
-const APP_URL = Deno.env.get('APP_URL') ?? 'http://localhost:5173'
+// Origine CORS : `APP_URL`, obligatoire. Absente, la fonction refuse de démarrer
+// (échec fermé, `_shared/env.ts`) au lieu de répondre sans CORS.
+requireEnv('APP_URL')
 const CONTACT_EMAIL = Deno.env.get('BUG_REPORT_TO') ?? 'contact@thecosmo.app'
 /**
  * Expéditeur. 🔴 AUCUN DÉFAUT, exactement comme `renewal-notice`.
@@ -50,22 +53,6 @@ const CONTACT_EMAIL = Deno.env.get('BUG_REPORT_TO') ?? 'contact@thecosmo.app'
  * et le client bascule sur son lien mailto — le repli existe déjà.
  */
 const MAIL_FROM = Deno.env.get('BUG_REPORT_FROM')
-
-// Origines autorisées : la prod, plus les deux serveurs de dev locaux
-// (`npm run dev` sur 5173, `npm start` sur 3000) — sans quoi le formulaire
-// serait intestable ailleurs qu'en production.
-const ALLOWED_ORIGINS = new Set([APP_URL, 'http://localhost:5173', 'http://localhost:3000'])
-
-function corsHeadersFor(req: Request) {
-  const origin = req.headers.get('Origin') ?? ''
-  const allow = ALLOWED_ORIGINS.has(origin) ? origin : ''
-  const headers: Record<string, string> = {
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-    'Vary': 'Origin',
-  }
-  if (allow) headers['Access-Control-Allow-Origin'] = allow
-  return headers
-}
 
 // Bornes — miroir de `src/lib/bug-report.ts`. Le client valide pour l'UX,
 // le serveur valide parce que rien de ce qui vient du client n'est acquis.

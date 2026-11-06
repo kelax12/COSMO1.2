@@ -30,21 +30,10 @@ import { opsAlert } from '../_shared/alert.ts'
 import { refundAmount, withinWithdrawalWindow, withdrawalDeadline } from '../_shared/refund-amount.ts'
 import { cancellationMail, withdrawalAckMail } from '../_shared/billing-mail-text.ts'
 import { sendBillingMail } from '../_shared/billing-mail.ts'
+import { corsHeadersFor, requireEnv } from '../_shared/env.ts'
 
-const APP_URL = Deno.env.get('APP_URL') ?? 'http://localhost:5173'
-const ALLOWED_ORIGINS = new Set([APP_URL])
+const APP_URL = requireEnv('APP_URL')
 const ACTIONS = new Set(['withdrawal_preview', 'withdraw', 'cancel', 'resume', 'cancel_now'])
-
-function corsHeadersFor(req: Request) {
-  const origin = req.headers.get('Origin') ?? ''
-  const allow = ALLOWED_ORIGINS.has(origin) ? origin : ''
-  const headers: Record<string, string> = {
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-    'Vary': 'Origin',
-  }
-  if (allow) headers['Access-Control-Allow-Origin'] = allow
-  return headers
-}
 
 Deno.serve(async (req) => {
   const cors = corsHeadersFor(req)

@@ -21,14 +21,28 @@ function propagationTargets(): RegExp[] {
   });
 }
 
+/**
+ * Les en-têtes autorisés par chaque fonction : écrits sur place, ou hérités de
+ * la politique unique `_shared/cors.ts` (COD-03, 2026-11-06) pour celles qui
+ * importent `_shared/env.ts`. Sans ce second cas, les neuf fonctions migrées
+ * sortiraient de la liste, et la garde ne verrait plus que `affiliation-api`.
+ */
 function functionsAllowHeaders(): Array<{ name: string; headers: string }> {
   const dir = join(root, 'supabase/functions');
+  const shared = readFileSync(join(dir, '_shared/cors.ts'), 'utf8')
+    .match(/CORS_ALLOW_HEADERS\s*=\s*'([^']*)'/);
+  if (!shared) throw new Error('CORS_ALLOW_HEADERS introuvable dans _shared/cors.ts');
   return readdirSync(dir)
     .map((name) => ({ name, file: join(dir, name, 'index.ts') }))
     .filter(({ file }) => existsSync(file))
     .flatMap(({ name, file }) => {
-      const h = readFileSync(file, 'utf8').match(/'Access-Control-Allow-Headers':\s*'([^']*)'/);
-      return h ? [{ name, headers: h[1].toLowerCase() }] : [];
+      const src = readFileSync(file, 'utf8');
+      const h = src.match(/'Access-Control-Allow-Headers':\s*'([^']*)'/);
+      if (h) return [{ name, headers: h[1].toLowerCase() }];
+      if (src.includes("from '../_shared/env.ts'") && src.includes('corsHeadersFor(')) {
+        return [{ name, headers: shared[1].toLowerCase() }];
+      }
+      return [];
     });
 }
 
@@ -47,7 +61,8 @@ describe('propagation Sentry vers les Edge Functions', () => {
     const fnUrl = 'https://x.supabase.co/functions/v1/report-bug';
     const covers = targets.some((r) => r.test(fnUrl));
     const fns = functionsAllowHeaders();
-    expect(fns.length).toBeGreaterThan(0);
+    // Dix fonctions appelées du navigateur au 2026-11-06 (neuf par `_shared/cors.ts`).
+    expect(fns.length).toBeGreaterThanOrEqual(10);
     const refusing = fns
       .filter(({ headers }) => !(headers.includes('baggage') && headers.includes('sentry-trace')))
       .map(({ name }) => name);

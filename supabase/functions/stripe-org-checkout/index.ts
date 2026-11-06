@@ -28,21 +28,9 @@ import type { OrgBillingInterval } from '../_shared/org-tiers.ts'
 import { resolveYearlyPriceId } from '../_shared/org-stripe-prices.ts'
 import { isResourceMissing } from '../_shared/stripe-errors.ts'
 import { checkoutBlockFor } from '../_shared/org-checkout-gate.ts'
+import { corsHeadersFor, requireEnv } from '../_shared/env.ts'
 
-const APP_URL = Deno.env.get('APP_URL') ?? 'http://localhost:5173'
-const ALLOWED_ORIGINS = new Set([APP_URL])
-
-function corsHeadersFor(req: Request) {
-  const origin = req.headers.get('Origin') ?? ''
-  const allow = ALLOWED_ORIGINS.has(origin) ? origin : ''
-  const headers: Record<string, string> = {
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-    'Vary': 'Origin',
-  }
-  if (allow) headers['Access-Control-Allow-Origin'] = allow
-  return headers
-}
-
+const APP_URL = requireEnv('APP_URL')
 Deno.serve(async (req) => {
   const cors = corsHeadersFor(req)
   if (req.method === 'OPTIONS') {
