@@ -106,13 +106,13 @@ describe('copie du hero : visible pour le seul visiteur sans session', () => {
 
   it('prerender.mjs la pose HORS de #root (createRoot l’effacerait), inerte, avec sa langue', () => {
     const prerender = read('prerender.mjs');
-    expect(prerender).toContain('<div id="lp-hero" inert data-locale="${locale}" data-track="${track}">${fragment}</div>');
+    expect(prerender).toContain('<div id="lp-hero" inert data-locale="${locale}" data-track="${track}">${demoteH1(fragment)}</div>');
     expect(prerender).toMatch(/replace\('<div id="root">', \(\) => `<div id="lp-hero"/);
     expect(prerender).toMatch(/let home = injectHeroCopy\(buildPage\(homeRoute/);
     expect(prerender).toContain('if (route.heroTrack) sortie = injectHeroCopy(page, locale, route.heroTrack);');
     expect(prerender).toContain('else if (route.copy) sortie = await injectContentCopy(page, locale, route.copy, path);');
     // Même calque pour la copie des pages de contenu, rendue par React au build.
-    expect(prerender).toContain('<div id="lp-hero" inert data-locale="${locale}" data-track="contenu">${fragment}</div>');
+    expect(prerender).toContain('<div id="lp-hero" inert data-locale="${locale}" data-track="contenu">${demoteH1(fragment)}</div>');
   });
 
   it('home et entreprise peignent leur capture, les pages de contenu leur rendu React ; jamais le texte SEO brut', () => {

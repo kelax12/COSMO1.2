@@ -22,6 +22,7 @@ import { ARTICLES, articlesFor, relatedArticles } from './src/content/blog/index
 import { USE_CASES } from './src/content/use-cases.mjs';
 import { CONTACT_EMAIL } from './src/lib/contact.mjs';
 import { scopedCssFor } from './scripts/landing-hero-css.mjs';
+import { demoteH1, countH1, bodyWords } from './scripts/prerender-h1.mjs';
 import {
   BCP47_TAG,
   DEFAULT_LOCALE,
@@ -1002,7 +1003,7 @@ function injectHeroCopy(out, locale, track) {
   if (!out.includes('<div id="root">')) throw new Error('prerender: <div id="root"> introuvable, copie du hero non posée');
   out = out.replace('</head>', () => `    <style id="lp-hero-css">${css}</style>
   </head>`);
-  out = out.replace('<div id="root">', () => `<div id="lp-hero" inert data-locale="${locale}" data-track="${track}">${fragment}</div>
+  out = out.replace('<div id="root">', () => `<div id="lp-hero" inert data-locale="${locale}" data-track="${track}">${demoteH1(fragment)}</div>
     <div id="root">`);
   return out;
 }
@@ -1062,9 +1063,27 @@ async function injectContentCopy(out, locale, page, path) {
   out = out.replace(/<html(?![^>]*data-prerendered)/, '<html data-prerendered');
   out = out.replace('</head>', () => `    <style id="lp-hero-css">${css}</style>
   </head>`);
-  out = out.replace('<div id="root">', () => `<div id="lp-hero" inert data-locale="${locale}" data-track="contenu">${fragment}</div>
+  out = out.replace('<div id="root">', () => `<div id="lp-hero" inert data-locale="${locale}" data-track="contenu">${demoteH1(fragment)}</div>
     <div id="root">`);
   return out;
+}
+
+// ── Gardes du HTML servi (2026-11-06) ───────────────────────────────────
+// Deux régressions de 66f76355 (2026-10-24) que seul un `curl` sur la
+// production avait vues : les pages de contenu portaient DEUX <h1> (le texte SEO
+// et la copie peinte avant React), et le guide ne servait plus que 700 mots sur
+// les 2 600 que React rend. Le build échoue, il ne les laisse plus partir.
+// ❌ Ne pas relever le plancher du guide pour faire passer un build : un guide
+// plus court dans le HTML dit qu'une section a disparu de la copie.
+const MOTS_MIN = { '/guide': 1500 };
+function verifierPage(page, path, routePath) {
+  const h1 = countH1(page);
+  if (h1 > 1) throw new Error(`prerender: ${path} sert ${h1} <h1>, un seul est permis (cf. scripts/prerender-h1.mjs)`);
+  const min = MOTS_MIN[routePath];
+  if (min) {
+    const mots = bodyWords(page);
+    if (mots < min) throw new Error(`prerender: ${path} sert ${mots} mots dans le <body>, plancher ${min} (la copie du guide a perdu une section ?)`);
+  }
 }
 
 // ── Génération ──────────────────────────────────────────────────────────
@@ -1083,6 +1102,7 @@ for (const route of ROUTES) {
     let sortie = page;
     if (route.heroTrack) sortie = injectHeroCopy(page, locale, route.heroTrack);
     else if (route.copy) sortie = await injectContentCopy(page, locale, route.copy, path);
+    verifierPage(sortie, path, route.path);
     writeFileSync(join(dir, 'index.html'), sortie, 'utf8');
     count++;
     console.log(`  prerendered ${path}/index.html`);
@@ -1109,6 +1129,7 @@ for (const locale of availableLocales(homeRoute)) {
     home = home.replace('</head>', `    ${ld(faqSchemaFor(locale), 'faq-schema')}\n  </head>`);
     console.log(`  injected FAQPage JSON-LD (${locale}) into index.html`);
   }
+  verifierPage(home, localizePath('/', locale), '/');
   writeFileSync(join(DIST, localizePath('/', locale), 'index.html'), home, 'utf8');
 }
 
