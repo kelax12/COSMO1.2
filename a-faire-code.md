@@ -41,6 +41,11 @@ Sécurité : [`faille.md`](./faille.md) fait foi.
 
 ## Décompte courant
 
+> 🔎 **Relu le 2026-11-06** (passe d'audit) : six items purement code sont sortis des audits et
+> confiés à des sessions dédiées, liste et état dans [`docs/README.md`](./docs/README.md) § « Ce qui
+> reste, et qui le porte ». Ils ne reçoivent pas d'identifiant `C-NN` : chacun se ferme dans la
+> journée, par sa session, avec son commit.
+>
 > 🔎 **Relu le 2026-11-05** : restent ouverts `C-45` (geste de console), `C-24` (VoiceOver sur appareil),
 > `C-65` + `C-39` (épreuve réelle, `M-08`) et l'audit `A-4`. `C-58` est fermé. Le décompte ci-dessous est celui du 2026-10-10.
 

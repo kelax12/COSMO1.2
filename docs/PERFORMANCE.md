@@ -8,11 +8,23 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **95 / 100** au 2026-10-23, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **97 / 100** au 2026-11-06, au tableau de bord de [`README.md`](./README.md).
 
 # Performance bundle — `vite.config.ts manualChunks`
 
-## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → 95 → 90 → 93 → 93 → 92 → 94 → 95 → 96 → 96 → 96 → 95 → 95 → **97 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir) → 2026-10-18 → 2026-10-20 → 2026-10-22 → **2026-10-25**)
+## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → 95 → 90 → 93 → 93 → 92 → 94 → 95 → 96 → 96 → 96 → 95 → 95 → 97 → **97 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir) → 2026-10-18 → 2026-10-20 → 2026-10-22 → 2026-10-25 → **2026-11-06**)
+
+> ### ⚪ 2026-11-06 · 0 : deux plafonds relevés, sur arbitrage écrit
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-11-06 : CI de `main` du 2026-10-26 au 2026-11-06 (75 runs, dernier `e2e` complet vert à `ba169ba1`), workflows planifiés relus run par run, production (advisors par l'API, catalogue, Edge Functions), alertes GitHub, dépôt à `c3294936` puis `d938bc6e`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-11-06 |
+> |---|---|---|
+> | `legalTerms` 10 300 → 11 000 (2026-10-25) → **14 000** (2026-11-02, `79b92335`) ; `legal` 3 500 → 3 800 (2026-10-25, `4464e917`) | 0 | relevés sur décision d'Axel écrite au-dessus de la constante dans `scripts/check-bundle-budget.mjs` : texte légal obligatoire (CGV de vente du 2026-11-01, médiation L616-1), chargé par la seule page CGU, 13,4 ko sur deux chunks. Un arbitrage motivé et daté sur un chunk paresseux, pas un plafond déplacé en silence. ⚠️ Le cliquet ne dira plus rien d'une croissance de ces chunks sous 14 000 |
+> | `check:bundle` | 0 | vert à `074aa8c8` (étape de `lint-test-build`) |
+> | `lighthouse` | 0 | rouge à `ba169ba1` (code de sortie seul, aucune annotation), vert à `074aa8c8`, `c3294936` et `d938bc6e`. LCP non relu URL par URL par cette passe |
+>
+> **97 → 97.**
 
 > ### ⚪ 2026-10-22 · 0 : deux rouges réparés, le LCP mobile perdu sur six URLs
 >

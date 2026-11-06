@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **91 / 100** au 2026-10-23, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **91 / 100** au 2026-11-06, au tableau de bord de [`README.md`](./README.md).
 
 # Scalabilité — audit mesuré, décisions et runbook
 
@@ -21,7 +21,20 @@ s'est révélée fausse.
 Toutes les mesures de ce document sont **reproductibles** : les requêtes sont en
 [§10 Runbook](#10-runbook--refaire-cet-audit).
 
-## Note de scalabilité : 71 → 84 → 86 → 89 → 91 → 87 → 90 → 90 → 90 → 90 → 91 → 91 → 91 → **91 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-03 → 2026-09-08 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-18 → 2026-10-20 → **2026-10-22**) · inchangée au 2026-08-27, et au 2026-09-14 (soir) où l'invariant a été REVÉRIFIÉ en production
+## Note de scalabilité : 71 → 84 → 86 → 89 → 91 → 87 → 90 → 90 → 90 → 90 → 91 → 91 → 91 → 91 → **91 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-03 → 2026-09-08 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-18 → 2026-10-20 → 2026-10-22 → **2026-11-06**) · inchangée au 2026-08-27, et au 2026-09-14 (soir) où l'invariant a été REVÉRIFIÉ en production
+
+> ### ⚪ 2026-11-06 · 0 : dix tables de plus, base à 30 Mo
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-11-06 : CI de `main` du 2026-10-26 au 2026-11-06 (75 runs, dernier `e2e` complet vert à `ba169ba1`), workflows planifiés relus run par run, production (advisors par l'API, catalogue, Edge Functions), alertes GitHub, dépôt à `c3294936` puis `d938bc6e`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-11-06 |
+> |---|---|---|
+> | Base | 0 | **90** tables (80 le 2026-10-22, dont sept `affiliate_*`), **30 Mo** sur les 500 Mo du plan Free (24 Mo le 2026-10-18) |
+> | `scalability-volume` | 0 | vert le 2026-11-03 (`41621852096`) |
+> | Advisors de performance | 0 | `unused_index` **57** contre 75 à la référence du 2026-10-26 : une amélioration, qui rend `Posture` rouge jusqu'au recalage (geste d'Axel, [`SECURITY.md`](./SECURITY.md) AM-7) |
+> | `affiliation-api` | 0 | seau global sur `/session` contre la rotation d'IP (`87583e72`, `d86cbbcf`), une alerte par heure au plus (`772fbf3c`) |
+>
+> **91 → 91.**
 
 > ### ⚪ 2026-10-22 · 0 : inchangée
 >
