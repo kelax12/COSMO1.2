@@ -56,7 +56,7 @@ des notations du 2026-08-25 au 2026-10-25 est archivé :
 
 | Audit | 10-25 | **11-06** | Δ | Ce qui l'a décidé |
 |---|---|---|---|---|
-| [Sécurité](../faille.md) | 84 | **87** | **+3** | SV-1, SV-2, SV-3, SV-8 en production (+4) ; CodeQL n° 19 `high` sans décision (−1). Advisors `24 / 87 / 2 / 1`, les objets d'affiliation relus au catalogue et légitimes |
+| Sécurité (`faille.md`, hors dépôt) | 84 | **87** | **+3** | SV-1, SV-2, SV-3, SV-8 en production (+4) ; CodeQL n° 19 `high` sans décision (−1). Advisors `24 / 87 / 2 / 1`, les objets d'affiliation relus au catalogue et légitimes |
 | [Tests / CI](./TESTING.md) | 96 | **94** | **−2** | `main` rouge 56 runs sur 75 depuis le 10-26 (−1) ; `Sabotages` rouge, cinq témoins non rejoués (−1) ; `Mutation` enfin joué (+1, AM-3) puis rouge à 90,78 % sous 99 (−1) |
 | [Performance](./PERFORMANCE.md) | 97 | **97** | 0 | plafonds `legalTerms` (14 000) et `legal` (3 800) relevés sur arbitrage écrit d'Axel, texte légal sur un chunk paresseux ; `check:bundle` et `lighthouse` verts |
 | [Accessibilité](./ACCESSIBILITY.md) | 84 | **84** | 0 | échéances des lecteurs d'écran tenues (2026-12-15, 2027-01-15) ; `e2e` vert à `ba169ba1` |
@@ -117,8 +117,13 @@ ensuite rédiger depuis la mig. `236` ; jouer `restore-drill` ; les séances Voi
 
 | Statut | Où | Comment le lire |
 |---|---|---|
-| **Vivant** | [`../CLAUDE.md`](../CLAUDE.md), [`../faille.md`](../faille.md), [`../a-faire-code.md`](../a-faire-code.md), [`../a-faire-manuel.md`](../a-faire-manuel.md), `docs/*.md` | Décrit l'état courant. Si le code le contredit, **c'est un bug de doc à corriger**. |
+| **Vivant** | [`../CLAUDE.md`](../CLAUDE.md), `faille.md` (hors dépôt), [`../a-faire-code.md`](../a-faire-code.md), `a-faire-manuel.md` (hors dépôt), `docs/*.md` | Décrit l'état courant. Si le code le contredit, **c'est un bug de doc à corriger**. |
 | **Archive** | `docs/archive/**` | Instantané daté, **non maintenu**, coiffé d'un bandeau ⚠️. À lire pour comprendre *pourquoi* une décision a été prise. **Le code fait foi contre une archive.** |
+
+🔒 **Hors dépôt depuis le 2026-11-06** (le dépôt est PUBLIC, constat `SEC-02`) : `faille.md`,
+`a-faire-manuel.md` et `RGPD-VIOLATION.md` vivent dans `C:\Users\Axel\Documents\COSMO1.1\prive\`,
+dossier local du checkout principal, ignoré par git et refusé par le hook `pre-commit`. Ils restent
+vivants et `faille.md` reste la source de vérité sécurité ; aucun lien du dépôt ne les vise.
 
 ## Documents vivants
 
@@ -127,8 +132,8 @@ Une ligne par document. Les notes sont dans le tableau de bord ci-dessus, pas ic
 | Doc | Périmètre |
 |---|---|
 | [`../CLAUDE.md`](../CLAUDE.md) | Point d'entrée : produit, carte de la doc, conventions, garde-fous |
-| [`../faille.md`](../faille.md) | Sécurité : **source de vérité**, findings ouverts, ordre de priorité avant prod |
-| [`../a-faire-code.md`](../a-faire-code.md) · [`../a-faire-manuel.md`](../a-faire-manuel.md) | Ce qui reste à faire, en code et à la main (consoles, guichets, décisions) |
+| `faille.md` (hors dépôt) | Sécurité : **source de vérité**, findings ouverts, ordre de priorité avant prod |
+| [`../a-faire-code.md`](../a-faire-code.md) · `a-faire-manuel.md` (hors dépôt) | Ce qui reste à faire, en code et à la main (consoles, guichets, décisions) |
 | [`MODULES.md`](./MODULES.md) | **Carte** : module → fichiers, tables, RPC, écran |
 | [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Invariants du projet et leur état vérifié |
 | [`SECURITY.md`](./SECURITY.md) | RLS, migrations SQL, repositories, Edge Functions, Stripe, CSP, secrets |
@@ -146,7 +151,7 @@ Une ligne par document. Les notes sont dans le tableau de bord ci-dessus, pas ic
 | [`ACQUISITION.md`](./ACQUISITION.md) · [`ACQUISITION-BACKLINKS.md`](./ACQUISITION-BACKLINKS.md) | Attribution `?ref=`, funnel, runbook ; kit de soumission aux annuaires (manuel) |
 | [`RGPD.md`](./RGPD.md) | Inventaire des données personnelles, droits, rétention |
 | [`RGPD-REGISTRE.md`](./RGPD-REGISTRE.md) | Registre des activités de traitement (art. 30) |
-| [`RGPD-VIOLATION.md`](./RGPD-VIOLATION.md) · [`RGPD-VIOLATION-GABARITS.md`](./RGPD-VIOLATION-GABARITS.md) | Procédure de violation sous 72 h (art. 33-34) et ses gabarits |
+| `RGPD-VIOLATION.md` (hors dépôt) · [`RGPD-VIOLATION-GABARITS.md`](./RGPD-VIOLATION-GABARITS.md) · [`RGPD-VIOLATION-EXERCICES.md`](./RGPD-VIOLATION-EXERCICES.md) | Procédure de violation sous 72 h (art. 33-34), ses gabarits, et le journal public de ses exercices (gardé par `check:exercice-violation`) |
 | [`LEGAL.md`](./LEGAL.md) | Obligations légales : statut, TVA, consommation, marque, sous-traitants (tableau de conformité gardé par `check:legal`) |
 | [`LEGAL-JOURNAL.md`](./LEGAL-JOURNAL.md) | Journal des documents contractuels (CGU, CGV, politique), gardé par `check:legal-journal` |
 | [`MARQUE-COSMO.md`](./MARQUE-COSMO.md) | Dossier marque pour un conseil en propriété industrielle (`M-66`) |

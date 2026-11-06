@@ -20,7 +20,7 @@
 >
 > | Item | Effet | Mesuré le 2026-11-06 |
 > |---|---|---|
-> | 🔴 `main` rouge **56 runs sur 75** depuis le 2026-10-26 | **−1** | 18 verts, 1 annulé. Dernier épisode : du 2026-11-03 à 10:48 (`f7e45f61`) au 2026-11-06 à 11:13, 14 runs ; vert à `074aa8c8`, rouge de nouveau au commit suivant (`c3294936`, puis `d938bc6e` : `No new hardcoded strings`, écran de démarrage). Le défaut débité le 2026-10-20 se répète, à plus grande échelle. Il a un coût de production : `edge-deploy.yml` ne déploie que sur une CI verte, d'où les cinq fonctions de facturation en retard (cf. [`../faille.md`](../faille.md)) |
+> | 🔴 `main` rouge **56 runs sur 75** depuis le 2026-10-26 | **−1** | 18 verts, 1 annulé. Dernier épisode : du 2026-11-03 à 10:48 (`f7e45f61`) au 2026-11-06 à 11:13, 14 runs ; vert à `074aa8c8`, rouge de nouveau au commit suivant (`c3294936`, puis `d938bc6e` : `No new hardcoded strings`, écran de démarrage). Le défaut débité le 2026-10-20 se répète, à plus grande échelle. Il a un coût de production : `edge-deploy.yml` ne déploie que sur une CI verte, d'où les cinq fonctions de facturation en retard (cf. `faille.md` (hors dépôt)) |
 > | 🔴 `Sabotages` rouge depuis le 2026-11-02 | **−1** | run `41473542705` : cinq témoins ne sont plus rejoués (`src/inactive-accounts.guard.test.ts`, `src/hooks/use-modal-a11y.guard.test.tsx`, `src/components/skeletons/task-skeleton.guard.test.tsx`, `src/components/org-guide/guide-scenarios.guard.test.ts`, `scripts/pre-push-main-red.test.mjs`). Cinq gardes dont on ne sait plus si elles mordent |
 > | ✅ AM-3 · `Mutation` posé mais jamais joué (non crédité le 2026-10-25) | **+1** | premier run planifié **vert** le 2026-10-28 (`40681047825`) |
 > | 🔴 `Mutation` rouge depuis le 2026-11-04 | **−1** | run `41836291999` : **90,78 %** sous le seuil 99 (325 tués, 30 survivants, 3 sans couverture). La logique pure du parcours de facturation du 2026-11-02 est entrée par le glob `billing/*.logic.ts` avec des assertions trop faibles aux bornes. La garde fait son travail ; le seuil n'est pas touché |
@@ -55,7 +55,7 @@
 > | 🟠 Deux verdicts liés au jour de la semaine | **−1** | rouges sur `a9db6f2c`, qui ne change **que deux commentaires** ; vert le dimanche 10-18, rouge le lundi 10-19. `e2e/visual-regression.spec.ts` et `e2e/mobile-android.spec.ts` ne figent pas l'horloge (aucun `page.clock`) alors que la démo date ses données par rapport à aujourd'hui. Correctif : `page.clock.install` à une date fixe |
 > | ✅ `api/collect.ts` hors `tsc` et hors tests (−1 le 10-18) | **+1** | `946046952` et `f2507e69` : `api/` dans `tsconfig.json` (NodeNext, comme le contrôle de Vercel) et dans `vitest.config.ts` ; cinq sabotages du collecteur au catalogue (`62f8ba98`). **Vert en CI** sur la PR n° 79 (run `39163166665`, cinq jobs). Chaîne vue écrire par le collecteur le 10-19 (204, une ligne) |
 > | Comptes à `HEAD` | 0 | 352 fichiers, **3 969** tests ; outillage 29 / 503 ; `e2e` 254 verts, 1 échec (C-97 `/dashboard`), 2 instables, 4 sautés, 22,7 min ; 5 fichiers de test neufs pour 33 fichiers source neufs (les helpers de l'Aperçu) |
-> | Planifiés | 0 | `Posture` rouge chaque matin, référence non recalée (débit nul, voir [`../faille.md`](../faille.md)) ; verts : `Edge deploy drift`, `Migration coverage`, `db-backup`, `Uptime`, `Deploy SHA drift`, `renewal-notice`, `Daily digest` |
+> | Planifiés | 0 | `Posture` rouge chaque matin, référence non recalée (débit nul, voir `faille.md` (hors dépôt)) ; verts : `Edge deploy drift`, `Migration coverage`, `db-backup`, `Uptime`, `Deploy SHA drift`, `renewal-notice`, `Daily digest` |
 >
 > **96 → 95.**
 
@@ -69,7 +69,7 @@
 > | ✅ CI de `main` à `e69cb729` | 0 | cinq jobs verts : **346** fichiers, **3 890** tests ; outillage 29 / 501 ; RLS 8 / 151 ; `e2e` **255 verts, 2 instables** (deux parcours démo `mobile-safari`), 4 sautés, en 23,6 min |
 > | ✅ `lint-test-build` rouge sur `8b253a1b` et `5f8ecbdb` | 0 | une seule garde, `scripts/cosmo/api.test.mjs` : `8b253a1b` ajoute `status,health` à `TASK_LIST_COLUMNS` sans reporter la copie du CLI. La garde anti-dérive a mordu au premier run, l'alerte est partie sur Discord. Corrigé par cette passe (`15d40bea`), rejoué seul 46 / 46, puis **vert en CI** (run `39156293593`). Rouge 2 h 30 : non débité |
 > | 🟠 `api/collect.ts` · hors `tsc` et hors tests | **−1** | premier fichier de `api/` (fonctions Vercel), créé le 2026-10-18 et exécuté en production. `tsconfig.app.json` n'inclut que `src`, `tsconfig.node.json` que `vite.config.ts` : `tsc -b` ne le compile pas. `vitest.config.ts` ne ramasse que `src/**`, `scripts/**` et `eslint-rules/**` : un test posé à côté ne tournerait jamais. Ses trois défenses (même origine, 2 Ko, robots) n'ont aucun test, seul ESLint le lit. Et la chaîne complète n'a jamais été vue écrire : `traffic_hits` vaut **0** ligne en production ~19 h après le branchement, la preuve `222` ne joue que la RPC |
-> | Planifiés | 0 | `Posture` rouge depuis 09:29 UTC : la garde a parlé, son objet est débité dans [`../faille.md`](../faille.md) (`TR-1`). Verts le 10-18 : `Edge deploy drift`, `Migration coverage`, `db-backup`, `Uptime`, `Deploy SHA drift`, `renewal-notice`, `Daily digest` (nouveau, `d9f10f4a`). `Sabotages` vert le 10-16. `restore-drill` : `dump-check` vert le 10-15, `drill` refusé faute de confirmation, comme prévu. `Weekly digest` pas encore joué (premier passage le 2026-10-19 à 7 h UTC). `vendor-watch.yml` retiré avec son fournisseur (`23a12fdb`) |
+> | Planifiés | 0 | `Posture` rouge depuis 09:29 UTC : la garde a parlé, son objet est débité dans `faille.md` (hors dépôt) (`TR-1`). Verts le 10-18 : `Edge deploy drift`, `Migration coverage`, `db-backup`, `Uptime`, `Deploy SHA drift`, `renewal-notice`, `Daily digest` (nouveau, `d9f10f4a`). `Sabotages` vert le 10-16. `restore-drill` : `dump-check` vert le 10-15, `drill` refusé faute de confirmation, comme prévu. `Weekly digest` pas encore joué (premier passage le 2026-10-19 à 7 h UTC). `vendor-watch.yml` retiré avec son fournisseur (`23a12fdb`) |
 >
 > **97 → 96.**
 
@@ -116,7 +116,7 @@
 > | 🔴 `e2e` · `org-guide.spec.ts` | **−1** | rouge à **chaque** run depuis le 2026-10-13, trois tentatives de 2 min : le test clique « Créer une équipe » dans le tiroir du guide, dont les catégories sont repliées depuis `c7051e19`. Test posé le 10-12 (`eb443737`), jamais vert depuis la refonte du tiroir. Le reste : **239 verts, 2 instables** (WebKit), en 39 min |
 > | 🔴 `restore-drill.yml` **désactivé à la main depuis le 2026-09-01** | **−1** | `C-86` (2026-09-20) l'avait coupé en deux, dont un `dump-check` **trimestriel et automatique**. Un workflow désactivé n'exécute pas son `schedule` : le premier passage, le 2026-10-05, n'a pas eu lieu, et `gh run list --workflow restore-drill` répond « could not find any workflows ». Depuis `BK-1` (10-13), le dump est chiffré : ce workflow est le seul qui le **déchiffre** pour le restaurer, et il n'a jamais tourné sous cette forme. Une garde qu'on ne peut voir ni rouge ni verte |
 > | `Visual` rouge depuis le 2026-10-12 | 0 | 4 cas sur 20, débité dans [`UI-PATTERNS.md`](./UI-PATTERNS.md) |
-> | CodeQL rouge du 10-13 au 10-14 | 0 | dépôt privé pendant l'épisode : pas un défaut de test (cf. [`../faille.md`](../faille.md)) |
+> | CodeQL rouge du 10-13 au 10-14 | 0 | dépôt privé pendant l'épisode : pas un défaut de test (cf. `faille.md` (hors dépôt)) |
 > | `Sabotages` (10-12), `Posture`, `Edge deploy drift`, `Migration coverage`, `Uptime`, `Deploy SHA drift` | 0 | verts |
 >
 > **96 → 92.** 🔴 **La leçon, et elle est outillable** : un job qui s'arrête au premier rouge ne
@@ -152,7 +152,7 @@
 > | Tests unitaires à `HEAD` | 0 | **3 échecs sur 3 395** (`9ea33927`, 306 fichiers sur 306), trois gardes qui mordent juste : `architecture.guard` (`OKRPage.tsx`, 617 lignes), `lazy-namespaces.guard` (`/okr` → `org`), et le témoin de `loading-empty-state.guard`, dont la dispense de `TeamProjectsTab` ne correspond plus à rien depuis la refonte de l'onglet (`28f4299d`) : dispense morte, à retirer. Les deux premiers sont débités dans [`ARCHITECTURE.md`](./ARCHITECTURE.md) et [`I18N.md`](./I18N.md), pas ici |
 > | `e2e` (−1 le 10-01) | 0 | dernier verdict complet `f301f0bf` : **57 échecs, 13 instables, 167 verts** (60 / 9 / 168 le 10-01 au soir). Les deux cas Agenda tombent ; restent `demo-entreprise-*`, `delete-org` (attend « Zone de danger »), `demo-calendar` surfaces 5 et 6 (tâche d'équipe), déjà rouges le 10-01, et les cibles tactiles de l'Aperçu. Déjà payé |
 > | 🔴 Un verdict `e2e` par jour, au mieux | 0 | le job dure **4,3 h** et `cancel-in-progress` l'annule à chaque push : le 2026-10-02, sur **18** runs `CI` de `main`, **16** annulés, **1** complet, 1 en cours. La durée vient surtout des échecs (57 cas × 3 tentatives, délais de 120 s) : réparer la suite entreprise la ramène. Conséquence de l'item déjà payé, nommée pour qu'elle ne se perde pas |
-> | ✅ Témoin de `check:supabase-posture` | 0 | la garde comptait **zéro** pour chaque advisor depuis sa pose (cf. [`../faille.md`](../faille.md)) : corrigée, cas ajouté à `gardes-posture.guard.test.mjs` à la forme réelle de l'API, **vu rouge sans le correctif, vert avec**. Jamais créditée : rien à rembourser |
+> | ✅ Témoin de `check:supabase-posture` | 0 | la garde comptait **zéro** pour chaque advisor depuis sa pose (cf. `faille.md` (hors dépôt)) : corrigée, cas ajouté à `gardes-posture.guard.test.mjs` à la forme réelle de l'API, **vu rouge sans le correctif, vert avec**. Jamais créditée : rien à rembourser |
 >
 > **93 → 93.** Dernier `CI` vert sur `main` : toujours le 2026-09-23 (`869fb05a`).
 
@@ -910,7 +910,7 @@ d'attraper une vague de code non testé. C'est la seconde qui a été prise.
 > ## Gardes de migration — tester la garde, pas seulement le code (2026-08-24)
 >
 > `scripts/migration-guards.test.mjs` — **10 tests**. Deux findings sécurité du 2026-08-24 (B-1 et
-> B-3 de [`../faille.md`](../faille.md)) sont passés parce que la règle qu'ils enfreignaient ne
+> B-3 de `faille.md` (hors dépôt)) sont passés parce que la règle qu'ils enfreignaient ne
 > vivait que dans un Markdown. Les gardes ajoutées ce jour-là ne valent que si elles échouent
 > vraiment sur la régression qu'elles prétendent attraper : **une garde qu'on n'a jamais vue rouge
 > est une intention, pas une garde.**
@@ -1418,13 +1418,18 @@ facturation en retard depuis le 2026-11-03. Désormais :
 
 - `lint-test-build` : `check:docs`, `validate:migrations`, `check:rls`, gardes statiques
   (cycles, plancher, RGPD, sous-traitants, env, journal des CGU), `i18n:*`, build, budget de bundle.
-- `fichiers-sensibles` (SEC-01, SEC-05) : `check:fichiers-sensibles --arbre --plage <poussée>`,
-  historique complet. Refuse csv, pdf, xlsx, dumps, `.env*` (hors `.env.example`,
-  `.env.e2e-stub`) et fichiers > 1 Mo, dans l'arbre ET dans chaque version poussée (un fichier
-  ajouté puis retiré reste dans l'historique public). Exceptions une par une, chemin + blob +
-  motif, dans le script ; aucune variable de contournement. Même règle avant commit :
-  `.githooks/pre-commit`. Témoin : `check-fichiers-sensibles.guard.test.mjs`, dont un vrai
-  `git commit` d'un `.csv` refusé ; sabotage rejoué : `fichiers-sensibles-csv-aveugle`.
+- `fichiers-sensibles` (SEC-01, SEC-05, SEC-07) : `check:fichiers-sensibles --arbre --plage <poussée>`,
+  historique complet. Refuse `prive/**`, `docs/business-plan/**`, `leads-*`, `supabase/.temp/**`,
+  `.claude/settings.local.json`, csv, pdf, xls(x), docx, pptx, dumps, `.env*` (hors
+  `.env.example`, `.env.e2e-stub`) et fichiers > 1 Mo, dans l'arbre ET dans chaque version
+  poussée (un fichier ajouté puis retiré reste dans l'historique public). Exceptions une par une,
+  chemin + blob + motif, dans le script ; aucune variable de contournement. Même liste, même
+  module, à deux autres endroits : `.githooks/pre-commit` (l'index ; sans sa garde, il refuse) et
+  `scripts/fichiers-suivis.guard.test.mjs` (`git ls-files`, joué par `npm test` donc par le noyau :
+  un `--no-verify` y tombe). Témoins : `check-fichiers-sensibles.guard.test.mjs` (vrais `git commit`
+  d'un `.csv` et d'un fichier de `prive/` refusés, hook sans garde refusé) et le témoin
+  `--no-verify` de `fichiers-suivis` ; sabotages rejoués : `fichiers-sensibles-csv-aveugle`,
+  `fichiers-sensibles-prive-aveugle`, `pre-commit-vert-muet`.
 - `audit` — `npm audit --omit=dev --audit-level=high` (bloque sur CVE prod)
 - `e2e` — Playwright, project `chromium` uniquement
 - `rls-integration` — stack Supabase locale (`supabase start`), rejoue **toutes**

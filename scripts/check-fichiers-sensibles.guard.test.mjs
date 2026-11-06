@@ -16,11 +16,14 @@ import { join, resolve } from 'node:path';
 import {
   EXCEPTIONS,
   TAILLE_MAX,
+  CHEMINS_INTERDITS,
+  globVersRegex,
   raisonSensible,
   juger,
   exceptionsPerimees,
   lireRaw,
   lireArbre,
+  lireLsFiles,
   lirePlage,
   run,
 } from './check-fichiers-sensibles.mjs';
@@ -31,7 +34,18 @@ const e = (chemin, taille = 10, blob = B) => ({ chemin, blob, taille });
 describe('raisonSensible : la règle', () => {
   it.each([
     ['leads-50.csv'],
+    ['exports/prospects.csv'],
     ['docs/business-plan/business-plan-cosmo-2026-final.pdf'],
+    ['docs/business-plan/notes.md'],
+    ['prive/faille.md'],
+    ['prive/RGPD-VIOLATION.md'],
+    ['Prive/a-faire-manuel.md'],
+    ['leads-relance.txt'],
+    ['supabase/.temp/project-ref'],
+    ['supabase/.temp/linked-project.json'],
+    ['.claude/settings.local.json'],
+    ['docs/offre-commerciale.docx'],
+    ['pitch.PPTX'],
     ['exports/Clients.XLSX'],
     ['vieux.xls'],
     ['backup/prod-2026-10-13.sql.gz'],
@@ -45,12 +59,37 @@ describe('raisonSensible : la règle', () => {
     expect(raisonSensible(chemin, 10)).not.toBeNull();
   });
 
-  it.each([['.env.example'], ['.env.e2e-stub'], ['src/lib/env.ts'], ['docs/csv-export.md'], ['environment.d.ts']])(
+  it.each([
+    ['.env.example'], ['.env.e2e-stub'], ['src/lib/env.ts'], ['docs/csv-export.md'], ['environment.d.ts'],
+    ['.claude/settings.json'], ['.claude/launch.json'], ['src/leads.ts'], ['privee/x.md'], ['docs/prive/x.md'],
+    ['supabase/functions/report-bug/index.ts'],
+  ])(
     'laisse passer %s',
     (chemin) => {
       expect(raisonSensible(chemin, 10)).toBeNull();
     },
   );
+
+  it('un chemin interdit l emporte sur le suffixe : la raison la plus précise', () => {
+    expect(raisonSensible('prive/leads.csv', 10)).toMatch(/prive/);
+    expect(raisonSensible('leads-50.csv', 10)).toMatch(/prospection/);
+    expect(raisonSensible('supabase/.temp/x.csv', 10)).toMatch(/CLI Supabase/);
+  });
+
+  it('globVersRegex : `**` traverse les dossiers, `*` reste dans un nom', () => {
+    expect(globVersRegex('prive/**').test('prive/a/b.md')).toBe(true);
+    expect(globVersRegex('prive/**').test('src/prive/a.md')).toBe(false);
+    expect(globVersRegex('**/leads-*').test('leads-1.csv')).toBe(true);
+    expect(globVersRegex('**/leads-*').test('a/b/leads-1.csv')).toBe(true);
+    expect(globVersRegex('**/leads-*').test('a/leads-x/b.md')).toBe(false);
+    expect(globVersRegex('.claude/settings.local.json').test('.claude/settingsXlocal.json')).toBe(false);
+  });
+
+  it('la liste porte les motifs exigés par SEC-01 et SEC-07, un par un', () => {
+    expect(CHEMINS_INTERDITS.map(([g]) => g)).toEqual([
+      'prive/**', 'docs/business-plan/**', '**/leads-*', 'supabase/.temp/**', '.claude/settings.local.json',
+    ]);
+  });
 
   it('refuse au-delà de 1 Mo, pas à 1 Mo pile', () => {
     expect(raisonSensible('public/video.mp4', TAILLE_MAX)).toBeNull();
@@ -64,7 +103,7 @@ describe('juger : les exceptions, une par une', () => {
   it('l incident du 2026-10-30 : chaque fichier est refusé et nommé', () => {
     const refus = juger([e('leads-50.csv'), e('docs/business-plan/business-plan-cosmo-2026-v4.pdf'), e('src/a.ts')], ex);
     expect(refus).toHaveLength(2);
-    expect(refus[0]).toMatch(/^leads-50\.csv : export tabulaire/);
+    expect(refus[0]).toMatch(/^leads-50\.csv : fichier de prospection/);
   });
 
   it('une exception couvre SA version, pas une autre', () => {
@@ -119,6 +158,12 @@ describe('lecture de git', () => {
     expect(() => lireRaw(':000000 100644 A\0x\0')).toThrow(/illisible/);
   });
 
+  it('lireLsFiles : sortie ls-files -s -z, sous-module ignoré, forme cassée refusée', () => {
+    const s = `100644 ${B} 0\tprive/faille.md\x00160000 ${B} 0\tsous-module\0`;
+    expect(lireLsFiles(s)).toEqual([{ chemin: 'prive/faille.md', blob: B }]);
+    expect(() => lireLsFiles('100644 abc 0\tx\0')).toThrow(/illisible/);
+  });
+
   it('lirePlage : refuse une plage sans base ou mal formée', () => {
     expect(() => lirePlage(`${'0'.repeat(40)}..HEAD`, () => '')).toThrow(/sans base/);
     expect(() => lirePlage('HEAD;rm -rf /', () => '')).toThrow(/illisible/);
@@ -171,11 +216,16 @@ describe('le hook pre-commit, joué en vrai', () => {
   const hook = readFileSync(resolve(RACINE, '.githooks/pre-commit'), 'utf8');
 
   it('le hook lance cette garde sur l index, sans variable de contournement', () => {
-    expect(hook).toContain('exec node scripts/check-fichiers-sensibles.mjs --index');
+    expect(hook).toContain('scripts/check-fichiers-sensibles.mjs');
+    expect(hook).toContain('exec node "$garde" --index');
     expect(hook).not.toMatch(/\$\{?COSMO_|SKIP|BYPASS/);
   });
 
-  it('TÉMOIN : un .csv indexé fait échouer `git commit`, un .ts passe', () => {
+  /**
+   * Un dépôt git jetable, hook en place. `avecGarde: false` = le hook sans le
+   * script qu'il lance (worktree trop ancien, copie partielle).
+   */
+  function depotJetable(corps, { avecGarde = true } = {}) {
     const d = mkdtempSync(join(tmpdir(), 'fichiers-sensibles-'));
     try {
       const g = (...args) => spawnSync('git', args, { cwd: d, encoding: 'utf8' });
@@ -183,27 +233,60 @@ describe('le hook pre-commit, joué en vrai', () => {
       g('config', 'user.email', 'temoin@example.invalid');
       g('config', 'user.name', 'temoin');
       g('config', 'commit.gpgsign', 'false');
-      mkdirSync(join(d, 'scripts'));
       mkdirSync(join(d, '.githooks'));
-      copyFileSync(resolve(RACINE, 'scripts/check-fichiers-sensibles.mjs'), join(d, 'scripts/check-fichiers-sensibles.mjs'));
       copyFileSync(resolve(RACINE, '.githooks/pre-commit'), join(d, '.githooks/pre-commit'));
       g('config', 'core.hooksPath', '.githooks');
-
-      writeFileSync(join(d, 'a.ts'), 'export const a = 1;\n');
-      g('add', 'a.ts', 'scripts', '.githooks');
+      const suivis = ['.githooks'];
+      if (avecGarde) {
+        mkdirSync(join(d, 'scripts'));
+        copyFileSync(resolve(RACINE, 'scripts/check-fichiers-sensibles.mjs'), join(d, 'scripts/check-fichiers-sensibles.mjs'));
+        suivis.push('scripts');
+      }
+      g('add', ...suivis);
       g('update-index', '--chmod=+x', '.githooks/pre-commit');
-      const ok = g('commit', '-q', '-m', 'code');
-      expect(ok.status, ok.stderr).toBe(0);
-
-      writeFileSync(join(d, 'leads-50.csv'), 'nom,email\nA,a@example.invalid\n');
-      g('add', 'leads-50.csv');
-      const refuse = g('commit', '-q', '-m', 'leads');
-      expect(refuse.status).not.toBe(0);
-      expect(refuse.stderr).toMatch(/leads-50\.csv : export tabulaire/);
-      expect(g('log', '--oneline').stdout.trim().split('\n')).toHaveLength(1);
+      corps({ d, g });
     } finally {
       rmSync(d, { recursive: true, force: true });
     }
+  }
+
+  it('TÉMOIN : un .csv indexé fait échouer `git commit`, un .ts passe', () => {
+    depotJetable(({ d, g }) => {
+      writeFileSync(join(d, 'a.ts'), 'export const a = 1;\n');
+      g('add', 'a.ts');
+      const ok = g('commit', '-q', '-m', 'code');
+      expect(ok.status, ok.stderr).toBe(0);
+
+      writeFileSync(join(d, 'export-clients.csv'), 'nom,email\nA,a@example.invalid\n');
+      g('add', 'export-clients.csv');
+      const refuse = g('commit', '-q', '-m', 'export');
+      expect(refuse.status).not.toBe(0);
+      expect(refuse.stderr).toMatch(/commit REFUSÉ/);
+      expect(refuse.stderr).toMatch(/export-clients\.csv : export tabulaire/);
+      expect(g('log', '--oneline').stdout.trim().split('\n')).toHaveLength(1);
+    });
+  }, 30_000);
+
+  it('TÉMOIN : un fichier de `prive/` indexé fait échouer `git commit`', () => {
+    depotJetable(({ d, g }) => {
+      mkdirSync(join(d, 'prive'));
+      writeFileSync(join(d, 'prive/faille.md'), '# findings ouverts\n');
+      g('add', '-f', 'prive/faille.md');
+      const refuse = g('commit', '-q', '-m', 'faille');
+      expect(refuse.status).not.toBe(0);
+      expect(refuse.stderr).toMatch(/prive\/faille\.md : dossier local `prive\/`/);
+      expect(g('log', '--oneline').status).not.toBe(0);
+    });
+  }, 30_000);
+
+  it('TÉMOIN : un hook privé de sa garde refuse le commit, jamais un vert muet', () => {
+    depotJetable(({ d, g }) => {
+      writeFileSync(join(d, 'a.ts'), 'export const a = 1;\n');
+      g('add', 'a.ts');
+      const refuse = g('commit', '-q', '-m', 'code');
+      expect(refuse.status).not.toBe(0);
+      expect(refuse.stderr).toMatch(/commit refuse, scripts\/check-fichiers-sensibles\.mjs introuvable/);
+    }, { avecGarde: false });
   }, 30_000);
 });
 

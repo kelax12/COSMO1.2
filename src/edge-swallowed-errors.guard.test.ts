@@ -3,7 +3,7 @@
 //
 // POURQUOI CE FICHIER EXISTE (audit A-1, 2026-09-03)
 //
-// C'est la famille S-1 / S-2 de `faille.md`, trouvée cette fois hors Stripe :
+// C'est la famille S-1 / S-2 de `faille.md` (hors dépôt, `prive/` du checkout principal), trouvée cette fois hors Stripe :
 // une lecture dont le RÉSULTAT DÉCIDE d'un routage, et dont l'erreur n'est pas
 // regardée, transforme une panne de lecture en réponse « il n'y a rien ».
 //

@@ -28,7 +28,7 @@
 //
 // ⚠️ Mesure en viewport ÉMULÉ, pas sur un appareil : la taille en pixels CSS
 // est la même, mais le taux de ratage réel ne se mesure qu'avec un doigt
-// (`a-faire-manuel.md` §7, M-25).
+// (`a-faire-manuel.md` (hors dépôt, `prive/` du checkout principal) §7, M-25).
 //
 // 🔴 CE QUE LA PREMIÈRE VERSION DE CETTE GARDE NE VOYAIT PAS. Elle ne mesurait
 // que l'ÉTAT INITIAL de six routes — donc rien dans une modale, un menu ou une

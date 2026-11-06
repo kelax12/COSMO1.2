@@ -27,7 +27,7 @@
 // trente secondes et vaut une trace.
 //
 // ⚠️ Elle ne vérifie pas que le préavis a été ENVOYÉ. C'est un geste
-// (`a-faire-manuel.md`), et il laisse sa trace ailleurs — la table
+// (`a-faire-manuel.md` (hors dépôt, `prive/` du checkout principal)), et il laisse sa trace ailleurs — la table
 // `renewal_notices`, qui est une PREUVE et qu'on ne purge jamais.
 //
 // ❌ NE JAMAIS RECALER L'EMPREINTE SANS ÉCRIRE L'ENTRÉE. Le recalage est

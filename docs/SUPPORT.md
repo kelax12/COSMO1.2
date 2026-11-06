@@ -130,7 +130,7 @@ Bascule dès qu'**au moins deux** signalements portent sur le même symptôme, o
 perdue. La marche à suivre n'est pas ici :
 
 - **Panne, régression, rollback** → [`DEPLOYMENT.md`](./DEPLOYMENT.md) §4 « Réponse incident ».
-- **Donnée personnelle exposée, perdue ou altérée** → [`RGPD-VIOLATION.md`](./RGPD-VIOLATION.md),
+- **Donnée personnelle exposée, perdue ou altérée** → `RGPD-VIOLATION.md` (hors dépôt),
   et le chronomètre des **72 heures** part au moment où on en prend connaissance.
 - **Échec de paiement ou de facturation** → le journal `payment_records` fait foi, et il est
   inaltérable : une erreur se corrige par une ligne compensatoire, jamais par une modification.

@@ -7,7 +7,7 @@
 // puis exige que le dépôt réel, lui, soit vert.
 // ═══════════════════════════════════════════════════════════════════
 import { describe, it, expect } from 'vitest';
-import { mkdtempSync, mkdirSync, copyFileSync, readFileSync, writeFileSync, readdirSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, copyFileSync, readFileSync, writeFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import * as lecteurs from './check-lecteurs-ecran.mjs';
@@ -18,7 +18,7 @@ const RACINE = process.cwd();
 const FICHIERS = [
   'docs/AUDIT-VOICEOVER-IOS.md',
   'docs/AUDIT-NVDA-WINDOWS.md',
-  'docs/RGPD-VIOLATION.md',
+  'docs/RGPD-VIOLATION-EXERCICES.md',
   'docs/RGPD-VIOLATION-GABARITS.md',
   'docs/POST-AUDIT-GUIDE.md',
   'docs/RGPD.md',
@@ -28,8 +28,6 @@ const FICHIERS = [
   'docs/RGPD-REGISTRE.md',
   'docs/ACCESSIBILITY.md',
   'docs/STRIPE-LIVE.md',
-  'faille.md',
-  'a-faire-manuel.md',
   'package.json',
 ];
 
@@ -126,14 +124,24 @@ describe('check-exercice-violation', () => {
 
   it('TÉMOIN : l absence d exercice daté est refusée', () => {
     const d = copie();
-    ecrire(d, 'docs/RGPD-VIOLATION.md', (t) => t.replace(/^\| 2026-10-24 \| \*\*Mode table\*\*/m, '| bientôt | **Mode table**'));
+    ecrire(d, 'docs/RGPD-VIOLATION-EXERCICES.md', (t) => t.replace(/^\| 2026-10-24 \| Mode table/m, '| bientôt | Mode table'));
     expect(exercice.verifier(d, AVANT).erreurs.join('\n')).toMatch(/Aucun exercice daté/);
   });
 
-  it('TÉMOIN : un trou sans état est refusé', () => {
+  it('TÉMOIN : le journal public absent est refusé, jamais un vert muet', () => {
+    // La procédure est hors dépôt (2026-11-06, SEC-02) : la garde ne lit que
+    // son journal public, et son absence est un ÉCHEC.
     const d = copie();
-    ecrire(d, 'docs/RGPD-VIOLATION.md', (t) => t.replace(/^(\| T-5 \|.*\|) 🟠 ouvert[^\n]*$/m, '$1  |'));
-    expect(exercice.verifier(d, AVANT).erreurs.join('\n')).toMatch(/Trou T-5 sans état/);
+    rmSync(join(d, 'docs/RGPD-VIOLATION-EXERCICES.md'));
+    expect(exercice.verifier(d, AVANT).erreurs.join('\n')).toMatch(/RGPD-VIOLATION-EXERCICES\.md` introuvable/);
+  });
+
+  it('la garde ne lit pas la procédure hors dépôt (`prive/`)', () => {
+    expect(exercice.DOC).toBe('docs/RGPD-VIOLATION-EXERCICES.md');
+    // Le CODE, pas les commentaires (l'en-tête dit justement « jamais de lecture de prive/ »).
+    const code = readFileSync(join(RACINE, 'scripts/check-exercice-violation.mjs'), 'utf8')
+      .split(/\r?\n/).filter((l) => !/^\s*\/\//.test(l)).join('\n');
+    expect(code).not.toMatch(/prive\//);
   });
 
   it('TÉMOIN : un gabarit disparu est refusé', () => {
@@ -144,7 +152,7 @@ describe('check-exercice-violation', () => {
 
   it('TÉMOIN : un lien mort, une ancre morte et une commande inconnue sont refusés', () => {
     const d = copie();
-    ecrire(d, 'docs/RGPD-VIOLATION.md', (t) => `${t}\n[a](./N-EXISTE-PAS.md) [b](./SECURITY.md#ancre-fantome) \`npm run check:fantome\`\n`);
+    ecrire(d, 'docs/RGPD-VIOLATION-EXERCICES.md', (t) => `${t}\n[a](./N-EXISTE-PAS.md) [b](./SECURITY.md#ancre-fantome) \`npm run check:fantome\`\n`);
     const e = exercice.verifier(d, AVANT).erreurs.join('\n');
     expect(e).toMatch(/Lien mort : \.\/N-EXISTE-PAS\.md/);
     expect(e).toMatch(/Ancre morte : \.\/SECURITY\.md#ancre-fantome/);

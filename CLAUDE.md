@@ -65,7 +65,7 @@ RPC, écran) → `index.ts` du module → son `CLAUDE.md` s'il existe → le cod
 
 **Deux statuts, ne jamais les confondre :**
 
-- **Vivant** — maintenu, décrit l'état courant. Ce fichier, `faille.md`, et `docs/*.md`.
+- **Vivant** — maintenu, décrit l'état courant. Ce fichier, `faille.md` (hors dépôt), et `docs/*.md`.
 - **Archive** — `docs/archive/**` : instantanés datés (audits, rapports, plans exécutés),
   **non maintenus**, chacun coiffé d'un bandeau ⚠️. À lire pour le *pourquoi* d'une décision
   passée, **jamais** comme état courant. Le code fait foi contre une archive.
@@ -84,14 +84,19 @@ RPC, écran) → `index.ts` du module → son `CLAUDE.md` s'il existe → le cod
 | [`docs/TESTING.md`](./docs/TESTING.md) | Vitest, Playwright, a11y, i18n, CI, **checklist avant push prod** |
 | [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md) | Runbook deploy/rollback Vercel + Supabase |
 | [`docs/LEGAL.md`](./docs/LEGAL.md) | Statut, TVA, conso, marque, sous-traitants. **Tout client est un consommateur** (2026-08-26) |
-| [`faille.md`](./faille.md) | Sécurité : **source de vérité**, findings ouverts + ordre de priorité avant prod |
+| `faille.md` (hors dépôt) | Sécurité : **source de vérité**, findings ouverts + ordre de priorité avant prod |
 
 Autres docs vivantes, décrites dans `docs/README.md` : `SEO`, `ACQUISITION-BACKLINKS`, `I18N`,
-`RGPD`, `RGPD-REGISTRE` (art. 30), `RGPD-VIOLATION` (procédure 72 h), `STRIPE-LIVE`,
+`RGPD`, `RGPD-REGISTRE` (art. 30), `RGPD-VIOLATION-GABARITS` et `-EXERCICES` (procédure 72 h), `STRIPE-LIVE`,
 `ACCESSIBILITY`, `SCALABILITY`, `POST-AUDIT-GUIDE` (`PREMIUM_ENFORCED`), `MIGRATION-REACT19`.
 
 > **Sécurité : `faille.md` fait foi.** CLAUDE.md ne duplique pas les statuts de failles.
 > Avant tout déploiement : `faille.md` → « Ordre de priorité avant déploiement prod ».
+
+🔒 **Hors dépôt (dépôt PUBLIC, 2026-11-06)** : `faille.md`, `a-faire-manuel.md` et
+`RGPD-VIOLATION.md` vivent dans `C:\Users\Axel\Documents\COSMO1.1\prive\` (checkout principal).
+❌ Jamais de lien vers eux, jamais de copie de leur contenu dans le dépôt. Le hook `pre-commit`
+refuse `prive/**`, csv, pdf, docx… : liste unique dans `scripts/check-fichiers-sensibles.mjs`.
 
 ---
 

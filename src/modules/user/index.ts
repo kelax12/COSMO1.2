@@ -6,7 +6,7 @@
 // `useWatchAd` et `useUpdateUserSettings` : les trois premiers n'avaient
 // AUCUN consommateur, et le quatrième écrivait dans `cosmo_user`, une clé que
 // plus rien ne relisait depuis que `useAuth` est devenu la source de vérité du
-// type `User`. Détail : docs/ARCHITECTURE.md §4 et faille.md (finding N6).
+// type `User`. Détail : docs/ARCHITECTURE.md §4 et `faille.md`, hors dépôt (finding N6).
 //
 // Ce qui reste est ce qui sert :
 //   • le type `User`, ré-exporté depuis sa source de vérité ;

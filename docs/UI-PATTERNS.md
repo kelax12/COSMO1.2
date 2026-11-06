@@ -1074,7 +1074,7 @@ En prod **sans ligne au ledger** (relu au catalogue le 2026-09-30, cf. `supabase
 - ❌ Ajouter un champ à `lockedFields` sans gérer le visuel `disabled`/`readOnly` + style locked
 - ❌ **Déstructurer `const { data = [] } = useX()` sans lire `isLoading`** quand la valeur alimente un chiffre, un compteur ou un état vide visible (2026-08-27, finding 7). Le tableau vide par défaut se rend comme une **affirmation** : « 0 tâche », « aucun projet ». Rendre un squelette (`src/components/skeletons`, `OrgLoadingSkeletons`), en gris neutre `--color-hover` et **jamais** `bg-accent`, qui vaut un bleu vif dans 3 thèmes sur 4
 - ❌ **Confirmer un changement de contexte irréversible par un toast** (2026-08-27, finding 9) : il est *dismissible*, donc contournable. Un départ hors de la page, une perte de saisie, une navigation qui remplace l'écran se confirment dans un dialogue **bloquant** (`AlertDialog`)
-- ❌ **Monter une entrée de navigation sur `{data && …}`** (2026-08-27, finding 8) : la barre se peint sans elle, puis la fait apparaître, et tout ce qui suit saute d'une ligne. Réserver la place à partir d'un indice persisté, et ne jamais confondre cet indice avec une autorisation (cf. [`../faille.md`](../faille.md))
+- ❌ **Monter une entrée de navigation sur `{data && …}`** (2026-08-27, finding 8) : la barre se peint sans elle, puis la fait apparaître, et tout ce qui suit saute d'une ligne. Réserver la place à partir d'un indice persisté, et ne jamais confondre cet indice avec une autorisation (cf. `faille.md` (hors dépôt))
 
 ### 📋 Listes & SmartListMenu
 - ❌ Popover positionné en `absolute` dans une barre `overflow-x-auto` — utiliser `createPortal` + `position: fixed`

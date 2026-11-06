@@ -139,11 +139,11 @@ if (estLanceDirectement) {
   for (const [f, m] of marqueurs) {
     if (m.forme !== 'couvert-par') continue;
     const cible = m.valeur;
-    // `faille.md` est à la RACINE du dépôt, pas dans `docs/` : c'est la
-    // source de vérité sécurité, et `CLAUDE.md` le dit.
-    const existe = cible === 'faille.md'
-      ? existsSync(join(RACINE, 'faille.md'))
-      : existsSync(join(DOCS, cible));
+    // Une cible se cherche dans `docs/`, sans exception. L'ancien cas de
+    // `faille.md` (racine) est retiré le 2026-11-06 : le fichier est sorti du
+    // dépôt public (SEC-02), il vit hors dépôt (`prive/` du checkout
+    // principal) et la CI ne peut pas le lire. `SECURITY.md` est `non-note`.
+    const existe = existsSync(join(DOCS, cible));
     if (!existe) {
       erreurs.push(`\`docs/${f}\` se déclare couvert par \`${cible}\`, qui n'existe pas.`);
       continue;

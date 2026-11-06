@@ -7,14 +7,14 @@
 # l'API Management et comparees a `main` : LES TROIS divergeaient, de trois
 # facons differentes. `delete-account` executait une variante absente du
 # depot ; `renewal-notice` et `report-bug` portaient le defaut S-4 que
-# `faille.md` declare corrige. Remesure du 2026-09-04 : `stripe-org-refund`
+# `faille.md` (hors depot) declare corrige. Remesure du 2026-09-04 : `stripe-org-refund`
 # n'existe pas en prod, `report-bug` tourne toujours en v8 du 08-29,
 # `stripe-webhook` en v26 du 08-26. Il a fallu interroger le projet A LA
 # MAIN pour l'apprendre, et rien dans la CI ne l'aurait jamais dit.
 #
 # Consequence, et c'est la seule qui compte : toute conclusion tiree en
 # lisant `supabase/functions/` etait fausse d'avance, y compris les statuts
-# de `faille.md`. Un « ✅ corrige » sur une Edge Function ne veut rien dire
+# de `faille.md` (hors depot, `prive/` du checkout principal). Un « ✅ corrige » sur une Edge Function ne veut rien dire
 # sans sa date de deploiement.
 #
 # ── CE QU'IL FAUT FAIRE QUAND CE JOB CASSE ────────────────────────────
@@ -24,7 +24,7 @@
 #
 #   · le depot est en avance (le correctif est committe, pas deploye) →
 #     `supabase functions deploy <slug>`. C'est un geste manuel d'Axel,
-#     suivi dans `a-faire-manuel.md`.
+#     suivi dans `a-faire-manuel.md` (hors depot, `prive/` du checkout principal).
 #   · la prod est en avance (quelqu'un a deploye depuis un arbre de travail
 #     non committe, ce qui est EXACTEMENT ce qui a produit C-35) → recuperer
 #     le code deploye et le committer, avant tout autre travail.

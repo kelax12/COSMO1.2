@@ -3,7 +3,7 @@
 > ⚠️ **Lire avant tout `supabase db push`, `supabase migration …` ou toute écriture SQL.**
 > État détaillé, ledger, récits datés et migrations non appliquées :
 > [`docs/SECURITY.md`](../../docs/SECURITY.md) § « Base de données ».
-> Findings de sécurité ouverts : [`faille.md`](../../faille.md), qui **fait foi**.
+> Findings de sécurité ouverts : `faille.md` (hors dépôt), qui **fait foi**.
 
 ## Ce dossier n'est PAS géré par la CLI Supabase
 

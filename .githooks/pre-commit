@@ -1,13 +1,24 @@
 #!/bin/sh
-# Cf. scripts/check-fichiers-sensibles.mjs : refuse l'indexation d'un fichier
-# de donnees (csv, pdf, xlsx, dump, .env*, plus de 1 Mo) sur ce depot PUBLIC.
-# Aucune variable de contournement ; `--no-verify` saute ce hook, la CI
-# (`ci.yml`, job `fichiers-sensibles`) rejoue la meme garde.
+# Verrou anti-fuite (SEC-01, SEC-07) : refuse l'indexation d'un fichier qui
+# n'a rien a faire sur ce depot PUBLIC (prive/**, docs/business-plan/**,
+# leads-*, csv, pdf, xls(x), docx, pptx, dumps, .env* hors gabarits,
+# .claude/settings.local.json, supabase/.temp/**, plus de 1 Mo).
+# La liste vit dans UN seul fichier, scripts/check-fichiers-sensibles.mjs :
+# ce hook, le job CI `fichiers-sensibles` et la garde Vitest
+# `scripts/fichiers-suivis.guard.test.mjs` (git ls-files) la lisent tous.
+# Aucune variable de contournement ; `--no-verify` saute ce hook, la CI et
+# `npm test` rattrapent le fichier suivi.
 #
-# `core.hooksPath` peut pointer ce hook depuis un worktree plus ancien que la
-# garde : sans le script, on le dit et on laisse passer (la CI tranchera).
-if [ ! -f scripts/check-fichiers-sensibles.mjs ]; then
-  echo "pre-commit : scripts/check-fichiers-sensibles.mjs absent de ce checkout, index NON verifie (la CI le rejouera)." >&2
-  exit 0
+# Git lance un hook a la racine de l'arbre de travail. `core.hooksPath` peut
+# pointer ce hook depuis un worktree plus ancien que la garde : on prend alors
+# le script voisin du hook. Sans script du tout, on REFUSE (jamais un vert
+# muet : une garde qui ne peut pas lire n'a rien verifie).
+garde=scripts/check-fichiers-sensibles.mjs
+if [ ! -f "$garde" ]; then
+  garde="$(dirname "$0")/../scripts/check-fichiers-sensibles.mjs"
 fi
-exec node scripts/check-fichiers-sensibles.mjs --index
+if [ ! -f "$garde" ]; then
+  echo "pre-commit : commit refuse, scripts/check-fichiers-sensibles.mjs introuvable (ni dans ce checkout, ni a cote du hook) : l'index n'a pas pu etre verifie." >&2
+  exit 1
+fi
+exec node "$garde" --index

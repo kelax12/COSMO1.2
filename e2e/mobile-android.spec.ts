@@ -25,7 +25,7 @@
 // ⚠️ Ces cas mesurent un appareil ÉMULÉ sur un runner, pas un téléphone. Le
 // bridage CPU de CDP ralentit l'exécution JavaScript ; il ne reproduit ni la
 // thermique, ni le GPU mobile, ni la mémoire. Le volet « appareil réel » reste
-// `a-faire-manuel.md` (audit A-4, moitié appareil NON FAITE).
+// `a-faire-manuel.md`, hors dépôt (audit A-4, moitié appareil NON FAITE).
 //
 // ❌ Ne jamais lire un vert ici comme « le produit va bien sur Android ».
 //    Il dit : sur ces trois configurations, ces invariants-là tiennent.

@@ -9,7 +9,7 @@
 // téléchargeable depuis n'importe quel compte GitHub connecté. Son en-tête
 // affirmait l'inverse (« les artefacts d'un run ne le sont pas »). Rien ne
 // l'a vu pendant 45 jours : un audit juridique l'a trouvé, aucune garde
-// (`faille.md` § BK-1, `docs/RGPD-VIOLATION.md` ligne AM-2bis).
+// (`faille.md` § BK-1 et `RGPD-VIOLATION.md` ligne AM-2bis, tous deux hors dépôt dans `prive/` du checkout principal).
 //
 // `8c6a971d` a rendu le chiffrement obligatoire dans CE workflow. Rien ne
 // regardait les AUTRES. Ce fichier lit tous les `.github/workflows/*.yml`

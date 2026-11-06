@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // migration-guards.test.mjs — tester les GARDES, pas seulement le code
 //
-// Deux findings du 2026-08-24 (B-1 et B-3 de faille.md) sont passés parce que
+// Deux findings du 2026-08-24 (B-1 et B-3 de `faille.md` (hors dépôt, `prive/` du checkout principal)) sont passés parce que
 // la règle qu'ils enfreignaient ne vivait que dans un fichier Markdown. Les
 // gardes ajoutées ce jour-là ne valent donc que si elles échouent VRAIMENT sur
 // la régression qu'elles prétendent attraper — une garde qu'on n'a jamais vue
