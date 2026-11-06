@@ -23,8 +23,12 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 
 const SCAN_ROOTS = ['src'];
-/** shadcn (non modifiable) + vitrines marketing (déjà ignorées par ESLint). */
-const EXCLUDED_DIRS = new Set(['ui', 'showcase', '__test__', 'test']);
+/**
+ * shadcn (non modifiable) + vitrines marketing (déjà ignorées par ESLint) +
+ * `generated` : types écrits par `scripts/contrat-donnees.mjs`, jamais à la
+ * main, donc hors du budget de lecture humaine (ARC-07).
+ */
+const EXCLUDED_DIRS = new Set(['ui', 'showcase', '__test__', 'test', 'generated']);
 
 function collectSourceFiles(dir: string, acc: string[] = []): string[] {
   let entries: string[];
