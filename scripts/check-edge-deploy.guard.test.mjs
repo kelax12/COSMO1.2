@@ -252,6 +252,32 @@ describe('check:edge · temoin de perimetre', () => {
     ]);
   });
 
+  // 2026-11-06 : `seat-alert` jugee « absent-de-la-prod » sur un fichier que
+  // seul un `import type` atteint, et que le bundle en ligne n'embarque donc pas.
+  it('ignore un import de TYPES seuls, garde un import de valeur qui porte un type', () => {
+    const source = `
+      import { opsAlert } from './alert.ts'
+      import type { BillingMail } from './billing-mail-text.ts'
+      export type { OrgTier } from './org-tiers.ts'
+      import { renderBillingMail, type Layout } from './billing-mail-layout.ts'
+      import type {
+        A,
+        B,
+      } from './types-multilignes.ts'
+    `;
+    expect(importsLocaux(source).sort()).toEqual(['./alert.ts', './billing-mail-layout.ts']);
+  });
+
+  it('TEMOIN : seat-alert n embarque billing-mail-text que si un import de VALEUR y mene', () => {
+    const fichiers = [...repoFilesFor('seat-alert').keys()];
+    expect(fichiers).toContain('_shared/billing-mail.ts');
+    expect(fichiers).toContain('_shared/seat-alert-text.ts');
+    // Ce que le bundle deploye porte (run 42308483223) : pas billing-mail-text.
+    expect(fichiers).not.toContain('_shared/billing-mail-text.ts');
+    // Et le meme fichier atteint par une valeur reste dans le perimetre.
+    expect([...repoFilesFor('stripe-webhook').keys()]).toContain('_shared/billing-mail-text.ts');
+  });
+
   // Cas reel du depot, pas une fixture : si `report-bug` cesse un jour
   // d'embarquer `_shared/alert.ts`, ce test le dit.
   it('embarque bien _shared/alert.ts dans le perimetre reel de report-bug', () => {
