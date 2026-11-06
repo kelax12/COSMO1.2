@@ -116,6 +116,9 @@ export const DECLARATIONS: Record<string, Declaration> = {
   withdrawal_consents: proprietaire({
     // CHECK withdrawal_consents_complete_ck : seuls des consentements COMPLETS existent.
     valeurs: { immediate_execution: 'true', waives_withdrawal: 'true' },
+    // org_id est NULLABLE depuis la mig. 138 (la preuve survit à l'organisation) : sans
+    // lui la ligne n'appartient à aucune organisation et son propriétaire ne la lit pas.
+    remplir: ['org_id'],
   }),
   billing_flags: {
     visibilite: 'partagee',
