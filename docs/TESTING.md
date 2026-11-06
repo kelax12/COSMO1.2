@@ -1300,6 +1300,12 @@ l'exemple.
 - 🔴 **Local seulement** : `e2e/real/helpers.ts` refuse un hôte autre que `127.0.0.1` / `localhost`.
   Comptes `@example.com` créés par le test (la `service_role` ne sert qu'à créer et supprimer), supprimés
   en fin de cas. ❌ Jamais un vrai compte, jamais l'URL de production.
+- 🔴 **Première exécution (2026-11-06) : trois écarts entre une base REJOUÉE et l'application**, consignés
+  en `test.fixme` dans `e2e/real/schema-drift.spec.ts` : `tasks.deadline` NOT NULL, `tasks.priority` limitée à
+  1..5 (l'écran envoie `null` et `0`), `friend_requests.user_id` NOT NULL (l'insertion de l'app ne l'envoie
+  pas). La production a très probablement été assouplie hors migration (à confirmer par `\d tasks` et
+  `\d friend_requests`) ; une base reconstruite depuis le dépôt refuse ces écritures. Les parcours « tâche »
+  et « partage » posent donc leur tâche et l'amitié en préalable. Correctif : une migration, puis retirer `fixme`.
 - ⚠️ Ces cas ne comptent pas dans `playwright test --list` (config par défaut). Les recompter par
   `npx playwright test -c playwright.real.config.ts --list`.
 
