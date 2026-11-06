@@ -104,11 +104,21 @@ describe('RLS · matrice du catalogue : invariants', () => {
     expect(fautives, 'relations exposées qui contournent la RLS des tables lues').toEqual([]);
   });
 
-  it('chaque table exposée a sa déclaration, et chaque déclaration sa table', () => {
+  it('chaque table exposée a sa déclaration, et chaque déclaration sa table', async () => {
     const sansEntree = nomsTables.filter((n) => !declaration(n));
-    const mortes = Object.keys(DECLARATIONS).filter((n) => !tables.has(n)).sort();
     expect(sansEntree, 'tables nouvelles à classer dans e2e/rls/matrice.declarations.ts').toEqual([]);
-    expect(mortes, 'déclarations sans table exposée').toEqual([]);
+    // Une déclaration peut viser une table VERROUILLÉE (`REVOKE ALL … FROM anon,
+    // authenticated`, écrite par `service_role` ou une fonction DEFINER) : elle
+    // n'est pas exposée, donc absente du catalogue, et c'est voulu. Si elle
+    // l'était un jour, elle entrerait dans la matrice avec sa déclaration. Une
+    // déclaration est morte seulement quand la table n'existe plus du tout.
+    const { rows } = await db.query<{ nom: string }>(
+      `SELECT c.relname::text AS nom FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE n.nspname = 'public' AND c.relkind IN ('r', 'p')`,
+    );
+    const existantes = new Set(rows.map((r) => r.nom));
+    const mortes = Object.keys(DECLARATIONS).filter((n) => !existantes.has(n)).sort();
+    expect(mortes, 'déclarations dont la table n’existe plus dans public').toEqual([]);
   });
 
   it('chaque déclaration qui élargit l’accès est motivée', () => {
@@ -129,12 +139,14 @@ describe('RLS · matrice du catalogue : invariants', () => {
 describe('RLS · matrice du catalogue : propriétaire, tiers, anonyme', () => {
   let proprio: TestUser;
   let tiers: TestUser;
+  let figurant: TestUser;
   let semeur: Semeur;
 
   beforeAll(async () => {
     proprio = await createTestUser();
     tiers = await createTestUser();
-    semeur = new Semeur(db, tables, proprio.id, (n) => declaration(n)?.graine);
+    figurant = await createTestUser();
+    semeur = new Semeur(db, tables, proprio.id, figurant.id, (n) => declaration(n)?.graine);
     await semeur.semerTout();
 
     // Relevé des policies de la base fraîche, pour lire un écart sans rejouer.
@@ -161,7 +173,7 @@ describe('RLS · matrice du catalogue : propriétaire, tiers, anonyme', () => {
         // journal inaltérable, ligne déjà emportée par cascade : sans importance sur une base jetable
       }
     }
-    await deleteTestUsers(proprio, tiers);
+    await deleteTestUsers(proprio, tiers, figurant);
     await db.end();
   }, 120_000);
 
