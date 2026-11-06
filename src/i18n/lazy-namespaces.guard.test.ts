@@ -143,6 +143,10 @@ describe('découpage des catalogues i18n', () => {
     const files = readdirSync(join(ROOT, 'src/locales/fr'))
       .filter((f) => f.endsWith('.json'))
       .map((f) => f.replace(/\.json$/, ''))
+      // `boot` : écran de secours d'avant React, importé STATIQUEMENT par
+      // `lib/boot-watchdog.ts` et exclu du chargeur (`!../locales/*/boot.json`) :
+      // il n'a pas de namespace. Seule exception ; `i18n:check` garde sa parité fr/en.
+      .filter((f) => f !== 'boot')
       .sort();
 
     // `NAMESPACES` est écrit à la main depuis que `fr` n'est plus importé en
