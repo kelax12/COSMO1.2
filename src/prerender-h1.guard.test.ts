@@ -50,6 +50,11 @@ describe('le guide servi porte le guide entier', () => {
     expect(bodyWords(page)).toBe(1);
   });
 
+  it('accepte une balise fermante portant des attributs (CodeQL js/bad-tag-filter, n° 21)', () => {
+    const page = '<body><script>un deux</script\t\n bar>trois</body>';
+    expect(bodyWords(page)).toBe(1);
+  });
+
   it('prerender.mjs fixe un plancher de mots pour /guide', () => {
     expect(prerender).toMatch(/MOTS_MIN = \{ '\/guide': \d{4} \}/);
   });
