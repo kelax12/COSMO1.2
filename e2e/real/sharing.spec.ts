@@ -11,7 +11,7 @@ import {
  * (`friend_requests` puis la RPC réelle `accept_friend_request_v2`) : le geste
  * testé est le PARTAGE, par l'interface.
  */
-test('partager une tâche entre deux comptes', async ({ page, browser, baseURL, makeAccount }) => {
+test('partager une tâche entre deux comptes', async ({ page, browser, baseURL, makeAccount }, testInfo) => {
   const alice = await makeAccount('alice');
   const bob = await makeAccount('bob');
 
@@ -76,6 +76,10 @@ test('partager une tâche entre deux comptes', async ({ page, browser, baseURL, 
       .toBeVisible({ timeout: 30_000 });
     const { data: mine } = await bob.client.rpc('get_my_tasks');
     expect((mine as Array<{ name: string }>).map((t) => t.name)).toContain(taskName);
+  } catch (e) {
+    // La capture automatique ne montre que la page d'Alice : on garde celle de Bob.
+    await bobPage.screenshot({ path: testInfo.outputPath('bob.png') }).catch(() => undefined);
+    throw e;
   } finally {
     await bobPage.context().close();
   }
