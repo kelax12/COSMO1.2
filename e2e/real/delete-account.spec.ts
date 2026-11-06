@@ -1,4 +1,4 @@
-import { test, expect, loginViaUi, goto, createTaskViaUi, findUserIdByEmail, signInClient } from './helpers';
+import { test, expect, loginViaUi, goto, seedTask, findUserIdByEmail, signInClient } from './helpers';
 
 /**
  * Parcours 8 · supprimer son compte. Le geste passe par l'Edge Function
@@ -11,9 +11,9 @@ test('supprimer son compte efface le compte et ses données', async ({ page, mak
   const account = await makeAccount('delete');
   await loginViaUi(page, account);
 
-  // Une donnée à purger, créée par l'interface.
+  // Une donnée à purger (écrite par le client du compte).
   const taskName = `Tâche à purger ${Date.now()}`;
-  await createTaskViaUi(page, taskName);
+  await seedTask(account, taskName);
   const { data: before } = await account.client.from('tasks').select('id').eq('name', taskName);
   expect(before).toHaveLength(1);
 

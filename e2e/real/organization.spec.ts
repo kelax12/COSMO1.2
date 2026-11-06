@@ -4,8 +4,8 @@ import { test, expect, loginViaUi, newSession, goto, reload, expectNoErrorToast 
 
 /** L'accueil d'un espace entreprise recouvre l'écran à la première visite. */
 async function dismissOrgWelcome(page: Page): Promise<void> {
-  const welcome = page.getByRole('dialog', { name: /bienvenue dans l'espace entreprise/i });
-  if (await welcome.isVisible({ timeout: 4_000 }).catch(() => false)) {
+  const welcome = page.getByRole('dialog', { name: /^bienvenue/i });
+  if (await welcome.isVisible({ timeout: 8_000 }).catch(() => false)) {
     await welcome.getByRole('button', { name: /^commencer/i }).click();
     await expect(welcome).toBeHidden();
   }
