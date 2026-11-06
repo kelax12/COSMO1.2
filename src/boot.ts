@@ -25,6 +25,11 @@
 import { afterFirstPaint } from './lib/after-first-paint';
 import { applyRouterBootstrap } from './i18n/apply-bootstrap';
 import { dropPrerenderHeroIfLocaleDiffers } from './lib/prerender-hero';
+// Filet du spinner de démarrage : sans lui, une app qui ne monte pas laisse
+// `#boot-screen` tourner pour toujours (incident du 2026-11-06, en-tête du module).
+import { installBootWatchdog } from './lib/boot-watchdog';
+
+const bootWatchdog = installBootWatchdog();
 
 // `<html lang>` et l'URL canonique (`/fr/x` → `/x`, `/` → `/en/` selon la
 // préférence) AVANT la première peinture, comme quand `main.tsx` était
@@ -35,7 +40,9 @@ const { locale } = applyRouterBootstrap();
 dropPrerenderHeroIfLocaleDiffers(locale);
 
 const charger = () => {
-  void import('./main');
+  // Rejeté (chunk introuvable, module qui lève à l'évaluation) : la sortie
+  // s'affiche tout de suite, sans attendre le délai du filet.
+  import('./main').catch(() => bootWatchdog.fail());
 };
 
 // 🔴 PAGE PRÉRENDUE : les bibliothèques d'abord, chacune dans sa tâche, puis
