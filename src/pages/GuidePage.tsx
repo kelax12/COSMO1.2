@@ -49,9 +49,10 @@ const GuidePage: React.FC = () => {
   // Les vitrines suivent le thème de l'app : des captures sombres faisaient
   // des trous dans la page en thème clair.
   const theme = useDocumentTheme();
-  // Copie du prérendu (src/prerender/content-copy.tsx) : la première section
-  // seule. La copie ne montre que le premier écran, et les vitrines qui suivent
-  // (170 ko de balisage) suivent un thème que le build ne connaît pas.
+  // Copie du prérendu (src/prerender/content-copy.tsx) : le TEXTE de toutes les
+  // sections (le HTML servi doit porter le guide entier, pas son premier écran),
+  // sans les vitrines (170 ko de balisage qui suivent un thème que le build ne
+  // connaît pas).
   const copie = useContext(PrerenderCopyContext);
   const [activeSection, setActiveSection] = useState<SectionId>('demarrage');
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
@@ -214,7 +215,6 @@ const GuidePage: React.FC = () => {
               </div>
             </section>
 
-            {!copie && (<>
             {/* ══ TÂCHES ═════════════════════════════════════════════════ */}
             <section>
               <SectionHeader
@@ -225,9 +225,11 @@ const GuidePage: React.FC = () => {
                 subtitle={t('tasks.subtitle')}
               />
 
-              <div className="mb-8 rounded-2xl overflow-hidden border border-[rgb(var(--color-border))] shadow-2xl">
-                <TaskTableShowcase />
-              </div>
+              {!copie && (
+                <div className="mb-8 rounded-2xl overflow-hidden border border-[rgb(var(--color-border))] shadow-2xl">
+                  <TaskTableShowcase />
+                </div>
+              )}
 
               <div className="space-y-6">
                 <Step n={1} title={t('tasks.step1Title')}>
@@ -302,9 +304,11 @@ const GuidePage: React.FC = () => {
                 subtitle={t('agenda.subtitle')}
               />
 
-              <div className="mb-8 rounded-2xl overflow-hidden border border-[rgb(var(--color-border))] shadow-2xl">
-                <AgendaShowcase />
-              </div>
+              {!copie && (
+                <div className="mb-8 rounded-2xl overflow-hidden border border-[rgb(var(--color-border))] shadow-2xl">
+                  <AgendaShowcase />
+                </div>
+              )}
 
               <div className="space-y-6">
                 <Step n={1} title={t('agenda.step1Title')}>
@@ -344,9 +348,11 @@ const GuidePage: React.FC = () => {
                 subtitle={t('habits.subtitle')}
               />
 
-              <div className="mb-8 rounded-2xl overflow-hidden border border-[rgb(var(--color-border))] shadow-2xl">
-                <HabitHeatmapShowcase />
-              </div>
+              {!copie && (
+                <div className="mb-8 rounded-2xl overflow-hidden border border-[rgb(var(--color-border))] shadow-2xl">
+                  <HabitHeatmapShowcase />
+                </div>
+              )}
 
               <div className="space-y-6">
                 <Step n={1} title={t('habits.step1Title')}>
@@ -406,9 +412,11 @@ const GuidePage: React.FC = () => {
                 subtitle={t('okr.subtitle')}
               />
 
-              <div className="mb-8 rounded-2xl overflow-hidden border border-[rgb(var(--color-border))] shadow-2xl">
-                <OKRCardShowcase />
-              </div>
+              {!copie && (
+                <div className="mb-8 rounded-2xl overflow-hidden border border-[rgb(var(--color-border))] shadow-2xl">
+                  <OKRCardShowcase />
+                </div>
+              )}
 
               <div className="mb-8 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl p-5">
                 <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))] mb-3">{t('okr.whatIs')}</p>
@@ -460,11 +468,13 @@ const GuidePage: React.FC = () => {
                 subtitle={t('stats.subtitle')}
               />
 
-              <div className="mb-8 rounded-2xl overflow-hidden border border-[rgb(var(--color-border))] shadow-2xl">
-                <Suspense fallback={<StatsShowcaseFallback />}>
-                  <StatsShowcase />
-                </Suspense>
-              </div>
+              {!copie && (
+                <div className="mb-8 rounded-2xl overflow-hidden border border-[rgb(var(--color-border))] shadow-2xl">
+                  <Suspense fallback={<StatsShowcaseFallback />}>
+                    <StatsShowcase />
+                  </Suspense>
+                </div>
+              )}
 
               <div className="space-y-6">
                 <Step n={1} title={t('stats.step1Title')}>
@@ -554,7 +564,6 @@ const GuidePage: React.FC = () => {
                 <ArrowRight size={15} />
               </Link>
             </div>
-            </>)}
 
           </main>
           </ShowcaseTheme>
