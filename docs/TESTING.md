@@ -1436,7 +1436,8 @@ Revus et gardés parce qu'aucun ne lit l'horloge ni le réseau : `check:docs`, `
   `check:peremption-chantiers`, `check:acquisition`. Issue `calendrier-red`, refermée seule au vert.
 
 **Branches `noyau/**`** : le noyau y tourne sur `push`. C'est le chemin de réparation d'un noyau
-rouge (§ hook ci-dessous). `fichiers-sensibles` juge la première poussée d'une telle branche
+rouge (`DEPLOYMENT.md` § Hook `pre-push` : aucun contournement, seul un SHA déjà jugé vert passe
+sur un noyau rouge). `fichiers-sensibles` juge la première poussée d'une telle branche
 contre `origin/main`.
 
 Témoins : `noyau-ci.guard.test.mjs` (composition, aucune garde de calendrier ni job lent dans le
