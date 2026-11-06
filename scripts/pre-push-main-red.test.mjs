@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { decide, pushesToMain } from './pre-push-main-red.mjs';
+import { decide, pushesToMain, WORKFLOWS } from './pre-push-main-red.mjs';
 
 const red = { status: 'completed', conclusion: 'failure', headSha: 'abcdef123456', url: 'u' };
 const green = { status: 'completed', conclusion: 'success' };
@@ -33,6 +33,13 @@ describe('pre-push-main-red', () => {
     const r = decide({ runs: [red], override: true, toMain: true });
     expect(r.block).toBe(false);
     expect(r.message).toMatch(/COSMO_PUSH_ON_RED/);
+  });
+
+  it('TÉMOIN CI-03 : lit CI ET CI noyau, et nomme le workflow rouge', () => {
+    expect(WORKFLOWS).toEqual(['CI', 'CI noyau']);
+    const r = decide({ runs: [red], override: false, toMain: true, workflow: 'CI noyau' });
+    expect(r.block).toBe(true);
+    expect(r.message).toMatch(/dernier run CI noyau de main est rouge/);
   });
 
   it('gh illisible : avertit et laisse passer', () => {

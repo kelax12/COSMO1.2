@@ -15,7 +15,7 @@
 > datées vivent dans le doc cité en fin de ligne. ❌ Elle ne dit pas qu'une garde est juste : la
 > section suivante existe précisément parce que quatre d'entre elles répondaient sans mesurer.
 >
-> **Compte, relu dans `package.json` le 2026-10-22** : **36** gardes `check:*` / `i18n:*` /
+> **Compte, relu dans `package.json` le 2026-11-06** : **42** gardes `check:*` / `i18n:*` /
 > `validate:*`, plus trois outils de mesure (`analyze:entry`, `profile:landing`, `images:check`).
 > La racine a écrit « 36 » du 09-21 au 09-30. Un total se recompte, il ne se recopie pas.
 
@@ -62,15 +62,16 @@
 | `check:exercice-violation` | exercice 72 h de moins de 12 mois, liens et gabarits | `M-49` | `docs/RGPD-VIOLATION.md` |
 | `check:peremption-chantiers` | chaque chantier daté (relu 90 j, ou clos) | `AM-2` | `docs/POST-AUDIT-GUIDE.md` |
 | `check:study` | une **étude** décrit encore les versions installées | `C-108` | `docs/MIGRATION-REACT19.md` |
+| `check:fichiers-sensibles` | aucun csv, pdf, xlsx, dump, `.env*` ni fichier > 1 Mo sans exception écrite (hook `pre-commit` + job CI) | `SEC-01` | `docs/TESTING.md` |
 | `check:mail` | SPF / DKIM / DMARC — **pas une gate** | | `docs/DEPLOYMENT.md` |
 | `images:check` | images non optimisées — **pas une gate** | | `docs/PERFORMANCE.md` |
 
-🔒 **Hook `pre-push`** : refuse de pousser sur un `main` rouge → `docs/DEPLOYMENT.md` § 1.
+📅 **Gardes de calendrier** (`study`, `docs-scored`, `lecteurs-ecran`, `exercice-violation`,
+`peremption-chantiers`, `acquisition`) : `gardes-calendrier.yml`, quotidien, issue
+`calendrier-red`. ❌ Jamais dans un job bloquant (CI-01) → `docs/TESTING.md` § CI.
 
-✅ **Les trois gardes qui attendaient un geste manuel mesurent toutes** (relu le 2026-10-20) :
-`check:supabase-posture` a sa référence d'auth depuis le 2026-10-10 (`C-88`), `check:env` a
-`VERCEL_TOKEN` / `VERCEL_PROJECT_ID` depuis le 2026-10-09 (`C-105`), et CodeQL est à 0 alerte
-depuis le 2026-10-16 (`C-89`). Ce paragraphe a dit le contraire jusqu'au 2026-10-20.
+🔒 **Hooks** : `pre-push` refuse un `main` rouge (`CI` ou `CI noyau`) → `docs/DEPLOYMENT.md` § 1 ;
+`pre-commit` lance `check:fichiers-sensibles --index`.
 
 🔴 **`check:supabase-posture` compte une entrée PAR OCCURRENCE** (corrigé le 2026-10-02 : il lisait
 0 depuis sa pose). Référence : `scripts/supabase-posture.reference.json`, chaque compte avec la

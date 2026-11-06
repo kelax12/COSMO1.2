@@ -163,8 +163,38 @@ describe('ci.yml réel', () => {
 
   it('lint-test-build : chaque garde joue après un rouge, et le job finit par le résumé', () => {
     expect(verifierJob(etapes)).toEqual([]);
-    // 23 étapes le 2026-10-12 : une liste courte ne prouverait rien.
-    expect(etapes.filter((e) => e.if === CONDITION).length).toBeGreaterThanOrEqual(23);
+  });
+
+  // 🔴 CI-01 · CI-03 (2026-11-06) : les gardes de `lint-test-build` sont
+  // réparties en trois jobs (commit, noyau, calendrier). Chacun garde le
+  // dispositif, et le TOTAL ne baisse pas : 29 étapes le 2026-11-06 (23 le
+  // 2026-10-12). Une garde perdue dans le partage ferait baisser ce compte.
+  it('noyau et calendrier : même dispositif, et aucune garde perdue dans le partage', () => {
+    const lire = (f) => readFileSync(join(process.cwd(), '.github/workflows', f), 'utf8');
+    const noyau = lireEtapes(lire('ci-noyau.yml'), 'noyau');
+    const calendrier = lireEtapes(lire('gardes-calendrier.yml'), 'calendrier');
+    expect(verifierJob(noyau, { entrees: [] })).toEqual([]);
+    expect(verifierJob(calendrier, { entrees: [] })).toEqual([]);
+    expect(noyau.at(-1).run).toContain('--workflow .github/workflows/ci-noyau.yml --job noyau');
+    expect(calendrier.at(-1).run).toContain('--workflow .github/workflows/gardes-calendrier.yml --job calendrier');
+    const total = [etapes, noyau, calendrier].flat().filter((e) => e.if === CONDITION).length;
+    expect(total).toBeGreaterThanOrEqual(29);
+  });
+
+  // 🔴 CI-01 · TÉMOIN : le job bloquant ne juge plus une date. Ces six
+  // gardes peuvent rougir sans aucun commit ; les remettre dans
+  // `lint-test-build` rendrait `main` rouge un matin, sans poussée.
+  it('lint-test-build ne lance aucune garde de calendrier, gardes-calendrier les lance toutes', () => {
+    const CALENDRIER = ['check:study', 'check:docs-scored', 'check:lecteurs-ecran',
+      'check:exercice-violation', 'check:peremption-chantiers', 'check:acquisition'];
+    const cal = readFileSync(join(process.cwd(), '.github/workflows/gardes-calendrier.yml'), 'utf8').replace(/\r\n/g, '\n');
+    for (const g of CALENDRIER) {
+      expect(etapes.map((e) => e.run ?? '').join('\n'), g).not.toContain(`npm run ${g}`);
+      expect(cal, g).toContain(`run: npm run ${g}\n`);
+    }
+    expect(cal).toMatch(/schedule:\s*\n(\s*#.*\n)*\s*- cron: '[^']+'/);
+    expect(cal).toContain('workflow_dispatch:');
+    expect(cal).toContain('--label calendrier-red');
   });
 
   it('audit : la lecture de la chaîne de build joue après un audit prod rouge', () => {

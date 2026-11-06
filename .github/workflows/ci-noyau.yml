@@ -1,0 +1,104 @@
+# ──────────────────────────────────────────────────────────────────────
+# CI noyau · ce qui juge le CODE du commit, et rien d'autre (CI-03, 2026-11-06)
+#
+# 🔴 POURQUOI UN WORKFLOW A PART
+#
+# `Edge deploy` ne partait que sur un `CI` entierement vert. Or `CI` porte
+# aussi l'e2e, Lighthouse, la RLS d'integration et une vingtaine de gardes de
+# documents : sur les 60 derniers runs de `main` au 2026-11-06, 49 etaient
+# rouges, et cinq fonctions de facturation attendaient en retard sur `main`
+# depuis le 2026-11-03 pour des rouges qui ne touchaient pas une ligne
+# d'Edge Function.
+#
+# Ce workflow porte le seul noyau dont depend le deploiement des fonctions :
+# lint, typecheck, tests unitaires avec leurs seuils, couverture de
+# l'outillage (`scripts/`) et temoins des Edge Functions. `edge-deploy.yml`
+# se declenche sur LUI, avec les memes gardes de securite qu'avant
+# (`faille.md` § CodeQL n° 15).
+#
+# ⚠️ Ces etapes ont QUITTE `lint-test-build` (`ci.yml`) : elles ne tournent
+# qu'une fois. Le hook `pre-push` et `ci-alert.yml` lisent `CI` ET `CI noyau`.
+#
+# Meme dispositif que `lint-test-build` : `npm ci` bloquant, chaque etape
+# suivante joue apres un rouge, la derniere liste tous les rouges.
+# Temoin : `scripts/ci-toutes-les-gardes.guard.test.mjs`.
+# ──────────────────────────────────────────────────────────────────────
+name: CI noyau
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Meme regle que `ci.yml` : sur `main`, un groupe par commit, aucun run n'en
+# annule un autre ; sur une PR, le push suivant remplace le precedent.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  noyau:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+        id: deps
+
+      - name: Lint
+        id: lint
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run lint
+
+      # ⚠️ `npm run build` (Vite/esbuild) NE type-check PAS. Ne pas retirer.
+      - name: Type-check (tsc -b)
+        id: typecheck
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npx tsc -b
+
+      # C-82 · aucune Edge Function deployee sans au moins un temoin qui la
+      # nomme. `stripe-create-checkout` etait a zero.
+      - name: Temoins des Edge Functions
+        id: edge-coverage
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:edge-coverage
+
+      - name: Unit tests + coverage (enforced thresholds)
+        id: tests
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run test:coverage
+
+      # C-82 · la couverture s'arretait a `src/`. Perimetre et seuils PROPRES
+      # pour `scripts/` (le code qui decide si la CI est verte, dont le
+      # selecteur de `edge-deploy.yml`). Le script verifie d'abord que le
+      # rapport est COMPLET, puis les seuils.
+      - name: Couverture de l outillage (scripts/)
+        id: tooling-coverage
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run test:coverage:tooling
+
+      # Son ENTREE est `coverage/`, ecrit par l'etape `tests`, et vitest ne
+      # l'ecrit pas quand un test echoue. `if-no-files-found: error` : un envoi
+      # sans fichier ECHOUE au lieu de passer a vide avec un simple warning.
+      - name: Upload coverage report
+        id: coverage-upload
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage
+          path: coverage/
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Resume des gardes (toutes les etapes rouges)
+        if: ${{ !cancelled() }}
+        env:
+          STEPS_JSON: ${{ toJSON(steps) }}
+        run: node scripts/ci-toutes-les-gardes.mjs --workflow .github/workflows/ci-noyau.yml --job noyau

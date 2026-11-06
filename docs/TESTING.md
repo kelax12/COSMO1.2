@@ -1395,11 +1395,36 @@ npx playwright test e2e/a11y-audit.spec.ts --project=chromium
   (roadmap A-7/A-8/A-10). Une régression `critical` casse donc la CI : c'est ce
   guard qui a détecté le `button-name` manquant sur l'avatar de `SettingsPage`.
 
-## CI (`.github/workflows/ci.yml`, 5 jobs)
+## CI (`.github/workflows/ci.yml`, 6 jobs, plus `ci-noyau.yml` et `gardes-calendrier.yml`)
 
-- `lint-test-build` — lint, `tsc -b`, `validate:migrations`, `check:rls`,
-  `i18n:check`, `test:coverage` (seuils par fichier), build.
-  🔴 **Rouge au 2026-08-25**, cf. l'encadré de couverture en tête de fichier.
+🔴 **Partage du 2026-11-06 (CI-01, CI-03).** `main` était rouge sur 49 des 60 derniers runs, en
+partie à cause de gardes qui jugent une date ou un document : un rouge permanent ne signalait
+plus rien, et `edge-deploy.yml`, suspendu à un `CI` entièrement vert, laissait cinq fonctions de
+facturation en retard depuis le 2026-11-03. Désormais :
+
+- `ci-noyau.yml` (`CI noyau`, push et PR) : lint, `tsc -b`, `check:edge-coverage`,
+  `test:coverage`, `test:coverage:tooling`. **Seul déclencheur d'`edge-deploy.yml`**, lu par le
+  hook `pre-push` et par `ci-alert.yml` comme `CI`.
+- `gardes-calendrier.yml` (quotidien 06:29 UTC + `workflow_dispatch`) : `check:study`,
+  `check:docs-scored`, `check:lecteurs-ecran`, `check:exercice-violation`,
+  `check:peremption-chantiers`, `check:acquisition`. Ouvre ou commente l'issue
+  `calendrier-red`, refermée seule au vert ; ne bloque aucune poussée. Pas dans `ci-alert.yml`.
+- Restés dans le job bloquant après examen : `check:legal-journal` (empreinte des CGU : ne bouge
+  qu'avec un commit, et une CGU modifiée sans journal est un défaut du commit), `check:docs`,
+  `check:test-floor`, `check:subprocessors`, `check:env` (moitié statique) : aucun ne lit l'horloge.
+  ⚠️ `audit` (`npm audit` prod) peut rougir sans commit (nouvel avis) ; gardé bloquant, c'est une
+  vulnérabilité livrée. Témoins : `ci-toutes-les-gardes.guard.test.mjs` (aucune garde de
+  calendrier dans `lint-test-build`, total des étapes ≥ 29) et `edge-deploy-select.guard.test.mjs`.
+
+- `lint-test-build` : `check:docs`, `validate:migrations`, `check:rls`, gardes statiques
+  (cycles, plancher, RGPD, sous-traitants, env, journal des CGU), `i18n:*`, build, budget de bundle.
+- `fichiers-sensibles` (SEC-01, SEC-05) : `check:fichiers-sensibles --arbre --plage <poussée>`,
+  historique complet. Refuse csv, pdf, xlsx, dumps, `.env*` (hors `.env.example`,
+  `.env.e2e-stub`) et fichiers > 1 Mo, dans l'arbre ET dans chaque version poussée (un fichier
+  ajouté puis retiré reste dans l'historique public). Exceptions une par une, chemin + blob +
+  motif, dans le script ; aucune variable de contournement. Même règle avant commit :
+  `.githooks/pre-commit`. Témoin : `check-fichiers-sensibles.guard.test.mjs`, dont un vrai
+  `git commit` d'un `.csv` refusé ; sabotage rejoué : `fichiers-sensibles-csv-aveugle`.
 - `audit` — `npm audit --omit=dev --audit-level=high` (bloque sur CVE prod)
 - `e2e` — Playwright, project `chromium` uniquement
 - `rls-integration` — stack Supabase locale (`supabase start`), rejoue **toutes**
@@ -1439,6 +1464,12 @@ Ce que ça a fermé : le 2026-09-03, les trois sources en ligne divergeaient tou
   vérification. `assertReadSomething()` refuse un bundle vide ou sans entrypoint reconnaissable :
   une lecture ratée est une **erreur**, jamais un « identique au dépôt ».
 - Runbook deploy/rollback : [`DEPLOYMENT.md`](./DEPLOYMENT.md).
+
+✅ **Les trois gardes qui attendaient un geste manuel mesurent toutes** (relu le 2026-10-20) :
+`check:supabase-posture` a sa référence d'auth depuis le 2026-10-10 (`C-88`), `check:env` a
+`VERCEL_TOKEN` / `VERCEL_PROJECT_ID` depuis le 2026-10-09 (`C-105`), et CodeQL est à 0 alerte
+depuis le 2026-10-16 (`C-89`). Ce paragraphe a dit le contraire jusqu'au 2026-10-20. Descendu de
+`scripts/CLAUDE.md` le 2026-11-06 ; CodeQL n'est plus à 0 depuis (`faille.md`).
 
 ## Checklist avant push prod
 

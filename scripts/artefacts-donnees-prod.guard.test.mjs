@@ -93,7 +93,7 @@ export const SECRETS_SANS_DONNEE = {
 //   · 'metadonnees' : sortie d'une requête sur la prod, admise seulement si
 //                     son SQL (fourni ici) ne lit que le catalogue.
 export const ARTEFACTS = {
-  'ci.yml › coverage': {
+  'ci-noyau.yml › coverage': {
     nature: 'sans-prod',
     raison: 'couverture Vitest : chemins et taux du code source, tests sans base réelle',
   },

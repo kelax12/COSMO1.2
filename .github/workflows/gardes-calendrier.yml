@@ -1,0 +1,150 @@
+# ──────────────────────────────────────────────────────────────────────
+# Gardes de calendrier · ce qui peut rougir SANS AUCUN COMMIT (CI-01, 2026-11-06)
+#
+# 🔴 POURQUOI ELLES ONT QUITTE `lint-test-build`
+#
+# Ces six gardes jugent une DATE (une echeance passee, un exercice de plus de
+# 12 mois, un chantier non relu depuis 90 jours, des chiffres de plus de
+# 45 jours) ou l'etat d'un DOCUMENT, pas le code du commit. Dans le job
+# bloquant, elles rendaient `main` rouge un matin sans que personne n'ait
+# pousse quoi que ce soit : 49 runs `CI` rouges sur les 60 derniers au
+# 2026-11-06, un hook `pre-push` contourne par reflexe, et un deploiement
+# Edge bloque depuis le 2026-11-03. Un rouge permanent ne signale plus rien.
+#
+# Ici, elles tournent CHAQUE JOUR et ouvrent ou commentent une issue
+# `calendrier-red`, refermee seule au retour du vert. Elles ne bloquent
+# aucune poussee. ❌ Aucune n'est supprimee ni assouplie : leur verdict est
+# le meme, seul son effet change.
+#
+# ⚠️ Pas dans `ci-alert.yml` : l'issue `ci-red` y est celle d'un `main`
+# casse par un commit. Y verser une echeance quotidienne la rendrait muette,
+# comme `Uptime`, qui a lui aussi sa propre issue.
+#
+# Meme dispositif que `lint-test-build` : toutes les gardes jouent apres un
+# rouge, la derniere etape liste tous les rouges.
+# Temoin : `scripts/ci-toutes-les-gardes.guard.test.mjs`.
+# ──────────────────────────────────────────────────────────────────────
+name: Gardes de calendrier
+
+on:
+  schedule:
+    # Tous les jours a 06:29 UTC, minute libre parmi les crons du depot.
+    - cron: '29 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gardes-calendrier
+  cancel-in-progress: false
+
+jobs:
+  calendrier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+        id: deps
+
+      # C-108 : une etude perime sans que rien ne le signale. Echoue si une
+      # majeure citee par `docs/MIGRATION-REACT19.md` a bouge.
+      - name: Fraicheur des etudes
+        id: study
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:study
+
+      # C-109 : chaque document de `docs/` declare sa note, celle qui le
+      # couvre, ou qu'il n'est pas note ET pourquoi.
+      - name: Notes d audit declarees
+        id: docs-scored
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:docs-scored
+
+      # M-52 : rouge quand l'echeance est passee sans seance consignee.
+      - name: Echeances des seances lecteur d ecran
+        id: lecteurs-ecran
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:lecteurs-ecran
+
+      # M-49 : rouge si le dernier exercice a plus de 12 mois ou si un lien,
+      # une commande ou un gabarit de la procedure n'existe plus.
+      - name: Exercice de violation RGPD a jour
+        id: exercice-violation
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:exercice-violation
+
+      # POST-AUDIT-GUIDE AM-2 : chaque chantier porte sa date de derniere
+      # relecture (90 jours) ou sa date de cloture.
+      - name: Peremption des chantiers
+        id: peremption-chantiers
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:peremption-chantiers
+
+      # C-101 : chaque action d'acquisition a son etat, et les chiffres
+      # n'ont pas plus de 45 jours. La moitie qui rejoue les compteurs en base
+      # est dans `posture.yml`.
+      - name: Acquisition · etats et fraicheur
+        id: acquisition
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:acquisition
+
+      - name: Resume des gardes (toutes les etapes rouges)
+        if: ${{ !cancelled() }}
+        env:
+          STEPS_JSON: ${{ toJSON(steps) }}
+        run: node scripts/ci-toutes-les-gardes.mjs --workflow .github/workflows/gardes-calendrier.yml --job calendrier
+
+  # Un job a part : le resume doit rester la DERNIERE etape de `calendrier`,
+  # et seul ce job recoit le droit d'ecrire une issue.
+  issue:
+    needs: calendrier
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      RESULTAT: ${{ needs.calendrier.result }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Ouvrir, commenter ou refermer l issue « calendrier-red »
+        run: |
+          set -euo pipefail
+          gh label create calendrier-red --repo "$REPO" --color d93f0b \
+            --description "Garde de calendrier en echec (echeance, fraicheur d un document)" 2>/dev/null || true
+          EXISTANTE=$(gh issue list --repo "$REPO" --state open --label calendrier-red \
+                        --limit 1 --json number --jq '.[0].number // empty')
+          QUAND=$(date -u '+%Y-%m-%d %H:%M UTC')
+          if [ "$RESULTAT" = success ]; then
+            if [ -n "$EXISTANTE" ]; then
+              gh issue close "$EXISTANTE" --repo "$REPO" \
+                --comment "Retour au vert le $QUAND : $RUN_URL"
+            fi
+            exit 0
+          fi
+          # printf plutot qu'un heredoc : l'indentation YAML interdit le
+          # marqueur de fin en debut de ligne.
+          CORPS=$(printf '%s\n' \
+            "Une garde de calendrier est rouge ($RESULTAT) au $QUAND." \
+            "" \
+            "- Run : $RUN_URL (le resume du job nomme chaque etape rouge)" \
+            "" \
+            "Ces gardes jugent une echeance ou la fraicheur d'un document, pas un commit :" \
+            "elles ne bloquent aucune poussee. Le correctif est un geste (une seance, un" \
+            "exercice, une relecture datee), consigne dans le document qu'elles lisent." \
+            "" \
+            "Cette issue se met a jour a chaque run rouge et **se referme seule** au retour du vert.")
+          if [ -n "$EXISTANTE" ]; then
+            gh issue comment "$EXISTANTE" --repo "$REPO" --body "$CORPS"
+          else
+            gh issue create --repo "$REPO" --title "Gardes de calendrier en echec" \
+              --label calendrier-red --body "$CORPS"
+          fi
+          # Le run reste ROUGE par le job `calendrier` : GitHub notifie
+          # l'echec, et ce job-ci ne rougit que s'il n'a pas pu ecrire.
