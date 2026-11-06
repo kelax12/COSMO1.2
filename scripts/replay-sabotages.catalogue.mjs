@@ -1695,6 +1695,28 @@ export const CATALOGUE = [
       + 'rouge bloque les Edge Functions, cinq fonctions de facturation en retard le 2026-11-03.',
   },
 
+  // Vague 2.3 (2026-11-06) · plus aucun moyen de pousser sur un noyau rouge.
+  {
+    id: 'pre-push-laisse-passer',
+    famille: 'produit',
+    garde: 'scripts/pre-push-main-red.test.mjs',
+    modifs: [r('scripts/pre-push-main-red.mjs', '  return block ? 1 : 0;', '  return 0;')],
+    attendu: ['TÉMOIN : noyau rouge + ancienne variable de contournement posée = refus (code 1)'],
+    pourquoi:
+      'Un hook qui sort en 0 quoi qu’il décide : la poussée sur un noyau rouge repasse, '
+      + 'exactement le contournement banalisé que la vague 2.3 retire (CI-01).',
+  },
+  {
+    id: 'pre-push-illisible-ouvert',
+    famille: 'produit',
+    garde: 'scripts/pre-push-main-red.test.mjs',
+    modifs: [r('scripts/pre-push-main-red.mjs', '  if (runs === null) {', "  if (runs === null) return { block: false, message: '' };\n  if (false) {")],
+    attendu: ['TÉMOIN : gh illisible REFUSE, il ne laisse plus passer'],
+    pourquoi:
+      'Un état illisible traité comme un vert : un `gh` déconnecté suffirait à pousser '
+      + 'sur un noyau rouge, un contournement par omission.',
+  },
+
   // ═════════════════════════════════════════════════════════════════
   // SEC-01 · SEC-05 (2026-11-06) · AUCUN FICHIER DE DONNÉES SUR LE DÉPÔT PUBLIC
   // ═════════════════════════════════════════════════════════════════

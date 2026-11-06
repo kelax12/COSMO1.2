@@ -70,7 +70,8 @@
 `peremption-chantiers`, `acquisition`) : `gardes-calendrier.yml`, quotidien, issue
 `calendrier-red`. ❌ Jamais dans un job bloquant (CI-01) → `docs/TESTING.md` § CI.
 
-🔒 **Hooks** : `pre-push` refuse un `main` rouge (`CI` ou `CI noyau`) → `docs/DEPLOYMENT.md` § 1 ;
+🔒 **Hooks** : `pre-push` refuse un noyau rouge (`CI noyau` seul), sans contournement →
+`docs/DEPLOYMENT.md` § 1 ;
 `pre-commit` lance `check:fichiers-sensibles --index`.
 
 🔴 **`check:supabase-posture` compte une entrée PAR OCCURRENCE** (corrigé le 2026-10-02 : il lisait

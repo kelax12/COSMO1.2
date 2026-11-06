@@ -1,7 +1,6 @@
 # ──────────────────────────────────────────────────────────────────────
-# Alerte quand une garde automatique passe au rouge sur `main`.
-# Couvre `CI` et
-# `Edge deploy drift` (le code deploye des Edge Functions contre le depot).
+# Alerte quand le NOYAU (`CI noyau`) ou une sonde de production passe au
+# rouge sur `main`. Les jobs de test non bloquants ne sonnent pas (vague 2.3).
 #
 # POURQUOI : les quatre gardes de `ci.yml` sont restées rouges des mois sans
 # que personne ne réagisse — `rls-integration` n'avait JAMAIS été verte depuis
@@ -39,10 +38,19 @@ on:
     # où il a été planifié (cf. son en-tête).
     # `Signaux SEO` (2026-10-23) : hebdomadaire, sans déclencheur humain ; un
     # backlink perdu ou un secret absent n'a pas d'autre chemin vers un humain.
+    #
+    # 🔴 VAGUE 2.3 (2026-11-06) : côté CI, UNE alerte, celle du NOYAU. Un
+    # `main` rouge sur 49 runs de 60, chaque rouge poussé sur le salon :
+    # l'alerte ne signalait plus rien (CI-01). Les jobs de test NON
+    # BLOQUANTS ne sonnent plus : `CI etendue` (e2e, Lighthouse, audit),
+    # `Visual`, `Mutation`, `Sabotages`, `scalability-volume`. Ils se lisent
+    # dans l'onglet Actions, ils ne réveillent personne.
+    # Restent les sondes de PRODUCTION et de deploiement ci-dessous : elles
+    # ne testent pas un commit, elles regardent ce qui tourne, et leur rouge
+    # n'a pas d'autre chemin vers un humain.
+    # Témoin : `scripts/noyau-ci.guard.test.mjs` (« ci-alert.yml »).
     workflows:
-      - CI
-      # CI-03 (2026-11-06) : lint, typecheck et tests unitaires ont quitte `CI`
-      # pour lui. Absent d'ici, un lint rouge sur `main` ne sonnerait plus.
+      # Le noyau : le seul verdict bloquant du commit (`ci-noyau.yml`).
       - CI noyau
       - Edge deploy drift
       # AM-6 (2026-10-23) : le deploiement continu des fonctions. Un rouge ici
@@ -52,9 +60,6 @@ on:
       - Deploy SHA drift
       - CodeQL
       - Posture
-      - Sabotages
-      - Visual
-      - scalability-volume
       - restore-drill
       - Grille Stripe
       # `Erreurs de prod` (2026-10-23, OBSERVABILITE AM-1 à AM-3) : son
@@ -62,8 +67,6 @@ on:
       - Erreurs de prod
       - Secrets age
       - Signaux SEO
-      # `Mutation` (AM-3, 2026-10-23) : hebdomadaire, sans déclencheur humain.
-      - Mutation
       # ⚠️ `Gardes de calendrier` n'y est PAS, pour la meme raison qu'`Uptime`
       # ci-dessous : sa propre issue `calendrier-red`, refermee seule.
       # ⚠️ `Uptime` n'y est PAS NON PLUS, et ce n'est pas un oubli : il ouvre
