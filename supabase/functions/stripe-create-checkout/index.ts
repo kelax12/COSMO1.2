@@ -1,14 +1,9 @@
 import Stripe from 'npm:stripe@14.21.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from '../_shared/alert.ts'
+import { corsHeadersFor, requireEnv } from '../_shared/env.ts'
 
-const APP_URL = Deno.env.get('APP_URL') ?? 'http://localhost:5173'
-
-// Origin allowlist instead of wildcard '*'. The endpoint is JWT-authenticated
-// so direct exploitability of the previous wildcard was limited, but the
-// wildcard amplifies blast radius if a JWT leaks (replay from any origin).
-// Faille N7.
-const ALLOWED_ORIGINS = new Set([APP_URL])
+const APP_URL = requireEnv('APP_URL')
 
 /**
  * 🔴 SV-4 (audit serveur du 2026-10-24) : le premium PERSONNEL est coupé
@@ -23,17 +18,6 @@ const ALLOWED_ORIGINS = new Set([APP_URL])
  * sans le parcours de `docs/POST-AUDIT-GUIDE.md`, consentements compris.
  */
 const PERSONAL_CHECKOUT_ENABLED = false
-
-function corsHeadersFor(req: Request) {
-  const origin = req.headers.get('Origin') ?? ''
-  const allow = ALLOWED_ORIGINS.has(origin) ? origin : ''
-  const headers: Record<string, string> = {
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-    'Vary': 'Origin',
-  }
-  if (allow) headers['Access-Control-Allow-Origin'] = allow
-  return headers
-}
 
 Deno.serve(async (req) => {
   const cors = corsHeadersFor(req)

@@ -57,6 +57,17 @@ function codeOnly(texte: string): string {
 const code = codeOnly(source);
 
 /**
+ * La politique CORS ne vit plus dans la fonction : `_shared/cors.ts` la porte
+ * pour les neuf fonctions appelées du navigateur (COD-03, 2026-11-06). Le
+ * joker se cherche donc LÀ, et la fonction doit l importer au lieu d en
+ * réécrire une. `src/edge-cors.guard.test.ts` garde les neuf.
+ */
+const corsSource = readFileSync(join(process.cwd(), 'supabase/functions/_shared/cors.ts'), 'utf-8')
+  .split('\r\n')
+  .join(LF);
+const corsCode = codeOnly(corsSource);
+
+/**
  * Le bloc d'arguments d'un `createClient(` donne, parentheses EQUILIBREES.
  *
  * 🔴 La premiere ecriture de ce temoin coupait au premier `)` rencontre. Or le
@@ -108,11 +119,13 @@ describe('garde — stripe-create-checkout (C-82)', () => {
     // Faille N7. L'endpoint est authentifié par JWT, donc le joker n'était pas
     // directement exploitable — mais il amplifie la portée d'un JWT qui fuit,
     // en autorisant le rejeu depuis n'importe quelle origine.
-    expect(code).toContain('ALLOWED_ORIGINS');
-    expect(code).not.toMatch(JOKER_CORS);
+    expect(code).toContain("import { corsHeadersFor, requireEnv } from '../_shared/env.ts'");
+    expect(code).not.toContain('Access-Control-Allow-Origin');
+    expect(corsCode).toContain('allowed.has(origin)');
+    expect(corsCode).not.toMatch(JOKER_CORS);
     // `Vary: Origin` : sans lui, un cache intermédiaire sert à une origine la
     // réponse calculée pour une autre, ce qui annule l'allowlist.
-    expect(code).toContain("'Vary': 'Origin'");
+    expect(corsCode).toContain("'Vary': 'Origin'");
   });
 
   it('sans en-tete Authorization, la reponse est 401 AVANT tout appel Stripe', () => {
@@ -185,11 +198,11 @@ describe('garde — stripe-create-checkout (C-82)', () => {
     // façon la plus discrète de désarmer un témoin.
 
     // ── 1. Le joker CORS, dans ses deux formes ──────────────────────
-    const jokerIndexe = source.replace(
-      "if (allow) headers['Access-Control-Allow-Origin'] = allow",
+    const jokerIndexe = corsSource.replace(
+      "if (origin && allowed.has(origin)) headers['Access-Control-Allow-Origin'] = origin",
       "headers['Access-Control-Allow-Origin'] = '*'",
     );
-    const jokerLitteral = source.replace(
+    const jokerLitteral = corsSource.replace(
       "'Vary': 'Origin',",
       "'Vary': 'Origin',    'Access-Control-Allow-Origin': '*',",
     );
@@ -197,7 +210,7 @@ describe('garde — stripe-create-checkout (C-82)', () => {
       ['indexee', jokerIndexe],
       ['litterale', jokerLitteral],
     ] as const) {
-      expect(sabote, `le sabotage CORS ${nom} n a rien remplace`).not.toEqual(source);
+      expect(sabote, `le sabotage CORS ${nom} n a rien remplace`).not.toEqual(corsSource);
       expect(codeOnly(sabote)).toMatch(JOKER_CORS);
     }
 

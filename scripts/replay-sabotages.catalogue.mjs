@@ -75,7 +75,7 @@ export const CATALOGUE = [
     id: 'csp-wss',
     famille: 'produit',
     garde: 'src/csp.guard.test.ts',
-    modifs: [r('vercel.json', ' wss://*.supabase.co', '')],
+    modifs: [r('vercel.json', ' wss://ykeugqfgklejcdbrmawy.supabase.co', '')],
     attendu: ['autorise le WebSocket Realtime de Supabase (schéma wss, pas seulement https)'],
     pourquoi:
       'Sans `wss:` dans connect-src, le navigateur bloque TOUTES les connexions '
@@ -91,6 +91,46 @@ export const CATALOGUE = [
     pourquoi:
       "`'unsafe-eval'` rouvre l'exécution de chaînes arbitraires : la CSP cesse "
       + "d'être une défense contre le XSS et devient une décoration.",
+  },
+  {
+    id: 'csp-stripe-js',
+    famille: 'produit',
+    garde: 'src/csp.guard.test.ts',
+    modifs: [r('vercel.json', "script-src 'self' https://challenges.cloudflare.com", "script-src 'self' https://challenges.cloudflare.com https://js.stripe.com")],
+    attendu: ['SEC-09 : le seul projet Supabase, et aucun Stripe.js sans SDK client'],
+    pourquoi:
+      'Une origine de script autorisée sans aucun usage côté client est une porte '
+      + 'ouverte pour rien (SEC-09, audit du 2026-11-06).',
+  },
+  // ── CORS unique des Edge Functions (COD-03, SEC-09) ──────────────
+  {
+    id: 'edge-app-url-localhost',
+    famille: 'produit',
+    garde: 'src/edge-cors.guard.test.ts',
+    modifs: [r(
+      'supabase/functions/stripe-org-portal/index.ts',
+      "const APP_URL = requireEnv('APP_URL')",
+      "const APP_URL = Deno.env.get('APP_URL') ?? 'http://localhost:5173'",
+    )],
+    attendu: ['stripe-org-portal/index.ts ne porte aucune valeur par défaut localhost'],
+    pourquoi:
+      'Une APP_URL absente ne ferait plus échouer la fonction : elle renverrait les '
+      + 'clients du portail Stripe vers localhost (COD-03).',
+  },
+  // ── Ordre des événements d'abonnement Stripe (SEC-08) ──────────────
+  {
+    id: 'webhook-subscription-charge',
+    famille: 'produit',
+    garde: 'src/modules/billing/subscription-event.test.ts',
+    modifs: [r(
+      'supabase/functions/stripe-webhook/index.ts',
+      'const current = await stripe.subscriptions.retrieve(fromEvent.id)',
+      'const current = fromEvent',
+    )],
+    attendu: ['relit par stripe.subscriptions.retrieve et décide sur l état relu'],
+    pourquoi:
+      'Appliquer la charge de l événement rend un abonnement résilié actif quand '
+      + 'Stripe livre un updated ancien après le deleted (SEC-08).',
   },
   // ── Collecteur de la mesure d'audience (TR-1, mig. 223) : le SEUL chemin
   //    d'écriture de `track_hit`, donc ses refus et sa clé sont la frontière.
@@ -171,8 +211,8 @@ export const CATALOGUE = [
     famille: 'produit',
     garde: 'src/stripe-create-checkout.guard.test.ts',
     modifs: [r(
-      'supabase/functions/stripe-create-checkout/index.ts',
-      "if (allow) headers['Access-Control-Allow-Origin'] = allow",
+      'supabase/functions/_shared/cors.ts',
+      "if (origin && allowed.has(origin)) headers['Access-Control-Allow-Origin'] = origin",
       "headers['Access-Control-Allow-Origin'] = '*'",
     )],
     attendu: ["l'origine CORS est une ALLOWLIST, jamais le joker"],

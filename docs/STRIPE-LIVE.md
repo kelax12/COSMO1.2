@@ -426,9 +426,11 @@ Garde-fous propres à cette zone :
   propose de payer : impasse. Client `true` + serveur `false` = on encaisse sans rien débloquer.
 - ✅ **La grille branchée est celle du compte LIVE** depuis le 2026-10-20 (secrets live, endpoint
   webhook live à six events). Le sandbox de test, qui servait avant, est clôturé.
-- ⚠️ `APP_URL` vaut `https://thecosmo.app` et **est la seule origine CORS autorisée** par les
-  deux Edge Functions org : le checkout entreprise **ne peut pas être testé depuis
-  `localhost:5173`**. Tester depuis la prod, ou changer `APP_URL` le temps du test.
+- ⚠️ `APP_URL` vaut `https://thecosmo.app` et **est la seule origine CORS autorisée** par toutes
+  les Edge Functions appelées du navigateur (politique unique `_shared/cors.ts` depuis le
+  2026-11-06) : le checkout entreprise **ne peut pas être testé depuis `localhost:5173`** en
+  production. En local, `CORS_DEV_ORIGINS=http://localhost:5173` (origines locales seulement).
+  Sans `APP_URL`, les fonctions refusent de démarrer : plus de valeur par défaut `localhost`.
 - Facturation armée depuis le 2026-10-20 : `ENTERPRISE_BILLING_ENFORCED = true` et
   `billing_flags.enterprise_seat_limit = true` (mig. `224`).
   Contexte historique : [`POST-AUDIT-GUIDE.md`](./POST-AUDIT-GUIDE.md).

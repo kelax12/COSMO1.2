@@ -20,20 +20,12 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { txtMatches } from '../_shared/org-integrations.ts'
 import { membershipIsActive } from '../_shared/org-membership.ts'
+import { corsHeadersFor, requireEnv } from '../_shared/env.ts'
 
-const APP_URL = Deno.env.get('APP_URL') ?? 'https://thecosmo.app'
-const ALLOWED_ORIGINS = new Set([APP_URL, 'http://localhost:5173', 'http://localhost:3000'])
+// Origine CORS : `APP_URL`, obligatoire. Absente, la fonction refuse de démarrer
+// (échec fermé, `_shared/env.ts`) au lieu de répondre sans CORS.
+requireEnv('APP_URL')
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-
-function corsHeadersFor(req: Request): Record<string, string> {
-  const origin = req.headers.get('Origin') ?? ''
-  const headers: Record<string, string> = {
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-    'Vary': 'Origin',
-  }
-  if (ALLOWED_ORIGINS.has(origin)) headers['Access-Control-Allow-Origin'] = origin
-  return headers
-}
 
 function json(body: unknown, status: number, req: Request): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', ...corsHeadersFor(req) } })

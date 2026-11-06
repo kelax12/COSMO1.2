@@ -28,24 +28,13 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from '../_shared/alert.ts'
 import { SEND_ORG_INVITE_LIMITS, consumeRateLimits } from '../_shared/rate-limit.ts'
 import { membershipIsActive } from '../_shared/org-membership.ts'
+import { corsHeadersFor, requireEnv } from '../_shared/env.ts'
 
-const APP_URL = Deno.env.get('APP_URL') ?? 'https://thecosmo.app'
+const APP_URL = requireEnv('APP_URL')
 const MAIL_FROM = Deno.env.get('BUG_REPORT_FROM')
 const MAX_TOKENS = 50
 const RESEND_COOLDOWN_MS = 60 * 60 * 1000
 const LINK_VALIDITY_MS = 7 * 24 * 60 * 60 * 1000
-
-const ALLOWED_ORIGINS = new Set([APP_URL, 'http://localhost:5173', 'http://localhost:3000'])
-
-function corsHeadersFor(req: Request): Record<string, string> {
-  const origin = req.headers.get('Origin') ?? ''
-  const headers: Record<string, string> = {
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-    'Vary': 'Origin',
-  }
-  if (ALLOWED_ORIGINS.has(origin)) headers['Access-Control-Allow-Origin'] = origin
-  return headers
-}
 
 function json(body: unknown, status: number, req: Request): Response {
   return new Response(JSON.stringify(body), {
