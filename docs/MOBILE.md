@@ -8,11 +8,23 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **77 / 100** au 2026-10-23, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **78 / 100** au 2026-11-06, au tableau de bord de [`README.md`](./README.md).
 
 # Mobile-first — patterns et conventions
 
-## Note mobile / DA : 62 → 72 → 74 → 76 → 79 → 76 → 78 → 73 → 75 → 74 → 74 → 75 → 76 → 78 → 78 → 78 → 77 → **78 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → 2026-10-20 → 2026-10-22 → **2026-10-25**)
+## Note mobile / DA : 62 → 72 → 74 → 76 → 79 → 76 → 78 → 73 → 75 → 74 → 74 → 75 → 76 → 78 → 78 → 78 → 77 → 78 → **78 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → 2026-10-20 → 2026-10-22 → 2026-10-25 → **2026-11-06**)
+
+> ### ⚪ 2026-11-06 · 0 : vérifiée inchangée
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-11-06 : CI de `main` du 2026-10-26 au 2026-11-06 (75 runs, dernier `e2e` complet vert à `ba169ba1`), workflows planifiés relus run par run, production (advisors par l'API, catalogue, Edge Functions), alertes GitHub, dépôt à `c3294936` puis `d938bc6e`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-11-06 |
+> |---|---|---|
+> | `e2e` mobile (`mobile-safari`, Android) | 0 | vert à `ba169ba1` |
+> | Appareil réel | 0 | toujours aucune mesure (A-4, `C-24`) ; séance VoiceOver attendue avant le 2026-12-15 |
+> | `Visual` rouge huit jours | 0 | débité une fois, dans [`UI-PATTERNS.md`](./UI-PATTERNS.md) |
+>
+> **78 → 78.**
 
 > ### 🟠 2026-10-22 (passe) · −1 : le LCP mobile crédité le 10-16 est perdu
 >

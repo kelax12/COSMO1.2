@@ -1,4 +1,4 @@
-<!-- note-audit: note=96 -->
+<!-- note-audit: note=94 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,28 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **96 / 100** au 2026-10-23, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **94 / 100** au 2026-11-06, au tableau de bord de [`README.md`](./README.md).
 
 # Tests — COSMO
 
-## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → 95 → 91 → 92 → 92 → 93 → 93 → 96 → 92 → 97 → 96 → 95 → 95 → **96 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → 2026-10-20 → 2026-10-22 → **2026-10-25**)
+## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → 95 → 91 → 92 → 92 → 93 → 93 → 96 → 92 → 97 → 96 → 95 → 95 → 96 → **94 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → 2026-10-20 → 2026-10-22 → 2026-10-25 → **2026-11-06**)
+
+> ### 🟠 2026-11-06 · −2 : `main` rouge trois runs sur quatre, et l'instrument des témoins éteint
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-11-06 : CI de `main` du 2026-10-26 au 2026-11-06 (75 runs, dernier `e2e` complet vert à `ba169ba1`), workflows planifiés relus run par run, production (advisors par l'API, catalogue, Edge Functions), alertes GitHub, dépôt à `c3294936` puis `d938bc6e`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-11-06 |
+> |---|---|---|
+> | 🔴 `main` rouge **56 runs sur 75** depuis le 2026-10-26 | **−1** | 18 verts, 1 annulé. Dernier épisode : du 2026-11-03 à 10:48 (`f7e45f61`) au 2026-11-06 à 11:13, 14 runs ; vert à `074aa8c8`, rouge de nouveau au commit suivant (`c3294936`, puis `d938bc6e` : `No new hardcoded strings`, écran de démarrage). Le défaut débité le 2026-10-20 se répète, à plus grande échelle. Il a un coût de production : `edge-deploy.yml` ne déploie que sur une CI verte, d'où les cinq fonctions de facturation en retard (cf. [`../faille.md`](../faille.md)) |
+> | 🔴 `Sabotages` rouge depuis le 2026-11-02 | **−1** | run `41473542705` : cinq témoins ne sont plus rejoués (`src/inactive-accounts.guard.test.ts`, `src/hooks/use-modal-a11y.guard.test.tsx`, `src/components/skeletons/task-skeleton.guard.test.tsx`, `src/components/org-guide/guide-scenarios.guard.test.ts`, `scripts/pre-push-main-red.test.mjs`). Cinq gardes dont on ne sait plus si elles mordent |
+> | ✅ AM-3 · `Mutation` posé mais jamais joué (non crédité le 2026-10-25) | **+1** | premier run planifié **vert** le 2026-10-28 (`40681047825`) |
+> | 🔴 `Mutation` rouge depuis le 2026-11-04 | **−1** | run `41836291999` : **90,78 %** sous le seuil 99 (325 tués, 30 survivants, 3 sans couverture). La logique pure du parcours de facturation du 2026-11-02 est entrée par le glob `billing/*.logic.ts` avec des assertions trop faibles aux bornes. La garde fait son travail ; le seuil n'est pas touché |
+> | ⚠️ `Visual` rouge du 2026-10-29 au 2026-11-06 | 0 | débité une fois, dans [`UI-PATTERNS.md`](./UI-PATTERNS.md) |
+> | `restore-drill` | 0 | dernier run le 2026-10-15, échoué faute de confirmation (le workflow écrit dans la base cible) : geste d'Axel, inchangé |
+> | `tmp-webkit-repeat.yml` | 0 | workflow temporaire du 2026-10-22, toujours actif, sans run depuis : à retirer |
+> | Verts | 0 | `e2e` à `ba169ba1` ; `lighthouse`, `rls-integration` et `audit` à `HEAD` ; `db-backup`, `Uptime`, `Deploy SHA drift`, `Migration coverage`, `inactive-accounts`, `renewal-notice`, `Grille Stripe`, `Erreurs de prod`, `Signaux SEO` |
+>
+> **96 → 94.**
 
 > ### ⚪ 2026-10-22 · 0 : l'horloge figée rembourse, une garde laissée rouge 41 h reprend le point
 >

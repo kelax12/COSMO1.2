@@ -1,4 +1,4 @@
-<!-- note-audit: note=79 -->
+<!-- note-audit: note=78 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **79 / 100** au 2026-10-23, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **78 / 100** au 2026-11-06, au tableau de bord de [`README.md`](./README.md).
 
 # SEO — état mesuré, règles et dette
 
@@ -25,7 +25,20 @@ cause n'est pas dans le dépôt.
 > liens et les Core Web Vitals terrain. Ces données vivent dans Search Console, Ahrefs et
 > PageSpeed Insights.
 
-## Note SEO : 73 → 73 → 75 → 80 → 75 → 78 → 78 → 78 → 79 → 78 → 79 → 79 → 79 → **79 / 100** (2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir) → 2026-10-18 → 2026-10-20 → **2026-10-22**) · inchangée au 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+## Note SEO : 73 → 73 → 75 → 80 → 75 → 78 → 78 → 78 → 79 → 78 → 79 → 79 → 79 → 79 → **78 / 100** (2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-15 → 2026-10-16 → 2026-10-16 (soir) → 2026-10-18 → 2026-10-20 → 2026-10-22 → **2026-11-06**) · inchangée au 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+
+> ### 🟠 2026-11-06 · −1 : les deux régressions du 2026-11-05 débitées, `Signaux SEO` crédité
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-11-06 : CI de `main` du 2026-10-26 au 2026-11-06 (75 runs, dernier `e2e` complet vert à `ba169ba1`), workflows planifiés relus run par run, production (advisors par l'API, catalogue, Edge Functions), alertes GitHub, dépôt à `c3294936` puis `d938bc6e`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-11-06 |
+> |---|---|---|
+> | 🔴 Articles du blog rendus deux fois (2 `<h1>` servis) | **−1** | constat remesuré le 2026-11-05 (entrée ci-dessous) ; session dédiée lancée le 2026-11-06 |
+> | 🔴 `/guide/` à 682 mots servis (1 932 le 2026-10-22) | **−1** | idem |
+> | 🟠 JSON-LD de l'accueil (offre « via publicité », `screenshot` en double) | 0 | faux, sans effet de classement mesuré ; confié à la même session |
+> | ✅ AM-4 · `Signaux SEO` posé mais jamais joué (non crédité le 2026-10-25) | **+1** | `seo-signals.yml` vert les 2026-10-26 et 2026-11-02, points hebdomadaires commités (`ec52a3dc`, `e3f0644f`) |
+>
+> **79 → 78.**
 
 > ### 🟠 2026-11-05 · note maison NON rejouée : deux régressions trouvées par un audit externe
 >

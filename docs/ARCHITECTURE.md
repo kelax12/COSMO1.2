@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **93 / 100** au 2026-10-23, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **94 / 100** au 2026-11-06, au tableau de bord de [`README.md`](./README.md).
 
 # Architecture — invariants, dette et vérification
 
@@ -22,7 +22,19 @@ dit ligne par ligne. Mesuré contre le code de `main` et la prod. Remplace
 Ce document ne redécrit pas l'architecture — c'est le rôle de [`../CLAUDE.md`](../CLAUDE.md). Il
 répond à une seule question : **les invariants qu'on s'est donnés tiennent-ils encore ?**
 
-## Note d'architecture : 74 → 79 → 81 → 83 → 84 → 88 → 90 → 89 → 93 → 93 → 92 → 93 → 90 → 93 → 93 → 93 → 93 → **94 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → 2026-10-20 → 2026-10-22 → **2026-10-25**)
+## Note d'architecture : 74 → 79 → 81 → 83 → 84 → 88 → 90 → 89 → 93 → 93 → 92 → 93 → 90 → 93 → 93 → 93 → 93 → 94 → **94 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → 2026-10-20 → 2026-10-22 → 2026-10-25 → **2026-11-06**)
+
+> ### ⚪ 2026-11-06 · 0 : gardes de structure vertes, un module neuf déclaré
+>
+> **Même règle** : un défaut ne se rembourse que corrigé **et vu vert en CI**. Mesures du 2026-11-06 : CI de `main` du 2026-10-26 au 2026-11-06 (75 runs, dernier `e2e` complet vert à `ba169ba1`), workflows planifiés relus run par run, production (advisors par l'API, catalogue, Edge Functions), alertes GitHub, dépôt à `c3294936` puis `d938bc6e`. Tableau de bord : [`README.md`](./README.md).
+>
+> | Item | Effet | Mesuré le 2026-11-06 |
+> |---|---|---|
+> | `architecture.guard`, `check:docs`, `check:docs-scored` | 0 | verts à `074aa8c8` (`lint-test-build`) ; `check:docs-scored` rejoué en local : 32 documents, chacun déclare sa note |
+> | Module `affiliation` (mig. `236`, Edge Function `affiliation-api`) | 0 | déclaré dans [`MODULES.md`](./MODULES.md) (`762c3295`) ; calcul et routage en modules purs testés (`_shared/affiliation-math.ts`, `_shared/affiliation-api.ts`) |
+> | 188 commits depuis le 2026-10-25 | 0 | deux vagues d'interface entreprise, trois lots de facturation, l'affiliation : aucune garde de structure rouge au dernier vert |
+>
+> **94 → 94.**
 
 > ### ⚪ 2026-10-22 · 0 : gardes de structure vertes
 >
