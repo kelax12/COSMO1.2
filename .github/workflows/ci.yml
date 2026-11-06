@@ -44,12 +44,13 @@ concurrency:
 
 jobs:
   # ──────────────────────────────────────────────────────────────────
-  # Gate principale : lint + type-check + tests (coverage) + build, plus
-  # deux gardes statiques peu coûteuses (audit prod deps, validation des
-  # migrations SQL). Bloquant : tout rouge casse la PR.
+  # Gardes statiques du commit + build et budget de bundle. Bloquant : tout
+  # rouge casse la PR.
   #
-  # ⚠️ `npm run build` (Vite/esbuild) NE type-check PAS. Sans `tsc -b`
-  # ci-dessous, des erreurs de type partent en prod. Ne pas retirer.
+  # ⚠️ Depuis le 2026-11-06 (CI-03), lint, `tsc -b`, tests unitaires et
+  # couvertures vivent dans `ci-noyau.yml`, et les gardes de calendrier dans
+  # `gardes-calendrier.yml`. `npm run build` NE type-check PAS : le `tsc -b`
+  # de `ci-noyau.yml` reste obligatoire.
   # ──────────────────────────────────────────────────────────────────
   # ⚠️ Node 22 minimum, et ce n'est pas cosmetique : depuis la 2.112,
   # `@supabase/supabase-js` exige un WebSocket NATIF, absent avant Node 22.
@@ -83,20 +84,10 @@ jobs:
       - run: npm ci
         id: deps
 
-      - name: Lint
-        id: lint
-        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run lint
-
       - name: Budget des CLAUDE.md
         id: docs
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run check:docs
-
-      - name: Type-check (tsc -b)
-        id: typecheck
-        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npx tsc -b
 
       - name: Validate SQL migrations
         id: migrations
@@ -156,26 +147,12 @@ jobs:
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run check:portability
 
-      # C-82 — aucune Edge Function déployée sans au moins un témoin qui la
-      # nomme. `stripe-create-checkout` était à zéro.
-      - name: Temoins des Edge Functions
-        id: edge-coverage
-        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run check:edge-coverage
-
       # C-105 — le contrat des variables `VITE_*`. Moitié STATIQUE seulement
       # ici (la moitié Vercel demande un jeton, cf. `env-drift.yml`).
       - name: Contrat des variables d environnement
         id: env
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run check:env
-
-      # C-108 — une étude périme sans que rien ne le signale. Échoue si une
-      # majeure citée par `docs/MIGRATION-REACT19.md` a bougé.
-      - name: Fraicheur des etudes
-        id: study
-        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run check:study
 
       # C-107 — les CGU vivent dans un catalogue i18n ordinaire pour la CI.
       # Une modification de fond est un changement de CONTRAT (préavis de
@@ -199,48 +176,14 @@ jobs:
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run i18n:pages
 
-      # C-109 — douze documents de fond n'étaient notés par RIEN, donc ils ne
-      # pouvaient ni monter ni baisser : rien ne signalait qu'ils avaient
-      # vieilli. Chacun déclare désormais sa note, celle qui le couvre, ou
-      # qu'il n'est pas noté ET pourquoi.
-      # ❌ `non-note` est une réponse honnête ; un chiffre inventé sans audit
-      #    ne l'est pas — il vivrait dans un document qu'on produit en contrôle.
-      - name: Notes d audit declarees
-        id: docs-scored
-        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run check:docs-scored
-
-      # M-52 : une check-list lecteur d'écran sans échéance se reconduit à
-      # l'infini. Rouge quand l'échéance est passée sans séance consignée.
-      - name: Echeances des seances lecteur d ecran
-        id: lecteurs-ecran
-        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run check:lecteurs-ecran
-
-      # M-49 : une procedure de violation jamais parcourue est une hypothese.
-      # Rouge si le dernier exercice a plus de 12 mois ou si un lien, une
-      # commande ou un gabarit de la procedure n'existe plus.
-      - name: Exercice de violation RGPD a jour
-        id: exercice-violation
-        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run check:exercice-violation
-
-      # POST-AUDIT-GUIDE AM-2 : chaque chantier porte sa date de derniere
-      # relecture (90 jours) ou sa date de cloture.
-      - name: Peremption des chantiers
-        id: peremption-chantiers
-        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run check:peremption-chantiers
-
-      # C-101 — une liste d'actions manuelles sans colonne d'état ne distingue
-      # pas « pas encore tenté » de « tenté sans effet », et les deux appellent
-      # des décisions opposées. Vérifie aussi que les chiffres d'acquisition
-      # n'ont pas plus de 45 jours.
-      # ⚠️ La moitié qui REJOUE les compteurs en base est dans `posture.yml`.
-      - name: Acquisition · etats et fraicheur
-        id: acquisition
-        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run check:acquisition
+      # 🔴 CI-01 (2026-11-06) : SIX gardes ont quitté ce job pour
+      # `gardes-calendrier.yml` (quotidien, issue `calendrier-red`) : études,
+      # notes d'audit déclarées, séances lecteur d'écran, exercice de
+      # violation, péremption des chantiers, acquisition. Leur verdict juge
+      # une DATE ou un DOCUMENT, pas le code du commit : 49 runs rouges sur 60
+      # le 2026-11-06, et un `main` rouge en permanence ne signale plus rien.
+      # ❌ N'en remettre aucune ici. Lint, typecheck, tests et couvertures
+      # sont dans `ci-noyau.yml` (le seul dont dépend `edge-deploy.yml`).
 
       # Le moteur de traduction retombe sur le français clé par clé : un
       # catalogue traduit incomplet ne casse rien visiblement et partirait donc
@@ -276,39 +219,6 @@ jobs:
         id: i18n-quality
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run i18n:quality
-
-      - name: Unit tests + coverage (enforced thresholds)
-        id: tests
-        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run test:coverage
-
-      # C-82 — la couverture s'arrêtait à `src/`. En étaient absents
-      # `scripts/` (le code qui décide si la CI est verte) et
-      # `supabase/functions/`. Périmètre et seuils PROPRES, jamais mêlés à
-      # ceux de `src/` : les mêler aurait obligé à BAISSER les seuils
-      # existants pour absorber le nouveau périmètre.
-      #
-      # ⚠️ Le script qui suit ne juge pas que les seuils : il vérifie d'abord
-      # que le rapport est COMPLET. Trois fichiers en étaient sortis en
-      # silence à la pose (shebang non analysable par le provider v8), et le
-      # pourcentage affiché en était plus FLATTEUR que la réalité.
-      - name: Couverture de l outillage (scripts/)
-        id: tooling-coverage
-        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run test:coverage:tooling
-
-      # Son ENTRÉE est `coverage/`, écrit par l'étape `tests`, et vitest ne
-      # l'écrit pas quand un test échoue. `if-no-files-found: error` : un envoi
-      # sans fichier ÉCHOUE au lieu de passer à vide avec un simple warning.
-      - name: Upload coverage report
-        id: coverage-upload
-        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: coverage
-          path: coverage/
-          if-no-files-found: error
-          retention-days: 7
 
       - name: Build
         id: build
@@ -439,6 +349,40 @@ jobs:
               (noms.length ? "high/critical : " + noms.join(", ") + NL : "aucun high/critical" + NL) +
               "```" + NL);
           '
+
+  # ──────────────────────────────────────────────────────────────────
+  # SEC-01 · SEC-05 (2026-11-06) : aucun fichier de données sur ce dépôt
+  # PUBLIC sans exception écrite. Le 2026-10-30, `leads-50.csv` et six PDF
+  # de business plan y sont partis, rien ne filtrait. Le hook
+  # `.githooks/pre-commit` refuse l'indexation ; `--no-verify` le saute, ce
+  # job ne se saute pas. Il lit l'arbre de HEAD ET chaque version ajoutée ou
+  # modifiée par les commits poussés : un fichier ajouté puis retiré dans la
+  # même poussée reste dans l'historique public.
+  # Node seul, sans `npm ci`. Témoin : `check-fichiers-sensibles.guard.test.mjs`.
+  # ──────────────────────────────────────────────────────────────────
+  fichiers-sensibles:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # L'historique complet : la plage poussée doit être lisible.
+          fetch-depth: 0
+      - name: Fichiers sensibles (arbre et commits pousses)
+        env:
+          EVENEMENT: ${{ github.event_name }}
+          AVANT: ${{ github.event.before }}
+          BASE_PR: ${{ github.event.pull_request.base.sha }}
+          TETE_PR: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENEMENT" = pull_request ]; then
+            PLAGE="$BASE_PR..$TETE_PR"
+          else
+            PLAGE="$AVANT..$GITHUB_SHA"
+          fi
+          # Pas de repli silencieux : une plage sans base (premier push d'une
+          # branche) est refusée par le script, qui le dit.
+          node scripts/check-fichiers-sensibles.mjs --arbre --plage "$PLAGE"
 
   # ──────────────────────────────────────────────────────────────────
   # Tests E2E Playwright (3 parcours démo + scan a11y axe-core, bloquant

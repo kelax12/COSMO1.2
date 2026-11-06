@@ -1,5 +1,5 @@
 # ──────────────────────────────────────────────────────────────────────
-# Deploiement CONTINU des Edge Functions, apres une CI verte (AM-6).
+# Deploiement CONTINU des Edge Functions, apres un `CI noyau` vert (AM-6).
 #
 # 🔴 POURQUOI
 #
@@ -10,8 +10,8 @@
 #
 # ── CE QUE CE WORKFLOW FAIT, DANS L'ORDRE ─────────────────────────────
 #
-#   1. il ne part que sur un `CI` VERT, issu d'un PUSH sur `main`, et
-#      deploie le SHA que `CI` a valide (pas la tete de `main` a l'instant
+#   1. il ne part que sur un `CI noyau` VERT, issu d'un PUSH sur `main`, et
+#      deploie le SHA que `CI noyau` a valide (pas la tete de `main` a l'instant
 #      du declenchement, que `workflow_run` met dans `github.sha`) ;
 #   2. `scripts/edge-deploy-select.mjs` choisit les fonctions modifiees
 #      depuis le dernier SHA deploye, y compris toute importatrice d'un
@@ -24,7 +24,7 @@
 #
 # ── LE DERNIER SHA DEPLOYE EST DANS LE TITRE DU RUN ───────────────────
 #
-# `run-name` porte le SHA valide par `CI`, et SEULEMENT quand ce workflow a
+# `run-name` porte le SHA valide par `CI noyau`, et SEULEMENT quand ce workflow a
 # quelque chose a faire. Le selecteur lit le titre du dernier run VERT : un
 # run sans SHA (CI rouge, job saute) ne compte jamais comme un deploiement,
 # un run rouge non plus. ❌ Ne jamais renommer ce titre sans le selecteur.
@@ -48,7 +48,16 @@ run-name: >-
 
 on:
   workflow_run:
-    workflows: [CI]
+    # 🔴 CI-03 (2026-11-06) : `CI noyau`, plus `CI`. Le deploiement attendait
+    # un `CI` ENTIEREMENT vert (e2e, Lighthouse, gardes de documents) : 49 runs
+    # rouges sur 60, et cinq fonctions de facturation en retard sur `main`
+    # depuis le 2026-11-03 pour des rouges sans rapport avec elles.
+    # `CI noyau` porte ce qui teste le code Edge : lint, `tsc -b`, tests
+    # unitaires et leurs seuils, couverture de `scripts/`, temoins des Edge
+    # Functions. ❌ Ne rien changer aux quatre gardes du job `deploy` ni a la
+    # verification du SHA (`faille.md` § CodeQL n° 15) : elles valent pour
+    # ce workflow comme pour l'ancien.
+    workflows: [CI noyau]
     types: [completed]
     branches: [main]
 

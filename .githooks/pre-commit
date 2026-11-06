@@ -1,0 +1,13 @@
+#!/bin/sh
+# Cf. scripts/check-fichiers-sensibles.mjs : refuse l'indexation d'un fichier
+# de donnees (csv, pdf, xlsx, dump, .env*, plus de 1 Mo) sur ce depot PUBLIC.
+# Aucune variable de contournement ; `--no-verify` saute ce hook, la CI
+# (`ci.yml`, job `fichiers-sensibles`) rejoue la meme garde.
+#
+# `core.hooksPath` peut pointer ce hook depuis un worktree plus ancien que la
+# garde : sans le script, on le dit et on laisse passer (la CI tranchera).
+if [ ! -f scripts/check-fichiers-sensibles.mjs ]; then
+  echo "pre-commit : scripts/check-fichiers-sensibles.mjs absent de ce checkout, index NON verifie (la CI le rejouera)." >&2
+  exit 0
+fi
+exec node scripts/check-fichiers-sensibles.mjs --index
