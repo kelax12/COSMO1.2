@@ -18,7 +18,7 @@ test('cocher une habitude, relue après rechargement', async ({ page, makeAccoun
     .filter({ visible: true })
     .first()
     .click({ timeout: 30_000 });
-  await page.getByPlaceholder("Nom de l'habitude").filter({ visible: true }).first().fill(name);
+  await page.getByPlaceholder(/lire 30 minutes/i).filter({ visible: true }).first().fill(name);
   await page.getByRole('button', { name: "Créer l'habitude" }).filter({ visible: true }).first().click();
 
   // Les cases de la semaine : « <nom>, <date> » (role checkbox), futures desactivees.

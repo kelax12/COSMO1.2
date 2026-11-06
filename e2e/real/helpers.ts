@@ -47,6 +47,9 @@ const admin: SupabaseClient = createClient(SUPABASE_URL, SERVICE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
+/** Client service_role : preparation de donnees de test UNIQUEMENT (jamais une assertion). */
+export const adminClient: SupabaseClient = admin;
+
 export interface Account {
   id: string;
   email: string;
@@ -128,7 +131,7 @@ export const test = base.extend<{ makeAccount: (label: string) => Promise<Accoun
     await context.addInitScript(NEUTRALISE);
     await use(context);
   },
-  trackAccount: async ({}, use) => {
+  trackAccount: async (_fixtures, use) => {
     // Comptes crees par l'INTERFACE : supprimes aussi, une fois le cas termine.
     const ids: string[] = [];
     await use((id) => { ids.push(id); });
@@ -199,6 +202,28 @@ export async function createTaskViaUi(page: Page, name: string): Promise<void> {
   await expect(page.locator('[data-sonner-toast]').filter({ hasText: name })).toBeVisible({ timeout: 15_000 });
   await dialog.getByRole('button', { name: /^annuler$/i }).filter({ visible: true }).first().click();
   await expect(dialog).toBeHidden();
+}
+
+/**
+ * Tache posee en base par le client authentifie du compte, avec une echeance.
+ *
+ * 🔴 Une echeance est donnee exprès : sur une base REJOUEE depuis les migrations,
+ * `tasks.deadline` est NOT NULL, alors que l'application envoie `null` pour
+ * une tache sans echeance (cf. `schema-drift.spec.ts`). Les parcours qui ne
+ * testent pas la creation partent donc d'une tache deja ecrite.
+ */
+export async function seedTask(account: Account, name: string): Promise<string> {
+  const { data, error } = await account.client
+    .from('tasks')
+    .insert([{
+      name, priority: 0, category: null, deadline: new Date(Date.now() + 86_400_000).toISOString(),
+      estimated_time: 0, bookmarked: false, completed: false, recurrence: 'none',
+      is_collaborative: false, pending_invites: [], user_id: account.id,
+    }])
+    .select('id')
+    .single();
+  if (error || !data) throw new Error(`seedTask : ${error?.message ?? 'aucune ligne'}`);
+  return data.id as string;
 }
 
 /** La liste des taches, une fois peinte. */

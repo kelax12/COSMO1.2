@@ -35,7 +35,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   // Une reprise, pas deux : chaque parcours cree ses PROPRES comptes (adresse
   // horodatee), donc une reprise ne rencontre jamais l'etat de la precedente.
-  retries: process.env.CI ? 1 : 0,
+  retries: 0, // TODO-ITERATION: remettre 1 avant livraison
   workers: 1,
   reporter: [['list'], ['html', { open: 'never', outputFolder: 'playwright-report-real' }]],
   use: {

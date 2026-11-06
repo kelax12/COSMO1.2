@@ -1,5 +1,5 @@
 import {
-  test, expect, loginViaUi, createTaskViaUi, tasksList, newSession, goto, reload, expectNoErrorToast,
+  test, expect, loginViaUi, seedTask, adminClient, tasksList, newSession, goto, reload, expectNoErrorToast,
 } from './helpers';
 
 /**
@@ -7,18 +7,21 @@ import {
  *
  * La RLS de `shared_tasks` (mig. 036) et `get_my_tasks()` (mig. 103 : une
  * tâche partagée n'apparaît chez le destinataire qu'APRÈS son acceptation) ne
- * se prouvent qu'avec deux vrais comptes. L'amitié est posée par les mêmes
- * appels que l'application (`friend_requests` puis `accept_friend_request_v2`),
- * en préalable : le geste testé est le PARTAGE, par l'interface.
+ * se prouvent qu'avec deux vrais comptes. L'amitié est posée en préalable
+ * (`friend_requests` puis la RPC réelle `accept_friend_request_v2`) : le geste
+ * testé est le PARTAGE, par l'interface.
  */
 test('partager une tâche entre deux comptes', async ({ page, browser, baseURL, makeAccount }) => {
   const alice = await makeAccount('alice');
   const bob = await makeAccount('bob');
 
-  // ── Préalable : Alice et Bob sont amis (appels réels du module friends) ──
-  const { data: request, error: reqError } = await alice.client
+  // ── Préalable : Alice et Bob sont amis ──
+  // 🔴 Insertion par service_role AVEC `user_id` : sur une base rejouee, la colonne
+  // heritee de la migration 007 est NOT NULL, et l'insertion de l'application (sans
+  // elle) est refusee (cf. `schema-drift.spec.ts`, test.fixme).
+  const { data: request, error: reqError } = await adminClient
     .from('friend_requests')
-    .insert([{ email: bob.email, status: 'pending', sent_at: new Date().toISOString(), sender_id: alice.id }])
+    .insert([{ email: bob.email, status: 'pending', sent_at: new Date().toISOString(), sender_id: alice.id, user_id: alice.id }])
     .select()
     .single();
   expect(reqError, reqError?.message).toBeNull();
@@ -28,8 +31,8 @@ test('partager une tâche entre deux comptes', async ({ page, browser, baseURL, 
   // ── Alice crée une tâche et la partage avec Bob, par l'interface ─────────
   await loginViaUi(page, alice);
   const taskName = `Tâche partagée ${Date.now()}`;
-  await createTaskViaUi(page, taskName);
-  await reload(page);
+  await seedTask(alice, taskName);
+  await goto(page, '/tasks');
   await tasksList(page).getByText(taskName, { exact: true }).filter({ visible: true }).first().click();
   const modal = page.getByRole('dialog', { name: /modifier la tâche/i });
   await expect(modal).toBeVisible({ timeout: 15_000 });
