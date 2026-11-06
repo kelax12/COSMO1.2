@@ -1,0 +1,97 @@
+// ═══════════════════════════════════════════════════════════════════
+// noyau-ci.guard.test.mjs · LE NOYAU BLOQUANT, COMPLET ET COURT (vague 2.2, 2026-11-06)
+//
+// 🔴 POURQUOI CE FICHIER EXISTE
+//
+// Le 2026-11-06, `main` était rouge sur 49 des 60 derniers runs : le job
+// bloquant jugeait aussi des dates, des documents et des scores variables
+// (Lighthouse, e2e), et un rouge permanent ne signalait plus rien. Le noyau
+// (`ci-noyau.yml`, workflow `CI noyau`) est désormais LE verdict bloquant du
+// commit : pre-push, `edge-deploy.yml` et `ci-alert.yml` ne lisent que lui.
+//
+// Ce témoin refuse :
+//   · un noyau amputé d'une des gardes qui jugent le commit (lint, tsc,
+//     tests + couverture, i18n, fichiers sensibles, RLS d'intégration,
+//     build + budget de bundle) ;
+//   · une garde de calendrier, un job lent ou variable (e2e, Lighthouse,
+//     audit, mutation, visuel, sabotages) remis dans le noyau ;
+//   · un job du noyau resté en double dans `ci.yml`.
+// ═══════════════════════════════════════════════════════════════════
+import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { lireEtapes } from './ci-toutes-les-gardes.mjs';
+
+const lire = (f) => readFileSync(join(process.cwd(), '.github/workflows', f), 'utf8').replace(/\r\n/g, '\n');
+const NOYAU = lire('ci-noyau.yml');
+const ETENDUE = lire('ci.yml');
+
+/** Les jobs de premier niveau d'un workflow, dans l'ordre. */
+const jobsDe = (yaml) => {
+  const i = yaml.indexOf('\njobs:\n');
+  if (i < 0) throw new Error('aucun bloc `jobs:`');
+  return [...yaml.slice(i).matchAll(/^ {2}([A-Za-z_][\w-]*):\s*$/gm)].map((m) => m[1]);
+};
+
+const commandes = (job) => lireEtapes(NOYAU, job).map((e) => e.run ?? '').join('\n');
+
+describe('ci-noyau.yml : la composition du noyau', () => {
+  it('quatre jobs parallèles, sans `needs:` (le verdict tombe au rythme du plus lent)', () => {
+    expect(jobsDe(NOYAU)).toEqual(['noyau', 'lint-test-build', 'fichiers-sensibles', 'rls-integration']);
+    expect(NOYAU).not.toMatch(/^\s+needs:/m);
+  });
+
+  it.each([
+    ['noyau', ['npm run lint', 'npx tsc -b', 'npm run test:coverage', 'npm run test:coverage:tooling', 'npm run check:edge-coverage']],
+    ['lint-test-build', [
+      'npm run i18n:check', 'npm run i18n:scan', 'npm run i18n:pages', 'npm run i18n:identical',
+      'npm run i18n:quality', 'npm run build', 'npm run check:bundle', 'npm run validate:migrations',
+      'npm run check:rls', 'npm run check:legal-journal', 'npm run check:docs',
+    ]],
+    ['fichiers-sensibles', ['node scripts/check-fichiers-sensibles.mjs --arbre --plage']],
+    ['rls-integration', ['node scripts/apply-migrations.mjs', 'npm run test:rls']],
+  ])('TÉMOIN : le job `%s` lance ses gardes', (job, attendues) => {
+    const texte = commandes(job);
+    for (const c of attendues) expect(texte, `${job} : ${c}`).toContain(c);
+  });
+
+  // Une garde dont le verdict peut changer SANS commit rend `main` rouge un
+  // matin, et un noyau rouge bloque toute poussée, sans contournement.
+  it('TÉMOIN : aucune garde de calendrier, aucun job lent ou variable dans le noyau', () => {
+    const interdits = [
+      'check:study', 'check:docs-scored', 'check:lecteurs-ecran', 'check:exercice-violation',
+      'check:peremption-chantiers', 'check:acquisition', 'playwright test', 'lhci', 'npm audit',
+      'stryker', 'test:mutation', 'check:sabotages', 'test:e2e',
+    ];
+    // Les commandes et les actions, pas les commentaires (l'en-tête nomme ce qui est HORS noyau).
+    const lance = jobsDe(NOYAU).flatMap((j) => lireEtapes(NOYAU, j)).map((e) => `${e.run ?? ''} ${e.uses ?? ''}`).join('\n');
+    expect(lance).toContain('npm run lint');
+    for (const g of interdits) expect(lance, g).not.toContain(g);
+    expect(NOYAU).not.toMatch(/^\s+schedule:/m);
+  });
+
+  it('juge chaque poussée de main et des branches de réparation `noyau/**`, et chaque PR', () => {
+    expect(NOYAU).toMatch(/^name: CI noyau$/m);
+    expect(NOYAU).toMatch(/\non:\n {2}push:\n {4}branches: \[main, 'noyau\/\*\*'\]\n {2}pull_request:\n {4}branches: \[main\]\n/);
+  });
+
+  it('fichiers-sensibles : la première poussée d’une branche de réparation se juge contre main, jamais à vide', () => {
+    const run = lireEtapes(NOYAU, 'fichiers-sensibles').map((e) => e.run ?? '').join('\n');
+    expect(run).toContain('PLAGE="origin/main..$GITHUB_SHA"');
+    expect(run).toContain('PLAGE="$AVANT..$GITHUB_SHA"');
+    expect(run).toContain('set -euo pipefail');
+  });
+});
+
+describe('ci.yml : la CI étendue ne porte plus aucun job du noyau', () => {
+  it('ses jobs sont les non bloquants, et aucun du noyau', () => {
+    expect(ETENDUE).toMatch(/^name: CI etendue$/m);
+    expect(jobsDe(ETENDUE)).toEqual(['audit', 'e2e', 'lighthouse']);
+  });
+
+  it('edge-deploy.yml ne part que sur le noyau', () => {
+    const deploy = lire('edge-deploy.yml');
+    expect(deploy).toMatch(/^\s*workflows: \[CI noyau\]$/m);
+    expect(deploy).not.toMatch(/CI etendue/);
+  });
+});

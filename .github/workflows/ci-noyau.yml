@@ -1,40 +1,59 @@
 # ──────────────────────────────────────────────────────────────────────
-# CI noyau · ce qui juge le CODE du commit, et rien d'autre (CI-03, 2026-11-06)
+# CI noyau · LE verdict bloquant du commit, et rien d'autre (vague 2.2, 2026-11-06)
 #
-# 🔴 POURQUOI UN WORKFLOW A PART
+# 🔴 CE WORKFLOW EST LE NOYAU. Sa conclusion, et elle seule :
+#   · bloque une poussée sur `main` (`.githooks/pre-push`, sans contournement) ;
+#   · declenche `edge-deploy.yml` ;
+#   · sonne `ci-alert.yml` (issue `ci-red` + webhook).
 #
-# `Edge deploy` ne partait que sur un `CI` entierement vert. Or `CI` porte
-# aussi l'e2e, Lighthouse, la RLS d'integration et une vingtaine de gardes de
-# documents : sur les 60 derniers runs de `main` au 2026-11-06, 49 etaient
-# rouges, et cinq fonctions de facturation attendaient en retard sur `main`
-# depuis le 2026-11-03 pour des rouges qui ne touchaient pas une ligne
-# d'Edge Function.
+# Quatre jobs PARALLELES, chacun juge le code du commit :
+#   · `noyau`            lint, `tsc -b`, temoins Edge, tests unitaires +
+#                        couverture, couverture de `scripts/` ;
+#   · `lint-test-build`  gardes statiques (migrations, RLS, cycles, plancher
+#                        de tests, RGPD, sous-traitants, env, journal des
+#                        CGU, `check:docs`), i18n (parite, chaines en dur,
+#                        valeurs recopiees, pluriels, glossaire), build et
+#                        budget de bundle ;
+#   · `fichiers-sensibles` l'arbre ET chaque version poussee ;
+#   · `rls-integration`  toutes les migrations sur base vierge + `test:rls`.
+# Mesure du 2026-11-06 (run 42296845035 et CI 42296844839, memes jobs) : le
+# plus long est `noyau`, 4 min 30 ; verdict sous 5 min, cible < 15 min.
 #
-# Ce workflow porte le seul noyau dont depend le deploiement des fonctions :
-# lint, typecheck, tests unitaires avec leurs seuils, couverture de
-# l'outillage (`scripts/`) et temoins des Edge Functions. `edge-deploy.yml`
-# se declenche sur LUI, avec les memes gardes de securite qu'avant
-# (`faille.md` (hors depot, `prive/` du checkout principal) § CodeQL n° 15).
+# POURQUOI UN SEUL WORKFLOW plutot qu'une liste de « jobs requis » repartis :
+# le hook, `edge-deploy.yml` et `ci-alert.yml` lisent la conclusion d'un
+# WORKFLOW (`gh run list --workflow`, `workflow_run`). Une liste de jobs
+# requis devrait etre recopiee dans les trois, et un job ajoute a l'un sans
+# les autres bloquerait d'un cote et pas de l'autre.
 #
-# ⚠️ Ces etapes ont QUITTE `lint-test-build` (`ci.yml`) : elles ne tournent
-# qu'une fois. Le hook `pre-push` et `ci-alert.yml` lisent `CI` ET `CI noyau`.
+# ❌ RIEN ICI NE JUGE UNE DATE, UN DOCUMENT QUI VIEILLIT OU UN ETAT EXTERIEUR.
+# Un verdict qui peut changer sans commit rend `main` rouge un matin, et un
+# noyau rouge bloque tout. Hors noyau, non bloquants : `ci.yml` (e2e,
+# Lighthouse, `npm audit`), `visual.yml`, `mutation.yml`, `sabotages.yml`,
+# `gardes-calendrier.yml`.
+# ⚠️ `check:legal-journal` reste : il compare l'empreinte des CGU au journal,
+# donc ne bouge qu'avec un commit (une CGU modifiee sans entree est un defaut
+# du commit).
+# Temoins : `scripts/noyau-ci.guard.test.mjs` (composition, aucune garde de
+# calendrier), `scripts/ci-toutes-les-gardes.guard.test.mjs` (chaque etape
+# joue apres un rouge, le resume liste tous les rouges).
 #
-# Meme dispositif que `lint-test-build` : `npm ci` bloquant, chaque etape
-# suivante joue apres un rouge, la derniere liste tous les rouges.
-# Temoin : `scripts/ci-toutes-les-gardes.guard.test.mjs`.
+# `noyau/**` : chemin de reparation d'un noyau rouge. Le hook refuse de
+# pousser sur `main` tant que le noyau de `main` est rouge, SAUF un commit
+# dont ce workflow a deja rendu un verdict VERT (pousse d'abord sur une
+# branche `noyau/<nom>`). Le meme SHA, pas un autre.
 # ──────────────────────────────────────────────────────────────────────
 name: CI noyau
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'noyau/**']
   pull_request:
     branches: [main]
 
 permissions:
   contents: read
 
-# Meme regle que `ci.yml` : sur `main`, un groupe par commit, aucun run n'en
+# Meme regle que `ci.yml` : hors PR, un groupe par commit, aucun run n'en
 # annule un autre ; sur une PR, le push suivant remplace le precedent.
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
@@ -102,3 +121,386 @@ jobs:
         env:
           STEPS_JSON: ${{ toJSON(steps) }}
         run: node scripts/ci-toutes-les-gardes.mjs --workflow .github/workflows/ci-noyau.yml --job noyau
+
+  # ──────────────────────────────────────────────────────────────────
+  # Gardes statiques du commit + i18n + build et budget de bundle. Job du
+  # NOYAU (venu de `ci.yml` le 2026-11-06, vague 2.2) : tout rouge bloque.
+  #
+  # ⚠️ Lint, `tsc -b`, tests unitaires et couvertures sont dans le job
+  # `noyau` ci-dessus, les gardes de calendrier dans `gardes-calendrier.yml`.
+  # `npm run build` NE type-check PAS : le `tsc -b` du job `noyau` reste
+  # obligatoire.
+  # ──────────────────────────────────────────────────────────────────
+  # ⚠️ Node 22 minimum, et ce n'est pas cosmetique : depuis la 2.112,
+  # `@supabase/supabase-js` exige un WebSocket NATIF, absent avant Node 22.
+  # En Node 20 le simple `createClient()` de src/lib/supabase.ts jette, et
+  # toute la suite de tests tombe. Ne pas redescendre.
+  #
+  # 🔴 TOUTES LES GARDES JOUENT, MÊME APRÈS UN ROUGE (2026-10-15).
+  # Le 2026-10-12, l'étape 2 sur 23 (`check:docs`) est passée au rouge, et un
+  # job s'arrête au premier échec : les 21 suivantes n'ont plus été jouées
+  # pendant trois jours, dont dix étaient rouges elles aussi (effacement,
+  # portabilité, sept gardes unitaires, budget de bundle). Un job qui s'arrête
+  # au premier rouge ne mesure que le premier rouge. Désormais :
+  #   · `npm ci` (`id: deps`) reste BLOQUANT : sans dépendances, rien ne mesure ;
+  #   · chaque étape suivante porte `if: ${{ !cancelled() && steps.deps.outcome == 'success' }}`
+  #     et un `id`, et AUCUNE ne porte `continue-on-error` : un échec garde le
+  #     job rouge ;
+  #   · une étape qui lit la sortie d'une autre (`dist/`, `coverage/`) échoue
+  #     en le disant quand cette sortie manque, jamais à vide ;
+  #   · la dernière étape liste TOUTES les étapes rouges (résumé du job + une
+  #     annotation) et sort en 1 s'il y en a une.
+  # Témoin : `scripts/ci-toutes-les-gardes.guard.test.mjs`. ❌ Une nouvelle
+  # étape sans cette condition ou sans `id` le fait rougir.
+  lint-test-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+        id: deps
+
+      - name: Budget des CLAUDE.md
+        id: docs
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:docs
+
+      - name: Validate SQL migrations
+        id: migrations
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run validate:migrations
+
+      # Les invariants RLS (auth.uid() wrappé, une seule policy PERMISSIVE par
+      # rôle+action) ne vivaient que dans CLAUDE.md — et ont régressé DEUX fois
+      # (mig. 059, 077, 082). Une règle non vérifiée n'est pas une règle.
+      # Ce check est un cliquet : il n'audite que les migrations ≥ 043.
+      - name: Validate RLS invariants
+        id: rls
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:rls
+
+      # ═══ LES GARDES POSÉES LE 2026-09-20 (§ 12 d'a-faire-code.md) ═══
+      #
+      # Toutes statiques : aucune ne demande de secret, aucune ne touche au
+      # réseau. Elles tiennent dans le job existant plutôt que d'en ouvrir un,
+      # parce qu'un job de plus est un job de plus à surveiller.
+
+      # C-103 — un cycle d'imports ne casse ni le build ni un test : il rend
+      # un `undefined` à l'exécution, au moment où un module lit l'export d'un
+      # module pas encore évalué. Sept cycles existaient le jour de la pose.
+      - name: Cycles d imports
+        id: cycles
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:cycles
+
+      # C-83 — un test supprimé avec le code qu'il gardait ne laisse aucune
+      # trace : le total baisse, et un total qui baisse ne fait rougir rien.
+      - name: Plancher de tests
+        id: test-floor
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:test-floor
+
+      # C-92 — aucune table portant `user_id` ne peut exister sans décision
+      # d'effacement écrite (RGPD art. 17). Le périmètre est DÉRIVÉ des
+      # migrations, pas recopié.
+      - name: Effacement de compte (perimetre derive)
+        id: erasure
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:erasure
+
+      # AM-3 (RGPD-REGISTRE) — les tiers recevant des données sont DÉRIVÉS du
+      # code (CSP, hôtes, SDK) et comparés au registre art. 30 et à LEGAL.md.
+      - name: Sous-traitants (derives du code)
+        id: subprocessors
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:subprocessors
+
+      # C-94 — l'export de portabilité (art. 20) confronté au schéma : une
+      # colonne ajoutée à une table exportée doit y entrer ou être déclarée
+      # exclue. Trois colonnes saisies manquaient à la pose.
+      - name: Export de portabilite
+        id: portability
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:portability
+
+      # C-105 — le contrat des variables `VITE_*`. Moitié STATIQUE seulement
+      # ici (la moitié Vercel demande un jeton, cf. `env-drift.yml`).
+      - name: Contrat des variables d environnement
+        id: env
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:env
+
+      # C-107 — les CGU vivent dans un catalogue i18n ordinaire pour la CI.
+      # Une modification de fond est un changement de CONTRAT (préavis de
+      # 30 jours, CGU art. 11) : elle doit passer par le journal.
+      - name: Journal des documents contractuels
+        id: legal-journal
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:legal-journal
+
+      # C-99, PREMIÈRE MOITIÉ — les pluriels et les locales déclarées. Le
+      # moteur retombe clé par clé sur le français : une forme plurielle
+      # anglaise manquante affiche une phrase FRANÇAISE dans l'interface
+      # anglaise, sans jamais ressembler à une clé brute. `i18n:check`
+      # vérifiait déjà la complétude ; ce qu'il ne voyait pas, ce sont les
+      # formes MORTES — 23 `_many` recopiés du français, que
+      # `Intl.PluralRules('en')` ne demandera jamais.
+      # ⚠️ La SECONDE moitié (volume par page) exige un build : elle tourne
+      # dans le job `lighthouse`, à côté de `check:seo`.
+      - name: i18n · pluriels et locales declarees
+        id: i18n-pages
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run i18n:pages
+
+      # 🔴 CI-01 (2026-11-06) : SIX gardes ont quitté ce job pour
+      # `gardes-calendrier.yml` (quotidien, issue `calendrier-red`) : études,
+      # notes d'audit déclarées, séances lecteur d'écran, exercice de
+      # violation, péremption des chantiers, acquisition. Leur verdict juge
+      # une DATE ou un DOCUMENT, pas le code du commit : 49 runs rouges sur 60
+      # le 2026-11-06, et un `main` rouge en permanence ne signale plus rien.
+      # ❌ N'en remettre aucune ici, ni nulle part dans ce workflow : un
+      # rouge du noyau bloque la poussée, sans contournement.
+
+      # Le moteur de traduction retombe sur le français clé par clé : un
+      # catalogue traduit incomplet ne casse rien visiblement et partirait donc
+      # en prod à moitié traduit. Ce check est la seule protection réelle.
+      - name: Validate i18n catalogs
+        id: i18n-check
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run i18n:check
+
+      # Cliquet de dette : `i18n:check` ne voit que les clés, donc jamais une
+      # chaîne restée en dur. Sans cette étape, la dette remonte en silence.
+      - name: No new hardcoded strings
+        id: i18n-scan
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run i18n:scan
+
+      # Second angle mort du meme mecanisme : le moteur retombe sur le francais
+      # cle par cle, donc une valeur `en` jamais traduite s affiche en francais
+      # dans une interface anglaise, sans jamais ressembler a une cle brute.
+      # `i18n:check` ne voit que les CLES. Ce cliquet compte les valeurs
+      # identiques qui ne sont pas declarees legitimes.
+      - name: No untranslated en values
+        id: i18n-identical
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run i18n:identical
+
+      # AM-1 (docs/I18N.md) : les gardes ci-dessus comparent des CLES et des
+      # COPIES. Une traduction fausse mais differente les passe toutes. Celle-ci
+      # tient le glossaire epingle (tache -> task, objectif -> objective...) et
+      # refuse du francais reste dans une valeur en. Elle ne prouve PAS qu une
+      # phrase dit la meme chose : ca reste une relecture humaine (M-50).
+      - name: i18n · glossaire et francais dans en
+        id: i18n-quality
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run i18n:quality
+
+      - name: Build
+        id: build
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          # 🔴 SANS cette variable, la CI ne mesure PAS le bundle qui part en
+          # production. `main.tsx` garde son `Sentry.init` derriere
+          # `if (sentryDsn)` ; Vite remplace la variable absente par `undefined`
+          # a la compilation, la branche devient du code mort, et Rollup jette
+          # presque tout `@sentry/react`. Mesure du 2026-09-02, meme arbre et
+          # meme node_modules, seule la variable change :
+          #     avec DSN  -> vendor-sentry 145 740 o brut, 49 276 o gzip
+          #     sans DSN  -> vendor-sentry  11 633 o brut,  3 818 o gzip
+          # La garde de budget sous-estimait donc le chemin critique reel de
+          # ~45 ko gzip, et les attributions de bootup du job `lighthouse`
+          # etaient structurellement AVEUGLES a Sentry. Vercel, lui, construit
+          # avec la variable posee.
+          # La valeur n'a pas besoin d'etre un vrai DSN : seule sa presence
+          # decide de la forme du bundle, et cet artefact n'est jamais deploye.
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN || 'https://ci@example.invalid/0' }}
+
+      # Le seul budget du dépôt qui n'avait aucune garde · et le seul qui ait
+      # reculé sans que personne le voie (+5 ko gzip sur le chemin critique en
+      # une journée, le 2026-08-25). Mesure le build RÉEL, pas une estimation.
+      # 🔴 Ne jamais remonter un plafond pour faire passer ce job.
+      # Son ENTRÉE est `dist/`, écrit par l'étape `build`. Un Build rouge laisse
+      # un `dist/` absent ou partiel : la garde ÉCHOUE alors en le disant, au
+      # lieu de mesurer un reste.
+      - name: Budget de bundle
+        id: bundle
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        env:
+          ENTREE_BUILD: ${{ steps.build.outcome }}
+        run: |
+          if [ "$ENTREE_BUILD" != success ]; then
+            echo "::error title=Budget de bundle::entree absente, l etape Build a rendu '$ENTREE_BUILD' : dist/ ne decrit aucun build complet, rien a mesurer"
+            exit 1
+          fi
+          npm run check:bundle
+
+      # Dernière étape : TOUTES les étapes rouges, en un endroit. Elle joue même
+      # si `npm ci` a échoué, pour le dire, et sort en 1 s'il y a un rouge ou
+      # une étape sautée alors que `npm ci` est vert.
+      - name: Resume des gardes (toutes les etapes rouges)
+        if: ${{ !cancelled() }}
+        env:
+          STEPS_JSON: ${{ toJSON(steps) }}
+        run: node scripts/ci-toutes-les-gardes.mjs --workflow .github/workflows/ci-noyau.yml --job lint-test-build
+
+  # ──────────────────────────────────────────────────────────────────
+  # SEC-01 · SEC-05 (2026-11-06) : aucun fichier de données sur ce dépôt
+  # PUBLIC sans exception écrite. Le 2026-10-30, `leads-50.csv` et six PDF
+  # de business plan y sont partis, rien ne filtrait. Le hook
+  # `.githooks/pre-commit` refuse l'indexation ; `--no-verify` le saute, ce
+  # job ne se saute pas. Il lit l'arbre de HEAD ET chaque version ajoutée ou
+  # modifiée par les commits poussés : un fichier ajouté puis retiré dans la
+  # même poussée reste dans l'historique public.
+  # Node seul, sans `npm ci`. Témoin : `check-fichiers-sensibles.guard.test.mjs`.
+  # ──────────────────────────────────────────────────────────────────
+  fichiers-sensibles:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # L'historique complet : la plage poussée doit être lisible.
+          fetch-depth: 0
+      - name: Fichiers sensibles (arbre et commits pousses)
+        env:
+          EVENEMENT: ${{ github.event_name }}
+          AVANT: ${{ github.event.before }}
+          BASE_PR: ${{ github.event.pull_request.base.sha }}
+          TETE_PR: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENEMENT" = pull_request ]; then
+            PLAGE="$BASE_PR..$TETE_PR"
+          elif [ "$AVANT" = 0000000000000000000000000000000000000000 ] && [ "$GITHUB_REF" != refs/heads/main ]; then
+            # Premiere poussee d'une branche `noyau/**` (chemin de reparation
+            # d'un noyau rouge, `scripts/pre-push-main-red.mjs`) : les commits
+            # proposes sont ceux absents de `main`.
+            PLAGE="origin/main..$GITHUB_SHA"
+          else
+            PLAGE="$AVANT..$GITHUB_SHA"
+          fi
+          # Pas de repli silencieux : une plage sans base (premier push d'une
+          # branche) est refusée par le script, qui le dit.
+          node scripts/check-fichiers-sensibles.mjs --arbre --plage "$PLAGE"
+
+  # ──────────────────────────────────────────────────────────────────
+  # Tests RLS d'intégration : démarre une stack Supabase locale (GoTrue +
+  # PostgREST + Postgres), rejoue TOUTES les migrations sur base vierge via
+  # scripts/apply-migrations.mjs, puis vérifie que la RLS isole bien les
+  # données entre utilisateurs (e2e/rls/). Filet de sécurité du modèle
+  # d'accès (cf. récursion 42P17, mig. 045). Job séparé : Docker + images.
+  # ──────────────────────────────────────────────────────────────────
+  rls-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+      # `@v1` était une branche, pas un tag — pinné sur le commit de v1.7.1.
+      - uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
+        with:
+          version: latest
+      - run: npm ci
+      - name: Start Supabase stack (local)
+        run: supabase start
+      - name: Export Supabase env
+        run: |
+          supabase status -o env > supabase.env
+          # `supabase status -o env` émet API_URL/ANON_KEY/SERVICE_ROLE_KEY/DB_URL.
+          # On les remappe vers les noms attendus par le loader et le harnais.
+          set -a; . ./supabase.env; set +a
+
+          # ⚠️ Un remap qui ne trouve rien écrit une valeur VIDE sans faire
+          # échouer l'étape : le job mourait deux étapes plus loin sur un
+          # « DATABASE_URL manquant » invisible sans accès aux logs. On vérifie
+          # donc ici, et on annote les CLÉS trouvées (jamais les valeurs, qui
+          # contiennent la service_role key) pour voir tout de suite si la CLI
+          # a renommé sa sortie — le job installe `version: latest`.
+          if [ -z "$DB_URL" ]; then
+            KEYS=$(sed -n 's/^\([A-Z_][A-Z0-9_]*\)=.*/\1/p' supabase.env | paste -sd, -)
+            echo "::warning::DB_URL absent de 'supabase status -o env' (cles vues : ${KEYS:-aucune}) — repli sur l'URL locale standard"
+            DB_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          fi
+
+          {
+            echo "DATABASE_URL=$DB_URL"
+            echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+          } >> "$GITHUB_ENV"
+      - name: Apply migrations on fresh DB
+        id: migrate
+        run: |
+          set -o pipefail   # sans ça, le statut serait celui de `tee`, jamais celui de node
+          # Les LOGS d'un run exigent une authentification, même sur un dépôt
+          # public ; le RÉSUMÉ du job, lui, est visible de tous. Sans ce report,
+          # un échec ici n'affiche que « Process completed with exit code 1 » —
+          # c'est ce qui a rendu ce job indiagnosticable depuis le 2026-06-21.
+          # `2>&1` capture aussi un crash de Node (module absent, parse), qui
+          # sort AVANT toute annotation applicative.
+          if node scripts/apply-migrations.mjs 2>&1 | tee migrate.log; then
+            exit 0
+          fi
+          {
+            echo '### ✖ Replay des migrations sur base vierge — échec'
+            echo ''
+            echo '```'
+            tail -n 60 migrate.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+      # Décrit l'état RLS réellement obtenu par le replay, en annotations. Le
+      # job échoue depuis des semaines sur un message qui dit qu'une policy a
+      # refusé sans dire laquelle, alors que les deux moitiés du prédicat sont
+      # vraies quand on les évalue séparément. Ce que le dépôt DÉCRIT a été
+      # compare a la prod ; il reste a voir ce que la base CONTIENT.
+      # 🔴 Ce diagnostic ne teste rien, il DÉCRIT ; il peut pourtant sortir en
+      # non-zéro (connexion, requête). Il ne doit jamais masquer les tests :
+      # les deux étapes ne dépendent que du replay (`migrate`), pas l'une de
+      # l'autre (même défaut que `lint-test-build` le 2026-10-12).
+      - name: Etat RLS de la base fraiche
+        if: ${{ !cancelled() && steps.migrate.outcome == 'success' }}
+        run: node scripts/diagnose-rls-state.mjs
+
+      - name: Run RLS integration tests
+        if: ${{ !cancelled() && steps.migrate.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          if npm run test:rls 2>&1 | tee rls.log; then exit 0; fi
+          # GoTrue masque les erreurs SQL derriere « Database error creating
+          # new user » : la vraie cause n'existe que dans le journal Postgres
+          # du conteneur. Sans ce vidage dans le resume (public), un echec ici
+          # est indiagnosticable — meme piege que pour le replay.
+          {
+            echo '### Tests RLS en echec'
+            echo
+            echo '```'
+            tail -n 40 rls.log
+            echo '```'
+            echo
+            echo '#### Journal Postgres (erreurs)'
+            echo '```'
+            docker ps --filter name=supabase_db --format '{{.Names}}' | head -1               | xargs -r -I{} docker logs --tail 200 {} 2>&1               | grep -iE 'error|fatal|exception' | tail -n 30
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          # ⚠️ Le resume de job ne se lit QUE dans l interface, connecte. Vitest
+          # annote chaque test en echec, mais une sortie non nulle SANS test en
+          # echec (crash a l import, rejet non gere, hook casse) ne produit
+          # alors AUCUNE annotation : le job est rouge et muet. Mesure le
+          # 2026-08-29, run #896. On emet donc la fin du journal, en une seule
+          # annotation — GitHub en plafonne le NOMBRE a dix par etape, jamais la
+          # longueur.
+          TAIL=$(tail -n 25 rls.log | sed 's/%/%25/g; s/\r//g' | awk '{printf "%s%%0A", $0}')
+          echo "::error title=rls-tail::${TAIL}"
+          exit 1
+      - name: Stop Supabase stack
+        if: ${{ always() }}
+        run: supabase stop

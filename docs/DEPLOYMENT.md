@@ -66,9 +66,9 @@ réagir à un incident. À lire avant toute mise en prod.
 
 | Étape | Où | Bloquant |
 |---|---|---|
-| Lint, `tsc -b`, validation migrations, tests + coverage, build | GitHub Actions `ci.yml` (job `lint-test-build`) | ✅ |
-| `npm audit` prod deps (high+) | job `audit` | ✅ |
-| Playwright E2E + a11y (critical=0) | job `e2e` | ✅ |
+| Le noyau : lint, `tsc -b`, tests + couverture, gardes statiques, i18n, build + budget, fichiers sensibles, RLS d'intégration | `ci-noyau.yml` (`CI noyau`, 4 jobs, ~5 min) | ✅ seul bloquant |
+| `npm audit` prod deps (high+) | `ci.yml` (`CI etendue`), job `audit` | ❌ |
+| Playwright E2E + a11y (critical=0), Lighthouse | `ci.yml`, jobs `e2e`, `lighthouse` | ❌ |
 | Déploiement front | Vercel (auto sur push `main`) | — |
 
 Un `git push origin main` déclenche la CI **et** le déploiement Vercel du
@@ -126,8 +126,9 @@ le dernier run `CI` de `main` est rouge. Il s'installe une fois par clone :
 les fonctions Deno, elles, partent par `.github/workflows/edge-deploy.yml` (AM-6,
 2026-10-23) :
 
-- **Quand** : après un run `CI noyau` **vert** (lint, `tsc -b`, tests unitaires,
-  couvertures ; `ci-noyau.yml`, 2026-11-06) issu d'un push sur `main`, sur le SHA
+- **Quand** : après un run `CI noyau` **vert** (le noyau bloquant : lint, `tsc -b`, tests et
+  couvertures, gardes statiques, i18n, build et budget, fichiers sensibles, RLS d'intégration ;
+  `ci-noyau.yml`, vague 2.2 du 2026-11-06) issu d'un push sur `main`, sur le SHA
   qu'il a validé. Un déploiement à la fois (`concurrency: edge-deploy`).
 - **Quoi** : `scripts/edge-deploy-select.mjs` diffe le dernier SHA déployé (lu
   dans le titre du dernier run vert) contre ce SHA. Une fonction part si un de
