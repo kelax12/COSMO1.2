@@ -19,10 +19,7 @@ name: e2e-supabase
 
 on:
   push:
-    # Les branches `claude/e2e-supabase-*` servent a ITERER sur ce workflow
-    # avant la livraison sur `main` : sans Docker en local, la CI est le seul
-    # moyen de le jouer.
-    branches: [main, 'claude/e2e-supabase-**']
+    branches: [main]
   workflow_dispatch:
 
 permissions:
