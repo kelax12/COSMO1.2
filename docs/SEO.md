@@ -48,10 +48,10 @@ cause n'est pas dans le dépôt.
 >
 > | Item | État | Mesuré le 2026-11-05 |
 > |---|---|---|
-> | Articles du blog | 🔴 nouveau | `/blog/tableau-de-bord-productivite` : **2** `<h1>` dans le HTML servi, l'article est rendu deux fois (régression attribuée à `66f76355`, 2026-10-24, par l'audit) |
-> | `/guide/` | 🔴 nouveau | **682 mots** dans le `<body>` servi (scripts et styles retirés), contre 1 932 le 2026-10-22 |
+> | Articles du blog | 🔴 nouveau | `/blog/tableau-de-bord-productivite` : **2** `<h1>` dans le HTML servi, l'article est rendu deux fois (régression attribuée à `66f76355`, 2026-10-24, par l'audit). ✅ corrigé, `fe752e89` : 2 → 1 `<h1>` sur les 50 pages prérendues du build local, build qui échoue au-delà |
+> | `/guide/` | 🔴 nouveau | **682 mots** dans le `<body>` servi (scripts et styles retirés), contre 1 932 le 2026-10-22. ✅ corrigé, `fe752e89` : 723 → 2 935 mots (fr), 699 → 2 720 (en) sur le build local ; le 1 932 ne s'est pas reproduit |
 > | Accueil, contenu sous la ligne de flottaison | ⚠️ à confirmer | HTML servi : 761 mots et 8 `<h2>`. Selon l'audit, le DOM hydraté retombe à 123 mots sans `<h2>` tant qu'aucun geste n'a lieu (`BelowFold.tsx`). Ce que Google retient : inspection d'URL Search Console |
-> | JSON-LD de `index.html` | 🟠 | l'offre annonce un « Accès Premium gratuit via publicité » (contredit « Aucune publicité ») ; clé `screenshot` en double |
+> | JSON-LD de `index.html` | 🟠 | l'offre annonce un « Accès Premium gratuit via publicité » (contredit « Aucune publicité ») ; clé `screenshot` en double. ✅ corrigé, `fe752e89` |
 > | Autorité | inchangé | 0 domaine référent (Bing, 2026-11-02), `sameAs` vide |
 >
 > **79, en attente de renotation** : les deux 🔴 seront débités à la prochaine passe complète,
