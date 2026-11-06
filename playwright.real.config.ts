@@ -42,6 +42,8 @@ export default defineConfig({
     baseURL: `http://127.0.0.1:${PORT}`,
     locale: 'fr-FR',
     timezoneId: 'Europe/Paris',
+    // Un clic sur un element absent echoue en 30 s avec son nom, pas au delai du CAS.
+    actionTimeout: 30_000,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
