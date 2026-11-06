@@ -76,7 +76,7 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
 
   // Périodicité affichée : état LOCAL, jamais persisté. Celle qui compte après
   // coup vient de Stripe via le webhook (`subscription.billingInterval`).
-  const [billingInterval, setBillingInterval] = useState<OrgBillingInterval>('monthly');
+  const [selectedInterval, setSelectedInterval] = useState<OrgBillingInterval>('monthly');
   // Demande expresse d'accès immédiat (L221-13, L221-25) : NON cochée par
   // défaut, posée une fois le palier choisi, obligatoire pour payer.
   const [selectedTier, setSelectedTier] = useState<OrgTierKey | null>(null);
@@ -168,7 +168,7 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
 
   // La case vaut pour les conditions À L'ÉCRAN : changer de périodicité la repose.
   const changeInterval = (next: OrgBillingInterval) => {
-    setBillingInterval(next);
+    setSelectedInterval(next);
     if (selectedTier) setImmediateAccess(false);
   };
 
@@ -193,9 +193,9 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
   const pay = () => {
     if (!selectedTier || payingRef.current) return;
     payingRef.current = true;
-    writePendingCheckout({ orgId, tierKey: selectedTier, interval: billingInterval, at: Date.now() });
+    writePendingCheckout({ orgId, tierKey: selectedTier, interval: selectedInterval, at: Date.now() });
     checkout.mutate(
-      { orgId, tierKey: selectedTier, interval: billingInterval, immediateAccess },
+      { orgId, tierKey: selectedTier, interval: selectedInterval, immediateAccess },
       {
         onError: (err: Error) => {
           payingRef.current = false;
@@ -255,7 +255,7 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
                 tant qu'aucun palier ne se choisit (activation, impayé). */}
             {canChoose && (
               <BillingIntervalToggle
-                value={billingInterval}
+                value={selectedInterval}
                 onChange={changeInterval}
                 disabled={checkout.isPending || checkout.isSuccess}
               />
@@ -275,13 +275,13 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
           {ENTERPRISE_BILLING_ENFORCED && !isOwner && (
             <p className="text-sm text-[rgb(var(--color-text-secondary))]">{tOrgAdmin('billing.ownerOnly')}</p>
           )}
-          {canChoose && billingInterval === 'yearly' && (
+          {canChoose && selectedInterval === 'yearly' && (
             <p className="-mt-1 text-xs text-[rgb(var(--color-text-secondary))]">{tOrgAdmin('billing.intervalYearlyHint')}</p>
           )}
 
           {/* Information précontractuelle (L111-1, L221-5) AVANT le choix d'un
               palier, pas seulement dans les CGU. Son texte vit dans les pictos. */}
-          {canPay && <OrgPrecontractualPictos interval={billingInterval} />}
+          {canPay && <OrgPrecontractualPictos interval={selectedInterval} />}
 
           {/* Grille OU récapitulatif, jamais les deux. `popLayout` sort l'enfant
               qui part du flux (d'où le `relative`) : pas de saut de hauteur. */}
@@ -293,7 +293,7 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
                   <div key="recap">
                     <OrgCheckoutRecap
                       tierKey={selectedTier}
-                      interval={billingInterval}
+                      interval={selectedInterval}
                       isPending={checkout.isPending}
                       isRedirecting={checkout.isSuccess}
                       immediateAccess={immediateAccess}
@@ -314,7 +314,7 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
                       onSelect={canChoose ? chooseTier : undefined}
                       isPending={checkout.isPending || portal.isPending}
                       dormant={!ENTERPRISE_BILLING_ENFORCED}
-                      interval={billingInterval}
+                      interval={selectedInterval}
                     />
                   </motion.div>
                 )}
