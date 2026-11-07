@@ -1139,29 +1139,7 @@ CREATE FUNCTION public.can_access_team_project(p_project uuid) RETURNS boolean
   SELECT EXISTS (
     SELECT 1 FROM public.team_projects p
     WHERE p.id = p_project
-      AND public.is_org_member(p.org_id)
-      AND (
-        p.team_id IS NULL
-        OR public.is_org_admin(p.org_id)
-        -- Équipe porteuse OU équipe associée (mig. 164), pour moi ou mon sous-arbre.
-        OR EXISTS (
-          SELECT 1 FROM public.org_team_members tm
-          WHERE (
-              tm.team_id = p.team_id
-              OR tm.team_id IN (SELECT ptt.team_id FROM public.team_project_teams ptt
-                                 WHERE ptt.project_id = p.id)
-            )
-            AND (
-              tm.user_id = auth.uid()
-              OR tm.user_id IN (SELECT public.get_subtree(p.org_id, auth.uid()))
-            )
-        )
-        -- Membre direct du projet, quel que soit son rôle (mig. 190).
-        OR EXISTS (
-          SELECT 1 FROM public.team_project_members pm
-          WHERE pm.project_id = p.id AND pm.user_id = auth.uid()
-        )
-      )
+      AND p.id IN (SELECT public.my_team_project_ids(p.org_id))
   );
 $$;
 
@@ -1170,7 +1148,7 @@ $$;
 -- Name: FUNCTION can_access_team_project(p_project uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.can_access_team_project(p_project uuid) IS 'Accès à un projet d''équipe. Exige l''appartenance à l''organisation (mig. 104) — sans ce garde, une ligne org_team_members orpheline laissait un membre EXCLU continuer à lire les projets et tâches de ses anciennes équipes.';
+COMMENT ON FUNCTION public.can_access_team_project(p_project uuid) IS 'Visibilite d un projet d equipe, posee a la regle unique my_team_project_ids (mig. 243). Ne jamais y reecrire un predicat : faire evoluer my_team_project_ids, qui vaut a la fois pour les policies et pour les RPC get_my_team_*.';
 
 
 --
@@ -15763,13 +15741,6 @@ ALTER TABLE ONLY public.withdrawal_consents
 
 
 --
--- Name: shared_tasks Friends can read their shared tasks; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Friends can read their shared tasks" ON public.shared_tasks FOR SELECT USING ((auth.uid() = friend_id));
-
-
---
 -- Name: processed_stripe_events No client access to processed_stripe_events; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -15935,34 +15906,6 @@ CREATE POLICY "Users can insert own tasks" ON public.tasks FOR INSERT WITH CHECK
 
 
 --
--- Name: categories Users can read own categories; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Users can read own categories" ON public.categories FOR SELECT USING ((auth.uid() = user_id));
-
-
---
--- Name: events Users can read own events; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Users can read own events" ON public.events FOR SELECT USING ((auth.uid() = user_id));
-
-
---
--- Name: friends Users can read own friends; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Users can read own friends" ON public.friends FOR SELECT USING ((auth.uid() = user_id));
-
-
---
--- Name: habits Users can read own habits; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Users can read own habits" ON public.habits FOR SELECT USING ((auth.uid() = user_id));
-
-
---
 -- Name: key_results Users can read own key_results; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -15974,20 +15917,6 @@ CREATE POLICY "Users can read own key_results" ON public.key_results FOR SELECT 
 --
 
 CREATE POLICY "Users can read own kr_completions" ON public.kr_completions FOR SELECT USING ((( SELECT auth.uid() AS uid) = user_id));
-
-
---
--- Name: lists Users can read own lists; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Users can read own lists" ON public.lists FOR SELECT USING ((auth.uid() = user_id));
-
-
---
--- Name: okrs Users can read own okrs; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Users can read own okrs" ON public.okrs FOR SELECT USING ((auth.uid() = user_id));
 
 
 --
@@ -17421,9 +17350,11 @@ CREATE POLICY team_project_dependencies_insert ON public.team_project_dependenci
 -- Name: team_project_dependencies team_project_dependencies_select; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY team_project_dependencies_select ON public.team_project_dependencies FOR SELECT USING ((EXISTS ( SELECT 1
+CREATE POLICY team_project_dependencies_select ON public.team_project_dependencies FOR SELECT USING (((EXISTS ( SELECT 1
    FROM public.team_projects p
-  WHERE (p.id = team_project_dependencies.project_id))));
+  WHERE (p.id = team_project_dependencies.project_id))) AND (EXISTS ( SELECT 1
+   FROM public.team_projects q
+  WHERE (q.id = team_project_dependencies.depends_on_id)))));
 
 
 --
@@ -17689,9 +17620,11 @@ CREATE POLICY team_task_dependencies_insert ON public.team_task_dependencies FOR
 -- Name: team_task_dependencies team_task_dependencies_select; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY team_task_dependencies_select ON public.team_task_dependencies FOR SELECT USING ((EXISTS ( SELECT 1
+CREATE POLICY team_task_dependencies_select ON public.team_task_dependencies FOR SELECT USING (((EXISTS ( SELECT 1
    FROM public.team_tasks t
-  WHERE (t.id = team_task_dependencies.task_id))));
+  WHERE (t.id = team_task_dependencies.task_id))) AND (EXISTS ( SELECT 1
+   FROM public.team_tasks b
+  WHERE (b.id = team_task_dependencies.depends_on_id)))));
 
 
 --
@@ -20717,7 +20650,6 @@ GRANT ALL ON SEQUENCE public.withdrawal_consents_id_seq TO service_role;
 --
 
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON SEQUENCES TO postgres;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON SEQUENCES TO anon;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON SEQUENCES TO authenticated;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON SEQUENCES TO service_role;
 
@@ -20757,7 +20689,6 @@ ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON F
 --
 
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON TABLES TO postgres;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON TABLES TO anon;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON TABLES TO authenticated;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON TABLES TO service_role;
 
