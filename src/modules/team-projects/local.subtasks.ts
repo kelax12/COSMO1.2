@@ -10,7 +10,7 @@ import { safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
 import { makeApiError } from '@/lib/normalizeApiError';
 import type { CreateTeamSubtaskInput, TeamSubtask, UpdateTeamSubtaskInput } from './types';
 import { TEAM_TASK_SUBTASKS_STORAGE_KEY } from './constants';
-import { DEMO_USER_ID, DEMO_SUBTASKS, DEMO_SUBTASKS_EN } from './demo-seed';
+import { DEMO_USER_ID, DEMO_SUBTASKS, DEMO_SUBTASKS_EN } from './local.seed';
 
 /** Même lecture que `local.repository.ts` : une valeur illisible est ré-ensemencée. */
 function readSubtasks(): TeamSubtask[] {

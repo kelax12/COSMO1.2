@@ -1,5 +1,5 @@
-import { Habit, CreateHabitInput, UpdateHabitInput } from './types';
-import { PaginationParams, PaginatedResult } from '@/lib/pagination.types';
+import type { Habit, CreateHabitInput, UpdateHabitInput } from './types';
+import type { PaginationParams, PaginatedResult } from '@/lib/pagination.types';
 import type { CreateOptions } from '@/lib/restore-id';
 
 export interface IHabitsRepository {

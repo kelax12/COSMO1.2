@@ -194,3 +194,188 @@ describe('architecture — taille des fichiers source', () => {
     ).toEqual([]);
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// 3. Forme unique d'un module à repository (V12.3, constat ARC-04)
+// ═══════════════════════════════════════════════════════════════════
+//
+// Le contrat annoncé (`repository.ts` = l'interface) n'était pas tenu : sept
+// `repository.ts` logeaient une classe `LocalStorage…` et ses seeds (557 lignes
+// pour `okrs`), les autres avaient un `local.repository.ts`, et le factory
+// mélangeait trois manières d'instancier. La forme est écrite dans
+// `src/modules/CLAUDE.md` § « Forme d'un module » ; ces règles la tiennent :
+//
+//   a. `repository.ts` (et `<facette>.repository.ts` quand la facette a ses
+//      implémentations `<facette>.local|supabase.repository.ts`) ne contient
+//      que des types : ni classe, ni fonction, ni constante, ni import de valeur ;
+//   b. une classe qui implémente un `I…Repository` vit dans un
+//      `*local.repository.ts` ou un `*supabase.repository.ts`, nulle part
+//      ailleurs, et chaque dépôt démo a son interface voisine ;
+//   c. un `*local.repository.ts` ne porte pas de jeu de données `DEMO_…` : il vit
+//      dans le `*local.seed.ts` voisin, seul nom de seed admis ;
+//   d. le code applicatif n'importe JAMAIS statiquement un dépôt ou un seed de
+//      démo : seuls `src/lib/demo-repositories.ts`, les autres fichiers démo
+//      (`local.*`, `*.local.*`) et les tests le font. C'est ce qui garde la démo
+//      hors du chunk d'entrée ;
+//   e. le factory ne déclare ses dépôts que par `defineRepository`.
+//
+// Les détecteurs sont des fonctions pures, essayées d'abord sur des sources
+// fabriquées (TÉMOINS) : une garde qui ne détecte plus rien passerait au vert
+// en silence.
+
+const stripCode = (src: string) =>
+  src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"`])\/\/.*$/gm, '$1');
+
+/** a. Lignes d'un fichier d'interface qui exécuteraient quelque chose. */
+function runtimeLinesInInterfaceFile(src: string): string[] {
+  const RUNTIME = [
+    /^\s*(export\s+)?(default\s+)?(abstract\s+)?class\b/,
+    /^\s*(export\s+)?(async\s+)?function\b/,
+    /^\s*(export\s+)?(const|let|var|enum)\s/,
+    /^\s*import\s+(?!type\b)/,
+    /^\s*export\s*(\*|\{)/,
+    /^\s*export\s+default\b/,
+  ];
+  return stripCode(src)
+    .split('\n')
+    .filter((line) => RUNTIME.some((re) => re.test(line)))
+    .map((line) => line.trim());
+}
+
+/** b. Noms des classes qui implémentent un `I…Repository`. */
+function repositoryClassesIn(src: string): string[] {
+  return [...stripCode(src).matchAll(/class\s+(\w+)[^{]*\bimplements\b[^{]*\bI\w*Repository\b/g)].map((m) => m[1]);
+}
+
+/** c. Jeux de données `DEMO_…` (tableau ou objet littéral) déclarés au premier niveau. */
+function demoSeedsIn(src: string): string[] {
+  return [...stripCode(src).matchAll(/^(?:export\s+)?const\s+(DEMO_\w+)\s*(?::[^=\n]+)?=\s*[[{]/gm)].map((m) => m[1]);
+}
+
+/** d. Imports STATIQUES de valeur d'un dépôt ou d'un seed de démo (`import()` et `import type` non comptés). */
+function staticDemoImportsIn(src: string): string[] {
+  return [
+    ...stripCode(src).matchAll(
+      /^\s*(import|export)(\s+type)?\b[^;]*?\bfrom\s+'([^']*(?:local\.repository|local\.seed|demo-repositories))'/gm,
+    ),
+  ]
+    .filter((m) => !m[2])
+    .map((m) => m[3]);
+}
+
+const moduleFiles = files.filter((f) => rel(f).startsWith('src/modules/'));
+const moduleFileSet = new Set(moduleFiles.map(rel));
+const base = (f: string) => path.basename(f);
+
+/** Fichiers d'interface : `repository.ts`, et `<p>.repository.ts` dont la facette a une implémentation. */
+const interfaceFiles = moduleFiles.filter((f) => {
+  const name = base(f);
+  if (name === 'repository.ts') return true;
+  const m = /^([\w-]+)\.repository\.ts$/.exec(name);
+  if (!m || m[1] === 'local' || m[1] === 'supabase') return false;
+  const dir = rel(path.dirname(f));
+  return ['local', 'supabase'].some((side) => moduleFileSet.has(`${dir}/${m[1]}.${side}.repository.ts`));
+});
+const localRepositoryFiles = moduleFiles.filter((f) => /(^|\.)local\.repository\.ts$/.test(base(f)));
+/** Fichiers de la démo : `local.*.ts` et `<facette>.local.*.ts`. */
+const isDemoFile = (f: string) => /(^|\.)local\.[\w.-]+$/.test(base(f));
+
+describe("architecture — forme unique d'un module à repository (V12.3)", () => {
+  it('TEMOIN : les détecteurs voient ce qu’ils doivent voir', () => {
+    // La régression exacte qu'ARC-04 a relevée : une classe démo et un import de
+    // valeur remis dans un `repository.ts`.
+    const remis = [
+      "import type { X } from './types';",
+      "import { safeGetItem } from '@/lib/safe-json';",
+      'export interface IXRepository { getAll(): Promise<X[]> }',
+      'export class LocalStorageXRepository implements IXRepository {',
+      '  async getAll() { return []; }',
+      '}',
+    ].join('\n');
+    expect(runtimeLinesInInterfaceFile(remis)).toEqual([
+      "import { safeGetItem } from '@/lib/safe-json';",
+      'export class LocalStorageXRepository implements IXRepository {',
+    ]);
+    expect(repositoryClassesIn(remis)).toEqual(['LocalStorageXRepository']);
+    // Un fichier d'interface propre, commentaires compris, ne rougit pas.
+    expect(
+      runtimeLinesInInterfaceFile(
+        "// const DEMO = [] ; class Foo {}\nimport type { X } from './types';\nexport type Y = X;\n" +
+          'export interface IX {\n  get(id: string): Promise<X>;\n}',
+      ),
+    ).toEqual([]);
+    expect(
+      demoSeedsIn(
+        "const DEMO_USER_ID = 'demo-user';\nconst DEMO_TASKS: Task[] = [\n];\nexport const DEMO_EN: Record<string, P> = {\n};",
+      ),
+    ).toEqual(['DEMO_TASKS', 'DEMO_EN']);
+    expect(
+      staticDemoImportsIn(
+        "import { A } from '@/modules/x/local.repository';\nimport type { B } from './local.seed';\n" +
+          "const m = () => import('./local.repository');\nexport { C } from './local.seed';",
+      ),
+    ).toEqual(['@/modules/x/local.repository', './local.seed']);
+  });
+
+  it('TEMOIN : le balayage voit réellement les modules', () => {
+    // Posé sous le réel du 2026-11-07 (24 interfaces, 18 dépôts démo) : un
+    // chemin qui change ne doit pas vider la garde en silence.
+    expect(interfaceFiles.length).toBeGreaterThanOrEqual(20);
+    expect(localRepositoryFiles.length).toBeGreaterThanOrEqual(15);
+    expect(moduleFileSet.has('src/modules/okrs/repository.ts')).toBe(true);
+  });
+
+  it("a. un fichier d'interface ne contient que des types", () => {
+    const violations = interfaceFiles.flatMap((f) =>
+      runtimeLinesInInterfaceFile(readFileSync(f, 'utf8')).map((line) => `${rel(f)} : ${line}`),
+    );
+    expect(
+      violations,
+      "Code exécutable dans un fichier d'interface :\n" +
+        `${violations.join('\n')}\n` +
+        'La classe démo va dans `local.repository.ts`, ses données dans `local.seed.ts`,\n' +
+        "la classe Supabase dans `supabase.repository.ts`. Cf. src/modules/CLAUDE.md § Forme d'un module.",
+    ).toEqual([]);
+  });
+
+  it('b. une classe de dépôt vit dans un *local.repository.ts ou un *supabase.repository.ts', () => {
+    const misplaced = moduleFiles
+      .filter((f) => !/(^|\.)(local|supabase)\.repository\.ts$/.test(base(f)))
+      .flatMap((f) => repositoryClassesIn(readFileSync(f, 'utf8')).map((c) => `${rel(f)} : ${c}`));
+    const orphans = localRepositoryFiles
+      .filter((f) => !moduleFileSet.has(rel(f).replace(/local\.repository\.ts$/, 'repository.ts')))
+      .map((f) => `${rel(f)} : pas d'interface voisine`);
+    expect([...misplaced, ...orphans], 'Dépôt hors de sa place :\n' + [...misplaced, ...orphans].join('\n')).toEqual([]);
+  });
+
+  it('c. les seeds vivent dans *local.seed.ts, pas dans le dépôt démo', () => {
+    const seedsInRepo = localRepositoryFiles.flatMap((f) =>
+      demoSeedsIn(readFileSync(f, 'utf8')).map((n) => `${rel(f)} : ${n}`),
+    );
+    const badNames = moduleFiles.filter((f) => /seed/i.test(base(f)) && !/(^|\.)local\.seed\.ts$/.test(base(f))).map(rel);
+    const all = [...seedsInRepo, ...badNames];
+    expect(all, `Seed hors de \`local.seed.ts\` :\n${all.join('\n')}`).toEqual([]);
+  });
+
+  it("d. aucun code applicatif n'importe statiquement la démo", () => {
+    const violations = files
+      .filter((f) => rel(f) !== 'src/lib/demo-repositories.ts' && !isDemoFile(f))
+      .flatMap((f) => staticDemoImportsIn(readFileSync(f, 'utf8')).map((spec) => `${rel(f)} : ${spec}`));
+    expect(
+      violations,
+      'Import statique de la démo hors des fichiers démo :\n' +
+        `${violations.join('\n')}\n` +
+        "Passer par `lazy(() => import(...))` (src/lib/define-repository.ts) : un import statique est\n" +
+        "retenu dans le chunk de l'importeur même quand sa branche est morte (123,9 ko le 2026-09-02).",
+    ).toEqual([]);
+  });
+
+  it('e. le factory ne déclare ses dépôts que par defineRepository', () => {
+    const factory = stripCode(readFileSync(path.resolve(process.cwd(), 'src/lib/repository.factory.ts'), 'utf8'));
+    const getters = [...factory.matchAll(/^export\s+(?:const|function)\s+(get\w+Repository)\b(.*)$/gm)];
+    expect(getters.length).toBeGreaterThanOrEqual(15);
+    const handwritten = getters.filter((m) => !/^\s*=\s*defineRepository</.test(m[2])).map((m) => m[1]);
+    const singletons = [...factory.matchAll(/^let\s+(\w+)/gm)].map((m) => m[1]);
+    expect([...handwritten, ...singletons], 'Accesseur ou singleton écrit à la main dans le factory').toEqual([]);
+  });
+});

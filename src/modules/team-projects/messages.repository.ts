@@ -11,7 +11,7 @@ import { appModeStore } from '@/lib/app-mode.store';
 import { getCurrentUserId } from '@/lib/auth-user';
 import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { readJson, writeJsonOrThrow } from '@/lib/safe-json';
-import { DEMO_USER_ID } from './demo-seed';
+import { DEMO_USER_ID } from './constants';
 
 export interface TeamProjectMessage {
   id: string;

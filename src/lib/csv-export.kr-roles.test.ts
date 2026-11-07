@@ -11,7 +11,7 @@ vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn(), warning: v
 import { exportAllCSV, exportKRCompletionsCSV, exportOrgRolesCSV } from './csv-export';
 import type { KRCompletion } from '@/modules/kr-completions';
 import { SupabaseKRCompletionsRepository } from '@/modules/kr-completions/supabase.repository';
-import { LocalStorageKRCompletionsRepository } from '@/modules/kr-completions/repository';
+import { LocalStorageKRCompletionsRepository } from '@/modules/kr-completions/local.repository';
 import { SupabaseOrgRolesRepository } from '@/modules/organizations/roles.supabase.repository';
 import {
   LocalStorageOrgRolesRepository,

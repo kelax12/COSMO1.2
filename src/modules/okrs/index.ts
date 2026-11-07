@@ -27,7 +27,8 @@ export { okrsKeys, OKRS_STORAGE_KEY } from './constants';
 // ═══════════════════════════════════════════════════════════════════
 
 export type { IOKRsRepository } from './repository';
-export { LocalStorageOKRsRepository } from './repository';
+// `LocalStorageOKRsRepository` n'est PAS ré-exporté (V12.3) : il vit dans
+// `./local.repository` et n'arrive que par `import()`, depuis le factory.
 
 // ═══════════════════════════════════════════════════════════════════
 // PROGRESS (fonction pure — source unique du calcul pondéré)

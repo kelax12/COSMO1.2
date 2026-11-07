@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════
 //
 // Ce fichier LIT et ÉCRIT. Les données de démonstration elles-mêmes vivent
-// dans `demo-seed.ts` depuis le 2026-09-05 : elles y occupaient 278 lignes
+// dans `local.seed.ts` depuis le 2026-09-05 : elles y occupaient 278 lignes
 // sur 712, et un jeu de données n'est pas un repository.
 
 import type { RestoreCommentOptions } from './repository';
@@ -48,7 +48,7 @@ import { localizeSeed } from '@/lib/seed-i18n';
 import { DEPENDENCY_ERRORS, makeDependencyError } from '@/modules/tasks/dependency-errors';
 import { safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
 import { makeApiError } from '@/lib/normalizeApiError';
-// Les jeux de démonstration vivent dans `demo-seed.ts` : un jeu de données
+// Les jeux de démonstration vivent dans `local.seed.ts` : un jeu de données
 // n'est pas un repository, et il occupait ici 278 lignes sur 712.
 import {
   DEMO_USER_ID,
@@ -57,7 +57,7 @@ import {
   DEMO_COMMENTS, DEMO_COMMENTS_EN,
   DEMO_ACTIVITY,
   DEMO_TASK_DEPENDENCIES,
-} from './demo-seed';
+} from './local.seed';
 
 function readOrSeed<T>(key: string, seed: T): T {
   const data = safeGetItem(key);

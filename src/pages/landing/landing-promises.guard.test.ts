@@ -27,8 +27,8 @@ import {
 import { ORG_PERMISSION_KEYS } from '@/modules/organizations/permissions';
 import { LocalStorageTasksRepository } from '@/modules/tasks/local.repository';
 import { LocalStorageHabitsRepository } from '@/modules/habits/local.repository';
-import { LocalStorageEventsRepository } from '@/modules/events/repository';
-import { LocalStorageOKRsRepository } from '@/modules/okrs/repository';
+import { LocalStorageEventsRepository } from '@/modules/events/local.repository';
+import { LocalStorageOKRsRepository } from '@/modules/okrs/local.repository';
 import { LocalStorageOrganizationsRepository, DEMO_ORG_ID } from '@/modules/organizations/local.repository';
 
 const ROOT = process.cwd();

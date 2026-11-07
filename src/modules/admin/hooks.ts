@@ -11,7 +11,7 @@ import {
   type AssuranceLevel,
 } from '@/modules/auth/mfa';
 import { adminKeys } from './constants';
-import { fetchAdminStats, fetchIsAdmin, fetchOnboardingFunnel, fetchSupportStats } from './repository';
+import { fetchAdminStats, fetchIsAdmin, fetchOnboardingFunnel, fetchSupportStats } from './supabase.repository';
 import type { AdminOnboardingFunnel, AdminStats, AdminSupport } from './types';
 
 /**

@@ -47,3 +47,6 @@ export const teamProjectKeys = {
   orgActivity: (orgId: string, since: string) =>
     [...teamProjectKeys.all, 'org-activity', orgId, since] as const,
 };
+
+/** Identifiant de l'utilisateur démo, partagé par la démo et les dépôts-fonctions (`messages`). */
+export const DEMO_USER_ID = 'demo-user';

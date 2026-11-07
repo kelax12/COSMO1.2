@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { LocalStatsRepository } from './repository';
+import { LocalStatsRepository } from './local.repository';
 import type { ITasksRepository } from '@/modules/tasks/repository';
 import type { IEventsRepository } from '@/modules/events/repository';
 import type { IHabitsRepository } from '@/modules/habits/repository';
