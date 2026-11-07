@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 //
-// ARC-03 — L'ORDRE DES EFFETS DE SESSION EST UN CONTRAT.
+// ARC-03 : L'ORDRE DES EFFETS DE SESSION EST UN CONTRAT.
 //
 // `AuthContext` a été découpé (V12.4) : le cache hors ligne, les
 // préchargements, `last_seen`, l'attribution et le chien de garde vivent
@@ -243,7 +243,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe('séquence — connexion', () => {
+describe('séquence : connexion', () => {
   it('session restaurée : getSession puis INITIAL_SESSION, le second est idempotent', async () => {
     const a = userFor(`a${seq}`);
     fake.session = { user: a };
@@ -306,7 +306,7 @@ describe('séquence — connexion', () => {
   });
 });
 
-describe('séquence — changement de compte', () => {
+describe('séquence : changement de compte', () => {
   it('B remplace A : cache de A effacé AVANT le vidage, écrivain réabonné pour B', async () => {
     const a = userFor(`a${seq}`);
     const b = userFor(`b${seq}`);
@@ -339,7 +339,7 @@ describe('séquence — changement de compte', () => {
   });
 });
 
-describe('séquence — déconnexion', () => {
+describe('séquence : déconnexion', () => {
   it('logout puis SIGNED_OUT, et un re-login dans la même page re-pinge last_seen', async () => {
     const a = userFor(`a${seq}`);
     fake.session = { user: a };
@@ -382,7 +382,7 @@ describe('séquence — déconnexion', () => {
   });
 });
 
-describe('séquence — démo', () => {
+describe('séquence : démo', () => {
   it('démo vers réel : loginDemo, événements ignorés, login, SIGNED_IN', async () => {
     const a = userFor(`a${seq}`);
     mount();
@@ -477,7 +477,7 @@ describe('séquence — démo', () => {
   });
 });
 
-describe('séquence — inscription et chien de garde', () => {
+describe('séquence : inscription et chien de garde', () => {
   it("register transmet l'attribution first-touch et l'affiliation en metadata", async () => {
     fake.firstTouch = { source: 'tiktok', campaign: 'rentree' };
     fake.affiliateSlug = 'bde-lyon';
