@@ -144,13 +144,16 @@ describe('RLS · une seule règle de visibilité des projets d’équipe (mig. 2
       { project_id: ids.P2, user_id: PM.id, org_id: ids.O, role: 'contributor' },
       { project_id: ids.P3, user_id: F.id, org_id: ids.O, role: 'contributor' },
     ]);
+    // Insertion multi-lignes PostgREST : une clé absente d'une ligne mais
+    // présente dans une autre vaut NULL, pas le défaut de la colonne. D'où
+    // `completed` posé sur chaque ligne (NOT NULL).
     await pose('team_tasks', [
-      { id: ids.TK0, org_id: ids.O, project_id: ids.P0, name: 'TK0', created_by: A.id },
-      { id: ids.TK1a, org_id: ids.O, project_id: ids.P1, name: 'TK1a', created_by: A.id },
+      { id: ids.TK0, org_id: ids.O, project_id: ids.P0, name: 'TK0', created_by: A.id, completed: false },
+      { id: ids.TK1a, org_id: ids.O, project_id: ids.P1, name: 'TK1a', created_by: A.id, completed: false },
       { id: ids.TK1b, org_id: ids.O, project_id: ids.P1, name: 'TK1b', created_by: A.id, completed: true },
-      { id: ids.TK1d, org_id: ids.O, project_id: ids.P1, name: 'TK1d (corbeille)', created_by: A.id },
-      { id: ids.TK2, org_id: ids.O, project_id: ids.P2, name: 'TK2', created_by: A.id },
-      { id: ids.TK3, org_id: ids.O, project_id: ids.P3, name: 'TK3', created_by: A.id },
+      { id: ids.TK1d, org_id: ids.O, project_id: ids.P1, name: 'TK1d (corbeille)', created_by: A.id, completed: false },
+      { id: ids.TK2, org_id: ids.O, project_id: ids.P2, name: 'TK2', created_by: A.id, completed: false },
+      { id: ids.TK3, org_id: ids.O, project_id: ids.P3, name: 'TK3', created_by: A.id, completed: false },
     ]);
     await pose('team_task_dependencies', [
       { task_id: ids.TK1a, depends_on_id: ids.TK1b, org_id: ids.O },
