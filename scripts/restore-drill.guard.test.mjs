@@ -181,6 +181,21 @@ describe('restore-drill · une erreur n est toleree que pour une extension Supab
     ]);
   });
 
+  it('tolere une fonction du Vault absent, signature a espaces comprise (premier drill reel)', () => {
+    expect(raisonTolerance({
+      message: 'function vault.create_secret(text, text, text, uuid) does not exist',
+      commande: 'GRANT ALL ON FUNCTION vault.create_secret(new_secret text, new_name text, new_description text, new_key_id uuid) TO postgres WITH GRANT OPTION;',
+    })).toBe('objet du schema vault (extension absente)');
+  });
+
+  it('bloque une fonction de public absente, meme signature a espaces', () => {
+    expect(raisonTolerance({
+      message: 'function public.is_above(uuid, uuid) does not exist',
+      commande: 'CREATE POLICY p ON public.tasks USING (public.is_above(a, b));',
+    })).toBeNull();
+    expect(raisonTolerance({ message: 'function public.f(text, text) does not exist', commande: 'GRANT ALL ON FUNCTION x' })).toBeNull();
+  });
+
   it.each([
     ['une extension hors liste', { message: 'extension "vector" is not available', commande: 'CREATE EXTENSION vector;' }],
     ['un objet de public, meme cause', { message: 'schema "net" does not exist', commande: 'CREATE FUNCTION public.notifier() RETURNS void' }],

@@ -1,8 +1,11 @@
 // ═══════════════════════════════════════════════════════════════════
 // dump-check.mjs · RELIRE LE DERNIER DUMP CHIFFRE, SANS RIEN RESTAURER
 //
-// Appele par le job `dump-check` de `.github/workflows/restore-drill.yml`
-// (trimestriel, C-86), apres le `gh run download` de l'artefact `db-dump`.
+// Appele par `scripts/restore-drill.mjs` (job `drill-auto` de
+// `.github/workflows/restore-drill.yml`, MENSUEL depuis ROB-01, 2026-11-07),
+// AVANT la restauration. Le job trimestriel `dump-check` (C-86) qui
+// l'appelait seul a ete fondu dans ce drill. L'entree CLI reste, pour une
+// relecture a la main.
 //
 // 🔴 POURQUOI UN MODULE NODE, ET PAS LE SHELL QUI LE PRECEDAIT
 //

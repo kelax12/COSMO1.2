@@ -45,6 +45,12 @@
 # permanence finit ignorée, c'est la règle déjà écrite pour `renewal-notice`.
 # Sans `BACKUP_PASSPHRASE`, il ÉCHOUE : c'est la seule absence qui exposerait.
 #
+# MANIFESTE DE COMPTAGES (ROB-01, 2026-11-07) : à côté du dump, un artefact
+# `db-comptages` chiffré pareil, qui porte le nombre de lignes de chaque table
+# de `public` et d'`auth.users`, compté DANS LE SNAPSHOT du dump. Le drill
+# mensuel (`restore-drill.yml`, job `drill-auto`) restaure le dump et compare.
+# Un dump parti sans manifeste rend ce job ROUGE, après le dépôt du dump.
+#
 # RELIRE UN DUMP À LA MAIN :
 #   gpg --batch --passphrase-file <fichier> -o cosmo.dump -d cosmo-AAAA-MM-JJ.dump.gpg
 # ══════════════════════════════════════════════════════════════════

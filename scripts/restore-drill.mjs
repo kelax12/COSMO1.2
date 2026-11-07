@@ -234,8 +234,11 @@ export function raisonTolerance({ message, commande, table }) {
   }
   const ext = String(message).match(/extension "([^"]+)"/)?.[1];
   if (ext) return ext in EXTENSIONS_ABSENTES ? `extension ${ext} absente de postgres:17` : null;
+  // Une signature de fonction porte des espaces (`f(bytea, bigint)`) : elle a
+  // son motif. Vu sur le premier drill reel, le 2026-11-07 (Vault).
   const schema = String(message).match(/schema "([^"]+)" does not exist/)?.[1]
-    ?? String(message).match(/(?:relation|function|type|operator|table) "?([a-z_]\w*)\.[^\s"]+"? does not exist/i)?.[1]
+    ?? String(message).match(/(?:relation|type|operator|table) "?([a-z_]\w*)\.[^\s"]+"? does not exist/i)?.[1]
+    ?? String(message).match(/^function ([a-z_]\w*)\.\w+\([^)]*\) does not exist/i)?.[1]
     ?? null;
   if (schema && SCHEMAS_ABSENTS.has(schema)) return `objet du schema ${schema} (extension absente)`;
   return null;
