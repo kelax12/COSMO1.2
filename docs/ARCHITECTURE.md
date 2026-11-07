@@ -466,7 +466,7 @@ mais le cliquet les fait baisser) et la taille du chunk `index`
 | Toutes les tables `public` ont RLS activée | `SECURITY.md` | ✅ **Tenu**, vérifié en prod : 0 table avec `relrowsecurity = false` |
 | **Jamais de `supabase.from()` hors d'un repository** | `SCALABILITY.md` §5 + garde | ✅ **Tenu** · invariant **outillé** (§2) |
 | Imports toujours via l'alias `@/` | CLAUDE.md + ESLint | ✅ **Tenu** · outillé par `no-restricted-imports` (§2) |
-| Aucun fichier source > 600 LOC | refactor de juin 2026 + cliquet | ❌ **Violé au 2026-08-27 · 14 fichiers**, budget 13 103 → 12 503 → 11 452 → **10 811**. → ✅ **TENU depuis le 2026-09-06** (`C-09`) : plus aucun fichier hors budget dans le périmètre audité, cliquet à **0** (§3) |
+| Les fonctions restent sous les seuils de complexité, et aucun fichier ne dépasse 1 000 lignes | `eslint.config.js` + `complexite.guard` + `architecture.guard` | ✅ **Outillé le 2026-11-07** (ARC-05) : `complexity` 20, `max-depth` 4, `max-lines-per-function` 200, cliquet de **134 fichiers, 207 valeurs** qui ne peut que baisser ; plafond de fichier relevé de 600 à 1 000, dernier recours (§3) |
 | **Les lectures de liste entreprise passent par une RPC indexable** | CLAUDE.md ⚡ + test | ✅ **Tenu** · `get_my_team_projects` / `get_my_team_tasks` (mig. 113), `get_my_team_task_dependencies` (mig. 117). Verrouillé par `team-projects/supabase.repository.test.ts` |
 | **Un droit entreprise se lit dans `permissions.ts`, jamais recalculé** | CLAUDE.md 🔐 + garde | ✅ **Tenu depuis le 2026-08-25** : une seule source de vérité cliente (`useMyOrgPermissions`), miroir du SQL, 205 tests |
 | **Aucune position d'arrivée portée par une animation de transform** | CLAUDE.md + garde | 🟠 **17 feuilles encore écrites à la main**, mais les 5 réellement cassées sont corrigées et un cliquet interdit toute nouvelle (cf. [`MOBILE.md`](./MOBILE.md) §1) |
@@ -570,137 +570,98 @@ Deux choix méritent d'être relus avant d'être « simplifiés » :
 `supabase.from(`. Les commentaires sont retirés avant la recherche — sans ça, la phrase qui
 explique la règle déclenchait la règle.
 
-## 3. ✅ L'objectif « aucun fichier > 600 LOC » · 17 → **0** fichier, 13 103 → **0** ligne
+## 3. Taille et complexité · état au 2026-11-07 (ARC-05, V17.4)
 
-> 🔴 **2026-10-02 (soir) : 1 fichier.** `src/pages/OKRPage.tsx`, **617 lignes**, entré dans `main`
-> avec `05ddf746` ; `architecture.guard` rouge en CI sur `f301f0bf` et `9ea33927`. La garde a fait
-> son travail, et `OVERSIZED_BUDGET` reste à 0 : c'est la page qui se découpe. Cf. la note en tête.
-> ✅ **2026-10-03 : de nouveau 0.** `OKRPage.tsx` à 579 lignes (`d8b1584b`), garde verte en CI sur `c7fb936c`.
+**Décision du 2026-11-07.** Le plafond de **600 lignes par fichier** est relevé à **1 000**, en
+simple garde-fou de dernier recours. Le signal passe aux **fonctions** : trois règles standard
+d'ESLint, figées en **cliquet**. Mesuré sur `main` à `76b62791`.
 
-> ✅ **ATTEINT le 2026-09-06** (`7653d398`, item `C-09`), et **remesuré le 2026-09-20** :
-> `KNOWN_OVERSIZED` est un `Set` **vide** et `OVERSIZED_BUDGET` vaut **0** dans
-> `src/architecture.guard.test.ts`. Plus aucun fichier du périmètre audité ne dépasse 600 lignes,
-> et le budget n'est plus « en baisse », il est **structurellement nul** : il n'y a plus de stock
-> à autoriser. La constante reste à zéro pour que la garde échoue si quelqu'un rouvre la liste.
->
-> 🔴 **Ce titre a annoncé « 🟠 14 fichiers, 10 811 lignes » pendant quatorze jours après la
-> fermeture.** Le tableau des invariants du §1 porte la même phrase (« ❌ Toujours violé · 14
-> fichiers au 2026-08-27 »), et le bilan du 2026-08-27 range encore cette dette parmi « les deux
-> que rien ne mesure encore » — alors qu'elle est **outillée depuis le 2026-08-24** et **fermée
-> depuis le 09-06**. Les deux passages sont datés, donc conservés tels quels ; c'est ce titre-ci,
-> qui n'est daté de rien, qui les faisait lire comme l'état courant.
->
-> ⚠️ **Un seul fichier du dépôt dépasse encore 600 lignes** : `components/showcase/MobileShowcases.tsx`,
-> **623** au 2026-09-20 (« 613 » ailleurs dans ce document date du 08-25). Il est **hors périmètre
-> de la garde** (`EXCLUDED_DIRS` y met `showcase`, comme ESLint), ce qui n'est pas un oubli mais
-> **l'angle mort AM-2 de ce document**, nommé plus haut. ❌ Ne jamais lire « 0 fichier hors budget »
-> comme « 0 fichier long » : la première phrase parle d'un périmètre, la seconde du dépôt.
+### Pourquoi : le plafond faisait tasser le code
 
-### Historique de la fermeture · *conservé à sa date*
+L'audit externe du 2026-11-06 (ARC-05) l'a vu, la mesure le confirme. Sur les **1 034 fichiers**
+du périmètre (`src/` hors tests, `ui/`, `showcase/`, `generated/`) :
 
-**Ce qui suit décrit la descente, pas l'état courant** (17 → 14 fichiers, 13 103 → 10 811 lignes).
+| Lignes par fichier (`wc -l`) | 400-449 | 450-499 | 500-549 | **550-599** | 600 et plus |
+|---|---|---|---|---|---|
+| Fichiers | 20 | 17 | 24 | **25** | 0 |
+| Dont une fonction au-dessus des seuils ci-dessous | 14 (70 %) | 14 (82 %) | 19 (79 %) | 19 (76 %) | |
 
-> **Remesuré le 2026-08-25 : 15 fichiers, 11 452 lignes.** Le budget a baissé de **1 651 lignes
-> en deux jours**, alors que ces deux jours ont livré sept migrations et un système de permissions
-> complet. C'est le résultat le plus net de tout cet audit : **le cliquet ne coûte pas de la
-> vitesse, il en achète.**
->
-> Classement au 2026-08-25 : `TaskTable` 1 124 · `PyramidTab` 1 045 · `AgendaPage` 900 ·
-> `SettingsPage` 852 · `InboxMenu` 802 · `useTaskModal` 719 · `TasksPage` 712 ·
-> `team-projects/local.repository` 710 · `DesktopDetailsStep` 703 · `TaskModalMobileBody` 697 ·
-> `TeamTaskModal` 692 · `TeamTasksTab` 642 · `AuthContext` 626 · `TaskListsBar` 615 ·
-> `MobileShowcases` 613.
->
-> ⚠️ **Le nouveau plus gros fichier est `TaskTable.tsx` (1 124), et il n'a pas bougé de la
-> journée.** Tant qu'on découpe l'entreprise, la dette du socle reste où elle est. La prochaine
-> coupe utile n'est plus dans `/entreprise`.
+- Les deux tranches de 50 lignes sous la barre sont les plus peuplées depuis 400 lignes (49
+  fichiers contre 37) : la barre attire le code au lieu de le simplifier.
+- **35 fichiers de moins de 300 lignes** portent une fonction trop complexe ou trop longue
+  (`CollaboratorItem.tsx`, 196 lignes : une fonction de complexité 45). `wc -l` ne les voyait pas.
 
-### 4ᵉ passe (2026-08-27) : `TeamTasksTab` sort de la liste, et c'est la garde qui l'a imposé
+### Mesures du 2026-11-07
 
-> **14 fichiers, budget de garde 11 454 → 10 811.** `TeamTasksTab.tsx` passe de **651 à 573**
-> lignes par extraction de `TeamTasksToolbar.tsx` (recherche, tri, création, filtres de statut),
-> composant **purement présentationnel** : aucun état de filtre n'a bougé, il reste dans l'onglet
-> qui sait ce qu'il filtre.
->
-> **Le déclencheur n'est pas une intention de refactor.** Le correctif d'états de chargement
-> (`1d98f93`) ajoutait 9 lignes à ce fichier déjà hors budget, le total passait à 11 463, la garde
-> a refusé. La découpe a suivi. C'est la **quatrième** fois de suite que la séquence est
-> identique : une feature ajoute quelques lignes à un gros fichier, le cliquet refuse la
-> croissance nette, un découpage réel se fait. La garde ne demande jamais de refactor, elle rend
-> le refactor moins cher que le contournement.
->
-> Classement au 2026-08-27, mesuré : `TaskTable` 1 124 · `PyramidTab` 1 045 · `AgendaPage` 900 ·
-> `SettingsPage` 852 · `InboxMenu` 802 · `useTaskModal` 719 · `TasksPage` 712 ·
-> `team-projects/local.repository` 710 · `DesktopDetailsStep` 703 · `TaskModalMobileBody` 697 ·
-> `TeamTaskModal` 692 · `AuthContext` 626 · `TaskListsBar` 615 · `friends/supabase.repository` 600.
->
-> ⚠️ **`TaskTable.tsx` (1 124) n'a toujours pas bougé**, troisième journée consécutive. Les quatre
-> passes du cliquet ont toutes porté sur `/entreprise`, parce que c'est là que le travail a lieu.
-> **La dette du socle ne baisse pas toute seule** : le cliquet empêche la croissance, il ne
-> désigne pas la prochaine coupe utile. Celle-ci reste `TaskTable`.
+**Par fonction** (11 964 fonctions, règles ESLint standard, valeurs lues dans leurs messages) :
 
-### 3ᵉ passe (2026-08-24) : le plus gros fichier du dépôt n'est plus `PyramidTab`
+| Mesure (règle ESLint) | p50 | p90 | p99 | max | > seuil |
+|---|---|---|---|---|---|
+| Complexité cyclomatique (`complexity`) | 1 | 5 | 18 | **107** (`OrganizationPage.tsx`) | 101 fonctions, 92 fichiers |
+| Imbrication de blocs (`max-depth`) | 1 | 2 | 3 | 5 (`TeamOKRModal.tsx`, `report-pdf.ts`) | 2 blocs, 2 fichiers |
+| Longueur, lignes non vides hors commentaires (`max-lines-per-function`) | 2 | 21 | 176 | **474** (`GuidePage.tsx`) | 104 fonctions, 101 fichiers |
 
-> Ses 385 lignes
-> de `NodeCard` (le rendu récursif d'une carte de l'organigramme) sont parties dans
-> `PyramidNodeCard.tsx` : **1 506 → 1 046**. Budget total : 11 915 → **11 454**.
->
-> La coupe suit une frontière réelle, pas un compte de lignes : d'un côté le rendu
-> D'UNE carte, de l'autre l'orchestration de l'arbre (recherche, repli,
-> glisser-déposer, sheets). Aucune logique n'a changé, et la pyramide a été vérifiée
-> dans le navigateur après extraction (6 membres, pastilles d'équipe, non-placés).
->
-> ⚠️ **Le découpage n'est pas fini, il est commencé.** `PyramidTab` reste hors budget
-> à 1 046 lignes. La suite naturelle est d'extraire le glisser-déposer dans un hook —
-> c'est la moitié de ce qui reste, et la seule partie qui décide vraiment quelque chose.
+Pour comparer, la complexité au-dessus de 15 aurait mis **162** fonctions au cliquet, au-dessus
+de 10, **321** ; la longueur au-dessus de 100, **239**.
 
-### Historique
+**Par module** (graphe d'imports statiques de `npm run check:cycles` : 1 087 modules,
+3 956 arêtes, 0 non résolu, 0 cycle) :
 
-> **Le cliquet a servi le jour même.** Le correctif de scalabilité (mig. 113) ajoutait du
-> commentaire à `team-projects/supabase.repository.ts` (601 lignes, donc dans la liste) : le
-> budget a refusé la croissance nette, et la découpe a suivi — les mappers de lignes brutes sont
-> partis dans `supabase.mappers.ts`, le fichier est tombé à **483**. Nouveau total :
-> **16 fichiers, 12 503 lignes** (contre 17 / 13 103).
->
-> C'est exactement le comportement recherché : la garde ne demande pas de refactor, elle rend le
-> refactor moins cher que le contournement. `PyramidTab.tsx` (1 507) reste entier.
+| Fan-out (importe le plus) | | Fan-in (le plus importé) | |
+|---|---|---|---|
+| `lib/repository.factory.ts` | 37 | `i18n/useT.ts` | 476 |
+| `pages/DashboardPage.tsx` | 34 | `i18n/format.ts` | 99 |
+| `pages/OKRPage.tsx` | 33 | `lib/toast.ts` | 88 |
+| `components/organization/TeamTasksTab.tsx` | 32 | `modules/organizations/index.ts` | 74 |
+| `components/TaskTable.tsx` | 31 | `modules/team-projects/index.ts` | 65 |
 
-### Le diagnostic d'origine
+### Les seuils retenus, et le cliquet
 
-**Au 2026-08-24 : 15 fichiers dépassent 600 lignes** (13 au 2026-08-14), le plus gros à
-**1 505** (`src/components/organization/PyramidTab.tsx`, +50 lignes en dix jours), suivi de
-`TaskTable.tsx` (1 124, **+147**), `AgendaPage.tsx` (900) et `SettingsPage.tsx` (857).
-La liste complète au 2026-08-24 compte quatre fichiers `src/components/organization/`
-(`PyramidTab` 1 505, `TeamTaskModal` 672, `TeamProjectsTab` 602) et
-`src/modules/team-projects/local.repository.ts` (706) : la croissance vient de la vague
-entreprise.
+| Règle | Seuil | Motif |
+|---|---|---|
+| `complexity` | **20** | défaut d'ESLint, juste au-dessus du p99 (18) : vise le 1 % du haut |
+| `max-depth` | **4** | défaut d'ESLint ; 2 dépassements seulement |
+| `max-lines-per-function` | **200** | au-dessus du p99 (176) ; un composant React plus long mélange plusieurs surfaces |
 
-Le refactor de juin 2026 avait ramené le maximum sous 600 et la règle avait été inscrite comme
-acquise. Elle a cédé pendant la construction du mode entreprise, sans que rien ne le signale —
-aucune garde automatique ne mesure la taille des fichiers.
+- **Où** : `eslint.config.js`, sur le même périmètre que `architecture.guard`. `npm run lint`
+  refuse tout dépassement dans un fichier qui n'est pas dans la ligne de base.
+- **La ligne de base** : `eslint-rules/complexite.baseline.json`, **134 fichiers, 207 valeurs**
+  (101 complexités, 2 imbrications, 104 longueurs). Chaque fichier y reçoit sa pire valeur
+  mesurée comme plafond ESLint.
+- **Le cliquet, fonction par fonction** : `eslint-rules/complexite.guard.test.mjs` relint ces
+  134 fichiers au seuil commun et exige EXACTEMENT la liste de la ligne de base. Une valeur qui
+  monte, ou une fonction de plus au-dessus du seuil : rouge. Une valeur qui baisse : rouge aussi,
+  avec la valeur à recopier, pour que le cliquet ne reprenne jamais de mou.
 
-Coût réel, mesuré ailleurs dans cette série d'audits : ces fichiers alimentent le chunk `index`
-(438 kB, cf. [`PERFORMANCE.md`](./PERFORMANCE.md)) et rendent chaque intervention plus chère à
-charger en contexte.
+🔴 **C'est la ligne de base d'une métrique NEUVE, pas une allowlist pour faire passer.** On n'y
+ajoute jamais un fichier, on n'y relève jamais une valeur. Un nouveau dépassement se règle en
+découpant la fonction, jamais en éditant le JSON.
 
-**Correction, moitié faite le 2026-08-24.** La garde CI demandée ici existe désormais
-(`src/architecture.guard.test.ts`) et pose un **cliquet** en deux temps :
+**Témoin du 2026-11-07** : une fonction de complexité 21 posée dans un fichier neuf de `src/` a
+fait rougir `npm run lint` ; une seconde fonction trop complexe ajoutée à un fichier déjà listé, en
+dessous de sa pire valeur, passait `npm run lint` et a fait rougir `complexite.guard`. Les deux
+retirés, tout revient au vert. Le témoin permanent (une fonction de complexité 21 refusée, de 20
+acceptée, et la configuration réelle relue fichier par fichier) vit dans le même fichier de garde.
 
-- aucun **nouveau** fichier ne dépasse 600 lignes ;
-- le **total** des 17 fichiers déjà hors budget (13 103 lignes) ne remonte jamais.
+### Ce qui reste rapporté, et la revue humaine
 
-Le budget en total plutôt que par fichier est délibéré : il autorise à déplacer du code entre deux
-gros fichiers pendant un refactor, tout en interdisant la croissance nette. Un troisième test
-interdit à la liste de garder un fichier assaini — sans lui, un découpage libérerait de la place
-pour un futur dépassement, et le cliquet reprendrait du mou en silence.
+- **Couplage : rapporté, pas bloquant.** Les plus forts fan-in sont des façades voulues (i18n,
+  `toast`, l'`index.ts` d'un module) et les plus forts fan-out des racines de composition (la
+  fabrique de repositories, les pages) : un plafond punirait le motif recherché. La règle
+  standard de fan-out (`import/max-dependencies`) demanderait `eslint-plugin-import`, une
+  dépendance que ce dépôt refuse pour une mesure (cf. l'en-tête de `check-import-cycles.mjs`).
+- **Les découpages viennent ensuite, un par un, en revue humaine.** Ordre de travail : les pires
+  valeurs d'abord (complexité : `OrganizationPage` 107, `TeamTaskModal` 99, `PyramidNodeCard` 76,
+  `admin/repository` 74 ; longueur : `GuidePage` 474, `ApercuWidgetGrid` 449, `TeamTaskModal` 433,
+  `InboxMenu` 432). Une découpe suit une frontière réelle (un geste, une surface, une dérivation),
+  jamais une coupe à la valeur près pour passer sous un seuil.
+- **Le plafond de 1 000 lignes** reste dans `src/architecture.guard.test.ts`, liste d'exceptions
+  vide. Il n'arrête plus que le fichier fourre-tout fait de petites fonctions, que les règles
+  ci-dessus laisseraient passer. ❌ Ne pas le rabaisser à 600 : ce serait rouvrir le tassement.
 
-Ce que la garde ne fait PAS : découper `PyramidTab.tsx`. C'est un chantier, pas un correctif, et
-il reste entier. Mais l'hémorragie s'arrête ici — les 17 fichiers de la liste sont tous arrivés
-« juste au-dessus ».
-
-> Le comptage manuel s'est trompé une troisième fois dans cet audit : `friends/supabase.repository.ts`
-> (601 lignes) manquait à la liste écrite à la main. C'est l'argument du fichier de garde, pas une
-> anecdote — **une règle mesurée à la main mesure ce à quoi on a pensé.**
+L'histoire du plafond de 600 (17 fichiers hors budget au 2026-08-24, liste vidée le 2026-09-05 par
+`C-09`) n'est plus recopiée ici : elle se lit dans l'historique git de ce document et de
+`architecture.guard.test.ts`.
 
 ## 4. 🟡 Code livré sans consommateur — un motif récurrent
 
@@ -826,8 +787,10 @@ grep -rln "supabase.from(" src --include="*.tsx" | grep -v repository
 grep -rln "from 'gsap'" src | grep -v lib/gsap
 grep -rn "useAuth.*from '@/modules/user'" src
 
-# Dette de taille
-git ls-files 'src/**/*.tsx' 'src/**/*.ts' | xargs wc -l | awk '$1>600 && $2!="total"'
+# Dette de taille et de complexité (§3)
+npm run lint                                         # seuils + ligne de base
+npx vitest run eslint-rules/complexite.guard.test.mjs   # cliquet fonction par fonction
+npm run check:cycles                                 # cycles, fan-in et fan-out
 
 # Code sans consommateur (remplacer <nom>)
 grep -rl "<nom>" src --include="*.tsx" --include="*.ts" | grep -v "définition"
