@@ -102,6 +102,11 @@ export const ARTEFACTS = {
     raison:
       "parcours e2e en mode démo et `supabase-stub` (hôte qui ne résout pas, playwright.config.ts) ; les clés VITE_ reçues sont publiques et aucune session réelle ne s'ouvre",
   },
+  'e2e-supabase.yml › playwright-report-real': {
+    nature: 'sans-prod',
+    raison:
+      'parcours e2e contre la stack Supabase locale du runner (`supabase start`, graines du dépôt, aucun secret du dépôt lu) : comptes et captures fictifs, rien de la production',
+  },
   'ci.yml › lighthouse': {
     nature: 'sans-prod',
     raison: 'Lighthouse sur le build servi en local : pages publiques prérendues, aucune session',
