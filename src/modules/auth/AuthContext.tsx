@@ -1,19 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
-import { resetRepositories, clearDemoStorage, getTasksRepository, getHabitsRepository } from '@/lib/repository.factory';
-import { appModeStore, useIsDemo, wasDemoPersisted } from '@/lib/app-mode.store';
-import { taskKeys } from '@/modules/tasks/constants';
-import { habitKeys } from '@/modules/habits/constants';
-import { withTimeout } from '@/lib/withTimeout';
+import { resetRepositories } from '@/lib/repository.factory';
+import { appModeStore, useIsDemo } from '@/lib/app-mode.store';
 import { sanitizeEmail, isValidEmail } from '@/lib/email';
-import { recordDemoVisit, recordDemoConversionIfAny } from '@/lib/demo-metrics';
-import { resetDemoEngagementMemory } from '@/lib/demo-engagement';
-import { readFirstTouch } from '@/lib/attribution';
-import { claimAcquisitionSource } from './acquisition-claim';
-import { claimAffiliate } from './affiliate-claim';
-import { readAffiliateSlug } from '@/lib/affiliation';
-import { recordSeedLocale, seedLocaleMatchesCurrent } from '@/lib/seed-i18n';
 import {
   DEMO_SENTINEL_EMAIL,
   buildDemoUser,
@@ -28,12 +18,6 @@ import { User as SupabaseUser } from '@supabase/supabase-js';
 import * as monitoring from '@/lib/monitoring';
 import { toast } from '@/lib/toast';
 import { translator } from '@/i18n/useT';
-import {
-  readLocalCache,
-  writeLocalCache,
-  clearLocalCache,
-  purgeAllLocalCache,
-} from './session-cache';
 import { localeStore } from '@/i18n/store';
 import { DEFAULT_LOCALE } from '@/i18n/locale';
 import { postAuthRoute } from '@/lib/safe-redirect';
@@ -44,27 +28,17 @@ import {
 // Les deux sondes qui lisent le retour OAuth dans l'URL : un échec OAuth est
 // silencieux par défaut, et ce sont elles qui le rendent visible.
 import { consumeOAuthErrorFromUrl, checkOAuthLanding } from './oauth-url-probes';
-
-const DEBUG = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug');
-const dlog = (msg: string) => {
-  if (DEBUG) console.warn(`[AUTH] @${Math.round(performance.now())}ms ${msg}`);
-};
-
-// Dernière connexion — ping fire-and-forget de la RPC touch_last_seen()
-// (migration 054, timestamp pris côté serveur). Dédupliqué par utilisateur et
-// par chargement de page : Supabase refire SIGNED_IN à chaque refresh de token,
-// on ne veut écrire qu'à l'ouverture de session, pas toutes les heures.
-const lastSeenTouched = new Set<string>();
-function touchLastSeen(userId: string): void {
-  if (!isSupabaseConfigured || appModeStore.isDemo || lastSeenTouched.has(userId)) return;
-  lastSeenTouched.add(userId);
-  supabase.rpc('touch_last_seen').then(({ error }) => {
-    if (error) dlog(`touchLastSeen: ${error.message}`);
-  });
-  // Même moment « session réelle ouverte » : si cet appareil a testé la démo,
-  // on marque la conversion démo → compte (no-op sinon, cf. demo-metrics.ts).
-  recordDemoConversionIfAny();
-}
+// ARC-03 (V12.4) : ce fichier ne tient plus que l'authentification (session,
+// OAuth, inscription, démo comme backend). Le reste s'abonne aux événements
+// de session qu'il émet, une unité par fichier.
+import { dlog } from './auth-debug';
+import { createAuthEvents } from './auth-events';
+import { useLastSeen } from './use-last-seen';
+import { useAttribution, signupAttributionMetadata } from './use-attribution';
+import { useOfflineCache } from './use-offline-cache';
+import { useSessionPreload } from './use-session-preload';
+import { startLoadingWatchdog } from './loading-watchdog';
+import { restorePersistedDemoBackend, enterDemoBackend, exitDemoBackend } from './demo-session';
 
 // User type — identity fields only.
 // Premium/financial state (plan, status, période Stripe) lives exclusively in the
@@ -107,6 +81,18 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Map a Supabase session user to our App user type.
+// We deliberately read ONLY identity fields. Premium/authorization state must
+// come from the `subscriptions` table via useBilling(), never from user_metadata
+// (which is user-writable from the client and trivially spoofable). Faille N5/N6.
+const mapSupabaseUserToAppUser = (supabaseUser: SupabaseUser): User => ({
+  id: supabaseUser.id,
+  name: supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || translator('common').t('auth.defaultUserName'),
+  email: supabaseUser.email || '',
+  avatar: supabaseUser.user_metadata?.avatar_url,
+  provider: supabaseUser.app_metadata?.provider,
+});
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
@@ -128,97 +114,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     monitoring.setUser(user ? { id: user.id } : null);
   }, [user]);
 
-  // Map a Supabase session user to our App user type.
-  // We deliberately read ONLY identity fields. Premium/authorization state must
-  // come from the `subscriptions` table via useBilling() — never from user_metadata
-  // (which is user-writable from the client and trivially spoofable). Faille N5/N6.
-  const mapSupabaseUserToAppUser = (supabaseUser: SupabaseUser): User => ({
-    id: supabaseUser.id,
-    name: supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || translator('common').t('auth.defaultUserName'),
-    email: supabaseUser.email || '',
-    avatar: supabaseUser.user_metadata?.avatar_url,
-    provider: supabaseUser.app_metadata?.provider,
-  });
+  // Événements de session, propres à CETTE instance du provider (auth-events.ts).
+  const [events] = useState(createAuthEvents);
+
+  // 🔴 UNITÉS ABONNÉES AUX ÉVÉNEMENTS DE SESSION. L'ORDRE DES APPELS EST
+  // L'ORDRE D'EXÉCUTION, et c'est un contrat (AuthContext.sequence.test.tsx) :
+  //   · sessionOpened   : last_seen, puis acquisition, puis affiliation ;
+  //   · dataScopeOpened : cache hors ligne pré-rempli, PUIS préchargement ;
+  //   · signedOut       : last_seen remis à zéro, puis purge du cache.
+  // Chacune s'abonne dans son effet, déclaré avant l'effet de session
+  // ci-dessous : React les monte d'abord, aucun événement n'est perdu.
+  useLastSeen(events);
+  useAttribution(events);
+  useOfflineCache(events, queryClient);
+  useSessionPreload(events, queryClient);
 
   useEffect(() => {
-    // Unsubscribe fn for the queryCache write-back listener.
-    let cacheWriteUnsub: (() => void) | undefined;
-
-    // Registers a queryCache subscriber that persists tasks/habits to localStorage
-    // whenever a successful fetch completes. Called once per authenticated user.
-    const setupCacheWriter = (userId: string) => {
-      cacheWriteUnsub?.();
-      const taskKeyStr = JSON.stringify(taskKeys.lists());
-      const habitKeyStr = JSON.stringify(habitKeys.lists());
-      cacheWriteUnsub = queryClient.getQueryCache().subscribe((event) => {
-        if (event.type !== 'updated') return;
-        const action = event.action as { type: string };
-        if (action.type !== 'success') return;
-        const qk = JSON.stringify(event.query.queryKey);
-        if (qk === taskKeyStr) {
-          writeLocalCache(userId, 'tasks', event.query.state.data);
-        } else if (qk === habitKeyStr) {
-          writeLocalCache(userId, 'habits', event.query.state.data);
-        }
-      });
-    };
-
-    // Pre-populates the React Query cache from localStorage so the page renders
-    // instantly with stale data, then fires a background refetch.
-    const restoreAndRefresh = (userId: string, alreadySetupWriter: boolean) => {
-      const cachedTasks = readLocalCache(userId, 'tasks');
-      if (cachedTasks) queryClient.setQueryData(taskKeys.lists(), cachedTasks);
-      dlog(`restoreAndRefresh: tasks cache hit=${!!cachedTasks}`);
-
-      const cachedHabits = readLocalCache(userId, 'habits');
-      if (cachedHabits) queryClient.setQueryData(habitKeys.lists(), cachedHabits);
-      dlog(`restoreAndRefresh: habits cache hit=${!!cachedHabits}`);
-
-      if (!alreadySetupWriter) setupCacheWriter(userId);
-
-      // staleTime:0 forces a background refresh even though setQueryData just
-      // stamped the data as "fresh". User sees stale data immediately, then
-      // the fresh payload arrives silently in ~400–700 ms.
-      dlog('restoreAndRefresh: prefetchQuery(tasks) START');
-      const tTasks = performance.now();
-      queryClient.prefetchQuery({
-        queryKey: taskKeys.lists(),
-        queryFn: () => withTimeout(getTasksRepository().getAll(), 10_000),
-        staleTime: 0,
-      }).then(() => dlog(`restoreAndRefresh: prefetchQuery(tasks) DONE in ${Math.round(performance.now() - tTasks)}ms`))
-        .catch((err) => dlog(`restoreAndRefresh: prefetchQuery(tasks) FAIL — ${(err as Error).message}`));
-
-      dlog('restoreAndRefresh: prefetchQuery(habits) START');
-      const tHabits = performance.now();
-      queryClient.prefetchQuery({
-        queryKey: habitKeys.lists(),
-        queryFn: () => withTimeout(getHabitsRepository().fetchHabits(), 10_000),
-        staleTime: 0,
-      }).then(() => dlog(`restoreAndRefresh: prefetchQuery(habits) DONE in ${Math.round(performance.now() - tHabits)}ms`))
-        .catch((err) => dlog(`restoreAndRefresh: prefetchQuery(habits) FAIL — ${(err as Error).message}`));
+    // Session réelle connue : sonde OAuth, utilisateur posé, puis annonce.
+    // `checkOAuthLanding` consomme l'intention : les trois points d'appel
+    // couvrent les trois ordres possibles (getSession, INITIAL_SESSION,
+    // SIGNED_IN), le premier arrivé gagne, les suivants sont des no-op.
+    const openSession = (sessionUser: SupabaseUser) => {
+      checkOAuthLanding();
+      setUser(mapSupabaseUserToAppUser(sessionUser));
+      events.emit('sessionOpened', sessionUser);
     };
 
     const initializeAuth = async () => {
       dlog('initializeAuth: start');
-      // Session démo persistée (flag cosmo_demo_active) : un F5 pendant une
-      // démo restaure l'utilisateur démo avec SES données (pas de
-      // clearDemoStorage ici — seul un loginDemo() explicite réinitialise).
-      if (wasDemoPersisted()) {
-        dlog('initializeAuth: restoring persisted demo session');
-        // Langue changée depuis le seed (bascule FR↔EN, ou arrivée sur `/en`
-        // après avoir lancé la démo depuis `/`) : les données en place sont
-        // dans l'ancienne langue et ne se retraduisent pas — elles sont
-        // modifiables, donc relues telles quelles. On les régénère, sinon
-        // l'interface et le contenu parlent deux langues différentes.
-        if (!seedLocaleMatchesCurrent()) {
-          dlog('initializeAuth: demo seed locale stale — reseeding');
-          clearDemoStorage(); // efface aussi cosmo_demo_active…
-          appModeStore.setDemo(true); // …que ce setter réécrit aussitôt.
-          resetRepositories();
-          queryClient.clear();
-          recordSeedLocale();
-        }
-        appModeStore.setDemo(true);
+      // F5 pendant une démo : backend démo restauré avec SES données
+      // (demo-session.ts), seul un loginDemo() explicite réinitialise.
+      if (restorePersistedDemoBackend(queryClient)) {
         setUser(buildDemoUser());
         setIsLoading(false);
         return;
@@ -238,14 +164,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         dlog(`initializeAuth: getSession() resolved — session=${!!session?.user}`);
         if (session?.user) {
-          checkOAuthLanding();
-          setUser(mapSupabaseUserToAppUser(session.user));
-          touchLastSeen(session.user.id);
-          claimAcquisitionSource(session.user);
-          claimAffiliate(session.user);
-          dlog('initializeAuth: calling restoreAndRefresh()');
-          restoreAndRefresh(session.user.id, !!cacheWriteUnsub);
-          dlog('initializeAuth: restoreAndRefresh() returned');
+          openSession(session.user);
+          dlog('initializeAuth: emitting dataScopeOpened');
+          events.emit('dataScopeOpened', { userId: session.user.id, initial: true });
+          dlog('initializeAuth: dataScopeOpened handled');
         }
       } catch (err) {
         dlog(`initializeAuth: caught error after retry — ${(err as Error)?.message}`);
@@ -268,33 +190,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     initializeAuth();
 
-    // GARDE-FOU — `ProtectedRoute` ne rend RIEN tant que `isLoading` est vrai,
-    // et `RootRoute` non plus. Si la resolution de session ne se termine
-    // jamais (socket morte sur mobile Safari, echange PKCE bloque, onglet
-    // reveille apres un long arriere-plan), l'utilisateur reste devant un
-    // ecran vide — noir ou blanc selon son theme — sans le moindre bouton,
-    // deconnexion comprise.
-    //
-    // Au-dela de ce delai on tranche : pas de session resolue = non
-    // authentifie. L'utilisateur retombe sur la landing, d'ou il peut se
-    // reconnecter. Un `onAuthStateChange` tardif corrigera le tir tout seul.
-    const loadingWatchdog = window.setTimeout(() => {
-      // Les effets de bord (log, Sentry) sont HORS de l'updater : React peut
-      // rejouer un updater de `setState` — c'est explicitement autorisé, et il
-      // le fait en StrictMode — ce qui dédoublait l'événement Sentry. Un
-      // updater doit rester une fonction pure de l'état précédent, et il ne
-      // s'exécute d'ailleurs PAS au moment de l'appel : lire son argument pour
-      // décider ici n'aurait rien décidé du tout. D'où le ref.
-      const fired = isLoadingRef.current;
-      setIsLoading(false);
-      if (fired) {
-        dlog('watchdog: session non resolue apres 12 s — on debloque l UI');
-        monitoring.captureMessage('auth: isLoading watchdog fired', {
-          level: 'warning',
-          tags: { context: 'auth-watchdog' },
-        });
-      }
-    }, 12_000);
+    // GARDE-FOU : sans résolution de session sous 12 s, on débloque l'écran
+    // (loading-watchdog.ts). `isLoadingRef` est lu au moment où le délai expire.
+    const stopWatchdog = startLoadingWatchdog(
+      () => isLoadingRef.current,
+      () => setIsLoading(false),
+    );
 
     // Track the previous user id so we only blow away the cache when the
     // user identity actually changes. Supabase JS fires SIGNED_IN on token
@@ -324,12 +225,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (event === 'INITIAL_SESSION') {
         lastUserId = currentUserId;
         if (session?.user) {
-          checkOAuthLanding();
-          setUser(mapSupabaseUserToAppUser(session.user));
-          touchLastSeen(session.user.id);
-          claimAcquisitionSource(session.user);
-          claimAffiliate(session.user);
-          restoreAndRefresh(session.user.id, !!cacheWriteUnsub);
+          openSession(session.user);
+          events.emit('dataScopeOpened', { userId: session.user.id, initial: true });
         }
         setIsLoading(false);
         return;
@@ -338,59 +235,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const userIdChanged = currentUserId !== lastUserId;
 
       if (userIdChanged) {
-        if (lastUserId) clearLocalCache(lastUserId);
+        // Le cache hors ligne de l'utilisateur sortant est effacé AVANT le
+        // vidage ; celui de l'entrant est réchauffé APRÈS (use-offline-cache).
+        if (lastUserId) events.emit('userLeaving', lastUserId);
         appModeStore.setDemo(!session && !isSupabaseConfigured);
         resetRepositories();
         queryClient.clear();
         lastUserId = currentUserId;
-        if (currentUserId) restoreAndRefresh(currentUserId, false);
+        if (currentUserId) events.emit('dataScopeOpened', { userId: currentUserId, initial: false });
       }
 
       if (session?.user) {
-        // `checkOAuthLanding` consomme l'intention : les trois points d'appel
-        // couvrent les trois ordres possibles (getSession, INITIAL_SESSION,
-        // SIGNED_IN), le premier arrivé gagne, les suivants sont des no-op.
-        checkOAuthLanding();
-        setUser(mapSupabaseUserToAppUser(session.user));
-        touchLastSeen(session.user.id);
-        // Inscription Google : `signInWithOAuth` ne porte pas la source
-        // first-touch, on la rattache ici (mig. 217, acquisition-claim.ts).
-        claimAcquisitionSource(session.user);
-        claimAffiliate(session.user);
+        openSession(session.user);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
-        // Un re-login dans le même chargement de page doit re-pinger last_seen_at.
-        lastSeenTouched.clear();
-        // L-11 — purge every cached cosmo:qcache:* entry, not only the user
-        // we just signed out. Defense for shared devices.
-        purgeAllLocalCache();
+        // last_seen remis à zéro (re-login dans la même page), puis purge de
+        // tout le cache hors ligne (L-11) : use-last-seen, use-offline-cache.
+        events.emit('signedOut', undefined);
       }
       setIsLoading(false);
     });
 
     return () => {
-      window.clearTimeout(loadingWatchdog);
+      stopWatchdog();
       subscription.unsubscribe();
-      cacheWriteUnsub?.();
+      // L'écrivain du cache hors ligne est libéré par sa propre unité.
     };
     // Abonnement auth monté une seule fois ; queryClient et les autres deps sont stables.
     /* eslint-disable-next-line react-hooks/exhaustive-deps --
     abonnement monte UNE FOIS pour la vie de l application : le remonter
        rejouerait la sequence de session. `queryClient` vient d un provider
-       stable, les autres valeurs lues sont des setters de state, stables par
-       contrat React. */
+       stable, `events` est cree une fois par `useState`, les autres valeurs
+       lues sont des setters de state, stables par contrat React. */
   }, []);
 
-  // Sort proprement du mode démo avant une authentification réelle. Sans ça,
-  // le flag démo persistant (cosmo_demo_active) rendrait la démo « collante » :
-  // onAuthStateChange ignore les événements tant que isDemo est vrai, et un
-  // reload restaurerait la démo par-dessus la vraie session.
+  // Sort proprement du mode démo avant une authentification réelle
+  // (demo-session.ts dit pourquoi la démo serait sinon « collante »).
   const exitDemoIfActive = () => {
     if (!appModeStore.isDemo) return;
-    clearDemoStorage();
-    appModeStore.setDemo(false);
-    resetRepositories();
-    queryClient.clear();
+    exitDemoBackend(queryClient);
   };
 
   const login = async (email: string, password: string, captchaToken?: string) => {
@@ -426,11 +309,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: false, error: translator('common').t('auth.reservedEmail') };
     }
     exitDemoIfActive();
-    // Source d'acquisition first-touch (src/lib/attribution.ts). Déjà normalisée
-    // et validée : le trigger la re-valide de son côté (mig. 097), la metadata
-    // étant contrôlée par le client.
-    const firstTouch = readFirstTouch();
-    const affiliateSlug = readAffiliateSlug();
+    // Source first-touch et slug d'affilié, lus ici, avant l'appel réseau
+    // (use-attribution.ts). Les triggers les re-valident (mig. 097, 236).
+    const attribution = signupAttributionMetadata();
     try {
       const { data, error } = await supabase.auth.signUp({
         email: cleanEmail,
@@ -442,13 +323,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Lu par le trigger handle_new_user_profile (mig. 060) avec garde
             // stricte : toute valeur ≠ 'business' retombe en 'personal'.
             account_type: accountType === 'business' ? 'business' : 'personal',
-            ...(affiliateSlug ? { affiliate_slug: affiliateSlug } : {}),
-            ...(firstTouch
-              ? {
-                  acquisition_source: firstTouch.source,
-                  ...(firstTouch.campaign ? { acquisition_campaign: firstTouch.campaign } : {}),
-                }
-              : {}),
+            ...attribution,
           },
         },
       });
@@ -461,19 +336,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loginDemo = (): void => {
     // Set demo state synchronously so callers can navigate immediately
-    // (existing callsites do not await this function).
-    clearDemoStorage();
-    // Repli EN MÉMOIRE des compteurs de démo (sans consentement) : remis à zéro
-    // comme les clés que `clearDemoStorage()` vient d'effacer.
-    resetDemoEngagementMemory();
-    appModeStore.setDemo(true);
-    resetRepositories();
-    queryClient.clear();
-    // Langue du seed qu'on vient d'invalider — relue au prochain démarrage
-    // pour détecter un changement de langue (cf. initializeAuth).
-    recordSeedLocale();
-    // Compteur d'appareils distincts ayant testé la démo (fire-and-forget).
-    recordDemoVisit();
+    // (existing callsites do not await this function). Séquence : demo-session.ts.
+    enterDemoBackend(queryClient);
     // `clearDemoStorage()` vient d'effacer `cosmo_demo_profile` : une nouvelle
     // démo repart d'un profil neuf, pas de celui du visiteur précédent.
     setUser(buildDemoUser());
@@ -549,8 +413,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-    // Clear the persisted query cache for this user before signing out.
-    if (user && !appModeStore.isDemo) clearLocalCache(user.id);
+    // Clear the persisted query cache for this user before signing out
+    // (use-offline-cache.ts, abonné à `userLeaving`).
+    if (user && !appModeStore.isDemo) events.emit('userLeaving', user.id);
 
     // ALWAYS sign out from Supabase, regardless of whether we think we're in demo
     // mode. Without this, a stranded real Supabase session can survive a "logout"
@@ -560,12 +425,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {
       // ignore — signOut on no session is a no-op
     }
-    if (appModeStore.isDemo) {
-      clearDemoStorage();
-      appModeStore.setDemo(false);
-      resetRepositories();
-      queryClient.clear();
-    }
+    if (appModeStore.isDemo) exitDemoBackend(queryClient);
     setUser(null);
   };
 

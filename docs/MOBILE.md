@@ -1234,7 +1234,7 @@ if (supabaseUrl) {
 - ❌ Remplacer par `<link rel="preconnect">` seul — ne committe pas de stream HTTP
 - ❌ Centraliser les premières requêtes dans un seul fetch — le bug reviendra dès qu'une autre fetch sera ajoutée
 
-**Cache localStorage complémentaire** : `src/modules/auth/AuthContext.tsx` persiste `tasks` et `habits` (clés `cosmo:qcache:{userId}:{key}`, TTL 24 h, write-through via `queryCache.subscribe`). Cleaning : `clearLocalCache(userId)` sur logout et user-change.
+**Cache localStorage complémentaire** : `src/modules/auth/use-offline-cache.ts` (abonné aux événements de session d'`AuthContext`, ARC-03) persiste `tasks` et `habits` (clés `cosmo:qcache:{userId}:{key}`, TTL 24 h, write-through via `queryCache.subscribe`). Cleaning : `clearLocalCache(userId)` sur logout et user-change.
 
 **Skip retry sur timeout** : `src/App.tsx` retire le retry sur `timeout` / `aborted` / `Délai` — sinon worst-case 17 s avant erreur.
 
