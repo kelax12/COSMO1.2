@@ -2,18 +2,12 @@
 // FILET DU SPINNER DE DÉMARRAGE (`#boot-screen` d'index.html)
 // ═══════════════════════════════════════════════════════════════════
 //
-// 🔴 POURQUOI (2026-11-06). Axel est resté bloqué sur le spinner de démarrage,
-// sur TOUTES les pages, en navigation classique ; en navigation privée tout
-// marchait. Ce spinner vit DANS `#root` et seul le premier commit de React
-// l'efface. Le script inline d'index.html ne le montre (au lieu du prérendu)
-// que si une session `sb-*-auth-token` ou une démo est stockée : un état
-// propre au navigateur, d'où l'écart avec la navigation privée.
-//
-// Si React ne monte jamais (import de `main` rejeté, promesse d'amorçage qui ne
-// se résout pas, exception avant `createRoot`), rien ne retirait ce spinner :
-// ni `RootErrorBoundary`, ni le watchdog d'`AuthContext`, qui vivent tous deux
-// DANS l'arbre React, n'existent encore. L'utilisateur n'avait aucun geste, et
-// recharger relisait le même stockage.
+// Le spinner vit DANS `#root` et seul le premier commit de React l'efface. Le
+// script inline d'index.html ne le montre que si une session `sb-*-auth-token`
+// ou une démo est stockée. Si React ne monte jamais (import de `main` rejeté,
+// promesse d'amorçage bloquée, exception avant `createRoot`), ni
+// `RootErrorBoundary` ni le watchdog d'`AuthContext` n'existent encore :
+// l'utilisateur n'a aucun geste, et recharger relit le même stockage.
 //
 // Ce module tourne dans `boot.ts`, AVANT React : passé un délai, si le spinner
 // est toujours là, il le remplace par deux sorties (recharger, ou purger la
@@ -26,16 +20,11 @@
 // ⚠️ Un fil principal FIGÉ (boucle synchrone) n'est pas couvert : le minuteur
 // ne s'exécuterait pas. Ce filet couvre l'attente, pas le gel.
 //
-// 🔴 LA CAUSE MESURÉE (2026-11-06, console d'Axel) : « Refused to apply style
-// from /assets/main-DRISBFKc.css because its MIME type ('text/plain') is not a
-// supported stylesheet MIME type ». Le serveur le sert en `text/css`, mais le
-// navigateur en gardait une copie `text/plain`, sous `Cache-Control: immutable`
-// d'un an : jamais redemandée, même au rechargement. Le CSS refusé fait rejeter
-// `import('./main')` (préchargement Vite), React ne monte pas. La navigation
-// privée, cache vide, marchait. Recharger ou purger le localStorage ne change
-// RIEN à ce cache-là : seule une requête `cache: 'reload'` remplace l'entrée.
-// D'où `repairAssetCache`, tentée UNE fois automatiquement par `boot.ts`, puis
-// derrière les deux boutons.
+// Cause connue : un CSS servi en `text/css` mais gardé `text/plain` dans le cache
+// navigateur (`Cache-Control: immutable`) fait rejeter `import('./main')`.
+// Recharger ou purger le localStorage n'y change rien : seule une requête
+// `cache: 'reload'` remplace l'entrée. D'où `repairAssetCache`, tentée UNE fois
+// automatiquement par `boot.ts`, puis derrière les deux boutons.
 
 import { hardSignOut } from './hard-sign-out';
 // Catalogue `boot` : lu ICI, avant que l'i18n de l'app existe (pas de `useT`,
@@ -122,7 +111,7 @@ export function isBootScreenStuck(doc: Document): boolean {
  * Remplace le spinner par le panneau de sortie. Idempotent.
  * `force` (échec d'amorçage certain) : aussi sur une page prérendue, dont la
  * copie peinte avant React resterait sinon affichée mais inerte, sans aucun
- * bouton qui réponde (vécu le 2026-11-06 après « Réinitialiser la session »).
+ * bouton qui réponde.
  */
 export function showBootRescue(
   doc: Document,

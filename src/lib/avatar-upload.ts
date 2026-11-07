@@ -1,7 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════
 // AVATAR UPLOAD — validation pure d'un fichier avatar + calcul de
-// redimensionnement. Extrait de SettingsPage.handleAvatarUpload (audit
-// 2026-06-10, phase extractions) pour testabilité.
+// redimensionnement. Extrait de SettingsPage.handleAvatarUpload pour testabilité.
 //
 // Règles sécurité (faille V5, CLAUDE.md « Uploads de fichiers ») :
 // - Whitelist MIME stricte — JAMAIS image/svg+xml (peut embarquer du JS).
@@ -113,13 +112,10 @@ export const avatarStoragePath = (userId: string): string => `${userId}/avatar.j
 /**
  * Supprime le fichier d'avatar du bucket.
  *
- * 🔴 POURQUOI (revue du 2026-09-02, risque R-03). Retirer sa photo ne faisait
- * que remettre `avatar_url` à `null` dans `auth.users` et `profiles` : le
- * FICHIER, lui, restait dans un bucket `public: true`, donc accessible sans
- * authentification à une URL stable et devinable (`<uid>/avatar.jpg`). La
- * suppression de compte avait le même trou, `delete-account` ne touchant pas au
- * stockage. Une photographie de visage survivait ainsi au droit à l'effacement
- * (RGPD art. 17).
+ * Retirer sa photo ne remettait que `avatar_url` à `null` : le FICHIER restait
+ * dans un bucket `public: true`, accessible sans authentification à une URL
+ * devinable (`<uid>/avatar.jpg`). Une photo survivait ainsi au droit à
+ * l'effacement (RGPD art. 17), et à la suppression de compte.
  *
  * Rend `true` si le bucket ne contient plus l'objet à la sortie. Un fichier
  * absent n'est pas une erreur : la fonction doit être rejouable.

@@ -1,6 +1,6 @@
 // Créneau par défaut quand on planifie une tâche dans l'agenda, et conversions
 // entre ISO et valeur de champ local. Sortis de l'ancienne popup « Planifier »
-// (`ScheduleEventModal`, supprimée le 2026-10-29 au profit d'EventModal).
+// (`ScheduleEventModal`, remplacée par EventModal).
 import type { Task } from '@/modules/tasks';
 
 /** Ce que la planification lit d'une tâche (une tâche d'équipe s'y ramène). */

@@ -50,9 +50,8 @@ import { SupabaseOrganizationsRepository } from '@/modules/organizations/supabas
 import { ITeamProjectsRepository } from '@/modules/team-projects/repository';
 import { SupabaseTeamProjectsRepository } from '@/modules/team-projects/supabase.repository';
 
-// Gouvernance d'organisation et exécution des OKR (audit entreprise
-// 2026-09-23, mig. 160 à 162) : deux dépôts de plus plutôt que deux dépôts
-// existants gonflés au-delà de 600 lignes.
+// Gouvernance d'organisation et exécution des OKR : deux dépôts à part plutôt
+// que deux dépôts existants gonflés au-delà de 600 lignes.
 import type { IOrgGovernanceRepository } from '@/modules/organizations/governance.repository';
 import type { IOrgRolesRepository } from '@/modules/organizations/roles.repository';
 import type { IOkrExecutionRepository } from '@/modules/team-okrs/execution.repository';
@@ -86,30 +85,19 @@ import { SupabaseStatsRepository } from '@/modules/stats/supabase.repository';
 // DÉPÔTS DE DÉMO DU MODE ENTREPRISE — chargés à la demande
 // ═══════════════════════════════════════════════════════════════════
 //
-// Mesuré le 2026-09-02 : les dépôts de démonstration pesaient **123,9 ko
-// bruts** dans le chunk d'entrée, soit un quart de son poids, téléchargés par
-// chaque visiteur — y compris celui qui repart de la landing sans se
-// connecter. La cause : ce fichier importait STATIQUEMENT les deux
-// implémentations de chaque module pour n'en instancier qu'une, et un import
-// statique est retenu même quand sa branche est morte à l'exécution.
+// Importer statiquement les deux implémentations de chaque module fait payer
+// les dépôts de démonstration à tout visiteur (un import statique est retenu
+// même quand sa branche est morte). Ceux du mode entreprise partent donc dans
+// un chunk à part, via `src/lib/demo-repositories.ts`.
 //
-// Les quatre du mode entreprise (52 ko bruts) partent donc dans un chunk à
-// part, via `src/lib/demo-repositories.ts`.
+// Invariant : ces interfaces n'exposent QUE des méthodes asynchrones. Le
+// mandataire reste synchrone à la construction et n'attend le module qu'au
+// premier appel. Un membre synchrone (propriété, getter) casserait cette
+// transparence : il faudrait alors renoncer au différé pour ce module.
 //
-// 🔴 CE QUI REND LA COUPE SÛRE, ET CE QUI LA CASSERAIT. Les quatre interfaces
-// n'exposent QUE des méthodes asynchrones — vérifié avant d'écrire ce code.
-// Le mandataire ci-dessous reste donc synchrone à la construction et n'attend
-// le module qu'au premier APPEL, ce qui laisse intacts tous les appelants et
-// toute la séquence de `loginDemo()`. Qu'une de ces interfaces gagne un membre
-// synchrone — une propriété, un getter — et le mandataire cesse d'être
-// transparent pour lui : il faudra alors renoncer au différé pour ce module.
-//
-// ⚠️ Le mode PRODUCTION ne passe ici que pour DEUX dépôts : gouvernance et
-// exécution des OKR (2026-09-25). Leurs écrans sont rares (départ, journal,
-// vues, cycles, points d'étape), leurs interfaces 100 % asynchrones, et leurs
-// classes Supabase pesaient dans le chunk d'ENTRÉE, payé par toutes les pages.
-// Les autres instancient directement leur classe Supabase, importée
-// statiquement comme avant.
+// En production, seuls deux dépôts passent ici (gouvernance, exécution des
+// OKR) : écrans rares, interfaces asynchrones. Les autres instancient
+// directement leur classe Supabase.
 
 /**
  * Mandataire synchrone d'un dépôt dont le module arrive plus tard.
@@ -369,10 +357,8 @@ export function getOrgGovernanceRepository(): IOrgGovernanceRepository {
       ? lazyDemoRepository<IOrgGovernanceRepository>(() =>
           import('./demo-repositories').then((m) => m.createDemoOrgGovernanceRepository()),
         )
-      // Chargé à la demande AUSSI en production (2026-09-25) : importé en dur,
-      // ce repository entrait dans le chunk d'ENTRÉE dès qu'un écran lazy s'en
-      // servait (+1,9 ko gzip), pour des gestes d'admin que la plupart des
-      // visites ne font jamais. L'interface est 100 % asynchrone.
+      // Chargé à la demande AUSSI en production : importé en dur, il entrait
+      // dans le chunk d'ENTRÉE pour des gestes d'admin rares.
       : lazyDemoRepository<IOrgGovernanceRepository>(() =>
           import('@/modules/organizations/governance.supabase.repository').then((m) => new m.SupabaseOrgGovernanceRepository()),
         );

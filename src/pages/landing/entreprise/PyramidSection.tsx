@@ -28,7 +28,7 @@ const PYRAMID_BENEFITS: { titleKey: KeyOf<'landingEnterprise'>; bodyKey: KeyOf<'
  * trouve nulle part ailleurs : le périmètre de chacun est DÉDUIT de la
  * hiérarchie, et c'est depuis l'organigramme qu'on suit chaque personne.
  *
- * 2026-10-02 : la reproduction interactive de l'organigramme (cartes, liens
+ * La reproduction interactive de l'organigramme (cartes, liens
  * SVG animés, menu par membre) est remplacée par une CAPTURE du vrai onglet
  * Organigramme, charge affichée. Une reproduction dérive du produit sans que
  * rien ne le signale ; une capture se refait en une commande

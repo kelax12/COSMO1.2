@@ -2,32 +2,21 @@
 // MONITORING — la seule porte vers Sentry, et elle tamponne
 // ═══════════════════════════════════════════════════════════════════
 //
-// 🔴 POURQUOI CE MODULE EXISTE (arbitrage C-13 · C-14 du 2026-09-03).
-//
-// « Différer Sentry après le premier rendu : 49,3 ko sortent du chemin
-// critique, soit quatre fois la marge actuelle. »
-//
-// Différer l'`init()` ne suffisait PAS. Onze fichiers du SHELL faisaient
-// `import * as Sentry from '@sentry/react'` — les deux frontières d'erreur,
-// `normalizeApiError`, `AuthContext`, les trois canaux Realtime… Un seul
-// import statique suffit à garder le paquet dans le chunk d'entrée, quel que
-// soit le moment où on l'initialise. Ce module est donc la SEULE porte : il
-// est importé statiquement partout, et c'est LUI qui charge Sentry en
-// `import()` dynamique.
+// Pourquoi ce module : différer l'`init()` de Sentry ne suffisait pas. Un seul
+// import statique de `@sentry/react` garde le paquet dans le chunk d'entrée, quel
+// que soit le moment de l'initialisation. Ce module est donc la SEULE porte : il
+// est importé statiquement partout, et c'est LUI qui charge Sentry en `import()`
+// dynamique (49,3 ko hors du chemin critique).
 //
 // ❌ Ne jamais réintroduire un `import ... from '@sentry/react'` ailleurs
 //    qu'ici. `src/monitoring.guard.test.ts` le refuse, avec son témoin.
 //
 // ── L'ANGLE MORT, ET COMMENT IL EST COMBLÉ ──────────────────────────
 //
-// 🔴 L'arbitrage nomme lui-même le risque : « les erreurs des premières
-// millisecondes ne seraient plus capturées, et c'est exactement la fenêtre du
-// bug de `Layout` du 2026-09-03 » — celui qui rendait l'écran d'erreur sur
-// une valeur de `localStorage`, avant que quoi que ce soit soit monté.
-//
-// D'où le TAMPON. Tout appel arrivé avant que Sentry soit chargé est mis de
-// côté, et rejoué tel quel une fois le SDK prêt. Rien n'est perdu, seul
-// l'envoi est retardé — ce qui est exactement le compromis décidé.
+// Différer Sentry rate les erreurs des premières millisecondes, avant que quoi
+// que ce soit soit monté. D'où le TAMPON : tout appel arrivé avant le chargement
+// du SDK est mis de côté puis rejoué tel quel. Rien n'est perdu, seul l'envoi
+// est retardé.
 //
 // ── CE QUE CE MODULE NE FAIT JAMAIS ─────────────────────────────────
 //
@@ -172,7 +161,7 @@ export function installEarlyHandlers(): void {
 
 function removeEarlyHandlers(): void {
   if (typeof window === 'undefined') return;
-  // 🔴 RETIRÉS dès que Sentry pose les siens, sinon chaque erreur globale part
+  // RETIRÉS dès que Sentry pose les siens, sinon chaque erreur globale part
   //    DEUX fois : une par notre filet, une par celui du SDK.
   if (earlyErrorHandler) window.removeEventListener('error', earlyErrorHandler);
   if (earlyRejectionHandler) window.removeEventListener('unhandledrejection', earlyRejectionHandler);

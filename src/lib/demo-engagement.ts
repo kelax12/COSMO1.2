@@ -17,11 +17,11 @@
 // visiteur, son engagement repart de zéro. C'est l'inverse du flag de rejet
 // (cosmo_demo_bridge_snooze), lui préservé — voir PRESERVE_KEYS.
 //
-// 🔴 SOUS CONSENTEMENT depuis le 2026-10-13 (loi I&L art. 82, qui vise aussi
-// une écriture purement locale). Ces compteurs servent à choisir le moment
-// d'une sollicitation d'inscription : ce n'est pas strictement nécessaire à la
-// démo. Sans « Accepter », ils vivent EN MÉMOIRE (`memory`) : même seuils,
-// remis à zéro au rechargement, rien d'écrit sur l'appareil.
+// SOUS CONSENTEMENT (loi I&L art. 82, qui vise aussi une écriture purement
+// locale) : ces compteurs choisissent le moment d'une sollicitation
+// d'inscription, ce qui n'est pas strictement nécessaire à la démo. Sans
+// « Accepter », ils vivent EN MÉMOIRE (`memory`) : mêmes seuils, remis à zéro
+// au rechargement, rien d'écrit sur l'appareil.
 // ═══════════════════════════════════════════════════════════════════
 
 import { appModeStore } from '@/lib/app-mode.store';

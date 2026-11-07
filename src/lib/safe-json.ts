@@ -13,8 +13,7 @@
 // valeur par défaut, et le mode démo se re-sème tout seul.
 //
 // ❌ Ne jamais écrire `JSON.parse(localStorage.getItem(k))` en direct.
-//    CLAUDE.md cite cette règle depuis longtemps ; le helper qu'elle nommait
-//    n'existait plus dans le dépôt (revue du 2026-09-02, point 15).
+//    Passer par les helpers de ce fichier.
 
 /** Lit une clé de `localStorage`. `null` si le stockage est indisponible. */
 export function safeGetItem(key: string): string | null {
@@ -69,7 +68,7 @@ export function readJsonArray<T>(key: string): T[] | null {
 // ÉCRITURE — le silence n'est PAS toujours le bon comportement (C-46)
 // ═══════════════════════════════════════════════════════════════════
 //
-// 🔴 L'écriture n'est pas du câblage, contrairement à la lecture.
+// L'écriture n'est pas du câblage, contrairement à la lecture.
 //
 // `safeSetItem` avale l'échec. Pour une préférence d'affichage c'est le bon
 // comportement : rien n'est perdu que l'utilisateur ait produit. Pour une

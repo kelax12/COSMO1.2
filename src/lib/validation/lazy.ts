@@ -3,7 +3,7 @@
 // POURQUOI : `zod` pesait **131,8 ko bruts** dans le chunk d'entrée, soit le
 // plus gros module non-React que tout visiteur téléchargeait — y compris celui
 // qui arrive sur la landing et repart sans jamais créer quoi que ce soit.
-// Mesuré par `node scripts/analyze-entry.mjs` le 2026-08-28.
+// Mesure : `node scripts/analyze-entry.mjs`.
 //
 // C'est un coût que la nature même de cette couche rend injustifiable : la
 // validation zod est une **garde UX**, explicitement pas la frontière de

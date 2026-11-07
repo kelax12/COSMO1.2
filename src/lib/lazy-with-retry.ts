@@ -16,7 +16,7 @@ import { localeStore } from '@/i18n/store';
  * `src/i18n/catalog.ts`). Les 17 autres voyagent avec la page qui les utilise,
  * et sont attendus ICI, avant que le module ne résolve.
  *
- * 🔴 C'est le seul endroit où ces catalogues doivent être attendus. Le
+ * C'est le seul endroit où ces catalogues doivent être attendus. Le
  * `<Suspense>` qui enveloppe déjà l'import couvre l'attente. Déplacer ce
  * chargement dans un `useEffect` ferait rendre l'écran AVANT le catalogue, donc
  * afficherait des clés brutes (`org.project.name`) pendant une frame.
@@ -31,7 +31,7 @@ import { localeStore } from '@/i18n/store';
  *
  * ⚠️ `src/i18n/lazy-namespaces.guard.test.ts` lit les appels `lazyWithRetry`
  * **dans `App.tsx`** pour vérifier que chaque route déclare les catalogues de
- * son sous-arbre, et, depuis le 2026-09-25, ceux des pages listées dans
+ * son sous-arbre, et ceux des pages listées dans
  * `TAB_GATE_HOSTS` (`scripts/i18n-shell-namespaces.mjs`) QUI DÉCLARENT une
  * liste. Partout ailleurs, un second argument n'est vu par aucune garde : ne
  * jamais y compter pour charger un catalogue que la ROUTE ne déclare pas.
@@ -42,7 +42,7 @@ export const lazyWithRetry = <P extends object>(
 ) =>
   lazy(async () => {
     const STORAGE_KEY = 'cosmo:chunk-reload-attempt';
-    // 🔴 `sessionStorage` JETTE dans plusieurs contextes réels : webview, mode
+    // `sessionStorage` JETTE dans plusieurs contextes réels : webview, mode
     // privé de certains navigateurs, cookies tiers bloqués. Sans ces gardes,
     // l'accès se faisait dans le `try` du chargement : le module arrivait
     // correctement, puis l'erreur de stockage était relancée telle quelle et

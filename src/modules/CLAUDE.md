@@ -69,9 +69,9 @@ src/modules/{module}/
 └── index.ts               # Export public (barrel)
 ```
 
-**23 modules** (recomptés le 2026-10-20). Leur rôle, leurs tables et leurs RPC : une ligne chacun
-dans [`docs/MODULES.md`](../../docs/MODULES.md), la carte qui fait foi. Ce fichier listait
-18 modules sur 23 (`org-config`, `org-reports`, `team-lists` y manquaient).
+Les modules, leur rôle, leurs tables et leurs RPC : une ligne chacun dans
+[`docs/MODULES.md`](../../docs/MODULES.md), la carte qui fait foi. Leur nombre vit dans
+[`docs/FAITS.md`](../../docs/FAITS.md), généré depuis `src/modules/`.
 
 ### Règle d'import par zone
 
@@ -145,13 +145,14 @@ supabase.rpc('get_my_team_task_dependencies', { p_org: orgId }) // ✅ mig. 117
   sans argument est évalué une fois par requête ; un helper sur une colonne, une fois par ligne.
 - ❌ **Ne pas ajouter de table entreprise sur le modèle prédicat-fonction.** Exprimer l'appartenance
   en jointure indexable dans une RPC.
-- ❌ **Une RPC d'agrégat est `SECURITY INVOKER`.** Agréger des lectures, oui. Agréger des
-  **autorisations**, jamais : en `DEFINER` on réécrit N autorisations à la main dans une fonction
-  qui contourne la RLS.
-  ⚠️ **Seule exception, les lectures entreprise `get_my_team_*`** : DEFINER parce qu'en INVOKER la
-  policy reviendrait par ligne. Leur périmètre vient de `my_team_project_ids()` et de rien d'autre,
-  la règle que les policies consultent via `can_access_team_project` (mig. `243`). ❌ Jamais de
-  prédicat de visibilité réécrit dans une RPC. Témoin : `e2e/rls/regle-unique-projet.test.ts`.
+- ⚠️ **Le mode `SECURITY` d'une RPC se lit dans [`supabase/rpc-inventory.md`](../../supabase/rpc-inventory.md)**
+  (généré : mode, `search_path`, droits, appelants), jamais ici. La majorité sont `DEFINER`, `search_path`
+  figé. Agrégats de lecture (`get_work_time_stats`, `get_team_project_task_stats`,
+  `get_team_member_workload`, `get_my_habits`) : `INVOKER`, la RLS filtre. Lectures indexables
+  `get_my_tasks` et `get_my_team_*` : `DEFINER` (en `INVOKER` la policy reviendrait par ligne), périmètre
+  tiré de `auth.uid()` ou de `my_team_project_ids()` seuls, comme les policies via
+  `can_access_team_project` (mig. `243`). ❌ Jamais de prédicat de visibilité réécrit dans une RPC, ni
+  d'agrégat d'**autorisations** en `DEFINER`. Témoin : `e2e/rls/regle-unique-projet.test.ts`.
 - Exception légitime : `getById` (accès par clé primaire). `task_dependencies` (mig. 132) se lit en
   direct, sa policy portant sur une colonne dénormalisée, donc indexable.
 

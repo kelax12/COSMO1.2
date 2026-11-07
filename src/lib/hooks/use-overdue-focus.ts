@@ -4,13 +4,9 @@ import { useEffect } from 'react';
  * Maquette 122 — « N en retard » de l'en-tête mobile mène à la liste qu'il
  * compte.
  *
- * Relevé sur les captures du 2026-09-20 : la barre d'onglets affiche « 2 » et
- * « 1 », l'en-tête entreprise « 3 », la boîte de réception « 5 » sur /tasks et
- * « 8 » sur l'accueil, et le sous-titre de /tasks dit « 1 en retard ». Tous
- * ces compteurs portent DÉJÀ un libellé accessible complet, vérifié un par un
- * le 2026-09-21 (`MobileTabBar`, `TasksInboxMenu` avec son badge
- * `aria-hidden`, `OrgNotificationsBell`). La moitié accessibilité de la
- * maquette était donc faite avant elle.
+ * Les compteurs de l'application (barre d'onglets, en-tête entreprise, boîte de
+ * réception) portent DÉJÀ un libellé accessible complet : la moitié
+ * accessibilité de la maquette était faite avant elle.
  *
  * Ce qui manquait : un nombre qui ne mène nulle part oblige à chercher
  * soi-même ce qu'il désigne. `TasksHeader` émet donc `focus-overdue-tasks`,

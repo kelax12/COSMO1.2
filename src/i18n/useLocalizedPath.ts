@@ -2,19 +2,12 @@
 // LIEN INTERNE VERS UNE PAGE À SLUG LOCALISÉ
 // ═══════════════════════════════════════════════════════════════════
 //
-// 🔴 POURQUOI (revue du 2026-09-02, découvert en vérifiant la traduction des
-// pages contractuelles).
-//
 // Le préfixe de locale est porté par le `basename` du routeur : un
-// `<Link to="/politique-confidentialite">` devient donc `/en/politique-
-// confidentialite` pour un visiteur anglophone. Or une seule URL canonique
-// existe par langue (`/en/privacy-policy`), et le slug de l'autre langue rend
-// une **404** — comportement voulu et documenté, pas un bug de routage.
-//
-// Résultat mesuré dans le navigateur : les quatre liens internes vers les pages
-// légales (bandeau cookies + trois liens de pied de landing) tombaient sur une
-// 404 en anglais. Traduire la politique de confidentialité sans corriger ça
-// n'aurait servi à rien : le seul chemin vers elle était cassé.
+// `<Link to="/politique-confidentialite">` devient `/en/politique-confidentialite`
+// pour un visiteur anglophone. Or une seule URL canonique existe par langue
+// (`/en/privacy-policy`) et le slug de l'autre langue rend une **404**, voulu et
+// documenté : les liens internes vers les pages légales doivent donc passer par
+// le slug de la locale active.
 //
 // ❌ Ne JAMAIS écrire un slug localisé en dur dans un `to=`. Passer par ce
 //    hook, qui lit la locale active et rend le slug correspondant.

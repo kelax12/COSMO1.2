@@ -28,7 +28,7 @@ interface EnterpriseTrackProps {
  * mise en place réelles, dans l'ordre où on les fait : inviter et structurer
  * (1), suivre l'exécution des tâches : statuts, dépendances (2), regrouper le
  * travail en projets et les attribuer (3), poser les OKR (4), suivre la
- * progression (5). Tâches avant Projets depuis le 2026-10-02 : la tâche est
+ * progression (5). Tâches avant Projets : la tâche est
  * l'unité que chacun manipule tous les jours, le projet vient la ranger. Le visiteur qui l'a lue sait déjà quoi faire en arrivant dans le
  * produit, et retrouve les mêmes écrans.
  *
@@ -49,7 +49,7 @@ const EnterpriseTrack: React.FC<EnterpriseTrackProps> = ({ onDemo, onRegister, o
 
       {/* Tout ce qui suit le hero est monté au premier geste, comme le bas du
           parcours perso : monté avec le hero, il coûtait le gros du TBT mobile
-          de la page des prospects (2026-10-22). Déclencheurs : `BelowFold.tsx`. */}
+          de la page des prospects. Déclencheurs : `BelowFold.tsx`. */}
       <BelowFold>
         <ProblemSection />
 
@@ -61,7 +61,7 @@ const EnterpriseTrack: React.FC<EnterpriseTrackProps> = ({ onDemo, onRegister, o
         <ProgressSection />
         <MoreFeaturesSection />
         <SecuritySection />
-        {/* Prix masqués depuis le 2026-10-16 (`PRICES_VISIBLE`) : la section
+        {/* Prix masqués (`PRICES_VISIBLE`) : la section
             reste intacte, elle n'est juste plus montée. */}
         {ENTERPRISE_PRICES_SHOWN && <PricingSection onRegister={onRegister} />}
         <EnterpriseFaqSection />

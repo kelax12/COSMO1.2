@@ -1,20 +1,14 @@
 // Le bas du parcours perso : tout ce qui suit le bandeau, dans son propre chunk.
 //
-// 🔴 POURQUOI UN CHUNK (2026-10-22, TBT mobile de `/`). `BelowFold` ne monte
-// cette partie qu'au premier geste depuis le 2026-10-16, mais `PersoTrack`
-// l'importait en statique : ses modules (les cinq vitrines et `ShowcaseTheme`,
-// les solutions, la FAQ, la CTA) étaient ÉVALUÉS au chargement avec le chunk de
-// la landing, pour un rendu qui n'arrivait qu'au geste. Mesuré à CPU ×4, 412 px :
-// l'évaluation du chunk `LandingPage` pesait une tâche de 130 à 210 ms, dont le
-// premier `toLocaleDateString` de la page (initialisation ICU, appelée au niveau
-// module par une vitrine). Lighthouse ne fait aucun geste : ce code ne lui
-// coûte plus rien.
+// Pourquoi un chunk : `BelowFold` ne monte cette partie qu'au premier geste, mais
+// `PersoTrack` l'importait en statique : ses modules (cinq vitrines, solutions,
+// FAQ, CTA) étaient ÉVALUÉS au chargement avec le chunk de la landing, pour un
+// rendu qui n'arrivait qu'au geste (une tâche de 130 à 210 ms à CPU ×4).
 //
 // Le prix : au premier geste, le chunk doit arriver avant de se peindre.
 // L'emplacement de `BelowFold` (200vh) reste en place pendant ce temps, donc rien
 // ne saute. ⚠️ Une ancre du sommaire cliquée avant l'arrivée du chunk ne trouve
-// pas sa cible : le navigateur pose le hash sans défiler. `useSuivreAncre` défile
-// vers elle au montage.
+// pas sa cible : `useSuivreAncre` défile vers elle au montage.
 import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { gsap, ScrollTrigger, useGSAP } from '@/lib/gsap';
@@ -70,7 +64,7 @@ const PersoBelowFold: React.FC<PersoBelowFoldProps> = ({ isMobile, onDemo, onReg
 };
 
 /**
- * La CTA finale. Composant à part depuis le 2026-10-16 : elle est montée avec
+ * La CTA finale. Composant à part : elle est montée avec
  * `BelowFold`, au premier geste, et ses tweens doivent naître avec elle. Créés
  * au montage du parcours, ils ne trouvaient pas encore leurs cibles.
  */
@@ -91,18 +85,13 @@ const PersoCta: React.FC<{ onDemo: () => void; onRegister: () => void }> = ({ on
           scrollTrigger: { trigger: '.cta-card', start: 'top 80%', once: true },
         });
 
-        // Deux filets d'encre encadrent le titre de la CTA. Ils se
-        // dessinent UNE FOIS, à l'arrivée de la carte, puis ne coûtent plus
-        // rien — c'est la règle déjà écrite pour le hero (« le hero ne doit
-        // rien coûter une fois l'entrée finie »), enfin appliquée ici.
+        // Deux filets d'encre encadrent le titre de la CTA. Ils se dessinent UNE
+        // FOIS, à l'arrivée de la carte, puis ne coûtent plus rien (règle du hero :
+        // « le hero ne doit rien coûter une fois l'entrée finie »).
         //
-        // 🔴 Ils remplacent un `conic-gradient` en `filter: blur(60px)` mis en
-        // ROTATION INFINIE. C'est exactement le motif que l'audit A-8 du
-        // 2026-09-03 a fait retirer du hero, où neutraliser les seuls
-        // `filter: blur` ramenait la page de 2 856 ms bloquées sur 4 000 à
-        // 259. Il avait survécu dans cette carte, et la DA blanche l'a rendu
-        // presque invisible : il ne restait que la facture. Ne jamais le
-        // remettre, ici pas plus qu'ailleurs.
+        // Ils remplacent un `conic-gradient` en `filter: blur(60px)` en ROTATION
+        // INFINIE, motif retiré du hero (audit A-8 : neutraliser les `filter: blur`
+        // ramenait 2 856 ms bloquées à 259). Ne jamais le remettre.
         gsap.from('.cta-rule', {
           scaleX: 0,
           duration: 0.9,
@@ -184,11 +173,9 @@ const PersoCta: React.FC<{ onDemo: () => void; onRegister: () => void }> = ({ on
             {/*
               Count-ups : la démo est pré-remplie, chiffres animés (GSAP).
 
-              🔴 `role="img"` n'est pas décoratif : les enfants sont
-              `aria-hidden` (ils sont animés), donc le sens ne tient qu'à
-              l'`aria-label`. Sans rôle, `aria-label` est INTERDIT sur un
-              `div` (axe `aria-prohibited-attr`, `serious`) : le bloc était
-              entièrement muet pour un lecteur d'écran. Mesuré le 2026-09-04.
+              `role="img"` n'est pas décoratif : les enfants sont `aria-hidden`
+              (animés), donc le sens ne tient qu'à l'`aria-label`, et sans rôle
+              `aria-label` est INTERDIT sur un `div` (axe `aria-prohibited-attr`).
             */}
             <div
               role="img"

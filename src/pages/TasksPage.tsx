@@ -10,15 +10,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router';
 import { useLazyMount } from '@/hooks/use-lazy-mount';
 
-// ═══════════════════════════════════════════════════════════════════
-// Module tasks - Hooks indépendants (MIGRÉ)
-// ═══════════════════════════════════════════════════════════════════
+// Module tasks - Hooks indépendants
 import { useTasks, useUpdateTask } from '@/modules/tasks';
 import { useCategories } from '@/modules/categories';
 
-// ═══════════════════════════════════════════════════════════════════
-// Module lists - (MIGRÉ)
-// ═══════════════════════════════════════════════════════════════════
+// Module lists
 import {
   useDeleteList,
   tasksInList,
@@ -62,9 +58,7 @@ const TasksPage: React.FC = () => {
   // adapté au viewport courant.
   const tutorial = useTutorial(isMobile ? 'tasks_mobile' : 'tasks_desktop', 600, !isMobile);
   const tutorialSteps = isMobile ? tasksTutorialStepsMobile : tasksTutorialStepsDesktop;
-  // ═══════════════════════════════════════════════════════════════════
-  // TASKS - Depuis le module tasks (MIGRÉ)
-  // ═══════════════════════════════════════════════════════════════════
+  // TASKS - Depuis le module tasks
   const { data: tasks = [], isLoading: isTasksLoading, isError: isTasksError, error: tasksError, refetch: refetchTasks } = useTasks();
   // Nécessaire au filtre par branche de catégorie (tâche 12) : filtrer
   // « Travail » doit aussi remonter les tâches de ses sous-catégories.
@@ -72,9 +66,7 @@ const TasksPage: React.FC = () => {
   const updateTaskMutation = useUpdateTask();
 
 
-  // ═══════════════════════════════════════════════════════════════════
-  // LISTS - Depuis le module lists (MIGRÉ)
-  // ═══════════════════════════════════════════════════════════════════
+  // LISTS - Depuis le module lists
   // Tout ce qui concerne les listes — lesquelles, dans quel ordre, laquelle
   // filtre, et comment on les édite — vit dans `useTaskLists`. C'est
   // exactement l'état que `TaskListsBar` consomme : la barre reste pilotée

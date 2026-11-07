@@ -5,9 +5,8 @@
 // ne touche ni aux textes (un message d'erreur Supabase porte souvent un
 // e-mail ou un UUID), ni aux ADRESSES DE PAGE. Or ces adresses portent des
 // secrets : `/invite/<jeton>`, `/org-invite/<jeton>`, `?code=` du retour
-// OAuth, `#access_token=` d'un lien de réinitialisation. Jusqu'au 2026-10-13,
-// seuls les textes étaient nettoyés : les URLs partaient telles quelles, dans
-// `request.url`, le nom de transaction et les fils d'Ariane de navigation.
+// OAuth, `#access_token=` d'un lien de réinitialisation : elles sont nettoyées
+// dans `request.url`, le nom de transaction et les fils d'Ariane de navigation.
 //
 // Sorti de `main.tsx` pour être TESTÉ : un nettoyage RGPD qu'aucun test ne
 // rejoue est une promesse de la politique de confidentialité sans preuve.

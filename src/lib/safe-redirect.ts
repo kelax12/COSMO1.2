@@ -8,7 +8,7 @@
 // à usage unique et non consommé, il fallait retrouver l'e-mail d'origine
 // (risque R-04).
 //
-// 🔴 En le lisant, on ouvre une surface classique : la REDIRECTION SORTANTE.
+// En le lisant, on ouvre une surface classique : la REDIRECTION SORTANTE.
 // `?redirect=https://evil.example` transformerait la page de connexion du
 // produit en tremplin d'hameçonnage, avec l'URL de COSMO dans la barre
 // d'adresse au moment où la personne saisit son mot de passe.

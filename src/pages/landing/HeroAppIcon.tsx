@@ -1,25 +1,17 @@
 // La tuile produit du hero perso : une « icône d'application » posée au-dessus
 // du titre, qui change de module toutes les 2,6 s.
 //
-// POURQUOI ELLE REMPLACE LA FENÊTRE. Le hero perso montrait `AppWindowShowcase`
-// en colonne de droite, une fenêtre de 540 px de haut. La refonte du 2026-09-22
-// centre le premier écran autour du titre : il n'y a plus de colonne de droite,
-// et une fenêtre de 540 px posée au-dessus du H1 repousserait la promesse sous
-// la ligne de flottaison. La fenêtre n'est pas perdue pour autant — les quatre
-// vitrines qu'elle faisait tourner sont montrées en grand, une par une, dès la
-// section suivante (`FeaturesSection`). Ce qui reste ici est ce que le premier
-// écran doit dire : une seule application, quatre modules.
+// Elle remplace `AppWindowShowcase` : une fenêtre de 540 px au-dessus du H1
+// repousserait la promesse sous la ligne de flottaison. Les vitrines sont montrées
+// en grand dans `FeaturesSection` ; ici le premier écran dit : une seule
+// application, quatre modules.
 //
-// 🔴 ELLE GARDE LE MÉCANISME DE PAUSE DE C-69 (WCAG 2.2.2, niveau A). Une
-// information qui change seule, toutes les 2,6 s, indéfiniment, doit pouvoir
-// être arrêtée — la règle ne dépend pas de la taille de la chose qui bouge, et
-// la déplacer d'un composant à l'autre ne l'annule pas. La tuile EST le bouton
-// (96 px de côté, très au-dessus des 44 px mesurés par
-// `e2e/touch-targets.spec.ts`), elle suspend au survol et au focus, et les
-// trois états viennent du module déjà éprouvé `showcase/rotation-state.ts`.
-// ⚠️ Le troisième état (`lecture`) reste indispensable : sans lui, une personne
-// en mouvement réduit verrait la tuile figée sur « Tâches » pour toujours, et la
-// phrase « quatre modules, une seule app » ne tiendrait plus pour elle.
+// Elle garde le mécanisme de pause de C-69 (WCAG 2.2.2, niveau A) : une
+// information qui change seule, toutes les 2,6 s, doit pouvoir être arrêtée. La
+// tuile EST le bouton (96 px, au-dessus des 44 px de `e2e/touch-targets.spec.ts`),
+// elle suspend au survol et au focus, et les trois états viennent de
+// `showcase/rotation-state.ts`. ⚠️ Le troisième (`lecture`) reste indispensable :
+// sans lui, une personne en mouvement réduit verrait la tuile figée sur « Tâches ».
 import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useInView, useReducedMotion } from 'framer-motion';
 import { Pause, Play } from 'lucide-react';

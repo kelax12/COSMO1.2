@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // Import TickTick : une sauvegarde CSV (Réglages › Compte › Générer une sauvegarde)
 //
-// Format relu le 2026-10-08 (importeur TickTick de Vikunja, qui cherche la
+// Format (importeur TickTick de Vikunja, qui cherche la
 // même chose) : des lignes de MÉTADONNÉES d'abord (« Date: », « Version: »,
 // « Status: » sur plusieurs lignes), puis l'en-tête « Folder Name »,
 // « List Name », « Title »… On cherche donc l'en-tête au lieu de le supposer

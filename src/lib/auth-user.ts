@@ -1,18 +1,11 @@
 // ═══════════════════════════════════════════════════════════════════
 // auth-user — résolution de l'utilisateur courant SANS aller-retour réseau.
 //
-// Pourquoi ce module (audit architecture 2026-08-07, point C4) :
-//
-// `supabase.auth.getUser()` fait un **appel réseau** vers `/auth/v1/user`
-// pour re-valider le JWT auprès de GoTrue. Il était appelé sur ~45 sites,
-// dont l'entrée de presque chaque lecture de repository — donc chaque
-// `getAll()` / `create()` payait un RTT complet AVANT même de toucher
-// PostgREST. Deux conséquences mesurables :
-//
-//   1. Latence perçue doublée sur mobile (2 RTT au lieu d'1 par écran).
-//   2. GoTrue devenait un SPOF pour la LECTURE DE DONNÉES : une panne du
-//      service d'auth faisait échouer toutes les requêtes, pas seulement
-//      le login.
+// Pourquoi ce module : `supabase.auth.getUser()` fait un appel réseau vers
+// `/auth/v1/user` pour re-valider le JWT. Appelé à l'entrée de presque chaque
+// lecture de repository, il doublait la latence perçue sur mobile et faisait
+// de GoTrue un SPOF pour la lecture de données (une panne d'auth faisait
+// échouer toutes les requêtes, pas seulement le login).
 //
 // `getSession()` lit le JWT déjà stocké localement (localStorage) et ne
 // part sur le réseau que si le token doit être rafraîchi. Pour tout ce

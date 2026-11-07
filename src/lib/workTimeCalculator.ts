@@ -1,18 +1,15 @@
-// 🔴 `import type`, et ce n'est pas une coquetterie de style (C-103).
-// Ces quatre noms ne sont utilisés QUE comme types dans ce fichier, et les
-// importer en valeur créait SEPT cycles d'imports, tous de la même forme :
+// `import type`, et ce n'est pas une coquetterie de style : ces quatre noms ne
+// sont utilisés QUE comme types, et les importer en valeur créait SEPT cycles
+// d'imports, tous de la même forme :
 //
 //   repository.factory → stats/repository → workTimeCalculator
 //     → modules/<x> (baril) → modules/<x>/hooks → repository.factory
 //
-// Un cycle ne casse ni le build ni un test : Rollup le résout. Il rend un
-// `undefined` à l'exécution, au moment où un module lit l'export d'un module
-// pas encore évalué — donc un bug qui dépend de l'ordre d'évaluation, donc du
-// découpage en chunks, donc du build. Celui qu'on ne reproduit pas.
-//
-// `import type` est effacé à la compilation : les quatre arêtes disparaissent
-// du graphe d'exécution, et les sept cycles avec. Trouvé le 2026-09-20 par
-// `npm run check:cycles`, jamais par la lecture.
+// Un cycle ne casse ni le build ni un test : il rend un `undefined` à
+// l'exécution quand un module lit l'export d'un module pas encore évalué, donc un
+// bug qui dépend de l'ordre d'évaluation, du découpage en chunks, du build.
+// `import type` est effacé à la compilation : les arêtes disparaissent du graphe
+// (`npm run check:cycles` le garde).
 // ❌ Ne pas les repasser en import de valeur : le baril d'un module tire ses
 //    hooks, donc `repository.factory`, donc tout le graphe.
 import type { Task } from '@/modules/tasks';
@@ -53,23 +50,12 @@ interface HabitWithPeriodCompletions extends Habit {
 // TEMPS INVESTI SUR LES OKR — il vient de `kr_completions`, de rien d'autre
 // ═══════════════════════════════════════════════════════════════════
 //
-// 🔴 POURQUOI (revue du 2026-09-02). Ce fichier calculait `okrTime` en lisant
-// `kr.history`, un tableau `{ date, increment }` porté par chaque Key Result.
-// Ce champ N'EXISTE PAS : il est absent de l'interface `KeyResult`
-// (`src/modules/okrs/types.ts`), absent des mappers, et `grep "history:" src`
-// ne rend AUCUN écrivain. `(kr as … ).history || []` rendait donc toujours un
-// tableau vide, et `okrTime` valait **structurellement zéro**.
-//
-// La même lecture morte existait dans `get_work_time_stats` (mig. 127), donc la
-// page Statistiques affichait 0 pour les OKR en démo COMME en production. Seuls
-// les deux graphiques du tableau de bord donnaient le bon chiffre, parce qu'ils
-// avaient chacun leur propre `calcOkrTime` lisant `kr_completions` : trois
-// implémentations, dont deux justes et une morte, et c'est la morte qui servait
-// la page dédiée aux statistiques.
-//
-// Le journal `kr_completions` est le remplaçant de `history` (une ligne = une
-// rep, cf. `src/modules/okrs/supabase.repository.ts → recordKRReps`). C'est lui
-// qui fait foi, et il n'y a plus qu'un seul calcul, ici.
+// `okrTime` se lit dans `kr_completions` (une ligne = une rep, cf.
+// `src/modules/okrs/supabase.repository.ts → recordKRReps`), jamais dans
+// `kr.history` : ce champ n'existe pas (absent de `KeyResult` et des mappers),
+// l'ancienne lecture rendait toujours un tableau vide et `okrTime` valait
+// structurellement zéro (page Statistiques, démo comme production). Il n'y a plus
+// qu'un seul calcul, ici.
 //
 // ⚠️ La comparaison porte sur des INSTANTS, comme les tâches et les événements
 // juste au-dessus, et comme le faisait déjà le tableau de bord. Tous les

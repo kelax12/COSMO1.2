@@ -87,7 +87,7 @@ point commun : un instrument qui a parlé sans que personne ne le reprenne (`mai
 | `restore-drill` | ⚪ | dernier run le 2026-10-15, sans confirmation |
 | `Migration coverage`, `Grille Stripe`, `Erreurs de prod`, `Signaux SEO`, `db-backup`, `Uptime`, `Deploy SHA drift`, `inactive-accounts`, `renewal-notice` | ✅ | |
 | Alertes GitHub | 🟠 | CodeQL **3** (n° 19 `high`, n° 15 et 18 `medium`), Dependabot **1** (développement), secret scanning : la n° 1, connue |
-| Production | | 90 tables toutes sous RLS, 205 policies, ledger 192 (mig. `241`), 16 Edge Functions, base 30 Mo ; 2 abonnements d'organisation et 3 lignes au journal de paiement |
+| Production | | 90 tables toutes sous RLS, 205 policies, ledger 192 (mig. `241`), base 30 Mo ; 2 abonnements d'organisation et 3 lignes au journal de paiement |
 | PR ouvertes | 🟠 | n° 164 (historique KR coupé à 500, COSMO-40 ; 401 sur `get_my_tasks`) depuis le 2026-10-26 et n° 167 (calendrier des échéances) depuis le 2026-10-29, jamais fusionnées ; n° 125 (détecteur de violation) depuis le 2026-10-23 |
 
 ### Ce qui reste, et qui le porte
@@ -138,6 +138,7 @@ Une ligne par document. Les notes sont dans le tableau de bord ci-dessus, pas ic
 | `faille.md` (hors dépôt) | Sécurité : **source de vérité**, findings ouverts, ordre de priorité avant prod |
 | [`../a-faire-code.md`](../a-faire-code.md) · `a-faire-manuel.md` (hors dépôt) | Ce qui reste à faire, en code et à la main (consoles, guichets, décisions) |
 | [`MODULES.md`](./MODULES.md) | **Carte** : module → fichiers, tables, RPC, écran |
+| [`FAITS.md`](./FAITS.md) | **Chiffres du dépôt** (Edge Functions, migrations, workflows, modules, tables), générés par `npm run faits:generer` et vérifiés dans le noyau : les autres docs y renvoient |
 | [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Invariants du projet et leur état vérifié |
 | [`SECURITY.md`](./SECURITY.md) | RLS, migrations SQL, repositories, Edge Functions, Stripe, CSP, secrets |
 | [`TESTING.md`](./TESTING.md) | Vitest, Playwright, a11y, i18n, CI, **checklist avant push prod** |

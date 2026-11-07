@@ -1,11 +1,9 @@
 // Copie du haut de la landing, peinte par le prérendu de `/` et `/en/`.
 //
-// 🔴 POURQUOI (2026-10-21). Depuis C-116, une page prérendue se peint avant
-// React, pour le LCP mobile. Sur la home, ce premier rendu était le texte SEO
-// brut (#seo-fallback) : un visiteur voyait un mur de texte, puis le squelette
-// gris de `LandingSkeleton`, puis la landing. Trois pages différentes, l'une
-// après l'autre. Le bug a été « corrigé » huit fois : chaque correctif traitait
-// un cas (personne connectée, CSP…) sans toucher la décision de C-116.
+// Pourquoi : depuis C-116, une page prérendue se peint avant React pour le LCP
+// mobile. Sur la home, ce premier rendu était le texte SEO brut (#seo-fallback),
+// puis le squelette gris de `LandingSkeleton`, puis la landing : trois pages
+// l'une après l'autre.
 //
 // Le prérendu de la home et de l'entreprise peint désormais `#lp-hero`, une
 // COPIE du header et du hero rendus par React (`scripts/capture-landing-hero.mjs`),

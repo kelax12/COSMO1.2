@@ -3,7 +3,7 @@
 // `createRoot` vide `#root`, donc `#seo-fallback`, à son premier commit. Monté
 // avant la première peinture, il effaçait un prérendu que personne n'avait vu :
 // le LCP devenait un nœud rendu par React, donc dépendant de tout le JS du
-// chemin critique (5,6 à 8,3 s en Lighthouse CI mobile, 2026-10-10).
+// chemin critique.
 //
 // On attend la PREUVE de la peinture, l'entrée `first-contentful-paint`, et non
 // un `requestAnimationFrame` : pendant le chargement, Chrome exécute le rAF sans

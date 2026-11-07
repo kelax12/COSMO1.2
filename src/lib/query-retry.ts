@@ -2,25 +2,11 @@
 // FAUT-IL RETENTER CETTE REQUÊTE ? — prédicat `retry` de React Query
 // ═══════════════════════════════════════════════════════════════════
 //
-// 🔴 POURQUOI CE MODULE EXISTE (revue du 2026-09-02).
-//
-// Le prédicat vivait en ligne dans `src/App.tsx`, il n'était donc testable par
-// rien, et il était FAUX de deux façons qui s'additionnaient :
-//
-//     const msg = error instanceof Error ? error.message : '';
-//     if (msg.includes('PGRST') || msg.includes('row-level security')) return false;
-//
-//   1. `error instanceof Error` était faux pour TOUTES les erreurs de
-//      repository : `normalizeApiError` rendait un objet littéral (corrigé le
-//      même jour). `msg` valait donc systématiquement la chaîne vide.
-//   2. Même corrigé, le test portait sur le MESSAGE — or le message d'une
-//      `ApiError` vient du catalogue i18n, il est générique et traduit. Le
-//      code, lui, vit dans `.code`. La garde n'aurait jamais pu matcher, même
-//      avec une vraie `Error`.
-//
-// Résultat : chaque refus RLS définitif était retenté une fois, doublant les
-// requêtes perdues, exactement ce que le commentaire d'origine disait vouloir
-// éviter.
+// Pourquoi ce module : le prédicat vivait en ligne dans `src/App.tsx`, donc sans
+// test, et il testait `error.message`. Or `error instanceof Error` était faux
+// pour les erreurs de repository (`normalizeApiError`), et le message d'une
+// `ApiError` vient du catalogue i18n : générique et traduit. Le code, lui, vit
+// dans `.code`. Chaque refus RLS définitif était donc retenté.
 //
 // ── LA RÈGLE ───────────────────────────────────────────────────────
 //
@@ -80,7 +66,7 @@ export function shouldRetryQuery(failureCount: number, error: unknown): boolean 
 }
 
 /**
- * Prédicat `retry` des MUTATIONS (AM-4 de `docs/OBSERVABILITE.md`, 2026-10-23).
+ * Prédicat `retry` des MUTATIONS (AM-4 de `docs/OBSERVABILITE.md`).
  *
  * Le `retry: 1` inconditionnel rejouait aussi un refus nommé : un
  * `events_task_id_fkey` (23503, tâche supprimée entre-temps) revenait 1,3 s

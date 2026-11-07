@@ -84,10 +84,9 @@ export function downloadCSV(baseName: string, headers: string[], rows: unknown[]
 // Libellés — catalogue `common.csv`, jamais des littéraux
 // ═══════════════════════════════════════════════════════════════════
 //
-// 🔴 Les en-têtes, les noms de fichiers et les « Oui / Non » étaient EN DUR EN
-// FRANÇAIS (revue du 2026-09-02, point 24). Or l'export CSV est le support du
-// droit à la PORTABILITÉ (RGPD art. 20) : un anglophone qui exerce ce droit
-// recevait sept fichiers dont il ne lit aucune colonne.
+// L'export CSV est le support du droit à la PORTABILITÉ (RGPD art. 20) : les
+// en-têtes, noms de fichiers et « Oui / Non » viennent du catalogue, jamais en
+// dur en français.
 //
 // `translator` est appelé DANS chaque fonction, jamais au niveau du module :
 // évalué à l'import, il figerait la langue pour toute la session.
@@ -125,12 +124,9 @@ const fileName = (key: string): string => {
 /**
  * Tâches.
  *
- * ⚠️ Cinq colonnes ont été AJOUTÉES le 2026-09-02 (risque R-09) : `description`,
- * `sous-tâches`, `récurrence`, `KR lié` et `complétée le`. Les quatre premières
- * sont saisies par la personne, donc portables au sens de l'article 20 ; la
- * dernière est la seule trace de QUAND le travail a été fait. Le fichier posait
- * déjà la règle (« Toute nouvelle donnée SAISIE doit rejoindre cette
- * fonction ») ; l'export ne la respectait pas pour les champs ajoutés depuis.
+ * Toute nouvelle donnée SAISIE doit rejoindre cette fonction (`description`,
+ * `sous-tâches`, `récurrence`, `KR lié`, `complétée le`, seule trace de QUAND le
+ * travail a été fait) : sans cela la portabilité (art. 20) est incomplète.
  *
  * Les sous-tâches sont aplaties en une cellule lisible plutôt qu'en JSON : un
  * export de portabilité doit s'ouvrir dans un tableur, pas se parser.
@@ -168,8 +164,6 @@ export function exportTasksCSV(tasks: Task[]): void {
 /**
  * Dépendances entre tâches personnelles (mig. 132) — « bloquée par ».
  *
- * 🔴 Absentes de l'export du 2026-08-30 (livraison de la mig. 132) au
- * 2026-10-22, déclarées « dette reconnue » dans `check-portability-export.mjs`.
  * Le graphe est SAISI par la personne : c'est l'ordre dans lequel elle a
  * décidé de faire son travail, donc une donnée « fournie » au sens de
  * l'article 20.
@@ -192,12 +186,8 @@ export function exportTaskDependenciesCSV(dependencies: TaskDependency[], tasks:
 }
 
 export function exportHabitsCSV(habits: Habit[]): void {
-  // ⚠️ `icon` AJOUTÉE le 2026-09-20 (C-94). Elle manquait depuis la création de
-  // l'export, et personne ne l'avait vu : c'est un choix de la personne
-  // (`Habit.icon`, écrit par `mapToDb`), donc une donnée « fournie par la
-  // personne concernée » au sens de l'article 20. Trouvée par
-  // `npm run check:portability`, qui confronte l'export au schéma — pas par
-  // une relecture.
+  // `icon` est un choix de la personne (`Habit.icon`, écrit par `mapToDb`), donc
+  // portable au sens de l'article 20 : `npm run check:portability` le vérifie.
   const headers = cols('id', 'name', 'description', 'frequency', 'durationMin', 'color', 'icon', 'completions', 'createdAt');
   const rows = habits.map(h => {
     // ⚠️ `completionsTotal` d'abord : depuis la mig. 119, `h.completions` est
@@ -276,11 +266,9 @@ export function exportOKRsCSV(okrs: OKR[]): void {
     'krTarget',
     'krUnit',
     'krCompleted',
-    // ⚠️ AJOUTÉES le 2026-09-20 (C-94). `estimatedTime` est saisi par la
-    // personne et c'est LUI qui porte le temps investi sur les OKR
-    // (cf. `workTimeCalculator`, C-77) ; `weight` est la pondération qu'elle
-    // a choisie entre ses résultats clés. Les omettre rendait un export d'où
-    // la progression réelle n'est pas recalculable.
+    // `estimatedTime` porte le temps investi sur les OKR (`workTimeCalculator`) et
+    // `weight` la pondération choisie : sans eux la progression réelle n'est pas
+    // recalculable depuis l'export.
     'krDurationMin',
     'krWeight',
   );
@@ -315,11 +303,9 @@ export function exportOKRsCSV(okrs: OKR[]): void {
 /**
  * Journal des complétions de résultats clés (`kr_completions`).
  *
- * 🔴 Déclaré « non exporté » jusqu'au 2026-10-22 dans
- * `check-portability-export.mjs`, avec la mention « discutable ». C'est
- * pourtant la seule trace de QUAND chaque résultat clé a été atteint : le
- * fichier des OKR ne dit que l'état présent. Même raisonnement que
- * `completedAt` des tâches, ajouté le 2026-09-02.
+ * C'est la seule trace de QUAND chaque résultat clé a été atteint : le fichier
+ * des OKR ne dit que l'état présent. Même raisonnement que `completedAt` des
+ * tâches.
  *
  * Les titres sont les instantanés pris à la complétion (un OKR renommé depuis
  * garde ici le nom qu'il portait ce jour-là), c'est ce qui rend le fichier
@@ -334,10 +320,9 @@ export function exportKRCompletionsCSV(completions: KRCompletion[]): void {
 /**
  * Rôles personnalisés reçus dans une organisation (`org_member_roles`, mig. 219).
  *
- * 🔴 Déclarés « non exportés » du 2026-10-15 au 2026-10-22. Le rôle est
- * attribué PAR l'organisation, mais il concerne la personne : quels droits elle
- * a détenus, et de quand à quand. L'article 15 l'y donnerait accès de toute
- * façon ; l'export est l'endroit où elle le lit.
+ * Le rôle est attribué PAR l'organisation, mais il concerne la personne : quels
+ * droits elle a détenus, et de quand à quand. L'article 15 y donnerait accès ;
+ * l'export est l'endroit où elle le lit.
  *
  * ❌ `grantedBy` ne sort JAMAIS : il désigne une AUTRE personne. Seules les
  *    attributions de la personne connectée arrivent ici (filtre dans
@@ -359,10 +344,8 @@ export function exportOrgRolesCSV(assignments: MyOrgRoleAssignment[]): void {
 /**
  * Profil — identité et préférences fournies par la personne.
  *
- * Absent de l'export jusqu'au 2026-08-26, alors que c'est la donnée la plus
- * évidemment « fournie par la personne concernée » au sens de l'article 20 :
- * son nom et son adresse. Un export qui livre les tâches mais pas l'identité
- * de leur auteur est incomplet.
+ * Donnée la plus évidemment « fournie par la personne » au sens de l'article 20 :
+ * son nom et son adresse.
  *
  * ❌ Ne jamais exporter l'URL de l'avatar : c'est une URL de stockage signée
  *    ou publique, pas une donnée que la personne a fournie. On indique sa
@@ -388,10 +371,9 @@ export function exportProfileCSV(profile: {
 
 /** Catégories — créées par la personne, donc portables. */
 export function exportCategoriesCSV(categories: Category[]): void {
-  // ⚠️ `parent` AJOUTÉE le 2026-09-20 (C-94). L'ARBRE des catégories est
-  // construit par la personne (mig. 143, `parentId`) : l'exporter sans lui
-  // rendait une liste plate, donc une organisation perdue. Même origine que
-  // l'ajout d'`icon` aux habitudes.
+  // `parent` : l'ARBRE des catégories est construit par la personne (mig. 143,
+  // `parentId`) ; l'exporter sans lui rend une liste plate, donc une organisation
+  // perdue.
   const headers = cols('id', 'name', 'color', 'parent');
   const rows = categories.map((c) => [c.id, c.name, c.color, c.parentId ?? '']);
   download(fileName('categories'), rowsToCSV(headers, rows));
@@ -422,12 +404,8 @@ export function exportListsCSV(lists: TaskList[]): void {
  * Export combiné — déclenche les téléchargements en séquence (Safari refuse
  * souvent plusieurs `.click()` simultanés, on les espace de 150 ms).
  *
- * ⚠️ Dix fichiers depuis le 2026-10-22 (dépendances entre tâches, journal des
- * KR, rôles reçus), sept
- * depuis le 2026-08-26, quatre avant : profil, catégories et listes
- * manquaient. Toute nouvelle donnée SAISIE par
- * l'utilisateur doit rejoindre cette fonction, sinon l'export cesse
- * silencieusement d'être complet et la portabilité devient un mensonge.
+ * ⚠️ Toute nouvelle donnée SAISIE par l'utilisateur doit rejoindre cette
+ * fonction, sinon l'export cesse silencieusement d'être complet.
  */
 /**
  * ⚠️ PLAFOND. `getAll()` passe par `fetchAllPages`, borné à `MAX_ROWS = 5000`.

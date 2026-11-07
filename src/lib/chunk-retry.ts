@@ -8,7 +8,7 @@
 // React.lazy — ex. `validateAsync` (`@/lib/validation/lazy.ts`), dont le chunk
 // `validate-*.js` casse « Créer la tâche » avec le même symptôme.
 //
-// 🔴 `lazyWithRetry` garde SA propre copie de cette logique (couplée à
+// `lazyWithRetry` garde SA propre copie de cette logique (couplée à
 // `Suspense`/i18n) : ne pas fusionner les deux sans relire ses garanties.
 
 const STORAGE_KEY = 'cosmo:chunk-reload-attempt';
@@ -22,7 +22,7 @@ function isChunkLoadError(err: unknown): boolean {
   );
 }
 
-// 🔴 `sessionStorage` JETTE dans plusieurs contextes réels (webview, mode
+// `sessionStorage` JETTE dans plusieurs contextes réels (webview, mode
 // privé, cookies tiers bloqués) — même garde que `lazyWithRetry` : un confort
 // anti-boucle, jamais une condition de rendu.
 function readFlag(): string | null {

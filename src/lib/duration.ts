@@ -1,8 +1,5 @@
-// Une seule écriture des durées dans toute l'app (maquette 139, 2026-10-10).
-//
-// Avant : « 3h56min » sur l'accueil, « 1 h 30 min » sur Tâches, « 7h56 » sur
-// Statistiques, « 1h30min » dans la fiche d'événement, « 300min » dans les
-// OKR — cinq formateurs, quatre formes pour la même grandeur.
+// Une seule écriture des durées dans toute l'app (maquette 139) : avant, cinq
+// formateurs rendaient quatre formes pour la même grandeur.
 //
 // Forme retenue : « 45 min », « 2 h », « 1 h 30 » (minutes sur deux chiffres
 // après les heures, sans « min » derrière : la forme horaire suffit).

@@ -39,7 +39,7 @@ export const COOKIE_CONSENT_KEY = 'cosmo_cookie_consent';
  * Date (ms epoch) de la réponse. Un choix ne vaut pas pour toujours : la CNIL
  * recommande de redemander au bout de six mois (lignes directrices 2020).
  *
- * ⚠️ Une réponse SANS date (enregistrée avant 2026-09-24, ou posée par un test
+ * ⚠️ Une réponse SANS date (enregistrée avant le champ, ou posée par un test
  * e2e) reste valable : `stampLegacyConsent` lui donne une date au prochain
  * passage du bandeau, ce qui démarre son horloge de six mois.
  */
@@ -87,7 +87,7 @@ export function stampLegacyConsent(now: number = Date.now()): void {
 /**
  * Rouvre le bandeau pour revenir sur un choix déjà fait.
  *
- * 🔴 RGPD art. 7.3 : retirer son consentement doit être aussi simple que le
+ * RGPD art. 7.3 : retirer son consentement doit être aussi simple que le
  * donner. Avant ce point d'entrée, la seule façon de revenir sur « Accepter »
  * était d'effacer les données du site, ce que la politique osait écrire.
  * Appelé par le lien « Gérer les cookies » (footer, Paramètres, politique).

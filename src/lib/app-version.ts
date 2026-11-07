@@ -1,13 +1,8 @@
 // Détection d'un onglet qui exécute un bundle périmé — partie PURE.
 //
-// Le contexte, mesuré : le 2026-08-26, **91,5 % du trafic Supabase de la
-// journée venait de deux onglets** qui exécutaient encore le bundle d'avant la
-// suppression des sondes périodiques. Une SPA ne recharge pas son bundle toute
-// seule : un onglet laissé ouvert exécute indéfiniment la version qu'il a
-// téléchargée. Conséquence contre-intuitive, inscrite dans
-// `docs/PERFORMANCE.md` : **un gain de performance n'atteint que les
-// utilisateurs qui rouvrent l'application**, et les plus assidus sont les
-// derniers servis.
+// Une SPA ne recharge pas son bundle toute seule : un onglet laissé ouvert
+// exécute indéfiniment la version téléchargée, et un gain de performance
+// n'atteint que ceux qui rouvrent l'application (`docs/PERFORMANCE.md`).
 //
 // La décision d'afficher quoi que ce soit tient en trois lignes, isolées ici
 // pour être testables sans DOM, sans réseau et sans horloge réelle.

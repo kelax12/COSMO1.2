@@ -6,7 +6,7 @@
 // produit une query string d'environ 19 ko : bien au-delà des ~8 ko qu'acceptent
 // les intermédiaires HTTP usuels, donc un **414 URI Too Long** — et il tombe
 // AVANT que la troncature de la lecture précédente ne devienne visible, ce qui
-// le rend illisible depuis le symptôme (revue du 2026-09-02, point 14).
+// le rend illisible depuis le symptôme.
 //
 // Mesuré : un UUID coûte 36 caractères, plus la virgule encodée `%2C` (3), soit
 // ~39 octets par identifiant. 100 par lot ≈ 3,9 ko d'URL, avec de la marge.

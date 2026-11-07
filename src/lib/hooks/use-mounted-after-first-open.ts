@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
  * modales) : non montées tant qu'on ne les a jamais ouvertes, donc hors du
  * chunk de la page, mais gardées ensuite, sinon elles disparaîtraient d'un coup
  * au lieu de glisser. Utilisé par `pages/agenda/lazy-overlays.tsx` et
- * `pages/okr/lazy-dialogs.tsx` (budget de bundle, 2026-10-11).
+ * `pages/okr/lazy-dialogs.tsx` (budget de bundle).
  */
 export function useMountedAfterFirstOpen(open: boolean): boolean {
   const [mounted, setMounted] = useState(open);

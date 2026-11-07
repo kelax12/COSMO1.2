@@ -26,11 +26,9 @@ export const nextWeekStr = (now: Date = new Date()): string => {
 /**
  * Clé de catalogue, jamais un libellé.
  *
- * 🔴 Ces trois presets portaient « Aujourd'hui », « Demain » et « Lundi
- * prochain » EN DUR, et ils sont rendus par les deux pickers du produit — le
- * calendrier desktop et la feuille mobile de la modale de tâche. Un visiteur
- * anglophone les voyait donc en français (revue du 2026-09-02, point 5). Les
- * traduire ici est impossible : ce module est pur, il n'a pas de locale.
+ * Ces trois presets sont rendus par les deux pickers du produit (calendrier
+ * desktop, feuille mobile). Les traduire ici est impossible : ce module est
+ * pur, il n'a pas de locale.
  */
 export type DatePresetKey = 'datePicker.today' | 'datePicker.tomorrow' | 'datePicker.nextMonday';
 

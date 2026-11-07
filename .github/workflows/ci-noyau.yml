@@ -170,6 +170,21 @@ jobs:
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run check:docs
 
+      # COD-01 : les commentaires de `src/` ne racontent pas d'incident. Cliquet
+      # sur les lignes de commentaire à date ISO et à marqueur rouge : il ne
+      # peut que baisser (`scripts/commentaires.reference.json`).
+      - name: Commentaires de src (cliquet des recits)
+        id: commentaires
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:commentaires
+
+      # DOC-03 : un fait chiffre se calcule depuis la source, il ne se recopie
+      # pas. `docs/FAITS.md` est genere ; un ecart avec la generation echoue.
+      - name: Faits chiffres (docs/FAITS.md genere)
+        id: faits
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:faits
+
       - name: Validate SQL migrations
         id: migrations
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
