@@ -502,6 +502,55 @@ La session retombe en `aal1` et l'écran d'enrôlement reparaît au prochain pas
 
 ---
 
+## 2sexies. Traitements planifiés : pg_cron, Vault, journal (ARC-06, 2026-11-07)
+
+**Inventaire du 2026-11-07** (22 workflows planifiés). Cinq écrivent en production, par une Edge
+Function à `x-cron-secret`, et quittent GitHub : `renewal-notice.yml` (deux jobs : `renewal-notice`,
+`seat-alert`), `inactive-accounts.yml`, `org-digest.yml` (deux modes), `org-webhook-dispatch.yml`.
+Les dix-sept autres **restent** : ils lisent, comparent ou sondent (`uptime`, `posture`,
+`migration-coverage`, `edge-deploy-drift`, `deploy-sha-drift`, `prod-errors`, `stripe-prices`,
+`secrets-age`, `seo-signals`, `daily-digest`, `weekly-digest`), testent le dépôt (`codeql`,
+`mutation`, `sabotages`, `gardes-calendrier`, `scalability-volume`, sur une stack jetable) ou
+exportent hors fournisseur (`db-backup`, `restore-drill` vers un projet jetable).
+
+| Pièce | Où | Rôle |
+|---|---|---|
+| `cron_invoke(job)` | mig. `245` | pg_net + `x-cron-secret` lu dans Vault, une ligne `cron_runs` par appel |
+| `cron_runs` | mig. `245` | job, début, fin, statut, code HTTP. RLS sans policy, rien pour `anon`/`authenticated` |
+| `cron_leases` | mig. `245` + `_shared/cron-lease.ts` | un bail par job : deux passages simultanés ne travaillent jamais ensemble |
+| 7 jobs `cosmo-*` | mig. `246` | six appels + `cosmo-cron-runs-close` (relevé des réponses pg_net, toutes les 5 min) |
+| `Journal des crons` | `cron-journal.yml` → `ci-alert.yml` | rougit sur un job `absent` ou en `echec` dans sa fenêtre |
+
+Secrets Vault (noms fixés, jamais de valeur dans le dépôt) : `cosmo_project_url`
+(`https://<ref>.supabase.co`) et `cosmo_cron_secret` (**même valeur** que `CRON_SECRET` des Edge
+Functions et des secrets Actions). Rattrapage d'un passage manqué : `select public.cron_invoke('<job>');`
+en `postgres`, ou le `workflow_dispatch` du workflow d'origine : sûrs tous les deux (bail + rejeu idempotent).
+
+**Bascule, dans l'ordre (gestes d'Axel).** Les deux ordonnanceurs tournent ensemble entre 3 et 5 :
+c'est voulu, il n'y a ni trou ni doublon (bail).
+
+1. **Edge Functions avec bail déployées** : `Edge deploy` le fait au push sur `main`. Sans la `245`,
+   elles travaillent sans bail, comme avant (RPC absente reconnue).
+2. **Secrets Vault**, SQL editor :
+   `select vault.create_secret('https://ykeugqfgklejcdbrmawy.supabase.co', 'cosmo_project_url', 'lue par cron_invoke (mig. 245)');`
+   puis `select vault.create_secret('<valeur de CRON_SECRET>', 'cosmo_cron_secret', 'x-cron-secret des fonctions planifiees (mig. 245)');`.
+   ⚠️ Une valeur de Supabase ne se relit pas : sans copie, faire tourner `CRON_SECRET` aux trois
+   endroits (`supabase secrets set`, `gh secret set`, Vault) et dater `.github/secrets-registry.json`.
+3. **`245`** : `supabase db query --linked -f supabase/proofs/245.proof.sql` (0 ECHEC), appliquer,
+   relire au catalogue (`pg_net` présent, RLS des deux tables, `has_function_privilege` des six
+   fonctions : `anon` non, `service_role` sur le bail seul).
+4. **`246`** : preuve `246.proof.sql` (0 ECHEC, Vault présent), appliquer, relire
+   `select jobname, schedule, command, active from cron.job order by jobname;` (onze d'avant + sept).
+   Après 15 min : `select * from public.cron_runs order by id desc limit 10;` montre
+   `org-webhook-dispatch` en `ok`.
+5. **Après 24 h** (tous les jobs passés une fois) : `select * from public.cron_runs_verdict();` rend
+   six `ok`, et `gh workflow run cron-journal.yml` sort vert.
+6. **Retirer les `schedule:` GitHub** : commit prêt sur `noyau/cron-bascule` (garde les
+   `workflow_dispatch`, planifie `Journal des crons` à l'heure). Le rebaser sur `main`, le pousser
+   sur `noyau/cron-bascule`, attendre `CI noyau` vert sur ce SHA, puis `git push origin HEAD:main`.
+
+---
+
 ## 2. Appliquer une migration de base de données
 
 ⚠️ **Les migrations ne sont PAS appliquées par le déploiement Vercel.** Elles
