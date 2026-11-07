@@ -96,3 +96,16 @@ compilait, la suite passait.
 - ⚠️ **Se prouver AVANT, en transaction annulée**, acteur par acteur : une policy est une frontière
   de sécurité, pas un plan d'exécution. Cinq vérifications statiques n'exécutent aucun SQL, et c'est
   ainsi que la mig. 143 a mis un défaut en production.
+
+## Le schéma vivant se lit dans le dépôt (MAI-01, API-01, ARC-07)
+
+Trois fichiers **générés** depuis une base vierge où toutes les migrations sont rejouées, et le job
+`contrat-donnees` de `CI noyau` **échoue** s'ils divergent : `supabase/schema.sql` (`pg_dump`),
+`supabase/rpc-inventory.md` (droits `EXECUTE`, DEFINER, `search_path`, appelants du front),
+`src/generated/database.types.ts` (accroché aux mappers par `src/lib/db-contract.ts`).
+
+- ✅ **Toute migration** (colonne, fonction, GRANT, policy) **se commit avec les trois régénérés** :
+  `supabase start`, `node scripts/apply-migrations.mjs`, puis `npm run contrat:generer` (Docker requis).
+- ✅ **Sans Docker** : pousser sur `noyau/<nom>`, télécharger l'artefact `contrat-donnees` du run
+  (`gh run download <id> -n contrat-donnees`), copier les trois fichiers, commiter.
+- ❌ Ne jamais éditer ces fichiers à la main, ni monter la CLI épinglée du job sans les régénérer.

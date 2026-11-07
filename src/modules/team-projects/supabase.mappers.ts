@@ -23,6 +23,7 @@ import {
   TeamProjectHealth,
   TeamProjectTemplatePayload,
 } from './types';
+import type { ColumnsExist, DbRow, Verified } from '@/lib/db-contract';
 
 export interface ProjectRow {
   id: string;
@@ -187,3 +188,10 @@ export const mapActivity = (r: ActivityRow): TeamTaskActivity => ({
   newValue: r.new_value,
   createdAt: r.created_at,
 });
+
+// ARC-07 : une colonne renommée en base casse `tsc` ici, pas en production.
+export type ProjectRowContract = Verified<ColumnsExist<ProjectRow, DbRow<'team_projects'>>>;
+export type TeamTaskRowContract = Verified<ColumnsExist<TaskRow, DbRow<'team_tasks'>>>;
+export type CommentRowContract = Verified<ColumnsExist<CommentRow, DbRow<'team_task_comments'>>>;
+export type SubtaskRowContract = Verified<ColumnsExist<SubtaskRow, DbRow<'team_task_subtasks'>>>;
+export type ActivityRowContract = Verified<ColumnsExist<ActivityRow, DbRow<'team_task_activity'>>>;

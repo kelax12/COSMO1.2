@@ -15,9 +15,9 @@
 > datées vivent dans le doc cité en fin de ligne. ❌ Elle ne dit pas qu'une garde est juste : la
 > section suivante existe précisément parce que quatre d'entre elles répondaient sans mesurer.
 >
-> **Compte, relu dans `package.json` le 2026-11-06** : **42** gardes `check:*` / `i18n:*` /
+> **Compte, relu dans `package.json` le 2026-11-06** : **43** gardes `check:*` / `i18n:*` /
 > `validate:*`, plus trois outils de mesure (`analyze:entry`, `profile:landing`, `images:check`).
-> La racine a écrit « 36 » du 09-21 au 09-30. Un total se recompte, il ne se recopie pas.
+> Un total se recompte, il ne se recopie pas.
 
 | Commande | Ce qu'elle regarde | Item | Détail |
 |---|---|---|---|
@@ -56,6 +56,7 @@
 | `check:portability` | export art. 20 comparé à l'inventaire des colonnes | `C-94` | `docs/RGPD.md` |
 | `check:stripe-prices` | grille **Stripe** comparée au code | `C-106` | `docs/STRIPE-LIVE.md` |
 | `check:secrets-age` | âge des secrets (GitHub, Edge, Vercel) contre `.github/secrets-registry.json` : échu, date inconnue, hors registre, jeton absent | `AM-3` | `docs/SECURITY.md` |
+| `check:contrat` | `schema.sql`, `rpc-inventory.md` et types générés vs les migrations (CI seule, base vierge) | `ARC-07` | `supabase/migration/CLAUDE.md` |
 | `check:docs` | plafonds et pointeurs des `CLAUDE.md` | | ce fichier |
 | `check:docs-scored` | chaque doc de `docs/` déclare son rapport à une note | `C-109` | `docs/README.md` |
 | `check:lecteurs-ecran` | échéance des séances VoiceOver / NVDA, étapes à attendu | `M-52` | `docs/AUDIT-NVDA-WINDOWS.md` |
@@ -79,9 +80,7 @@
 liste NOMMÉE de ses objets. Un rouge = de nouveaux objets en base : les relire au catalogue
 (`pg_get_functiondef`, `has_function_privilege`, `relacl`) AVANT `--update`, et écrire leurs noms
 dans la `_note`. ❌ Jamais recaler pour faire taire.
-⚠️ **Rouge au 2026-11-05** (référence du 10-26) : `rls_enabled_no_policy` 24/14, DEFINER exposées
-87/84, `unindexed_foreign_keys` nouveau (3). Écarts nés des mig. `229` → `240` : relire au
-catalogue AVANT `--update`.
+⚠️ Écart constaté le 2026-11-05 : `docs/SECURITY.md` § AM-5.
 
 ---
 
