@@ -75,6 +75,13 @@ const CONTRAT = {
       + 'artefact qui n\'existe nulle part. Mesuré le 2026-09-02 : 49 ko gzip '
       + "d'écart.",
   },
+  VITE_SENTRY_TRACES_SAMPLE_RATE: {
+    requise: false,
+    absence:
+      "Taux d'échantillonnage des transactions Sentry (OBS-02) : absent, "
+      + '0,1. Hors de [0, 1] ou illisible, 0,1 aussi (`src/lib/sentry-tracing.ts`). '
+      + "Sans consentement « Accepter », rien n'est mesuré quel que soit le taux.",
+  },
   VITE_STRIPE_PUBLISHABLE_KEY: {
     requise: false,
     absence:

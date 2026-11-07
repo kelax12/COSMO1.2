@@ -1,6 +1,8 @@
 import { startTransition, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { scrubBreadcrumb, scrubEvent } from './lib/sentry-scrub';
+import { makeTracesSampler, parameterizeRoute, parseTracesSampleRate, scrubTransaction, tracingEnabled } from './lib/sentry-tracing';
+import { readConsent, subscribe as subscribeConsent } from './lib/cookie-consent';
 import { BrowserRouter } from 'react-router';
 import App from './App.tsx';
 import { RootErrorBoundary } from './components/RootErrorBoundary';
@@ -48,6 +50,35 @@ installEarlyHandlers();
 
 const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
 
+/** Taux d'échantillonnage des transactions (OBS-02), 0,1 par défaut. */
+const tracesSampleRate = parseTracesSampleRate(import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE);
+
+/**
+ * L'intégration de mesure de performance : navigation, requêtes (Supabase,
+ * fonctions Edge), interactions longues (INP, tâches longues, images
+ * d'animation longues). Les noms de route sont paramétrés AVANT la création du
+ * span, et nettoyés une seconde fois dans `beforeSendTransaction`.
+ */
+function tracingIntegration(Sentry: typeof import('./lib/sentry-client')) {
+  return Sentry.browserTracingIntegration({
+    beforeStartSpan: (options) => ({ ...options, name: parameterizeRoute(options.name) }),
+    enableInp: true,
+    enableLongTask: true,
+    enableLongAnimationFrame: true,
+  });
+}
+
+let tracingAdded = false;
+/** Ajoute le traçage à chaud quand la personne accepte APRÈS l'amorçage de Sentry. */
+function enableTracingOnConsent(Sentry: typeof import('./lib/sentry-client')): void {
+  const add = () => {
+    if (tracingAdded || !tracingEnabled(readConsent())) return;
+    tracingAdded = true;
+    try { Sentry.addIntegration(tracingIntegration(Sentry)); } catch { tracingAdded = false; }
+  };
+  subscribeConsent(add);
+}
+
 /**
  * Configuration du SDK. Reste ICI, et pas dans `monitoring.ts` : le scrubbing
  * RGPD et l'échantillonnage se relisent au même endroit que le reste de
@@ -66,8 +97,13 @@ function initSentry(Sentry: typeof import('./lib/sentry-client')): void {
     // transaction de chargement est dégradée. Ça porte sur la MESURE de
     // performance, pas sur la capture d'erreurs — celle-ci est intégralement
     // préservée par le tampon de `monitoring.ts`.
-    integrations: [Sentry.browserTracingIntegration()],
-    tracesSampleRate: 0.1,
+    //
+    // OBS-02 : la mesure de performance est CONDITIONNÉE au consentement
+    // (docs/OBSERVABILITE.md § Mesure de performance). Sans « Accepter », aucune
+    // intégration de traçage : ni transaction, ni en-tête `sentry-trace`. Elle
+    // s'ajoute à chaud si la personne accepte plus tard (`enableTracing`).
+    integrations: tracingEnabled(readConsent()) ? [tracingIntegration(Sentry)] : [],
+    tracesSampler: makeTracesSampler(tracesSampleRate, readConsent),
     // Propage le contexte de trace aux requêtes Supabase (corrèle un appel
     // PostgREST/RPC lent à la transaction front qui l'a déclenché).
     // 🔴 JAMAIS `/functions/v1/` : les Edge Functions n'autorisent pas
@@ -82,9 +118,11 @@ function initSentry(Sentry: typeof import('./lib/sentry-client')): void {
       'Non-Error promise rejection captured',
     ],
     beforeSend: (event) => scrubEvent(event),
-    beforeSendTransaction: (event) => scrubEvent(event),
+    beforeSendTransaction: (event) => scrubTransaction(scrubEvent(event), readConsent()),
     beforeBreadcrumb: (crumb) => scrubBreadcrumb(crumb),
   });
+  tracingAdded = tracingEnabled(readConsent());
+  enableTracingOnConsent(Sentry);
 }
 
 // Mobile debug console — only loaded when the URL contains ?debug=1.

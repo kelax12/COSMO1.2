@@ -14,13 +14,14 @@
 // ═══════════════════════════════════════════════════════════════════
 import Stripe from 'npm:stripe@14.21.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { withTrace } from '../_shared/trace.ts'
 import { opsAlert } from '../_shared/alert.ts'
 import { isResourceMissing } from '../_shared/stripe-errors.ts'
 import { customerContactFields } from '../_shared/org-billing-contact.ts'
 import { corsHeadersFor, requireEnv } from '../_shared/env.ts'
 
 const APP_URL = requireEnv('APP_URL')
-Deno.serve(async (req) => {
+Deno.serve(withTrace('stripe-org-portal', async (req) => {
   const cors = corsHeadersFor(req)
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: cors })
@@ -121,4 +122,4 @@ Deno.serve(async (req) => {
     await opsAlert('stripe-org-portal', 'billing portal session creation failed — customer cannot manage or cancel')
     return json({ error: 'Internal server error' }, 500)
   }
-})
+}))

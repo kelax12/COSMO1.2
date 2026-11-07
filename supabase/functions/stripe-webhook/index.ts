@@ -1,5 +1,6 @@
 import Stripe from 'npm:stripe@14.21.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { withTrace } from '../_shared/trace.ts'
 import { opsAlert } from '../_shared/alert.ts'
 import { tierFromPriceId, FREE_TIER_MAX_MEMBERS } from '../_shared/org-tiers.ts'
 import { resolveTierMatch } from '../_shared/org-stripe-prices.ts'
@@ -30,7 +31,7 @@ const supabaseAdmin = createClient(
  */
 const WEBHOOK_SECRET = Deno.env.get('STRIPE_WEBHOOK_SECRET')
 
-Deno.serve(async (req) => {
+Deno.serve(withTrace('stripe-webhook', async (req) => {
   // L-13 — Stripe only POSTs; reject other methods early without parsing.
   if (req.method !== 'POST') {
     return new Response('Method not allowed', { status: 405 })
@@ -200,7 +201,7 @@ Deno.serve(async (req) => {
   return new Response(JSON.stringify({ received: true }), {
     headers: { 'Content-Type': 'application/json' },
   })
-})
+}))
 
 // ─── Event handlers ────────────────────────────────────────────────
 

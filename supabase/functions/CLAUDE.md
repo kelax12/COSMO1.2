@@ -72,6 +72,9 @@ comment elle refuse, jamais qu'elle fait son travail.
   `requireEnv` de `_shared/env.ts` (COD-03). `APP_URL` seule, origine locale par `CORS_DEV_ORIGINS`.
   Garde : `src/edge-cors.guard.test.ts` (`affiliation-api` en exception nommée).
 - ❌ **Jamais `event.data.object` appliqué tel quel** pour un abonnement : relire (SEC-08).
+- ⚠️ **Traçage Sentry : `Deno.serve(withTrace('<slug>', …))`** (`_shared/trace.ts`, 9 fonctions, OBS-02). `SENTRY_DSN_EDGE`
+  absent, le gestionnaire passe tel quel : c'est de l'observabilité, pas une garde. ❌ Jamais d'URL, d'en-tête,
+  de corps ni d'identifiant en attribut de span (`src/edge-trace.guard.test.ts`). → `docs/OBSERVABILITE.md`.
 - ⚠️ `opsAlert()` pousse sur `OPS_ALERT_WEBHOOK_URL`. Un secret absent se solde par un **échec**,
   jamais par un `::warning::` dans un run vert.
 - ⚠️ **`_shared/refund-replay.ts` est un module TS pur, et doit le rester** : mélangé aux appels

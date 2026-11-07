@@ -35,6 +35,7 @@
 //    erreur : les autres avis de la journée doivent partir quand même.
 // ═══════════════════════════════════════════════════════════════════
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { withTrace } from '../_shared/trace.ts'
 import { opsAlert } from '../_shared/alert.ts'
 import { renewalNoticeMail } from '../_shared/renewal-notice-text.ts'
 import { withCronLease } from '../_shared/cron-lease.ts'
@@ -78,7 +79,7 @@ interface DueOrg {
   tier_key: string
 }
 
-Deno.serve(async (req) => {
+Deno.serve(withTrace('renewal-notice', async (req) => {
   // ÉCHEC FERMÉ, volontairement. Une première version écrivait
   // `if (CRON_SECRET && ...)`, ce qui laissait passer TOUT LE MONDE tant que
   // le secret n'était pas posé — et il ne l'était pas. Sur une fonction qui
@@ -240,4 +241,4 @@ Deno.serve(async (req) => {
       })
     },
   })
-})
+}))

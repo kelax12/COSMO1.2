@@ -19,6 +19,7 @@
 // qui rend opposable le prorata de la période utilisée (L221-25).
 // ═══════════════════════════════════════════════════════════════════
 import Stripe from 'npm:stripe@14.21.0'
+import { withTrace } from '../_shared/trace.ts'
 import { CGV_VERSION } from '../_shared/billing-mail-text.ts'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from '../_shared/alert.ts'
@@ -31,7 +32,7 @@ import { checkoutBlockFor } from '../_shared/org-checkout-gate.ts'
 import { corsHeadersFor, requireEnv } from '../_shared/env.ts'
 
 const APP_URL = requireEnv('APP_URL')
-Deno.serve(async (req) => {
+Deno.serve(withTrace('stripe-org-checkout', async (req) => {
   const cors = corsHeadersFor(req)
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: cors })
@@ -321,4 +322,4 @@ Deno.serve(async (req) => {
     await opsAlert('stripe-org-checkout', 'org checkout session creation failed — customer could not subscribe')
     return json({ error: 'Internal server error' }, 500)
   }
-})
+}))
