@@ -505,8 +505,13 @@ if (process.argv[1] && process.argv[1].endsWith('restore-drill.mjs')) {
     temoin: process.env.TEMOIN === 'true',
   });
   for (const l of lines) console.log(l);
-  if (process.env.GITHUB_STEP_SUMMARY) {
-    appendFileSync(process.env.GITHUB_STEP_SUMMARY, resumeMarkdown(resume, process.env.RUN_ID));
-  }
+  const md = resumeMarkdown(resume, process.env.RUN_ID);
+  // Le MEME resume au journal, replie : le resume de job ne se lit qu'en
+  // session GitHub, le journal se relit aussi par l'API (`gh run view --log`).
+  // Des noms de tables et des comptes, rien d'autre.
+  console.log('::group::Resume du drill (comptages par table)');
+  console.log(md);
+  console.log('::endgroup::');
+  if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, md);
   process.exit(exit);
 }
