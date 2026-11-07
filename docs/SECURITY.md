@@ -739,13 +739,23 @@ Fonctions SECURITY DEFINER clés : `accept_friend_request_v2`, `accept_shared_ta
 
 ---
 
-### État des migrations (relu au ledger de production le 2026-11-05)
+### État des migrations (relu au ledger de production le 2026-11-07)
 
 - Dépôt : `000` → `240` (216 fichiers). **Tout est en production sauf `206`** (jalons, non
   appliquée délibérément). `Migration coverage` vert les 2026-11-04 et 11-05.
 - En base **sans** ligne au ledger, par décision d'Axel : `164`, `181`, `190`-`195`, `197`-`199`.
   `196` est retirée par la `200`. ❌ **Ne jamais réappliquer la `164`** : elle retire la branche
   « membre du projet » de la `190`.
+- **2026-11-07** : `242` → `244` en prod, dernière entrée `244_select_permissive_unique`
+  (`20261107091936`). Pour `242` (`20261107091512`), `243` (`20261107091727`) et `244` : ledger
+  relu avant, preuve `supabase/proofs/24x.proof.sql` rejouée en prod (0 ECHEC, annulation
+  vérifiée), `apply_migration`, relecture au catalogue. `242` : `pg_default_acl` de `postgres`
+  sur `public` ne nomme plus `anon` (tables, séquences) ; les fonctions et `supabase_admin` hors
+  périmètre. `243` : `pg_get_functiondef(can_access_team_project)` = le corps du fichier, ACL
+  inchangée, deux `EXISTS` sur les policies de dépendances. `244` : une SELECT permissive par
+  table sur les sept ; la prod ne portait déjà plus les « read own » relevés sur base rejouée,
+  la 244 y a recréé des prédicats identiques (vérifié au caractère près). Advisors sans nouvelle
+  alerte ; aucun 42501 ni 500 dans les logs, sans trafic API dans la fenêtre.
 - Le journal daté des applications `150` → `223` (preuves, numéros de ledger, relectures au
   catalogue), dont les premières lignes étaient démenties par les suivantes, est archivé :
   [`archive/SECURITY-journal-migrations-150-223.md`](./archive/SECURITY-journal-migrations-150-223.md).
