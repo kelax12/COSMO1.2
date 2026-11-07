@@ -857,7 +857,8 @@ d'attraper une vague de code non testé. C'est la seconde qui a été prise.
 > | Garde | Forme |
 > |---|---|
 > | `supabase.from()` uniquement dans un `*.repository.ts` | binaire — 0 violation, et ça doit le rester |
-> | Aucun fichier source > 600 lignes | **binaire depuis le 2026-09-05** — `KNOWN_OVERSIZED` est vide, `OVERSIZED_BUDGET` vaut 0 |
+> | Aucun fichier source > 1 000 lignes (600 jusqu'au 2026-11-07) | binaire, `KNOWN_OVERSIZED` vide ; dernier recours depuis ARC-05 |
+> | Complexité par fonction (`eslint-rules/complexite.guard.test.mjs`, 2026-11-07) | **cliquet** fonction par fonction sur 134 fichiers : une valeur qui monte ou qui baisse sans être recopiée rougit. Cf. `ARCHITECTURE.md` § 3 |
 >
 > Le cliquet plutôt qu'un seuil dur : rendre la règle rouge sur les 17 fichiers existants
 > produirait une gate rouge en permanence, donc ignorée — exactement le travers que l'audit

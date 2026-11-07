@@ -1,0 +1,473 @@
+{
+  "_lire": "docs/ARCHITECTURE.md § 3. Ligne de base d une metrique NEUVE (2026-11-07), pas une allowlist : chaque valeur ne peut que baisser. Une valeur qui monte, ou une fonction de plus au-dessus du seuil, fait rougir eslint-rules/complexite.guard.test.mjs. Une valeur qui baisse aussi, tant qu elle n est pas recopiee ici.",
+  "seuils": {
+    "complexity": 20,
+    "max-depth": 4,
+    "max-lines-per-function": 200
+  },
+  "fichiers": {
+    "src/components/AuthForm.tsx": {
+      "complexity": [37],
+      "max-lines-per-function": [379]
+    },
+    "src/components/BugReportModal.tsx": {
+      "max-lines-per-function": [227]
+    },
+    "src/components/CollaboratorItem.tsx": {
+      "complexity": [45]
+    },
+    "src/components/ColorSettingsModal.tsx": {
+      "max-lines-per-function": [326]
+    },
+    "src/components/CommandPalette.tsx": {
+      "max-lines-per-function": [221]
+    },
+    "src/components/EventModal.tsx": {
+      "complexity": [39, 23],
+      "max-lines-per-function": [341]
+    },
+    "src/components/HabitActionsMenu.tsx": {
+      "max-lines-per-function": [258]
+    },
+    "src/components/HabitGlobalTracking.tsx": {
+      "max-lines-per-function": [294]
+    },
+    "src/components/HabitModal.tsx": {
+      "complexity": [28],
+      "max-lines-per-function": [322]
+    },
+    "src/components/HabitTable.tsx": {
+      "max-lines-per-function": [357]
+    },
+    "src/components/InboxMenu.tsx": {
+      "complexity": [42],
+      "max-lines-per-function": [432]
+    },
+    "src/components/Layout.tsx": {
+      "complexity": [22],
+      "max-lines-per-function": [285]
+    },
+    "src/components/OKRDeadlineReviewModal.tsx": {
+      "max-lines-per-function": [236]
+    },
+    "src/components/OKRModalSheet.tsx": {
+      "max-lines-per-function": [392]
+    },
+    "src/components/QuickAddBar.tsx": {
+      "max-lines-per-function": [214]
+    },
+    "src/components/TaskFilter.tsx": {
+      "complexity": [24],
+      "max-lines-per-function": [211]
+    },
+    "src/components/TaskSidebar.tsx": {
+      "max-lines-per-function": [405]
+    },
+    "src/components/TaskTable.tsx": {
+      "complexity": [39],
+      "max-lines-per-function": [407]
+    },
+    "src/components/TextType.tsx": {
+      "complexity": [23]
+    },
+    "src/components/TodayHabits.tsx": {
+      "max-lines-per-function": [213]
+    },
+    "src/components/TodayTasks.tsx": {
+      "max-lines-per-function": [202]
+    },
+    "src/components/WeeklyCheckinModal.tsx": {
+      "max-lines-per-function": [218]
+    },
+    "src/components/add-to-list/DesktopAddToList.tsx": {
+      "max-lines-per-function": [278]
+    },
+    "src/components/add-to-list/MobileAddToList.tsx": {
+      "max-lines-per-function": [296]
+    },
+    "src/components/event-modal/EventModalFormDesktop.tsx": {
+      "complexity": [47],
+      "max-lines-per-function": [405]
+    },
+    "src/components/event-modal/EventModalFormMobile.tsx": {
+      "complexity": [24],
+      "max-lines-per-function": [369]
+    },
+    "src/components/layout/MobileMoreSheet.tsx": {
+      "max-lines-per-function": [229]
+    },
+    "src/components/layout/NavItemLink.tsx": {
+      "complexity": [25]
+    },
+    "src/components/onboarding/FirstRunSetup.tsx": {
+      "complexity": [48],
+      "max-lines-per-function": [358]
+    },
+    "src/components/onboarding/perso/PersoPreview.tsx": {
+      "complexity": [39],
+      "max-lines-per-function": [267]
+    },
+    "src/components/onboarding/perso/PersoSteps.tsx": {
+      "max-lines-per-function": [361]
+    },
+    "src/components/org-guide/guide-runner.ts": {
+      "complexity": [21]
+    },
+    "src/components/organization/AddWidgetPage.tsx": {
+      "max-lines-per-function": [202]
+    },
+    "src/components/organization/ApercuWidgetGrid.tsx": {
+      "complexity": [26],
+      "max-lines-per-function": [449]
+    },
+    "src/components/organization/AssignRoleDialog.tsx": {
+      "complexity": [26],
+      "max-lines-per-function": [272]
+    },
+    "src/components/organization/BulkActionsBar.tsx": {
+      "complexity": [30]
+    },
+    "src/components/organization/CreateTeamModal.tsx": {
+      "complexity": [21]
+    },
+    "src/components/organization/DeleteTeamDialog.tsx": {
+      "complexity": [37]
+    },
+    "src/components/organization/InviteOrJoinModal.tsx": {
+      "max-lines-per-function": [239]
+    },
+    "src/components/organization/MemberAgendaBody.tsx": {
+      "complexity": [21],
+      "max-lines-per-function": [360]
+    },
+    "src/components/organization/MemberDirectory.tsx": {
+      "complexity": [33],
+      "max-lines-per-function": [305]
+    },
+    "src/components/organization/MemberDirectoryRow.tsx": {
+      "complexity": [40],
+      "max-lines-per-function": [230]
+    },
+    "src/components/organization/MemberDirectoryToolbar.tsx": {
+      "complexity": [32],
+      "max-lines-per-function": [213]
+    },
+    "src/components/organization/MemberPermissionsSheet.tsx": {
+      "max-lines-per-function": [248]
+    },
+    "src/components/organization/MyWorkSections.tsx": {
+      "complexity": [26],
+      "max-lines-per-function": [229]
+    },
+    "src/components/organization/MyWorkTab.tsx": {
+      "complexity": [27]
+    },
+    "src/components/organization/MyWorkTeamWidgets.tsx": {
+      "complexity": [21]
+    },
+    "src/components/organization/OffboardMemberDialog.tsx": {
+      "complexity": [35]
+    },
+    "src/components/organization/OkrFilterBar.tsx": {
+      "complexity": [26]
+    },
+    "src/components/organization/OrgBillingContactCard.tsx": {
+      "complexity": [23]
+    },
+    "src/components/organization/OrgBillingTab.tsx": {
+      "complexity": [54],
+      "max-lines-per-function": [245]
+    },
+    "src/components/organization/OrgInviteSection.tsx": {
+      "complexity": [26],
+      "max-lines-per-function": [222]
+    },
+    "src/components/organization/OrgNotificationsPanel.tsx": {
+      "complexity": [27]
+    },
+    "src/components/organization/OrgPlanCard.tsx": {
+      "complexity": [33]
+    },
+    "src/components/organization/OrgProfileForm.tsx": {
+      "complexity": [21]
+    },
+    "src/components/organization/OrgReportsSection.tsx": {
+      "complexity": [37],
+      "max-lines-per-function": [376]
+    },
+    "src/components/organization/OrgSettingsSection.tsx": {
+      "complexity": [57],
+      "max-lines-per-function": [423]
+    },
+    "src/components/organization/OrgTaskFilterBar.tsx": {
+      "complexity": [37]
+    },
+    "src/components/organization/OrgWithdrawCancel.tsx": {
+      "complexity": [24]
+    },
+    "src/components/organization/ProjectDetailPage.tsx": {
+      "complexity": [49],
+      "max-lines-per-function": [310]
+    },
+    "src/components/organization/ProjectEditDialog.tsx": {
+      "complexity": [39, 39],
+      "max-lines-per-function": [280]
+    },
+    "src/components/organization/ProjectPortfolioView.tsx": {
+      "complexity": [24],
+      "max-lines-per-function": [201]
+    },
+    "src/components/organization/PyramidNodeCard.tsx": {
+      "complexity": [76],
+      "max-lines-per-function": [351]
+    },
+    "src/components/organization/PyramidPlacementSheet.tsx": {
+      "complexity": [24],
+      "max-lines-per-function": [210]
+    },
+    "src/components/organization/PyramidTab.tsx": {
+      "complexity": [44],
+      "max-lines-per-function": [355]
+    },
+    "src/components/organization/TeamCategoryTreeManager.tsx": {
+      "max-lines-per-function": [213]
+    },
+    "src/components/organization/TeamCategoryTreeSelect.tsx": {
+      "complexity": [31],
+      "max-lines-per-function": [394]
+    },
+    "src/components/organization/TeamEventDialog.tsx": {
+      "complexity": [21],
+      "max-lines-per-function": [372]
+    },
+    "src/components/organization/TeamOKRModal.tsx": {
+      "complexity": [44],
+      "max-depth": [5],
+      "max-lines-per-function": [396]
+    },
+    "src/components/organization/TeamOverviewTab.tsx": {
+      "complexity": [26],
+      "max-lines-per-function": [361]
+    },
+    "src/components/organization/TeamPage.tsx": {
+      "complexity": [31],
+      "max-lines-per-function": [317]
+    },
+    "src/components/organization/TeamProjectCard.tsx": {
+      "complexity": [48],
+      "max-lines-per-function": [321]
+    },
+    "src/components/organization/TeamProjectsKanban.tsx": {
+      "complexity": [22],
+      "max-lines-per-function": [218]
+    },
+    "src/components/organization/TeamProjectsTab.tsx": {
+      "complexity": [57],
+      "max-lines-per-function": [397]
+    },
+    "src/components/organization/TeamProjectsTimeline.tsx": {
+      "max-lines-per-function": [395, 202]
+    },
+    "src/components/organization/TeamTaskDependencyPicker.tsx": {
+      "max-lines-per-function": [386]
+    },
+    "src/components/organization/TeamTaskFields.tsx": {
+      "max-lines-per-function": [254]
+    },
+    "src/components/organization/TeamTaskModal.tsx": {
+      "complexity": [99, 23],
+      "max-lines-per-function": [433]
+    },
+    "src/components/organization/TeamTasksTab.tsx": {
+      "complexity": [43],
+      "max-lines-per-function": [416]
+    },
+    "src/components/organization/TeamTasksTableRow.tsx": {
+      "complexity": [39],
+      "max-lines-per-function": [233]
+    },
+    "src/components/organization/TeamsSection.tsx": {
+      "max-lines-per-function": [250]
+    },
+    "src/components/organization/WeeklyReviewSheet.tsx": {
+      "complexity": [25],
+      "max-lines-per-function": [258]
+    },
+    "src/components/organization/critical-path.helpers.ts": {
+      "complexity": [29]
+    },
+    "src/components/organization/report-pdf.ts": {
+      "complexity": [28],
+      "max-depth": [5]
+    },
+    "src/components/organization/usePyramidDnd.ts": {
+      "max-lines-per-function": [281]
+    },
+    "src/components/organization/visibility.helpers.ts": {
+      "complexity": [25]
+    },
+    "src/components/reactbits/DotGrid.tsx": {
+      "max-lines-per-function": [208]
+    },
+    "src/components/reactbits/LightRays.tsx": {
+      "max-lines-per-function": [325, 216, 202]
+    },
+    "src/components/task-modal/DesktopCollaboratorsStep.tsx": {
+      "max-lines-per-function": [212]
+    },
+    "src/components/task-modal/DesktopDetailsStep.tsx": {
+      "complexity": [54],
+      "max-lines-per-function": [431]
+    },
+    "src/components/task-modal/TaskDependenciesSection.tsx": {
+      "complexity": [22]
+    },
+    "src/components/task-modal/TaskDependencyPicker.tsx": {
+      "max-lines-per-function": [414]
+    },
+    "src/components/task-modal/TaskModalDesktopBody.tsx": {
+      "complexity": [30],
+      "max-lines-per-function": [278]
+    },
+    "src/components/task-modal/TaskModalMobileBody.tsx": {
+      "complexity": [35],
+      "max-lines-per-function": [389]
+    },
+    "src/components/task-modal/useTaskModal.ts": {
+      "complexity": [47],
+      "max-lines-per-function": [354]
+    },
+    "src/components/task-table/TaskBulkActionsBar.tsx": {
+      "max-lines-per-function": [253]
+    },
+    "src/components/task-table/TaskCard.tsx": {
+      "complexity": [52],
+      "max-lines-per-function": [383]
+    },
+    "src/components/task-table/TasksInboxMenu.tsx": {
+      "complexity": [23],
+      "max-lines-per-function": [277]
+    },
+    "src/components/task-table/list.tsx": {
+      "complexity": [57],
+      "max-lines-per-function": [327]
+    },
+    "src/components/tutorial/PageTutorial.tsx": {
+      "complexity": [28],
+      "max-lines-per-function": [383]
+    },
+    "src/lib/normalizeApiError.ts": {
+      "complexity": [24]
+    },
+    "src/lib/quick-add-parser.ts": {
+      "complexity": [38]
+    },
+    "src/lib/task-import/todoist.ts": {
+      "complexity": [24]
+    },
+    "src/modules/admin/repository.ts": {
+      "complexity": [74, 24]
+    },
+    "src/modules/auth/AuthContext.tsx": {
+      "max-lines-per-function": [214]
+    },
+    "src/modules/organizations/governance.local.repository.ts": {
+      "complexity": [46]
+    },
+    "src/modules/tasks/mappers.ts": {
+      "complexity": [22]
+    },
+    "src/modules/tasks/task-filtering.ts": {
+      "complexity": [23]
+    },
+    "src/modules/team-okrs/local.repository.ts": {
+      "complexity": [22]
+    },
+    "src/modules/team-okrs/supabase.repository.ts": {
+      "complexity": [25, 23, 21]
+    },
+    "src/modules/team-projects/local.repository.ts": {
+      "complexity": [38, 32, 28]
+    },
+    "src/modules/team-projects/supabase.repository.ts": {
+      "complexity": [38, 21]
+    },
+    "src/pages/AdminPage.tsx": {
+      "complexity": [30],
+      "max-lines-per-function": [337]
+    },
+    "src/pages/AgendaPage.tsx": {
+      "complexity": [22],
+      "max-lines-per-function": [393]
+    },
+    "src/pages/DashboardPage.tsx": {
+      "max-lines-per-function": [328]
+    },
+    "src/pages/GuidePage.tsx": {
+      "max-lines-per-function": [474]
+    },
+    "src/pages/HabitsPage.tsx": {
+      "complexity": [23],
+      "max-lines-per-function": [247]
+    },
+    "src/pages/LandingPage.tsx": {
+      "complexity": [30],
+      "max-lines-per-function": [408]
+    },
+    "src/pages/OKRPage.tsx": {
+      "complexity": [30],
+      "max-lines-per-function": [414]
+    },
+    "src/pages/OrganizationPage.tsx": {
+      "complexity": [107],
+      "max-lines-per-function": [307]
+    },
+    "src/pages/PremiumPage.tsx": {
+      "max-lines-per-function": [389]
+    },
+    "src/pages/SettingsPage.tsx": {
+      "complexity": [58],
+      "max-lines-per-function": [415]
+    },
+    "src/pages/StatisticsPage.tsx": {
+      "complexity": [22],
+      "max-lines-per-function": [407]
+    },
+    "src/pages/TasksPage.tsx": {
+      "complexity": [27],
+      "max-lines-per-function": [414]
+    },
+    "src/pages/agenda/AgendaCalendarSection.tsx": {
+      "max-lines-per-function": [323]
+    },
+    "src/pages/landing/PersoTrack.tsx": {
+      "max-lines-per-function": [261]
+    },
+    "src/pages/landing/WhySection.tsx": {
+      "max-lines-per-function": [303]
+    },
+    "src/pages/landing/entreprise/PricingSection.tsx": {
+      "max-lines-per-function": [273]
+    },
+    "src/pages/okr/CategoryFilterBar.tsx": {
+      "max-lines-per-function": [314]
+    },
+    "src/pages/okr/OKRCard.tsx": {
+      "complexity": [25],
+      "max-lines-per-function": [361]
+    },
+    "src/pages/settings/ImportTasksDialog.tsx": {
+      "complexity": [33]
+    },
+    "src/pages/statistics/HabitHeatmap.tsx": {
+      "max-lines-per-function": [225]
+    },
+    "src/pages/tasks/MobileTaskSearch.tsx": {
+      "max-lines-per-function": [247]
+    },
+    "src/pages/tasks/TaskListsBar.tsx": {
+      "complexity": [26],
+      "max-lines-per-function": [389]
+    }
+  }
+}

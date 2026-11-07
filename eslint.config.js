@@ -4,6 +4,45 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
 import exhaustiveDepsJustified from './eslint-rules/exhaustive-deps-justified.js';
+import { readFileSync } from 'node:fs';
+
+// ── ARC-05 · complexité par fonction, en CLIQUET (2026-11-07) ──────
+//
+// Le plafond de 600 lignes par fichier faisait TASSER le code sous la barre
+// (26 fichiers entre 550 et 599) sans rien dire des fonctions : 35 fichiers de
+// moins de 300 lignes portent une fonction au-dessus des seuils ci-dessous.
+// Trois règles STANDARD d'ESLint, plutôt qu'un script maison (MAI-02).
+//
+// `complexite.baseline.json` est la ligne de base d'une métrique NEUVE, pas
+// une allowlist : chaque fichier listé reçoit sa valeur MESURÉE comme plafond,
+// et `eslint-rules/complexite.guard.test.mjs` compare fonction par fonction
+// (une valeur qui monte, une fonction de plus au-dessus du seuil : rouge ;
+// une valeur qui baisse : rouge aussi, tant que la ligne de base n'est pas
+// resserrée). ❌ Ne jamais y ajouter un fichier ni relever une valeur.
+// Décision et mesures : `docs/ARCHITECTURE.md` § 3.
+const COMPLEXITE = JSON.parse(
+  readFileSync(new URL('./eslint-rules/complexite.baseline.json', import.meta.url), 'utf8'),
+);
+const reglesComplexite = (plafonds) => ({
+  complexity: ['error', plafonds.complexity],
+  'max-depth': ['error', plafonds['max-depth']],
+  'max-lines-per-function': [
+    'error',
+    { max: plafonds['max-lines-per-function'], skipBlankLines: true, skipComments: true },
+  ],
+});
+/** Même périmètre que `src/architecture.guard.test.ts` (`EXCLUDED_DIRS`). */
+const PERIMETRE_COMPLEXITE = {
+  files: ['src/**/*.{ts,tsx}'],
+  ignores: [
+    'src/**/*.{test,spec}.{ts,tsx}',
+    'src/**/ui/**',
+    'src/**/showcase/**',
+    'src/**/generated/**',
+    'src/**/test/**',
+    'src/**/__test__/**',
+  ],
+};
 
 export default tseslint.config(
   // `.worktrees/**` : ce depot travaille a plusieurs sessions, chacune dans son
@@ -113,6 +152,22 @@ export default tseslint.config(
       ],
     },
   },
+
+  // ── ARC-05 · seuils de complexité, puis la ligne de base fichier par
+  // fichier (cf. l'en-tête de ce fichier). L'ordre compte : le bloc d'un
+  // fichier listé vient APRÈS le seuil commun et le remplace pour ce fichier.
+  { ...PERIMETRE_COMPLEXITE, rules: reglesComplexite(COMPLEXITE.seuils) },
+  ...Object.entries(COMPLEXITE.fichiers).map(([fichier, mesures]) => ({
+    files: [fichier],
+    rules: reglesComplexite(
+      Object.fromEntries(
+        Object.entries(COMPLEXITE.seuils).map(([regle, seuil]) => [
+          regle,
+          mesures[regle] ? Math.max(...mesures[regle]) : seuil,
+        ]),
+      ),
+    ),
+  })),
 
   // ── C-102 · l'arbre Playwright : du Node, pas du React ────────────
   //
