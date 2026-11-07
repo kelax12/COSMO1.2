@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// La pile de captures du hero ENTREPRISE (maquette 124, 2026-09-23)
+// La pile de captures du hero ENTREPRISE (maquette 124)
 // ═══════════════════════════════════════════════════════════════════
 //
 // POURQUOI UN COMPOSANT MAISON, et plus `reactbits/CardSwap`. CardSwap étalait

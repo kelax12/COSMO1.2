@@ -8,11 +8,11 @@
 // Chaque arrivée avec un slug valide est comptée par un POST fire-and-forget
 // vers l'Edge Function `affiliation-api/click`.
 //
-// 🔴 EXCEPTION VOULUE, NE PAS « CORRIGER » : contrairement à `attribution.ts`,
-// le slug est écrit SANS attendre le consentement et `clearAttributionTraces`
-// ne l'efface PAS. Décision d'Axel (2026-10-31), risque CNIL assumé : sans ça,
-// un refus du bandeau priverait l'affilié de sa commission. Déclaré dans la
-// politique de confidentialité (s10). Spec : analytics/docs/AFFILIATION.md.
+// Exception voulue, ne pas « corriger » : contrairement à `attribution.ts`, le
+// slug est écrit SANS attendre le consentement et `clearAttributionTraces` ne
+// l'efface PAS (décision d'Axel, risque CNIL assumé : un refus du bandeau
+// priverait l'affilié de sa commission). Déclaré dans la politique de
+// confidentialité (s10). Spec : analytics/docs/AFFILIATION.md.
 //
 // Comme tout l'analytics : la valeur vient de l'URL (whitelist stricte, re-
 // validée à la lecture) et rien ne doit casser un rendu ni une auth (tout

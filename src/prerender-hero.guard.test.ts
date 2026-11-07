@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 // @ts-expect-error module .mjs sans déclaration de types (Node brut, partagé avec prerender.mjs)
-import { heroSourcesDigest, HERO_SOURCES, SOURCES_MANIFEST } from '../scripts/landing-hero-sources.mjs';
+import { heroSourcesDigest, sansCommentaires, HERO_SOURCES, SOURCES_MANIFEST } from '../scripts/landing-hero-sources.mjs';
 // @ts-expect-error idem
 import { scopedCssFor } from '../scripts/landing-hero-css.mjs';
 
@@ -39,6 +39,14 @@ describe('copie du hero : fraîcheur de la capture', () => {
     const a = heroSourcesDigest(ROOT) as Record<string, string>;
     expect(Object.keys(a)).toEqual(HERO_SOURCES);
     expect(new Set(Object.values(a)).size).toBe(HERO_SOURCES.length);
+  });
+
+  it('témoin : un commentaire ne change pas l’empreinte, une ligne de code oui', () => {
+    const base = 'const a = 1;\nexport const b = <p>{a}</p>;\n';
+    const commente = '// pourquoi\nconst a = 1; // invariant\n/** doc */\nexport const b = <p>{/* x */ a}</p>;\n';
+    expect(sansCommentaires(commente, 'x.tsx').replace(/\s/g, '')).toBe(sansCommentaires(base, 'x.tsx').replace(/\s/g, ''));
+    expect(sansCommentaires('const a = 2;\n', 'x.ts')).not.toBe(sansCommentaires('const a = 1;\n', 'x.ts'));
+    expect(sansCommentaires('{"a": "// pas un commentaire"}', 'x.json')).toBe('{"a": "// pas un commentaire"}');
   });
 
   const TEXTES = {

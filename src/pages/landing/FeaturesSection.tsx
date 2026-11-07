@@ -12,13 +12,9 @@ import TaskTableShowcase from '@/components/showcase/TaskTableShowcase';
 import AgendaShowcase from '@/components/showcase/AgendaShowcase';
 import OKRCardShowcase from '@/components/showcase/OKRCardShowcase';
 import HabitHeatmapShowcase from '@/components/showcase/HabitHeatmapShowcase';
-// Vitrines MOBILES chargées à la demande (2026-09-23) : 17,5 ko minifiés, soit
-// le plus gros poste du chunk `LandingPage`, qui dépassait son cliquet de
-// budget (21,3 ko pour 21,0). Elles ne sont rendues que sous `isMobile` : un
-// visiteur sur ordinateur les téléchargeait sans jamais les voir. Sur
-// téléphone, l'import part au premier rendu de la section, bien avant que le
-// défilement l'atteigne ; le conteneur qui les porte n'apparaît de toute façon
-// qu'en entrant dans l'écran (`whileInView`). L'écran ne change pas.
+// Vitrines MOBILES chargées à la demande : 17,5 ko minifiés, le plus gros poste
+// du chunk `LandingPage`. Elles ne sont rendues que sous `isMobile` ; l'import part
+// au premier rendu de la section, bien avant que le défilement l'atteigne.
 const vitrineMobile = (nom: 'TaskCardMobileShowcase' | 'AgendaMobileShowcase' | 'HabitMobileShowcase' | 'OKRMobileShowcase' | 'StatsMobileShowcase') =>
   lazy(() => import('@/components/showcase/MobileShowcases').then((m) => ({ default: m[nom] })));
 const TaskCardMobileShowcase = vitrineMobile('TaskCardMobileShowcase');
@@ -31,17 +27,11 @@ import WhenVisible from '@/components/showcase/WhenVisible';
 import ShowcaseTheme from '@/components/showcase/ShowcaseTheme';
 import { basisColonneAgenda } from '@/components/showcase/agenda-geometrie';
 
-// Audit perf 2026-05-29 — StatsShowcase pulls Recharts (≈ 320 kB). Landing
-// page should never block on it: lazy-load with a lightweight skeleton so
-// the page renders instantly and the chart streams in once Recharts arrives.
-//
-// ⚠️ **Corrigé le 2026-08-29, et l'intention d'origine n'était pas tenue.**
-// `lazy()` découpe le code, il ne le diffère pas : ce composant était rendu
-// immédiatement, donc son import partait au chargement de la page. Mesuré :
-// `vendor-charts` (413 ko bruts, recharts + d3) était téléchargé sur `/`, alors
-// que `PERFORMANCE.md` le décrivait comme « réellement lazy ». D'où
-// `WhenVisible` : le panneau Statistiques est le cinquième d'une section
-// défilante, la plupart des visiteurs ne l'atteignent jamais.
+// StatsShowcase tire Recharts (≈ 320 kB) : il est lazy ET différé par
+// `WhenVisible`. `lazy()` découpe le code sans le différer (rendu tout de suite, le
+// composant faisait télécharger `vendor-charts` sur `/`) ; le panneau Statistiques
+// est le cinquième d'une section défilante, la plupart des visiteurs ne
+// l'atteignent jamais.
 const StatsShowcase = lazy(() => import('@/components/showcase/StatsShowcase'));
 const ShowcaseSkeleton = () => (
   <div className="w-full rounded-2xl bg-slate-800/80 border border-white/10 shadow-2xl p-5 h-[340px] animate-pulse" />
@@ -59,12 +49,8 @@ const RefreshScrollTriggerOnMount: React.FC = () => {
 /**
  * Les cinq modules mis en avant.
  *
- * 🔴 La COPIE n'est plus ici. Titres, description, puces et libellé de CTA
- * étaient écrits EN DUR EN FRANÇAIS et rendus tels quels, alors que
- * `landing.features.<id>.*` portait déjà les quarante clés traduites — que
- * plus rien ne consommait. Un visiteur anglophone lisait donc toute la section
- * en français (revue du 2026-09-02, point 7 : le scan ne voyait pas ces
- * formes, donc la gate certifiait un état qu'elle ne mesurait pas).
+ * La COPIE n'est pas ici : titres, description, puces et libellé de CTA viennent
+ * de `landing.features.<id>.*`, jamais écrits en dur en français.
  *
  * `id` EST la clé de catalogue : `tasks` · `agenda` · `okr` · `habits` ·
  * `stats`. Ajouter un module sans sa section de catalogue ne compile pas.
@@ -381,12 +367,9 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isMobile, handleFeatu
                     // Panneaux 2-5 masqués dès le rendu (les 5 partagent la
                     // même cellule de grid) : sans ça, ils se chevauchent
                     // visiblement pendant la frame avant le gsap.set.
-                    // Quinconce (2026-09-23) : même ordre que le layout empilé,
-                    // vitrine à gauche pour Agenda et Habitudes (`fromRight`).
-                    // Le deck imposait `flex-row` à tous les panneaux depuis
-                    // juillet, alors que l'inclinaison GSAP ci-dessus alterne
-                    // déjà selon `i % 2`. `pl-10` reste : c'est la place du
-                    // rail de points, toujours à gauche.
+                    // Quinconce : même ordre que le layout empilé, vitrine à gauche
+                    // pour Agenda et Habitudes (`fromRight`). `pl-10` reste : c'est la
+                    // place du rail de points, toujours à gauche.
                     className={`feature-panel col-start-1 row-start-1 flex ${feature.fromRight ? 'flex-row-reverse' : 'flex-row'} items-center gap-16 pl-10 ${i > 0 ? 'opacity-0' : ''}`}
                   >
                     <div className="flex-1">

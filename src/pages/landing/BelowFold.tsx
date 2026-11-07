@@ -1,14 +1,11 @@
 // Le bas d'un parcours de la landing, monté au premier geste du visiteur.
-// Perso depuis le 2026-10-16 ; entreprise depuis le 2026-10-22 (tout ce qui
-// suit `EnterpriseHero`, 1 007 noeuds DOM au chargement ramenés à 266).
+// Perso et entreprise (tout ce qui suit `EnterpriseHero`, 1 007 noeuds DOM au
+// chargement ramenés à 266).
 //
-// 🔴 POURQUOI (2026-10-16, TBT mobile). Monter tout le parcours d'un coup
-// coûtait UNE tâche de ~1 s à CPU ×4 : React rendait les cinq vitrines, les
-// solutions, la FAQ et la CTA, puis les `useGSAP` forçaient la mise en page de
-// toute la page (Layout 480 ms, style 283 ms dans la même tâche). Sous le
-// bridage mobile de Lighthouse, c'était l'essentiel des 878 à 1 507 ms de TBT de
-// `/`, `/en/` et `/entreprise-presentation/`. Le premier écran n'a besoin que du
-// hero et du bandeau.
+// Pourquoi : monter tout le parcours d'un coup coûtait UNE tâche de ~1 s à CPU ×4
+// (cinq vitrines, solutions, FAQ, CTA, puis les `useGSAP` qui forcent la mise en
+// page de toute la page), l'essentiel du TBT mobile. Le premier écran n'a besoin
+// que du hero et du bandeau.
 //
 // Ce qui déclenche le montage, et pourquoi chacun :
 //   · le premier GESTE (défilement, molette, toucher, pointeur, clavier) : un
@@ -21,11 +18,9 @@
 //   · l'emplacement réservé qui atteint la MOITIÉ du viewport (robot qui rend
 //     avec une fenêtre haute) ;
 //   · une ancre dans l'URL (`/#faq`) : tout est monté d'emblée.
-// 🔴 La moitié, et pas « visible » : sur téléphone (412 × 823), l'emplacement
-// commence à 882 px sur `/` mais à 792 px sur `/en/`, le titre anglais tenant
-// sur moins de lignes. Avec un simple « visible », `/en/` montait tout au
-// chargement et gardait 717 à 802 ms de TBT en CI (2026-10-16), pendant que `/`
-// tombait à 166. ❌ Ne jamais élargir cette marge vers le bas.
+// La moitié, et pas « visible » : sur téléphone l'emplacement commence plus haut
+// sur `/en/` que sur `/` (titre plus court), et avec un simple « visible » `/en/`
+// montait tout au chargement. ❌ Ne jamais élargir cette marge vers le bas.
 // Les robots sans JS lisent le prérendu (`#seo-fallback`), qui porte tout.
 import React, { startTransition, useEffect, useRef, useState } from 'react';
 import { gsap, ScrollTrigger } from '@/lib/gsap';

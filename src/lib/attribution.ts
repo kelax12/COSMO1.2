@@ -23,12 +23,12 @@
 // son attribution instantanément — le parcours le plus fréquent du plan
 // d'acquisition.
 //
-// 🔴 SOUS CONSENTEMENT depuis le 2026-10-13 (loi I&L art. 82). La source finit
-// écrite sur le PROFIL : ce n'est pas une statistique anonyme, l'exemption
-// CNIL de mesure d'audience ne la couvre pas. Rien n'est écrit sur l'appareil
-// ni lu avant « Accepter » : la source de l'URL est gardée EN MÉMOIRE
-// (`pending`) et posée seulement si le visiteur accepte pendant la visite
-// (`persistPendingFirstTouch`). Refuser efface tout (`clearAttributionTraces`).
+// SOUS CONSENTEMENT (loi I&L art. 82). La source finit écrite sur le PROFIL :
+// ce n'est pas une statistique anonyme, l'exemption CNIL de mesure d'audience
+// ne la couvre pas. Rien n'est écrit sur l'appareil ni lu avant « Accepter » :
+// la source de l'URL est gardée EN MÉMOIRE (`pending`) et posée seulement si le
+// visiteur accepte pendant la visite (`persistPendingFirstTouch`). Refuser
+// efface tout (`clearAttributionTraces`).
 // ═══════════════════════════════════════════════════════════════════
 
 import { hasConsented } from './cookie-consent';
@@ -97,7 +97,7 @@ function readRaw(): FirstTouch | null {
  * nouvelle capture).
  */
 export function readFirstTouch(): FirstTouch | null {
-  // Une valeur posée AVANT le 2026-10-13, sans consentement, ne doit pas
+  // Une valeur posée sans consentement ne doit pas
   // atteindre le profil : sans « Accepter », il n'y a pas d'attribution.
   if (!hasConsented()) return null;
   const stored = readRaw();
@@ -186,9 +186,8 @@ export function sourceFromReferrer(referrer: string, ownHost: string): string | 
  * stocke la source si — et seulement si — aucune attribution valide n'existe
  * déjà.
  *
- * 2026-10-18 : AVANT, sans `?ref=` ni `utm_*`, rien n'était retenu. Une arrivée
- * depuis une recherche Google ou un lien Instagram non balisé finissait donc
- * « Non attribuée » : 11 inscriptions sur 11 en 60 jours.
+ * Sans `?ref=` ni `utm_*`, le site référent (recherche, lien non balisé) sert
+ * de source ; sinon l'arrivée finirait « Non attribuée ».
  *
  * À appeler une fois, avant le montage de React (`src/main.tsx`).
  */

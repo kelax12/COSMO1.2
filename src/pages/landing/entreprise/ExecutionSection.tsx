@@ -16,7 +16,7 @@ const POINTS: { titleKey: KeyOf<'landingEnterprise'>; bodyKey: KeyOf<'landingEnt
  * Étape 2 : l'exécution. Le tableau de tâches transverse, les cinq statuts de
  * flux, les dépendances et le chemin critique.
  *
- * Deux VRAIES captures (2026-10-02), plus de mockup : l'onglet Tâches en vue
+ * Deux VRAIES captures, plus de mockup : l'onglet Tâches en vue
  * Tableau, une colonne par statut, et en surimpression la fiche d'une tâche
  * bloquée ouverte sur son onglet Dépendances. Les deux viennent de la même
  * démo : « Audit accessibilité WCAG », dans la colonne Bloquée du tableau, est

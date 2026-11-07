@@ -6,19 +6,13 @@ import TeamTaskCard from './task-sidebar/TeamTaskCard';
 import TaskContextMenu, { type ContextMenuState } from './task-sidebar/TaskContextMenu';
 import { showUndoToast } from '@/lib/undo-toast';
 
-// ═══════════════════════════════════════════════════════════════════
-// Module tasks - Hooks indépendants (MIGRÉ)
-// ═══════════════════════════════════════════════════════════════════
+// Module tasks - Hooks indépendants
 import { useTasks, useDeleteTask, useCreateTask, useRestoreTask, Task } from '@/modules/tasks';
 
-// ═══════════════════════════════════════════════════════════════════
-// Module events - Hooks indépendants (MIGRÉ)
-// ═══════════════════════════════════════════════════════════════════
+// Module events - Hooks indépendants
 import { useEvents, useDeleteEvent, useRestoreEvent } from '@/modules/events';
 
-// ═══════════════════════════════════════════════════════════════════
-// Module categories - (MIGRÉ)
-// ═══════════════════════════════════════════════════════════════════
+// Module categories
 import { useCategories, buildTree } from '@/modules/categories';
 import type { Category, CategoryNode } from '@/modules/categories';
 
@@ -53,14 +47,10 @@ const TUTORIAL_KEY = 'cosmo_agenda_tutorial_open';
 
 const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
   const { t, tp } = useT('agenda');
-  // ═══════════════════════════════════════════════════════════════════
-  // TASKS - Depuis le module tasks (MIGRÉ)
-  // ═══════════════════════════════════════════════════════════════════
+  // TASKS - Depuis le module tasks
   const { data: tasks = [] } = useTasks();
 
-  // ═══════════════════════════════════════════════════════════════════
-  // EVENTS - Depuis le module events (MIGRÉ)
-  // ═══════════════════════════════════════════════════════════════════
+  // EVENTS - Depuis le module events
   const { data: events = [] } = useEvents();
   const deleteEventMutation = useDeleteEvent();
   // « Annuler » de la suppression des evenements lies (C-43) : rend chaque
@@ -71,9 +61,7 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
   // « Annuler » d'une suppression de tache : SON identifiant, pas un neuf (R-08).
   const restoreTaskMutation = useRestoreTask();
 
-  // ═══════════════════════════════════════════════════════════════════
-  // CATEGORIES - Depuis le module categories (MIGRÉ)
-  // ═══════════════════════════════════════════════════════════════════
+  // CATEGORIES - Depuis le module categories
   const { data: categories = [] } = useCategories();
   // Ordre parent-puis-enfants pour l'indentation du <select> natif du filtre
   // (aucun repli possible dans un <option>, cf. le commentaire au rendu).

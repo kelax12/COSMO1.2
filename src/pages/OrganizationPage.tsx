@@ -45,24 +45,19 @@ import type { KeyOf } from '@/i18n/catalog';
 
 // ── Onglets chargés à la demande ──────────────────────────────────
 //
-// Tout /entreprise tenait dans UN chunk de 280 ko bruts (64 ko gzip), le 4e du
-// build, plus lourd que `vendor-react`. Ouvrir l'Aperçu téléchargeait donc
-// aussi la pyramide, le kanban, la frise et les graphiques des statistiques,
-// que la plupart des visites n'ouvrent jamais.
+// Chaque onglet est un chunk à part : ouvrir l'Aperçu ne doit pas télécharger la
+// pyramide, le kanban ou les graphiques de statistiques.
 //
-// `MyWorkTab` reste EAGER : c'est l'onglet par défaut, le rendre paresseux
-// remplacerait l'écran d'arrivée par un squelette à chaque ouverture, pour
-// n'économiser que ce qu'on va charger dans la seconde. Ses blocs peints, eux,
-// sont chargés à part et préchargés (`MyWorkSections`, 2026-09-24).
+// `MyWorkTab` reste EAGER : c'est l'onglet par défaut, un squelette à chaque
+// ouverture coûterait plus que ce qu'il économise. Ses blocs peints sont
+// chargés à part et préchargés (`MyWorkSections`).
 //
-// ⚠️ Second argument à `lazyWithRetry` VIDE par défaut : les catalogues de cette
-// page sont déclarés par sa ROUTE (`App.tsx`, ligne `OrganizationPage`).
-// Une exception, vérifiée : un onglet qui DÉCLARE sa liste devient une frontière
-// que `lazy-namespaces.guard.test.ts` contrôle comme une route (`TAB_GATE_HOSTS`
-// dans `scripts/i18n-shell-namespaces.mjs`). La liste doit alors couvrir TOUT
-// son sous-arbre, `org` compris.
-// `portfolio` (M2) n'est payé que par qui ouvre Projets : dans `org`, il pesait
-// 4,7 ko gzip sur chaque visite de /entreprise.
+// Second argument à `lazyWithRetry` VIDE par défaut : les catalogues de la page
+// sont déclarés par sa ROUTE (`App.tsx`). Un onglet qui DÉCLARE sa liste devient
+// une frontière que `lazy-namespaces.guard.test.ts` contrôle comme une route
+// (`TAB_GATE_HOSTS`, `scripts/i18n-shell-namespaces.mjs`) : la liste doit alors
+// couvrir TOUT son sous-arbre, `org` compris.
+// `portfolio` n'est payé que par qui ouvre Projets, pas par toute visite.
 const TeamProjectsTab = lazyWithRetry(() => import('@/components/organization/TeamProjectsTab'), ['org', 'orgAdmin', 'overlays', 'portfolio', 'tasks']);
 const TeamTasksTab = lazyWithRetry(() => import('@/components/organization/TeamTasksTab'), ['csv', 'eventModal', 'org', 'orgAdmin', 'overlays', 'portfolio', 'tasks']);
 const TeamOKRTab = lazyWithRetry(() => import('@/components/organization/TeamOKRTab'), ['okr', 'org', 'orgAdmin', 'overlays', 'portfolio']);
@@ -70,14 +65,9 @@ const TeamOverviewTab = lazyWithRetry(() => import('@/components/organization/Te
 const OrgBillingTab = lazyWithRetry(() => import('@/components/organization/OrgBillingTab'), ['org', 'orgAccount', 'orgAdmin', 'overlays']);
 const OrgPastDueBanner = lazyWithRetry(() => import('@/components/organization/OrgPastDueBanner'));
 const OrgOverQuotaLock = lazyWithRetry(() => import('@/components/organization/OrgOverQuotaLock'));
-// Section Membres : sortie de la page le 2026-09-24, et LAZY pour la même
-// raison que les onglets ci-dessus. Importée en dur, elle restait dans ce
-// chunk, qui dépassait son cliquet (18,3 ko pour 18,0) : seul qui ouvre
-// `/entreprise/members` doit la payer.
+// Membres, Équipes (et la page de chaque équipe) et Paramètres ont chacune leur
+// adresse et leur chunk : seul qui ouvre `/entreprise/members` paie la section.
 const OrgMembersSection = lazyWithRetry(() => import('@/components/organization/OrgMembersSection'));
-// Audit Membres du 2026-09-24 : la section Membres tenait quatre pages en une.
-// Équipes (et la page de chaque équipe) et Paramètres ont leur adresse, et
-// leur chunk.
 const TeamsSection = lazyWithRetry(() => import('@/components/organization/TeamsSection'));
 const TeamPage = lazyWithRetry(() => import('@/components/organization/TeamPage'));
 // Rapports d'activité (mig. 202) : un chunk à part, payé par qui l'ouvre.
@@ -87,10 +77,9 @@ const OrgSettingsSection = lazyWithRetry(() => import('@/components/organization
 // rendu. Ils ne l'étaient pas au TÉLÉCHARGEMENT.
 // Glossaire et liens profonds (`?task=`…) : UNE entrée paresseuse pour les deux,
 // chargée seulement quand l'un sert (cf. `OrgPageOverlays`).
-// Accueil d'un membre au premier passage (2026-10-03) : son catalogue
-// `onboarding` ne part qu'avec lui, soit une fois par entreprise et par appareil.
-// Bouton flottant du guide (desktop) : lazy depuis le 2026-10-15, budget de ce
-// chunk. Il n'est pas nécessaire au premier rendu, et il arrive avec son catalogue.
+// Accueil d'un membre au premier passage : son catalogue `onboarding` ne part
+// qu'avec lui. Bouton flottant du guide (desktop) : inutile au premier rendu,
+// il arrive avec son catalogue.
 const OrgGuideFab = lazyWithRetry(() => import('@/components/org-guide/OrgGuideFab'), ['org', 'orgGuide', 'overlays']);
 const OrgWelcomeVideo = lazyWithRetry(() => import('@/components/onboarding/enterprise/OrgWelcomeVideo'), ['onboarding']);
 const OrgPageOverlays = lazyWithRetry(() => import('@/components/organization/OrgPageOverlays'), ['eventModal', 'org', 'orgAccount', 'orgAdmin', 'overlays', 'tasks']);
@@ -98,7 +87,7 @@ const OrgPageOverlays = lazyWithRetry(() => import('@/components/organization/Or
 type OrgTab = OrgSection;
 
 /**
- * Espace entreprise. Chaque section est une ROUTE depuis le 2026-09-23
+ * Espace entreprise. Chaque section est une ROUTE
  * (`/entreprise/projects`) : le bouton précédent passe d'une section à
  * l'autre et l'onglet du navigateur porte son nom. La navigation vit à
  * droite (`OrgSideNav`) sur desktop, dans un sélecteur (`OrgSectionSwitcher`)
@@ -118,11 +107,6 @@ const tabFallback = (tab: OrgTab, tOrgAdmin: (key: KeyOf<'orgAdmin'>) => string)
   if (tab === 'stats') return <TeamOverviewSkeleton label={tOrgAdmin('overview.loading')} />;
   return <OrgTabSkeleton label={tOrgAdmin('page.tabLoading')} />;
 };
-
-/** Bannière sièges : dismiss persistant par org (informative, freemium dormant). */
-
-// 🗑️ Bannière « gratuit jusqu'au 1er août » retirée le 2026-09-24 : elle ne
-// s'affichait plus depuis le 2026-08-01, son code et ses libellés restaient.
 
 /** Ouvre la palette Ctrl+K (écoutée dans `CommandPalette.tsx`). */
 const openSearch = () => window.dispatchEvent(new CustomEvent('open-command-palette'));
@@ -146,16 +130,11 @@ const OrganizationPage = () => {
   const isDemo = useIsDemo();
   // Fermé pendant cette visite ; le drapeau, lui, est posé par entreprise.
   const [welcomeClosed, setWelcomeClosed] = useState(false);
-  // 🔴 DÉCIDÉ À L'ARRIVÉE, une seule fois : l'accueil membre ne s'ouvre que
-  // si l'on ARRIVE sans paramètre dans l'adresse. Toute section convient
-  // depuis le 2026-10-05 : limité à l'Aperçu nu, il ratait les personnes qui
-  // arrivent toujours par le menu sur Tâches ou Projets.
-  // Relue à chaque rendu, la condition laissait l'accueil s'ouvrir APRÈS coup
-  // par-dessus l'écran qu'on était venu voir : `?tab=settings` réécrit en
-  // `/entreprise/settings`, retour Stripe `?tab=billing`, `?task=` retiré par
-  // `DeepTaskModal` quand la tâche est introuvable. Mesuré le 2026-10-04 par
-  // le job e2e (8 échecs `supabase-stub`, run 37138213107). Même règle que le
-  // verrou de `FirstRunSetup` : une garde d'entrée se fige à l'entrée.
+  // Décidé À L'ARRIVÉE, une seule fois : l'accueil membre ne s'ouvre que si l'on
+  // ARRIVE sans paramètre dans l'adresse, quelle que soit la section. Relue à
+  // chaque rendu, la condition l'ouvrirait après coup par-dessus l'écran voulu
+  // (`?tab=settings` réécrit, retour Stripe, `?task=` retiré par `DeepTaskModal`).
+  // Même règle que `FirstRunSetup` : une garde d'entrée se fige à l'entrée.
   const [arrivedBare] = useState(() => searchParams.toString() === '');
   // `?guide=1` (fin de la constellation) : ouvre le guide une seule fois,
   // puis le paramètre quitte l'URL pour qu'un rechargement ne le rouvre pas.
@@ -267,8 +246,8 @@ const OrganizationPage = () => {
   const canStats = teamsLoading || canSeeStats(teams, { members, teamMembers, currentUserId: user?.id, isAdmin });
   // Un membre qui arrive sur `/entreprise/billing` (lien partagé, ancien
   // favori) ou sur `stats` sans en avoir le droit ne voit pas un écran vide :
-  // il retombe sur l'aperçu. L'organigramme est masqué pour tous depuis le
-  // 2026-10-30 (mig. 229) : `pyramid` y renvoie aussi.
+  // il retombe sur l'aperçu. L'organigramme est masqué pour tous (mig. 229) :
+  // `pyramid` y renvoie aussi.
   const tab: OrgTab =
     (urlTab === 'billing' && !isOwner) || urlTab === 'pyramid' || (urlTab === 'stats' && !canStats)
       ? 'overview'
@@ -276,9 +255,9 @@ const OrganizationPage = () => {
 
   // Entrées de navigation, partagées par le panneau desktop et le sélecteur
   // mobile. Projets (tâches nouvellement assignées) et Membres (demandes
-  // d'adhésion) ont leur compteur dérivé ; depuis l'audit du 2026-09-24, les
-  // autres sections comptent leurs notifications non lues (aucune requête de
-  // plus : la boîte de réception les porte déjà).
+  // d'adhésion) ont leur compteur dérivé ; les autres sections comptent leurs
+  // notifications non lues (aucune requête de plus : la boîte de réception les
+  // porte déjà).
   const sectionBadges = sectionNotificationBadges(orgNotifications);
   const badgeOf = (id: OrgSection): { count: number; items: string[] } => {
     const extra = (id in sectionBadges) ? sectionBadges[id as BadgeSection] : null;
@@ -395,17 +374,13 @@ const OrganizationPage = () => {
             <p className="text-xs text-[rgb(var(--color-text-secondary))] mt-0.5 line-clamp-1">{myOrg.description}</p>
           )}
         </div>
-        {/* La pastille « Forfait » est retirée de l'en-tête (maquette du
-            2026-09-27) : le forfait reste atteignable, pour le seul
-            propriétaire, depuis Paramètres (`OrgSettingsSection`, section
-            « Forfait et facturation »), qui est une section de navigation
-            ordinaire, donc accessible en desktop comme en mobile. */}
-        {/* Les triggers de la mig. 095 et le job pg_cron de la 096 ecrivaient
-            dans `org_notifications` sans qu'aucun ecran ne les lise. */}
+        {/* Le forfait n'est pas dans l'en-tête : le propriétaire le trouve dans
+            Paramètres (`OrgSettingsSection`, « Forfait et facturation »). */}
+        {/* La cloche lit `org_notifications`, alimentée côté serveur. */}
         <OrgNotificationsBell orgId={myOrg.id} members={members} />
       </header>
 
-      {/* Impayé : propriétaire seul, au-dessus de tout (spec 2026-11-02 § 5.2).
+      {/* Impayé : propriétaire seul, au-dessus de tout.
           Chunk chargé seulement quand l'abonnement est `past_due`. */}
       {isOwner && !isDemo && needsPaymentAttention(orgSubscription ?? null) && (
         <Suspense fallback={null}>
@@ -539,8 +514,8 @@ const OrganizationPage = () => {
       {/* Premier passage dans CETTE entreprise (créateur comme membre) : la
           vidéo d'accueil, seulement à une arrivée sans paramètre : qui arrive
           par un lien (fiche, réglages, retour de paiement) vient pour cet
-          écran, pas pour une visite. En démo aussi depuis le 2026-10-19 (demande
-          d'Axel) : le visiteur démo est un prospect, la vidéo lui fait le tour.
+          écran, pas pour une visite. En démo aussi : le visiteur démo est un
+          prospect, la vidéo lui fait le tour.
           La date d'arrivée n'y compte pas (membres seedés), le drapeau « vu »
           tombe avec le reste des clés `cosmo_*` à chaque nouvelle démo. */}
       {arrivedBare && !welcomeClosed && !hasEntityParam && user?.id && (isDemo || joinedSinceWelcome(members, user.id)) && !readMemberWelcomeSeen(myOrg.id, user.id) && (

@@ -39,7 +39,7 @@ export const SHOTS: Record<string, AppShotRef> = {
   projectsPlanning: { id: 'projectsPlanning', labelKey: 'enterprise.shot.projectsPlanning', image: shot('projets-planning'), altKey: 'enterprise.shot.projectsPlanningAlt' },
   projectsPortfolio: { id: 'projectsPortfolio', labelKey: 'enterprise.shot.projectsPortfolio', image: shot('projets-portefeuille'), altKey: 'enterprise.shot.projectsPortfolioAlt' },
   okr: { id: 'okr', labelKey: 'enterprise.shot.okr', image: shot('okr'), altKey: 'enterprise.shot.okrAlt' },
-  // L'onglet Statistiques est masqué de la navigation depuis le 2026-09-30 :
+  // L'onglet Statistiques est masqué de la navigation :
   // l'étape « Suivi » montre les rapports d'activité, qu'on atteint vraiment.
   reports: { id: 'reports', labelKey: 'enterprise.shot.reports', image: shot('rapports'), altKey: 'enterprise.shot.reportsAlt' },
   tasks: { id: 'tasks', labelKey: 'enterprise.shot.tasks', image: shot('taches'), altKey: 'enterprise.shot.tasksAlt' },
@@ -56,7 +56,7 @@ export const HERO_SHOTS = [SHOTS.overview, SHOTS.projects, SHOTS.okr];
  * Les vingt fonctionnalités de la section « Plus », en quatre familles de cinq.
  *
  * Uniquement ce que les cinq étapes ne montrent PAS, et uniquement ce qui est
- * atteignable dans le produit aujourd'hui (relu dans le code le 2026-10-02).
+ * atteignable dans le produit aujourd'hui.
  * Une fonctionnalité qu'on retire du produit sort d'ici le même jour. L'icône
  * est un NOM, résolu par le composant : ce module n'importe rien de lourd.
  */

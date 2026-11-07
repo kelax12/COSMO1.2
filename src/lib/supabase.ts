@@ -74,13 +74,8 @@ export const supabase: SupabaseClient = hasSupabaseConfig
 
 export const isSupabaseConfigured = hasSupabaseConfig;
 
-// ⚠️ `isDemoMode` / `setDemoMode` ont été SUPPRIMÉS ici (audit archi
-// 2026-08-07, point D2). Ils formaient un SECOND drapeau de mode démo, à côté
-// de `appModeStore` que CLAUDE.md désigne comme source de vérité unique.
-// Ils n'avaient plus aucun consommateur, mais leur simple existence était un
-// piège : `import { isDemoMode } from '@/lib/supabase'` compilait et renvoyait
-// une valeur figée au chargement du module, jamais mise à jour par
-// `loginDemo()`. C'est exactement la faille B0 (dériver `isDemo` d'une source
-// parallèle) prête à se reproduire.
+// ⚠️ `isDemoMode` / `setDemoMode` n'existent plus ici : ils formaient un SECOND
+// drapeau de mode démo, figé au chargement du module et jamais mis à jour par
+// `loginDemo()` (faille B0 : dériver `isDemo` d'une source parallèle).
 //
 // Source unique : `appModeStore.isDemo` / `useIsDemo()` (src/lib/app-mode.store.ts).

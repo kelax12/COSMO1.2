@@ -87,12 +87,9 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
         // Boucles infinies du hero, mises en pause dès que le hero sort de
         // l'écran (perf : zéro tick offscreen).
         const heroLoops: gsap.core.Tween[] = [];
-        // W1 — Le reveal du H1 est en CSS depuis le 2026-08-30 (masques par
-        // ligne, cf. `src/index.css`). Il vivait ici, en SplitText : découpe
-        // en mots, re-split au chargement des fontes, recopie des classes de
-        // gradient sur chaque mot. Trois mécanismes fragiles, et surtout une
-        // entrée qui ne pouvait jouer qu'une fois GSAP chargé — c'est-à-dire
-        // après le fallback de page, donc jamais vue.
+        // W1 : le reveal du H1 est en CSS (masques par ligne, cf. `src/index.css`).
+        // Il vivait ici en SplitText, trois mécanismes fragiles et une entrée qui ne
+        // pouvait jouer qu'une fois GSAP chargé, donc après le fallback de page.
 
         // Entrées du reste du hero (remplace les motion.* retirés).
         if (!reprise) gsap.from('[data-hero-fade]', {
@@ -104,19 +101,16 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
           delay: 0.5,
         });
 
-        // Vie permanente du fond, version ENCRE (2026-09-22).
+        // Vie permanente du fond, version ENCRE.
         //
-        // 🔴 Sur une page BLANCHE, un mouvement ne peut pas se faire par la
-        // lumière. Les orbes floutés et les faisceaux translucides qui
-        // vivaient ici avaient été dessinés pour le fond sombre : posés sur
-        // du blanc ils n'émettent plus rien de visible, mais ils coûtent
-        // toujours — un flou se rastérise à chaque frame, qu'on le voie ou
-        // non. Un trait sombre, lui, se voit. Version archivée intégralement :
-        // `docs/archive/LANDING-MOTION-DA-SOMBRE-2026-09-22.md`.
+        // Sur une page BLANCHE, un mouvement ne peut pas se faire par la lumière :
+        // des orbes floutés ou des faisceaux translucides ne rendent rien de visible
+        // et coûtent toujours (un flou se rastérise à chaque frame). Un trait sombre
+        // se voit. La version sombre est archivée dans `docs/archive/`.
         //
-        // Les NOEUDS respirent sur place (opacité + échelle) au lieu de
-        // dériver : un point sombre qui glisse hors de la grille se lit
-        // comme un défaut d'alignement, pas comme une animation.
+        // Les NOEUDS respirent sur place (opacité + échelle) au lieu de dériver : un
+        // point sombre qui glisse hors de la grille se lit comme un défaut
+        // d'alignement.
         gsap.utils.toArray<HTMLElement>('.hero-node').forEach((node, i) => {
           heroLoops.push(
             gsap.to(node, {
@@ -193,13 +187,9 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
           scrollTrigger: { trigger: heroRef.current, start: 'top top', end: '+=200', scrub: true },
         });
 
-        // W3 — Parallax de fond scrubbé : grille lente, aurores moyennes.
-        // ease none obligatoire (scrub).
-        //
-        // La troisième couche — le mockup, qui remontait de 110 px — a disparu
-        // avec la colonne de droite (hero centré, 2026-09-22). Un parallax sur
-        // le bloc de texte lui-même serait un contresens : c'est la promesse de
-        // la page, elle ne doit pas glisser par rapport à son propre fond.
+        // W3 : parallax de fond scrubbé (grille lente, aurores moyennes). `ease: none`
+        // obligatoire (scrub). Pas de parallax sur le bloc de texte : c'est la promesse
+        // de la page, elle ne doit pas glisser par rapport à son propre fond.
         if (heroRef.current) {
           const tl = gsap.timeline({
             defaults: { ease: 'none' },
@@ -218,15 +208,13 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
   );
 
   // Vue affichée par la tuile du hero : la puce du module correspondant
-  // s'allume en même temps. 🔴 Par un magasin, JAMAIS par un état d'ici : un
+  // s'allume en même temps. Par un magasin, JAMAIS par un état d'ici : un
   // `useState` dans ce composant re-rendait tout le parcours toutes les 2,6 s
   // (cf. `hero-module-actif.ts`).
 
-  // Le tilt 3D à la souris a été RETIRÉ le 2026-08-30 avec la refonte du hero.
-  // Il coûtait deux ressorts Framer et un handler par mouvement de souris, pour
-  // un effet qu'un visiteur sur mobile ne voit jamais et qui ne dit rien du
-  // produit. Ce que le hero doit faire comprendre en deux secondes, c'est que
-  // quatre outils tiennent dans une seule fenêtre : c'est HeroModuleDock qui
+  // Pas de tilt 3D à la souris : deux ressorts Framer et un handler par mouvement
+  // pour un effet invisible sur mobile. Ce que le hero doit faire comprendre,
+  // c'est que quatre outils tiennent dans une seule fenêtre : `HeroModuleDock`
   // s'en charge, en CSS.
 
   return (
@@ -263,7 +251,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
                   chaque mot parce que `bg-clip-text` ne survit pas aux
                   transforms des ENFANTS. Trois mécanismes fragiles pour un
                   effet que personne ne voyait, l'entrée jouant derrière le
-                  fallback de la page (mesuré le 2026-08-30).
+                  fallback de la page.
                   Ici le gradient et le transform sont portés par le MÊME
                   élément, ce qui est le cas que `bg-clip-text` supporte, et le
                   masque est une simple div en `overflow: hidden`. */}
@@ -273,7 +261,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
                   pour que les puces se posent avant elle. */}
               <HeroAppIcon onModuleChange={setModuleActif}delaiEntree={DELAI_ARRIMAGE_MS + 120} />
 
-              {/* ── Typographie de la refonte centree (2026-09-22) ──
+              {/* ── Typographie de la refonte centree ──
                   Le titre est la seule chose que le premier ecran doit reussir,
                   et son reglage vient de trois valeurs, pas d'une taille :
                   · `tracking-[-0.045em]` — un display serre. Inter s'espace
@@ -281,7 +269,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
                     fait flotter les mots et casse le bloc.
                   · `leading-[0.98]` — les deux lignes forment UN bloc. Au-dela
                     de 1,0 elles se lisent comme deux phrases empilees.
-                  🔴 LES QUATRE TAILLES SONT ARBITRAIRES, ET C'EST OBLIGATOIRE.
+                  LES QUATRE TAILLES SONT ARBITRAIRES, ET C'EST OBLIGATOIRE.
                   Les classes nommees de Tailwind (`text-6xl`, `text-7xl`…)
                   posent AUSSI un `line-height`, et leurs variantes responsives
                   sont emises APRES `leading-[…]` dans la feuille : a poids egal,

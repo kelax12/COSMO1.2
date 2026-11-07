@@ -13,16 +13,11 @@
 // ce qui est en aval raisonne sur des CLÉS DE JOUR ('YYYY-MM-DD'), jamais sur
 // des instants, parce qu'une échéance est un jour et pas une heure.
 //
-// 🔴 POURQUOI (revue du 2026-09-02, risque R-01). Trois écritures différentes
-// produisaient trois valeurs différentes pour le même jour choisi :
-//   `new Date('2026-09-02').toISOString()`  → minuit UTC       (save-task)
-//   `'2026-09-02'` envoyé tel quel          → minuit UTC après cast (snooze)
-//   minuit local converti en ISO            → correct          (TasksPage)
-// et la relecture se faisait tantôt par `.slice(0, 10)` (jour UTC), tantôt par
-// comparaison d'instants en heure locale. Résultat mesuré : pour tout fuseau à
-// décalage négatif, une tâche datée du jour même était classée « En retard » et
-// absente de « Aujourd'hui ». Invisible depuis la métropole, systématique aux
-// Antilles et sur tout le continent américain.
+// Pourquoi un seul chemin : trois écritures différentes (`save-task`, `snooze`,
+// `TasksPage`) produisaient trois valeurs pour le même jour choisi, et la
+// relecture mêlait jour UTC et instants locaux. Pour tout fuseau à décalage
+// négatif, une tâche du jour même était « En retard » et absente de
+// « Aujourd'hui » (invisible depuis la métropole).
 //
 // ❌ Ne JAMAIS écrire `new Date(jour).toISOString()` pour une échéance.
 // ❌ Ne JAMAIS relire un jour d'échéance par `deadline.slice(0, 10)`.

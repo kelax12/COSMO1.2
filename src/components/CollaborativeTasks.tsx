@@ -6,15 +6,11 @@ import TaskModal from './TaskModal';
 import EventModal from './EventModal';
 import AddToListModal from './AddToListModal';
 
-// ═══════════════════════════════════════════════════════════════════
-// Module tasks - Hooks indépendants (MIGRÉ)
-// ═══════════════════════════════════════════════════════════════════
+// Module tasks - Hooks indépendants
 import { useTasks, useDeleteTask, useToggleTaskBookmark, useToggleTaskComplete, Task } from '@/modules/tasks';
 import { useCreateEvent, CreateEventInput } from '@/modules/events';
 
-// ═══════════════════════════════════════════════════════════════════
-// Module categories - (MIGRÉ)
-// ═══════════════════════════════════════════════════════════════════
+// Module categories
 
 import { useAuth } from '@/modules/auth/AuthContext';
 // Fraîcheur d'une tâche partagée (#40) — délégué à `Intl.RelativeTimeFormat`
@@ -25,18 +21,14 @@ import { selectCollaborativeTasks } from './collaborative-tasks.helpers';
 
 const CollaborativeTasks = ({ compact = false }: { compact?: boolean }) => {
   const { t, tp } = useT('dashboard');
-  // ═══════════════════════════════════════════════════════════════════
-  // TASKS - Depuis le module tasks (MIGRÉ)
-  // ═══════════════════════════════════════════════════════════════════
+  // TASKS - Depuis le module tasks
   const { data: tasks = [], isLoading } = useTasks();
   const deleteMutation         = useDeleteTask();
   const toggleCompleteMutation = useToggleTaskComplete();
   const toggleBookmarkMutation = useToggleTaskBookmark();
   const createEventMutation    = useCreateEvent();
 
-  // ═══════════════════════════════════════════════════════════════════
-  // CATEGORIES - Depuis le module categories (MIGRÉ)
-  // ═══════════════════════════════════════════════════════════════════
+  // CATEGORIES - Depuis le module categories
 
   const { user } = useAuth();
 

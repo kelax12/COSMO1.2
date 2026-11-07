@@ -19,13 +19,11 @@
 - ❌ **Ne jamais se fier à une copie laissée sur le disque** (`.deploy-tmp/` et consorts) : elle
   périme en silence. La sienne était antérieure au correctif C-08.
 
-## ⚠️ Dérive au 2026-11-05
+## Dérive du déployé
 
-**15 fonctions déployées**, 15 sondes vertes. `Edge deploy drift` est **rouge** depuis les commits de
-facturation du 2026-11-03 : `stripe-webhook`, `stripe-org-refund`, `stripe-org-subscription`,
-`renewal-notice` et `seat-alert` portent en ligne une version antérieure (`_shared/billing-mail-*`).
-Les dix autres sont identiques à `main`. Redéployer : geste d'Axel. Le job dit l'état du jour,
-pas ce paragraphe.
+`Edge deploy drift` (`edge-deploy-drift.yml`, `npm run check:edge`) dit l'état du jour : ce fichier ne
+le recopie pas. Nombre de fonctions : [`docs/FAITS.md`](../../docs/FAITS.md). Le déploiement reste un
+geste manuel d'Axel (`docs/DEPLOYMENT.md`, AM-6).
 - 🔴 **Un module `_shared/` modifié fait dériver TOUTES les fonctions qui l'importent**, pas seulement
   celle qu'on visait : `verify-org-domain` embarquait l'ancienne `_shared/org-integrations.ts` après W-2.
   Avant de déployer : `grep -l "_shared/<module>" supabase/functions/*/index.ts`.

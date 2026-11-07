@@ -4,8 +4,8 @@ import React from 'react';
  * Le fond du premier ecran du parcours perso : grille masquee, bruit, aurores
  * cuites, traceurs d'encre.
  *
- * Extrait de `PersoTrack` le 2026-09-22, quand le fichier a depasse son plafond
- * de 600 lignes (`architecture.guard`). La frontiere est une SURFACE, pas un
+ * Extrait de `PersoTrack` quand le fichier a depasse son plafond de 600 lignes
+ * (`architecture.guard`). La frontiere est une SURFACE, pas un
  * compte de lignes : ici il n'y a que du decor, aucune donnee, aucun geste, et
  * le reste du hero se lit sans avoir a le traverser.
  *
@@ -23,20 +23,12 @@ interface Props {
 const HeroBackdrop: React.FC<Props> = ({ gridRef, auroraRef }) => (
   <>
       {/* ── Fond ambiant : grille masquée + noise + aurores + encre ──
-          🔴 `z-0`, JAMAIS `-z-10`. Cette couche a porté `-z-10` depuis
-          l'origine, et elle n'a jamais été VISIBLE : un descendant en z
-          négatif se peint à l'étape 2 d'un contexte d'empilement, le fond
-          des blocs non positionnés à l'étape 3. Le `<div>` racine de ce
-          parcours porte un fond (`bg-white` aujourd'hui, un dégradé
-          `slate-900` avant le 2026-09-22) et ne crée AUCUN contexte
-          d'empilement, la `<section>` étant `relative` sans `z-index` : ce
-          fond se peignait donc PAR-DESSUS la grille, les quatre aurores, le
-          bruit et les traceurs. Mesuré le 2026-09-22 en forçant un traceur
-          en rouge plein de 3 px, invisible — puis visible d'un coup en
-          passant cette seule couche à `z-0`.
-          ⚠️ Le contenu reste au-dessus sans rien changer : il est `relative`
-          et vient APRÈS dans l'arbre, donc il se peint après à la même
-          étape. C'est bien l'ordre du DOM qui tient l'empilement ici. */}
+          `z-0`, JAMAIS `-z-10` : un descendant en z négatif se peint avant le fond
+          des blocs non positionnés, et le `<div>` racine du parcours porte un fond
+          sans créer de contexte d'empilement. Avec `-z-10`, grille, aurores, bruit
+          et traceurs étaient rasterisés puis recouverts.
+          ⚠️ Le contenu reste au-dessus sans rien changer : il est `relative` et vient
+          APRÈS dans l'arbre, donc il se peint après à la même étape. */}
       <div className="absolute inset-0 z-0" aria-hidden="true">
         {/* Grille fine type Linear/Vercel, fondue — couche parallax lente (GSAP) */}
         <div
@@ -55,32 +47,18 @@ const HeroBackdrop: React.FC<Props> = ({ gridRef, auroraRef }) => (
             d'opacité/scale restent en Framer sur les enfants ; GSAP ne
             translate que ce wrapper (pas de conflit de transform). */}
         {/* ── Aurores CUITES : des dégradés déjà doux, zéro `filter: blur()` ──
-            Ces quatre couches étaient des aplats floutés à 90-110 px, animés
-            en boucle. Mesuré le 2026-09-03 (audit A-8, build de prod, fenêtre
-            de 4 s AU REPOS, sans scroll ni clic) : la page bloquait le fil
-            principal 2 856 ms sur 4 000, et neutraliser les seuls
-            `filter: blur` la ramenait à 259 ms. `/guide`, sur le même build,
-            en bloque 0.
-            🔴 Le coût n'était PAS les bibliothèques d'animation, contrairement
-            à ce que le bootup Lighthouse laissait croire : couper les 23
-            ScrollTrigger, les 8 tweens infinis ou la rotation de la fenêtre
-            produit ne déplaçait pas la mesure d'un point. C'était la
-            rastérisation d'une pile de surfaces floutées, refaite à chaque
-            frame — et le coût est CUMULATIF, les couches se superposant.
-            ❌ Ne pas « réoptimiser » en remettant un `filter: blur()` ici, ni
-            espérer le rattraper par un `will-change`, un `translateZ(0)`, un
-            `contain: paint` ou un rayon plus petit : les quatre ont été
-            mesurés, aucun ne change quoi que ce soit.
-            ✅ Un `radial-gradient` qui s'éteint vers `transparent` EST déjà
-            flou : il produit le même halo diffus, mais il se peint comme un
-            dégradé ordinaire.
-            🔴 ET DEPUIS LE 2026-09-22, ces quatre couches sont FIXES. Elles
-            oscillaient en opacité entre 0,82 et 1 — sur des dégradés dont
-            l'alpha maximal vaut 0,16, posés sur du BLANC. L'amplitude réelle
-            était sous le seuil de perception ; la boucle, elle, tournait en
-            continu sur quatre surfaces de la taille du premier écran. Ne pas
-            la remettre « pour donner de la vie au fond » : la vie du fond,
-            sur cette page, c'est la trace d'encre, qui se voit.
+            Ces couches étaient des aplats floutés animés en boucle : la page bloquait
+            le fil principal 2 856 ms sur 4 000 au repos, 259 sans les `filter: blur`
+            (audit A-8). Le coût était la rastérisation d'une pile de surfaces floutées
+            refaite à chaque frame, cumulative, pas les bibliothèques d'animation.
+            ❌ Ne pas « réoptimiser » en remettant un `filter: blur()` ici, ni espérer le
+            rattraper par `will-change`, `translateZ(0)`, `contain: paint` ou un rayon
+            plus petit : mesurés, aucun ne change rien.
+            ✅ Un `radial-gradient` qui s'éteint vers `transparent` EST déjà flou, et se
+            peint comme un dégradé ordinaire.
+            Les quatre couches sont FIXES : l'oscillation d'opacité (0,82 à 1) sur des
+            dégradés d'alpha 0,16 posés sur du BLANC était sous le seuil de perception.
+            Ne pas la remettre : la vie du fond, c'est la trace d'encre.
             Harnais de non-régression : `scripts/landing-motion-probe.mjs`. */}
         <div ref={auroraRef} className="absolute inset-0">
           {/* Nappe de teintes (remplace le halo conique tournant).
@@ -95,19 +73,12 @@ const HeroBackdrop: React.FC<Props> = ({ gridRef, auroraRef }) => (
                 'radial-gradient(circle closest-side, rgba(99,102,241,0.04) 0%, rgba(99,102,241,0.035) 34%, rgba(139,92,246,0.028) 56%, rgba(217,70,239,0.018) 76%, rgba(34,211,238,0.01) 90%, transparent 100%)',
             }}
           />
-          {/* Aurores — alphas DIVISÉS PAR DEUX une PREMIÈRE fois le 2026-09-22,
-              quand la couche est redevenue visible (cf. `z-0` plus haut) : ils
-              avaient été réglés pour glisser sur un fond `slate-900`, et posés
-              sur du blanc ils lavaient la page en pastel.
-              🔴 DIVISÉS PAR DEUX UNE SECONDE FOIS avec le hero centré, et pour
-              une raison distincte : le titre est devenu la seule chose du
-              premier écran, il porte lui-même un dégradé bleu → fuchsia sur sa
-              deuxième ligne, et il s'affiche DEVANT ces quatre nappes. Un fond
-              teinté dans les mêmes couleurs que le texte qu'il porte enlève au
-              texte ce qu'il donne au fond. Mesuré sur la page, pas sur les
-              valeurs : le coin haut-droit virait au rose franc.
-              ⚠️ Ce sont des teintes, pas un décor. Si le fond commence à se
-              voir, c'est qu'il est déjà trop fort. */}
+          {/* Aurores : alphas divisés par deux, deux fois. Réglés pour un fond
+              `slate-900`, ils lavaient la page blanche en pastel ; et le titre, seul
+              élément du premier écran, porte un dégradé bleu → fuchsia qui se détache
+              mal d'un fond teinté des mêmes couleurs.
+              ⚠️ Ce sont des teintes, pas un décor. Si le fond commence à se voir,
+              c'est qu'il est déjà trop fort. */}
           <div
             className="absolute -top-40 left-1/2 h-[60rem] w-[60rem] -translate-x-1/2 rounded-full"
             style={{
@@ -141,15 +112,10 @@ const HeroBackdrop: React.FC<Props> = ({ gridRef, auroraRef }) => (
             reduced-motion).
             ⚠️ La trace est un DÉGRADÉ qui part de `transparent` : c'est lui
             qui fait l'entrée et la sortie. Aucun tween d'opacité, et surtout
-            aucun `blur-[…]` — les orbes qu'ils remplacent en portaient un
-            chacun, cf. l'audit A-8 ci-dessus.
-            🔴 CE BLOC EST LE DERNIER DE LA COUCHE DE FOND, et il doit le
-            rester. Placé à l'endroit des anciens faisceaux — juste après la
-            grille —, il passait SOUS les aurores, sous le bruit et surtout
-            sous le fondu blanc de bas de section, qui est opaque à son bord.
-            Mesuré en forçant la trace en rouge plein de 3 px : invisible. Un
-            effet de fond ne se vérifie pas en relisant sa couleur, seulement
-            en le regardant peint. */}
+            aucun `blur-[…]` (cf. l'audit A-8 ci-dessus).
+            Ce bloc est le DERNIER de la couche de fond, et doit le rester : placé
+            avant les aurores, le bruit ou le fondu blanc de bas de section (opaque
+            à son bord), il passerait dessous et serait invisible. */}
         <div className="hero-trace-h absolute top-[28%] left-0 h-px w-52 bg-gradient-to-r from-transparent via-slate-900/20 to-blue-600/45" />
         <div className="hero-trace-v absolute left-[68%] top-0 w-px h-52 bg-gradient-to-b from-transparent via-slate-900/15 to-violet-600/40" />
         <div className="hero-node absolute top-[20%] left-[10%] h-1.5 w-1.5 rounded-full bg-slate-900/25 opacity-50" />

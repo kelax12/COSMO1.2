@@ -84,7 +84,7 @@ export function stripLocalePrefix(pathname: string): { locale: Locale | null; pa
  *
  * Vercel sert `/entreprise-presentation/` en 200 sans rediriger : sans ce
  * retrait, la comparaison de slug de `useLandingTrack` ratait cette URL et
- * l'hydratation rendait le parcours perso (mesuré en prod le 2026-10-16).
+ * l'hydratation rendait le parcours perso.
  */
 function normalizePath(path: string): string {
   const trimmed = path.replace(/\/+$/, '');

@@ -85,12 +85,10 @@ export function useSeoMeta({ title, description, canonical, ogTitle, ogDescripti
  * restait affiché sur `/en/` : `useSeoMeta` ne pose les méta racine qu'au
  * DÉMONTAGE, pour restaurer l'état d'origine.
  *
- * `/` et `/entreprise-presentation` rendent le MÊME composant. Avant le
- * 2026-10-12, les deux posaient les méta de la racine : le HTML prérendu de la
- * page entreprise était juste, puis React réécrivait son titre, sa description
- * et son canonical vers la HOME. Google, qui rend le JS, voyait donc la page
- * qui porte l'offre payante se déclarer doublon de l'accueil (Lighthouse :
- * audit `canonical` en échec, SEO 92). Le parcours perso garde les méta racine.
+ * `/` et `/entreprise-presentation` rendent le MÊME composant : seul le parcours
+ * entreprise pose ses propres méta (titre, description, canonical), sinon Google
+ * verrait la page de l'offre payante se déclarer doublon de l'accueil. Le
+ * parcours perso garde les méta racine.
  */
 export function useLandingSeoMeta(track: 'perso' | 'entreprise') {
   const root = rootMeta();

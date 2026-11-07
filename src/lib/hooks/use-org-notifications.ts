@@ -3,16 +3,11 @@
 // demandes d'adhésion en attente (admins) + nouvelles tâches qui me sont
 // assignées depuis ma dernière visite de /entreprise.
 //
-// 🔴 Ce hook est monté par `Layout`, donc sur TOUTES les pages protégées, pour
+// Ce hook est monté par `Layout`, donc sur TOUTES les pages protégées, pour
 // tout membre d'une organisation. Il n'affiche aucune liste : il en dérive un
 // nombre et quatre libellés d'aperçu. Tout ce qu'il lit doit donc être payé au
-// prix d'un compteur, jamais au prix d'une liste.
-//
-// Jusqu'au 2026-09-05 il montait `useTeamTasks`, c'est-à-dire une lecture
-// org-wide de `team_tasks` bornée à 1 000 lignes — la lecture la plus chère du
-// produit (`SCALABILITY.md` §2). Le rechargement en avait été coupé le
-// 2026-08-27 (`background`), la LECTURE pas : elle partait toujours au premier
-// montage, à chaque chargement de l'application. C'est le finding C-05.
+// prix d'un compteur, jamais au prix d'une liste (il ne monte plus
+// `useTeamTasks`, lecture org-wide la plus chère du produit, `SCALABILITY.md` §2).
 //
 // Le compte vient maintenant du serveur, agrégé dans la boîte de réception
 // (`badge_tasks`, mig. 142) : la même lecture qui portait déjà les
