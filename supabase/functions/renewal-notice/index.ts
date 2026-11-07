@@ -12,10 +12,11 @@
 //
 // ── DÉCLENCHEMENT ──────────────────────────────────────────────────
 //
-// Appelée une fois par jour par `.github/workflows/renewal-notice.yml`. Pas
-// par `pg_cron` : appeler une Edge Function depuis Postgres exigerait
-// `pg_net`, non installé, et installer une extension pour un travail
-// quotidien serait payer cher une commodité.
+// Appelée une fois par jour par pg_cron (job `cosmo-renewal-notice`, mig.
+// 246), qui passe par `cron_invoke()` (pg_net, secret dans Vault) et note
+// chaque exécution dans `cron_runs` (mig. 245, ARC-06). Le cron de GitHub
+// (`.github/workflows/renewal-notice.yml`) ne garantissait ni l'heure ni
+// l'exécution ; il reste en `workflow_dispatch` pour un rattrapage.
 //
 // ── IDEMPOTENCE ────────────────────────────────────────────────────
 //
@@ -36,6 +37,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from '../_shared/alert.ts'
 import { renewalNoticeMail } from '../_shared/renewal-notice-text.ts'
+import { withCronLease } from '../_shared/cron-lease.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'https://thecosmo.app'
 /**
@@ -119,111 +121,123 @@ Deno.serve(async (req) => {
     })
   }
 
-  const { data, error } = await supabaseAdmin.rpc('orgs_due_for_renewal_notice')
-  if (error) {
-    console.error('orgs_due_for_renewal_notice failed:', error)
-    await opsAlert('renewal-notice', 'la selection des avis de reconduction a echoue — obligation L215-1 non tenue ce jour')
-    return new Response(JSON.stringify({ error: 'query_failed' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    })
-  }
-
-  const due = (data ?? []) as DueOrg[]
-  let sent = 0
-  const failed: string[] = []
-
-  for (const org of due) {
-    try {
-      // SV-5 : le nom d'organisation, écrit par ses admins, est échappé dans le HTML.
-      const { subject, text, html } = renewalNoticeMail(org, APP_URL)
-      const res = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          from: MAIL_FROM,
-          to: [org.owner_email],
-          subject,
-          text,
-          html,
-        }),
-        signal: AbortSignal.timeout(15000),
-      })
-
-      if (!res.ok) {
-        failed.push(org.org_id)
-        continue
+  // Bail du job (mig. 245, `_shared/cron-lease.ts`) : deux passages simultanés
+  // (pg_cron et GitHub pendant la bascule, un rattrapage manuel) ne travaillent
+  // jamais ensemble. Le second rend `skipped` sans rien lire ni envoyer.
+  return withCronLease((fn, args) => supabaseAdmin.rpc(fn, args), 'renewal-notice', {
+    onBusy: () => new Response(JSON.stringify({ skipped: 'already_running' }), { status: 200, headers: { 'Content-Type': 'application/json' } }),
+    onError: async () => {
+      await opsAlert('renewal-notice', 'bail du job illisible (cron_lease_acquire en echec) : aucun avis L215-1 ce passage')
+      return new Response(JSON.stringify({ error: 'lease_failed' }), { status: 500, headers: { 'Content-Type': 'application/json' } })
+    },
+    work: async () => {
+      const { data, error } = await supabaseAdmin.rpc('orgs_due_for_renewal_notice')
+      if (error) {
+        console.error('orgs_due_for_renewal_notice failed:', error)
+        await opsAlert('renewal-notice', 'la selection des avis de reconduction a echoue — obligation L215-1 non tenue ce jour')
+        return new Response(JSON.stringify({ error: 'query_failed' }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        })
       }
-      // Identifiant du message chez Resend : la preuve en cas de litige.
-      // Corps d'un SUCCÈS, lu pour l'identifiant seul : jamais relayé (C-36).
-      const sentBody = (await (res.json() as Promise<{ id?: string }>).catch(() => ({}))) as { id?: string }
 
-      // APRÈS l'envoi, jamais avant. Si cette écriture échoue, l'avis repartira
-      // demain : un doublon est un désagrément, une absence de preuve est un
-      // risque juridique. On penche volontairement du côté du doublon.
-      const { error: traceError } = await supabaseAdmin.from('renewal_notices').insert({
-        org_id: org.org_id,
-        period_end: org.period_end,
-        recipient: org.owner_email,
-        provider_message_id: sentBody.id ?? null,
-      })
-      if (traceError && (traceError as { code?: string }).code !== '23505') {
-        await opsAlert('renewal-notice', `avis envoye a une organisation mais preuve NON enregistree (${org.org_id})`)
+      const due = (data ?? []) as DueOrg[]
+      let sent = 0
+      const failed: string[] = []
+
+      for (const org of due) {
+        try {
+          // SV-5 : le nom d'organisation, écrit par ses admins, est échappé dans le HTML.
+          const { subject, text, html } = renewalNoticeMail(org, APP_URL)
+          const res = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              from: MAIL_FROM,
+              to: [org.owner_email],
+              subject,
+              text,
+              html,
+            }),
+            signal: AbortSignal.timeout(15000),
+          })
+
+          if (!res.ok) {
+            failed.push(org.org_id)
+            continue
+          }
+          // Identifiant du message chez Resend : la preuve en cas de litige.
+          // Corps d'un SUCCÈS, lu pour l'identifiant seul : jamais relayé (C-36).
+          const sentBody = (await (res.json() as Promise<{ id?: string }>).catch(() => ({}))) as { id?: string }
+
+          // APRÈS l'envoi, jamais avant. Si cette écriture échoue, l'avis repartira
+          // demain : un doublon est un désagrément, une absence de preuve est un
+          // risque juridique. On penche volontairement du côté du doublon.
+          const { error: traceError } = await supabaseAdmin.from('renewal_notices').insert({
+            org_id: org.org_id,
+            period_end: org.period_end,
+            recipient: org.owner_email,
+            provider_message_id: sentBody.id ?? null,
+          })
+          if (traceError && (traceError as { code?: string }).code !== '23505') {
+            await opsAlert('renewal-notice', `avis envoye a une organisation mais preuve NON enregistree (${org.org_id})`)
+          }
+          sent++
+        } catch (err) {
+          console.error('renewal notice failed for org:', err)
+          failed.push(org.org_id)
+        }
       }
-      sent++
-    } catch (err) {
-      console.error('renewal notice failed for org:', err)
-      failed.push(org.org_id)
-    }
-  }
 
-  if (failed.length > 0) {
-    await opsAlert('renewal-notice', `${failed.length} avis de reconduction non envoye(s) sur ${due.length} — obligation L215-1 en risque`)
-  }
+      if (failed.length > 0) {
+        await opsAlert('renewal-notice', `${failed.length} avis de reconduction non envoye(s) sur ${due.length} — obligation L215-1 en risque`)
+      }
 
-  // ── Rappel jamais parti au moins un mois avant (§5) ─────────────
-  // Ces abonnements deviennent résiliables à tout moment après le
-  // renouvellement, avec remboursement au prorata sous 30 jours : on les
-  // MARQUE (l'outil admin l'exige pour rembourser) et on prévient l'équipe.
-  let missed = 0
-  const { data: missing, error: missingError } = await supabaseAdmin.rpc('orgs_missing_renewal_notice')
-  if (missingError) {
-    await opsAlert('renewal-notice', 'la detection des rappels de renouvellement manques a echoue')
-  } else {
-    for (const m of (missing ?? []) as { org_id: string }[]) {
-      const { error: markError } = await supabaseAdmin
-        .from('org_subscriptions')
-        .update({ renewal_notice_missed_at: new Date().toISOString() })
-        .eq('org_id', m.org_id)
-      if (!markError) missed++
-    }
-    if (missed > 0) {
-      await opsAlert('renewal-notice', `${missed} abonnement(s) annuel(s) SANS rappel L215-1 a un mois du terme : marques, resiliables a tout moment avec prorata`)
-    }
-  }
+      // ── Rappel jamais parti au moins un mois avant (§5) ─────────────
+      // Ces abonnements deviennent résiliables à tout moment après le
+      // renouvellement, avec remboursement au prorata sous 30 jours : on les
+      // MARQUE (l'outil admin l'exige pour rembourser) et on prévient l'équipe.
+      let missed = 0
+      const { data: missing, error: missingError } = await supabaseAdmin.rpc('orgs_missing_renewal_notice')
+      if (missingError) {
+        await opsAlert('renewal-notice', 'la detection des rappels de renouvellement manques a echoue')
+      } else {
+        for (const m of (missing ?? []) as { org_id: string }[]) {
+          const { error: markError } = await supabaseAdmin
+            .from('org_subscriptions')
+            .update({ renewal_notice_missed_at: new Date().toISOString() })
+            .eq('org_id', m.org_id)
+          if (!markError) missed++
+        }
+        if (missed > 0) {
+          await opsAlert('renewal-notice', `${missed} abonnement(s) annuel(s) SANS rappel L215-1 a un mois du terme : marques, resiliables a tout moment avec prorata`)
+        }
+      }
 
-  // ── Relance J+10 des rétractations non remboursées (§2) ─────────
-  // Le remboursement est dû sous 14 jours (L221-24) ; au-delà, pénalités.
-  const tenDaysAgo = new Date(Date.now() - 10 * 24 * 3600 * 1000).toISOString()
-  const { data: late, error: lateError } = await supabaseAdmin
-    .from('org_withdrawals')
-    .select('id, org_id, amount_due_cents, withdrawn_at')
-    .is('refunded_at', null)
-    .is('reminder_sent_at', null)
-    .lte('withdrawn_at', tenDaysAgo)
-  if (lateError) {
-    await opsAlert('renewal-notice', 'la lecture des retractations non remboursees a echoue')
-  } else {
-    for (const w of late ?? []) {
-      await opsAlert(
-        'renewal-notice',
-        `RELANCE J+10 : retractation org ${w.org_id} du ${String(w.withdrawn_at).slice(0, 10)} NON remboursee (${(w.amount_due_cents / 100).toFixed(2)} EUR). Echeance legale J+14.`,
-      )
-      await supabaseAdmin.from('org_withdrawals').update({ reminder_sent_at: new Date().toISOString() }).eq('id', w.id)
-    }
-  }
+      // ── Relance J+10 des rétractations non remboursées (§2) ─────────
+      // Le remboursement est dû sous 14 jours (L221-24) ; au-delà, pénalités.
+      const tenDaysAgo = new Date(Date.now() - 10 * 24 * 3600 * 1000).toISOString()
+      const { data: late, error: lateError } = await supabaseAdmin
+        .from('org_withdrawals')
+        .select('id, org_id, amount_due_cents, withdrawn_at')
+        .is('refunded_at', null)
+        .is('reminder_sent_at', null)
+        .lte('withdrawn_at', tenDaysAgo)
+      if (lateError) {
+        await opsAlert('renewal-notice', 'la lecture des retractations non remboursees a echoue')
+      } else {
+        for (const w of late ?? []) {
+          await opsAlert(
+            'renewal-notice',
+            `RELANCE J+10 : retractation org ${w.org_id} du ${String(w.withdrawn_at).slice(0, 10)} NON remboursee (${(w.amount_due_cents / 100).toFixed(2)} EUR). Echeance legale J+14.`,
+          )
+          await supabaseAdmin.from('org_withdrawals').update({ reminder_sent_at: new Date().toISOString() }).eq('id', w.id)
+        }
+      }
 
-  return new Response(JSON.stringify({ due: due.length, sent, failed: failed.length, missed, lateWithdrawals: late?.length ?? 0 }), {
-    headers: { 'Content-Type': 'application/json' },
+      return new Response(JSON.stringify({ due: due.length, sent, failed: failed.length, missed, lateWithdrawals: late?.length ?? 0 }), {
+        headers: { 'Content-Type': 'application/json' },
+      })
+    },
   })
 })

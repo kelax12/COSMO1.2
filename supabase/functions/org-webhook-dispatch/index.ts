@@ -1,8 +1,9 @@
 // ═══════════════════════════════════════════════════════════════════
 // Envoi des webhooks d'organisation (mig. 199, audit entreprise 2026-09-24)
 //
-// Appelée par `.github/workflows/org-webhook-dispatch.yml` (en-tête
-// `x-cron-secret`), comme `org-digest` : pg_net n'est pas installé.
+// Appelée toutes les dix minutes par pg_cron (job `cosmo-org-webhook-dispatch`,
+// mig. 246, journal `cron_runs`), en `x-cron-secret`, comme `org-digest`.
+// Rattrapage : `.github/workflows/org-webhook-dispatch.yml`, à la main.
 //
 // Vide la file `org_webhook_deliveries` par `org_webhook_deliveries_due`
 // (service_role). Deux formats :
@@ -30,6 +31,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from '../_shared/alert.ts'
 import { addressesArePublic, slackText, webhookHostOf } from '../_shared/org-integrations.ts'
+import { withCronLease } from '../_shared/cron-lease.ts'
 
 const CRON_SECRET = Deno.env.get('CRON_SECRET')
 const APP_URL = Deno.env.get('APP_URL') ?? 'https://thecosmo.app'
@@ -83,61 +85,73 @@ Deno.serve(async (req) => {
   if (req.headers.get('x-cron-secret') !== CRON_SECRET) return json({ error: 'unauthorized' }, 401)
 
   const admin = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '')
-  const { data, error } = await admin.rpc('org_webhook_deliveries_due', { p_limit: 200 })
-  if (error) {
-    await opsAlert('org-webhook-dispatch', 'lecture de la file des webhooks en echec')
-    return json({ error: 'query_failed' }, 500)
-  }
+  // Bail du job (mig. 245, `_shared/cron-lease.ts`) : deux passages simultanés
+  // (pg_cron et GitHub pendant la bascule, un rattrapage manuel) ne travaillent
+  // jamais ensemble. Le second rend `skipped` sans rien lire ni envoyer.
+  return withCronLease((fn, args) => admin.rpc(fn, args), 'org-webhook-dispatch', {
+    onBusy: () => json({ skipped: 'already_running' }, 200),
+    onError: async () => {
+      await opsAlert('org-webhook-dispatch', 'bail du job illisible (cron_lease_acquire en echec) : aucun webhook ce passage')
+      return json({ error: 'lease_failed' }, 500)
+    },
+    work: async () => {
+      const { data, error } = await admin.rpc('org_webhook_deliveries_due', { p_limit: 200 })
+      if (error) {
+        await opsAlert('org-webhook-dispatch', 'lecture de la file des webhooks en echec')
+        return json({ error: 'query_failed' }, 500)
+      }
 
-  let delivered = 0
-  let failed = 0
-  const outcome = new Map<string, { ok: boolean; status: number | null }>()
-  const publicHosts = new Map<string, boolean>()
+      let delivered = 0
+      let failed = 0
+      const outcome = new Map<string, { ok: boolean; status: number | null }>()
+      const publicHosts = new Map<string, boolean>()
 
-  for (const d of (data ?? []) as Due[]) {
-    const body = d.format === 'slack' ? JSON.stringify({ text: slackText(d.event, d.payload, APP_URL) }) : JSON.stringify(d.payload)
-    const headers: Record<string, string> = { 'Content-Type': 'application/json', 'User-Agent': 'Cosmo-Webhooks/1' }
-    if (d.format === 'json') {
-      const ts = String(Math.floor(Date.now() / 1000))
-      headers['X-Cosmo-Event'] = d.event
-      headers['X-Cosmo-Timestamp'] = ts
-      headers['X-Cosmo-Signature'] = `sha256=${await hmacHex(d.secret, `${ts}.${body}`)}`
-    }
-    let status: number | null = null
-    try {
-      // Cible non publique : compté comme un échec, donc coupé au bout de
-      // DISABLE_AFTER_FAILURES, sans qu'aucun octet parte.
-      if (!(await targetIsPublic(d.url, publicHosts))) throw new Error('target_not_public')
-      const res = await fetch(d.url, { method: 'POST', headers, body, redirect: 'manual', signal: AbortSignal.timeout(TIMEOUT_MS) })
-      status = res.status
-      await res.body?.cancel()
-    } catch {
-      status = null
-    }
-    const ok = status !== null && status >= 200 && status < 300
-    if (ok) delivered++
-    else failed++
-    await admin.from('org_webhook_deliveries')
-      .update({ attempts: d.attempts + 1, status_code: status, delivered_at: ok ? new Date().toISOString() : null })
-      .eq('id', d.delivery_id)
-    outcome.set(d.webhook_id, { ok, status })
-  }
+      for (const d of (data ?? []) as Due[]) {
+        const body = d.format === 'slack' ? JSON.stringify({ text: slackText(d.event, d.payload, APP_URL) }) : JSON.stringify(d.payload)
+        const headers: Record<string, string> = { 'Content-Type': 'application/json', 'User-Agent': 'Cosmo-Webhooks/1' }
+        if (d.format === 'json') {
+          const ts = String(Math.floor(Date.now() / 1000))
+          headers['X-Cosmo-Event'] = d.event
+          headers['X-Cosmo-Timestamp'] = ts
+          headers['X-Cosmo-Signature'] = `sha256=${await hmacHex(d.secret, `${ts}.${body}`)}`
+        }
+        let status: number | null = null
+        try {
+          // Cible non publique : compté comme un échec, donc coupé au bout de
+          // DISABLE_AFTER_FAILURES, sans qu'aucun octet parte.
+          if (!(await targetIsPublic(d.url, publicHosts))) throw new Error('target_not_public')
+          const res = await fetch(d.url, { method: 'POST', headers, body, redirect: 'manual', signal: AbortSignal.timeout(TIMEOUT_MS) })
+          status = res.status
+          await res.body?.cancel()
+        } catch {
+          status = null
+        }
+        const ok = status !== null && status >= 200 && status < 300
+        if (ok) delivered++
+        else failed++
+        await admin.from('org_webhook_deliveries')
+          .update({ attempts: d.attempts + 1, status_code: status, delivered_at: ok ? new Date().toISOString() : null })
+          .eq('id', d.delivery_id)
+        outcome.set(d.webhook_id, { ok, status })
+      }
 
-  // Suivi par webhook : dernier code, et coupure après trop d'échecs.
-  for (const [webhookId, { ok, status }] of outcome) {
-    // SV-7 : sur panne de lecture, `w` valait `null`, donc le compteur repartait
-    // de 1 et un webhook mort n'était jamais coupé. On ne touche à rien : le
-    // passage suivant relira.
-    const { data: w, error: wError } = await admin.from('org_webhooks').select('failure_count').eq('id', webhookId).maybeSingle()
-    if (wError) continue
-    const failures = ok ? 0 : ((w?.failure_count as number | undefined) ?? 0) + 1
-    await admin.from('org_webhooks').update({
-      last_status: status,
-      last_delivery_at: new Date().toISOString(),
-      failure_count: failures,
-      ...(failures >= DISABLE_AFTER_FAILURES ? { enabled: false } : {}),
-    }).eq('id', webhookId)
-  }
+      // Suivi par webhook : dernier code, et coupure après trop d'échecs.
+      for (const [webhookId, { ok, status }] of outcome) {
+        // SV-7 : sur panne de lecture, `w` valait `null`, donc le compteur repartait
+        // de 1 et un webhook mort n'était jamais coupé. On ne touche à rien : le
+        // passage suivant relira.
+        const { data: w, error: wError } = await admin.from('org_webhooks').select('failure_count').eq('id', webhookId).maybeSingle()
+        if (wError) continue
+        const failures = ok ? 0 : ((w?.failure_count as number | undefined) ?? 0) + 1
+        await admin.from('org_webhooks').update({
+          last_status: status,
+          last_delivery_at: new Date().toISOString(),
+          failure_count: failures,
+          ...(failures >= DISABLE_AFTER_FAILURES ? { enabled: false } : {}),
+        }).eq('id', webhookId)
+      }
 
-  return json({ delivered, failed }, 200)
+      return json({ delivered, failed }, 200)
+    },
+  })
 })

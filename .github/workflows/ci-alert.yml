@@ -67,6 +67,10 @@ on:
       - Erreurs de prod
       - Secrets age
       - Signaux SEO
+      # `Journal des crons` (ARC-06, 2026-11-07) : un traitement de production
+      # planifie dans pg_cron qui n a pas tourne. Son rouge n a pas d autre
+      # chemin vers un humain.
+      - Journal des crons
       # ⚠️ `Gardes de calendrier` n'y est PAS, pour la meme raison qu'`Uptime`
       # ci-dessous : sa propre issue `calendrier-red`, refermee seule.
       # ⚠️ `Uptime` n'y est PAS NON PLUS, et ce n'est pas un oubli : il ouvre

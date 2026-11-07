@@ -159,6 +159,9 @@ export const CONTACTS_PROD = {
   'weekly-digest.yml › digest › Envoyer le résumé': {
     affiche: "l'état de l'envoi seulement ; le message (totaux de prod) part au webhook, jamais au journal",
   },
+  'cron-journal.yml › verdict › Lire le journal des crons': {
+    affiche: 'par job planifié : nom, fenêtre, date et statut du dernier passage, code HTTP, date de la dernière réussite ; aucune donnée utilisateur (le journal n en porte pas)',
+  },
   'daily-digest.yml › digest › Envoyer le résumé': {
     affiche: "l'état de l'envoi seulement ; le message (totaux de prod) part au webhook, jamais au journal",
   },

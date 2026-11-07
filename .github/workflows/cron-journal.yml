@@ -1,0 +1,43 @@
+# ═══════════════════════════════════════════════════════════════════
+# Journal des crons · les traitements planifies ont-ils tourne ? (ARC-06, vague 10.2)
+#
+# Les six traitements de production (avis de reconduction, alertes de sieges,
+# comptes inactifs, notifications d entreprise horaires et quotidiennes,
+# webhooks) tournent dans pg_cron (mig. 246) et notent chaque execution dans
+# `cron_runs` (mig. 245). Cette sonde lit `cron_runs_verdict()` en lecture
+# seule et ROUGIT des qu un job n a pas tourne, ou pas reussi, dans sa
+# fenetre. Le rouge part sur le canal d alerte par `ci-alert.yml`.
+#
+# 🔴 POURQUOI ELLE RESTE SUR GITHUB : une surveillance logee dans pg_cron se
+#    tairait le jour ou pg_cron s arrete. Le retard du cron de GitHub ne
+#    fausse rien : la fenetre se juge sur les dates du journal.
+# ⚠️ `schedule:` pose par le commit de BASCULE (branche `noyau/cron-bascule`),
+#    le meme qui retire ceux des workflows de production : avant que la
+#    mig. 245 soit appliquee en production, la sonde serait rouge a tort.
+# ⚠️ Secret absent = ECHEC, jamais un silence vert.
+# ═══════════════════════════════════════════════════════════════════
+name: Journal des crons
+
+on:
+  workflow_dispatch:
+
+# Moindre privilege (A-8) : le job lit la base, il ne lit ni n ecrit le depot
+# au-dela du checkout.
+permissions:
+  contents: read
+
+jobs:
+  verdict:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Lire le journal des crons
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: node scripts/check-cron-runs.mjs
