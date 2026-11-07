@@ -5,6 +5,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { OKR, KeyResult } from './types';
 import { krWeight } from './progress';
+import type { ColumnsExist, DbInsert, DbRow, Verified } from '@/lib/db-contract';
 
 // ─── DB row types ────────────────────────────────────────────────────────────
 
@@ -109,3 +110,8 @@ export const mapOkrToDb = (input: Partial<OKR>): OKRDbInput => {
   if (input.endDate !== undefined) result.end_date = input.endDate;
   return result;
 };
+
+// ARC-07 : une colonne renommée en base casse `tsc` ici, pas en production.
+export type OKRRowContract = Verified<ColumnsExist<OKRRow, DbRow<'okrs'>>>;
+export type KRRowContract = Verified<ColumnsExist<KRRow, DbRow<'key_results'>>>;
+export type OKRDbInputContract = Verified<ColumnsExist<OKRDbInput, DbInsert<'okrs'>>>;

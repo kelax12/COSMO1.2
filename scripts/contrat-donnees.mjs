@@ -167,7 +167,7 @@ select pg_get_triggerdef(t.oid) as def
 export const SQL_POLICIES_HORS_PUBLIC = `
 select schemaname, tablename, policyname, permissive, roles::text[] as roles, cmd, qual, with_check
   from pg_policies
- where schemaname <> 'public'
+ where schemaname not in ('public', 'cron')
  order by schemaname, tablename, policyname`;
 
 export const SQL_BUCKETS = `

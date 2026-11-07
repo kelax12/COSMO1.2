@@ -916,3 +916,10 @@ npm run check:edge          # Le code DÉPLOYÉ des Edge Functions contre le dé
   n'a corrigé qu'un nom sur six sur la sélection de modules : elle constatait l'absence de
   `RequireModule` sans voir que la fonctionnalité entière avait disparu, ce qui laisse la dérive
   presque intacte **et la fait paraître vérifiée**.
+
+### AM-5 · écart de `check:supabase-posture` constaté le 2026-11-05
+
+Rouge au 2026-11-05 (référence du 10-26, descendu de `scripts/CLAUDE.md`) : `rls_enabled_no_policy`
+24/14, DEFINER exposées 87/84, `unindexed_foreign_keys` nouveau (3). Écarts nés des mig. `229` → `240` :
+relire au catalogue AVANT `--update`. `supabase/rpc-inventory.md` (généré, MAI-01/API-01) donne l'état
+des droits `EXECUTE` de chaque fonction depuis les migrations.

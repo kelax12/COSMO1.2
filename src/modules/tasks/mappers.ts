@@ -5,6 +5,7 @@
 // added server-side in the repository from `auth.getUser()`.
 // ═══════════════════════════════════════════════════════════════════
 import { Task, Subtask, TaskRecurrence, TaskStatus, TaskHealth } from './types';
+import type { ColumnsExist, DbInsert, DbRow, Verified } from '@/lib/db-contract';
 
 /** Supabase DB row type for the `tasks` table (snake_case). */
 export interface TaskRow {
@@ -129,3 +130,7 @@ export function mapTaskToDb(input: Partial<Task>): TaskDbInput {
   if (input.health !== undefined) result.health = input.health ?? null;
   return result;
 }
+
+// ARC-07 : une colonne renommée en base casse `tsc` ici, pas en production.
+export type TaskRowContract = Verified<ColumnsExist<TaskRow, DbRow<'tasks'>>>;
+export type TaskDbInputContract = Verified<ColumnsExist<TaskDbInput, DbInsert<'tasks'>>>;
