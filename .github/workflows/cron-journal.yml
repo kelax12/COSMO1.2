@@ -11,14 +11,18 @@
 # 🔴 POURQUOI ELLE RESTE SUR GITHUB : une surveillance logee dans pg_cron se
 #    tairait le jour ou pg_cron s arrete. Le retard du cron de GitHub ne
 #    fausse rien : la fenetre se juge sur les dates du journal.
-# ⚠️ `schedule:` pose par le commit de BASCULE (branche `noyau/cron-bascule`),
-#    le meme qui retire ceux des workflows de production : avant que la
-#    mig. 245 soit appliquee en production, la sonde serait rouge a tort.
+# ⚠️ `schedule:` pose par le commit de BASCULE, le meme qui retire ceux des
+#    workflows de production (mig. 245 et 246 appliquees en production).
 # ⚠️ Secret absent = ECHEC, jamais un silence vert.
 # ═══════════════════════════════════════════════════════════════════
 name: Journal des crons
 
 on:
+  schedule:
+    # Toutes les heures, minute 51 (decalee des autres crons du depot). La
+    # fenetre la plus courte est celle des webhooks (35 min) : une absence se
+    # voit en moins de deux heures.
+    - cron: '51 * * * *'
   workflow_dispatch:
 
 # Moindre privilege (A-8) : le job lit la base, il ne lit ni n ecrit le depot

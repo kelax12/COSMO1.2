@@ -3,7 +3,7 @@
 #
 # Declenche l Edge Function `org-webhook-dispatch`, qui vide la file
 # `org_webhook_deliveries` (Slack ou JSON signe). Meme mecanisme que
-# `org-digest.yml` : pg_net n est pas installe.
+# `org-digest.yml`. Planifie dans pg_cron depuis la mig. 246 (ARC-06).
 #
 # 🔴 A-3 (2026-09-30) : ce job est rouge (HTTP 401) depuis sa creation. La
 #    fonction etait absente de supabase/config.toml, donc deployee en
@@ -16,9 +16,12 @@
 name: org-webhook-dispatch
 
 on:
-  schedule:
-    # Toutes les dix minutes, decale des autres crons du depot.
-    - cron: '7-59/10 * * * *'
+  # ARC-06 (2026-11-07) : PLUS DE `schedule:` ici. Le traitement est planifie
+  # dans pg_cron (`cosmo-org-webhook-dispatch`, mig. 246), chaque passage est note dans
+  # `cron_runs` (mig. 245) et surveille par `cron-journal.yml`. Ce workflow ne
+  # sert plus qu au RATTRAPAGE manuel, sur, sans doublon (bail de la fonction).
+  # ❌ Ne pas remettre de `schedule:` : deux ordonnanceurs, c est le cron de
+  # GitHub (ni heure ni execution garanties) qui revient.
   workflow_dispatch:
 
 # Moindre privilege (A-8, CodeQL actions/missing-workflow-permissions) :

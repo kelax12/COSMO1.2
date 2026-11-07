@@ -4,9 +4,8 @@
 # Declenche l Edge Function `renewal-notice`, qui previent les clients dont
 # l abonnement ANNUEL se reconduit dans 30 a 60 jours.
 #
-# Pourquoi la CI et pas pg_cron : appeler une Edge Function depuis Postgres
-# exigerait l extension pg_net, non installee. Un workflow planifie fait le
-# meme travail sans ajouter de dependance en base.
+# Planification : pg_cron depuis la mig. 246 (ARC-06). Ce workflow reste pour
+# le rattrapage manuel (`workflow_dispatch`).
 #
 # ⚠️ Ne PAS supprimer ce workflow en croyant nettoyer : son absence ne casse
 # rien de visible, elle fait juste que les avis cessent de partir. Et un avis
@@ -15,10 +14,12 @@
 name: renewal-notice
 
 on:
-  schedule:
-    # 07:12 UTC, tous les jours. Heure decalee des autres crons du depot pour
-    # ne pas empiler les executions sur la meme minute.
-    - cron: '12 7 * * *'
+  # ARC-06 (2026-11-07) : PLUS DE `schedule:` ici. Le traitement est planifie
+  # dans pg_cron (`cosmo-renewal-notice`, `cosmo-seat-alert`, mig. 246), chaque passage est note dans
+  # `cron_runs` (mig. 245) et surveille par `cron-journal.yml`. Ce workflow ne
+  # sert plus qu au RATTRAPAGE manuel, sur, sans doublon (bail de la fonction).
+  # ❌ Ne pas remettre de `schedule:` : deux ordonnanceurs, c est le cron de
+  # GitHub (ni heure ni execution garanties) qui revient.
   workflow_dispatch:
 
 # Moindre privilege (A-8, CodeQL actions/missing-workflow-permissions) :

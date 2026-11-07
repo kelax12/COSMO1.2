@@ -6,8 +6,8 @@
 # `delete-account` ceux avertis depuis 30 jours et restes absents. C est ce
 # que promet la politique de confidentialite (s6.li1).
 #
-# Pourquoi la CI et pas pg_cron : meme raison que `renewal-notice.yml`
-# (pas de pg_net en base).
+# Planification : pg_cron depuis la mig. 246 (ARC-06). Ce workflow reste pour
+# le rattrapage manuel (`workflow_dispatch`).
 #
 # ⚠️ Ne PAS supprimer ce workflow en croyant nettoyer : son absence ne casse
 # rien de visible, elle fait juste que la promesse publiee n est plus tenue.
@@ -16,9 +16,12 @@
 name: inactive-accounts
 
 on:
-  schedule:
-    # 06:37 UTC, tous les jours. Heure decalee des autres crons du depot.
-    - cron: '37 6 * * *'
+  # ARC-06 (2026-11-07) : PLUS DE `schedule:` ici. Le traitement est planifie
+  # dans pg_cron (`cosmo-inactive-accounts`, mig. 246), chaque passage est note dans
+  # `cron_runs` (mig. 245) et surveille par `cron-journal.yml`. Ce workflow ne
+  # sert plus qu au RATTRAPAGE manuel, sur, sans doublon (bail de la fonction).
+  # ❌ Ne pas remettre de `schedule:` : deux ordonnanceurs, c est le cron de
+  # GitHub (ni heure ni execution garanties) qui revient.
   workflow_dispatch:
 
 # Moindre privilege (A-8) : le job n appelle qu une URL.
