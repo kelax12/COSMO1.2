@@ -5,6 +5,7 @@
 // (Record<string,boolean>), never `completedDates` (faille B5).
 // ═══════════════════════════════════════════════════════════════════
 import { Habit } from './types';
+import type { ColumnsExist, DbInsert, DbRow, RpcRow, Verified } from '@/lib/db-contract';
 
 /** Supabase DB row type for the `habits` table (snake_case). */
 export interface HabitRow {
@@ -77,3 +78,8 @@ export function mapHabitToDb(input: Partial<Habit>): HabitDbInput {
   if (input.completions !== undefined) result.completions = input.completions;
   return result;
 }
+
+// ARC-07 : une colonne renommée en base casse `tsc` ici, pas en production.
+// `HabitRow` lit aussi les colonnes calculées de `get_my_habits()` (mig. 119).
+export type HabitRowContract = Verified<ColumnsExist<HabitRow, DbRow<'habits'> & RpcRow<'get_my_habits'>>>;
+export type HabitDbInputContract = Verified<ColumnsExist<HabitDbInput, DbInsert<'habits'>>>;
