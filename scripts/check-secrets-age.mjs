@@ -140,6 +140,56 @@ export function evaluer({ registre, vivant, exemple, maintenant }) {
   return { erreurs, lignes };
 }
 
+/**
+ * Les écarts, rangés par GESTE (V9.4, TST-05, 2026-11-07).
+ *
+ * 🔴 Du 2026-10-26 au 2026-11-07, ce job a rendu 44 lignes d'écart en vrac, et
+ * « GH_TOKEN absent » ne disait pas que le secret à créer s'appelle
+ * `SECRETS_AUDIT_TOKEN` : rouge depuis sa pose, et personne ne savait quoi
+ * faire. Chaque écart tombe ici dans UN geste, et un écart non reconnu tombe
+ * dans « à lire », jamais nulle part. Ne change PAS le verdict : `run()` sort
+ * en 1 sur la liste brute, ceci ne fait que l'expliquer.
+ */
+export function quoiFaire(erreurs) {
+  const gestes = {
+    jeton: { titre: 'Poser le jeton de lecture (geste d Axel)', items: [] },
+    rotation: { titre: 'Faire tourner (geste d Axel, V4.3), puis renseigner lastRotated', items: [] },
+    date: { titre: 'Date de rotation inconnue : renseigner lastRotated (date réelle) ou faire tourner', items: [] },
+    inventaire: { titre: 'Inventaire : inscrire au registre (nom, store, kind, échéance) OU supprimer chez le fournisseur', items: [] },
+    absent: { titre: 'Au registre mais absent : poser la variable OU retirer l entrée, par décision écrite', items: [] },
+    registre: { titre: 'Registre mal formé : corriger .github/secrets-registry.json', items: [] },
+    autre: { titre: 'À lire', items: [] },
+  };
+  const consequences = [];
+  for (const e of erreurs) {
+    if (/^github : GH_TOKEN/.test(e)) {
+      gestes.jeton.items.push(
+        'secret GitHub `SECRETS_AUDIT_TOKEN` absent : PAT fin (Settings → Developer settings), dépôt seul, '
+          + 'permission « Secrets: Read-only », puis `gh secret set SECRETS_AUDIT_TOKEN`',
+      );
+    } else if (/ : (\S+) absent : echec/.test(e)) {
+      gestes.jeton.items.push(e.replace(' : echec, jamais un saut', ' : secret du workflow à poser'));
+    } else if (/source non lue|lecture impossible/.test(e)) {
+      consequences.push(e);
+    } else if (/, a faire tourner$/.test(e)) {
+      gestes.rotation.items.push(e.replace(', a faire tourner', ''));
+    } else if (/date de rotation INCONNUE/.test(e)) {
+      const store = e.split('/')[0];
+      if (erreurs.some((x) => x.startsWith(`${store} : source non lue`))) consequences.push(e);
+      else gestes.date.items.push(e.replace(', donc echue', ''));
+    } else if (/existe sans entree au registre|dans \.env\.example sans entree/.test(e)) {
+      gestes.inventaire.items.push(e.split(' : ')[0]);
+    } else if (/au registre mais absent/.test(e)) {
+      gestes.absent.items.push(e.split(' : ')[0]);
+    } else if (/^registre : /.test(e)) {
+      gestes.registre.items.push(e.slice('registre : '.length));
+    } else {
+      gestes.autre.items.push(e);
+    }
+  }
+  return { gestes: Object.values(gestes).filter((g) => g.items.length > 0), consequences };
+}
+
 /** Noms de `.env.example`, hors commentaires. */
 export function nomsDeLExemple(texte) {
   const noms = new Set();
@@ -227,6 +277,22 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   if (r.exit) {
     console.error(`\n✖ ${r.erreurs.length} ecart(s) :`);
     for (const e of r.erreurs) console.error(`  · ${e}`);
+    const { gestes, consequences } = quoiFaire(r.erreurs);
+    console.error('\n▶ QUE FAIRE (noms seulement, aucune valeur) :');
+    for (const g of gestes) {
+      console.error(`\n  ${g.titre} :`);
+      for (const i of g.items) console.error(`    - ${i}`);
+    }
+    if (consequences.length) {
+      console.error(`\n  Conséquences, qui se lèvent avec le jeton (${consequences.length}) : la source n'est pas lue, donc ses dates non plus.`);
+    }
+    // Les LOGS d'un run exigent un compte même sur un dépôt public, les
+    // ANNOTATIONS non : le geste doit se lire sans ouvrir le journal.
+    if (process.env.GITHUB_ACTIONS === 'true') {
+      for (const g of gestes) {
+        for (const i of g.items) console.log(`::error title=secrets-age · ${g.titre.split(' :')[0]}::${i}`);
+      }
+    }
   } else {
     console.log(`\n✔ ${r.lignes.length} secret(s) dans leur echeance`);
   }

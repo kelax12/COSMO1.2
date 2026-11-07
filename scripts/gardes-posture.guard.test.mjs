@@ -177,9 +177,39 @@ describe('témoin — posture Supabase (C-88)', () => {
   it('AM-5 · la référence commitée porte les advisors de performance', () => {
     const ref = JSON.parse(readFileSync(join(process.cwd(), 'scripts', 'supabase-posture.reference.json'), 'utf8'));
     expect(ref.performance).toBeTruthy();
-    // Depuis la mig. 227 (2026-10-26) l'advisor est absent de la référence : absent = 0.
-    expect(ref.performance.unindexed_foreign_keys?.compte ?? 0).toBe(0);
+    // Depuis la mig. 227 (2026-10-26) l'advisor était absent de la référence : absent = 0.
+    // 🔴 Seule exception admise (V9.4, 2026-11-07) : la DETTE DATÉE des trois FK
+    // nées par les mig. 230, 233 et 237, que la mig. 245 indexe. Bornée à 3, sa
+    // `_note` doit citer la 245. ❌ Pas d'échéance testée ici : ce fichier tourne
+    // dans `CI noyau`, et une garde de calendrier n'est jamais bloquante (CI-01).
+    const fk = ref.performance.unindexed_foreign_keys;
+    if ((fk?.compte ?? 0) > 0) {
+      expect(fk.compte).toBeLessThanOrEqual(3);
+      expect(fk._note).toMatch(/mig\. 245/);
+    }
     expect(ref.performance.unused_index.compte).toBeGreaterThan(0);
+  });
+
+  it('TÉMOIN · la référence COMMITÉE rougit encore sur un objet de plus (V9.4)', () => {
+    // Le recalage du 2026-11-07 a relevé des comptes (sécurité 14 → 24 et
+    // 84 → 87, FK sans index 0 → 3). Ce témoin joue la VRAIE référence, pas une
+    // référence fabriquée : un objet de plus sur chaque advisor de sécurité, et
+    // une FK de plus, doivent rougir ; la mesure égale à la référence, non.
+    const ref = JSON.parse(readFileSync(join(process.cwd(), 'scripts', 'supabase-posture.reference.json'), 'utf8'));
+    const nus = (bloc) => Object.fromEntries(
+      Object.entries(bloc).filter(([k]) => !k.startsWith('_')).map(([k, v]) => [k, { niveau: v.niveau, compte: v.compte }]),
+    );
+    const sec = nus(ref.securite);
+    expect(comparerAdvisors(ref.securite, sec).ecarts).toEqual([]);
+    for (const nom of Object.keys(sec)) {
+      const plus = { ...sec, [nom]: { ...sec[nom], compte: sec[nom].compte + 1 } };
+      expect(comparerAdvisors(ref.securite, plus).ecarts.some((e) => e.includes(nom)), `${nom} +1 toléré`).toBe(true);
+    }
+    const perf = nus(ref.performance);
+    expect(comparerPerformance(ref.performance, perf).ecarts).toEqual([]);
+    const fk = (perf.unindexed_foreign_keys?.compte ?? 0) + 1;
+    const unDePlus = comparerPerformance(ref.performance, { ...perf, unindexed_foreign_keys: { niveau: 'INFO', compte: fk } });
+    expect(unDePlus.ecarts.some((e) => e.includes('unindexed_foreign_keys'))).toBe(true);
   });
 
   it('les réglages surveillés portent tous une raison', () => {
@@ -400,7 +430,10 @@ describe('témoin — coût serveur (C-87)', () => {
 
 // ═══════════════════════════════════════════════════════════════════
 describe('témoin — sondes de fumée des Edge Functions (C-91)', () => {
-  it('les seize fonctions sont sondées, et aucune en écriture', () => {
+  // 🔴 Titre SANS compte (V9.4, 2026-11-07) : « les treize… », puis « seize… » ;
+  // chaque fonction neuve renommait le cas et désarmait son sabotage au catalogue
+  // (rouge de `Sabotages` du 2026-11-02 au 11-07). Le compte vit dans l'assertion.
+  it('chaque fonction est sondée, et aucune en écriture', () => {
     // 8 jusqu'au 2026-09-30 : les quatre fonctions du mode entreprise
     // n'étaient sondées par rien (A-2). Une par dossier de supabase/functions/ ;
     // 14 depuis affiliation-api, 15 depuis stripe-org-subscription (2026-11-01),

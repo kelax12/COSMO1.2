@@ -945,7 +945,7 @@ export const CATALOGUE = [
       'un statut inattendu et une panne réseau sont distingués',
       'Une fonction injoignable et une fonction qui répond mal ne se corrigent pas de la même façon : le rapport doit le dire.'],
     ['smoke-destructrice-en-post', 'produit', r('scripts/check-edge-smoke.mjs', "    fonction: 'delete-account',\n    methode: 'GET',", "    fonction: 'delete-account',\n    methode: 'POST',"),
-      'les treize fonctions sont sondées, et aucune en écriture',
+      'chaque fonction est sondée, et aucune en écriture',
       "`delete-account` SUPPRIME un compte : sondée en POST chaque jour, la sonde deviendrait l'incident."],
     ['anon-mauvaise-cle', 'detecteur', r('scripts/check-edge-smoke.mjs', "  const anon = Array.isArray(cles) ? cles.find((c) => c.name === 'anon') : null;", '  const anon = Array.isArray(cles) ? cles[0] : null;'),
       'lit la clé nommée « anon » par l API Management',
@@ -1605,8 +1605,10 @@ export const CATALOGUE = [
     famille: 'produit',
     garde: 'src/edge-audit-serveur.guard.test.ts',
     modifs: [r(
-      'supabase/functions/_shared/renewal-notice-text.ts',
-      '<p style="margin:0 0 8px">${escapeHtml(l)}</p>',
+      // Depuis cf7bc5aa (2026-11-03), l'avis passe par le gabarit commun : l'échappement
+      // du paragraphe légal (qui porte le nom d'organisation) vit dans billing-mail-layout.ts.
+      'supabase/functions/_shared/billing-mail-layout.ts',
+      '<p style="margin:0 0 8px">${e(l)}</p>',
       '<p style="margin:0 0 8px">${l}</p>',
     )],
     attendu: ['aucune balise du nom n arrive dans le HTML, le texte reste lisible'],
