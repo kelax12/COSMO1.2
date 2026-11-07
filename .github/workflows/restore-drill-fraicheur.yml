@@ -1,0 +1,45 @@
+# ──────────────────────────────────────────────────────────────────────
+# Fraicheur du drill · la seule sauvegarde a-t-elle ete RESTAUREE ce mois-ci ?
+#
+# ROB-01 (vague 4.4, 2026-11-07). `restore-drill.yml` restaure chaque mois le
+# dernier dump dans un Postgres jetable (job `drill-auto`). Son ECHEC part par
+# `ci-alert.yml`. Son ABSENCE, non : un workflow desactive, un cron suspendu
+# ou un YAML casse ne produisent aucun run, donc aucun rouge. C'est arrive :
+# `restore-drill.yml` est reste desactive du 2026-09-01 au 2026-10-15 sans que
+# rien ne le signale.
+#
+# Ce workflow lit l'historique des runs et ROUGIT si aucun `drill-auto` n'a
+# reussi sur `main` depuis 35 jours. Son rouge part par `ci-alert.yml` (issue
+# `ci-red` + webhook), comme celui du drill.
+# Logique et temoin : `scripts/restore-drill-fraicheur.mjs` et
+# `scripts/restore-drill-fraicheur.guard.test.mjs`.
+#
+# ⚠️ Volontairement HORS de `restore-drill.yml` : une garde logee dans le
+#    fichier qu'elle surveille se tait le jour ou ce fichier ne tourne plus.
+# ──────────────────────────────────────────────────────────────────────
+name: Fraicheur du drill
+
+on:
+  schedule:
+    # Hebdomadaire, le lundi a 06:19 UTC : minute libre parmi les crons du depot.
+    - cron: '19 6 * * 1'
+  workflow_dispatch:
+
+# Lecture seule : l'historique des runs, rien d'autre.
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  fraicheur:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # Node est preinstalle sur les runners : pas de `setup-node`, ce script
+      # n'a aucune dependance hors bibliotheque standard.
+      - name: Un drill vert de moins de 35 jours ?
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: node scripts/restore-drill-fraicheur.mjs

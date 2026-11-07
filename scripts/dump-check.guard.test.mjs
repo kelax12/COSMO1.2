@@ -258,23 +258,49 @@ describe.skipIf(!gpgReel)('dump-check · avec le vrai gpg', () => {
 });
 
 describe('dump-check · le workflow appelle REELLEMENT ce module', () => {
+  // Depuis ROB-01 (2026-11-07), la relecture n'a plus de job a elle : le
+  // drill MENSUEL `drill-auto` la joue avant de restaurer, par
+  // `scripts/restore-drill.mjs`, qui appelle `relireDump`.
   const yml = readFileSync(resolve('.github/workflows/restore-drill.yml'), 'utf8');
-  const job = yml.slice(yml.indexOf('  dump-check:'), yml.indexOf('\n  drill:'));
+  const job = yml.slice(yml.indexOf('  drill-auto:'), yml.indexOf('\n  drill:'));
+  const module = readFileSync(resolve('scripts/restore-drill.mjs'), 'utf8');
 
-  it('le job dump-check invoque scripts/dump-check.mjs', () => {
-    expect(job).toMatch(/node scripts\/dump-check\.mjs/);
+  it('le job drill-auto invoque scripts/restore-drill.mjs, qui relit par relireDump', () => {
+    expect(job).toMatch(/node scripts\/restore-drill\.mjs/);
+    expect(module).toMatch(/import \{[^}]*relireDump[^}]*\} from '\.\/dump-check\.mjs'/);
+    expect(module).toMatch(/relireDump\(\{/);
   });
 
-  it('le job dump-check reste planifie', () => {
+  it('le job drill-auto reste planifie', () => {
     expect(yml).toMatch(/schedule:\s*\n\s*#[^\n]*\n(?:\s*#[^\n]*\n)*\s*- cron:/);
   });
 
-  it('le job dump-check ne touche a aucune base', () => {
-    expect(job).not.toMatch(/DRILL_DB_URL|SUPABASE_DB_URL|psql/);
+  it('le job drill-auto ne touche a aucune base de production', () => {
+    expect(job).not.toMatch(/DRILL_DB_URL|SUPABASE_DB_URL/);
+    expect(job).toMatch(/PGHOST: localhost/);
   });
 
-  it('le drill garde sa confirmation tapee et attend dump-check', () => {
+  it('le drill manuel garde sa confirmation tapee', () => {
     expect(yml).toMatch(/"\$CONFIRMATION" != "RESTAURER"/);
-    expect(yml).toMatch(/needs: dump-check/);
+    expect(yml).toMatch(/inputs\.confirmation != ''/);
+  });
+});
+
+describe('dump-check · conserver : le dechiffre est remis au drill, jamais sur un refus', () => {
+  it('sur une reussite, le clair survit et son chemin est rendu', () => {
+    const d = artefact({ 'x.dump.gpg': SKESK });
+    const r = relireDump({ dossier: d, phrase: PHRASE, executer: faux().executer, conserver: true });
+    expect(r.exit).toBe(0);
+    expect(r.clair).toBe(join(d, 'x.dump'));
+    expect(existsSync(r.clair)).toBe(true);
+    expect(r.toc).toBe(TOC_COMPLETE);
+  });
+
+  it('sur un refus, le clair est efface meme avec conserver', () => {
+    const d = artefact({ 'x.dump.gpg': SKESK });
+    const r = relireDump({ dossier: d, phrase: PHRASE, executer: faux({ toc: '' }).executer, conserver: true });
+    expect(r.exit).toBe(1);
+    expect(r.clair).toBeUndefined();
+    expect(existsSync(join(d, 'x.dump'))).toBe(false);
   });
 });

@@ -60,7 +60,12 @@ on:
       - Deploy SHA drift
       - CodeQL
       - Posture
+      # ROB-01 (2026-11-07) : le drill MENSUEL qui restaure la seule
+      # sauvegarde dans un Postgres jetable, et la garde de son ABSENCE
+      # (aucun drill vert depuis 35 jours). Ni l'un ni l'autre n'a de
+      # declencheur humain : leur rouge n'a pas d'autre chemin.
       - restore-drill
+      - Fraicheur du drill
       - Grille Stripe
       # `Erreurs de prod` (2026-10-23, OBSERVABILITE AM-1 à AM-3) : son
       # métier est de lire la production, son rouge n'a pas d'autre chemin.

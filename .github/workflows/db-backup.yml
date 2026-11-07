@@ -64,6 +64,10 @@ jobs:
   dump:
     runs-on: ubuntu-latest
     steps:
+      # Le depot pour une seule raison : la requete du manifeste de comptages
+      # (`scripts/sql/comptages-sauvegarde.sql`), la MEME que relit le drill.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
       - name: Verifier le secret
         id: guard
         env:
@@ -162,7 +166,32 @@ jobs:
           sys.exit(0 if ok else 1)
           EOF
 
-      - name: Exporter la base
+      # ── Le dump ET son manifeste de comptages, dans le MEME snapshot ──
+      #
+      # ROB-01 (2026-11-07) : le drill mensuel (`restore-drill.yml`) restaure
+      # ce dump et compare chaque table a ce manifeste. Compter APRES le dump
+      # ne vaudrait rien : `traffic_hits` ou `cron_runs` bougent a la minute,
+      # et le drill rougirait sur un ecart qui ne dit rien de la sauvegarde.
+      # Une session psql ouvre donc une transaction REPEATABLE READ en lecture
+      # seule, exporte son snapshot (`pg_export_snapshot`), compte dedans, et
+      # `pg_dump --snapshot` lit exactement le meme etat de la base.
+      #
+      # Le manifeste ne porte que des COMPTES (genre|nom|nombre), jamais une
+      # ligne. Il est chiffre comme le dump (etape suivante) : un nombre de
+      # comptes ou de paiements n'est pas une donnee personnelle, mais n'a rien
+      # a faire en clair dans un artefact public.
+      #
+      # 🔴 LE DUMP PASSE AVANT LE MANIFESTE. Si le snapshot ne s'obtient pas
+      # (pooler, delai), le dump part SANS manifeste et le job finit ROUGE
+      # (derniere etape) : la sauvegarde du jour n'est jamais sacrifiee a son
+      # controle, et le manque se voit.
+      #
+      # Chemin absolu : `pg_dump` tout court resoudrait vers le client 16.
+      # --format=custom : compresse, et se restaure table par table.
+      # --no-owner : le dump se rejoue sur une instance dont les roles
+      #   different, ce qui est precisement le cas d'un changement de
+      #   fournisseur.
+      - name: Exporter la base et ses comptages
         if: steps.guard.outputs.ready == 'true'
         env:
           # Passe par l'environnement : une URL en argument apparaitrait dans
@@ -170,17 +199,57 @@ jobs:
           PGCONNECT_TIMEOUT: '30'
           DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
-          set -o pipefail
+          # `+e` et SIGPIPE ignore : une session psql morte (snapshot refuse)
+          # ne doit pas tuer l'etape avant le dump de repli.
+          set +e
+          set -uo pipefail
+          trap '' PIPE
+          umask 077
+          BIN=/usr/lib/postgresql/17/bin
           NOM="cosmo-$(date -u +%Y-%m-%d).dump"
-          # --format=custom : compresse, et se restaure table par table.
-          # --no-owner : le dump se rejoue sur une instance dont les roles
-          #   different, ce qui est precisement le cas d'un changement de
-          #   fournisseur.
-          # Chemin absolu : `pg_dump` tout court resoudrait vers le client 16.
-          echo "Version utilisee : $(/usr/lib/postgresql/17/bin/pg_dump --version)"
-          /usr/lib/postgresql/17/bin/pg_dump "$DB_URL" --no-owner --format=custom -f "$NOM"
+          COMPTAGES="cosmo-$(date -u +%Y-%m-%d).comptages.tsv"
+          echo "Version utilisee : $($BIN/pg_dump --version)"
+
+          # La session qui tient le snapshot. Ses sorties vont dans des
+          # fichiers, jamais au journal.
+          mkfifo session.fifo
+          "$BIN/psql" "$DB_URL" -X -q -tA -F '|' -v ON_ERROR_STOP=1 < session.fifo > session.out 2> session.err &
+          SESSION=$!
+          exec 3> session.fifo
+          # `\o fichier` puis `\o` : le fichier est FERME, donc complet, des
+          # que la commande suivante passe. C'est ce qui permet de l'attendre.
+          printf '%s\n' 'SET row_security = off;' \
+            'BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;' \
+            '\o snapshot.id' 'SELECT pg_export_snapshot();' '\o' \
+            "\\o $COMPTAGES" '\i scripts/sql/comptages-sauvegarde.sql' '\o' \
+            '\o comptages.fini' 'SELECT 1;' '\o' >&3
+          SNAP=""
+          for _ in $(seq 1 120); do
+            if [ -s comptages.fini ]; then
+              SNAP=$(tr -d '[:space:]' < snapshot.id)
+              break
+            fi
+            kill -0 "$SESSION" 2>/dev/null || break
+            sleep 1
+          done
+
+          MANIFESTE=absent
+          if [ -n "$SNAP" ] && "$BIN/pg_dump" "$DB_URL" --snapshot="$SNAP" --no-owner --format=custom -f "$NOM"; then
+            MANIFESTE=ok
+          else
+            echo "::warning::Snapshot ou dump synchronise en echec : dump SANS manifeste, le job finira rouge."
+            echo "Session psql : $(head -c 300 session.err 2>/dev/null | head -1)"
+            rm -f "$NOM" "$COMPTAGES"
+            "$BIN/pg_dump" "$DB_URL" --no-owner --format=custom -f "$NOM" || exit 1
+          fi
+          printf '%s\n' 'COMMIT;' >&3
+          exec 3>&-
+          wait "$SESSION" || true
+          rm -f session.fifo session.out snapshot.id comptages.fini
           ls -lh "$NOM"
           echo "NOM=$NOM" >> "$GITHUB_ENV"
+          echo "COMPTAGES=$COMPTAGES" >> "$GITHUB_ENV"
+          echo "MANIFESTE=$MANIFESTE" >> "$GITHUB_ENV"
 
       # Verification minimale : un fichier de 0 octet est un echec silencieux,
       # et c'est exactement le mode de defaillance d'une sauvegarde — on ne
@@ -234,3 +303,57 @@ jobs:
           path: ${{ env.CHIFFRE }}
           retention-days: 30
           if-no-files-found: error
+
+      # ── Le manifeste de comptages (ROB-01) : relu, chiffre, depose ──
+      #
+      # Relu AVANT d'etre chiffre : un manifeste vide ou mal forme rendrait le
+      # drill rouge un mois plus tard, sur un defaut qui se voit ici. Les deux
+      # `grep -c` rendent des NOMBRES de lignes, rien de leur contenu.
+      # Meme chiffrement, meme phrase, meme preuve de relecture que le dump.
+      - name: Chiffrer le manifeste de comptages
+        if: steps.guard.outputs.ready == 'true' && env.MANIFESTE == 'ok'
+        env:
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          umask 077
+          MAL_FORMEES=$(grep -Evc '^(table|meta)[|][A-Za-z0-9_.$-]+[|][0-9]+$' "$COMPTAGES" || true)
+          TABLES=$(grep -Ec '^table[|]public[.]' "$COMPTAGES" || true)
+          echo "Manifeste : $TABLES tables de public, $MAL_FORMEES ligne(s) mal formee(s)"
+          if [ "$MAL_FORMEES" != 0 ] || [ "${TABLES:-0}" -lt 10 ]; then
+            echo "::error::Manifeste de comptages invalide : il ne sera pas depose."
+            rm -f "$COMPTAGES"
+            exit 1
+          fi
+          PF=$(mktemp)
+          printf '%s' "$PASSPHRASE" > "$PF"
+          gpg --batch --yes --pinentry-mode loopback --passphrase-file "$PF" \
+              --symmetric --cipher-algo AES256 -o "$COMPTAGES.gpg" "$COMPTAGES"
+          gpg --batch --yes --pinentry-mode loopback --passphrase-file "$PF" \
+              -o verif.tsv -d "$COMPTAGES.gpg"
+          rm -f "$PF"
+          A=$(sha256sum "$COMPTAGES" | cut -d' ' -f1)
+          B=$(sha256sum verif.tsv | cut -d' ' -f1)
+          [ "$A" = "$B" ] || { echo "::error::Le manifeste chiffre ne se relit pas a l'identique."; exit 1; }
+          rm -f "$COMPTAGES" verif.tsv
+          [ ! -e "$COMPTAGES" ] || { echo "::error::Le manifeste en clair est encore present."; exit 1; }
+          echo "MANIFESTE_CHIFFRE=$COMPTAGES.gpg" >> "$GITHUB_ENV"
+
+      - name: Deposer le manifeste (chiffre uniquement)
+        if: steps.guard.outputs.ready == 'true' && env.MANIFESTE == 'ok'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: db-comptages
+          path: ${{ env.MANIFESTE_CHIFFRE }}
+          retention-days: 30
+          if-no-files-found: error
+
+      # Le dump est parti ; s'il part SANS manifeste, le drill ne pourra rien
+      # comparer. Rouge, donc, mais APRES le depot du dump.
+      - name: Exiger le manifeste
+        if: steps.guard.outputs.ready == 'true'
+        run: |
+          if [ "${MANIFESTE:-}" != ok ]; then
+            echo "::error::Dump depose SANS manifeste de comptages : le drill mensuel ne pourra pas le juger."
+            exit 1
+          fi

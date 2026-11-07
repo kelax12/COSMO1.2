@@ -1,105 +1,103 @@
 # ══════════════════════════════════════════════════════════════════
-# DRILL DE RESTAURATION (T-02) — restaure le dump quotidien vers un projet
-# jetable, chronomètre, et vérifie que ce qui revient est utilisable.
+# DRILL DE RESTAURATION · le dernier dump se restaure-t-il VRAIMENT ?
 #
-# POURQUOI CE WORKFLOW ET PAS UN SCRIPT LOCAL : le drill exige un client
-# PostgreSQL 17. La machine d'Axel n'a ni client Postgres ni Docker, et le
-# runner GitHub, lui, sait déjà en installer un — c'est exactement ce que fait
-# `db-backup.yml` chaque nuit. Le dump vit d'ailleurs ici, en artefact. Faire
-# le drill là où sont déjà l'outil et le fichier supprime la moitié des gestes,
-# et le chronomètre devient une mesure machine plutôt qu'un souvenir.
+# DEUX JOBS, et la coupure est celle de la cible :
 #
-# CE QUE CE WORKFLOW PROUVE
-#   1. le dump se relit (`pg_restore --list`) ;
-#   2. il se restaure sur une instance vierge, et on sait en combien de temps ;
-#   3. les données sont là, en volume ;
-#   4. **la RLS est revenue** : aucune table publique sans RLS, des policies
-#      présentes, et un utilisateur ne voit que ses propres tâches. Une
-#      restauration qui rend les données mais perd l'isolation est le mode de
-#      défaillance silencieux de cette procédure.
+#   · `drill-auto` · MENSUEL ET AUTOMATIQUE (ROB-01, vague 4.4, 2026-11-07).
+#     Restaure le dernier dump de `db-backup.yml` dans un Postgres 17 JETABLE
+#     du runner (service container, détruit avec le job), puis compare le
+#     nombre de lignes de chaque table de `public` et d'`auth.users` au
+#     manifeste écrit par `db-backup` DANS LE MÊME SNAPSHOT que le dump. Une
+#     table de plus, de moins, ou une ligne d'écart : rouge. Rejoue aussi
+#     l'isolation RLS (un utilisateur ne voit que ses tâches). Aucun secret
+#     de connexion : il ne voit jamais la production (`PGHOST=localhost`,
+#     imposé par `scripts/restore-drill.mjs`).
 #
-# CE QU'IL NE PROUVE PAS, et qui reste un geste humain : ouvrir l'application
-# pointée sur le projet restauré, se connecter, créer une tâche. Le dump ne
-# contient pas les Edge Functions ni les secrets ; un `select` réussi ne dit
-# rien du parcours réel.
+#   · `drill` · MANUEL, vers un projet Supabase jetable. Il garde ce que le
+#     Postgres du runner ne sait pas faire : restaurer sur la plateforme
+#     réelle (pg_cron, Vault, pg_net, rôles gérés), et chronométrer le RTO
+#     d'un vrai sinistre. Confirmation tapée et secret `DRILL_DB_URL` posé
+#     le jour même, comme avant.
 #
-# 🔴 CE WORKFLOW ÉCRIT DANS UNE BASE. Trois gardes, toutes vérifiées avant la
-# moindre connexion : une confirmation à taper, un refus catégorique si l'URL
-# désigne le projet de PRODUCTION, et l'obligation d'une chaîne en mode session.
+# 🔴 POURQUOI LE PREMIER EST AUTOMATIQUE (audit externe du 2026-11-06,
+# ROB-01) : plan Free, pas de PITR, et le dump quotidien est la SEULE copie
+# de la base. Le cron trimestriel qui précédait (`dump-check`, C-86) ne
+# faisait qu'un `pg_restore --list` : une table des matières, pas une ligne
+# rejouée. Le dernier drill réel datait du 2026-09-01.
 #
-# MISE EN SERVICE (le jour du drill, et à défaire juste après)
-#   1. créer un projet Supabase jetable — ⚠️ le plan Free plafonne à 2 projets
-#      actifs, donc il faudra le supprimer, pas seulement l'oublier ;
-#   2. poser son « connection string » en mode session comme secret de dépôt
-#      `DRILL_DB_URL` ;
-#   3. lancer ce workflow (Actions → restore-drill → Run workflow) en tapant
-#      RESTAURER ;
-#   4. reporter le chronomètre dans `docs/DEPLOYMENT.md` §7 ;
-#   5. **supprimer le projet jetable ET le secret `DRILL_DB_URL`.**
+# CE QUE `drill-auto` NE PROUVE PAS : `docs/DEPLOYMENT.md` § 7.
+#
+# 🔴 DONNÉES PERSONNELLES (dépôt PUBLIC : journal et résumé se lisent par
+# tous). Le dump est déchiffré sur le disque du runner, restauré, effacé.
+# ❌ Aucun `upload-artifact` dans ce workflow ; ❌ aucune ligne au journal :
+# des noms de tables et des comptes, rien d'autre (cf. l'en-tête du module).
+#
+# ALERTE : un échec part par `ci-alert.yml` (issue `ci-red` + webhook). Une
+# ABSENCE de drill vert depuis 35 jours rougit `restore-drill-fraicheur.yml`,
+# qui part par le même chemin.
 # ══════════════════════════════════════════════════════════════════
 name: restore-drill
 
-# ═══ C-86 · CE QUI A ÉTÉ TRANCHÉ LE 2026-09-20 ═════════════════════
-#
-# 🔴 Ce workflow n'avait qu'un `workflow_dispatch` : l'épreuve de restauration
-# n'était jouée que si quelqu'un y pensait. Avec `scalability-volume`, c'étaient
-# les deux seuls des onze workflows du dépôt sans `schedule` ni `push`.
-#
-# LE PROBLÈME, ET LA DÉCISION. On ne peut pas planifier ce workflow tel quel :
-# il ÉCRIT dans une base, il exige une confirmation tapée à la main et un
-# secret `DRILL_DB_URL` qui ne doit exister QUE le jour du drill. Un cron
-# dessus serait rouge chaque trimestre sans rien avoir mesuré.
-#
-# Le workflow est donc coupé en DEUX jobs, et la coupure est celle de l'écriture :
-#
-#   · `dump-check` — TRIMESTRIEL ET AUTOMATIQUE. Ne se connecte à aucune base et
-#     n'écrit nulle part. Il télécharge le dernier dump de `db-backup.yml`, le
-#     DÉCHIFFRE (chiffré depuis BK-1, 2026-10-13), le relit avec
-#     `pg_restore --list`, et ÉCHOUE si l'artefact est absent, en clair,
-#     indéchiffrable, tronqué, ou s'il ne contient plus les tables attendues. C'est la moitié du drill
-#     qui répond à « le dump existe-t-il et est-il relisible », et c'est la
-#     moitié qui échouait en silence : un dump quotidien qui produit depuis
-#     trois semaines un fichier de 200 octets ne fait rougir personne.
-#
-#   · `drill` — MANUEL, inchangé. C'est la moitié qui restaure, chronomètre et
-#     vérifie la RLS. Elle reste humaine parce qu'elle exige un projet jetable
-#     créé pour l'occasion, et un plan Free plafonné à 2 projets actifs.
-#
-# ❌ NE PAS CROIRE QUE `dump-check` REMPLACE LE DRILL. Un dump relisible n'est
-# pas un dump restauré : `pg_restore --list` lit une table des matières, il ne
-# rejoue pas une ligne. Ce que le trimestriel gagne, c'est de ne plus découvrir
-# le jour du drill que le fichier était inutilisable depuis des semaines.
-#
-# Les échecs de ce workflow remontent par `ci-alert.yml`.
 on:
   schedule:
-    # Trimestriel : le 5 janvier, avril, juillet et octobre à 04:29 UTC. Minute
-    # décalée des autres crons du dépôt (cf. `uptime.yml`).
-    - cron: '29 4 5 1,4,7,10 *'
+    # Mensuel : le 9 à 05:43 UTC. Minute libre parmi les crons du dépôt
+    # (`grep -h "cron:" .github/workflows/*.yml`), après le `db-backup` du
+    # jour s'il n'a pas pris de retard.
+    - cron: '43 5 9 * *'
   workflow_dispatch:
     inputs:
       confirmation:
-        description: 'Taper RESTAURER pour confirmer une ecriture dans la base cible'
-        required: true
-        default: ''
-      run_id:
-        description: 'Id du run db-backup a restaurer (vide = le dernier reussi)'
+        description: 'Drill MANUEL vers un projet Supabase jetable : taper RESTAURER (vide = drill automatique seul)'
         required: false
         default: ''
+      run_id:
+        description: 'Id du run db-backup a restaurer (vide = le dernier reussi sur main)'
+        required: false
+        default: ''
+      temoin:
+        description: 'TEMOIN : alterer un comptage du manifeste (+1) pour voir le drill rougir et l alerte partir'
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
   # Necessaire pour telecharger l'artefact d'un AUTRE run que celui-ci.
   actions: read
 
+concurrency:
+  group: restore-drill
+  cancel-in-progress: false
+
 jobs:
-  # ── La moitié AUTOMATIQUE : le dump est-il relisible ? ──────────────
-  #
-  # Aucune connexion, aucune écriture, aucun secret. Tourne sur le cron ET sur
-  # un déclenchement manuel (il précède alors le drill, cf. `needs`).
-  dump-check:
+  # ── Le drill AUTOMATIQUE : un Postgres jetable, jamais la production ─
+  drill-auto:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
+    services:
+      # Meme majeure que la production (17). L'image officielle n'a pas les
+      # extensions propres a Supabase : leurs erreurs sont classees, une a
+      # une, par `scripts/restore-drill.mjs` (liste fermee).
+      postgres:
+        image: postgres:17
+        env:
+          # Mot de passe d'une base jetable, joignable du seul runner, detruite
+          # avec le job : pas un secret.
+          POSTGRES_PASSWORD: drill-jetable
+          POSTGRES_DB: drill
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d drill"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: drill-jetable
+      PGDATABASE: drill
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -118,39 +116,41 @@ jobs:
           "$BIN/pg_restore" --version | grep -q ' 17[.]' || {
             echo "::error::Le binaire impose n'est pas en version 17."; exit 1; }
 
-      # Le telechargement reste ici ; la relecture vit dans un module Node,
-      # parce que le shell qui la portait acceptait un `.gpg` non chiffre et un
-      # clair pose a cote du chiffre, sans qu'aucun temoin puisse le voir
-      # (relu le 2026-10-15). Detail : en-tete de `scripts/dump-check.mjs`,
-      # temoin `scripts/dump-check.guard.test.mjs`.
-      # Node est preinstalle sur les runners : pas de `setup-node`.
+      # Telechargement ici, restauration et verdict dans un module Node : du
+      # YAML ne se teste pas, et le classement des erreurs de pg_restore est
+      # exactement le genre de code qui se trompe dans le sens rassurant.
+      # Temoin : `scripts/restore-drill.guard.test.mjs`.
       # ⚠️ Nom d'etape cite tel quel par `scripts/artefacts-donnees-prod.guard.test.mjs`.
-      - name: Relire le dernier dump
+      - name: Restaurer le dernier dump et comparer ses comptages
         env:
           GH_TOKEN: ${{ github.token }}
           BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
           REPO: ${{ github.repository }}
           RUN_ID: ${{ inputs.run_id }}
+          TEMOIN: ${{ inputs.temoin }}
         run: |
           set -euo pipefail
           if [ -z "${RUN_ID:-}" ]; then
-            RUN_ID=$(gh run list --repo "$REPO" --workflow db-backup.yml \
+            RUN_ID=$(gh run list --repo "$REPO" --workflow db-backup.yml --branch main \
                        --status success --limit 1 --json databaseId \
                        --jq '.[0].databaseId') || RUN_ID=""
-            [ -n "$RUN_ID" ] || { echo "::error title=dump-check::Aucun run db-backup reussi trouve."; exit 1; }
+            [ -n "$RUN_ID" ] || { echo "::error title=drill::Aucun run db-backup reussi sur main."; exit 1; }
           fi
           echo "Run db-backup : $RUN_ID"
           if ! gh run download "$RUN_ID" --repo "$REPO" --name db-dump --dir dump; then
-            echo "::error title=dump-check::Artefact db-dump introuvable sur le run $RUN_ID (expire apres 30 jours, ou run reussi sans depot)."
+            echo "::error title=drill::Artefact db-dump introuvable sur le run $RUN_ID (expire apres 30 jours, ou run reussi sans depot)."
             exit 1
           fi
-          export RUN_ID
-          node scripts/dump-check.mjs dump
+          if ! gh run download "$RUN_ID" --repo "$REPO" --name db-comptages --dir comptages; then
+            echo "::error title=drill::Artefact db-comptages introuvable sur le run $RUN_ID : ce dump n a pas de manifeste, ses comptages ne se comparent a rien."
+            exit 1
+          fi
+          export RUN_ID TEMOIN
+          node scripts/restore-drill.mjs dump comptages
 
-  # ── La moitié MANUELLE : celle qui écrit ───────────────────────────
+  # ── Le drill MANUEL : vers un projet Supabase jetable, celui qui écrit ─
   drill:
-    if: github.event_name == 'workflow_dispatch'
-    needs: dump-check
+    if: github.event_name == 'workflow_dispatch' && inputs.confirmation != ''
     runs-on: ubuntu-latest
     steps:
       # ── Garde 1 : intention, secret, et surtout PAS la production ───────
