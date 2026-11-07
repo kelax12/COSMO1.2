@@ -102,7 +102,9 @@ describe('complexité · le détecteur détecte (témoins négatifs et positifs)
   });
 });
 
-describe('complexité · `eslint.config.js` applique bien les seuils et la ligne de base', () => {
+describe('complexité · `eslint.config.js` applique bien les seuils et la ligne de base', { timeout: 120_000 }, () => {
+  // Le premier appel charge `eslint.config.js` et tous ses plugins : mesuré à
+  // 20,5 s sur un poste partagé le 2026-11-07. Délai explicite, comme le cliquet.
   const eslint = new ESLint({ cwd: RACINE });
   const niveau = async (fichier) => (await eslint.calculateConfigForFile(fichier)).rules;
 
