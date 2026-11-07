@@ -111,7 +111,7 @@ Aucune.
 | `get_admin_stats()` | DEFINER | `""` | - | oui | oui | `src/modules/admin/repository.ts` |
 | `get_admin_traffic(p_days integer)` | DEFINER | `""` | - | oui | oui | - |
 | `get_incoming_request_senders()` | DEFINER | `public, pg_temp` | - | oui | oui | `src/modules/friends/supabase.repository.ts`<br>~`src/modules/friends/types.ts` |
-| `get_my_habits(p_days integer, p_today date)` | INVOKER | `""` | - | oui | oui | `src/modules/habits/supabase.repository.ts` |
+| `get_my_habits(p_days integer, p_today date)` | INVOKER | `""` | - | oui | oui | `src/modules/habits/supabase.repository.ts`<br>~`src/modules/habits/mappers.ts` |
 | `get_my_org_inbox()` | INVOKER | `public` | - | oui | oui | `src/modules/organizations/supabase.repository.ts` |
 | `get_my_org_invitations()` | DEFINER | `""` | - | oui | oui | `src/modules/organizations/supabase.repository.ts` |
 | `get_my_org_removal_notices()` | DEFINER | `""` | - | oui | oui | `src/modules/organizations/supabase.repository.ts`<br>~`src/modules/organizations/useOrgInboxRealtime.ts` |

@@ -107,6 +107,11 @@ export const ARTEFACTS = {
     raison:
       'parcours e2e contre la stack Supabase locale du runner (`supabase start`, graines du dépôt, aucun secret du dépôt lu) : comptes et captures fictifs, rien de la production',
   },
+  'ci-noyau.yml › contrat-donnees': {
+    nature: 'sans-prod',
+    raison:
+      'schema, inventaire des fonctions et types regeneres depuis une base vierge de la stack Supabase locale du runner (`supabase start`, migrations du depot rejouees, aucun secret du depot lu) : structure seule, aucune donnee, rien de la production',
+  },
   'ci.yml › lighthouse': {
     nature: 'sans-prod',
     raison: 'Lighthouse sur le build servi en local : pages publiques prérendues, aucune session',
