@@ -6,13 +6,13 @@
 // Ici l'image dit la même chose que la phrase : quatre outils habituellement
 // séparés se rassemblent autour de la même application.
 //
-// DEUX DISPOSITIONS, UN SEUL JEU DE PUCES (2026-09-22, hero centré) :
+// DEUX DISPOSITIONS, UN SEUL JEU DE PUCES (hero centré) :
 //   · < xl  — rangée centrée sous le sommaire, comme avant, avec le filet
 //             d'arrimage qui ponctue l'arrivée des quatre ;
 //   · ≥ xl  — les quatre FLOTTENT de part et d'autre du titre, dans les marges
 //             que la mise en page centrée laisse libres, chacune reliée au
 //             centre par un filet d'encre.
-// 🔴 Les deux dispositions sont le MÊME DOM, basculé par des classes `xl:`.
+// Les deux dispositions sont le MÊME DOM, basculé par des classes `xl:`.
 // Rendre deux jeux de puces et en masquer un coûterait soit un doublon annoncé
 // aux lecteurs d'écran, soit un `aria-hidden` sur la seule liste libellée —
 // c'est-à-dire la disparition de `hero.modulesLabel` sur grand écran.
@@ -40,7 +40,7 @@ export const HeroModuleDock: React.FC = () => {
 
   return (
     <div
-      // MASQUÉES sous `lg` (demande d'Axel, 2026-09-23) : sur téléphone et
+      // MASQUÉES sous `lg` : sur téléphone et
       // tablette, la rangée de quatre pastilles s'empilait au-dessus de l'icône
       // du hero et n'y ajoutait rien — la tuile fait déjà défiler les quatre
       // modules, et c'est elle qui porte le message.

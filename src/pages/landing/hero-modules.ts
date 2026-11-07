@@ -1,6 +1,6 @@
 // Les quatre modules de COSMO, décrits UNE fois.
 //
-// POURQUOI CE FICHIER. Depuis la refonte du hero (2026-09-22, DA centrée), deux
+// POURQUOI CE FICHIER. Depuis la refonte du hero (DA centrée), deux
 // composants racontent la même chose et doivent rester d'accord : `HeroAppIcon`
 // — la tuile produit qui tourne au-dessus du titre, à la manière d'une icône
 // d'application — et `HeroModuleDock` — les quatre puces qui flottent de part

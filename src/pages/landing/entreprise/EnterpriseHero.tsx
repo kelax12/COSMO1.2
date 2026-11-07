@@ -34,11 +34,10 @@ const avecAppui = (texte: string) =>
   });
 
 /**
- * Hero du track entreprise — refait le 2026-09-23 (maquettes 123 à 127,
- * `Documents/COSMO-maquettes/landing-entreprise-hero.html`). L'ancienne
- * version est archivée : `docs/archive/LANDING-HERO-ENTREPRISE-2026-09-23.md`.
+ * Hero du track entreprise (maquettes 123 à 127). L'ancienne version est
+ * archivée dans `docs/archive/`.
  *
- * 🔴 UN SEUL AXE, CELUI DE LA LUMIÈRE. Le faisceau (`LightRays`, origine
+ * UN SEUL AXE, CELUI DE LA LUMIÈRE. Le faisceau (`LightRays`, origine
  * `top-center`) tombait entre deux colonnes, sur du vide : la signature de la
  * page n'éclairait rien. Le titre, le CTA et la pile sont maintenant centrés
  * SOUS l'origine, et la pile remonte vers elle (`HeroStack`). Ne pas revenir à

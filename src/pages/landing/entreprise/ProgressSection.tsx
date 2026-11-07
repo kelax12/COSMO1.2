@@ -17,7 +17,7 @@ const POINTS: { titleKey: KeyOf<'landingEnterprise'>; bodyKey: KeyOf<'landingEnt
  * Étape 4 — ce qu'on regarde une fois que tout tourne.
  *
  * Montre les rapports d'activité, pas l'onglet Statistiques : celui-ci est
- * masqué de la navigation depuis le 2026-09-30, et une capture d'un écran
+ * masqué de la navigation, et une capture d'un écran
  * qu'on ne peut pas ouvrir ment sur le produit.
  */
 const ProgressSection: React.FC = () => {

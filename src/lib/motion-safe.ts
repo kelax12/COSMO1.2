@@ -9,7 +9,7 @@ import { useReducedMotion } from 'framer-motion';
 //
 //   initial={{ y: 120 }} animate={{ y: 0 }}
 //
-// reste donc figé 120 px plus bas, définitivement. Mesuré le 2026-08-14 sur
+// reste donc figé 120 px plus bas, définitivement. Constaté sur
 // `CookieBanner` et `DemoBridgePrompt` : leur bouton d'action sortait de
 // l'écran sur mobile, et aucun scroll ne pouvait le ramener puisque ces
 // éléments sont en `position: fixed`.

@@ -20,9 +20,7 @@ import TaskBulkActionsBar from './task-table/TaskBulkActionsBar';
 import TeamTaskModal from './organization/TeamTaskModal';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 
-// ═══════════════════════════════════════════════════════════════════
-// Module tasks - Hooks indépendants (MIGRÉ)
-// ═══════════════════════════════════════════════════════════════════
+// Module tasks - Hooks indépendants
 import { showUndoToast } from '@/lib/undo-toast';
 import { toast } from '@/lib/toast';
 import { useQueryClient } from '@tanstack/react-query';
@@ -92,9 +90,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
 }) => {
   const { t, tp } = useT('tasks');
 
-  // ═══════════════════════════════════════════════════════════════════
-  // TASKS - Depuis le module tasks (MIGRÉ)
-  // ═══════════════════════════════════════════════════════════════════
+  // TASKS - Depuis le module tasks
   const { data: moduleTasks = [], isLoading: isLoadingTasks } = useTasks();
   const deleteMutation = useDeleteTask();
   const createMutation = useCreateTask();
@@ -213,9 +209,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
     }
   };
 
-  // ═══════════════════════════════════════════════════════════════════
-  // Handlers avec mutations (MIGRÉ) - MÉMOÏSÉS pour performance
-  // ═══════════════════════════════════════════════════════════════════
+  // Handlers avec mutations - MÉMOÏSÉS pour performance
   const handleToggleComplete = useCallback((taskId: string) => {
     toggleCompleteMutation.mutate(taskId);
   }, [toggleCompleteMutation]);

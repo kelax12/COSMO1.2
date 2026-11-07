@@ -74,7 +74,7 @@ export function lireMarqueur(texte) {
  * de quitter : un document sans note et sans explication.
  */
 export function lirePhrase(texte) {
-  return /^>\s*\*\*Note d'audit\*\*\s*—\s*(.+)$/m.exec(texte)?.[1]?.trim() ?? null;
+  return /^>\s*\*\*Note d'audit\*\*\s*(?:—|:|-)\s*(.+)$/m.exec(texte)?.[1]?.trim() ?? null;
 }
 
 export function documents(dossier = DOCS) {

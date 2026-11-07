@@ -77,6 +77,7 @@ RPC, écran) → `index.ts` du module → son `CLAUDE.md` s'il existe → le cod
 |---|---|
 | [`docs/README.md`](./docs/README.md) | Carte complète (une ligne par doc) + **tableau de bord des notes d'audit** |
 | [`docs/MODULES.md`](./docs/MODULES.md) | **Carte** : module → fichiers, tables, RPC, écran |
+| [`docs/FAITS.md`](./docs/FAITS.md) | **Chiffres** (Edge Functions, migrations, tables, namespaces…) : générés, jamais recopiés |
 | [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | Invariants du projet et leur état vérifié |
 | [`docs/SECURITY.md`](./docs/SECURITY.md) | RLS, migrations SQL, repositories Supabase, Edge Functions, Stripe, CSP, secrets |
 | [`docs/MOBILE.md`](./docs/MOBILE.md) | Toute page/composant mobile, bottom-sheets, bug iOS Safari WebKit |

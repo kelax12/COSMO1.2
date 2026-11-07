@@ -35,7 +35,7 @@ export const TRACK_ANCHORS: Record<LandingTrack, TrackAnchor[]> = {
     { href: '#fonctionnalites', labelKey: 'enterprise.nav.more' },
     { href: '#securite', labelKey: 'enterprise.nav.security' },
     // Retirée du sommaire tant que les prix sont masqués : elle viserait une
-    // section absente (`PRICES_VISIBLE`, 2026-10-16).
+    // section absente (`PRICES_VISIBLE`).
     ...(ENTERPRISE_PRICES_SHOWN
       ? [{ href: '#tarifs', labelKey: 'enterprise.nav.pricing' } as TrackAnchor]
       : []),

@@ -9,25 +9,18 @@ import { localeStore } from '@/i18n/store';
 // NORMALISATION DES ERREURS D'API — et pourquoi c'est une vraie `Error`
 // ═══════════════════════════════════════════════════════════════════
 //
-// 🔴 POURQUOI (revue du 2026-09-02). Cette fonction rendait un OBJET LITTÉRAL
-// (`{ code, message, originalMessage }`), et 184 sites du dépôt font
-// `throw normalizeApiError(...)`. On lançait donc, partout, une valeur qui
-// n'est pas une `Error`. Trois conséquences, indépendantes les unes des
-// autres :
+// Pourquoi une vraie `Error` : un objet littéral (`{ code, message,
+// originalMessage }`) lancé par 184 sites rendrait `error instanceof Error` faux
+// dans tout le produit, avec trois conséquences :
 //
-//   1. `error instanceof Error` était FAUX dans tout le produit. Le prédicat
-//      `retry` de React Query commence par là : il retombait sur une chaîne
-//      vide, donc la garde « ne pas retenter un refus RLS définitif » ne
-//      s'appliquait jamais (cf. `src/lib/query-retry.ts`).
-//   2. Une valeur non-`Error` n'a pas de PILE. Sentry la classe alors en
-//      « Non-Error promise rejection captured », et cette chaîne est
-//      explicitement listée dans `ignoreErrors` (`src/main.tsx`) : les rares
-//      erreurs d'API qui s'échappaient étaient jetées à l'entrée, sans même
-//      un endroit d'où elles venaient.
-//   3. Le détail serveur ne partait que dans un `console.error`, et le build
-//      de production supprime `console.error` (`vite.config.ts → esbuild.pure`).
-//      Le commentaire annonçait « log once for ops/sentry » ; en production il
-//      n'allait nulle part.
+//   1. le prédicat `retry` de React Query retombait sur une chaîne vide, donc
+//      la garde « ne pas retenter un refus RLS définitif » ne s'appliquait
+//      jamais (`src/lib/query-retry.ts`) ;
+//   2. sans PILE, Sentry classe la valeur « Non-Error promise rejection
+//      captured », listée dans `ignoreErrors` (`src/main.tsx`) : les erreurs
+//      d'API étaient jetées à l'entrée ;
+//   3. le détail serveur ne partait que dans un `console.error`, supprimé du
+//      build de production (`vite.config.ts → esbuild.pure`).
 //
 // ❌ Ne JAMAIS revenir à un objet littéral ici. Ce qu'on lance doit être une
 //    `Error` : c'est ce que testent les prédicats en aval, et c'est ce qui
@@ -70,13 +63,10 @@ const genericMessage = (): string => messageForCode('GENERIC_ERROR') ?? 'GENERIC
 /**
  * Lève-toi une erreur métier CATALOGUÉE, au lieu d'une phrase en dur.
  *
- * 🔴 POURQUOI (finding C-62). `src/modules/` contient 99
- * `throw new Error('<littéral>')`, et 75 clés `mutation.*` interpolent
- * `{{message}}`. Le littéral traverse donc le tuyau entier et s'affiche tel
- * quel : « Impossible de modifier la tâche : Task with id … not found », ou
- * « Impossible de créer le lien : localStorage is not defined ». Environ 45 de
- * ces phrases sont en français écrit en dur — donc identiques en anglais — et
- * une vingtaine en anglais, donc affichées telles quelles en français.
+ * Pourquoi : les `throw new Error('<littéral>')` de `src/modules/` traversent
+ * les clés `mutation.*` (`{{message}}`) et s'affichent tels quels : phrases en
+ * dur en français (donc identiques en anglais) ou en anglais (donc non
+ * traduites).
  *
  * `makeApiError` est le remplaçant : il rend une `ApiError` dont le `message`
  * vient du catalogue (`errors.api.<code>`), exactement comme si le serveur

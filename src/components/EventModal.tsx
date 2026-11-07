@@ -5,19 +5,13 @@ import { useModalA11y } from "@/hooks/use-modal-a11y";
 import ColorSettingsModal from "./ColorSettingsModal";
 import ConfirmDiscardDialog from "./ConfirmDiscardDialog";
 
-// ═══════════════════════════════════════════════════════════════════
-// Module tasks - Types (MIGRÉ)
-// ═══════════════════════════════════════════════════════════════════
+// Module tasks - Types
 import { Task } from '@/modules/tasks';
 
-// ═══════════════════════════════════════════════════════════════════
-// Module events - Types (MIGRÉ)
-// ═══════════════════════════════════════════════════════════════════
+// Module events - Types
 import { CalendarEvent, EventRecurrence } from '@/modules/events';
 
-// ═══════════════════════════════════════════════════════════════════
-// Module categories - (MIGRÉ)
-// ═══════════════════════════════════════════════════════════════════
+// Module categories
 import { useCategories } from '@/modules/categories';
 
 import { useFavoriteColors } from '@/modules/ui-states';

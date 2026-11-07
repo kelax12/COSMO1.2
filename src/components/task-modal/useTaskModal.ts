@@ -5,9 +5,7 @@ import { useFormDraft } from '@/lib/hooks/use-form-draft';
 import { toast } from '@/lib/toast';
 import { showUndoToast } from '@/lib/undo-toast';
 
-// ═══════════════════════════════════════════════════════════════════
-// Module tasks - Hooks indépendants (MIGRÉ)
-// ═══════════════════════════════════════════════════════════════════
+// Module tasks - Hooks indépendants
 import {
   useCreateTask,
   useUpdateTask,
@@ -19,20 +17,14 @@ import {
   TaskRecurrence,
 } from '@/modules/tasks';
 
-// ═══════════════════════════════════════════════════════════════════
-// Module categories - (MIGRÉ)
-// ═══════════════════════════════════════════════════════════════════
+// Module categories
 import { useCategories, useCreateCategory } from '@/modules/categories';
 
-// ═══════════════════════════════════════════════════════════════════
-// Module lists - (MIGRÉ)
-// ═══════════════════════════════════════════════════════════════════
+// Module lists
 import { useLists, useAddTaskToList, useRemoveTaskFromList, useCreateList } from '@/modules/lists';
 
 
-// ═══════════════════════════════════════════════════════════════════
-// BillingContext — vérification premium côté serveur
-// ═══════════════════════════════════════════════════════════════════
+// Session et mode démo
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useIsDemo } from '@/lib/app-mode.store';
 
@@ -60,9 +52,7 @@ export interface TaskModalProps {
 }
 
 export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCollaborators = false, initialData }: TaskModalProps) {
-  // ═══════════════════════════════════════════════════════════════════
-  // TASKS - Depuis le module tasks (MIGRÉ)
-  // ═══════════════════════════════════════════════════════════════════
+  // TASKS - Depuis le module tasks
   const createTaskMutation = useCreateTask();
   const updateTaskMutation = useUpdateTask();
   const deleteTaskMutation = useDeleteTask();
@@ -85,15 +75,11 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
     enabled: !effectiveIsCreating && !!effectiveTask?.id,
   });
 
-  // ═══════════════════════════════════════════════════════════════════
-  // CATEGORIES - Depuis le module categories (MIGRÉ)
-  // ═══════════════════════════════════════════════════════════════════
+  // CATEGORIES - Depuis le module categories
   const { data: categories = [] } = useCategories();
   const createCategoryMutation = useCreateCategory();
 
-  // ═══════════════════════════════════════════════════════════════════
-  // LISTS - Depuis le module lists (MIGRÉ)
-  // ═══════════════════════════════════════════════════════════════════
+  // LISTS - Depuis le module lists
   const { data: lists = [] } = useLists();
   const addTaskToListMutation = useAddTaskToList();
   const removeTaskFromListMutation = useRemoveTaskFromList();

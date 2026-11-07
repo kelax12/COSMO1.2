@@ -8,11 +8,9 @@
 ## i18n — catalogues maison (fr + en)
 
 L'app est **bilingue fr/en**, sans framework i18n (pas d'i18next). Socle dans `src/i18n/`,
-catalogues JSON par namespace dans `src/locales/{fr,en}/*.json` (**33 namespaces** au 2026-10-20, dont `persoGuide` du 2026-10-19 ; `npm run i18n:check` les compte : `common`,
-`tasks`, `org`, `landing`, `seo`, `settings`…). ⚠️ Ce fichier a écrit « 19 » jusqu'au 2026-09-14 :
-le chiffre datait du levier de chargement paresseux du 2026-08-25 et n'a jamais été recompté
-pendant que quatre catalogues entraient. Il se relit en une commande, `npm run i18n:check` l'annonce
-à chaque exécution, et il figurait exact dans le tableau de gardes de `faille.md`, jamais ici.
+catalogues JSON par namespace dans `src/locales/{fr,en}/*.json` (nombre :
+[`docs/FAITS.md`](../../docs/FAITS.md), généré ; `npm run i18n:check` les compte aussi : `common`,
+`tasks`, `org`, `landing`, `seo`, `settings`…).
 
 ```typescript
 import { useT } from '@/i18n/useT';

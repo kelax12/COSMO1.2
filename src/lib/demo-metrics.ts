@@ -12,11 +12,11 @@
 // Tout est fire-and-forget : l'analytics ne doit jamais bloquer ni faire
 // échouer l'auth.
 //
-// 🔴 SOUS CONSENTEMENT depuis le 2026-10-13 (loi I&L art. 82). L'identifiant
-// est persistant, il part au serveur et finit RATTACHÉ AU COMPTE
-// (`converted_user_id`) : ce n'est pas une statistique anonyme, l'exemption
-// CNIL ne le couvre pas. Sans « Accepter », rien n'est créé ni envoyé, et un
-// identifiant posé avant cette date est effacé au lieu d'être rattaché.
+// SOUS CONSENTEMENT (loi I&L art. 82). L'identifiant est persistant, il part au
+// serveur et finit RATTACHÉ AU COMPTE (`converted_user_id`) : ce n'est pas une
+// statistique anonyme, l'exemption CNIL ne le couvre pas. Sans « Accepter »,
+// rien n'est créé ni envoyé, et un identifiant antérieur au consentement est
+// effacé au lieu d'être rattaché.
 // ═══════════════════════════════════════════════════════════════════
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { hasConsented } from '@/lib/cookie-consent';
@@ -64,7 +64,7 @@ export function recordDemoConversionIfAny(): void {
   }
   if (!id) return;
   if (!hasConsented()) {
-    // Posé avant le 2026-10-13, sans consentement : on l'efface, on ne le
+    // Posé sans consentement : on l'efface, on ne le
     // rattache jamais au compte.
     clearDemoMetricsTraces(localStorage);
     return;

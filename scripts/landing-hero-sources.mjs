@@ -15,9 +15,13 @@
 //
 // ⚠️ Fins de ligne normalisées avant hachage : un checkout Windows (CRLF) et la
 // CI (LF) doivent rendre la même empreinte.
+// ⚠️ Les COMMENTAIRES des sources .ts/.tsx sont ôtés avant hachage : ils ne
+// changent pas le balisage capturé, et réécrire un commentaire ne doit pas
+// exiger une nouvelle capture (navigateur requis).
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
+import { commentairesDe } from './check-commentaires.mjs';
 
 /** Tout ce qui décide du balisage capturé : header, sélecteur, heros des deux parcours, textes. */
 export const HERO_SOURCES = [
@@ -43,11 +47,24 @@ export const HERO_SOURCES = [
 
 export const SOURCES_MANIFEST = 'scripts/landing-hero/sources.json';
 
-/** `{ chemin: sha256 }` des sources, fins de ligne normalisées. */
+/** Le texte d'une source sans ses commentaires (JSON : tel quel). */
+export function sansCommentaires(text, path) {
+  if (!/\.tsx?$/.test(path)) return text;
+  let out = '';
+  let curseur = 0;
+  for (const c of commentairesDe(text, path)) {
+    out += text.slice(curseur, c.pos);
+    curseur = c.pos + c.texte.length;
+  }
+  out += text.slice(curseur);
+  return out.replace(/[ \t]+$/gm, '').replace(/\n{2,}/g, '\n');
+}
+
+/** `{ chemin: sha256 }` des sources, fins de ligne normalisées, commentaires ôtés. */
 export function heroSourcesDigest(root) {
   const out = {};
   for (const path of HERO_SOURCES) {
-    const text = readFileSync(join(root, path), 'utf8').replace(/\r\n/g, '\n');
+    const text = sansCommentaires(readFileSync(join(root, path), 'utf8').replace(/\r\n/g, '\n'), path);
     out[path] = createHash('sha256').update(text, 'utf8').digest('hex').slice(0, 16);
   }
   return out;

@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // Import Todoist : un export « Projet en CSV »
 //
-// Format (aide Todoist, relu le 2026-10-08) : colonnes TYPE, CONTENT,
+// Format (aide Todoist) : colonnes TYPE, CONTENT,
 // DESCRIPTION, PRIORITY, INDENT, … DATE, … DEADLINE. Une ligne par élément :
 //   · `task`    : INDENT 1 = tâche, 2 et plus = sous-tâche (COSMO n'a qu'un
 //                 niveau : tout ce qui est indenté rejoint la tâche de niveau 1) ;

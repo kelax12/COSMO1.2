@@ -2,59 +2,29 @@
 // RESTAURATION D'UN OBJET SUPPRIMÉ — « Annuler » doit rendre le MÊME objet
 // ═══════════════════════════════════════════════════════════════════
 //
-// 🔴 POURQUOI (revue du 2026-09-02, risque R-08).
+// Pourquoi : une annulation qui recréait l'objet sous un NOUVEL identifiant
+// laissait orphelin tout ce qui référençait l'ancien (tâches d'une catégorie,
+// tri mémorisé d'une liste, liens `taskId` d'un événement, `krId` d'un OKR,
+// rattachements d'une tâche).
 //
-// Cinq chemins d'annulation faisaient exactement la même chose :
-//
-//     const { id: _id, ...rest } = snapshot;
-//     createMutation.mutate(rest);
-//
-// L'objet revenait, mais sous un NOUVEL identifiant. Tout ce qui référençait
-// l'ancien restait orphelin, en silence :
-//
-//   - catégorie : les tâches qui la portaient gardaient un identifiant mort.
-//     Mesuré en production, 13 tâches sur 611 et 2 objectifs sur 14 étaient
-//     déjà dans cet état ; « Annuler » donnait l'illusion d'avoir réparé (R-02).
-//   - liste : le tri mémorisé par liste (`sortPrefs`) et la sélection courante
-//     sont keyés par identifiant, donc perdus.
-//   - événement : les liens `taskId` et l'auteur d'origine.
-//   - OKR : les tâches qui portent un `krId` pointant sur un KR de cet OKR.
-//   - tâche : ses rattachements aux listes et à un KR.
-//
-// ── POURQUOI UN SECOND ARGUMENT, ET PAS UN CHAMP `id` DANS L'INPUT ──
-//
-// La première version de ce correctif ajoutait un `id?` optionnel aux entrées
-// de création. Le test de garde `supabase.repository.test.ts` l'a refusée, et
-// il avait raison : ces entrées viennent d'un état de formulaire, donc d'un
-// objet que des devtools peuvent enrichir. Accepter `id` y aurait ouvert un
-// ORACLE D'EXISTENCE — forger l'identifiant d'une catégorie appartenant à
-// quelqu'un d'autre fait répondre 23505 (collision de clé primaire) au lieu de
-// réussir, ce qui révèle qu'elle existe. Aucune donnée ne fuit, mais la
-// réponse du serveur cesse d'être indépendante des lignes des autres.
-//
-// L'identifiant de restauration passe donc par un SECOND ARGUMENT de
-// `create()`, hors du payload : il n'est atteignable que par un appel écrit
-// exprès, jamais par un objet qui traverse un formulaire.
+// Pourquoi un SECOND ARGUMENT et pas un champ `id` dans l'input : ces entrées
+// viennent d'un état de formulaire, enrichissable par des devtools. Accepter
+// `id` y ouvrirait un ORACLE D'EXISTENCE (forger l'identifiant d'une ligne
+// d'autrui ferait répondre 23505 au lieu de réussir). L'identifiant de
+// restauration passe donc hors du payload, atteignable par un appel écrit exprès :
 //
 //     repository.create(payload, { restoreId: snapshot.id })
 //
-// Côté React, seuls les hooks `useRestoreX` l'utilisent. Les `useCreateX`
-// restent inchangés, et les whitelists `mapToDb` aussi : `user_id` continue
-// d'être posé par le serveur depuis la session, jamais par le client.
+// Seuls les hooks `useRestoreX` l'utilisent ; `user_id` reste posé par le
+// serveur depuis la session.
 //
 // ❌ Ne JAMAIS étendre ce motif à `user_id`, `org_id` ou toute colonne qui
 //    décide de QUI voit la ligne.
-// ⚠️ N'utiliser `useRestoreX` QUE depuis un « Annuler ». Une création
-//    ordinaire laisse la base choisir l'identifiant.
-//
-// ── CE QUE ÇA NE RATTRAPE PAS ──────────────────────────────────────
-//
-// Les lignes supprimées EN CASCADE ne reviennent pas pour autant.
-// `kr_completions` cascade depuis `okrs` ET `key_results` (vérifié en
-// production) : restaurer un OKR sous son identifiant d'origine ramène
-// l'objectif, ses KR et les tâches qui les référencent, mais pas le journal
-// des complétions, donc pas les points du graphique « KR réalisés ». Seule une
-// suppression logique le permettrait. C'est documenté à l'appel concerné.
+// ⚠️ N'utiliser `useRestoreX` QUE depuis un « Annuler ».
+// ⚠️ Les lignes supprimées EN CASCADE ne reviennent pas : restaurer un OKR
+// ramène l'objectif, ses KR et leurs tâches, mais pas `kr_completions` (donc pas
+// les points du graphique « KR réalisés »). Seule une suppression logique le
+// permettrait.
 
 // Sentry n'est PLUS importe statiquement : il est charge apres le premier
 // rendu (arbitrage C-13/C-14). `monitoring` est la seule porte, et elle
@@ -92,19 +62,10 @@ export function splitRestore<T extends { id: string }>(
 // QUAND « ANNULER » ÉCHOUE
 // ═══════════════════════════════════════════════════════════════════
 //
-// 🔴 POURQUOI (revue du 2026-09-02). Les cinq `useRestoreX` avaient tous le
-// même `onError` :
-//
-//     onError: (error: Error) => { console.error('[useRestoreX]', error); }
-//
-// Or `console.error` est listé dans `esbuild.pure` (`vite.config.ts`) : l'appel
-// est SUPPRIMÉ du bundle de production. En production, une restauration ratée
-// ne produisait donc strictement rien — pas de toast, pas de log, pas de
-// Sentry. L'utilisateur cliquait « Annuler », voyait le toast se fermer, et
-// repartait en croyant son objet revenu. Il ne l'était pas.
-//
-// C'est le pire endroit du produit pour un échec muet : l'utilisateur vient
-// justement de dire qu'il ne voulait PAS supprimer.
+// Les `useRestoreX` n'avaient qu'un `onError` en `console.error`, supprimé du
+// bundle de production (`esbuild.pure` dans `vite.config.ts`) : une restauration
+// ratée ne produisait ni toast, ni log, ni Sentry, au pire endroit pour un
+// échec muet (la personne vient de dire qu'elle ne voulait PAS supprimer).
 //
 // ❌ Ne jamais confier un chemin d'erreur à `console.*` : la production le
 //    supprime. Un toast pour la personne, Sentry pour nous.

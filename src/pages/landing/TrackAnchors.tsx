@@ -22,7 +22,7 @@ interface TrackAnchorsProps {
  * Sommaire du parcours.
  *
  * Il vivait dans une capsule collée sous le header, à `top-[4.5rem]` en dur :
- * au scroll elle passait 9,6 px SOUS l'îlot (mesuré le 2026-09-23 à 1440 px),
+ * au scroll elle passait 9,6 px SOUS l'îlot (à 1440 px),
  * et le texte des sections défilait entre les deux. Il est maintenant DANS le
  * header pour le parcours perso. En entreprise, la capsule reste, mais se
  * cale sur `--landing-header-h`, mesurée par `ResizeObserver` dans

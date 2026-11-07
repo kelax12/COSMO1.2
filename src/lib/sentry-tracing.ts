@@ -2,7 +2,7 @@
 // sentry-tracing : la MESURE DE PERFORMANCE de Sentry, et ce qui la borne
 // ═══════════════════════════════════════════════════════════════════
 //
-// OBS-02 (audit du 2026-11-06, vague 10.4) : on ne savait pas quelle action
+// OBS-02 : on ne savait pas quelle action
 // était lente. La capture d'erreurs existait ; la performance n'était qu'un
 // `tracesSampleRate: 0.1` en dur, branché sans condition et sans nettoyage des
 // noms de span. Ce module porte, en fonctions pures et testées :

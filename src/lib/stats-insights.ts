@@ -4,10 +4,9 @@
 // client-side donnent la conclusion directement.
 // ═══════════════════════════════════════════════════════════════════
 //
-// 🔴 CES FONCTIONS NE RENDENT PAS DE TEXTE. Elles rendaient des phrases
-// FRANÇAISES EN DUR — noms de jours compris — affichées telles quelles à un
-// visiteur anglophone (revue du 2026-09-02, point 6). Elles rendent désormais
-// des faits typés ; c'est la page qui les met en mots via le catalogue.
+// Ces fonctions ne rendent PAS de texte : elles rendent des faits typés, et
+// c'est la page qui les met en mots via le catalogue (des phrases françaises en
+// dur seraient affichées telles quelles à un visiteur anglophone).
 //
 // ❌ Ne jamais réintroduire de littéral affichable ici : ce module est importé
 //    par une page, il n'a pas de locale à lui.
@@ -59,7 +58,7 @@ const expectedOccurrences = (frequency: Habit['frequency']): number => {
 /**
  * Habitude la plus fragile : la plus manquée sur les 7 derniers jours.
  *
- * 🔴 Deux corrections (revue du 2026-09-02, point 26) :
+ * Deux règles :
  *   1. les jours ANTÉRIEURS à la création de l'habitude ne comptent pas — une
  *      habitude créée hier affichait « 6 oublis cette semaine », ce qui est un
  *      reproche adressé à quelqu'un qui vient de s'y mettre ;

@@ -1,14 +1,11 @@
 // Cloudflare Turnstile — protection anti-robot des points d'entrée Auth.
 //
-// POURQUOI : l'audit du 2026-08-27 a trouvé qu'aucune protection anti-bot
-// n'existait sur l'inscription (finding AM-3 de `docs/archive/ROADMAP-60J-2026-08-28-au-10-26.md`). Le
-// risque n'est pas tant le faux compte que le **quota d'emails** : une vague de
-// robots vide le plafond d'envoi du projet, et les inscriptions légitimes
-// échouent alors avec « Trop de tentatives » sans que personne ne comprenne
-// pourquoi. C'est le même mode de défaillance que AM-1, et les deux se
-// corrigent ensemble ou pas du tout.
+// Pourquoi : aucune protection anti-bot n'existait sur l'inscription. Le risque
+// n'est pas tant le faux compte que le **quota d'emails** : une vague de robots
+// vide le plafond d'envoi du projet et les inscriptions légitimes échouent avec
+// « Trop de tentatives ».
 //
-// 🔴 **INERTE tant que `VITE_TURNSTILE_SITE_KEY` n'est pas posée.** Aucun
+// **INERTE tant que `VITE_TURNSTILE_SITE_KEY` n'est pas posée.** Aucun
 // script tiers n'est chargé, aucun jeton n'est produit, aucun comportement ne
 // change. C'est délibéré : le code peut partir en production avant que le
 // compte Cloudflare existe, et il ne fait rien en attendant.
@@ -23,7 +20,7 @@
 // Inverser les deux rend l'inscription ET la connexion impossibles pour tout le
 // monde, parce que GoTrue exigerait un jeton que personne n'envoie encore.
 //
-// 🔴 **Activer le CAPTCHA côté Supabase CASSERA `npm run cosmo:login`.** La
+// **Activer le CAPTCHA côté Supabase CASSERA `npm run cosmo:login`.** La
 // protection couvre aussi `signInWithOtp`, qu'utilise le CLI agent
 // (`scripts/cosmo/login.mjs`) — un script Node ne peut pas résoudre un
 // challenge. Il faut s'y attendre AVANT de basculer le réglage, pas le

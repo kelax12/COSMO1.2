@@ -47,6 +47,7 @@ describe('ci-noyau.yml : la composition du noyau', () => {
       'npm run i18n:check', 'npm run i18n:scan', 'npm run i18n:pages', 'npm run i18n:identical',
       'npm run i18n:quality', 'npm run build', 'npm run check:bundle', 'npm run validate:migrations',
       'npm run check:rls', 'npm run check:legal-journal', 'npm run check:docs',
+      'npm run check:commentaires', 'npm run check:faits',
     ]],
     ['fichiers-sensibles', ['node scripts/check-fichiers-sensibles.mjs --arbre --plage']],
     ['rls-integration', ['node scripts/apply-migrations.mjs', 'npm run test:rls']],

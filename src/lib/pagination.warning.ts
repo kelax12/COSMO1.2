@@ -20,7 +20,7 @@ const TABLE_LABEL_KEYS: readonly string[] = [
   'tasks', 'habits', 'events', 'okrs', 'kr_completions',
   'categories', 'lists', 'friends', 'team_tasks',
   // Mode entreprise — dix lectures bornees en dur qui tronquaient en silence
-  // (revue du 2026-09-02, point 13). C'est exactement ce que ce module existe
+  // C'est exactement ce que ce module existe
   // pour empecher : une liste coupee a 200 sans que personne, ni l'utilisateur
   // ni l'equipe, n'apprenne qu'elle l'a ete.
   'team_projects', 'org_members', 'org_teams', 'team_members',
@@ -37,7 +37,7 @@ const TABLE_LABEL_KEYS: readonly string[] = [
  *   session via Set `warned`. Faille §9 — pagination UI à venir.
  * - Sentry (prod ET dev) — voir ci-dessous.
  *
- * ⚠️ Pourquoi Sentry ici (audit archi 2026-08-07, point H4/M6)
+ * ⚠️ Pourquoi Sentry ici
  *
  * L'utilisateur était prévenu (toast), mais PERSONNE côté équipe ne l'était :
  * `console.warn` est retiré au build prod (`vite.config.ts → esbuild.pure`).

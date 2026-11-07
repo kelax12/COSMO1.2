@@ -58,8 +58,8 @@ export function withTimeout<T>(
     timer = setTimeout(() => {
       // Message résolu DANS le timer, et non en valeur par défaut de
       // paramètre : ce module est importé au démarrage, et le littéral
-      // français en dur s'affichait tel quel à un anglophone (revue du
-      // 2026-09-02, point 24). `errors.api.TIMEOUT` porte déjà la phrase.
+      // français en dur s'affichait tel quel à un anglophone.
+      // `errors.api.TIMEOUT` porte déjà la phrase.
       reject(new TimeoutError(message ?? translator('errors').t('api.TIMEOUT')));
     }, ms);
   });

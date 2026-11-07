@@ -113,18 +113,15 @@ interface CatalogShapes {
   /**
    * En-têtes et libellés des exports CSV.
    *
-   * 🔴 Namespace À PART, et pas dans `common` : il y vivait, et `common` est
-   * l'un des DEUX catalogues du chunk d'entrée. Ses 1,4 ko bruts partaient
-   * donc chez TOUT visiteur, pour une fonctionnalité qu'on n'atteint que
-   * depuis Réglages → Données ou l'aperçu d'entreprise. Mesuré : l'entrée
-   * passe de 78 023 à 77 556 o gzip, soit **467 o**, en le sortant.
+   * Namespace À PART, et pas dans `common` : `common` est l'un des DEUX catalogues
+   * du chunk d'entrée, et ces textes ne servent que depuis Réglages → Données ou
+   * l'aperçu d'entreprise (467 o gzip gagnés en le sortant).
    */
   /**
    * Formulaire « Signaler un bug ».
    *
-   * 🔴 Namespace À PART pour la même raison que `csv` : il vivait dans
-   * `common`, donc dans le chunk d'entrée, alors que `BugReportModal` est
-   * `lazy()` et que ses 1,2 ko bruts ne servent qu'à ceux qui l'ouvrent.
+   * Namespace À PART pour la même raison que `csv` : `BugReportModal` est `lazy()`,
+   * ses textes ne servent qu'à ceux qui l'ouvrent.
    */
   bugReport: Shape<'bugReport'>;
   csv: Shape<'csv'>;
@@ -142,11 +139,9 @@ interface CatalogShapes {
    * suppression, champ de lien de partage, calendrier de saisie, avertissement
    * de pagination.
    *
-   * 🔴 Namespace À PART, pour la troisième fois la même raison que `csv` et
-   * `bugReport` : ces neuf sections vivaient dans `common`, l'un des DEUX
-   * catalogues du chunk d'ENTRÉE. Leurs 8,5 ko bruts (fr) + 7,7 (en) partaient
-   * donc chez tout visiteur de la landing, du blog ou d'une page légale, pour
-   * des surfaces qu'aucun d'eux n'ouvrira jamais — il faut être connecté.
+   * Namespace À PART pour la même raison que `csv` et `bugReport` : ces sections
+   * vivaient dans `common`, donc chez tout visiteur de la landing, du blog ou
+   * d'une page légale, pour des surfaces qui exigent d'être connecté.
    *
    * ⚠️ Ce n'est PAS « tout ce qui est modal ». `shareInvite` reste dans
    * `common` parce que `ShareInviteClaimer` est monté par le SHELL
@@ -175,10 +170,9 @@ interface CatalogShapes {
    * Pages contractuelles : libellés communs (retour, date de mise à jour) et
    * mentions légales.
    *
-   * 🔴 Les CGU et la politique de confidentialité vivent À PART depuis le
-   * 2026-10-01 (`legalTerms`, `legalPrivacy`), chacune chargée par SA page :
-   * ensemble dans ce catalogue, elles faisaient 18,5 ko gzip (fr + en) pour un
-   * plafond de 15,5, et chaque page légale téléchargeait les deux autres
+   * Les CGU et la politique de confidentialité vivent À PART (`legalTerms`,
+   * `legalPrivacy`), chacune chargée par SA page : réunies dans ce catalogue, elles
+   * dépassaient le plafond et chaque page légale téléchargeait les deux autres
    * documents. ⚠️ Les trois fichiers d'une langue forment UN document au sens
    * de `npm run check:legal-journal` : leur empreinte est calculée sur leur
    * réunion, un découpage ne la change donc pas, une modification de texte si.
@@ -193,11 +187,9 @@ interface CatalogShapes {
   /**
    * Portefeuille de projets (M2) : vues, page projet, jalons, modèles.
    *
-   * 🔴 Namespace À PART, chargé avec le SEUL onglet Projets
-   * (`OrganizationPage`, `lazyWithRetry(…, ['portfolio'])`). Dans `org`, il
-   * faisait passer ce catalogue de 28,5 à 33,2 ko gzip, payés par toute visite
-   * de /entreprise, Aperçu et Pyramide compris, pour des textes qu'elles
-   * n'affichent jamais.
+   * Namespace À PART, chargé avec le SEUL onglet Projets (`OrganizationPage`,
+   * `lazyWithRetry(…, ['portfolio'])`) : dans `org`, il serait payé par toute
+   * visite de /entreprise, Aperçu et Pyramide compris.
    */
   portfolio: Shape<'portfolio'>;
   /**
@@ -205,36 +197,32 @@ interface CatalogShapes {
    * Facturation (sièges, historique, contact, mig. 180) et assistant de
    * démarrage (/entreprise/onboarding?setup=).
    *
-   * 🔴 À part de `org`, qui est payé par toute visite de /entreprise. Et UN
-   * seul namespace pour les deux, pas deux : chaque namespace ajoute ses
-   * chargeurs fr/en à la table `import.meta.glob` du chunk d'ENTRÉE (mesuré
-   * le 2026-09-25 : +0,14 ko gzip pour le second), payée par toutes les pages.
+   * À part de `org`, qui est payé par toute visite de /entreprise. Et UN seul
+   * namespace pour les deux, pas deux : chaque namespace ajoute ses chargeurs
+   * fr/en à la table `import.meta.glob` du chunk d'ENTRÉE, payée par toutes les
+   * pages.
    */
   orgAccount: Shape<'orgAccount'>;
   /**
-   * Gestes d'ADMINISTRATION du mode entreprise (2026-09-25) : départ et
+   * Gestes d'ADMINISTRATION du mode entreprise : départ et
    * suspension, invitations par e-mail, actions en masse, droits, transfert de
    * propriété, pyramide, revue hebdomadaire, corbeille.
    *
-   * 🔴 Namespace À PART, pour la même raison que `portfolio` : l'audit du
-   * 2026-09-24 (étapes 3 et 4) et la branche gouvernance faisaient passer `org`
-   * à 41,3 ko gzip pour un plafond de 30. Chargé par les SEULES sections et
-   * dialogues qui s'en servent (`lazyWithRetry(…, [..., 'orgAdmin'])` dans
-   * `OrganizationPage`), jamais par l'Aperçu.
+   * Namespace À PART, pour la même raison que `portfolio` : chargé par les SEULES
+   * sections et dialogues qui s'en servent (`lazyWithRetry(…, [..., 'orgAdmin'])`
+   * dans `OrganizationPage`), jamais par l'Aperçu.
    *
-   * 🔴 ÉLARGI le 2026-10-01 : la ROUTE /entreprise le charge pour toute visite,
-   * il porte donc aussi les textes que SEUL /entreprise affiche (annuaire,
-   * aperçu, notifications, réglages, facturation, navigation de la section,
-   * corbeille…, 34 sections). `org`, lui, est chargé par `Layout`, donc par
-   * TOUT compte connecté, entreprise ou non : il remontait à 40,6 ko gzip pour
-   * un plafond de 30, et il n'en garde que ce que le reste de l'app affiche
-   * (fiche de tâche d'équipe dans /tasks, invitations, pastilles…), 23,7 ko.
+   * La ROUTE /entreprise le charge pour toute visite : il porte donc aussi les
+   * textes que SEUL /entreprise affiche (annuaire, aperçu, notifications,
+   * réglages, facturation, navigation de la section, corbeille…). `org`, chargé
+   * par `Layout`, donc par TOUT compte connecté, ne garde que ce que le reste de
+   * l'app affiche (fiche de tâche d'équipe dans /tasks, invitations, pastilles…).
    * ❌ Ne rien remettre dans `org` qu'un écran hors /entreprise n'affiche pas :
    *    `lazy-namespaces.guard.test.ts` dira où chaque section est rendue.
    */
   orgAdmin: Shape<'orgAdmin'>;
   /**
-   * Configuration d'entreprise (mig. 195-199, audit du 2026-09-24) : réglages,
+   * Configuration d'entreprise (mig. 195-199) : réglages,
    * sécurité, champs et statuts, automatisations, intégrations, capacité,
    * liens secondaires. À part d'`orgAdmin`, que la ROUTE /entreprise charge
    * pour toute visite : ces écrans le chargent eux-mêmes (`org-config.lazy.ts`).
@@ -304,7 +292,7 @@ const registry: Registry = {};
  * STATIQUES depuis `App.tsx` et `main.tsx`. Tout ce qui rend avant qu'une route
  * soit résolue doit être ici, sous peine d'afficher des clés brutes.
  *
- * 🔴 **Ne jamais en ajouter un « au cas où ».** `src/i18n/lazy-namespaces.guard.test.ts`
+ * **Ne jamais en ajouter un « au cas où ».** `src/i18n/lazy-namespaces.guard.test.ts`
  * échoue si un namespace eager n'est plus atteignable depuis le shell : la
  * liste ne peut donc que refléter la mesure.
  */
@@ -515,11 +503,8 @@ export function listNamespaces(): readonly Namespace[] {
   return NAMESPACES;
 }
 
-// `listLazyLocales()` a été supprimée le 2026-08-25 : elle n'existait que pour
-// vérifier que `fr` était EXCLU du glob, ce qui n'est plus vrai depuis que les
-// 17 namespaces de page y sont entrés. `listLoaderKeys()` la remplace et
-// vérifie plus : la présence d'un chargeur pour chaque couple attendu, ET son
-// absence pour les deux namespaces eager.
+// `listLoaderKeys()` vérifie la présence d'un chargeur pour chaque couple attendu,
+// ET son absence pour les deux namespaces eager.
 
 /**
  * Résout une clé avec repli, mais retourne `null` si elle n'existe nulle part

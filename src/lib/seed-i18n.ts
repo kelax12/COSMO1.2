@@ -30,7 +30,7 @@ export function isEnglishSeed(): boolean {
  * relu tel quel — c'est nécessaire, ces données sont modifiables (renommer un
  * projet doit tenir). Conséquence : changer de langue après coup laissait une
  * interface traduite par-dessus un contenu resté dans l'ancienne langue.
- * Mesuré en prod le 2026-08-17 : navigateur français → `/` sème en français,
+ * Exemple : navigateur français → `/` sème en français,
  * puis `/en` affiche « Projects » au-dessus de « Refonte du site ».
  *
  * On mémorise donc la langue du seed pour pouvoir le régénérer quand elle ne

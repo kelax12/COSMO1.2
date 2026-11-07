@@ -74,7 +74,7 @@ const LandingFooter: React.FC<LandingFooterProps> = ({ track }) => {
               <Link to={localizedPath('legalNotice')} className={`${hover} transition-colors`}>{t('footer.legalNotice')}</Link>
               <Link to={localizedPath('privacy')} className={`${hover} transition-colors`}>{t('footer.privacy')}</Link>
               <Link to={localizedPath('terms')} className={`${hover} transition-colors`}>{t('footer.terms')}</Link>
-              {/* `TAP_AREA_44_Y` (C-57, 2026-10-01) : un BOUTON parmi des liens,
+              {/* `TAP_AREA_44_Y` (C-57) : un BOUTON parmi des liens,
                   donc mesure par la garde (115 x 20 px), contrairement aux liens
                   voisins (dette AAA assumee dans `e2e/touch-targets.spec.ts`).
                   Le `gap-6` vaut 24 px sur les deux axes : le debord de 12 px

@@ -2,13 +2,11 @@
 // `basename` du routeur. La décision vit dans `bootstrap.ts` (pure, testée) ;
 // ce module ne fait que l'appliquer.
 //
-// 🔴 APPELÉ DEUX FOIS, ET C'EST VOULU (2026-10-16). `src/boot.ts` l'appelle en
-// premier, de façon synchrone : depuis que l'application n'est chargée qu'après
-// la première peinture du prérendu, l'appel de `main.tsx` tombait APRÈS
-// l'événement `load`, donc après le premier rendu — `lang` et l'URL canonique
-// arrivaient en retard (`e2e/i18n-routing.spec.ts`, 4 cas rouges sur `c8591450`).
-// Le second appel, dans `main.tsx`, part de l'URL déjà canonique : il rend la
-// même locale et le même `basename`, et ne réécrit rien.
+// Appelé DEUX FOIS, et c'est voulu : `src/boot.ts` l'appelle en premier, de façon
+// synchrone, car l'appel de `main.tsx` tombe APRÈS l'événement `load` (donc après
+// le premier rendu) et `lang` comme l'URL canonique arriveraient en retard.
+// Le second appel, dans `main.tsx`, part de l'URL déjà canonique : même locale,
+// même `basename`, rien n'est réécrit.
 //
 // ❌ N'importer ici que la logique de locale : ce module est sur le chemin du
 // LCP, via `boot.ts`.
