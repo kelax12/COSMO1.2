@@ -1,8 +1,11 @@
 // ═══════════════════════════════════════════════════════════════════
 // dump-check.mjs · RELIRE LE DERNIER DUMP CHIFFRE, SANS RIEN RESTAURER
 //
-// Appele par le job `dump-check` de `.github/workflows/restore-drill.yml`
-// (trimestriel, C-86), apres le `gh run download` de l'artefact `db-dump`.
+// Appele par `scripts/restore-drill.mjs` (job `drill-auto` de
+// `.github/workflows/restore-drill.yml`, MENSUEL depuis ROB-01, 2026-11-07),
+// AVANT la restauration. Le job trimestriel `dump-check` (C-86) qui
+// l'appelait seul a ete fondu dans ce drill. L'entree CLI reste, pour une
+// relecture a la main.
 //
 // 🔴 POURQUOI UN MODULE NODE, ET PAS LE SHELL QUI LE PRECEDAIT
 //
@@ -165,10 +168,15 @@ function lireDebut(chemin, n) {
  * lui-meme, pour que le temoin l'execute sans tuer le process de test.
  * `executer` est `spawnSync` en production, un faux dans le temoin.
  * ⚠️ `lines` ne contient JAMAIS la phrase secrete : elle passe par stdin.
+ * `conserver` : sur une REUSSITE seulement, le dechiffre survit et son chemin
+ * est rendu (`clair`), avec la table des matieres (`toc`). C'est le cas du
+ * drill mensuel (`restore-drill.mjs`), qui le restaure puis l'efface lui-meme.
+ * Sur un refus, il est efface comme toujours.
  */
-export function relireDump({ dossier, phrase, attendues = ATTENDUES, executer = spawnSync }) {
+export function relireDump({ dossier, phrase, attendues = ATTENDUES, executer = spawnSync, conserver = false }) {
   const lines = [];
   let clair = null;
+  let garde = false;
   const resume = { fichier: null, taille: null, objets: null, manquantes: null, verdict: null };
   try {
     const nom = classerArtefact(listerFichiers(dossier));
@@ -213,6 +221,10 @@ export function relireDump({ dossier, phrase, attendues = ATTENDUES, executer = 
       `::notice title=dump-check::Dump chiffre dechiffre et relisible : ${resume.fichier}, `
         + `${taille} octets en clair, ${resume.objets} objets, toutes les tables attendues presentes.`,
     );
+    if (conserver) {
+      garde = true;
+      return { exit: 0, lines, resume, clair, toc };
+    }
     return { exit: 0, lines, resume };
   } catch (e) {
     if (!(e instanceof RefusDump)) throw e;
@@ -220,8 +232,8 @@ export function relireDump({ dossier, phrase, attendues = ATTENDUES, executer = 
     lines.push(`::error title=dump-check::${e.message}`);
     return { exit: 1, lines, resume };
   } finally {
-    // Le clair ne survit pas au controle, quelle que soit l'issue.
-    if (clair) rmSync(clair, { force: true });
+    // Le clair ne survit pas au controle, sauf s'il est remis au drill.
+    if (clair && !garde) rmSync(clair, { force: true });
   }
 }
 

@@ -124,6 +124,11 @@ export const ARTEFACTS = {
     nature: 'chiffre',
     raison: 'dump COMPLET de la prod, chiffré gpg AES-256 (BACKUP_PASSPHRASE) ; le clair ne quitte pas le runner (BK-1, 8c6a971d)',
   },
+  'db-backup.yml › db-comptages': {
+    nature: 'chiffre',
+    raison:
+      'manifeste du dump (ROB-01) : nombre de lignes par table de public et d auth.users, compteurs RLS, aucune ligne ; chiffré comme le dump, le clair est effacé avant dépôt',
+  },
   'migration-coverage.yml › introspection': {
     nature: 'metadonnees',
     raison: "noms d'objets du catalogue et du ledger, jamais une ligne de table",
@@ -171,17 +176,22 @@ export const CONTACTS_PROD = {
   'db-backup.yml › dump › Diagnostiquer la chaine (sans le mot de passe)': {
     affiche: 'utilisateur, hôte, port et base de la chaîne ; du mot de passe, sa seule longueur',
   },
-  'db-backup.yml › dump › Exporter la base': {
-    affiche: 'version de pg_dump et taille du fichier ; le dump va dans un fichier',
+  'db-backup.yml › dump › Exporter la base et ses comptages': {
+    affiche:
+      "version de pg_dump et taille du fichier ; le dump et le manifeste vont dans des fichiers. En cas d'échec du snapshot, la première ligne du stderr de la session psql : un message du serveur sur la requête de comptage, jamais une ligne de table",
   },
   'db-backup.yml › dump › Chiffrer le dump': {
     affiche: 'premier octet et taille du fichier chiffré',
   },
+  'db-backup.yml › dump › Chiffrer le manifeste de comptages': {
+    affiche: 'nombre de tables de public et de lignes mal formées du manifeste (deux `grep -c`) ; jamais son contenu',
+  },
   'migration-coverage.yml › couverture › Lire le ledger et le catalogue de production': {
     affiche: "taille de l'introspection en octets ; la sortie de psql va dans un fichier",
   },
-  'restore-drill.yml › dump-check › Relire le dernier dump': {
-    affiche: "nom et taille du dump, nombre d'objets de sa table des matières, tables manquantes",
+  'restore-drill.yml › drill-auto › Restaurer le dernier dump et comparer ses comptages': {
+    affiche:
+      "nom et taille du dump, durée de restauration, par table de public et pour auth.users le nombre de lignes attendu et restauré, compteurs RLS et d'isolation, erreurs de pg_restore réduites à leur première ligne (jamais DETAIL ni CONTEXT, jamais le message d'un COPY) ; restauré dans un Postgres jetable du runner (localhost imposé), effacé avec le job",
   },
   'restore-drill.yml › drill › Verifier l intention et la cible': {
     affiche: 'hôte, utilisateur, port et base de la cible ; jamais le mot de passe',

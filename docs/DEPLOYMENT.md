@@ -766,6 +766,73 @@ passer par `apply_migration` (MCP) ou le SQL editor avec le fichier versionné.
 
 ## 7. Backup & Disaster Recovery (runbook)
 
+> 🔎 **État au 2026-11-07 (ROB-01, vague 4.4).** Le dump quotidien est désormais **restauré
+> chaque mois, sans humain**, par le job `drill-auto` de `restore-drill.yml` (le 9 à 05:43 UTC),
+> et une garde d'**absence** (`restore-drill-fraicheur.yml`, hebdomadaire) rougit si aucun drill
+> n'est vert depuis 35 jours. Les deux sonnent par `ci-alert.yml`. Premier drill vert : **2026-11-07**
+> (run `42380272895`, 91 tables comptées, comptages identiques au manifeste).
+> Le `dump-check` trimestriel (C-86), qui ne lisait qu'une table des matières, est fondu dans ce
+> drill. Détail : § « Drill automatique mensuel » ci-dessous.
+
+### Drill automatique mensuel · `restore-drill.yml` › `drill-auto` (ROB-01, 2026-11-07)
+
+**Le mécanisme.** `db-backup.yml` ouvre une transaction `REPEATABLE READ` en lecture seule,
+exporte son snapshot, y compte les lignes de chaque table (`scripts/sql/comptages-sauvegarde.sql`),
+puis lance `pg_dump --snapshot` sur ce même snapshot : le manifeste décrit **exactement** les
+lignes du dump. Il part chiffré comme le dump (artefact `db-comptages`, 30 jours). Chaque mois,
+`drill-auto` télécharge les deux, déchiffre sur le runner, restaure dans un **Postgres 17
+jetable** (service container détruit avec le job, `PGHOST=localhost` imposé par
+`scripts/restore-drill.mjs`), recompte avec la **même** requête, et compare.
+
+| Ce que le drill PROUVE | Comment |
+|---|---|
+| le dernier dump se **déchiffre** avec `BACKUP_PASSPHRASE` | mêmes refus que `dump-check.mjs` : clair déguisé, phrase fausse, fichier tronqué |
+| il se **restaure** sur un Postgres 17 vierge, et en combien de temps | `pg_restore --no-owner`, durée au résumé du job |
+| **chaque table** de `public` et `auth.users` revient avec **exactement** ses lignes | comptages comparés au manifeste du même snapshot : une ligne, une table de plus ou de moins = rouge |
+| la RLS revient : même nombre de policies et de tables sous RLS | compteurs du manifeste |
+| l'isolation est **effective** | le rôle `authenticated`, avec les claims d'un vrai propriétaire, voit ses tâches et seulement elles |
+| aucune erreur de restauration n'est avalée | chaque erreur de `pg_restore` est classée ; seules sont tolérées celles des extensions propres à Supabase absentes de l'image officielle (liste fermée), jamais sur un objet de `public` ou `auth`, et leur nombre doit égaler celui que `pg_restore` annonce |
+
+| Ce qu'il NE PROUVE PAS | Qui le couvre |
+|---|---|
+| **pg_cron, pg_net, Vault, pg_graphql** : absents de `postgres:17`, leurs objets et données (jobs planifiés de la mig. `246`, secrets du Vault) ne sont **pas** restaurés, et c'est dit au résumé | le drill **manuel** vers un projet Supabase jetable (job `drill`, ci-dessous) |
+| la restauration sur la **plateforme Supabase** (rôles gérés, `supabase_admin`, Auth qui redémarre sur le schéma restauré) | le drill manuel |
+| les **Edge Functions**, leurs secrets, le **Storage** (fichiers), la config du Dashboard | aucun dump ne les contient : § Restauration réelle, étape 4 |
+| un **parcours applicatif** (se connecter, créer une tâche) | geste humain, jamais rejoué depuis le 2026-09-01 |
+| le **RTO réel** d'un sinistre (création du projet, re-pointage Vercel, redéploiements) | le drill manuel chronomètre la seule restauration |
+| un **RPO** meilleur que 24 h | rien : c'est la limite d'un dump quotidien sans PITR (plan Free) |
+| que les **comptages** de la prod sont justes | le drill prouve que la restauration rend le dump, pas que le dump rend la vérité métier |
+
+**Le témoin.** `Run workflow` avec la case *temoin* cochée altère d'une unité le comptage de
+`public.tasks` dans le manifeste lu : le drill doit rougir, et l'alerte partir. Témoins de code :
+`scripts/restore-drill.guard.test.mjs`, `scripts/restore-drill-fraicheur.guard.test.mjs`.
+
+**Données personnelles.** Le journal et le résumé d'un dépôt public se lisent par tous : n'en
+sortent que des noms de tables et des comptes. Aucun `upload-artifact` dans `restore-drill.yml`,
+le déchiffré est effacé en fin de job, et une erreur de `COPY` n'imprime que sa table, jamais son
+message (il peut citer une valeur).
+
+| Date | Run drill | Run db-backup | Restauration | Tables comptées | Erreurs tolérées | Verdict |
+|---|---|---|---|---|---|---|
+| 2026-11-07 | `42380272895` (branche `noyau/drill-auto`) | `42378846309` | 1 s (job 39 s) | 91 : 90 de `public` + `auth.users` | 27 : pg_cron et Vault | ✅ comptages identiques, 205 policies, 90 tables sous RLS, isolation 289 / 940 |
+
+### Au passage en Pro (décision d'Axel, au premier client payant)
+
+Le drill reste utile en Pro : il prouve **notre** dump, celui qui vit hors de Supabase et couvre
+la perte du compte. Le passage ajoute une seconde copie, il ne remplace pas la première. Le geste
+de passer en Pro est celui d'Axel ; ce qui suit est la liste à cocher le jour même.
+
+- [ ] **Sauvegardes quotidiennes de Supabase** : vérifier dans le tableau de bord (Database →
+  Backups) qu'elles apparaissent. C'est une seconde copie, indépendante du dépôt et de
+  `BACKUP_PASSPHRASE`. Noter ici la date du premier point visible.
+- [ ] **PITR** : option payante en plus du Pro, à décider (RPO de quelques minutes au lieu de
+  24 h). Tant qu'elle n'est pas prise, le RPO reste celui du dump quotidien.
+- [ ] **Refus des mots de passe fuités** (V5.3) : à activer (Auth → mots de passe). C'est
+  l'avertissement `auth_leaked_password_protection` des advisors, que `check:supabase-posture`
+  verra disparaître ; recaler sa référence ensuite, avec le nom de la règle dans la `_note`.
+- [ ] **Confirmation de l'adresse e-mail** à l'inscription : à rediscuter avec Axel (elle avait
+  été écartée sur le plan Free).
+
 > 🔎 **État au 2026-10-15.** `db-backup` est vert tous les jours, **chiffré** depuis le 2026-10-13.
 > `restore-drill.yml` était **désactivé à la main du 2026-09-01 au 2026-10-15** (rangement
 > d'après-drill, rendu caduc par `C-86`) : le premier `dump-check` trimestriel, le 2026-10-05,
