@@ -11,7 +11,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
   evaluer, validerRegistre, nomsDeLExemple, dateEffective,
-  lireGithub, lireSupabase, lireVercel, run,
+  lireGithub, lireSupabase, lireVercel, run, quoiFaire,
 } from './check-secrets-age.mjs';
 
 const MAINTENANT = new Date('2026-10-23T12:00:00Z');
@@ -146,5 +146,62 @@ describe('check-secrets-age · jeton absent = exit 1', () => {
     expect(t).toMatch(/github : GH_TOKEN/);
     expect(t).toMatch(/supabase-edge : SUPABASE_ACCESS_TOKEN/);
     expect(t).toMatch(/vercel : VERCEL_TOKEN/);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// V9.4 (TST-05, 2026-11-07) · la garde dit QUOI FAIRE, et le registre
+// complété rougit encore sur un secret échu.
+// ═══════════════════════════════════════════════════════════════════
+describe('check-secrets-age · que faire (V9.4)', () => {
+  it('TÉMOIN : jeton absent → le geste NOMME `SECRETS_AUDIT_TOKEN`, et les dates GitHub sont des conséquences', async () => {
+    const r = await run({ SUPABASE_ACCESS_TOKEN: '', VERCEL_TOKEN: '' }, MAINTENANT);
+    const { gestes, consequences } = quoiFaire(r.erreurs);
+    const jeton = gestes.find((g) => g.titre.startsWith('Poser le jeton'));
+    expect(jeton.items.join('\n')).toMatch(/SECRETS_AUDIT_TOKEN/);
+    expect(jeton.items.join('\n')).toMatch(/Secrets: Read-only/);
+    // Les dates INCONNUES d'un store non lu ne sont pas présentées comme des rotations.
+    expect(gestes.find((g) => g.titre.startsWith('Faire tourner'))).toBeUndefined();
+    expect(consequences.some((c) => c.startsWith('github/'))).toBe(true);
+  });
+
+  it('TÉMOIN : un secret échu tombe dans « faire tourner », un orphelin dans « inventaire »', () => {
+    const r = evalue(
+      registre(entree({}), entree({ name: 'B_KEY', store: 'vercel' })),
+      vivant({ github: new Map([['A_KEY', il(101)], ['ORPHELIN', il(1)]]), vercel: new Map() }),
+    );
+    const { gestes } = quoiFaire(r.erreurs);
+    const titre = (debut) => gestes.find((g) => g.titre.startsWith(debut))?.items ?? [];
+    expect(titre('Faire tourner')).toEqual(['github/A_KEY : 101 j pour une echeance de 100 j (high)']);
+    expect(titre('Inventaire')).toEqual(['github/ORPHELIN']);
+    expect(titre('Au registre mais absent')).toEqual(['vercel/B_KEY']);
+  });
+
+  it('aucun écart ne disparaît : un écart non reconnu tombe dans « à lire »', () => {
+    const { gestes } = quoiFaire(['quelque chose de neuf']);
+    expect(gestes).toEqual([{ titre: 'À lire', items: ['quelque chose de neuf'] }]);
+  });
+
+  it('TÉMOIN : le registre COMMITÉ rougit sur un secret Vercel inscrit le 2026-11-07, une fois échu', () => {
+    const reg = JSON.parse(readFileSync(resolve(process.cwd(), '.github/secrets-registry.json'), 'utf8'));
+    // `supabase-platform` n'a pas de date vivante : sa date vient de lastRotated seul
+    // (c'est l'écart réel du 2026-11-07, qui attend Axel). Une date posée sur la COPIE.
+    for (const e of reg.entries) if (e.store === 'supabase-platform') e.lastRotated = il(1).slice(0, 10);
+    const toutVivant = (age) => {
+      const v = vivant();
+      for (const e of reg.entries) if (v[e.store] instanceof Map) v[e.store].set(e.name, il(age(e)));
+      return v;
+    };
+    const exemple = new Set(reg.entries.filter((e) => e.store === 'public').map((e) => e.name));
+    // Plancher : tout vivant, tout jeune → aucun écart (sinon une garde toujours rouge passerait).
+    expect(evaluer({ registre: reg, vivant: toutVivant(() => 1), exemple, maintenant: MAINTENANT }).erreurs).toEqual([]);
+    // La clé service_role posée par l'intégration chez Vercel, à 366 jours.
+    const r = evaluer({
+      registre: reg,
+      vivant: toutVivant((e) => (e.store === 'vercel' && e.name === 'SUPABASE_SERVICE_ROLE_KEY' ? 366 : 1)),
+      exemple,
+      maintenant: MAINTENANT,
+    });
+    expect(r.erreurs).toEqual(['vercel/SUPABASE_SERVICE_ROLE_KEY : 366 j pour une echeance de 365 j (critical), a faire tourner']);
   });
 });

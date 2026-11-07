@@ -88,7 +88,12 @@ jobs:
           # Les LOGS d'un run exigent une authentification même sur un dépôt
           # public ; les ANNOTATIONS non. C'est la seule forme de diagnostic
           # qu'un agent sans compte GitHub puisse relire.
-          tail -n 20 posture.log | while IFS= read -r LIGNE; do
+          # 🔴 Seul le VERDICT (à partir de « ✖ Posture Supabase ») devient
+          # annotation. Jusqu'au 2026-11-07 c'étaient les 20 dernières lignes :
+          # les améliorations imprimées juste avant y passaient en `::error::`,
+          # et l'audit externe du 2026-11-06 a lu « rouge pour une baisse
+          # d'unused_index » là où la garde rougissait sur trois hausses réelles.
+          sed -n '/^✖ Posture Supabase/,$p' posture.log | grep -v '^\s*$' | head -n 40 | while IFS= read -r LIGNE; do
             echo "::error title=posture-supabase::${LIGNE}"
           done
           exit 1

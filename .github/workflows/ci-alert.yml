@@ -79,7 +79,17 @@ on:
       # alertes pour un incident apprennent à en ignorer une.
     types: [completed]
   # Exercice à blanc du canal d'alerte, sans casser une garde pour le tester.
+  # Il joue aussi la règle des 7 jours (job `rouges-anciens`), qui écrit l'issue.
   workflow_dispatch:
+  # 🔴 RÈGLE DES 7 JOURS (V9.4, TST-05, 2026-11-07). L'alerte ci-dessus sonne au
+  # PREMIER rouge puis se tait : une garde qui RESTE rouge ne sonne plus jamais.
+  # `Posture` rouge chaque jour depuis le 2026-10-30, `Secrets age` depuis sa
+  # pose, et personne ne lisait plus ni l'une ni l'autre. Chaque jour, TOUS les
+  # workflows actifs (pas une liste : une liste a laissé `Sabotages` et
+  # `Mutation` hors de vue) dont le dernier run sur `main` est rouge depuis
+  # plus de 7 jours, sans décision écrite et datée, vont dans l'issue `ci-red`.
+  schedule:
+    - cron: '43 7 * * *' # quotidien, 07:43 UTC, minute décalée des autres crons
 
 # Seul droit élevé du dépôt, strictement borné à l'ouverture d'issues.
 # `actions: read` (lecture seule, 2026-10-16) : lister les runs verts de `main`,
@@ -96,7 +106,8 @@ jobs:
     # Le déclenchement manuel passe aussi, pour l'exercice à blanc du canal.
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      (github.event.workflow_run.conclusion == 'failure' &&
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'failure' &&
        github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
     steps:
@@ -224,4 +235,40 @@ jobs:
           GITHUB_EVENT_NAME: ${{ github.event_name }}
         # Node est preinstalle sur les runners GitHub : pas de `setup-node`,
         # ce script n'a aucune dependance hors bibliotheque standard.
+        run: node scripts/ops-alert.mjs
+
+  # ── Règle des 7 jours (V9.4, TST-05) ──────────────────────────────────
+  #
+  # Toute garde rouge plus de 7 jours est corrigée, recalée par une décision
+  # écrite et datée (`.github/gardes-rouges-decisions.json`, revue à 30 jours
+  # au plus), ou retirée. Sinon : inscrite dans l'issue `ci-red` (la même que
+  # ci-dessus, pas une seconde), un commentaire seulement quand la liste
+  # CHANGE, et le job sort en 1 (un rouge est l'alerte : GitHub le notifie).
+  # ✅ Échec fermé : API refusée, fichier de décisions mal formé = rouge.
+  # ⚠️ Dépôt public : noms de workflow, dates et liens de runs, rien d'autre.
+  # Témoin : `scripts/gardes-rouges-7j.guard.test.mjs`.
+  rouges-anciens:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Gardes rouges depuis plus de 7 jours
+        id: scan
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: node scripts/gardes-rouges-7j.mjs
+      # Pousser seulement quand la liste a changé : un salon qui reçoit la même
+      # ligne chaque matin apprend à l'ignorer. `always()` : le scan sort en 1
+      # justement quand il y a quelque chose à dire.
+      - name: Pousser la liste sur le webhook ops (si elle a change)
+        if: always() && steps.scan.outputs.nouveau == 'true'
+        env:
+          WEBHOOK: ${{ secrets.OPS_ALERT_WEBHOOK_URL }}
+          GITHUB_EVENT_NAME: schedule
+          WF: 'Gardes rouges depuis plus de 7 jours (${{ steps.scan.outputs.noms }})'
+          SHA: ${{ github.sha }}
+          RUN_URL: ${{ steps.scan.outputs.issue }}
         run: node scripts/ops-alert.mjs

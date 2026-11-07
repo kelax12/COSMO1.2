@@ -1496,6 +1496,34 @@ joue après un rouge, le résumé liste tous les rouges), `edge-deploy-select.gu
   `main`, un groupe par commit, aucun run annulé (2026-10-16). `permissions: contents:read`.
   Dépendances : `.github/dependabot.yml`.
 
+### Règle des 7 jours : une garde rouge se corrige, se recale par écrit ou se retire (V9.4, TST-05)
+
+🔴 **Constat de l'audit externe du 2026-11-06** : des workflows planifiés restaient rouges des
+jours durant, donc plus personne ne les lisait. `ci-alert.yml` sonne au PREMIER rouge puis se tait.
+
+**La règle, posée le 2026-11-07** : toute garde dont le dernier run sur `main` est rouge depuis
+plus de 7 jours est **corrigée**, **recalée** par une décision écrite et datée
+(`.github/gardes-rouges-decisions.json` : mesure, motif, doc, revue à **30 jours au plus**), ou
+**retirée** avec la même trace. Sinon, le job `rouges-anciens` de `ci-alert.yml` (quotidien,
+07:43 UTC) l'inscrit dans l'issue `ci-red` (la même, pas une seconde ; un commentaire seulement
+quand la liste change, webhook ops idem) et sort en 1. Il lit **tous** les workflows actifs, pas
+une liste. Script : `scripts/gardes-rouges-7j.mjs` ; témoin : `gardes-rouges-7j.guard.test.mjs`.
+⚠️ Hors noyau : il lit l'horloge et l'API, il ne bloque rien.
+
+**Première mesure, 2026-11-07** : `restore-drill` rouge depuis 22 j (aucun exercice réussi
+depuis le 2026-09-01, le run manuel du 10-15 refusé faute de confirmation, aucun run planifié en
+octobre) et `Secrets age` depuis au moins 11 j ; `Posture` rouge depuis le 2026-10-30 à 11:18,
+juste sous le seuil.
+
+**Décisions du 2026-11-07, garde par garde :**
+
+| Garde | Rouge mesuré | Ce qui a été fait, et pourquoi |
+|---|---|---|
+| `Sabotages` | depuis le 2026-11-02 (`41473542705`), relancé le 11-07 (`42358983774`) : **2 problèmes** | ⚠️ **Pas** « cinq témoins non rejoués » (l'audit lisait la liste imprimée des témoins jamais vus rouges, qui ne fait pas rougir). Les vraies causes : deux entrées du catalogue périmées. `smoke-destructrice-en-post` cherchait un cas nommé « les treize fonctions… », renommé à chaque sonde ajoutée (« seize » au 11-07) : le titre porte désormais « chaque fonction… », le compte reste dans l'assertion. `avis-l215-html-brut` visait un échappement déménagé dans `billing-mail-layout.ts` par `cf7bc5aa` (2026-11-03) : recible. `68b37c10` n'y touchait pas. Les deux vus rouges sous sabotage et verts sans (`--only=`). |
+| `Mutation` | vert le 2026-11-06 (`42237865948`) après un rouge le 11-04 | **Seuil `break: 99` et périmètre GARDÉS, jugés tenables.** Mesure : 99,48 %, 384 / 386, run de 95 s. Le rouge du 11-04 disait vrai (30 survivants, logique de facturation entrée avec des assertions faibles), fermé en deux jours par 25 assertions, aucun mutant exclu. Élargir le périmètre sous le même seuil global laisserait des fichiers neufs compenser une dégradation du périmètre argent : un élargissement se fera par une seconde configuration avec son propre seuil, mesuré. ⚠️ Marge : 99 % de 386 admet 3 non tués, 2 sont pris par les équivalents nommés dans `stryker.config.mjs` ; un 4ᵉ équivalent irréductible rouvre cette décision, il ne relève pas le seuil. |
+| `Posture` | voir `SECURITY.md` § AM-5 | trois hausses réelles relues, mig. `245`, référence recalée par écrit |
+| `Secrets age` | voir `SECURITY.md` § Rotation des secrets | rouge vrai, attend deux gestes d'Axel : décision jusqu'au 2026-11-21 |
+
 ### Boucle locale : `npm run test:changed` (vague 2.4, DEV-01)
 
 La suite complète prend 54 min sur le poste de dev (4 cœurs, 8 Go). `test:changed`

@@ -1,0 +1,43 @@
+-- ═══════════════════════════════════════════════════════════════════
+-- 245 · Index couvrants des trois clés étrangères nées après la 227 (AM-5)
+-- ═══════════════════════════════════════════════════════════════════
+--
+-- Relevé du 2026-11-07, advisor de performance `unindexed_foreign_keys`
+-- (projet ykeugqfgklejcdbrmawy) : 3 occurrences, alors que la mig. 227 l'avait
+-- ramené à 0 le 2026-10-26. C'est ce qui tient `Posture` rouge (job `supabase`)
+-- depuis l'arrivée de la 230 : `PERF_BLOQUANTS` refuse toute FK neuve sans index.
+--
+-- LES TROIS, ET LA MIGRATION QUI LES A CRÉÉES
+--   · `org_settings.default_role_id` → `org_roles(id)` ON DELETE SET NULL
+--     (mig. 230). Parcourue à chaque suppression d'un rôle d'organisation.
+--   · `team_tasks.validator_id` → `auth.users(id)` ON DELETE SET NULL
+--     (mig. 233). Parcourue par la SUPPRESSION DE COMPTE (RGPD art. 17,
+--     `delete-account`, `inactive-accounts`), sur la table qui grossit le plus
+--     en mode entreprise. `idx_team_tasks_org_validator (org_id, validator_id)`
+--     ne la couvre pas : la colonne n'y est pas en tête.
+--   · `org_withdrawals.org_id` → `organizations(id)` ON DELETE SET NULL
+--     (mig. 237). Parcourue à chaque suppression d'organisation.
+--     `org_withdrawals_pending_idx` est partiel et porte sur `withdrawn_at`.
+--
+-- Même raisonnement que la 227 (son en-tête) : sans index, chaque ligne parent
+-- supprimée déclenche un parcours séquentiel de l'enfant entier, sous verrou.
+--
+-- APPLICATION
+--   · Indépendante de 242 à 244 : aucun objet commun. Idempotente
+--     (`IF NOT EXISTS`). Aucune donnée touchée, aucune fonction, aucun droit.
+--   · Tables petites au 2026-11-07 : `CREATE INDEX` simple, comme la 227.
+--   · Relecture après application :
+--       SELECT indexname FROM pg_indexes
+--        WHERE schemaname = 'public'
+--          AND indexname IN ('idx_org_settings_default_role_id',
+--                            'idx_team_tasks_validator_id',
+--                            'idx_org_withdrawals_org_id');
+--     puis `get_advisors performance` : `unindexed_foreign_keys` doit DISPARAÎTRE.
+--   · Ensuite, `Posture` l'imprime en amélioration (3 → absent) : recaler la
+--     référence (workflow Posture, entrée `regenerer`) pour que la garde
+--     reprenne son refus à zéro FK sans index.
+-- ═══════════════════════════════════════════════════════════════════
+
+CREATE INDEX IF NOT EXISTS idx_org_settings_default_role_id ON public.org_settings (default_role_id);
+CREATE INDEX IF NOT EXISTS idx_team_tasks_validator_id ON public.team_tasks (validator_id);
+CREATE INDEX IF NOT EXISTS idx_org_withdrawals_org_id ON public.org_withdrawals (org_id);

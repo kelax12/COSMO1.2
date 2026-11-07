@@ -435,6 +435,24 @@ Les identifiants et URLs (`kind: config`) ne tournent pas, mais leur existence e
 
 Quand elle est rouge : faire tourner le secret (procédure ci-dessous), puis, pour les stores que l'API ne date pas (Edge, `SUPABASE_SERVICE_ROLE_KEY`), écrire la date du jour dans `lastRotated`. ❌ Ne jamais écrire une date sans avoir tourné le secret, ni relever une échéance pour faire taire la garde.
 
+**Relu le 2026-11-07 (V9.4, TST-05) : rouge depuis sa pose, et AUCUN secret connu n'a dépassé son
+échéance.** Run `41474391054` (2026-11-02), 44 écarts : `SECRETS_AUDIT_TOKEN` jamais posé (la source
+GitHub n'est pas lue, d'où dix dates « inconnues » qui n'en sont pas), 30 noms vivants hors registre,
+`vercel/VITE_TURNSTILE_SITE_KEY` absente, `supabase-platform/SUPABASE_SERVICE_ROLE_KEY` sans date.
+- **Corrigé dans le dépôt** : les 30 noms sont inscrits avec leur échéance (intégrations
+  Vercel-Supabase et Vercel-Sentry, prix d'équipe Stripe, origines d'affiliation). Les clés posées
+  par l'intégration Supabase chez Vercel (`SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`,
+  `POSTGRES_PASSWORD`, `POSTGRES_URL*`) ne sont lues par **aucun** code (`api/` lit
+  `SUPABASE_SECRET_KEY` et `VITE_SUPABASE_URL`) : surface à retirer chez Vercel plutôt qu'à faire
+  tourner. `vercel/VITE_TURNSTILE_SITE_KEY` est **retirée** du registre par décision (absente,
+  Turnstile inerte, décision en attente imprimée par `check:env`) : la garde la réclamera le jour
+  où elle sera posée.
+- **La garde dit quoi faire** : bloc « QUE FAIRE » rangé par geste (jeton, rotation, date,
+  inventaire, entrée absente), en annotations lisibles sans compte. Le verdict ne change pas.
+- **Reste rouge, et c'est vrai** : deux gestes d'Axel, poser `SECRETS_AUDIT_TOKEN` et donner la
+  date de dernière rotation de la `service_role` de la plateforme (ou la faire tourner). Recalé
+  par décision jusqu'au **2026-11-21** dans `.github/gardes-rouges-decisions.json`.
+
 ### Comment (secret compromis ou échu)
 Si une clé fuite (commit accidentel, compromission soupçonnée, etc.) :
 
@@ -933,3 +951,25 @@ Rouge au 2026-11-05 (référence du 10-26, descendu de `scripts/CLAUDE.md`) : `r
 24/14, DEFINER exposées 87/84, `unindexed_foreign_keys` nouveau (3). Écarts nés des mig. `229` → `240` :
 relire au catalogue AVANT `--update`. `supabase/rpc-inventory.md` (généré, MAI-01/API-01) donne l'état
 des droits `EXECUTE` de chaque fonction depuis les migrations.
+
+**Relu et recalé le 2026-11-07 (V9.4, TST-05).** Rouge chaque jour depuis le 2026-10-30
+(`42220903077` le 11-06). ⚠️ **Pas** « rouge pour une amélioration » comme l'a lu l'audit externe :
+la baisse d'`unused_index` (75 → 56) est imprimée sans rougir ; le workflow annotait les 20
+dernières lignes du journal, améliorations comprises (corrigé : seul le verdict est annoté).
+Objets relus dans leurs migrations et par `get_advisors` le même jour, noms écrits dans les `_note` :
+- `rls_enabled_no_policy` 14 → 24 : les sept `affiliate_*` (mig. `236`), `billing_acceptances` et
+  `org_withdrawals` (`237`), `org_seat_alerts` (`240`). RLS sans policy et `REVOKE ALL` à `anon` et
+  `authenticated` dans chaque migration : voulu, comme les 14 premières.
+- DEFINER exposées 84 → 87 : `affiliate_backfill`, `affiliate_attach` (`is_admin()` ou
+  `service_role` en première instruction), `claim_affiliate` (profil de `auth.uid()` seul, compte
+  de moins d'une heure). Légitimes.
+- `unindexed_foreign_keys` 0 → 3 : **défaut**. `org_settings.default_role_id` (`230`),
+  `team_tasks.validator_id` (`233`, parcourue par la suppression de compte),
+  `org_withdrawals.org_id` (`237`). Correctif : mig. **`245`**, écrite, **non appliquée** (geste
+  d'Axel). D'ici là, le compte de 3 est une **dette datée** dans la référence : la garde refuse la
+  quatrième au lieu de rester rouge sur les trois connues. Après application, l'advisor disparaît :
+  recaler (`regenerer`) pour revenir au refus de toute FK sans index. À relire au plus tard le
+  2026-12-07 si la 245 n'est pas appliquée.
+
+Comptes recalés par le job `regenerer` du workflow Posture sur `main` (jamais à la main). Témoin :
+« la référence COMMITÉE rougit encore sur un objet de plus » (`gardes-posture.guard.test.mjs`).
