@@ -26,6 +26,7 @@
 
 import Stripe from 'npm:stripe@14.21.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { withTrace } from '../_shared/trace.ts'
 import { opsAlert } from '../_shared/alert.ts'
 import { refundAmount, withinWithdrawalWindow, withdrawalDeadline } from '../_shared/refund-amount.ts'
 import { cancellationMail, withdrawalAckMail } from '../_shared/billing-mail-text.ts'
@@ -35,7 +36,7 @@ import { corsHeadersFor, requireEnv } from '../_shared/env.ts'
 const APP_URL = requireEnv('APP_URL')
 const ACTIONS = new Set(['withdrawal_preview', 'withdraw', 'cancel', 'resume', 'cancel_now'])
 
-Deno.serve(async (req) => {
+Deno.serve(withTrace('stripe-org-subscription', async (req) => {
   const cors = corsHeadersFor(req)
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
 
@@ -228,4 +229,4 @@ Deno.serve(async (req) => {
     await opsAlert('stripe-org-subscription', `action ${action || '?'} ECHOUEE sur un abonnement d organisation`)
     return json({ error: 'subscription_action_failed' }, 500)
   }
-})
+}))

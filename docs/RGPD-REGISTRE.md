@@ -265,6 +265,16 @@ par Row Level Security** ; le onzième (T11, 2026-10-18) vit dans un projet Supa
   sont retirés » : c'est vrai des identifiants présents dans les TEXTES, faux pour celui du
   compte, joint volontairement pour relier les erreurs. Corrigé le 2026-10-13. `sendDefaultPii`
   est désactivé.
+- **Mesure de performance (2026-11-07, OBS-02)** : navigations, requêtes vers Supabase, interactions
+  lentes, échantillonnées (10 % par défaut). **Base légale : consentement**, le même bandeau que
+  l'audience ; sans « Accepter », aucune intégration de traçage n'est chargée, et le retrait recharge la
+  page. Noms de route paramétrés, adresses privées de leur chaîne de requête, e-mails et UUID masqués,
+  ni utilisateur ni en-tête (`src/lib/sentry-tracing.ts`). Décision et motifs : `OBSERVABILITE.md`.
+- **Edge Functions (2026-11-07)** : neuf fonctions de facturation et d'effacement envoient à Sentry un
+  span par requête (nom de la fonction, méthode, code de réponse, durée) et les exceptions non
+  gérées, vers le DSN `SENTRY_DSN_EDGE`. Aucune donnée de visiteur : pas d'URL,
+  d'en-tête, de corps, d'IP ni d'identifiant de compte, d'organisation ou de client Stripe
+  (`supabase/functions/_shared/trace-core.ts`). Base légale : intérêt légitime, comme les erreurs.
 - **Sous-traitant** : Sentry (société américaine ; ingestion dans la région UE, Allemagne).
 - **Conservation** : selon la rétention Sentry, 90 jours par défaut.
 

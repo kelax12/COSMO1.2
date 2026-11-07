@@ -1,5 +1,6 @@
 import Stripe from 'npm:stripe@14.21.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { withTrace } from '../_shared/trace.ts'
 import { opsAlert } from '../_shared/alert.ts'
 import { corsHeadersFor, requireEnv } from '../_shared/env.ts'
 
@@ -19,7 +20,7 @@ const APP_URL = requireEnv('APP_URL')
  */
 const PERSONAL_CHECKOUT_ENABLED = false
 
-Deno.serve(async (req) => {
+Deno.serve(withTrace('stripe-create-checkout', async (req) => {
   const cors = corsHeadersFor(req)
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: cors })
@@ -158,4 +159,4 @@ Deno.serve(async (req) => {
       headers: { ...cors, 'Content-Type': 'application/json' },
     })
   }
-})
+}))
