@@ -175,6 +175,17 @@ describe('fonctions planifiées · le bail est pris, au bon endroit', () => {
     });
   }
 
+  it('bascule faite : les workflows de production ne sont plus planifiés, la sonde l est', () => {
+    // Deux ordonnanceurs, c'est le cron de GitHub qui revient (ni heure ni
+    // exécution garanties). Le rattrapage manuel reste (`workflow_dispatch`).
+    for (const wf of ['renewal-notice', 'inactive-accounts', 'org-digest', 'org-webhook-dispatch']) {
+      const yml = read(`.github/workflows/${wf}.yml`);
+      expect(yml, `${wf}.yml : schedule revenu`).not.toMatch(/^\s+schedule:/m);
+      expect(yml, `${wf}.yml : rattrapage manuel perdu`).toMatch(/^\s+workflow_dispatch:/m);
+    }
+    expect(read('.github/workflows/cron-journal.yml')).toMatch(/^\s+schedule:\s*\n(\s*#.*\n)*\s*- cron: '[^']+'/m);
+  });
+
   it('chaque job appelé par cron_invoke (mig. 245) a sa fonction sous bail', () => {
     const sql = read('supabase/migration/245_cron_journal.sql');
     const chemins = [...sql.matchAll(/WHEN '[a-z-]+'\s+THEN '([a-z-]+)(?:\?mode=[a-z]+)?'/g)].map((m) => m[1]);
