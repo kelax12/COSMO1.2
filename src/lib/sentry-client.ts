@@ -36,4 +36,5 @@ export {
   addBreadcrumb,
   setUser,
   browserTracingIntegration,
+  addIntegration,
 } from '@sentry/react';

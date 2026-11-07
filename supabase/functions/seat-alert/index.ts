@@ -18,6 +18,7 @@
 // ❌ Ne JAMAIS faire échouer la fonction entière sur un destinataire.
 // ═══════════════════════════════════════════════════════════════════
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { withTrace } from '../_shared/trace.ts'
 import { opsAlert } from '../_shared/alert.ts'
 import { sendBillingMail } from '../_shared/billing-mail.ts'
 import { seatAlertMail, shouldAlert } from '../_shared/seat-alert-text.ts'
@@ -46,7 +47,7 @@ interface SeatCandidate {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 
-Deno.serve(async (req) => {
+Deno.serve(withTrace('seat-alert', async (req) => {
   // ÉCHEC FERMÉ : secret absent = refus, jamais une porte ouverte.
   if (!CRON_SECRET) {
     await opsAlert('seat-alert', 'CRON_SECRET absent : la fonction refuse tout appel, aucune alerte de sieges ne part')
@@ -119,4 +120,4 @@ Deno.serve(async (req) => {
       return json({ due: due.length, sent, failed, deferred: due.length - batch.length })
     },
   })
-})
+}))
