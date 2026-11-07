@@ -17,7 +17,7 @@ import type {
   TeamProjectDependency,
   TeamProjectTeam,
 } from './types';
-import { DEMO_PROJECT_DEPENDENCIES } from './demo-seed';
+import { DEMO_PROJECT_DEPENDENCIES } from './local.seed';
 
 // Préfixe `cosmo_` : balayé par `clearDemoStorage` au prochain `loginDemo()`.
 export const TEAM_PROJECT_DEPENDENCIES_STORAGE_KEY = 'cosmo_team_project_dependencies';

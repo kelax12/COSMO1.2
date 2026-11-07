@@ -1,5 +1,5 @@
-import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskDependency } from './types';
-import { PaginationParams, PaginatedResult } from '@/lib/pagination.types';
+import type { Task, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskDependency } from './types';
+import type { PaginationParams, PaginatedResult } from '@/lib/pagination.types';
 import type { CreateOptions } from '@/lib/restore-id';
 
 /**

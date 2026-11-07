@@ -176,7 +176,7 @@ const DETECTORS: Detector[] = [
 const ALLOWLIST: Record<string, string> = {
   'src/lib/task-import/dates.ts::noms-jours-mois-a-la-main':
     'vocabulaire LU dans un fichier importé (« 3 mars », « March 3 ») pour le convertir en date ; rien n’est affiché',
-  'src/modules/lists/repository.ts::noms-jours-mois-a-la-main':
+  'src/modules/lists/local.seed.ts::noms-jours-mois-a-la-main':
     'noms des listes de la démo (« Lundi », « Mardi ») : des TITRES de seed, traduits par l’overlay `en` du même fichier (mécanisme seed-i18n)',
 };
 

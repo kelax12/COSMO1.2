@@ -18,7 +18,7 @@ import type {
   TeamProjectTaskStats,
   TeamTask,
 } from './types';
-import { DEMO_USER_ID } from './demo-seed';
+import { DEMO_USER_ID } from './local.seed';
 
 // Préfixe `cosmo_` : balayé par `clearDemoStorage` au prochain `loginDemo()`.
 export const TEAM_PROJECT_MEMBERS_STORAGE_KEY = 'cosmo_team_project_members';

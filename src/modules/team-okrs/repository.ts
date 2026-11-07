@@ -2,7 +2,7 @@
 // TEAM-OKRS MODULE - Repository Interface
 // ═══════════════════════════════════════════════════════════════════
 
-import {
+import type {
   TeamOKR,
   CreateTeamOKRInput,
   UpdateTeamOKRInput,

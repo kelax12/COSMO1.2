@@ -41,33 +41,32 @@ loginDemo() {
 
 ### Données seed démo
 
-Rechargées à chaque `loginDemo()` grâce à `clearDemoStorage()`.
-
-| Module | Fichier seed | Volume |
-|---|---|---|
-| Tasks | `src/modules/tasks/local.repository.ts` | **12 tâches** (recompté le 2026-09-10 ; « ~100 » était faux) |
-| Habits | `src/modules/habits/local.repository.ts` | ~100 habitudes / 30–120 j |
-| Events | `src/modules/events/repository.ts` | ~150 événements |
-| OKRs | `src/modules/okrs/repository.ts` | 8 OKRs |
-| Entreprise | `src/modules/{organizations,org-teams,team-projects}/local.repository.ts` | organisation, équipes, projets |
-
-Helpers : dates relatives (`getDate`, `getDateString`), historique déterministe
-(`generateCompletions` — **pas de `Math.random()`**), raccourcis `t(...)` / `h(...)`.
+Rechargées à chaque `loginDemo()` grâce à `clearDemoStorage()`. Chaque seed vit dans le
+`local.seed.ts` de son module (tâches : **12**, recompté le 2026-09-10). Helpers : dates
+relatives, historique déterministe (`generateCompletions`, **pas de `Math.random()`**).
 
 ---
 
-## Structure des modules
+## Forme d'un module (V12.3, garde `src/architecture.guard.test.ts` § 3)
 
 ```
 src/modules/{module}/
-├── types.ts               # Interfaces TypeScript
-├── constants.ts           # Clés React Query (factory) + clés localStorage
-├── repository.ts          # Interface I{Module}Repository
-├── local.repository.ts    # Implémentation LocalStorage (quand dédiée)
-├── supabase.repository.ts # Implémentation Supabase
-├── hooks.ts               # Hooks React Query (lecture + écriture)
-└── index.ts               # Export public (barrel)
+├── types.ts · constants.ts  # types ; clés React Query + clés localStorage
+├── repository.ts            # interface I{Module}Repository et ses types, RIEN qui s'exécute
+├── local.repository.ts      # classe démo (localStorage), helpers `local.*.ts`
+├── local.seed.ts            # jeu de données démo, sans lecture ni écriture de stockage
+├── supabase.repository.ts   # classe Supabase
+├── hooks.ts                 # hooks React Query, via `getXRepository()` du factory
+└── index.ts                 # surface publique ; n'exporte JAMAIS la classe démo
 ```
+
+- Facette (`governance`, `roles`, `execution`) : même forme, préfixée (`governance.local.repository.ts`).
+  Module à un seul backend : `supabase.repository.ts` seul (`admin`).
+- Instanciation : **uniquement** `defineRepository(démo, production)` (`src/lib/define-repository.ts`),
+  chaque côté `eager` ou `lazy`. Démo toujours `lazy`, depuis `src/lib/demo-repositories.ts` :
+  ❌ jamais d'import statique d'un `local.repository` / `local.seed` hors des fichiers démo et des tests.
+- Hors forme (dépôts-fonctions à deux modes) : `follows`, `messages`, `audience`, `inbox`,
+  `notifications`, `member-activity`, `share-link`, `profile`, `billing`.
 
 Les modules, leur rôle, leurs tables et leurs RPC : une ligne chacun dans
 [`docs/MODULES.md`](../../docs/MODULES.md), la carte qui fait foi. Leur nombre vit dans
@@ -183,12 +182,8 @@ par utilisateur connecté avant toute interaction.
 | `tasks/hooks.ts` · `useTasks` | filet à 5 min, et seulement si une collaboration est active |
 | `billing/org-billing.hooks.ts` · `useOrgSubscription` | bornée : 1,5 s pendant 20 s au plus, au retour de Stripe seulement |
 
-> ⚠️ **Compter les `refetchInterval` ne suffit pas : il faut qualifier chacun.** Une première
-> version de ce paragraphe annonçait « aucun permanent » alors que deux l'étaient encore, dont
-> `useOrgJoinRequests`, monté par `Layout` donc actif sur TOUTES les pages protégées pour tout
-> admin d'organisation. Un audit indépendant l'a trouvé. Le décompte ci-dessus est nominatif
-> exprès : un total ne prouve rien. Le `refetchInterval` de `useTasks` n'est plus qu'un filet
-de sécurité à 5 min.
+> ⚠️ **Compter les `refetchInterval` ne suffit pas : il faut qualifier chacun** (récit :
+> `docs/SCALABILITY.md`, `useOrgJoinRequests`). Le décompte ci-dessus est nominatif exprès.
 
 - ❌ Ne pas remonter la cadence du sondage : chaque tick est un `getAll()` complet. La version à
   15 s coûtait ≈ 58 Mo/mois/utilisateur d'egress.

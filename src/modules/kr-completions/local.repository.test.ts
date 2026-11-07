@@ -2,7 +2,7 @@
 // Couverture métier (audit P0a) : journal append-only des complétions de KR
 // (mode démo). Alimente le graphe dashboard — ne jamais perdre cette logique.
 import { describe, it, expect, beforeEach } from 'vitest';
-import { LocalStorageKRCompletionsRepository } from './repository';
+import { LocalStorageKRCompletionsRepository } from './local.repository';
 import { KR_COMPLETIONS_STORAGE_KEY } from './constants';
 import type { KRCompletion } from './types';
 

@@ -2,7 +2,7 @@
 // ORGANIZATIONS MODULE - Repository Interface
 // ═══════════════════════════════════════════════════════════════════
 
-import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink, OrgInvitation, OrgRemovalNotice, OrgInbox } from './types';
+import type { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink, OrgInvitation, OrgRemovalNotice, OrgInbox } from './types';
 import type { OrgMemberPermissions, SetOrgPermissionsInput } from './permissions';
 
 export interface IOrganizationsRepository {

@@ -5,7 +5,8 @@
 export type { TeamCategory, CreateTeamCategoryInput, UpdateTeamCategoryInput } from './types';
 export { teamCategoryKeys, TEAM_CATEGORIES_STORAGE_KEY, TEAM_CATEGORY_COLORS } from './constants';
 export type { ITeamCategoriesRepository } from './repository';
-export { LocalStorageTeamCategoriesRepository } from './repository';
+// `LocalStorageTeamCategoriesRepository` n'est PAS ré-exporté (V12.3) : il vit dans
+// `./local.repository` et n'arrive que par `import()`, depuis le factory.
 export { SupabaseTeamCategoriesRepository } from './supabase.repository';
 export {
   useTeamCategories,

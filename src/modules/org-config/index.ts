@@ -11,7 +11,7 @@ export type {
 export { defaultOrgSettings, WEBHOOK_EVENTS } from './types';
 export type { IOrgConfigRepository } from './repository';
 export { orgConfigKeys, ORG_CONFIG_STORAGE_KEYS } from './constants';
-export { webhookUrlIsAllowed } from './local.repository';
+export { webhookUrlIsAllowed } from './webhook-url';
 export { applyAutomations, applyCustomStatus } from './automation.helpers';
 export {
   useOrgSettings, useSaveOrgSettings, useOrgDomains, useAddOrgDomain, useRemoveOrgDomain, useVerifyOrgDomain,

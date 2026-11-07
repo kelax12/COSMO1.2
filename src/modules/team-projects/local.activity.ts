@@ -9,7 +9,7 @@
 import { safeGetItem, safeSetItem } from '@/lib/safe-json';
 import type { TeamTaskActivity } from './types';
 import { TEAM_TASK_ACTIVITY_STORAGE_KEY } from './constants';
-import { DEMO_ACTIVITY } from './demo-seed';
+import { DEMO_ACTIVITY } from './local.seed';
 
 /** Même lecture que `local.repository.ts` : une valeur illisible est ré-ensemencée. */
 function readOrSeed<T>(key: string, seed: T): T {
