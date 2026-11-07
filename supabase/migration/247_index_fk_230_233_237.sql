@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════
--- 245 · Index couvrants des trois clés étrangères nées après la 227 (AM-5)
+-- 247 · Index couvrants des trois clés étrangères nées après la 227 (AM-5)
 -- ═══════════════════════════════════════════════════════════════════
 --
 -- Relevé du 2026-11-07, advisor de performance `unindexed_foreign_keys`
@@ -23,7 +23,7 @@
 -- supprimée déclenche un parcours séquentiel de l'enfant entier, sous verrou.
 --
 -- APPLICATION
---   · Indépendante de 242 à 244 : aucun objet commun. Idempotente
+--   · Indépendante de 242 à 246 : aucun objet commun. Idempotente
 --     (`IF NOT EXISTS`). Aucune donnée touchée, aucune fonction, aucun droit.
 --   · Tables petites au 2026-11-07 : `CREATE INDEX` simple, comme la 227.
 --   · Relecture après application :
