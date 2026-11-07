@@ -140,14 +140,17 @@ const NON_MESUREES: Record<string, string> = {
     'inatteignable : l organigramme est retiré depuis la mig. 229 (2026-10-30), '
     + '`PyramidTab` n est plus monté et `/entreprise/pyramid` renvoie à l Aperçu. Code conservé.',
   'components/organization/TeamBulkAddToListDialog.tsx':
-    'dette : « Liste » de la barre de sélection multiple d entreprise (2026-10-30), '
-    + 'câblée par useModalA11y, pas encore couverte par e2e/a11y-keyboard-audit.spec.ts.',
+    'dette de NAVIGATEUR : « Liste » de la barre de sélection multiple d entreprise (2026-10-30), '
+    + 'câblée par useModalA11y. mesurée en jsdom (FRO-01, 2026-11-07) par modal-a11y.surfaces.test.tsx, '
+    + 'pas encore par e2e/a11y-keyboard-audit.spec.ts.',
   'components/organization/TeamTaskListsField.tsx':
-    'dette : popup « Ajouter à une liste » de la fiche de tâche d entreprise (2026-10-30), '
-    + 'câblée par useModalA11y, pas encore couverte par e2e/a11y-keyboard-audit.spec.ts.',
+    'dette de NAVIGATEUR : popup « Ajouter à une liste » de la fiche de tâche d entreprise (2026-10-30), '
+    + 'câblée par useModalA11y. mesurée en jsdom (FRO-01, 2026-11-07) par modal-a11y.surfaces.test.tsx, '
+    + 'pas encore par e2e/a11y-keyboard-audit.spec.ts.',
   'components/PremiumGateModal.tsx':
     'inatteignable : `PREMIUM_ENFORCED` est à false, aucune gate ne s ouvre '
-    + '(décision 2026-06-11, le partage est gratuit).',
+    + '(décision 2026-06-11, le partage est gratuit). mesurée en jsdom (FRO-01, 2026-11-07) par '
+    + 'modal-a11y.surfaces.test.tsx.',
   'components/mobile/BottomSheet.tsx':
     'PRIMITIVE, pas une surface : c est elle que montent la plupart des '
     + 'feuilles ci-dessus, et quatre de ses consommatrices sont mesurées.',
@@ -219,6 +222,16 @@ describe('C-96 — couverture clavier des surfaces modales', () => {
       "Ces surfaces sont déclarées mesurées, et le cas qui les mesure n'existe "
         + 'plus dans e2e/a11y-keyboard-audit.spec.ts.',
     ).toEqual([]);
+  });
+
+  it('les surfaces declarees « mesurée en jsdom » le sont vraiment dans modal-a11y.surfaces.test.tsx', () => {
+    // Meme logique que pour MESUREES : une raison qui promet une mesure doit pouvoir etre relue.
+    const spec = readFileSync(join(SRC, 'components', 'modal-a11y.surfaces.test.tsx'), 'utf8');
+    const absentes = Object.entries(NON_MESUREES)
+      .filter(([, raison]) => raison.includes('mesurée en jsdom'))
+      .map(([f]) => f)
+      .filter((f) => !spec.includes(f.split('/').pop()!.replace('.tsx', '')));
+    expect(absentes, 'mesure jsdom annoncée mais absente : ' + absentes.join(', ')).toEqual([]);
   });
 
   it('chaque non-mesuree porte une raison, pas un vide', () => {

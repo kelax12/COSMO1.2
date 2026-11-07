@@ -852,6 +852,55 @@ résultat généralisable, mais c'est une inférence.
 et mesurées, les quarante-huit autres ne le sont pas. « Le hook existe » ne veut pas dire « toutes
 les modales piègent le focus » — ne jamais écrire la seconde phrase à la place de la première.
 
+### FRO-01 · le décompte des surfaces modales, remesuré le 2026-11-07
+
+Le constat FRO-01 de l'audit externe du 2026-11-06 (« le piège de focus est mesuré sur 10 surfaces
+modales sur 53 ») repose sur un chiffre périmé : « 10 sur 53 » date du 2026-09-16, avant que
+`e2e/a11y-keyboard-audit*.spec.ts` ne parcoure les surfaces atteignables (AM-2, 2026-10-23). Il
+ignorait aussi deux familles de surfaces que le cliquet C-53 ne voyait pas.
+
+**Décompte au 2026-11-07 : 91 fichiers de surfaces modales, 90 couverts par un mécanisme mesuré,
+62 montés eux-mêmes par une mesure.**
+
+| Famille | Fichiers | Mesure |
+|---|---|---|
+| Maison (`useModalA11y`) | 64 | 59 au clavier dans un navigateur (`e2e/a11y-keyboard-audit*.spec.ts`), 3 en jsdom depuis cette passe (`TeamBulkAddToListDialog`, `TeamTaskListsField`, `PremiumGateModal`), la primitive `BottomSheet` en jsdom (`mobile-primitives.test.tsx`). **1 non mesurée** : `PyramidPlacementSheet`, sans point d'entrée depuis la mig. 229 |
+| Radix (`Dialog`, `Sheet`, `AlertDialog`) | 20 | le contrat des cinq critères est mesuré **une fois**, sur les trois enveloppes réelles, par `components/ui/modal-contract.test.tsx` ; le nom accessible (`*Title`) est vérifié fichier par fichier par la garde |
+| Feuilles `BottomSheet` seules | 7 | par la primitive : `ariaLabel` y est obligatoire par le TYPE |
+
+⚠️ **Deux niveaux, jamais fondus.** « 62 montées elles-mêmes » est la mesure la plus forte. Les 28 autres
+(20 Radix, 7 feuilles, la primitive) partagent un mécanisme mesuré : une régression locale (un
+`onCloseAutoFocus` qui empêche le retour du focus, une surface qui sort du mécanisme) n'y serait vue
+que par la garde statique, pas par une mesure de la surface.
+
+**Méthode.** L'inventaire n'est plus tenu à la main : `src/components/modal-a11y.guard.test.ts` balaie
+`src/**/*.tsx`, compare à trois listes (maison, `RADIX_SURFACES`, `BOTTOMSHEET_CONSUMERS`) et imprime le
+décompte (`::notice title=fro-01`). Une surface neuve sans déclaration, une déclaration périmée, un
+`*Content` Radix sans `*Title`, une primitive Radix importée en direct (qui contournerait les
+enveloppes) ou un Échap désactivé sans justification font rougir la garde. `keyboard-audit-coverage`
+continue de chiffrer la mesure navigateur de la famille maison.
+
+**Défauts trouvés et corrigés (mesurés rouges avant correction, jsdom).**
+
+- (d) **Le focus ne revenait pas au déclencheur pour toute surface Radix sans `DialogTrigger`**, soit la
+  quasi-totalité : le produit pilote ses surfaces par `open` / `onOpenChange`. Radix fait
+  `event.preventDefault()` dans `onCloseAutoFocus` puis ne rend le focus qu'à `triggerRef`, nul : le
+  focus tombait sur `body`. Même chute quand la surface s'ouvre depuis l'entrée d'un menu qui disparaît.
+  Correctif : `useRadixFocusReturn` (`use-modal-a11y.ts`), même historique de focus que les surfaces
+  maison, branché dans `DialogContent`, `SheetContent` et `AlertDialogContent`. Le déclencheur est lu
+  dans `onOpenAutoFocus` (avant que Radix ne déplace le focus), et seul un focus perdu sur `body` est
+  rattrapé : un `preventDefault()` de l'appelant est respecté.
+- (e) **`aria-modal` manquait sur les trois enveloppes Radix.** Ajouté.
+- (e) **La croix de `SheetContent` portait « Close » en dur**, entendu en anglais par un lecteur d'écran
+  francophone. Traduite par `common.actions.close`, comme `DialogContent`.
+- (c) Aucune surface ne désactive Échap : aucune exception à justifier, et la garde refuse d'en laisser
+  entrer une sans écrit.
+
+⚠️ **Ce que ces mesures ne prouvent pas.** jsdom ne simule pas Tab natif (le piège se mesure en émettant
+Tab au bord de la surface), et aucune mesure n'a été jouée avec un lecteur d'écran ni sur un appareil
+réel : vagues 16.1, 16.2 et 16.4. Le retour du focus des surfaces Radix n'est mesuré qu'en jsdom ; le
+harnais Playwright ne le gate toujours pas (`focusReturned` reste imprimé, cf. ci-dessus).
+
 ### C-53 refermé le 2026-09-05 · un hook porte le piège, pas 58 fichiers
 
 `useModalA11y` (`src/hooks/use-modal-a11y.ts`) porte, pour toute surface modale maison, le piège
