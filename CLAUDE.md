@@ -32,6 +32,7 @@ repository → Supabase, où **la RLS est la vraie frontière**, ou `localStorag
 
 **Face à une zone inconnue** : [`docs/MODULES.md`](./docs/MODULES.md) (module → fichiers, tables,
 RPC, écran) → `index.ts` du module → son `CLAUDE.md` s'il existe → le code, qui fait foi.
+**Le pourquoi d'une décision structurante** : [`docs/adr/`](./docs/adr/README.md) (ADR) ; l'entrée humaine : `README.md`.
 
 ---
 

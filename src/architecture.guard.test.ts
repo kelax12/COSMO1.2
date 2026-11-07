@@ -57,8 +57,12 @@ const rel = (file: string) => path.relative(process.cwd(), file).replace(/\\/g, 
 // ═══════════════════════════════════════════════════════════════════
 //
 // Cet invariant n'est pas cosmétique : c'est lui qui garde le pattern
-// repository comme frontière de données UNIQUE, donc ce qui rend une sortie de
-// Supabase envisageable en jours plutôt qu'en mois. Il était violé par
+// repository comme frontière de données UNIQUE côté client (un seul endroit où
+// une table est lue ou écrite, donc un seul endroit à relire quand une requête
+// change). Il ne rend PAS une sortie de Supabase bon marché : l'autorisation
+// (RLS), les agrégats, les triggers, le cron et l'authentification vivent dans
+// le SQL et dans GoTrue, pas dans les repositories. Supabase est assumé, voir
+// `docs/adr/0001-supabase-assume-rls-frontiere.md`. Il était violé par
 // `SettingsPage.tsx` (deux `.update()` sur `profiles`), corrigé le 2026-08-24
 // par `src/modules/user/profile.repository.ts`.
 //
