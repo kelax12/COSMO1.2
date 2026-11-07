@@ -220,6 +220,34 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"cron_leases": {
+                  Row: {
+                    "acquired_at": string,"job": string,"locked_until": string,"token": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "acquired_at"?: string,"job": string,"locked_until": string,"token": string
+                  }
+                  Update: {
+                    "acquired_at"?: string,"job"?: string,"locked_until"?: string,"token"?: string
+                  }
+                  Relationships: [
+
+                  ]
+                },"cron_runs": {
+                  Row: {
+                    "detail": string | null,"finished_at": string | null,"http_code": number | null,"id": number,"job": string,"request_id": number | null,"started_at": string,"status": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "detail"?: string | null,"finished_at"?: string | null,"http_code"?: number | null,"id"?: never,"job": string,"request_id"?: number | null,"started_at"?: string,"status"?: string
+                  }
+                  Update: {
+                    "detail"?: string | null,"finished_at"?: string | null,"http_code"?: number | null,"id"?: never,"job"?: string,"request_id"?: number | null,"started_at"?: string,"status"?: string
+                  }
+                  Relationships: [
+
+                  ]
                 },"demo_devices": {
                   Row: {
                     "converted_at": string | null,"converted_user_id": string | null,"device_id": string,"first_seen_at": string
@@ -2129,6 +2157,26 @@ isOneToOne: false
                            },
 "create_team_project_with_tasks":
 { Args: { "p_milestones"?: Json,"p_org": string,"p_project": Json,"p_tasks"?: Json }; Returns: string
+                           },
+"cron_invoke":
+{ Args: { "p_job": string }; Returns: number
+                           },
+"cron_lease_acquire":
+{ Args: { "p_job": string,"p_ttl_seconds": number }; Returns: string
+                           },
+"cron_lease_release":
+{ Args: { "p_job": string,"p_token": string }; Returns: boolean
+                           },
+"cron_run_status":
+{ Args: { "p_http_code": number,"p_timed_out": boolean }; Returns: string
+                           },
+"cron_runs_close":
+{ Args: Record<PropertyKey, never>; Returns: number
+                           },
+"cron_runs_verdict":
+{ Args: { "p_now"?: string }; Returns: {
+              "dernier_code": number,"dernier_debut": string,"dernier_ok": string,"dernier_statut": string,"fenetre": string,"job": string,"verdict": string
+            }[]
                            },
 "delete_organization":
 { Args: { "p_org": string }; Returns: undefined
