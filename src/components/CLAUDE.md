@@ -138,21 +138,19 @@ const { ref, dialogProps } = useModalA11y({ open: isOpen, onClose, label: t('tit
   câblée. Les exceptions y sont déclarées une par une, avec leur motif.
   ❌ **Ne JAMAIS y ajouter une entrée pour faire passer la CI.** Une surface qui capture l'écran se
   câble ; une surface qui n'en est pas une se déclare, et la déclaration doit dire pourquoi.
-- ⚠️ **Câblé n'est pas mesuré.** 10 surfaces sont mesurées au clavier dans un vrai navigateur
-  (`e2e/a11y-keyboard-audit.spec.ts`), les 43 autres sont câblées et gardées par le cliquet.
-  Ne jamais écrire « les 53 piègent le focus » : l'énoncé vérifiable reste la liste de
-  `docs/ACCESSIBILITY.md` § « C-53 refermé ».
-- ❌ **Le chemin de fermeture n'est pas toujours `onClose`** — c'est `onCancel`, `onSnooze`,
-  `closeAfter`, `onOpenChange(false)`, ou un `setState`. Échap doit emprunter EXACTEMENT le chemin
-  du voile et de la croix. Et une surface qui refuse de fermer pendant une opération
-  (`pending`, `sending`) refuse aussi Échap : sinon la touche fait ce qu'aucun clic ne peut faire.
-- ❌ **Ne jamais laisser un Échap maison à côté de celui du hook.** Cinq surfaces en gardaient un,
-  avec le même comportement, donc invisible — deux propriétaires pour une touche, ce sont deux
-  endroits où la règle diverge. L'une portait une fermeture À ÉTAGES (annuler un sous-formulaire
-  avant de fermer) : la déplacer sans déplacer l'escalade aurait perdu une saisie en silence.
-- Gardes : `src/components/modal-a11y.guard.test.ts` (4 tests, dont un témoin qui refuse un
-  détecteur ne détectant plus rien), `src/hooks/use-modal-a11y.guard.test.tsx` (11 tests, dont
-  **3 témoins** montant la même modale sans le hook) et les `expect` du harnais clavier.
+- ⚠️ **Câblé n'est pas mesuré.** Le décompte vit dans `docs/ACCESSIBILITY.md` § « FRO-01 » et se
+  recalcule : ne jamais le recopier d'ici, ni écrire « toutes les modales piègent le focus ».
+- ❌ **Une surface Radix passe par `ui/dialog`, `ui/sheet` ou `ui/alert-dialog`, jamais par la
+  primitive** : les enveloppes portent `aria-modal` et le retour du focus (`useRadixFocusReturn`),
+  que Radix ne rend qu'à un `DialogTrigger`, jamais utilisé ici. Chaque `*Content` porte son `*Title`.
+- ❌ **Le chemin de fermeture n'est pas toujours `onClose`** (`onCancel`, `closeAfter`,
+  `onOpenChange(false)`, un `setState`) : Échap emprunte EXACTEMENT celui du voile et de la croix.
+  Une surface qui refuse de fermer pendant `pending` / `sending` refuse aussi Échap.
+- ❌ **Ne jamais laisser un Échap maison à côté de celui du hook** : deux propriétaires pour une
+  touche, deux endroits où la règle diverge. Une fermeture À ÉTAGES (annuler un sous-formulaire
+  d'abord) se déplace avec son escalade, sinon une saisie se perd en silence.
+- Gardes : `modal-a11y.guard.test.ts` (inventaire des trois familles), `ui/modal-contract.test.tsx`
+  (contrat Radix), `src/hooks/use-modal-a11y.guard.test.tsx` (dont **3 témoins** sans le hook).
 
 
 ---
