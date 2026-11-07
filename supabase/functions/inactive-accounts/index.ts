@@ -4,8 +4,9 @@
 // La politique de confidentialité (s6.li1) promet : un compte sans activité
 // pendant TROIS ANS est supprimé, après un e-mail envoyé TRENTE JOURS avant.
 //
-// Appelée une fois par jour par `.github/workflows/inactive-accounts.yml`,
-// comme `renewal-notice` (pas de `pg_net` en base). Deux phases :
+// Appelée une fois par jour par pg_cron (job `cosmo-inactive-accounts`, mig.
+// 246, journal `cron_runs`), comme `renewal-notice`. Rattrapage :
+// `.github/workflows/inactive-accounts.yml`, à la main. Deux phases :
 //
 //   1. AVERTIR : `accounts_due_for_inactivity_notice()` (mig. 226) rend les
 //      comptes inactifs, non avertis depuis leur dernière activité, qui ne
@@ -30,6 +31,7 @@ import {
   MAX_NOTICES_PER_RUN,
   inactivityMail,
 } from '../_shared/inactivity-notice.ts'
+import { withCronLease } from '../_shared/cron-lease.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'https://thecosmo.app'
 /** Même expéditeur signé que `renewal-notice` : AUCUNE valeur par défaut. */
@@ -72,109 +74,121 @@ Deno.serve(async (req) => {
     return json({ error: 'mail_not_configured' }, 503)
   }
 
-  // ── 1. Avertir ──────────────────────────────────────────────────
-  const { data: noticeRows, error: noticeError } = await supabaseAdmin.rpc(
-    'accounts_due_for_inactivity_notice',
-    { p_limit: MAX_NOTICES_PER_RUN },
-  )
-  if (noticeError) {
-    console.error('accounts_due_for_inactivity_notice failed:', noticeError)
-    await opsAlert('inactive-accounts', 'selection des comptes a avertir en echec — C-121 non tenu ce jour')
-    return json({ error: 'notice_query_failed' }, 500)
-  }
-
-  const toWarn = (noticeRows ?? []) as DueNotice[]
-  let warned = 0
-  const warnFailed: string[] = []
-
-  for (const row of toWarn) {
-    try {
-      const warnedAt = new Date()
-      const mail = inactivityMail(APP_URL, warnedAt)
-      const res = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from: MAIL_FROM, to: [row.email], ...mail }),
-        signal: AbortSignal.timeout(15000),
-      })
-      if (!res.ok) {
-        warnFailed.push(row.user_id)
-        continue
+  // Bail du job (mig. 245, `_shared/cron-lease.ts`) : deux passages simultanés
+  // (pg_cron et GitHub pendant la bascule, un rattrapage manuel) ne travaillent
+  // jamais ensemble. Le second rend `skipped` sans rien lire ni envoyer.
+  return withCronLease((fn, args) => supabaseAdmin.rpc(fn, args), 'inactive-accounts', {
+    onBusy: () => json({ skipped: 'already_running' }),
+    onError: async () => {
+      await opsAlert('inactive-accounts', 'bail du job illisible (cron_lease_acquire en echec) : C-121 non tenu ce passage')
+      return json({ error: 'lease_failed' }, 500)
+    },
+    work: async () => {
+      // ── 1. Avertir ──────────────────────────────────────────────────
+      const { data: noticeRows, error: noticeError } = await supabaseAdmin.rpc(
+        'accounts_due_for_inactivity_notice',
+        { p_limit: MAX_NOTICES_PER_RUN },
+      )
+      if (noticeError) {
+        console.error('accounts_due_for_inactivity_notice failed:', noticeError)
+        await opsAlert('inactive-accounts', 'selection des comptes a avertir en echec — C-121 non tenu ce jour')
+        return json({ error: 'notice_query_failed' }, 500)
       }
-      // APRÈS l'envoi. Si cette écriture échoue, l'avertissement repartira
-      // demain : un doublon vaut mieux qu'un effacement sans preuve d'envoi
-      // (et sans ligne, aucun effacement ne s'ouvre).
-      const { error: traceError } = await supabaseAdmin
-        .from('account_inactivity_notices')
-        .upsert(
-          { user_id: row.user_id, warned_at: warnedAt.toISOString(), activity_at: row.activity_at },
-          { onConflict: 'user_id' },
+
+      const toWarn = (noticeRows ?? []) as DueNotice[]
+      let warned = 0
+      const warnFailed: string[] = []
+
+      for (const row of toWarn) {
+        try {
+          const warnedAt = new Date()
+          const mail = inactivityMail(APP_URL, warnedAt)
+          const res = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ from: MAIL_FROM, to: [row.email], ...mail }),
+            signal: AbortSignal.timeout(15000),
+          })
+          if (!res.ok) {
+            warnFailed.push(row.user_id)
+            continue
+          }
+          // APRÈS l'envoi. Si cette écriture échoue, l'avertissement repartira
+          // demain : un doublon vaut mieux qu'un effacement sans preuve d'envoi
+          // (et sans ligne, aucun effacement ne s'ouvre).
+          const { error: traceError } = await supabaseAdmin
+            .from('account_inactivity_notices')
+            .upsert(
+              { user_id: row.user_id, warned_at: warnedAt.toISOString(), activity_at: row.activity_at },
+              { onConflict: 'user_id' },
+            )
+          if (traceError) {
+            // SV-9 : jamais d'identifiant de compte dans une alerte (contrat de
+            // `_shared/alert.ts`) : le salon d'alerte est un tiers, hors registre.
+            await opsAlert('inactive-accounts', 'un avertissement envoye mais NON enregistre : il repartira demain')
+            warnFailed.push(row.user_id)
+            continue
+          }
+          warned++
+        } catch (err) {
+          console.error('inactivity notice failed:', err)
+          warnFailed.push(row.user_id)
+        }
+      }
+
+      // ── 2. Effacer ──────────────────────────────────────────────────
+      const { data: deletionRows, error: deletionError } = await supabaseAdmin.rpc(
+        'accounts_due_for_inactivity_deletion',
+        { p_limit: MAX_DELETIONS_PER_RUN },
+      )
+      if (deletionError) {
+        console.error('accounts_due_for_inactivity_deletion failed:', deletionError)
+        await opsAlert('inactive-accounts', 'selection des comptes a effacer en echec — C-121 non tenu ce jour')
+        return json({ error: 'deletion_query_failed', warned }, 500)
+      }
+
+      const toDelete = (deletionRows ?? []) as { user_id: string }[]
+      let deleted = 0
+      const deleteFailed: string[] = []
+
+      for (const row of toDelete) {
+        try {
+          const res = await fetch(`${SUPABASE_URL}/functions/v1/delete-account`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+              apikey: SERVICE_ROLE_KEY,
+              'Content-Type': 'application/json',
+              'x-cron-secret': CRON_SECRET,
+            },
+            body: JSON.stringify({ userId: row.user_id }),
+            signal: AbortSignal.timeout(60000),
+          })
+          if (res.ok) deleted++
+          else deleteFailed.push(String(res.status))
+        } catch (err) {
+          console.error('inactive account deletion failed:', err)
+          deleteFailed.push('crash')
+        }
+      }
+
+      if (warnFailed.length > 0 || deleteFailed.length > 0) {
+        // Codes HTTP seulement : ni identifiant de compte ni e-mail (SV-9). Les
+        // comptes en échec se retrouvent par `accounts_due_for_inactivity_deletion`.
+        await opsAlert(
+          'inactive-accounts',
+          `C-121 : ${warnFailed.length} avertissement(s) et ${deleteFailed.length} effacement(s) en echec (codes : ${[...new Set(deleteFailed)].sort().join(', ')})`,
         )
-      if (traceError) {
-        // SV-9 : jamais d'identifiant de compte dans une alerte (contrat de
-        // `_shared/alert.ts`) : le salon d'alerte est un tiers, hors registre.
-        await opsAlert('inactive-accounts', 'un avertissement envoye mais NON enregistre : il repartira demain')
-        warnFailed.push(row.user_id)
-        continue
       }
-      warned++
-    } catch (err) {
-      console.error('inactivity notice failed:', err)
-      warnFailed.push(row.user_id)
-    }
-  }
 
-  // ── 2. Effacer ──────────────────────────────────────────────────
-  const { data: deletionRows, error: deletionError } = await supabaseAdmin.rpc(
-    'accounts_due_for_inactivity_deletion',
-    { p_limit: MAX_DELETIONS_PER_RUN },
-  )
-  if (deletionError) {
-    console.error('accounts_due_for_inactivity_deletion failed:', deletionError)
-    await opsAlert('inactive-accounts', 'selection des comptes a effacer en echec — C-121 non tenu ce jour')
-    return json({ error: 'deletion_query_failed', warned }, 500)
-  }
-
-  const toDelete = (deletionRows ?? []) as { user_id: string }[]
-  let deleted = 0
-  const deleteFailed: string[] = []
-
-  for (const row of toDelete) {
-    try {
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/delete-account`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
-          apikey: SERVICE_ROLE_KEY,
-          'Content-Type': 'application/json',
-          'x-cron-secret': CRON_SECRET,
-        },
-        body: JSON.stringify({ userId: row.user_id }),
-        signal: AbortSignal.timeout(60000),
+      return json({
+        toWarn: toWarn.length,
+        warned,
+        warnFailed: warnFailed.length,
+        toDelete: toDelete.length,
+        deleted,
+        deleteFailed: deleteFailed.length,
       })
-      if (res.ok) deleted++
-      else deleteFailed.push(String(res.status))
-    } catch (err) {
-      console.error('inactive account deletion failed:', err)
-      deleteFailed.push('crash')
-    }
-  }
-
-  if (warnFailed.length > 0 || deleteFailed.length > 0) {
-    // Codes HTTP seulement : ni identifiant de compte ni e-mail (SV-9). Les
-    // comptes en échec se retrouvent par `accounts_due_for_inactivity_deletion`.
-    await opsAlert(
-      'inactive-accounts',
-      `C-121 : ${warnFailed.length} avertissement(s) et ${deleteFailed.length} effacement(s) en echec (codes : ${[...new Set(deleteFailed)].sort().join(', ')})`,
-    )
-  }
-
-  return json({
-    toWarn: toWarn.length,
-    warned,
-    warnFailed: warnFailed.length,
-    toDelete: toDelete.length,
-    deleted,
-    deleteFailed: deleteFailed.length,
+    },
   })
 })

@@ -43,6 +43,9 @@ pas ce paragraphe.
   comme `is_org_member` (SV-1, un admin expiré envoyait encore des invitations).
 - ❌ **Jamais l'IP d'appel lue dans la 1re entrée de `x-forwarded-for`** : Cloudflare ajoute, il ne remplace
   pas. `callerIp` (`_shared/caller-ip.ts`) lit `cf-connecting-ip` (SV-3).
+- ❌ **Jamais une fonction planifiée sans `withCronLease`** (`_shared/cron-lease.ts`, mig. `245`, ARC-06) :
+  idempotentes en rejeu, elles ne l'étaient pas en concurrence (deux passages, deux envois). Garde :
+  `src/edge-cron-lease.guard.test.ts`. Planification : pg_cron, `docs/DEPLOYMENT.md` § 2sexies.
 - ❌ **Jamais un e-mail sans plafond de débit** (`_shared/rate-limit.ts`, W-4 ; plafond par exécution pour un cron).
 - ⚠️ **`delete-account` a deux modes depuis le 2026-10-22 (C-121)** : JWT de la personne, ou
   `x-cron-secret` + compte désigné, accepté seulement si `account_inactivity_deletion_due()` (mig. `226`)
