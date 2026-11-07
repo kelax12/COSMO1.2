@@ -2,8 +2,10 @@
 # Controle de fumee de la PRODUCTION apres chaque mise en ligne (CI-02, audit
 # externe du 2026-11-06, plan de reprise point 3.3).
 #
-# POURQUOI : Vercel publie chaque push de `main` en ~40 s, sans attendre la CI
-# (docs/DEPLOYMENT.md, section Rollback). Avant ce fichier, rien ne regardait le
+# POURQUOI : Vercel publiait chaque push de `main` en ~40 s, sans attendre la
+# CI. Depuis le 2026-11-07 (porte de deploiement, `scripts/vercel-ignore-build.mjs`),
+# seul un SHA au `CI noyau` vert part en production ; mais un noyau vert ne
+# prouve pas que le site demarre. Avant ce fichier, rien ne regardait le
 # site APRES la mise en ligne. `uptime.yml` lit du HTML avec curl et ne tourne
 # que deux fois par heure ; il n'execute pas le bundle. Un bundle qui plante au
 # demarrage rend un HTML parfait et une page morte, et seul un navigateur le voit.
@@ -25,11 +27,13 @@
 # ecarte en 204 avant tout appel a la base).
 #
 # CE QUE CE JOB NE FAIT PAS, dans cette version :
-#   · PAS de retour arriere automatique. Il viendra avec le deploiement par la
-#     CI. Aujourd'hui un rouge ouvre une issue `smoke-prod` ; le retour arriere
-#     reste le geste de docs/DEPLOYMENT.md section 3.
+#   · PAS de retour arriere automatique : un rouge ouvre une issue
+#     `smoke-prod` ; le retour arriere reste le geste de docs/DEPLOYMENT.md
+#     section 3.
 #   · il ne bloque pas la mise en ligne : elle est deja faite quand il demarre.
-#     C'est une alarme rapide (~3 min), pas une porte.
+#     C'est une alarme rapide (~3 min) APRES la porte du noyau, pas une porte.
+#   · un build IGNORE par la porte (noyau rouge, delai) finit `CANCELED` chez
+#     Vercel : aucun `success`, donc aucun run ici, et c'est voulu.
 #   · il ne voit pas un deploiement Vercel qui ECHOUE (etat `failure`) : celui-ci
 #     ne remplace pas la prod, et `deploy-sha-drift.yml` voit l'ecart ensuite.
 #

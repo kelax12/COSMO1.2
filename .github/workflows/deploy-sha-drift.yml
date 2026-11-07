@@ -24,6 +24,15 @@
 # qui doit être observé, et il n'événemente rien ici. Même raison que
 # `edge-deploy-drift.yml` et `migration-coverage.yml`.
 #
+# ── LA RÉFÉRENCE : LE DERNIER COMMIT VERT (CI-02, 2026-11-07) ─────────
+#
+# Depuis la porte de déploiement, Vercel ne construit en production qu'un SHA
+# tagué `ci-vert/<sha>` (`ci-vert.yml`, `scripts/vercel-ignore-build.mjs`).
+# La garde compare donc la production au commit le plus récent de `main` qui
+# porte ce tag, plus à la tête de `main` : un `main` rouge reste hors
+# production, et c'est voulu. Une production EN AVANCE sur ce dernier vert
+# est un commit servi sans verdict vert (redeploy d'urgence) : rouge.
+#
 # ── CE QU'IL NE PROUVE PAS ────────────────────────────────────────────
 #
 # Que le bon commit soit servi ne dit rien de ce qu'il FAIT. Ce job ferme la
@@ -75,7 +84,9 @@ jobs:
       - run: npm ci
 
       # ⚠️ Sur un `schedule`, le runner est sur le dernier commit de `main` :
-      # la comparaison porte donc bien sur la branche par défaut.
+      # la référence (dernier commit tagué `ci-vert/<sha>`) est cherchée dans
+      # son histoire. `fetch-depth: 0` rapatrie aussi les tags : sans eux, la
+      # garde ÉCHOUE (`aucun_vert`), elle ne compare jamais à vide.
       - name: Le commit servi en production
         run: node scripts/check-deploy-sha.mjs
 

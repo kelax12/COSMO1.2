@@ -1,0 +1,134 @@
+# ──────────────────────────────────────────────────────────────────────
+# CI vert · le verdict du noyau, publie en TAG pour la porte de deploiement
+# (CI-02, vague 3.2, 2026-11-07).
+#
+# 🔴 POURQUOI
+#
+# Vercel construisait et publiait chaque poussee sur `main` en ~40 s, avant
+# que `CI noyau` ne rende son verdict (~5 min) : un commit rouge partait en
+# production. La porte est `scripts/vercel-ignore-build.mjs`, lancee par
+# Vercel (`vercel.json` → `ignoreCommand`) : un build de production attend
+# le tag `ci-vert/<sha>` que pose CE workflow.
+#
+# ── CE QU'IL FAIT ─────────────────────────────────────────────────────
+#
+#   · `CI noyau` VERT sur une poussee (`main` ou `noyau/**`) : tag leger
+#     `ci-vert/<sha>`. `noyau/**` compte : c'est le meme verdict que celui
+#     que le hook `pre-push` accepte pour laisser passer ce SHA sur `main`,
+#     et le chemin habituel (branche `noyau/<nom>` d'abord, `main` ensuite)
+#     deploie alors sans attendre un second noyau.
+#   · `CI noyau` ROUGE sur `main` : tag `ci-rouge/<sha>`, pour que la porte
+#     cesse d'attendre et libere le slot de build au lieu de sonder 15 min.
+#     ❌ Jamais sur `noyau/**` : un temoin rouge pousse expres sur une
+#     branche, puis le meme SHA vert sur `main`, serait refuse a tort.
+#   · un vert apres un rouge (Re-run) retire `ci-rouge/<sha>`.
+#   · garde les 50 tags les plus recents de chaque sorte (date du commit).
+#
+# ── POURQUOI UN WORKFLOW A PART, ET PAS UN JOB DE `CI NOYAU` ──────────
+#
+# Un job de plus dans `ci-noyau.yml` ferait dependre le verdict du commit
+# d'un etat EXTERIEUR (API GitHub, droits du jeton), ce que ce workflow
+# s'interdit : un echec de pose rendrait `main` rouge, donc la poussee
+# suivante impossible. Ici, un echec rend CE run rouge, `ci-alert.yml`
+# sonne, et la production reste sur son dernier deploiement vert (echec
+# ferme cote porte).
+#
+# Aucun secret : `GITHUB_TOKEN`, `contents: write` sur ce seul job. Un tag
+# pose par `GITHUB_TOKEN` ne declenche aucun workflow, et Vercel ne
+# deploie pas les tags.
+# Temoin : `scripts/porte-deploiement.guard.test.mjs`.
+# ──────────────────────────────────────────────────────────────────────
+name: CI vert
+run-name: >-
+  ${{ format('CI vert {0} ({1}, {2})', github.event.workflow_run.head_sha,
+      github.event.workflow_run.conclusion, github.event.workflow_run.head_branch) }}
+
+on:
+  workflow_run:
+    workflows: [CI noyau]
+    types: [completed]
+    branches: [main, 'noyau/**']
+
+permissions:
+  contents: read
+
+# Un run a la fois : le menage des tags lit puis supprime, deux runs
+# concurrents se marcheraient dessus. Aucun n'est annule.
+concurrency:
+  group: ci-vert
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    if: >-
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      (github.event.workflow_run.conclusion == 'success' ||
+       (github.event.workflow_run.conclusion == 'failure' &&
+        github.event.workflow_run.head_branch == 'main'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      # Historique complet SANS les blobs : le menage trie les tags par date
+      # de commit, qui exige les commits, jamais le contenu des fichiers.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          filter: blob:none
+
+      # Pose par l'API, pas par `git push` : le commit d'une branche
+      # `noyau/**` deja supprimee n'est plus dans le clone, mais GitHub le
+      # garde, et l'API le retrouve.
+      - name: Poser le tag du verdict
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+        run: |
+          set -euo pipefail
+          if ! [[ "$SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error title=CI vert::SHA illisible : '$SHA'"
+            exit 1
+          fi
+          if [ "$CONCLUSION" = success ]; then SORTE=ci-vert; else SORTE=ci-rouge; fi
+          REF="refs/tags/$SORTE/$SHA"
+          if gh api -X POST "repos/$REPO/git/refs" -f ref="$REF" -f sha="$SHA" > /dev/null 2> pose.err; then
+            echo "Pose : $REF"
+          else
+            # Deja pose (second noyau sur le meme SHA, Re-run) : seule une
+            # ref qui pointe sur CE commit est acceptee.
+            LU=$(gh api "repos/$REPO/git/ref/tags/$SORTE/$SHA" --jq .object.sha 2> /dev/null || true)
+            if [ "$LU" != "$SHA" ]; then
+              cat pose.err
+              echo "::error title=CI vert::pose de $REF refusee, et la ref lue rend '${LU:-rien}'"
+              exit 1
+            fi
+            echo "Deja pose : $REF"
+          fi
+          if [ "$SORTE" = ci-vert ] && [ -n "$(git ls-remote origin "refs/tags/ci-rouge/$SHA")" ]; then
+            gh api -X DELETE "repos/$REPO/git/refs/tags/ci-rouge/$SHA"
+            echo "Retire : refs/tags/ci-rouge/$SHA (vert apres un rouge)"
+          fi
+          {
+            echo "### Verdict publie"
+            echo ""
+            echo "\`$REF\` ($CONCLUSION, $RUN_URL)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Garder les 50 tags les plus recents de chaque sorte
+        run: |
+          set -euo pipefail
+          git fetch --quiet --prune origin \
+            '+refs/tags/ci-vert/*:refs/tags/ci-vert/*' \
+            '+refs/tags/ci-rouge/*:refs/tags/ci-rouge/*'
+          for SORTE in ci-vert ci-rouge; do
+            mapfile -t VIEUX < <(git for-each-ref --sort=-committerdate \
+              --format='%(refname)' "refs/tags/$SORTE/" | tail -n +51)
+            if [ "${#VIEUX[@]}" -gt 0 ]; then
+              git push --quiet origin --delete "${VIEUX[@]}"
+              echo "Retires ($SORTE) : ${#VIEUX[@]}"
+            fi
+          done

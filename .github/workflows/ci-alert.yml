@@ -56,6 +56,10 @@ on:
       # AM-6 (2026-10-23) : le deploiement continu des fonctions. Un rouge ici
       # est une fonction partie a moitie, ou pas partie du tout.
       - Edge deploy
+      # `CI vert` (CI-02, 2026-11-07) : pose le tag `ci-vert/<sha>` qu'attend
+      # la porte de deploiement Vercel. Un rouge ici est un commit vert qui
+      # ne partira pas en production, et rien d'autre ne le dirait.
+      - CI vert
       - Migration coverage
       - Deploy SHA drift
       - CodeQL

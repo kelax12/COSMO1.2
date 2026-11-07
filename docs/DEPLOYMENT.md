@@ -69,10 +69,11 @@ réagir à un incident. À lire avant toute mise en prod.
 | Le noyau : lint, `tsc -b`, tests + couverture, gardes statiques, i18n, build + budget, fichiers sensibles, RLS d'intégration | `ci-noyau.yml` (`CI noyau`, 4 jobs, ~5 min) | ✅ seul bloquant |
 | `npm audit` prod deps (high+) | `ci.yml` (`CI etendue`), job `audit` | ❌ |
 | Playwright E2E + a11y (critical=0), Lighthouse | `ci.yml`, jobs `e2e`, `lighthouse` | ❌ |
-| Déploiement front | Vercel (auto sur push `main`) | — |
+| Déploiement front | Vercel, sur push `main`, **après** le tag `ci-vert/<sha>` (porte ci-dessous) | attend le noyau |
 
-Un `git push origin main` déclenche la CI **et** le déploiement Vercel du
-**front uniquement**. La base de données n'est **jamais** touchée par ce push.
+Un `git push origin main` déclenche la CI **et** un build Vercel du **front uniquement**, qui
+attend le verdict vert du noyau avant de construire. La base de données n'est **jamais** touchée
+par ce push.
 
 ### Gates locales avant push (cf. [`TESTING.md → Checklist avant push prod`](./TESTING.md#checklist-avant-push-prod))
 ```bash
@@ -132,6 +133,56 @@ rouge passe par un verdict vert sur le correctif lui-même :
 côté GitHub (statut `CI noyau` requis) fermerait ce dernier chemin ; c'est un réglage du dépôt.
 Témoins : `scripts/pre-push-main-red.test.mjs` (noyau rouge + ancienne variable posée = refus ;
 gh illisible = refus ; la variable n'existe plus hors `docs/archive/`).
+
+### Porte de déploiement : la production n'attend plus que le noyau (CI-02, 2026-11-07)
+
+Jusqu'au 2026-11-07, Vercel construisait et publiait chaque poussée sur `main` en ~40 s, avant le
+verdict de `CI noyau` (~5 min) : un commit rouge partait en production. Désormais :
+
+1. `CI noyau` rend son verdict sur la poussée (`main` ou `noyau/<nom>`).
+2. `.github/workflows/ci-vert.yml` (`workflow_run`) pose un tag léger : `ci-vert/<sha>` sur un
+   vert, `ci-rouge/<sha>` sur un rouge de `main` seulement. Il garde les 50 plus récents de chaque
+   sorte. `GITHUB_TOKEN` seul (`contents: write` sur ce job), aucun secret.
+3. Vercel lance `vercel.json` → `ignoreCommand` :
+   `node scripts/vercel-ignore-build.mjs; test $? -ne 78`. Pour un build de **production**
+   (`VERCEL_ENV=production` ou branche `main`), le script sonde
+   `git ls-remote https://github.com/kelax12/COSMO1.2 refs/tags/ci-vert/<sha>` toutes les 20 s,
+   15 min au plus. Tag vert : il sort en 78, `test` rend 1, **Vercel construit**. Tout le reste
+   rend 0 et Vercel **ignore** le build (déploiement `CANCELED`) : tag `ci-rouge`, délai dépassé,
+   GitHub injoignable, SHA illisible, et même un Node qui plante (il sort en 1, pas en 78). La
+   raison est écrite dans le journal du build, lignes `[porte]`.
+4. Les builds d'**aperçu** (branches `noyau/*` et autres) construisent tout de suite, comme avant.
+
+Pourquoi `git ls-remote` et pas l'API REST : sans jeton, l'API est limitée à 60 requêtes par heure
+et par IP, et les IP de build de Vercel sont partagées. Le protocole git d'un dépôt public n'a pas
+ce plafond et ne demande aucun jeton.
+
+Délai normal : la poussée sur `main` d'un SHA déjà vert sur `noyau/<nom>` construit tout de suite
+(le tag existe) ; une poussée directe attend le noyau, soit ~5 min de plus qu'avant. Le build en
+attente occupe le slot de build Vercel : un aperçu poussé pendant ce temps patiente.
+
+**Si le noyau est rouge** : le build de production est ignoré dès le tag `ci-rouge` (au plus
+15 min sans verdict), la production reste sur le dernier déploiement vert, `CI noyau` sonne
+(`ci-alert.yml`) et le hook `pre-push` bloque `main` jusqu'au correctif (§ Hook ci-dessus). Le
+correctif, une fois vert, part en production comme n'importe quel commit. Un **Re-run** vert après
+coup pose `ci-vert/<sha>` mais ne relance pas le build déjà ignoré : pousser un commit, ou
+redéployer depuis Vercel (case **cochée**, le tag existe désormais).
+
+**Si `CI vert` est rouge** (tag non posé) : `ci-alert.yml` sonne, rien ne part en production.
+Réparer, puis Re-run de `CI vert` et redéploiement Vercel case cochée.
+
+**Urgence, déployer un SHA sans verdict vert** (geste d'Axel, tableau de bord Vercel, aucun
+réglage du projet à changer) : Deployments → le déploiement du SHA voulu → **⋯ → Redeploy** →
+**décocher « Use project's Ignore Build Step »** → Redeploy. Revenir en arrière ne passe pas par
+la porte : **Promote** / Instant Rollback d'un déploiement existant ne reconstruit rien (§ 3).
+⚠️ Un SHA servi sans tag vert rend `Deploy SHA drift` rouge (`prod_en_avance`) jusqu'au prochain
+déploiement vert : c'est la trace voulue du contournement.
+
+`Deploy SHA drift` compare la production au **dernier commit tagué vert** de `main`, plus à sa
+tête : un `main` rouge hors production est l'état normal. Aucun tag `ci-vert/*` dans les
+500 derniers commits rend la garde rouge (`aucun_vert`).
+Témoins : `scripts/porte-deploiement.guard.test.mjs` (décision, commande de `vercel.json` jouée
+sous `sh`, câblage de `ci-vert.yml`), `scripts/check-deploy-sha.guard.test.mjs`.
 
 ## 2bis. Déployer les Edge Functions
 
@@ -602,7 +653,9 @@ ensuite la page d'app générique.
 **Ce que la répétition a appris :**
 - 🔴 **Vercel déploie sans attendre la CI.** Un revert est en ligne en ~35 s, mais un mauvais
   commit l'est tout aussi vite : la CI (25 min) juge APRÈS la mise en production. Le retour
-  arrière est donc le vrai filet, pas la CI.
+  arrière est donc le vrai filet, pas la CI. ✅ **Fermé le 2026-11-07** par la porte de
+  déploiement (§ 1) : un revert part désormais après le vert du noyau (~5 min), pas en 35 s.
+  Le retour arrière immédiat reste le **Promote** ci-dessous, qui ne reconstruit rien.
 - ⚠️ **Une URL inconnue répond 200** (repli SPA, limite assumée) : pour prouver qu'un fichier a
   disparu, lire son contenu, jamais son code HTTP.
 - ❌ **Ne pas enchaîner `git revert -q` et `git commit --amend`** : si le revert échoue en silence,

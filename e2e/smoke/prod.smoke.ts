@@ -5,7 +5,8 @@ import { parseUserAgent } from '../../src/lib/traffic-ua';
  * Contrôle de fumée de la PRODUCTION, rejoué après chaque mise en ligne
  * (`.github/workflows/smoke-prod.yml`, constat CI-02 de l'audit du 2026-11-06).
  *
- * POURQUOI : Vercel publie chaque push de `main` en ~40 s, sans attendre la CI
+ * POURQUOI : Vercel publiait chaque push de `main` en ~40 s, sans attendre la CI
+ * (porte de deploiement depuis le 2026-11-07 : seul un noyau vert part)
  * (docs/DEPLOYMENT.md § Rollback). Avant ce fichier, rien ne regardait le site
  * APRÈS la mise en ligne : `uptime.yml` lit du HTML avec curl, il n'exécute pas
  * le bundle. Un bundle qui plante au démarrage rend un HTML parfait et une page

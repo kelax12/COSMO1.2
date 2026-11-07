@@ -130,6 +130,9 @@ describe('CLI · contre un depot git et un serveur HTTP jetables', () => {
     writeFileSync(join(dir, 'a.txt'), 'deux')
     git('add', '.')
     git('commit', '-q', '-m', 'second')
+    // La porte de deploiement (CI-02) : `second` a un verdict vert, comme le
+    // poserait `ci-vert.yml`. C'est la reference de la garde, plus HEAD.
+    git('tag', `ci-vert/${git('rev-parse', 'HEAD')}`)
 
     corps = '{"release":"inconnu"}'
     serveur = createServer((_req, res) => {
@@ -191,6 +194,51 @@ describe('CLI · contre un depot git et un serveur HTTP jetables', () => {
     const r = await run()
     expect(r.status).toBe(1)
     expect(r.stderr).toMatch(/prod_en_avance/)
+  })
+
+  // ── la reference est le DERNIER VERT (porte de deploiement, CI-02) ──
+
+  const commitRouge = () => {
+    writeFileSync(join(dir, 'a.txt'), 'rouge')
+    git('add', '.')
+    git('commit', '-q', '-m', 'rouge, sans tag ci-vert')
+  }
+
+  it('VERT quand `main` est rouge et que la prod sert le dernier vert', async () => {
+    const vert = git('rev-parse', '--short=7', 'HEAD')
+    commitRouge()
+    corps = JSON.stringify({ release: vert })
+    const r = await run()
+    expect(r.status, r.stdout + r.stderr).toBe(0)
+    expect(r.stdout).toMatch(/relation\s+: egal/)
+    expect(r.stdout).toContain(`dernier vert : ${vert}`)
+  })
+
+  it('ROUGE quand la prod sert un commit SANS verdict vert (porte contournee)', async () => {
+    commitRouge()
+    corps = JSON.stringify({ release: git('rev-parse', '--short=7', 'HEAD') })
+    const r = await run()
+    expect(r.status).toBe(1)
+    expect(r.stderr).toMatch(/prod_en_avance/)
+    expect(r.stderr).toMatch(/SANS verdict/)
+  })
+
+  it('ROUGE quand aucun tag ci-vert n existe : la garde n a plus de reference', async () => {
+    git('tag', '-d', `ci-vert/${git('rev-parse', 'HEAD')}`)
+    corps = JSON.stringify({ release: git('rev-parse', '--short=7', 'HEAD') })
+    const r = await run()
+    expect(r.status).toBe(1)
+    expect(r.stderr).toMatch(/aucun_vert/)
+  })
+
+  it('un tag ci-vert dont le NOM ne dit pas sa CIBLE ne compte pas', async () => {
+    const head = git('rev-parse', 'HEAD')
+    git('tag', '-d', `ci-vert/${head}`)
+    git('tag', `ci-vert/${git('rev-parse', 'HEAD~1')}`, head) // deplace a la main
+    corps = JSON.stringify({ release: head.slice(0, 7) })
+    const r = await run()
+    expect(r.status).toBe(1)
+    expect(r.stderr).toMatch(/aucun_vert/)
   })
 
   it('ROUGE quand le marqueur est un JSON sans champ `release`', async () => {
