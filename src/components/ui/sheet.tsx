@@ -5,6 +5,8 @@ import * as SheetPrimitive from "@radix-ui/react-dialog"
 import { XIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { useT } from "@/i18n/useT"
+import { useRadixFocusReturn } from "@/hooks/use-modal-a11y"
 
 function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />
@@ -50,6 +52,8 @@ function SheetContent({
   side = "right",
   closeButtonClassName,
   closeIconClassName,
+  onOpenAutoFocus,
+  onCloseAutoFocus,
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
   side?: "top" | "right" | "bottom" | "left"
@@ -60,11 +64,18 @@ function SheetContent({
   /** Classes ajoutées à l'icône `X` elle-même (ex. une taille plus grande). */
   closeIconClassName?: string
 }) {
+  // Le nom de la croix etait `Close` en dur : un lecteur d'ecran francophone l'entendait en anglais.
+  const { t } = useT('common')
+  // FRO-01 : Radix ne rend le focus qu'a `SheetTrigger`, que le produit n'utilise jamais.
+  const focusReturn = useRadixFocusReturn(onOpenAutoFocus, onCloseAutoFocus)
   return (
     <SheetPortal>
       <SheetOverlay />
       <SheetPrimitive.Content
         data-slot="sheet-content"
+        aria-modal="true"
+        onOpenAutoFocus={focusReturn.onOpenAutoFocus}
+        onCloseAutoFocus={focusReturn.onCloseAutoFocus}
         className={cn(
           "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
           side === "right" &&
@@ -82,7 +93,7 @@ function SheetContent({
         {children}
         <SheetPrimitive.Close className={cn("ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:pointer-events-none", closeButtonClassName)}>
           <XIcon className={cn("size-4", closeIconClassName)} />
-          <span className="sr-only">Close</span>
+          <span className="sr-only">{t('actions.close')}</span>
         </SheetPrimitive.Close>
       </SheetPrimitive.Content>
     </SheetPortal>

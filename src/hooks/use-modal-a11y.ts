@@ -152,6 +152,66 @@ export function mergeRefs<T>(
   };
 }
 
+/**
+ * FRO-01 (vague 16.3) · la restitution du focus des surfaces RADIX, par le MEME historique.
+ *
+ * 🔴 Radix ne rend le focus qu'a `DialogTrigger` : son `onCloseAutoFocus` fait
+ * `event.preventDefault()` puis `context.triggerRef.current?.focus()`. Le produit pilote toutes
+ * ses surfaces par un etat (`open` / `onOpenChange`), sans aucun `DialogTrigger` : `triggerRef`
+ * est nul, le focus tombait sur `body`. Pareil pour une surface ouverte depuis l'entree d'un
+ * menu, qui disparait avec lui.
+ *
+ * Le declencheur est lu dans `onOpenAutoFocus`, au moment ou Radix monte son `FocusScope` et
+ * AVANT qu'il ne deplace le focus : `document.activeElement` est alors l'element d'origine.
+ * A la fermeture on ne touche a rien si Radix (ou l'appelant) a deja pose le focus quelque
+ * part : seul un focus perdu sur `body` est rattrape.
+ *
+ * Les gestionnaires de l'appelant passent AVANT, et son `preventDefault()` est respecte
+ * (un menu en cascade qui gere lui-meme son focus).
+ */
+export function useRadixFocusReturn<E extends Event>(
+  userOnOpenAutoFocus?: (event: E) => void,
+  userOnCloseAutoFocus?: (event: E) => void,
+): {
+  onOpenAutoFocus: (event: E) => void;
+  onCloseAutoFocus: (event: E) => void;
+} {
+  const openerRef = useRef<HTMLElement | null>(null);
+  const openRef = useRef(userOnOpenAutoFocus);
+  const closeRef = useRef(userOnCloseAutoFocus);
+  openRef.current = userOnOpenAutoFocus;
+  closeRef.current = userOnCloseAutoFocus;
+  installFocusHistory();
+
+  const onOpenAutoFocus = useCallback((event: E) => {
+    const active = document.activeElement as HTMLElement | null;
+    openerRef.current = menuTriggerOf(
+      active && active !== document.body ? active : lastFocusedOutside(null),
+    );
+    openRef.current?.(event);
+  }, []);
+
+  const onCloseAutoFocus = useCallback((event: E) => {
+    closeRef.current?.(event);
+    if (event.defaultPrevented) {
+      // L'appelant a pris le focus en charge : on lui laisse, sans repli.
+      openerRef.current = null;
+      return;
+    }
+    const opener = openerRef.current;
+    openerRef.current = null;
+    // Radix pose son propre focus dans la meme tache : le repli passe APRES lui.
+    setTimeout(() => {
+      const active = document.activeElement as HTMLElement | null;
+      if (active && active !== document.body) return;
+      const target = opener?.isConnected ? opener : lastFocusedOutside(null);
+      target?.focus?.({ preventScroll: true });
+    }, 0);
+  }, []);
+
+  return { onOpenAutoFocus, onCloseAutoFocus };
+}
+
 export interface ModalA11yOptions {
   /** La surface est-elle montée et visible ? */
   open: boolean;

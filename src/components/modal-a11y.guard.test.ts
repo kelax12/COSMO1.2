@@ -112,3 +112,133 @@ describe('C-53 — cliquet : toute surface modale maison passe par useModalA11y'
     expect(doubles, `Echap en double :\n  ${doubles.join('\n  ')}`).toEqual([]);
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// FRO-01 (vague 16.3) : l'INVENTAIRE COMPLET : trois familles de surfaces modales.
+//
+// Le cliquet ci-dessus ne voyait que la famille MAISON (`fixed inset-0`, `role="dialog"`).
+// L'audit externe du 2026-11-06 comptait « 10 surfaces sur 53 » : le chiffre mesurait la
+// famille maison seule, et deux autres familles n'etaient inventoriees nulle part.
+//
+//   1. MAISON     : cablee par `useModalA11y` (garde ci-dessus + `keyboard-audit-coverage.guard`).
+//   2. BOTTOMSHEET : les ecrans qui montent la primitive `BottomSheet`, cablee une fois pour
+//                   toutes ; `ariaLabel` y est obligatoire par le TYPE (critere e).
+//   3. RADIX      : `Dialog`, `Sheet`, `AlertDialog` de `components/ui/**`. Le piege, Echap et
+//                   le role sont ceux de Radix ; la restitution du focus (d) et `aria-modal` (e)
+//                   sont portes par les trois enveloppes et mesures par
+//                   `components/ui/modal-contract.test.tsx`. Ici : chaque fichier est declare, et
+//                   chaque `*Content` a son `*Title` (le nom accessible).
+//
+// ❌ Ne JAMAIS ajouter une entree pour faire passer la CI : une surface neuve se declare avec
+//    le chemin par lequel elle est mesuree, pas avec un « on verra ».
+// ═══════════════════════════════════════════════════════════════════
+
+/** Fichiers (hors `components/ui/`) qui montent un `Dialog`, `Sheet` ou `AlertDialog` Radix. */
+const RADIX_SURFACES = [
+  'components/DescriptionField.tsx',
+  'components/OKRModalSheet.tsx',
+  'components/TaskModal.tsx',
+  'components/org-guide/OrgGuideDrawer.tsx',
+  'components/organization/AssignMembersDialog.tsx',
+  'components/organization/ConfirmProjectAudienceDialog.tsx',
+  'components/organization/DeleteTeamDialog.tsx',
+  'components/organization/KRExecutionDialog.tsx',
+  'components/organization/MemberAccessDialog.tsx',
+  'components/organization/OrgConfirmDialog.tsx',
+  'components/organization/OrgNotificationSettingsDialog.tsx',
+  'components/organization/ProjectPeopleDialogs.tsx',
+  'components/organization/TeamEventDialog.tsx',
+  'components/organization/TeamOKRModal.tsx',
+  'components/organization/TeamTaskDependencyPicker.tsx',
+  'components/organization/TeamTrashDialog.tsx',
+  'components/organization/TransferOwnershipDialog.tsx',
+  'components/perso-guide/PersoGuideDrawer.tsx',
+  'components/task-modal/TaskDependencyPicker.tsx',
+  'pages/SettingsPage.tsx',
+];
+
+/** Fichiers qui montent la primitive `BottomSheet` (hors `components/mobile/`). */
+const BOTTOMSHEET_CONSUMERS = [
+  'components/organization/MobileTeamTasks.tsx',
+  'components/share/WeeklyRecapSheet.tsx',
+  'components/task-board/MoveTaskSheet.tsx',
+  'pages/agenda/MobileScheduleSheet.tsx',
+  'pages/okr/OKRCard.tsx',
+  'pages/okr/OKRCategorySelect.tsx',
+  'pages/settings/ImportTasksDialog.tsx',
+  'pages/tasks/MobileDisplaySheet.tsx',
+  'pages/tasks/MobileSortButton.tsx',
+];
+
+const RADIX_CONTENT = /<(DialogContent|SheetContent|AlertDialogContent)\b/g;
+const RADIX_TITLE = /<(DialogTitle|SheetTitle|AlertDialogTitle)\b/g;
+
+const nonUi = files.filter((f) => !f.path.startsWith('components/ui/'));
+const radixFiles = nonUi.filter((f) => /<(DialogContent|SheetContent|AlertDialogContent)\b/.test(f.source));
+const bottomSheetFiles = nonUi.filter(
+  (f) => !f.path.startsWith('components/mobile/') && /<BottomSheet\b/.test(f.source),
+);
+
+describe('FRO-01 : inventaire des surfaces Radix et BottomSheet', () => {
+  it('detecte bien des surfaces (temoin : un detecteur muet rendrait la garde verte)', () => {
+    expect(radixFiles.length).toBeGreaterThan(15);
+    expect(bottomSheetFiles.length).toBeGreaterThan(5);
+  });
+
+  it('chaque surface Radix est declaree, et aucune declaration ne designe un fichier disparu', () => {
+    const detectees = radixFiles.map((f) => f.path).sort();
+    const nouvelles = detectees.filter((p) => !RADIX_SURFACES.includes(p));
+    const perimees = RADIX_SURFACES.filter((p) => !detectees.includes(p));
+    expect(nouvelles, `surfaces Radix non declarees :\n  ${nouvelles.join('\n  ')}`).toEqual([]);
+    expect(perimees, `declarations perimees :\n  ${perimees.join('\n  ')}`).toEqual([]);
+  });
+
+  it('chaque surface BottomSheet est declaree, et aucune declaration ne designe un fichier disparu', () => {
+    const detectees = bottomSheetFiles.map((f) => f.path).sort();
+    const nouvelles = detectees.filter((p) => !BOTTOMSHEET_CONSUMERS.includes(p));
+    const perimees = BOTTOMSHEET_CONSUMERS.filter((p) => !detectees.includes(p));
+    expect(nouvelles, `feuilles non declarees :\n  ${nouvelles.join('\n  ')}`).toEqual([]);
+    expect(perimees, `declarations perimees :\n  ${perimees.join('\n  ')}`).toEqual([]);
+  });
+
+  it('chaque *Content Radix a son *Title (le nom accessible, critere e)', () => {
+    // Sans titre, Radix ne leve qu'un avertissement console : la surface s'ouvre, muette.
+    const sansTitre = radixFiles
+      .filter((f) => (f.source.match(RADIX_CONTENT) ?? []).length > (f.source.match(RADIX_TITLE) ?? []).length)
+      .map((f) => f.path);
+    expect(sansTitre, `surfaces Radix sans titre :\n  ${sansTitre.join('\n  ')}`).toEqual([]);
+  });
+
+  it('aucune surface ne contourne les enveloppes `components/ui/` (primitives Radix importees en direct)', () => {
+    // Les trois enveloppes portent `aria-modal` et la restitution du focus (FRO-01) : une
+    // surface qui importe la primitive les perdrait sans que rien ne le signale.
+    const directs = nonUi
+      .filter((f) => /from ['"]@radix-ui\/react-(dialog|alert-dialog)['"]/.test(f.source))
+      .map((f) => f.path);
+    expect(directs, `primitive Radix importee en direct :\n  ${directs.join('\n  ')}`).toEqual([]);
+  });
+
+  it('aucune surface ne desactive Echap (critere c) : exception a justifier ici, par ecrit', () => {
+    // Aucune exception n'existe a ce jour. `closeOnEscape: false` et `onEscapeKeyDown` qui
+    // empeche la fermeture sont les deux facons de la desactiver.
+    const muettes = files
+      .filter((f) => /closeOnEscape\s*[:=]\s*\{?\s*false/.test(f.source) || /onEscapeKeyDown=\{[^}]*preventDefault/.test(f.source))
+      .map((f) => f.path)
+      .filter((p) => p !== 'hooks/use-modal-a11y.ts');
+    expect(muettes, `Echap desactive sans justification :\n  ${muettes.join('\n  ')}`).toEqual([]);
+  });
+
+  it('le decompte, imprime', () => {
+    // L'UNION, pas la somme : `MoveTaskSheet` et `ImportTasksDialog` sont cablees ET montent la
+    // primitive `BottomSheet`. Les compter deux fois gonflerait le chiffre.
+    const maison = new Set(files.filter((f) => f.source.includes('useModalA11y')).map((f) => f.path));
+    const radix = new Set(radixFiles.map((f) => f.path));
+    const feuilles = new Set(bottomSheetFiles.map((f) => f.path).filter((p) => !maison.has(p)));
+    const total = maison.size + radix.size + feuilles.size;
+    console.log(
+      `::notice title=fro-01::${total} fichiers de surfaces modales : ${maison.size} maison, `
+        + `${radix.size} Radix, ${feuilles.size} feuilles BottomSheet seules.`,
+    );
+    expect(total).toBeGreaterThan(80);
+  });
+});
