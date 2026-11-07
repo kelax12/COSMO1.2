@@ -76,7 +76,7 @@
     "check:fichiers-sensibles": "node scripts/check-fichiers-sensibles.mjs --arbre"
   },
   "dependencies": {
-    "@fullcalendar/core": "^6.1.10",
+    "@fullcalendar/core": "^7.1.3",
     "@fullcalendar/daygrid": "^6.1.10",
     "@fullcalendar/interaction": "^6.1.10",
     "@fullcalendar/react": "^6.1.10",
