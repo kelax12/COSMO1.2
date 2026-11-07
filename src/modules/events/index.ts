@@ -27,7 +27,8 @@ export { eventsKeys, EVENTS_STORAGE_KEY } from './constants';
 // ═══════════════════════════════════════════════════════════════════
 
 export type { IEventsRepository } from './repository';
-export { LocalStorageEventsRepository } from './repository';
+// `LocalStorageEventsRepository` n'est PAS ré-exporté (V12.3) : il vit dans
+// `./local.repository` et n'arrive que par `import()`, depuis le factory.
 
 // ═══════════════════════════════════════════════════════════════════
 // READ HOOKS

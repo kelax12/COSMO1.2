@@ -11,7 +11,7 @@
 // 🔴 N'ajouter ici QUE des méthodes asynchrones : le mandataire différé du
 // factory suppose une interface 100 % asynchrone.
 
-import { Category, CreateCategoryInput, UpdateCategoryInput } from './types';
+import type { Category, CreateCategoryInput, UpdateCategoryInput } from './types';
 import type { CreateOptions } from '@/lib/restore-id';
 
 export interface ICategoriesRepository {

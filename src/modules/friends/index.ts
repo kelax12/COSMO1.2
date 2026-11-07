@@ -36,7 +36,8 @@ export {
 // ═══════════════════════════════════════════════════════════════════
 
 export type { IFriendsRepository } from './repository';
-export { LocalStorageFriendsRepository } from './repository';
+// `LocalStorageFriendsRepository` n'est PAS ré-exporté (V12.3) : il vit dans
+// `./local.repository` et n'arrive que par `import()`, depuis le factory.
 export { SupabaseFriendsRepository } from './supabase.repository';
 
 // ═══════════════════════════════════════════════════════════════════

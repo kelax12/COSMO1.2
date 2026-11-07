@@ -2,7 +2,7 @@
 // ORG-TEAMS MODULE - Repository Interface
 // ═══════════════════════════════════════════════════════════════════
 
-import { OrgTeam, OrgTeamMember, CreateOrgTeamInput, UpdateOrgTeamInput, TeamDeletionImpact, DeleteTeamInput } from './types';
+import type { OrgTeam, OrgTeamMember, CreateOrgTeamInput, UpdateOrgTeamInput, TeamDeletionImpact, DeleteTeamInput } from './types';
 
 export interface IOrgTeamsRepository {
   getTeams(orgId: string): Promise<OrgTeam[]>;

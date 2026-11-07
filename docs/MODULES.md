@@ -7,14 +7,15 @@ ne dit que **où chercher**. Le code fait foi : si un nom ci-dessous n'existe pl
 
 ## Lire un module
 
-Tous suivent la même forme. Partir de `index.ts` (exports publics), puis :
+Tous suivent la même forme ([`src/modules/CLAUDE.md`](../src/modules/CLAUDE.md) § Forme d'un module ; le choix démo / Supabase est dans `src/lib/repository.factory.ts`). Partir de `index.ts` (exports publics), puis :
 
 | Fichier | Rôle |
 |---|---|
 | `types.ts` | Types métier |
-| `repository.ts` | Interface + choix démo / Supabase |
+| `repository.ts` | Interface du dépôt et ses types, rien d'exécutable (garde V12.3) |
 | `supabase.repository.ts` | Implémentation prod, frontière `mapToDb` |
 | `local.repository.ts` | Implémentation démo (`localStorage` via `safe-json`) |
+| `local.seed.ts` | Jeu de données démo |
 | `hooks.ts` | Hooks React Query (lecture + mutations) |
 | `constants.ts` | Fabriques de clés React Query |
 | `*.schema.ts` | Garde zod côté client (UX, pas sécurité) |

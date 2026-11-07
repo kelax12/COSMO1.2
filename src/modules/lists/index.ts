@@ -27,7 +27,8 @@ export { listKeys, LISTS_STORAGE_KEY } from './constants';
 // ═══════════════════════════════════════════════════════════════════
 
 export type { IListsRepository } from './repository';
-export { LocalStorageListsRepository } from './repository';
+// `LocalStorageListsRepository` n'est PAS ré-exporté (V12.3) : il vit dans
+// `./local.repository` et n'arrive que par `import()`, depuis le factory.
 export { SupabaseListsRepository } from './supabase.repository';
 
 // ═══════════════════════════════════════════════════════════════════

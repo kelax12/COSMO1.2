@@ -18,7 +18,7 @@ import {
   fetchIsAdmin,
   fetchOnboardingFunnel,
   fetchSupportStats,
-} from './repository';
+} from './supabase.repository';
 
 beforeEach(() => supabaseMock.reset());
 

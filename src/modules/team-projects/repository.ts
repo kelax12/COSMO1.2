@@ -2,7 +2,7 @@
 // TEAM-PROJECTS MODULE - Repository Interface
 // ═══════════════════════════════════════════════════════════════════
 
-import {
+import type {
   TeamProject,
   CreateTeamProjectInput,
   UpdateTeamProjectInput,

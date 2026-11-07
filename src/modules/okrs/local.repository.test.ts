@@ -6,7 +6,7 @@
 //   - whitelist des champs updatables (B19) ;
 //   - symétrie reps ± (append/remove) selon le delta de currentValue.
 import { describe, it, expect, beforeEach } from 'vitest';
-import { LocalStorageOKRsRepository } from './repository';
+import { LocalStorageOKRsRepository } from './local.repository';
 import { OKRS_STORAGE_KEY } from './constants';
 import { KR_COMPLETIONS_STORAGE_KEY, MAX_REPS_PER_WRITE } from '@/modules/kr-completions/constants';
 import type { OKR, KeyResult } from './types';

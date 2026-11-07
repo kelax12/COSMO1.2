@@ -53,7 +53,7 @@ export const PROMISES_PERSO: LandingPromise[] = [
       { key: 'why.demoVolume', includes: '100 tâches · 100 habitudes · 150 events' },
       { key: 'faq.a4', includes: '100 tâches, 100 habitudes, 150 événements agenda et 8 OKRs' },
     ],
-    proofs: [{ file: 'src/modules/tasks/local.repository.ts', has: '// 10 tâches' }],
+    proofs: [{ file: 'src/modules/tasks/local.seed.ts', has: '// 10 tâches' }],
     figures: {
       '100': ['hero.reassurance', 'cta.statsAria', 'why.demoVolume', 'faq.a4'],
       '150': ['cta.statsAria', 'why.demoVolume', 'faq.a4'],
@@ -142,7 +142,7 @@ export const PROMISES_PERSO: LandingPromise[] = [
     ],
     proofs: [
       { file: 'src/pages/agenda/AgendaCalendarSection.tsx', has: 'droppable' },
-      { file: 'src/modules/events/repository.ts', has: 'getByTaskId' },
+      { file: 'src/modules/events/local.repository.ts', has: 'getByTaskId' },
     ],
   },
   {

@@ -30,9 +30,11 @@ import type {
   TeamActivityField,
   TeamProjectDependency,
 } from './types';
+import { DEMO_USER_ID } from './constants';
 
 export const DEMO_ORG_ID = 'org-demo-1';
-export const DEMO_USER_ID = 'demo-user';
+// Défini dans `./constants` (lu aussi par `messages.repository.ts`, hors démo).
+export { DEMO_USER_ID };
 
 const DAY = 24 * 60 * 60 * 1000;
 // Date locale 'YYYY-MM-DD' décalée de `offset` jours (déterministe).

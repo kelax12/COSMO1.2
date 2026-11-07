@@ -2,7 +2,7 @@
 // Couverture métier (audit P0a) : LocalStorageEventsRepository (démo) —
 // CRUD, filtres temporels, pagination curseur.
 import { describe, it, expect, beforeEach } from 'vitest';
-import { LocalStorageEventsRepository } from './repository';
+import { LocalStorageEventsRepository } from './local.repository';
 import { EVENTS_STORAGE_KEY } from './constants';
 import type { CalendarEvent } from './types';
 

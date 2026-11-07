@@ -4,7 +4,7 @@
 // corrompu (B14), refus d'accepter une demande sortante (B13), dédup partage
 // (B11).
 import { describe, it, expect, beforeEach } from 'vitest';
-import { LocalStorageFriendsRepository } from './repository';
+import { LocalStorageFriendsRepository } from './local.repository';
 import {
   FRIENDS_STORAGE_KEY,
   FRIEND_REQUESTS_STORAGE_KEY,

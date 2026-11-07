@@ -213,7 +213,7 @@ export const PROMISES_ENTREPRISE: LandingPromise[] = [
     kind: 'produit',
     claim: 'La démo entreprise s’ouvre sans inscription.',
     anchors: [{ key: 'enterprise.hero.ctaAria', includes: 'sans inscription' }],
-    proofs: [{ file: 'src/modules/organizations/local.repository.ts', has: "export const DEMO_ORG_ID = 'org-demo-1';" }],
+    proofs: [{ file: 'src/modules/organizations/local.seed.ts', has: "export const DEMO_ORG_ID = 'org-demo-1';" }],
   },
   {
     id: 'entreprise-demo-effectif',
@@ -222,7 +222,7 @@ export const PROMISES_ENTREPRISE: LandingPromise[] = [
     verdict: 'fausse',
     constat: 'L’organisation de démo compte 15 membres depuis le 2026-10-05 (commentaire de `local.repository.ts`).',
     anchors: [{ key: 'usecase.teams.html', includes: 'organisation fictive de six personnes' }],
-    proofs: [{ file: 'src/modules/organizations/local.repository.ts', has: '15 membres au total' }],
+    proofs: [{ file: 'src/modules/organizations/local.seed.ts', has: '15 membres au total' }],
     figures: { '6': ['usecase.teams.html'] },
   },
 

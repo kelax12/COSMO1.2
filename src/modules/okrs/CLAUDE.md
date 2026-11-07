@@ -12,7 +12,7 @@ Quand un KR passe `completed: false → true`, **les deux repositories OKR doive
 ligne dans `kr_completions`** atomiquement. Cette table alimente le graphique « KR réalisés » du
 Dashboard.
 
-- **LocalStorage** : `src/modules/okrs/repository.ts → updateKeyResult`
+- **LocalStorage** : `src/modules/okrs/local.repository.ts → updateKeyResult`
 - **Supabase** : `src/modules/okrs/supabase.repository.ts → recordKRCompletion()`
   (appelé depuis `updateKeyResult` ET `updateKeyResultViaJsonb`)
 

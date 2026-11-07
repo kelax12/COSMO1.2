@@ -2,7 +2,7 @@
 // Couverture métier (audit P0a) : LocalStorageListsRepository (démo) —
 // tri position/nom (NULLS LAST), associations tâches, CRUD.
 import { describe, it, expect, beforeEach } from 'vitest';
-import { LocalStorageListsRepository } from './repository';
+import { LocalStorageListsRepository } from './local.repository';
 import { LISTS_STORAGE_KEY } from './constants';
 import type { TaskList } from './types';
 

@@ -22,7 +22,7 @@ sujet. La classe `SupabaseTeamProjectsRepository` délègue en une ligne par mé
 | Statut propre au projet, automatisations | triggers en base | `local.task-rules.ts` | 197, 198 |
 | Suivre une tâche ou un projet | `follows.repository.ts` | idem | 162 |
 | Chat d'un projet | `messages.repository.ts` | idem | 220 |
-| Seeds démo (« Nova Studio ») | | `demo-seed.ts` | |
+| Seeds démo (« Nova Studio ») | | `local.seed.ts` | |
 
 ## Règles
 
