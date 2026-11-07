@@ -12763,6 +12763,13 @@ CREATE INDEX idx_org_saved_views_owner ON public.org_saved_views USING btree (us
 
 
 --
+-- Name: idx_org_settings_default_role_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_org_settings_default_role_id ON public.org_settings USING btree (default_role_id);
+
+
+--
 -- Name: idx_org_settings_updated_by; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -12865,6 +12872,13 @@ CREATE INDEX idx_org_weekly_reviews_created_by ON public.org_weekly_reviews USIN
 --
 
 CREATE INDEX idx_org_weekly_reviews_org ON public.org_weekly_reviews USING btree (org_id, created_at DESC);
+
+
+--
+-- Name: idx_org_withdrawals_org_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_org_withdrawals_org_id ON public.org_withdrawals USING btree (org_id);
 
 
 --
@@ -13600,6 +13614,13 @@ CREATE INDEX idx_team_tasks_project ON public.team_tasks USING btree (project_id
 --
 
 CREATE INDEX idx_team_tasks_trash ON public.team_tasks USING btree (org_id, deleted_at DESC) WHERE (deleted_at IS NOT NULL);
+
+
+--
+-- Name: idx_team_tasks_validator_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_team_tasks_validator_id ON public.team_tasks USING btree (validator_id);
 
 
 --
