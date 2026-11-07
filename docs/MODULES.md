@@ -37,7 +37,7 @@ Tous suivent la même forme. Partir de `index.ts` (exports publics), puis :
 | `stats` | aucune (RPC) | 1 | `get_work_time_stats` côté SQL | `pages/StatisticsPage.tsx` |
 | `friends` | `friends`, `friend_requests`, `shared_tasks`, `shared_lists`, `share_links` | 7 | partage gratuit, liens de partage, Realtime de la boîte | `components/share/`, `ShareListSheet.tsx` |
 | `user` | `profiles` | 0 | profil seul ; `useAuth` vient d'`auth`, jamais d'ici | `pages/SettingsPage.tsx` |
-| `auth` | aucune | 1 | `AuthContext.tsx`, MFA, OAuth, attribution (`acquisition-claim.ts`) | `pages/LoginPage.tsx`, `SignupPage.tsx` |
+| `auth` | aucune | 1 | `AuthContext.tsx` (session, OAuth, inscription, démo), MFA ; unités abonnées à ses événements : `use-offline-cache`, `use-session-preload`, `use-last-seen`, `use-attribution` (`acquisition-claim.ts`, `affiliate-claim.ts`) | `pages/LoginPage.tsx`, `SignupPage.tsx` |
 | `ui-states` | aucune | 0 | états d'interface persistés | transverse |
 
 ## Entreprise

@@ -22,7 +22,7 @@ useIsDemo()                  // hook React
 Repositories sélectionnés dynamiquement via `src/lib/repository.factory.ts`
 (`getTasksRepository()`, `getHabitsRepository()`, … `resetRepositories()`, `clearDemoStorage()`).
 
-### loginDemo() — séquence exacte (`src/modules/auth/AuthContext.tsx`)
+### loginDemo() — séquence exacte (`AuthContext.tsx`, transitions dans `auth/demo-session.ts`)
 
 ```typescript
 loginDemo() {
