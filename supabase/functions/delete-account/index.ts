@@ -24,6 +24,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { withTrace } from '../_shared/trace.ts'
 import { opsAlert } from '../_shared/alert.ts'
 import { pickOrgSuccessor, type SuccessorCandidate } from '../_shared/org-membership.ts'
 import { corsHeadersFor, requireEnv } from '../_shared/env.ts'
@@ -75,7 +76,7 @@ function isMissingTableError(error: { code?: string; message?: string }): boolea
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-Deno.serve(async (req) => {
+Deno.serve(withTrace('delete-account', async (req) => {
   const cors = corsHeadersFor(req)
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: cors })
@@ -413,4 +414,4 @@ Deno.serve(async (req) => {
       headers: { ...cors, 'Content-Type': 'application/json' },
     })
   }
-})
+}))

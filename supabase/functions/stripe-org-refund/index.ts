@@ -36,6 +36,7 @@
 
 import Stripe from 'npm:stripe@14.21.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { withTrace } from '../_shared/trace.ts'
 import { opsAlert } from '../_shared/alert.ts'
 import { refundAmount, type RefundException } from '../_shared/refund-amount.ts'
 import { remainingRefundableCents } from '../_shared/refund-replay.ts'
@@ -46,7 +47,7 @@ import { corsHeadersFor, requireEnv } from '../_shared/env.ts'
 const APP_URL = requireEnv('APP_URL')
 const MODES = new Set<string>(['withdrawal', 'conformity', 'renewal_notice_missed'])
 
-Deno.serve(async (req) => {
+Deno.serve(withTrace('stripe-org-refund', async (req) => {
   const cors = corsHeadersFor(req)
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
 
@@ -218,4 +219,4 @@ Deno.serve(async (req) => {
     await opsAlert('stripe-org-refund', 'remboursement admin ECHOUE — a reprendre depuis le tableau de bord Stripe')
     return json({ error: 'refund_failed' }, 500)
   }
-})
+}))
