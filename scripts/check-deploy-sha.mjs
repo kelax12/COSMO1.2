@@ -58,6 +58,22 @@
 // ❌ Ne JAMAIS relâcher `TOLERANCE_RETARD_MIN` pour faire passer la CI. Un
 // retard qui dure veut dire qu'un déploiement est cassé, pas que la borne est
 // trop basse.
+//
+// ── LA RÉFÉRENCE EST LE DERNIER COMMIT VERT, PLUS LA TÊTE DE `main` ─
+//
+// Depuis la porte de déploiement (CI-02, 2026-11-07), Vercel ne construit en
+// production qu'un SHA portant le tag `ci-vert/<sha>` (`ci-vert.yml`,
+// `scripts/vercel-ignore-build.mjs`). Un `main` rouge reste donc légitimement
+// hors production : comparée à HEAD, la garde crierait au « retard » sur une
+// production saine. La référence est le commit le plus récent de l'histoire
+// de HEAD qui porte ce tag (`dernierShaVert`). Conséquences :
+//   - `main` rouge, production sur le dernier vert        → À JOUR ;
+//   - production DESCENDANTE du dernier vert              → un commit SANS
+//     verdict vert est servi : porte contournée (redeploy d'urgence) ou tag
+//     manquant. ROUGE, toujours ;
+//   - aucun tag `ci-vert/*` dans les 500 derniers commits → ROUGE
+//     (`aucun_vert`) : `CI vert` ne pose plus rien, donc plus rien ne part en
+//     production. Une garde qui ne trouve pas sa référence échoue.
 // ═══════════════════════════════════════════════════════════════════
 import { execFileSync } from 'node:child_process'
 
@@ -108,7 +124,7 @@ export function verdict(e) {
   }
 
   if (relation === 'egal') {
-    return { ok: true, code: 'a_jour', message: `la production sert ${servi}, qui est le commit du depot.` }
+    return { ok: true, code: 'a_jour', message: `la production sert ${servi}, qui est le dernier commit vert du depot.` }
   }
 
   if (relation === 'ancetre') {
@@ -125,7 +141,7 @@ export function verdict(e) {
       ok: false,
       code: 'retard',
       message:
-        `la production sert ${servi} alors que le depot est a ${head}, pousse il y a ` +
+        `la production sert ${servi} alors que le dernier commit vert est ${head}, pousse il y a ` +
         `${Math.round(ageHeadMin)} min (tolerance ${TOLERANCE_RETARD_MIN} min). Le deploiement est BLOQUE ou a echoue : ` +
         'la CI est verte, le site repond, et personne ne voit que le correctif n\'est pas en ligne.',
     }
@@ -136,8 +152,10 @@ export function verdict(e) {
       ok: false,
       code: 'prod_en_avance',
       message:
-        `la production sert ${servi}, qui DESCEND de ${head} : du code a ete deploye sans passer par la branche ` +
-        "par defaut, donc sans y avoir ete relu. C'est plus grave qu'un retard, jamais moins.",
+        `la production sert ${servi}, qui DESCEND du dernier commit vert ${head} : un commit SANS verdict ` +
+        '`CI noyau` vert est servi (porte de deploiement contournee par un redeploy d urgence, ou tag ' +
+        "`ci-vert` absent), ou du code a ete deploye sans passer par la branche par defaut. C'est plus grave " +
+        "qu'un retard, jamais moins.",
     }
   }
 
@@ -169,16 +187,43 @@ function git(args, cwd) {
   return execFileSync('git', args, { cwd, encoding: 'utf8' }).trim()
 }
 
+/** Prefixe des tags poses par `ci-vert.yml` (lu aussi par la porte). */
+export const PREFIXE_VERT = 'refs/tags/ci-vert/'
+
+/** Profondeur de recherche du dernier commit vert dans l'histoire de HEAD. */
+export const PROFONDEUR_VERT = 500
+
 /**
- * Relation entre le commit servi et HEAD.
+ * Le commit le plus recent de l'histoire de HEAD qui porte `ci-vert/<sha>`,
+ * en SHA complet, ou `null`. Seuls les tags dont le NOM et la CIBLE disent le
+ * meme commit comptent : un tag deplace a la main ne fait pas un vert.
+ *
+ * ⚠️ Le clone doit porter les tags et l'historique (`fetch-depth: 0`).
+ */
+export function dernierShaVert(cwd = process.cwd()) {
+  const verts = new Set(
+    git(['for-each-ref', '--format=%(refname) %(objectname)', PREFIXE_VERT], cwd)
+      .split('\n')
+      .map((l) => l.trim().split(' '))
+      .filter(([ref, cible]) => ref && cible && ref === PREFIXE_VERT + cible)
+      .map(([, cible]) => cible),
+  )
+  if (verts.size === 0) return null
+  const histoire = git(['rev-list', `--max-count=${PROFONDEUR_VERT}`, 'HEAD'], cwd).split('\n')
+  return histoire.map((c) => c.trim()).find((c) => verts.has(c)) ?? null
+}
+
+/**
+ * Relation entre le commit servi et la reference (HEAD par defaut ; le CLI
+ * passe le dernier commit vert).
  *
  * ⚠️ Un clone SUPERFICIEL (`fetch-depth: 1`, le defaut d'actions/checkout) ne
  * contient pas l'ancetre : `merge-base` echouerait et la garde rendrait
  * « inconnu » sur une production parfaitement saine. Le workflow pose donc
  * `fetch-depth: 0`, et ce cas est distingue explicitement ci-dessous.
  */
-export function relationAvecHead(servi, cwd = process.cwd()) {
-  const head = git(['rev-parse', 'HEAD'], cwd)
+export function relationAvecHead(servi, cwd = process.cwd(), reference = 'HEAD') {
+  const head = git(['rev-parse', reference], cwd)
   const court = head.slice(0, servi.length)
   if (court === servi) return { relation: 'egal', head: head.slice(0, 7) }
 
@@ -203,9 +248,9 @@ export function relationAvecHead(servi, cwd = process.cwd()) {
   return { relation: 'inconnu', head: head.slice(0, 7) }
 }
 
-/** Age du commit HEAD, en minutes. */
-export function ageHeadMinutes(cwd = process.cwd()) {
-  const ts = Number(git(['log', '-1', '--format=%ct'], cwd))
+/** Age du commit de reference (HEAD par defaut), en minutes. */
+export function ageHeadMinutes(cwd = process.cwd(), reference = 'HEAD') {
+  const ts = Number(git(['log', '-1', '--format=%ct', reference], cwd))
   return (Date.now() / 1000 - ts) / 60
 }
 
@@ -227,14 +272,25 @@ if (lanceDirectement) {
     process.exit(1)
   }
 
-  const { relation, head } =
-    servi && servi !== 'dev' ? relationAvecHead(servi) : { relation: 'inconnu', head: 'n/a' }
-  const v = verdict({ servi, head, relation, ageHeadMin: ageHeadMinutes() })
+  const vert = dernierShaVert()
+  if (!vert) {
+    console.error(
+      `::error::[aucun_vert] aucun tag ci-vert/<sha> dans les ${PROFONDEUR_VERT} derniers commits de HEAD. ` +
+        '`CI vert` (ci-vert.yml) ne pose plus le verdict du noyau, donc la porte de deploiement ne laisse plus ' +
+        'rien partir en production. Une garde qui ne trouve pas sa reference ECHOUE (clone sans tags : fetch-depth 0).',
+    )
+    process.exit(1)
+  }
 
-  console.log(`marqueur   : ${url}`)
-  console.log(`servi      : ${servi ?? '(illisible)'}`)
-  console.log(`depot HEAD : ${head}`)
-  console.log(`relation   : ${relation}`)
+  const { relation, head } =
+    servi && servi !== 'dev' ? relationAvecHead(servi, process.cwd(), vert) : { relation: 'inconnu', head: 'n/a' }
+  const v = verdict({ servi, head, relation, ageHeadMin: ageHeadMinutes(process.cwd(), vert) })
+
+  console.log(`marqueur     : ${url}`)
+  console.log(`servi        : ${servi ?? '(illisible)'}`)
+  console.log(`dernier vert : ${vert.slice(0, 7)}`)
+  console.log(`depot HEAD   : ${git(['rev-parse', '--short=7', 'HEAD'], process.cwd())}`)
+  console.log(`relation     : ${relation}`)
   console.log('')
 
   if (!v.ok) {

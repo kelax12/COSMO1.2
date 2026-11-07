@@ -1,4 +1,5 @@
 {
+  "ignoreCommand": "node scripts/vercel-ignore-build.mjs; test $? -ne 78",
   "redirects": [
     { "source": "/welcome", "destination": "/", "permanent": true }
   ],
