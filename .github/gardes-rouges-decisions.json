@@ -1,0 +1,13 @@
+{
+  "_note": "Gardes rouges plus de 7 jours, recalées par DÉCISION ÉCRITE ET DATÉE (V9.4, TST-05). Lu par scripts/gardes-rouges-7j.mjs (job `rouges-anciens` de ci-alert.yml). Une entrée = un workflow (son `name:`), `decide_le`, `revoir_le` (30 jours au plus après la décision : une décision se relit), `mesure` (ce qui a été mesuré, et quand), `motif` (pourquoi ce rouge est assumé), `doc` (où la décision est écrite en entier). Une décision échue remet le workflow dans l'issue ci-red. Une décision dont le workflow n'est plus rouge est signalée « sans objet » : la retirer. ❌ Jamais une entrée pour faire taire : la question est d'abord « que dit ce rouge ? ».",
+  "decisions": [
+    {
+      "workflow": "Secrets age",
+      "decide_le": "2026-11-07",
+      "revoir_le": "2026-11-21",
+      "mesure": "run 41474391054 (2026-11-02) : 44 écarts, AUCUN secret connu au-delà de son échéance. Causes : secret SECRETS_AUDIT_TOKEN jamais posé (source GitHub illisible, d'où 10 dates inconnues), 30 noms vivants hors registre (inscrits le 2026-11-07), vercel/VITE_TURNSTILE_SITE_KEY absente (entrée retirée), supabase-platform/SUPABASE_SERVICE_ROLE_KEY sans date.",
+      "motif": "Le rouge restant est VRAI et ne se corrige pas dans le code : il attend deux gestes d'Axel (poser SECRETS_AUDIT_TOKEN ; donner la date de dernière rotation de la clé service_role de la plateforme, ou la faire tourner). Masquer ce rouge serait mentir ; le laisser dans l'issue sans décision le rendrait inaudible. Recalé deux semaines, le temps du geste, puis relu.",
+      "doc": "docs/SECURITY.md, AM-3 secrets (âge des secrets)"
+    }
+  ]
+}
