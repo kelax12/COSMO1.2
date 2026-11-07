@@ -80,7 +80,7 @@ function sec09Violations(d: Map<string, string[]>): string[] {
   for (const [name, sources] of d) {
     for (const src of sources) {
       if (JOKER_SUPABASE.test(src)) out.push(`${name} : joker ${src}`);
-      if (src.includes('js.stripe.com')) out.push(`${name} : ${src} sans SDK Stripe côté client`);
+      if (/(^|[/.])stripe\.com$/.test(src.replace(/^\w+:\/\//, ''))) out.push(`${name} : ${src} sans SDK ni appel Stripe côté client`);
     }
   }
   return out;
@@ -133,6 +133,12 @@ describe('CSP servie par Vercel', () => {
     expect(d.get('img-src') ?? []).toContain(`https://${SUPABASE_HOST}`);
   });
 
+  it('COD-03 : aucun domaine Stripe dans la CSP, le checkout passe par une redirection serveur', () => {
+    for (const [name, sources] of cspDirectives()) {
+      expect(sources.filter((x) => x.includes('stripe')), name).toEqual([]);
+    }
+  });
+
   it("SEC-09 : Stripe.js n'est chargé nulle part côté client (sinon, la CSP doit le rouvrir)", () => {
     // La raison du retrait doit rester vraie : un `<script src=js.stripe.com>`
     // ajouté plus tard serait bloqué en production, en silence.
@@ -152,5 +158,7 @@ describe('CSP servie par Vercel', () => {
     expect(sec09Violations(parseCsp(`connect-src https://${SUPABASE_HOST} wss://${SUPABASE_HOST}`))).toEqual([]);
     expect(STRIPE_JS.test("const s = await loadStripe('pk_live_x')")).toBe(true);
     expect(STRIPE_JS.test('<script src="https://js.stripe.com/v3"></script>')).toBe(true);
+    // COD-03 : `api.stripe.com` en connect-src n'a aucun appelant client non plus.
+    expect(sec09Violations(parseCsp('connect-src https://api.stripe.com'))).toHaveLength(1);
   });
 });
