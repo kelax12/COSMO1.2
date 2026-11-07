@@ -259,7 +259,7 @@ Aucune.
 | `toggle_task_bookmark(p_task_id uuid)` | INVOKER | `public, pg_temp` | - | oui | oui | `src/modules/tasks/supabase.repository.ts` |
 | `toggle_task_complete(p_task_id uuid)` | INVOKER | `public, pg_temp` | - | oui | oui | - |
 | `toggle_task_complete_v2(p_task_id uuid, p_next_deadline timestamp with time zone)` | INVOKER | `public, pg_temp` | - | oui | oui | `src/modules/tasks/supabase.repository.ts`<br>~`src/components/task-board/board.helpers.ts`<br>~`src/components/task-board/use-move-task.ts`<br>~`src/modules/tasks/local.repository.ts`<br>~`src/modules/tasks/recurrence.ts`<br>~`src/modules/tasks/status-sync.ts`<br>~`src/modules/tasks/types.ts` |
-| `touch_last_seen()` | DEFINER | `""` | - | oui | oui | `src/modules/auth/AuthContext.tsx` |
+| `touch_last_seen()` | DEFINER | `""` | - | oui | oui | `src/modules/auth/use-last-seen.ts` |
 | `track_hit(p jsonb)` | INVOKER | `""` | - | - | oui | ~`api/collect.ts` |
 | `transfer_org_ownership(p_org uuid, p_new_owner uuid)` | DEFINER | `""` | - | oui | oui | `src/modules/organizations/supabase.repository.ts` |
 | `trash_team_okr(p_okr uuid)` | DEFINER | `""` | - | oui | oui | `src/modules/team-okrs/supabase.repository.ts` |
