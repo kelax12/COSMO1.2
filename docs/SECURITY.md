@@ -265,7 +265,7 @@ Pour tout `<input type="file">` :
 ### CSP & headers
 
 - ✅ Tous les headers de sécurité Vercel doivent rester (HSTS, X-Frame-Options, etc.)
-- ✅ CSP **présente** dans `vercel.json` (faille §6 CLOSE) : `default-src 'self'` + Stripe (`api.stripe.com` seul : aucun SDK Stripe côté client, `js.stripe.com` retiré le 2026-11-06, SEC-09) + Supabase (le seul hôte du projet, `https://` ET `wss://`, plus de joker `*.supabase.co` depuis le 2026-11-06) + Sentry (`*.ingest.de.sentry.io`) + Google Fonts, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`. Toute nouvelle origine externe (CDN, AdSense, etc.) doit y être whitelistée explicitement, sinon elle sera bloquée.
+- ✅ CSP **présente** dans `vercel.json` (faille §6 CLOSE) : `default-src 'self'` + aucun domaine Stripe (checkout par redirection serveur : `js.stripe.com` retiré le 2026-11-06, SEC-09, `api.stripe.com` retiré le 2026-11-07, COD-03 ; garde `src/csp.guard.test.ts`) + Supabase (le seul hôte du projet, `https://` ET `wss://`, plus de joker `*.supabase.co` depuis le 2026-11-06) + Sentry (`*.ingest.de.sentry.io`) + Google Fonts, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`. `style-src 'unsafe-inline'` est conservé (COD-03) : Framer Motion, Radix, FullCalendar, le shader de la landing et plus de 1 300 `style={}` React posent des attributs `style` en ligne, qu'un nonce ou un hash ne peut pas couvrir. Le retirer casserait l'affichage ; le risque résiduel (injection CSS, sans exécution de script) est accepté. Toute nouvelle origine externe (CDN, AdSense, etc.) doit y être whitelistée explicitement, sinon elle sera bloquée.
 
 #### 🚫 Jamais de clé `"//"` (commentaire) dans `vercel.json`
 
