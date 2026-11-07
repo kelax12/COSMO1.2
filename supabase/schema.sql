@@ -1988,6 +1988,205 @@ $$;
 
 
 --
+-- Name: cron_invoke(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.cron_invoke(p_job text) RETURNS bigint
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_path   text;
+  v_url    text;
+  v_secret text;
+  v_req    bigint;
+  v_id     bigint;
+BEGIN
+  v_path := CASE p_job
+    WHEN 'org-webhook-dispatch' THEN 'org-webhook-dispatch'
+    WHEN 'org-digest-hourly'    THEN 'org-digest?mode=hourly'
+    WHEN 'org-digest-daily'     THEN 'org-digest?mode=daily'
+    WHEN 'renewal-notice'       THEN 'renewal-notice'
+    WHEN 'seat-alert'           THEN 'seat-alert'
+    WHEN 'inactive-accounts'    THEN 'inactive-accounts'
+  END;
+  IF v_path IS NULL THEN
+    RAISE EXCEPTION 'cron_invoke : job inconnu (%)', p_job USING ERRCODE = '22023';
+  END IF;
+
+  SELECT s.decrypted_secret INTO v_url
+    FROM vault.decrypted_secrets s WHERE s.name = 'cosmo_project_url';
+  SELECT s.decrypted_secret INTO v_secret
+    FROM vault.decrypted_secrets s WHERE s.name = 'cosmo_cron_secret';
+
+  -- Secret absent = une ligne en échec, jamais un silence.
+  IF coalesce(v_url, '') = '' OR coalesce(v_secret, '') = '' THEN
+    INSERT INTO public.cron_runs (job, finished_at, status, detail)
+    VALUES (p_job, now(), 'config_missing',
+            'secret Vault absent : cosmo_project_url ou cosmo_cron_secret')
+    RETURNING id INTO v_id;
+    RETURN v_id;
+  END IF;
+
+  -- 300 s : au-delà de la limite d'exécution d'une Edge Function (150 s en
+  -- Free, 400 s au-dessus), pour que ce soit la fonction qui tranche, pas le
+  -- client. Corps vide : chaque fonction lit sa sélection en base.
+  v_req := net.http_post(
+    url := rtrim(v_url, '/') || '/functions/v1/' || v_path,
+    body := '{}'::jsonb,
+    headers := jsonb_build_object('Content-Type', 'application/json', 'x-cron-secret', v_secret),
+    timeout_milliseconds := 300000
+  );
+
+  INSERT INTO public.cron_runs (job, request_id) VALUES (p_job, v_req) RETURNING id INTO v_id;
+  RETURN v_id;
+END;
+$$;
+
+
+--
+-- Name: cron_lease_acquire(text, integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.cron_lease_acquire(p_job text, p_ttl_seconds integer) RETURNS uuid
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_token uuid := gen_random_uuid();
+  v_got   uuid;
+BEGIN
+  IF p_ttl_seconds IS NULL OR p_ttl_seconds < 30 OR p_ttl_seconds > 3600 THEN
+    RAISE EXCEPTION 'cron_lease_acquire : duree de bail hors bornes (%)', p_ttl_seconds
+      USING ERRCODE = '22023';
+  END IF;
+  INSERT INTO public.cron_leases AS l (job, token, locked_until, acquired_at)
+  VALUES (p_job, v_token, now() + make_interval(secs => p_ttl_seconds), now())
+  ON CONFLICT (job) DO UPDATE
+     SET token = EXCLUDED.token,
+         locked_until = EXCLUDED.locked_until,
+         acquired_at = EXCLUDED.acquired_at
+   WHERE l.locked_until <= now()
+  RETURNING l.token INTO v_got;
+  RETURN v_got;
+END;
+$$;
+
+
+--
+-- Name: cron_lease_release(text, uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.cron_lease_release(p_job text, p_token uuid) RETURNS boolean
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+  UPDATE public.cron_leases
+     SET locked_until = now()
+   WHERE job = p_job AND token = p_token AND locked_until > now();
+  RETURN FOUND;
+END;
+$$;
+
+
+--
+-- Name: cron_run_status(integer, boolean); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.cron_run_status(p_http_code integer, p_timed_out boolean) RETURNS text
+    LANGUAGE sql IMMUTABLE
+    SET search_path TO ''
+    AS $$
+  SELECT CASE
+    WHEN p_timed_out IS TRUE THEN 'timeout'
+    WHEN p_http_code BETWEEN 200 AND 299 THEN 'ok'
+    ELSE 'error'
+  END;
+$$;
+
+
+--
+-- Name: cron_runs_close(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.cron_runs_close() RETURNS integer
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_closed integer;
+BEGIN
+  UPDATE public.cron_runs r
+     SET finished_at = x.created,
+         http_code = x.status_code,
+         status = public.cron_run_status(x.status_code, x.timed_out),
+         detail = left(x.error_msg, 300)
+    FROM net._http_response x
+   WHERE r.status = 'started'
+     AND x.id = r.request_id;
+  GET DIAGNOSTICS v_closed = ROW_COUNT;
+
+  UPDATE public.cron_runs
+     SET status = 'lost',
+         finished_at = now(),
+         detail = 'aucune reponse pg_net une heure apres l envoi'
+   WHERE status = 'started'
+     AND started_at < now() - interval '1 hour';
+
+  DELETE FROM public.cron_runs WHERE started_at < now() - interval '90 days';
+
+  RETURN v_closed;
+END;
+$$;
+
+
+--
+-- Name: cron_runs_verdict(timestamp with time zone); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.cron_runs_verdict(p_now timestamp with time zone DEFAULT now()) RETURNS TABLE(job text, fenetre interval, dernier_debut timestamp with time zone, dernier_statut text, dernier_code integer, dernier_ok timestamp with time zone, verdict text)
+    LANGUAGE sql STABLE
+    SET search_path TO ''
+    AS $$
+  WITH attendus (job, fenetre) AS (
+    VALUES
+      ('org-webhook-dispatch', interval '35 minutes'),
+      ('org-digest-hourly',    interval '2 hours 15 minutes'),
+      ('org-digest-daily',     interval '26 hours'),
+      ('renewal-notice',       interval '26 hours'),
+      ('seat-alert',           interval '26 hours'),
+      ('inactive-accounts',    interval '26 hours')
+  )
+  SELECT a.job,
+         a.fenetre,
+         d.started_at,
+         d.status,
+         d.http_code,
+         o.started_at,
+         CASE
+           WHEN d.started_at IS NULL OR d.started_at < p_now - a.fenetre THEN 'absent'
+           WHEN o.started_at IS NULL OR o.started_at < p_now - a.fenetre THEN 'echec'
+           ELSE 'ok'
+         END
+    FROM attendus a
+    LEFT JOIN LATERAL (
+      SELECT r.started_at, r.status, r.http_code
+        FROM public.cron_runs r
+       WHERE r.job = a.job AND r.started_at <= p_now
+       ORDER BY r.started_at DESC
+       LIMIT 1
+    ) d ON true
+    LEFT JOIN LATERAL (
+      SELECT max(r.started_at) AS started_at
+        FROM public.cron_runs r
+       WHERE r.job = a.job AND r.status = 'ok' AND r.started_at <= p_now
+    ) o ON true
+   ORDER BY a.job;
+$$;
+
+
+--
 -- Name: delete_organization(uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -9602,6 +9801,66 @@ COMMENT ON COLUMN public.categories.parent_id IS 'Catégorie parente. NULL = rac
 
 
 --
+-- Name: cron_leases; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.cron_leases (
+    job text NOT NULL,
+    token uuid NOT NULL,
+    locked_until timestamp with time zone NOT NULL,
+    acquired_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT cron_leases_job_check CHECK ((job ~ '^[a-z][a-z0-9:-]{1,62}$'::text))
+);
+
+
+--
+-- Name: TABLE cron_leases; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.cron_leases IS 'ARC-06 : un bail par job planifie, pris par l Edge Function. Deux executions simultanees ne travaillent jamais ensemble.';
+
+
+--
+-- Name: cron_runs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.cron_runs (
+    id bigint NOT NULL,
+    job text NOT NULL,
+    started_at timestamp with time zone DEFAULT now() NOT NULL,
+    finished_at timestamp with time zone,
+    status text DEFAULT 'started'::text NOT NULL,
+    http_code integer,
+    request_id bigint,
+    detail text,
+    CONSTRAINT cron_runs_detail_check CHECK ((char_length(detail) <= 300)),
+    CONSTRAINT cron_runs_job_check CHECK ((job ~ '^[a-z][a-z0-9-]{1,62}$'::text)),
+    CONSTRAINT cron_runs_status_check CHECK ((status = ANY (ARRAY['started'::text, 'ok'::text, 'error'::text, 'timeout'::text, 'lost'::text, 'config_missing'::text])))
+);
+
+
+--
+-- Name: TABLE cron_runs; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.cron_runs IS 'ARC-06 : une ligne par execution planifiee (pg_cron -> pg_net -> Edge Function). Aucun secret, aucun corps de reponse. Purge a 90 jours.';
+
+
+--
+-- Name: cron_runs_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public.cron_runs ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.cron_runs_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
 -- Name: demo_devices; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -11189,6 +11448,22 @@ ALTER TABLE ONLY public.categories
 
 
 --
+-- Name: cron_leases cron_leases_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.cron_leases
+    ADD CONSTRAINT cron_leases_pkey PRIMARY KEY (job);
+
+
+--
+-- Name: cron_runs cron_runs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.cron_runs
+    ADD CONSTRAINT cron_runs_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: demo_devices demo_devices_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -11953,6 +12228,20 @@ ALTER TABLE ONLY public.withdrawal_consents
 --
 
 CREATE INDEX billing_acceptances_org_idx ON public.billing_acceptances USING btree (org_id, created_at DESC);
+
+
+--
+-- Name: cron_runs_job_started_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX cron_runs_job_started_idx ON public.cron_runs USING btree (job, started_at DESC);
+
+
+--
+-- Name: cron_runs_pending_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX cron_runs_pending_idx ON public.cron_runs USING btree (request_id) WHERE (status = 'started'::text);
 
 
 --
@@ -16106,6 +16395,18 @@ CREATE POLICY billing_flags_select ON public.billing_flags FOR SELECT TO authent
 ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: cron_leases; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.cron_leases ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: cron_runs; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.cron_runs ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: demo_devices; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -18187,6 +18488,50 @@ GRANT ALL ON FUNCTION public.create_team_project_with_tasks(p_org uuid, p_projec
 
 
 --
+-- Name: FUNCTION cron_invoke(p_job text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.cron_invoke(p_job text) FROM PUBLIC;
+
+
+--
+-- Name: FUNCTION cron_lease_acquire(p_job text, p_ttl_seconds integer); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.cron_lease_acquire(p_job text, p_ttl_seconds integer) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.cron_lease_acquire(p_job text, p_ttl_seconds integer) TO service_role;
+
+
+--
+-- Name: FUNCTION cron_lease_release(p_job text, p_token uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.cron_lease_release(p_job text, p_token uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.cron_lease_release(p_job text, p_token uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION cron_run_status(p_http_code integer, p_timed_out boolean); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.cron_run_status(p_http_code integer, p_timed_out boolean) FROM PUBLIC;
+
+
+--
+-- Name: FUNCTION cron_runs_close(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.cron_runs_close() FROM PUBLIC;
+
+
+--
+-- Name: FUNCTION cron_runs_verdict(p_now timestamp with time zone); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.cron_runs_verdict(p_now timestamp with time zone) FROM PUBLIC;
+
+
+--
 -- Name: FUNCTION delete_organization(p_org uuid); Type: ACL; Schema: public; Owner: -
 --
 
@@ -20013,6 +20358,21 @@ GRANT ALL ON TABLE public.categories TO service_role;
 
 
 --
+-- Name: TABLE cron_runs; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT ON TABLE public.cron_runs TO service_role;
+
+
+--
+-- Name: SEQUENCE cron_runs_id_seq; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON SEQUENCE public.cron_runs_id_seq TO authenticated;
+GRANT ALL ON SEQUENCE public.cron_runs_id_seq TO service_role;
+
+
+--
 -- Name: TABLE demo_devices; Type: ACL; Schema: public; Owner: -
 --
 
@@ -20730,8 +21090,13 @@ CREATE POLICY "avatars_public_read" ON "storage"."objects" AS PERMISSIVE FOR SEL
 -- pg_cron (nom, planning, commande)
 
 SELECT cron.schedule('cosmo-activity-reports', '2 * * * *', 'SELECT public.generate_due_activity_reports();');
+SELECT cron.schedule('cosmo-cron-runs-close', '*/5 * * * *', 'SELECT public.cron_runs_close();');
 SELECT cron.schedule('cosmo-expire-org-roles', '7 * * * *', 'SELECT public.expire_org_member_roles();');
+SELECT cron.schedule('cosmo-inactive-accounts', '37 6 * * *', 'SELECT public.cron_invoke(''inactive-accounts'');');
 SELECT cron.schedule('cosmo-kr-due', '5 6 * * *', 'SELECT public.notify_kr_due();');
+SELECT cron.schedule('cosmo-org-digest-daily', '41 7 * * *', 'SELECT public.cron_invoke(''org-digest-daily'');');
+SELECT cron.schedule('cosmo-org-digest-hourly', '23 * * * *', 'SELECT public.cron_invoke(''org-digest-hourly'');');
+SELECT cron.schedule('cosmo-org-webhook-dispatch', '7-59/10 * * * *', 'SELECT public.cron_invoke(''org-webhook-dispatch'');');
 SELECT cron.schedule('cosmo-overdue-reminders', '0 7 * * *', 'SELECT public.run_overdue_reminders();');
 SELECT cron.schedule('cosmo-prune-declined-invitations', '30 3 * * *', 'SELECT public.prune_declined_org_invitations();');
 SELECT cron.schedule('cosmo-purge-email-invitations', '50 3 * * *', 'SELECT public.purge_expired_email_invitations();');
@@ -20740,3 +21105,5 @@ SELECT cron.schedule('cosmo-purge-team-okr-trash', '47 3 * * *', 'SELECT public.
 SELECT cron.schedule('cosmo-purge-team-task-trash', '45 3 * * *', 'SELECT public.purge_team_task_trash();');
 SELECT cron.schedule('cosmo-purge-traffic', '17 0 * * *', 'SELECT public.purge_traffic();');
 SELECT cron.schedule('cosmo-purge-webhook-deliveries', '35 4 * * *', 'DELETE FROM public.org_webhook_deliveries WHERE created_at < now() - interval ''7 days'';');
+SELECT cron.schedule('cosmo-renewal-notice', '12 7 * * *', 'SELECT public.cron_invoke(''renewal-notice'');');
+SELECT cron.schedule('cosmo-seat-alert', '14 7 * * *', 'SELECT public.cron_invoke(''seat-alert'');');

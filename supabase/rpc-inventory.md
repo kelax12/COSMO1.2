@@ -16,12 +16,12 @@ Regenerer : npm run contrat:generer (Docker, supabase start, node scripts/apply-
 
 | Mesure | Nombre |
 |---|---|
-| Fonctions | 237 |
+| Fonctions | 243 |
 | Executables par `anon` | 3 |
 | Executables par `authenticated` | 109 |
-| Executables par `service_role` | 237 |
+| Executables par `service_role` | 239 |
 | Droit accorde a `PUBLIC` | 0 |
-| SECURITY DEFINER | 155 |
+| SECURITY DEFINER | 157 |
 | SECURITY DEFINER sans `search_path` fige | 0 |
 | SECURITY DEFINER executables par `anon` | 2 |
 
@@ -83,6 +83,12 @@ Aucune.
 | `create_organization(p_name text)` | DEFINER | `""` | - | oui | oui | `src/modules/organizations/supabase.repository.ts` |
 | `create_profile_for_new_user(p_id uuid, p_email text, p_meta jsonb)` | DEFINER | `""` | - | - | oui | - |
 | `create_team_project_with_tasks(p_org uuid, p_project jsonb, p_tasks jsonb, p_milestones jsonb)` | INVOKER | `""` | - | oui | oui | `src/modules/team-projects/supabase.portfolio.ts`<br>~`src/modules/team-projects/local.repository.ts`<br>~`src/modules/team-projects/types.ts` |
+| `cron_invoke(p_job text)` | INVOKER | `""` | - | - | - | - |
+| `cron_lease_acquire(p_job text, p_ttl_seconds integer)` | DEFINER | `""` | - | - | oui | `supabase/functions/_shared/cron-lease.ts` |
+| `cron_lease_release(p_job text, p_token uuid)` | DEFINER | `""` | - | - | oui | `supabase/functions/_shared/cron-lease.ts` |
+| `cron_run_status(p_http_code integer, p_timed_out boolean)` | INVOKER | `""` | - | - | - | - |
+| `cron_runs_close()` | INVOKER | `""` | - | - | - | - |
+| `cron_runs_verdict(p_now timestamp with time zone)` | INVOKER | `""` | - | - | - | - |
 | `delete_organization(p_org uuid)` | DEFINER | `""` | - | oui | oui | `src/modules/organizations/supabase.repository.ts`<br>~`src/components/organization/DeleteOrganizationDialog.tsx`<br>~`src/components/organization/OrgSettingsSection.tsx`<br>~`src/pages/organization/useDeleteOrgFlow.ts` |
 | `delete_team_with_transfer(p_team uuid, p_target uuid, p_archive_projects boolean)` | INVOKER | `""` | - | oui | oui | `src/modules/org-teams/supabase.repository.ts`<br>~`src/modules/org-teams/local.repository.ts`<br>~`src/modules/org-teams/repository.ts` |
 | `drop_muted_org_notification()` (trigger) | INVOKER | `""` | - | - | oui | ~`src/components/organization/OrgNotificationSettingsDialog.tsx` |
