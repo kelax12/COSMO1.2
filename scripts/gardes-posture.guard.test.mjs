@@ -179,13 +179,13 @@ describe('témoin — posture Supabase (C-88)', () => {
     expect(ref.performance).toBeTruthy();
     // Depuis la mig. 227 (2026-10-26) l'advisor était absent de la référence : absent = 0.
     // 🔴 Seule exception admise (V9.4, 2026-11-07) : la DETTE DATÉE des trois FK
-    // nées par les mig. 230, 233 et 237, que la mig. 245 indexe. Bornée à 3, sa
-    // `_note` doit citer la 245. ❌ Pas d'échéance testée ici : ce fichier tourne
+    // nées par les mig. 230, 233 et 237, que la mig. 247 indexe. Bornée à 3, sa
+    // `_note` doit citer la 247. ❌ Pas d'échéance testée ici : ce fichier tourne
     // dans `CI noyau`, et une garde de calendrier n'est jamais bloquante (CI-01).
     const fk = ref.performance.unindexed_foreign_keys;
     if ((fk?.compte ?? 0) > 0) {
       expect(fk.compte).toBeLessThanOrEqual(3);
-      expect(fk._note).toMatch(/mig\. 245/);
+      expect(fk._note).toMatch(/mig. 247/);
     }
     expect(ref.performance.unused_index.compte).toBeGreaterThan(0);
   });

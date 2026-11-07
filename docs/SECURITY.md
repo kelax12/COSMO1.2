@@ -965,11 +965,11 @@ Objets relus dans leurs migrations et par `get_advisors` le même jour, noms éc
   de moins d'une heure). Légitimes.
 - `unindexed_foreign_keys` 0 → 3 : **défaut**. `org_settings.default_role_id` (`230`),
   `team_tasks.validator_id` (`233`, parcourue par la suppression de compte),
-  `org_withdrawals.org_id` (`237`). Correctif : mig. **`245`**, écrite, **non appliquée** (geste
+  `org_withdrawals.org_id` (`237`). Correctif : mig. **`247`**, écrite, **non appliquée** (geste
   d'Axel). D'ici là, le compte de 3 est une **dette datée** dans la référence : la garde refuse la
   quatrième au lieu de rester rouge sur les trois connues. Après application, l'advisor disparaît :
   recaler (`regenerer`) pour revenir au refus de toute FK sans index. À relire au plus tard le
-  2026-12-07 si la 245 n'est pas appliquée.
+  2026-12-07 si la 247 n'est pas appliquée.
 
 Comptes recalés par le job `regenerer` du workflow Posture sur `main` (jamais à la main). Témoin :
 « la référence COMMITÉE rougit encore sur un objet de plus » (`gardes-posture.guard.test.mjs`).

@@ -80,7 +80,7 @@
 liste NOMMÉE de ses objets. Un rouge = de nouveaux objets en base : les relire au catalogue
 (`pg_get_functiondef`, `has_function_privilege`, `relacl`) AVANT `--update`, et écrire leurs noms
 dans la `_note`. ❌ Jamais recaler pour faire taire.
-⚠️ Recalé le 2026-11-07 (mig. `245`) : `docs/SECURITY.md` § AM-5. Rouge > 7 j : `docs/TESTING.md`.
+⚠️ Recalé le 2026-11-07 (mig. `247`) : `docs/SECURITY.md` § AM-5. Rouge > 7 j : `docs/TESTING.md`.
 
 ---
 
