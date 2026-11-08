@@ -54,9 +54,15 @@ export function teamOkrsContract(
       });
     });
 
+    // Six KR : un ordre aléatoire ne retombe sur l'ordre saisi qu'une fois sur
+    // 720, ce qui rend le cas déterministe en pratique des deux côtés.
     contractCase(opts, 'les KR se relisent dans l’ordre où ils ont été saisis', async () => {
-      const created = await create();
-      expect((await find(created.id))?.keyResults.map((k) => k.title)).toEqual(['Signer 3 clients', 'Publier 10 études']);
+      const titles = ['KR un', 'KR deux', 'KR trois', 'KR quatre', 'KR cinq', 'KR six'];
+      const created = await ctx.repo.create(ctx.orgId, {
+        title: unique('Ordre des KR'),
+        keyResults: titles.map((title) => ({ title, targetValue: 1 })),
+      });
+      expect((await find(created.id))?.keyResults.map((k) => k.title)).toEqual(titles);
     });
 
     contractCase(opts, 'renomme un OKR d’équipe', async () => {
