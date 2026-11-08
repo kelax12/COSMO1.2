@@ -213,7 +213,7 @@ acceptée, et la configuration réelle relue fichier par fichier) vit dans le m�
   dépendance que ce dépôt refuse pour une mesure (cf. l'en-tête de `check-import-cycles.mjs`).
 - **Les découpages viennent ensuite, un par un, en revue humaine.** Ordre de travail : les pires
   valeurs d'abord (complexité : `OrganizationPage` 107, `TeamTaskModal` 99, `PyramidNodeCard` 76,
-  `admin/repository` 74 ; longueur : `GuidePage` 474, `ApercuWidgetGrid` 449, `TeamTaskModal` 433,
+  `admin/supabase.repository` 74 ; longueur : `GuidePage` 474, `ApercuWidgetGrid` 449, `TeamTaskModal` 433,
   `InboxMenu` 432). Une découpe suit une frontière réelle (un geste, une surface, une dérivation),
   jamais une coupe à la valeur près pour passer sous un seuil.
 - **Le plafond de 1 000 lignes** reste dans `src/architecture.guard.test.ts`, liste d'exceptions
