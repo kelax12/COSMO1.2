@@ -56,7 +56,7 @@ src/modules/{module}/
 ├── local.repository.ts      # classe démo (localStorage), helpers `local.*.ts`
 ├── local.seed.ts            # jeu de données démo, sans lecture ni écriture de stockage
 ├── supabase.repository.ts   # classe Supabase
-├── hooks.ts                 # hooks React Query, via `getXRepository()` du factory
+├── hooks.ts                 # hooks React Query (via le factory)
 └── index.ts                 # surface publique ; n'exporte JAMAIS la classe démo
 ```
 
