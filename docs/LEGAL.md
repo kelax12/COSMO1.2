@@ -11,7 +11,7 @@
 > phrase ici ne protège en cas de contrôle. Les points marqués ⚠️ portaient, à cette date, sur
 > des textes déjà modifiés au moins une fois : ils se revérifient à la source.
 
-**Plan** : [État des lieux](#état-des-lieux-au-2026-08-26) · [**Tableau de conformité**](#-tableau-de-conformité) · [État d'alerte](#-état-dalerte-au-2026-08-26--la-chaîne-de-paiement-est-armée) · [La décision structurante](#-la-décision-structurante--tout-client-est-un-consommateur)
+**Plan** : [État des lieux](#état-des-lieux-au-2026-08-26) · [**Tableau de conformité**](#-tableau-de-conformité) · [État de la chaîne de paiement](#-état-au-2026-09-14--la-chaîne-de-paiement-est-désarmée-mode-entreprise-gratuit-sans-plafond) · [La décision structurante](#-la-décision-structurante--tout-client-est-un-consommateur)
 · [Actif aujourd'hui](#1-actif-aujourdhui-sans-structure) · [À la création](#2-à-la-création-de-la-structure)
 · [Au premier euro](#3-au-premier-euro-encaissé) · [Droit de la consommation](#4-droit-de-la-consommation)
 · [Produit et marque](#5-produit-marque-et-dépendances) · [Sous-traitants](#6-sous-traitants-et-transferts)

@@ -220,3 +220,38 @@ describe('check-docs-budget · notes /100 (ADR 0012)', () => {
     expect(run().code).toBe(0)
   })
 })
+
+// ── Règle 7 : les ancres internes tiennent (ADR 0014) ───────────────
+describe('check-docs-budget · ancres', () => {
+  it('ROUGE quand un lien vise une ancre qui n existe plus (section deplacee en archive)', () => {
+    arbreSain()
+    put('docs/TESTING.md', '# Tests' + NL + NL + '## Boucle locale' + NL)
+    put('docs/ARCHITECTURE.md', '# Archi' + NL + NL + 'Voir [la boucle](./TESTING.md#journal-des-notes).' + NL)
+    const r = run()
+    expect(r.code).toBe(1)
+    expect(r.out).toContain('journal-des-notes')
+    expect(r.out).toContain('ancre')
+  })
+
+  it('VERT quand l ancre existe, emoji et ponctuation compris, et sur les liens internes #x', () => {
+    arbreSain()
+    put('docs/TESTING.md', '# Tests' + NL + NL + '## 📋 Tableau de conformité (C-1) : état' + NL + NL + 'Retour : [haut](#-tableau-de-conformité-c-1--état).' + NL)
+    put('docs/ARCHITECTURE.md', '# Archi' + NL + NL + 'Voir [le tableau](./TESTING.md#-tableau-de-conformité-c-1--état).' + NL)
+    expect(run().code).toBe(0)
+  })
+
+  it('une ancre dans un bloc de code n est pas un titre, et les doublons recoivent -1', () => {
+    arbreSain()
+    put('docs/TESTING.md', '# Tests' + NL + NL + '```bash' + NL + '# faux-titre' + NL + '```' + NL + NL + '## Suite' + NL + NL + '## Suite' + NL)
+    put('docs/ARCHITECTURE.md', '# A' + NL + NL + '[a](./TESTING.md#suite) [b](./TESTING.md#suite-1)' + NL)
+    expect(run().code).toBe(0)
+    put('docs/ARCHITECTURE.md', '# A' + NL + NL + '[a](./TESTING.md#faux-titre)' + NL)
+    expect(run().code).toBe(1)
+  })
+
+  it('IGNORE docs/archive/ : une ancre y est une trace d epoque', () => {
+    arbreSain()
+    put('docs/archive/X.md', '[a](../TESTING.md#absente)' + NL)
+    expect(run().code).toBe(0)
+  })
+})

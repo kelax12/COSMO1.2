@@ -121,6 +121,62 @@ export function findLivingDocs(root) {
   return out.sort()
 }
 
+/**
+ * Ancre GitHub d'un titre : minuscules, ponctuation retiree (sauf `-` et `_`),
+ * espaces en tirets. Les emoji sont de la ponctuation, ils tombent.
+ */
+export function ancreDe(titre) {
+  return titre
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/<[^>]*>/g, '')
+    .replace(/`/g, '')
+    .replace(/[*~]/g, '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s_-]/gu, '')
+    .replace(/\s/g, '-')
+}
+
+/** Les ancres d'un fichier markdown (titres hors blocs de code, doublons suffixes -1, -2). */
+export function ancresDe(texte) {
+  const out = new Set()
+  const vus = {}
+  let code = false
+  for (const l of texte.replace(/\r\n/g, '\n').split('\n')) {
+    if (/^\s*```/.test(l)) code = !code
+    if (code) continue
+    const m = /^#{1,6}\s+(.*?)\s*#*\s*$/.exec(l)
+    if (!m) continue
+    const base = ancreDe(m[1])
+    const n = vus[base] ?? 0
+    vus[base] = n + 1
+    out.add(n === 0 ? base : `${base}-${n}`)
+  }
+  return out
+}
+
+/** Les liens `](fichier.md#ancre)` et `](#ancre)` d'un fichier, resolus depuis SON dossier. */
+function liensAvecAncre(root, rel) {
+  const body = readFileSync(join(root, rel), 'utf8')
+  const found = []
+  const re = /\]\(([^)\s#]*)#([^)\s]+)\)/g
+  let m
+  while ((m = re.exec(body)) !== null) {
+    const href = m[1]
+    if (/^[a-z]+:/i.test(href)) continue
+    if (href !== '' && !href.endsWith('.md')) continue
+    const cible = href === '' ? rel : relative(root, resolve(join(root, dirname(rel)), href)).split(sep).join('/')
+    let ancre = m[2]
+    try {
+      ancre = decodeURIComponent(ancre)
+    } catch {
+      /* ancre deja lisible */
+    }
+    found.push({ href: `${href}#${m[2]}`, cible, ancre: ancre.toLowerCase() })
+  }
+  return found
+}
+
 export function audit(root = process.cwd()) {
   const errors = []
   const rows = []
@@ -209,6 +265,26 @@ export function audit(root = process.cwd()) {
           `${f} : ${r.dit}. Les notes /100 ont cesse (ADR 0012) : renvoyer vers docs/INDICATEURS.md, ` +
             `deplacer l'historique dans docs/archive/.`,
         )
+      }
+    }
+  }
+
+  // ── 7 · les ANCRES internes tiennent ──────────────────────────────
+  //
+  // Une section deplacee en archive (ADR 0014) emporte son ancre : le lien
+  // `](./X.md#section)` qui y menait ne casse pas la garde des fichiers (regle
+  // 5) mais envoie en haut de page, ou nulle part. Chaque lien avec ancre, dans
+  // un doc vivant ou un CLAUDE.md, doit viser un titre qui existe.
+  const cache = new Map()
+  const ancresDuFichier = (rel) => {
+    if (!cache.has(rel)) cache.set(rel, ancresDe(readFileSync(join(root, rel), 'utf8')))
+    return cache.get(rel)
+  }
+  for (const f of [...findLivingDocs(root), ...files]) {
+    for (const l of liensAvecAncre(root, f)) {
+      if (!l.cible.endsWith('.md') || !existsSync(join(root, l.cible))) continue
+      if (!ancresDuFichier(l.cible).has(l.ancre)) {
+        errors.push(`${f} pointe vers ${l.href}, dont l'ancre n'existe pas dans ${l.cible}.`)
       }
     }
   }
