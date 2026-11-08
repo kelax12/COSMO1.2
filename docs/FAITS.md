@@ -14,7 +14,7 @@ Les chiffres de production (tables vivantes, ledger, taille de base) ne sont pas
 | dont planifiés | **25** | workflows portant un `schedule:` |
 | Modules applicatifs | **23** | dossiers de `src/modules/` |
 | Namespaces i18n | **34** | fichiers de `src/locales/fr/` |
-| Gardes `check:` / `i18n:` / `validate:` | **46** | scripts de `package.json` |
+| Gardes `check:` / `i18n:` / `validate:` | **44** | scripts de `package.json` |
 | ADR | **14** | fichiers `NNNN-*.md` de `docs/adr/` |
 | Tables du schéma `public` | **91** | `CREATE TABLE public.` dans `supabase/schema.sql` |
 | dont sous RLS | **91** | `ENABLE ROW LEVEL SECURITY` dans `supabase/schema.sql` |
