@@ -62,6 +62,7 @@
     "check:portability": "node scripts/check-portability-export.mjs",
     "check:env": "node scripts/check-env-contract.mjs",
     "check:edge-smoke": "node scripts/check-edge-smoke.mjs",
+    "indicateurs": "node scripts/indicateurs.mjs --ecrire",
     "check:secrets-age": "node scripts/check-secrets-age.mjs",
     "check:supabase-posture": "node scripts/check-supabase-posture.mjs",
     "check:prod-errors": "node scripts/check-prod-errors.mjs",
