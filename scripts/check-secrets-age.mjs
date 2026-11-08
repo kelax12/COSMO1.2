@@ -77,6 +77,79 @@ export function validerRegistre(registre) {
     if (e.lastRotated != null && !/^\d{4}-\d{2}-\d{2}$/.test(e.lastRotated)) {
       erreurs.push(`${id} : lastRotated n'est pas AAAA-MM-JJ`);
     }
+    erreurs.push(...validerCompletude(e, registre.procedures));
+  }
+  erreurs.push(...validerProcedures(registre.procedures, entries));
+  return erreurs;
+}
+
+// ── V4.3 (SEC-04) : le registre est UNIQUE et COMPLET ────────────────
+// Chaque entree dit qui la lit (`readers`), l'effet d'une fuite (`leak`) et
+// renvoie a une procedure de rotation pas a pas (`rotation`, un id de
+// `procedures`). Les procedures sont des NOMS et des COMMANDES, jamais une
+// valeur ni un indice de valeur.
+
+/** Une valeur ou un indice de valeur : chaine de connexion, cle PEM, longue suite opaque. */
+export const MOTIFS_DE_VALEUR = [
+  /postgres(ql)?:\/\/[^\s"<]*:[^\s"<@]+@/i,
+  /-----BEGIN [A-Z ]*KEY/,
+  /\b[A-Za-z0-9]{32,}\b/,
+  /\b(sk|rk|pk)_(live|test)_/,
+  /\bwhsec_/,
+  /\bsbp_/,
+  /\beyJ[A-Za-z0-9_-]{10}/,
+  /https?:\/\/[^\s"]*(hooks\.|discord(app)?\.com\/api\/webhooks)/i,
+];
+
+/** Les procédures d'un secret que rien ne lit : variable chez Vercel, ou secret GitHub en attente de son lecteur. */
+export const PROCEDURES_SANS_LECTEUR = ['variable-orpheline', 'secret-sans-lecteur'];
+
+export function contientUneValeur(texte) {
+  return MOTIFS_DE_VALEUR.some((re) => re.test(String(texte)));
+}
+
+/** Les champs de completude d'UNE entree. Rend une liste d'erreurs. */
+export function validerCompletude(e, procedures) {
+  const id = `${e.store}/${e.name}`;
+  const erreurs = [];
+  if (!Array.isArray(e.readers) || !e.readers.every((r) => typeof r === 'string' && r.trim())) {
+    erreurs.push(`${id} : \`readers\` (qui le lit) manquant ou mal forme`);
+  } else if (e.kind === 'secret' && e.readers.length === 0 && !PROCEDURES_SANS_LECTEUR.includes(e.rotation)) {
+    erreurs.push(`${id} : un secret que personne ne lit est une variable orpheline (rotation: ${PROCEDURES_SANS_LECTEUR.join(' ou ')}), a retirer ou a justifier`);
+  }
+  if (typeof e.leak !== 'string' || e.leak.trim().length < 20) {
+    erreurs.push(`${id} : \`leak\` (effet d'une fuite) manquant ou trop court`);
+  }
+  if (typeof e.rotation !== 'string' || !procedures || !Array.isArray(procedures[e.rotation])) {
+    erreurs.push(`${id} : \`rotation\` ne designe aucune procedure de \`procedures\``);
+  }
+  if (e.coffre != null && e.coffre !== true) erreurs.push(`${id} : \`coffre\` vaut true ou n'existe pas`);
+  if (e.coffre === true && e.kind !== 'secret') erreurs.push(`${id} : seul un secret va au coffre`);
+  for (const champ of ['use', 'leak']) {
+    if (contientUneValeur(e[champ] ?? '')) erreurs.push(`${id} : \`${champ}\` ressemble a une VALEUR de secret, jamais ici`);
+  }
+  for (const r of e.readers ?? []) {
+    if (contientUneValeur(r)) erreurs.push(`${id} : un lecteur ressemble a une VALEUR de secret`);
+  }
+  return erreurs;
+}
+
+/** Les procedures : pas a pas (>= 3 etapes pour un secret), sans valeur, et utiles. */
+export function validerProcedures(procedures, entries) {
+  const erreurs = [];
+  if (!procedures || typeof procedures !== 'object' || Array.isArray(procedures)) return ['`procedures` absent'];
+  const pourSecret = new Set(entries.filter((e) => e.kind === 'secret').map((e) => e.rotation));
+  const utilisees = new Set(entries.map((e) => e.rotation));
+  for (const [nom, etapes] of Object.entries(procedures)) {
+    if (!Array.isArray(etapes) || etapes.length === 0 || !etapes.every((s) => typeof s === 'string' && s.trim().length > 10)) {
+      erreurs.push(`procedure ${nom} : une liste d'etapes non vides est exigee`);
+      continue;
+    }
+    if (pourSecret.has(nom) && etapes.length < 3) erreurs.push(`procedure ${nom} : un secret exige au moins 3 etapes (generer, poser, verifier)`);
+    if (!utilisees.has(nom)) erreurs.push(`procedure ${nom} : aucune entree ne l'utilise`);
+    for (const s of etapes) {
+      if (contientUneValeur(s)) erreurs.push(`procedure ${nom} : une etape ressemble a une VALEUR de secret`);
+    }
   }
   return erreurs;
 }

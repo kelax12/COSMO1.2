@@ -189,7 +189,7 @@ describe('ci.yml et ci-noyau.yml réels', () => {
   // `lint-test-build` rendrait `main` rouge un matin, sans poussée.
   it('lint-test-build ne lance aucune garde de calendrier, gardes-calendrier les lance toutes', () => {
     const CALENDRIER = ['check:study', 'check:docs-scored', 'check:lecteurs-ecran',
-      'check:exercice-violation', 'check:peremption-chantiers', 'check:acquisition'];
+      'check:exercice-violation', 'check:peremption-chantiers', 'check:acquisition', 'check:coffre'];
     const cal = readFileSync(join(process.cwd(), '.github/workflows/gardes-calendrier.yml'), 'utf8').replace(/\r\n/g, '\n');
     for (const g of CALENDRIER) {
       expect(etapes.map((e) => e.run ?? '').join('\n'), g).not.toContain(`npm run ${g}`);

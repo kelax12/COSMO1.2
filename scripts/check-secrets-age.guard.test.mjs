@@ -11,14 +11,18 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
   evaluer, validerRegistre, nomsDeLExemple, dateEffective,
-  lireGithub, lireSupabase, lireVercel, run, quoiFaire,
+  lireGithub, lireSupabase, lireVercel, run, quoiFaire, contientUneValeur,
 } from './check-secrets-age.mjs';
 
 const MAINTENANT = new Date('2026-10-23T12:00:00Z');
 const il = (jours) => new Date(MAINTENANT.getTime() - jours * 86_400_000).toISOString();
 
-const entree = (o) => ({ name: 'A_KEY', store: 'github', kind: 'secret', owner: 'Axel', criticality: 'high', maxAgeDays: 100, lastRotated: null, ...o });
-const registre = (...entries) => ({ entries });
+const entree = (o) => ({
+  name: 'A_KEY', store: 'github', kind: 'secret', owner: 'Axel', criticality: 'high', maxAgeDays: 100, lastRotated: null,
+  readers: ['workflow de test'], leak: 'Effet d\'une fuite decrit en toutes lettres.', rotation: 'proc-test', ...o,
+});
+const PROC_TEST = ['Generer la valeur chez le fournisseur.', 'La poser par la commande prevue.', 'Verifier par le workflow concerne.'];
+const registre = (...entries) => ({ procedures: { 'proc-test': PROC_TEST }, entries });
 const vivant = (o = {}) => ({
   github: new Map(), 'supabase-edge': new Map(), vercel: new Map(), ...o,
 });
@@ -118,6 +122,89 @@ describe('check-secrets-age · le registre', () => {
     const noms = nomsDeLExemple(readFileSync(resolve(process.cwd(), '.env.example'), 'utf8'));
     const inscrits = new Set(reg.entries.filter((e) => e.store === 'public').map((e) => e.name));
     expect([...noms].filter((n) => !inscrits.has(n))).toEqual([]);
+  });
+});
+
+// ── V4.3 (SEC-04) : le registre est UNIQUE et COMPLET ──────────────────
+// Chaque entree dit qui la lit, l'effet d'une fuite et renvoie a une procedure
+// pas a pas. Une entree incomplete, ou qui contient une valeur, est un echec.
+describe('check-secrets-age · V4.3, le registre est complet et sans valeur', () => {
+  const erreurs = (reg) => validerRegistre(reg).join('\n');
+
+  it('plancher : une entree complete avec sa procedure est bien formee', () => {
+    expect(validerRegistre(registre(entree({})))).toEqual([]);
+  });
+
+  it('une entree sans `readers`, sans `leak` ou sans procedure echoue', () => {
+    expect(erreurs(registre(entree({ readers: undefined })))).toMatch(/readers/);
+    expect(erreurs(registre(entree({ leak: undefined })))).toMatch(/leak/);
+    expect(erreurs(registre(entree({ leak: 'court' })))).toMatch(/leak/);
+    expect(erreurs(registre(entree({ rotation: undefined })))).toMatch(/rotation/);
+    expect(erreurs(registre(entree({ rotation: 'inconnue' })))).toMatch(/aucune procedure/);
+  });
+
+  it('un secret que personne ne lit n\'est admis que comme variable orpheline', () => {
+    expect(erreurs(registre(entree({ readers: [] })))).toMatch(/orpheline/);
+    const reg = { procedures: { 'variable-orpheline': PROC_TEST }, entries: [entree({ readers: [], rotation: 'variable-orpheline' })] };
+    expect(validerRegistre(reg)).toEqual([]);
+  });
+
+  it('une procedure de secret a au moins trois etapes, et chaque procedure sert', () => {
+    expect(validerRegistre({ procedures: { 'proc-test': PROC_TEST.slice(0, 2) }, entries: [entree({})] }).join()).toMatch(/au moins 3 etapes/);
+    const inutile = { procedures: { 'proc-test': PROC_TEST, jamais: PROC_TEST }, entries: [entree({})] };
+    expect(validerRegistre(inutile).join()).toMatch(/procedure jamais : aucune entree/);
+    expect(validerRegistre({ entries: [entree({})] }).join()).toMatch(/procedures. absent/);
+  });
+
+  it('une config peut n\'avoir qu\'une etape ; `coffre` ne va qu\'a un secret', () => {
+    const reg = { procedures: { 'proc-test': ['Ne tourne pas : un identifiant.'] }, entries: [entree({ kind: 'config', maxAgeDays: null })] };
+    expect(validerRegistre(reg)).toEqual([]);
+    expect(validerRegistre({ ...reg, entries: [entree({ kind: 'config', maxAgeDays: null, coffre: true })] }).join()).toMatch(/seul un secret va au coffre/);
+    expect(erreurs(registre(entree({ coffre: 'oui' })))).toMatch(/coffre/);
+  });
+
+  it.each([
+    ['une chaine de connexion Postgres', 'postgresql://postgres:motdepasse@db.exemple.test:5432/postgres'],
+    ['une cle Stripe', 'sk_live_abcdefgh'],
+    ['un secret de webhook Stripe', 'whsec_abcdefgh'],
+    ['un jeton Supabase', 'sbp_abcdefgh'],
+    ['un jeton JWT', 'eyJhbGciOiJIUzI1NiJ9'],
+    ['une cle PEM', '-----BEGIN PRIVATE KEY-----'],
+    ['une URL de webhook', 'https://discord.com/api/webhooks/1/abc'],
+    ['une longue suite opaque', 'a1b2c3d4e5f6a7b8c9d0a1b2c3d4e5f6a7b8c9d0'],
+  ])('%s est refusee, dans `leak`, dans une etape et dans un lecteur', (_titre, valeur) => {
+    expect(erreurs(registre(entree({ leak: `Effet d'une fuite : ${valeur}` })))).toMatch(/VALEUR/);
+    expect(erreurs(registre(entree({ readers: [valeur] })))).toMatch(/VALEUR/);
+    const reg = { procedures: { 'proc-test': [...PROC_TEST, `Poser ${valeur} puis verifier.`] }, entries: [entree({})] };
+    expect(validerRegistre(reg).join()).toMatch(/VALEUR/);
+  });
+
+  it('un nom de variable ou de commande n\'est pas pris pour une valeur', () => {
+    for (const ok of ['supabase secrets set SUPABASE_SERVICE_ROLE_KEY', 'gh secret set BACKUP_PASSPHRASE', 'supabase/functions/_shared/billing-mail.ts', 'select public.cron_invoke(\'<job>\');']) {
+      expect(contientUneValeur(ok), ok).toBe(false);
+    }
+  });
+
+  it('le registre commite : chaque entree est complete, chaque secret a une procedure pas a pas', () => {
+    const reg = JSON.parse(readFileSync(resolve(process.cwd(), '.github/secrets-registry.json'), 'utf8'));
+    expect(validerRegistre(reg)).toEqual([]);
+    for (const e of reg.entries.filter((x) => x.kind === 'secret')) {
+      expect(reg.procedures[e.rotation].length, `${e.store}/${e.name}`).toBeGreaterThanOrEqual(3);
+    }
+    // Le registre est UNIQUE : aucun second fichier de registre dans le depot.
+    expect(reg.entries.length).toBeGreaterThan(50);
+  });
+
+  it('la phrase de chiffrement des sauvegardes est au coffre, et seule ce qui ne se regenere pas y va', () => {
+    const reg = JSON.parse(readFileSync(resolve(process.cwd(), '.github/secrets-registry.json'), 'utf8'));
+    const auCoffre = reg.entries.filter((e) => e.coffre === true).map((e) => e.name);
+    expect(auCoffre).toContain('BACKUP_PASSPHRASE');
+    expect(reg.procedures['phrase-sauvegardes'].join('\n')).toMatch(/coffre/);
+  });
+
+  it('le registre commite ne contient aucune forme de valeur, lu en entier', () => {
+    const brut = readFileSync(resolve(process.cwd(), '.github/secrets-registry.json'), 'utf8');
+    expect(contientUneValeur(brut)).toBe(false);
   });
 });
 

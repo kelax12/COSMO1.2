@@ -75,6 +75,7 @@
     "check:docs-scored": "node scripts/check-docs-scored.mjs",
     "check:lecteurs-ecran": "node scripts/check-lecteurs-ecran.mjs",
     "check:exercice-violation": "node scripts/check-exercice-violation.mjs",
+    "check:coffre": "node scripts/check-coffre.mjs",
     "check:peremption-chantiers": "node scripts/check-peremption-chantiers.mjs",
     "check:fichiers-sensibles": "node scripts/check-fichiers-sensibles.mjs --arbre"
   },
