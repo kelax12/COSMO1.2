@@ -110,7 +110,15 @@ Rangées par nature. Aucune n'est maintenue.
 
 - **Sécurité** : [`faille-historique.md`](./archive/faille-historique.md), `faille-jusqua-2026-10-11.md`,
   [`SECURITY-journal-migrations-150-223.md`](./archive/SECURITY-journal-migrations-150-223.md)
-  (journal daté des migrations `150` → `240`).
+  (journal daté des migrations `150` → `240`). Les récits d'incident, de mesure et de bascule retirés de
+  `SECURITY.md` le 2026-11-08 (angles morts, base de données, gardes SQL, garde-fous transversaux, AM-5) :
+  [`SECURITY-recits-base-gardes-angles-morts-2026-08-26-au-2026-11-08.md`](./archive/SECURITY-recits-base-gardes-angles-morts-2026-08-26-au-2026-11-08.md).
+- **Exploitation et migration** : [`DEPLOYMENT-recits-et-releves-2026-06-07-au-2026-11-08.md`](./archive/DEPLOYMENT-recits-et-releves-2026-06-07-au-2026-11-08.md)
+  (récits et relevés du runbook, dont les drills de restauration anciens),
+  [`MIGRATION-REACT19-etude-2026-09-03-au-2026-09-13.md`](./archive/MIGRATION-REACT19-etude-2026-09-03-au-2026-09-13.md)
+  (l'étude sous React 18, caduque depuis la migration du 2026-10-23),
+  [`ANGLES-MORTS-2026-09-16-docs-vivantes.md`](./archive/ANGLES-MORTS-2026-09-16-docs-vivantes.md)
+  (tableaux « Angles morts » d'origine de neuf docs).
 - **Notes d'audit et journaux de notes** (retirés des docs le 2026-11-08, ADR 0012) : [`README-journal-des-notes-2026-08-25-au-10-25.md`](./archive/README-journal-des-notes-2026-08-25-au-10-25.md), puis un `<DOC>-journal-des-notes-<dates>.md` par domaine (angles morts, mesures, récits d'incident, notes) : `ACCESSIBILITY-journal-des-notes-2026-08-24-au-2027-01-15.md`, `ARCHITECTURE-journal-des-notes-2026-07-01-au-2026-11-06.md`, `I18N-journal-des-notes-2026-08-14-au-2026-11-06.md`, `MOBILE-journal-des-notes-2026-08-14-au-2026-12-15.md`, `PERFORMANCE-journal-des-notes-2026-08-24-au-2026-11-06.md`, `README-journal-des-notes-2026-08-25-au-10-25.md`, `README-tableau-de-bord-des-notes-2026-08-25-au-2027-01-15.md`, `RGPD-journal-des-notes-2026-04-06-au-2026-11-06.md`, `SCALABILITY-journal-des-notes-2026-08-07-au-2026-11-06.md`, `SEO-journal-des-notes-2026-01-10-au-2026-11-06.md`, `TESTING-journal-des-notes-2026-06-21-au-2026-11-07.md`, `UI-PATTERNS-journal-des-notes-2026-07-23-au-2026-11-06.md`.
 - **Audits datés** : `AUDIT-*`, `audit-*`, `I18N-REVUE-2026-10-23.md`, `DEMO-DATA-EXPORT-2026-08-21.md`.
 - **Plans** : [`ROADMAP-60J-2026-08-28-au-10-26.md`](./archive/ROADMAP-60J-2026-08-28-au-10-26.md)
