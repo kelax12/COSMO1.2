@@ -126,7 +126,7 @@ export function useTaskImport(target?: OrgImportTarget) {
     const problems: string[] = [];
     for (const file of Array.from(list)) {
       if (file.size > MAX_FILE_BYTES) { problems.push(t('import.tooBig', { name: file.name })); continue; }
-      let rows: string[][] = [];
+      let rows: string[][];
       try { rows = parseCsv(await file.text()); } catch { rows = []; }
       if (rows.length < 2) { problems.push(t('import.unreadable', { name: file.name })); continue; }
       const source = detectFormat(rows);

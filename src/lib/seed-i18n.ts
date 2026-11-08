@@ -57,7 +57,7 @@ export function recordSeedLocale(): void {
  * chargement suivant le déploiement, pour un contenu déjà correct.
  */
 export function seedLocaleMatchesCurrent(): boolean {
-  let stored: string | null = null;
+  let stored: string | null;
   try {
     stored = localStorage.getItem(DEMO_SEED_LOCALE_KEY);
   } catch {

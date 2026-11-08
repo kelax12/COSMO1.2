@@ -75,7 +75,7 @@ const PersoPreview = ({
   }`;
   const CAPTION = 'mt-3 text-center font-data text-caption uppercase tracking-[0.14em] text-[var(--onb-muted)]';
 
-  let body: React.ReactNode = null;
+  let body: React.ReactNode;
 
   if (step === 0) {
     const defs: Record<Planet, string> = {

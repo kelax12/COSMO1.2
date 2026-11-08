@@ -35,7 +35,7 @@ export function writePendingCheckout(pending: PendingCheckout): void {
 }
 
 export function readPendingCheckout(orgId: string, now = Date.now()): PendingCheckout | null {
-  let raw: string | null = null;
+  let raw: string | null;
   try {
     raw = sessionStorage.getItem(PENDING_CHECKOUT_KEY);
   } catch {

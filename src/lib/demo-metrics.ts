@@ -56,7 +56,7 @@ export function recordDemoVisit(): void {
  */
 export function recordDemoConversionIfAny(): void {
   if (!isSupabaseConfigured) return;
-  let id: string | null = null;
+  let id: string | null;
   try {
     id = localStorage.getItem(DEMO_DEVICE_ID_KEY);
   } catch {

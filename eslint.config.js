@@ -256,6 +256,15 @@ export default tseslint.config(
       'react-hooks/rules-of-hooks': 'off',
       'react-hooks/exhaustive-deps': 'off',
       'react-refresh/only-export-components': 'off',
+      // V18.2 (DEP-01, 2026-11-08) : `no-useless-assignment`, NEUVE dans
+      // `eslint:recommended` d'ESLint 10, signale 3 initialiseurs morts ici
+      // (`_shared/trace-core.ts`, `org-webhook-dispatch`, `verify-org-domain`).
+      // Corrigés dans `src/` et `e2e/` ; PAS ici, parce que toucher une
+      // fonction la redéploie en production (`edge-deploy.yml`), et
+      // `_shared/` les redéploierait toutes, pour un changement sans effet.
+      // Suite : retirer ces trois initialiseurs avec la prochaine modification
+      // fonctionnelle de chaque fichier, puis supprimer cette ligne.
+      'no-useless-assignment': 'off',
     },
   }
 );

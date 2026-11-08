@@ -50,6 +50,26 @@ const nextWeekday = (base: Date, weekday: number): Date => {
   return addDays(base, delta);
 };
 
+/**
+ * Date numérique 15/07 ou 15/07/2026, ou `undefined` si le jeton n'en est pas
+ * une valide (il retombe alors dans le nom). Sans année explicite, une date
+ * déjà passée bascule sur l'année suivante.
+ */
+const parseNumericDate = (token: string, now: Date): string | undefined => {
+  const numericDate = /^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/.exec(token);
+  if (!numericDate) return undefined;
+  const day = Number(numericDate[1]);
+  const month = Number(numericDate[2]);
+  if (day < 1 || day > 31 || month < 1 || month > 12) return undefined;
+  let year = numericDate[3] !== undefined ? Number(numericDate[3]) : now.getFullYear();
+  if (year < 100) year += 2000;
+  let candidate = new Date(year, month - 1, day);
+  if (numericDate[3] === undefined && candidate < new Date(now.getFullYear(), now.getMonth(), now.getDate())) {
+    candidate = new Date(year + 1, month - 1, day);
+  }
+  return toLocalDateString(candidate);
+};
+
 export function parseQuickAdd(input: string, now: Date = new Date()): QuickAddParseResult {
   const result: QuickAddParseResult = { name: '' };
   const nameParts: string[] = [];
@@ -129,22 +149,10 @@ export function parseQuickAdd(input: string, now: Date = new Date()): QuickAddPa
         result.deadline = toLocalDateString(nextWeekday(now, WEEKDAYS[token]));
         continue;
       }
-      // Date numérique 15/07 ou 15/07/2026
-      const numericDate = /^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/.exec(token);
-      if (numericDate) {
-        const day = Number(numericDate[1]);
-        const month = Number(numericDate[2]);
-        if (day >= 1 && day <= 31 && month >= 1 && month <= 12) {
-          let year = numericDate[3] !== undefined ? Number(numericDate[3]) : now.getFullYear();
-          if (year < 100) year += 2000;
-          let candidate = new Date(year, month - 1, day);
-          // Sans année explicite, une date déjà passée bascule sur l'année suivante.
-          if (numericDate[3] === undefined && candidate < new Date(now.getFullYear(), now.getMonth(), now.getDate())) {
-            candidate = new Date(year + 1, month - 1, day);
-          }
-          result.deadline = toLocalDateString(candidate);
-          continue;
-        }
+      const numericDeadline = parseNumericDate(token, now);
+      if (numericDeadline !== undefined) {
+        result.deadline = numericDeadline;
+        continue;
       }
     }
 

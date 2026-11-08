@@ -46,7 +46,7 @@ describe('supabase/proofs : preuves 242 à 244 rejouées sur la base fraîche', 
     });
 
     it(`${preuve} : PREUVE-ANNULEE 0 ECHEC`, async () => {
-      let verdict = '';
+      let verdict: string;
       try {
         await db.query(lire(`supabase/proofs/${preuve}`));
         verdict = 'le bloc DO a VALIDÉ au lieu de lever : la preuve ne s’annule pas';
