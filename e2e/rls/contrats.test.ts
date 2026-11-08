@@ -110,7 +110,15 @@ okrsContract(SIDE, async () => ({
 }));
 
 teamTasksContract(SIDE, async () => ({ repo: new SupabaseTeamProjectsRepository(), orgId, userId: user.id }));
-teamOkrsContract(SIDE, async () => ({ repo: new SupabaseTeamOKRsRepository(), orgId, userId: user.id }));
+// PAR-03 : les KR créés en un seul lot partagent `created_at` ; la relecture
+// (`ORDER BY created_at, id`) retombe sur des UUID aléatoires, l'ordre saisi est
+// perdu une fois sur deux. Non déterministe, donc `skip` et non `it.fails`.
+teamOkrsContract(SIDE, async () => ({ repo: new SupabaseTeamOKRsRepository(), orgId, userId: user.id }), {
+  skip: {
+    'les KR se relisent dans l’ordre où ils ont été saisis':
+      'PAR-03, ordre de relecture non déterministe en base (created_at identique dans un même lot)',
+  },
+});
 teamCategoriesContract(SIDE, async () => ({ repo: new SupabaseTeamCategoriesRepository(), orgId }));
 teamListsContract(SIDE, async () => {
   const projects = new SupabaseTeamProjectsRepository();

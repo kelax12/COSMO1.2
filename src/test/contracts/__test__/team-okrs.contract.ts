@@ -41,7 +41,8 @@ export function teamOkrsContract(
         title: read.title,
         createdBy: read.createdBy,
         teamIds: read.teamIds,
-        krs: read.keyResults.map((k) => [k.title, k.targetValue, k.currentValue, k.weight ?? 1, k.completed]),
+        // Trié : l'ordre de relecture a son propre cas, plus bas.
+        krs: read.keyResults.map((k) => [k.title, k.targetValue, k.currentValue, k.weight ?? 1, k.completed]).sort(),
       }).toEqual({
         title: 'Croissance contrat',
         createdBy: ctx.userId,
@@ -49,8 +50,13 @@ export function teamOkrsContract(
         krs: [
           ['Signer 3 clients', 3, 0, 1, false],
           ['Publier 10 études', 10, 0, 2, false],
-        ],
+        ].sort(),
       });
+    });
+
+    contractCase(opts, 'les KR se relisent dans l’ordre où ils ont été saisis', async () => {
+      const created = await create();
+      expect((await find(created.id))?.keyResults.map((k) => k.title)).toEqual(['Signer 3 clients', 'Publier 10 études']);
     });
 
     contractCase(opts, 'renomme un OKR d’équipe', async () => {

@@ -75,6 +75,7 @@ avec sa raison.
 | catégorie d'entreprise : boucle, cycle et profondeur non gardés | démo | démo corrigée (trigger `enforce_team_category_tree`) |
 | tâche sans priorité (0), défaut de la fiche, refusée par la base | production | `PAR-01`, `it.fails` côté Supabase, CHECK `tasks_priority_check` (mig. 001) |
 | tâche sans échéance (`''` → NULL), refusée par la base | production | `PAR-02`, `it.fails` côté Supabase, `tasks.deadline NOT NULL` (mig. 001) |
+| KR d'équipe créés en un lot relus dans un ordre aléatoire (même `created_at`, départage par UUID) | production | `PAR-03`, `skip` côté Supabase : non déterministe, un `it.fails` clignoterait |
 
 ### Ajouter un module à la suite
 
