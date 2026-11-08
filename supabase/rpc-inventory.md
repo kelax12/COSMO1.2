@@ -49,7 +49,7 @@ Aucune.
 | `accounts_due_for_inactivity_deletion(p_limit integer)` | DEFINER | `""` | - | - | oui | `supabase/functions/inactive-accounts/index.ts` |
 | `accounts_due_for_inactivity_notice(p_limit integer)` | DEFINER | `""` | - | - | oui | `supabase/functions/inactive-accounts/index.ts` |
 | `add_task_to_list(p_task_id uuid, p_list_id uuid)` | INVOKER | `public, pg_temp` | - | oui | oui | `src/modules/lists/supabase.repository.ts` |
-| `admin_allowlisted()` | DEFINER | `""` | - | oui | oui | `src/modules/admin/repository.ts` |
+| `admin_allowlisted()` | DEFINER | `""` | - | oui | oui | `src/modules/admin/supabase.repository.ts` |
 | `admin_stats_excluded_uids()` | INVOKER | `""` | - | oui | oui | - |
 | `affiliate_attach(p_affiliate_id uuid, p_email text)` | DEFINER | `""` | - | oui | oui | `supabase/functions/affiliation-api/index.ts` |
 | `affiliate_backfill()` | DEFINER | `""` | - | oui | oui | - |
@@ -112,9 +112,9 @@ Aucune.
 | `freeze_team_membership_identity()` (trigger) | INVOKER | `""` | - | - | oui | ~`src/modules/org-teams/supabase.repository.ts` |
 | `generate_due_activity_reports()` | DEFINER | `""` | - | - | oui | - |
 | `generate_join_code()` | INVOKER | `""` | - | - | oui | - |
-| `get_admin_onboarding_funnel(p_days integer)` | DEFINER | `""` | - | oui | oui | `src/modules/admin/repository.ts` |
+| `get_admin_onboarding_funnel(p_days integer)` | DEFINER | `""` | - | oui | oui | `src/modules/admin/supabase.repository.ts` |
 | `get_admin_revenue(p_days integer)` | DEFINER | `""` | - | oui | oui | - |
-| `get_admin_stats()` | DEFINER | `""` | - | oui | oui | `src/modules/admin/repository.ts` |
+| `get_admin_stats()` | DEFINER | `""` | - | oui | oui | `src/modules/admin/supabase.repository.ts` |
 | `get_admin_traffic(p_days integer)` | DEFINER | `""` | - | oui | oui | - |
 | `get_incoming_request_senders()` | DEFINER | `public, pg_temp` | - | oui | oui | `src/modules/friends/supabase.repository.ts`<br>~`src/modules/friends/types.ts` |
 | `get_my_habits(p_days integer, p_today date)` | INVOKER | `""` | - | oui | oui | `src/modules/habits/supabase.repository.ts`<br>~`src/modules/habits/mappers.ts` |
@@ -134,7 +134,7 @@ Aucune.
 | `get_org_member_last_activity(p_org uuid)` | DEFINER | `""` | - | oui | oui | `src/modules/organizations/member-activity.repository.ts`<br>~`src/modules/organizations/member-activity.ts` |
 | `get_pending_shared_tasks()` | DEFINER | `""` | - | oui | oui | `src/modules/tasks/supabase.repository.ts` |
 | `get_subtree(p_org uuid, p_root uuid)` | DEFINER | `""` | - | - | oui | ~`src/components/organization/pyramid.helpers.ts`<br>~`src/modules/team-projects/supabase.repository.ts` |
-| `get_support_stats()` | DEFINER | `""` | - | oui | oui | `src/modules/admin/repository.ts`<br>~`src/modules/admin/types.ts` |
+| `get_support_stats()` | DEFINER | `""` | - | oui | oui | `src/modules/admin/supabase.repository.ts`<br>~`src/modules/admin/types.ts` |
 | `get_team_deletion_impact(p_team uuid)` | INVOKER | `""` | - | oui | oui | `src/modules/org-teams/supabase.repository.ts` |
 | `get_team_member_workload(p_org uuid, p_today date)` | INVOKER | `""` | - | oui | oui | `src/modules/team-projects/supabase.access.ts`<br>~`src/modules/team-projects/local.access.ts` |
 | `get_team_okr_trash(p_org uuid)` | DEFINER | `""` | - | oui | oui | `src/modules/team-okrs/supabase.repository.ts`<br>~`src/components/organization/TeamTrashDialog.tsx` |
@@ -148,13 +148,13 @@ Aucune.
 | `insert_kr_checkin_row(p_kr uuid, p_org uuid, p_value numeric, p_status text, p_note text)` | DEFINER | `""` | - | oui | oui | - |
 | `invite_friend_to_org(p_org uuid, p_invitee uuid)` | DEFINER | `""` | - | oui | oui | `src/modules/organizations/supabase.repository.ts`<br>~`src/components/organization/InviteFriendsToOrg.tsx` |
 | `is_above(p_org uuid, p_user uuid)` | DEFINER | `""` | - | oui | oui | ~`src/components/organization/audience.helpers.ts`<br>~`src/components/organization/member-bulk.helpers.ts`<br>~`src/components/organization/visibility.helpers.ts` |
-| `is_admin()` | DEFINER | `""` | - | oui | oui | `src/modules/admin/repository.ts`<br>`supabase/functions/affiliation-api/index.ts`<br>`supabase/functions/stripe-org-refund/index.ts` |
+| `is_admin()` | DEFINER | `""` | - | oui | oui | `src/modules/admin/supabase.repository.ts`<br>`supabase/functions/affiliation-api/index.ts`<br>`supabase/functions/stripe-org-refund/index.ts` |
 | `is_allowed_avatar_url(p_url text)` | INVOKER | `""` | - | oui | oui | - |
 | `is_org_admin(p_org uuid)` | DEFINER | `""` | - | oui | oui | - |
 | `is_org_manager(p_org uuid)` | DEFINER | `""` | - | oui | oui | - |
 | `is_org_member(p_org uuid)` | DEFINER | `""` | - | oui | oui | ~`src/components/organization/MemberAccessDialog.tsx`<br>~`src/modules/organizations/types.ts`<br>~`supabase/functions/_shared/org-membership.ts`<br>~`supabase/functions/send-org-invite/index.ts` |
 | `leave_organization(p_org uuid)` | DEFINER | `""` | - | oui | oui | `src/modules/organizations/supabase.repository.ts` |
-| `log_team_task_activity()` (trigger) | DEFINER | `""` | - | - | oui | ~`src/modules/team-projects/demo-seed.ts`<br>~`src/modules/team-projects/local.repository.ts`<br>~`src/modules/team-projects/types.ts` |
+| `log_team_task_activity()` (trigger) | DEFINER | `""` | - | - | oui | ~`src/modules/team-projects/local.repository.ts`<br>~`src/modules/team-projects/local.seed.ts`<br>~`src/modules/team-projects/types.ts` |
 | `log_team_task_creation()` (trigger) | DEFINER | `""` | - | - | oui | ~`src/modules/team-projects/types.ts` |
 | `manages_user(p_user uuid)` | DEFINER | `""` | - | oui | oui | - |
 | `member_departure_impact(p_org uuid, p_user uuid)` | DEFINER | `""` | - | oui | oui | `src/modules/organizations/governance.supabase.repository.ts`<br>~`src/components/organization/OffboardMemberDialog.tsx` |

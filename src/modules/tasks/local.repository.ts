@@ -1,7 +1,6 @@
 import { ITasksRepository, ToggleCompleteResult } from './repository';
 import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskDependency } from './types';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
-import { localizeSeed } from '@/lib/seed-i18n';
 import { reachableSets } from '@/lib/dependency-graph';
 import { TASK_DEPENDENCIES_STORAGE_KEY } from './constants';
 import { deadlineDayKey } from '@/lib/deadline';
@@ -10,7 +9,7 @@ import { DEPENDENCY_ERRORS, makeDependencyError } from './dependency-errors';
 import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
 import { makeApiError } from '@/lib/normalizeApiError';
 import { applyStatusSync, effectiveStatus } from './status-sync';
-import { DEMO_TASKS, DEMO_TASKS_EN } from './local.seed';
+import { localizedDemoTasks } from './local.seed';
 const STORAGE_KEY = 'cosmo_demo_tasks';
 
 export class LocalStorageTasksRepository implements ITasksRepository {
@@ -19,7 +18,7 @@ export class LocalStorageTasksRepository implements ITasksRepository {
     // Corrompu ou stockage indisponible : on re-seme plutot que de faire
     // tomber la page (regle B14, helper `safeParseArray`).
     if (!stored) {
-      const seeded = localizeSeed(DEMO_TASKS, DEMO_TASKS_EN);
+      const seeded = localizedDemoTasks();
       this.saveTasks(seeded);
       return seeded;
     }

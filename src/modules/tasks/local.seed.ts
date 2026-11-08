@@ -6,6 +6,7 @@
 // dépôt de démo voisin l'ensemence au premier accès.
 
 import { Task } from './types';
+import { localizeSeed } from '@/lib/seed-i18n';
 
 // Helper pour générer des dates
 const getDate = (daysFromNow: number): string => {
@@ -113,3 +114,6 @@ export const DEMO_TASKS_EN: Record<string, Partial<Task>> = {
   'shared-001': { name: 'Review the monthly report', description: 'Check figures and add comments' },
   'shared-002': { name: 'Prepare the kickoff meeting', description: 'Agenda + slides + invitations' },
 };
+
+/** Le seed dans la langue de l'interface (overlay anglais par id, cf. src/lib/seed-i18n.ts). */
+export const localizedDemoTasks = () => localizeSeed(DEMO_TASKS, DEMO_TASKS_EN);

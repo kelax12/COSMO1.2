@@ -4,16 +4,15 @@
 
 import { TeamCategory, CreateTeamCategoryInput, UpdateTeamCategoryInput } from './types';
 import { TEAM_CATEGORIES_STORAGE_KEY } from './constants';
-import { localizeSeed } from '@/lib/seed-i18n';
 import { safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
 import { makeApiError } from '@/lib/normalizeApiError';
 import type { ITeamCategoriesRepository } from './repository';
-import { DEMO_USER_ID, DEMO_CATEGORIES, DEMO_CATEGORIES_EN } from './local.seed';
+import { DEMO_USER_ID, localizedDemoTeamCategories } from './local.seed';
 
 function readOrSeed(): TeamCategory[] {
   const data = safeGetItem(TEAM_CATEGORIES_STORAGE_KEY);
   if (!data) {
-    const clone = JSON.parse(JSON.stringify(localizeSeed(DEMO_CATEGORIES, DEMO_CATEGORIES_EN))) as TeamCategory[];
+    const clone = JSON.parse(JSON.stringify(localizedDemoTeamCategories())) as TeamCategory[];
     safeSetItem(TEAM_CATEGORIES_STORAGE_KEY, JSON.stringify(clone));
     return clone;
   }
