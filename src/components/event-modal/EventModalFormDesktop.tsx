@@ -194,7 +194,6 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                           handleFieldChange("endDate", setEndDate, formatted);
                         }}
                         locale={getDateLocale()}
-                        initialFocus
                       />
                     </PopoverContent>
                   </Popover>

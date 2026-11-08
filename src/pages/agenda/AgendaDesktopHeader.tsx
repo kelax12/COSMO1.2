@@ -150,7 +150,6 @@ const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
                           setShowDatePicker(false);
                         }}
                         locale={getDateLocale()}
-                        initialFocus
                       />
                     </PopoverContent>
                   </Popover>
