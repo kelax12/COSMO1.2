@@ -420,7 +420,7 @@
     },
     "src/pages/OrganizationPage.tsx": {
       "complexity": [107],
-      "max-lines-per-function": [307]
+      "max-lines-per-function": [306]
     },
     "src/pages/PremiumPage.tsx": {
       "max-lines-per-function": [389]
