@@ -4,12 +4,11 @@
 
 import { TaskList, CreateListInput, UpdateListInput } from './types';
 import { LISTS_STORAGE_KEY } from './constants';
-import { localizeSeed } from '@/lib/seed-i18n';
 import type { CreateOptions } from '@/lib/restore-id';
 import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
 import { makeApiError } from '@/lib/normalizeApiError';
 import type { IListsRepository } from './repository';
-import { DEMO_LISTS, DEMO_LISTS_EN } from './local.seed';
+import { localizedDemoLists } from './local.seed';
 
 // ═══════════════════════════════════════════════════════════════════
 // LOCAL STORAGE REPOSITORY IMPLEMENTATION
@@ -24,7 +23,7 @@ export class LocalStorageListsRepository implements IListsRepository {
     // Corrompu ou stockage indisponible : on re-seme plutot que de faire
     // tomber la page (regle B14, helper `safeParseArray`).
     if (!stored) {
-      const seeded = localizeSeed(DEMO_LISTS, DEMO_LISTS_EN);
+      const seeded = localizedDemoLists();
       this.saveLists(seeded);
       return seeded;
     }

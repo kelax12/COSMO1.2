@@ -6,6 +6,7 @@
 // démo (`local.repository.ts`) l'ensemence au premier accès.
 
 import { TaskList } from './types';
+import { localizeSeed } from '@/lib/seed-i18n';
 
 // ═══════════════════════════════════════════════════════════════════
 // DEMO DATA
@@ -65,3 +66,6 @@ export const DEMO_LISTS_EN: Record<string, Partial<TaskList>> = {
   'list-3-smart-overdue': { name: 'Overdue' },
   'list-4-smart-priority': { name: 'High priority' },
 };
+
+/** Le seed dans la langue de l'interface (overlay anglais par id, cf. src/lib/seed-i18n.ts). */
+export const localizedDemoLists = () => localizeSeed(DEMO_LISTS, DEMO_LISTS_EN);

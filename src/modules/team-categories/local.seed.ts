@@ -6,6 +6,7 @@
 // démo (`local.repository.ts`) l'ensemence au premier accès.
 
 import { TeamCategory } from './types';
+import { localizeSeed } from '@/lib/seed-i18n';
 
 const DEMO_ORG_ID = 'org-demo-1';
 export const DEMO_USER_ID = 'demo-user';
@@ -31,3 +32,6 @@ export const DEMO_CATEGORIES_EN: Record<string, Partial<TeamCategory>> = {
   'teamcat-interne': { name: 'Internal' },
   'teamcat-design': { name: 'Design' },
 };
+
+/** Le seed dans la langue de l'interface (overlay anglais par id, cf. src/lib/seed-i18n.ts). */
+export const localizedDemoTeamCategories = () => localizeSeed(DEMO_CATEGORIES, DEMO_CATEGORIES_EN);
