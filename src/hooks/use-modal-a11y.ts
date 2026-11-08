@@ -104,21 +104,20 @@ export function mergeRefs<T>(
 /**
  * FRO-01 (vague 16.3) · la restitution du focus des surfaces RADIX, par le MEME historique.
  *
- * 🔴 Radix ne rend le focus qu'a `DialogTrigger` : son `onCloseAutoFocus` fait
+ * Radix ne rend le focus qu'a `DialogTrigger` : son `onCloseAutoFocus` fait
  * `event.preventDefault()` puis `context.triggerRef.current?.focus()`. Le produit pilote toutes
- * ses surfaces par un etat (`open` / `onOpenChange`), sans aucun `DialogTrigger` : `triggerRef`
- * est nul, le focus tombait sur `body`. Pareil pour une surface ouverte depuis l'entree d'un
- * menu, qui disparait avec lui.
+ * ses surfaces par un etat (`open` / `onOpenChange`), sans `DialogTrigger` : `triggerRef` est
+ * nul, le focus tombait sur `body`. Pareil pour une surface ouverte depuis l'entree d'un menu,
+ * qui disparait avec lui.
  *
- * 🔴 LE DECLENCHEUR N'EST PAS LU DANS `onOpenAutoFocus` : il ne part pas quand un enfant
- * `autoFocus` a deja pris le focus au commit (piege de `HabitModal`, cf. `focusHistory`). Il est
- * lu par un `ref` pose sur le contenu, dans l'historique des focus.
+ * Le declencheur n'est PAS lu dans `onOpenAutoFocus` : il ne part pas quand un enfant `autoFocus`
+ * a deja pris le focus au commit (piege de `HabitModal`, cf. `focusHistory`). Il est lu par un
+ * `ref` pose sur le contenu, dans l'historique des focus.
  *
- * 🔴 ET UN DECLENCHEUR PEUT AVOIR ETE RECREE. Mesure du 2026-11-07 dans un navigateur (`/tasks`,
- * « Nouvelle tâche », Entree, Echap) : le meme rendu qui ouvre la surface RECREE le bouton, l'element
- * d'origine est detache avant le montage de la surface, et le focus tombait sur BODY. La capture
- * garde donc un element detache (`allowDetached`), et la restitution lui retrouve son equivalent
- * (`reconnected`).
+ * Un declencheur peut avoir ete RECREE : le meme rendu qui ouvre la surface recree le bouton,
+ * l'element d'origine est detache avant le montage, et le focus tombait sur BODY. La capture
+ * garde donc un element detache (`allowDetached`), et la restitution lui retrouve son
+ * equivalent (`reconnected`).
  *
  * A la fermeture on ne touche a rien si Radix (ou l'appelant) a deja pose le focus quelque
  * part : seul un focus perdu sur `body` est rattrape. Le `preventDefault()` de l'appelant est
@@ -258,24 +257,20 @@ export function useModalA11y<T extends HTMLElement = HTMLDivElement>({
     target.focus?.({ preventScroll: true });
   }, [initialFocusRef]);
 
-  // 🔴 `useLayoutEffect`, PAS `useEffect` : l'écouteur d'Échap doit être posé
-  // AVANT que la surface ne soit peinte. Un effet passif tourne APRÈS la
-  // peinture, dans une tâche à part : entre les deux, la feuille est à l'écran,
-  // cliquable, et Échap n'y fait RIEN. Mesuré le 2026-10-22 sous WebKit en CI
-  // (`OrgSectionSheet`, chargée en lazy, donc commitée par une relance de
-  // Suspense) : Échap envoyé dès la feuille visible, perdu, la feuille restée
-  // ouverte 10 s avec le focus déjà dedans. Instable 2 fois sur 5 runs.
+  // `useLayoutEffect`, PAS `useEffect` : l'écouteur d'Échap doit être posé AVANT que la
+  // surface ne soit peinte. Un effet passif tourne APRÈS la peinture, dans une tâche à part :
+  // entre les deux, la feuille est à l'écran, cliquable, et Échap n'y fait RIEN (vu sous
+  // WebKit en CI avec `OrgSectionSheet`, chargée en lazy).
   useLayoutEffect(() => {
     if (!open) return;
 
     const id = idRef.current as symbol;
     openStack.push(id);
 
-    // ⚠️ Le noeud est capturé ICI, pas relu dans le nettoyage. Écrit quand cet
-    // effet était PASSIF : React avait alors deja detache les refs quand son
-    // nettoyage tournait, et `ref.current` y valait `null`. On perdait donc le test « le focus est-il
-    // encore dans la modale ? », donc la restitution au declencheur — mesure du
-    // 2026-09-05, `focusReturned: false` sur HabitModal.
+    // ⚠️ Le noeud est capturé ICI, pas relu dans le nettoyage : quand cet effet était passif,
+    // React avait déjà détaché les refs au nettoyage, `ref.current` valait `null` et on
+    // perdait le test « le focus est-il encore dans la modale ? », donc la restitution au
+    // déclencheur (cas de HabitModal).
     const rootAtOpen = ref.current as HTMLElement | null;
 
     // Le déclencheur : le dernier élément focalisé qui vit HORS de la modale.
@@ -349,13 +344,12 @@ export function useModalA11y<T extends HTMLElement = HTMLDivElement>({
       // serait pire que de ne rien faire.
       const opener = triggerRef.current;
       triggerRef.current = null;
-      // 🔴 EN MICROTACHE, PAS DANS LE NETTOYAGE. Mesure du 2026-11-07 dans un navigateur
-      // (`MobileDisplaySheet`, largeur mobile, Echap) : le nettoyage rendait bien le focus au
-      // declencheur, puis React le REPRENAIT. Apres un commit, `restoreSelection` refocalise
-      // l'element qui avait le focus AVANT le commit, s'il est encore dans le document, et une
-      // feuille en sortie (`AnimatePresence`) garde ses boutons montes pendant l'animation. Le
-      // focus retournait donc dans la feuille, puis tombait sur `body` quand elle disparaissait.
-      // La microtache passe APRES ce commit synchrone, et l'etat du focus y est lu a jour.
+      // EN MICROTACHE, PAS DANS LE NETTOYAGE : le nettoyage rendait bien le focus au declencheur,
+      // puis React le REPRENAIT. Apres un commit, `restoreSelection` refocalise l'element qui avait
+      // le focus AVANT le commit, s'il est encore dans le document, et une feuille en sortie
+      // (`AnimatePresence`) garde ses boutons montes pendant l'animation (cas de
+      // `MobileDisplaySheet`, largeur mobile, Echap). La microtache passe APRES ce commit
+      // synchrone, et l'etat du focus y est lu a jour.
       queueMicrotask(() => {
         // Restitution : seulement si le focus est encore DANS la modale, ou nulle
         // part. Sinon quelqu'un l'a déjà déplacé volontairement (une modale
@@ -369,8 +363,8 @@ export function useModalA11y<T extends HTMLElement = HTMLDivElement>({
         // Un déclencheur DÉMONTÉ (l'entrée d'un menu Radix, refermé en ouvrant
         // la modale) ne peut plus reprendre le focus : il revient alors au
         // dernier élément extérieur encore monté, en pratique le bouton qui avait
-        // ouvert ce menu. Sans ce repli, le focus tombait sur `body` (mesuré le
-        // 2026-10-22, `AssignRoleDialog` ouverte depuis « Actions pour … »).
+        // ouvert ce menu. Sans ce repli, le focus tombait sur `body` (cas de `AssignRoleDialog`,
+        // ouverte depuis « Actions pour … »).
         const trigger = reconnected(opener) ?? lastFocusedOutside(rootAtOpen);
         if (focusIsLoose && trigger) {
           trigger.focus?.({ preventScroll: true });
