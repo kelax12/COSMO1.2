@@ -89,7 +89,7 @@ L'empreinte porte désormais sur la RÉUNION des trois catalogues d'une langue, 
 | `src/locales/en/legal.json` | `477a96cee124c558` |
 
 Empreintes relevées par `node scripts/check-legal-journal.mjs` le 2026-09-24, pas recopiées.
-Analyse qui l'a motivée : [`LEGAL.md`](./LEGAL.md) § « Audit du 2026-09-24 ».
+Analyse qui l'a motivée : [archive](./archive/LEGAL-audits-et-etat-des-lieux-2026-08-26-au-2026-10-13.md) § « Audit du 2026-09-24 ».
 
 **CGU**
 
@@ -176,7 +176,7 @@ envoyée là fait courir les délais légaux (14 jours, un mois).
 | `src/locales/en/{legal,legalTerms,legalPrivacy}.json` | `64df04e46c848228` |
 
 Empreintes relevées par `node scripts/check-legal-journal.mjs` le 2026-10-13, pas recopiées.
-Analyse qui l'a motivée : audit juridique du 2026-10-13 (constats repris dans [`LEGAL.md`](./LEGAL.md) § « Audit du 2026-10-13 »).
+Analyse qui l'a motivée : audit juridique du 2026-10-13 (constats repris dans [archive](./archive/LEGAL-audits-et-etat-des-lieux-2026-08-26-au-2026-10-13.md) § « Audit du 2026-10-13 »).
 
 **CGU**
 
