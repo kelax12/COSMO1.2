@@ -76,9 +76,7 @@ export function rendre(f) {
     ['Fonctions SQL de `public`', f.fonctionsSql, '`CREATE FUNCTION public.` dans `supabase/schema.sql`'],
   ]
   return [
-    '<!-- note-audit: couvert-par=ARCHITECTURE.md -->',
     '<!-- GENERE par scripts/generer-faits.mjs. NE PAS EDITER A LA MAIN. Regenerer : npm run faits:generer -->',
-    "> **Note d'audit** : fichier généré depuis les sources, sans note propre ; ses chiffres sont recalculés à chaque commit.",
     '',
     '# Faits chiffrés du dépôt',
     '',

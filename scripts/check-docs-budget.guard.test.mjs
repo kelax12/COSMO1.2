@@ -191,3 +191,32 @@ describe('check-docs-budget · le cliquet des CLAUDE.md', () => {
     expect(out).toMatch(/CLAUDE\.md est absent de la racine/)
   })
 })
+
+// ── Règle 6 : aucune note /100 dans les docs vivantes (ADR 0012) ────
+describe('check-docs-budget · notes /100 (ADR 0012)', () => {
+  it('ROUGE sur le marqueur note-audit de l ancienne garde C-109', () => {
+    arbreSain()
+    put('docs/TESTING.md', '<!-- note-audit: note=94 -->' + NL + '# Tests' + NL)
+    const r = run()
+    expect(r.code).toBe(1)
+    expect(r.out).toContain('note-audit')
+  })
+
+  it('ROUGE sur la phrase « Note d audit » et sur l en-tete de journal de notes', () => {
+    arbreSain()
+    put('docs/TESTING.md', "> **Note d'audit** : x" + NL + '# Tests' + NL)
+    expect(run().code).toBe(1)
+    put('docs/TESTING.md', '# Tests' + NL + NL + '## Note de tests : 80 → 83 → **94 / 100**' + NL)
+    const r = run()
+    expect(r.code).toBe(1)
+    expect(r.out).toContain('en-tete')
+  })
+
+  it('VERT sur un doc qui renvoie vers INDICATEURS.md, et IGNORE docs/archive/', () => {
+    arbreSain()
+    put('docs/TESTING.md', '# Tests' + NL + NL + 'Etat de sante : [INDICATEURS](./INDICATEURS.md).' + NL)
+    put('docs/INDICATEURS.md', '# Indicateurs' + NL)
+    put('docs/archive/TESTING-journal.md', '## Note de tests : 80 → 94 / 100' + NL)
+    expect(run().code).toBe(0)
+  })
+})

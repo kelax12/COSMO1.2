@@ -58,13 +58,6 @@ jobs:
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run check:study
 
-      # C-109 : chaque document de `docs/` declare sa note, celle qui le
-      # couvre, ou qu'il n'est pas note ET pourquoi.
-      - name: Notes d audit declarees
-        id: docs-scored
-        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run check:docs-scored
-
       # M-52 : rouge quand l'echeance est passee sans seance consignee.
       - name: Echeances des seances lecteur d ecran
         id: lecteurs-ecran

@@ -1,15 +1,3 @@
-<!-- note-audit: non-note -->
-<!--
-  🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
-  Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
-  ni baisser, donc **rien ne signalait qu'ils avaient vieilli**.
-  Chaque document de `docs/` déclare donc soit sa note, soit la note qui le
-  couvre, soit qu'il n'est pas noté ET pourquoi.
-  ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
-     une réponse honnête, un chiffre faux ne l'est pas.
--->
-> **Note d'audit** — 🔴 **Aucune note publique.** La note « Sécurité » vit dans `faille.md`, sorti du dépôt public le 2026-11-06 (constat `SEC-02`, hors dépôt : `prive/` du checkout principal) : la CI ne peut plus la lire, donc ce document ne s'en déclare plus couvert. La délégation avait déjà sa limite : `faille.md` porte les **findings**, ce document porte les **règles**, et une règle qui se périme ne fait bouger aucun chiffre.
-
 # Sécurité — COSMO
 
 > Sécurité : `faille.md` (hors dépôt) = findings **ouverts** + priorités (source de vérité) ·

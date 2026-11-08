@@ -1,6 +1,3 @@
-<!-- note-audit: couvert-par=RGPD.md -->
-> **Note d'audit** — Couvert par la note de [`RGPD.md`](./RGPD.md) : journal public des exercices de la procédure de violation, même domaine.
-
 # Exercices à blanc de la procédure de violation
 
 La procédure de violation de données (art. 33-34, 72 h) vit **hors dépôt** depuis le 2026-11-06 :

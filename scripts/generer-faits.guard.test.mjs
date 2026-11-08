@@ -85,9 +85,9 @@ describe('le dépôt', () => {
     expect(actuel, 'lancer `npm run faits:generer` et commiter docs/FAITS.md').toBe(attendu)
   })
 
-  it('le fichier généré porte le marqueur de note et la phrase que check:docs-scored exige', () => {
+  it('le fichier généré ne porte plus de marqueur de note (ADR 0012)', () => {
     const texte = rendre(calculerFaits(process.cwd()))
-    expect(texte).toMatch(/<!-- note-audit: couvert-par=ARCHITECTURE\.md -->/)
-    expect(texte).toMatch(/^> \*\*Note d'audit\*\* : .{20,}$/m)
+    expect(texte).not.toMatch(/note-audit/)
+    expect(texte).not.toMatch(/Note d'audit/)
   })
 })

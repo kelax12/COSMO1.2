@@ -1,7 +1,4 @@
-<!-- note-audit: non-note -->
 <!-- GENERE par scripts/indicateurs.mjs. NE PAS EDITER A LA MAIN. Regenerer : npm run indicateurs -->
-> **Note d'audit** : Ce document ne porte aucune note. Il remplace les notes sur 100 par six indicateurs mesurés, chacun daté et sourcé (ADR 0012).
-
 # Indicateurs COSMO
 
 > 🔴 **Fichier généré, ne pas éditer à la main.** `npm run indicateurs` (`scripts/indicateurs.mjs`) le réécrit ;

@@ -1,15 +1,3 @@
-<!-- note-audit: non-note -->
-<!--
-  🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
-  Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
-  ni baisser, donc **rien ne signalait qu'ils avaient vieilli**.
-  Chaque document de `docs/` déclare donc soit sa note, soit la note qui le
-  couvre, soit qu'il n'est pas noté ET pourquoi.
-  ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
-     une réponse honnête, un chiffre faux ne l'est pas.
--->
-> **Note d'audit** — **NON NOTÉ** : ce document décrit des gestes hors dépôt (soumissions d'annuaires), pas du code. Son état est gardé par la colonne « État » de son tableau, vérifiée par `npm run check:acquisition` (C-101).
-
 # Backlinks — kit de soumission annuaires et places de marché
 
 **Créé le 2026-08-19**, après lecture des données Search Console sur 3 mois.

@@ -985,16 +985,6 @@ export const CATALOGUE = [
     ['acquisition-premiere-date', 'detecteur', r('scripts/check-acquisition.mjs', '  return /<!--\\s*chiffres-remesures:\\s*(20\\d\\d-\\d\\d-\\d\\d)\\s*-->/.exec(texte)?.[1] ?? null;', '  return /(20\\d\\d-\\d\\d-\\d\\d)/.exec(texte)?.[1] ?? null;'),
       'la fraîcheur se lit sur un MARQUEUR, pas sur la première date venue',
       "La première écriture prenait la première date venue et déclarait frais des chiffres du 09-14 : n'importe quelle note rajeunissait les mesures."],
-    // ── check:docs-scored (C-109)
-    ['docs-forme-oubliee', 'detecteur', r('scripts/check-docs-scored.mjs', "  { re: /^tableau-de-bord$/, nom: 'tableau-de-bord' },", ''),
-      'les quatre formes de marqueur sont reconnues',
-      'Le tableau de bord des notes rendu « forme INCONNUE » : la garde rougirait sur le document qui porte les notes.'],
-    ['docs-phrase-mal-lue', 'detecteur', r('scripts/check-docs-scored.mjs', "/^>\\s*\\*\\*Note d'audit\\*\\*\\s*(?:—|:|-)\\s*(.+)$/m", "/^>\\s*\\*\\*Note d'audit\\*\\*\\s*(?:—)\\s*(.+)$/m"),
-      'la phrase lisible est lue, et exigée',
-      'Une phrase jamais lue rend « non-note » sans raison écrite : un document sans note et sans explication.'],
-    ['docs-mauvaise-extension', 'detecteur', r('scripts/check-docs-scored.mjs', "filter((f) => f.endsWith('.md')).sort();", "filter((f) => f.endsWith('.mdx')).sort();"),
-      'les 28 documents de `docs/` sont vus',
-      'Une garde qui ne voit aucun document déclare chacun d`eux en règle.'],
     // ── check:i18n-pages (C-99)
     ['pages-aplatir-tableaux', 'detecteur', r('scripts/check-i18n-pages.mjs', "    if (v && typeof v === 'object' && !Array.isArray(v)) Object.assign(out, aplatir(v, cle));", "    if (v && typeof v === 'object') Object.assign(out, aplatir(v, cle));"),
       '`aplatir` descend les objets et laisse les tableaux entiers',
