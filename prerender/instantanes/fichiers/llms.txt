@@ -1,0 +1,56 @@
+# Cosmo
+
+> Cosmo (aussi appelé « Cosmo App », « The Cosmo App » ou « thecosmo », site officiel : thecosmo.app) est une application web de productivité gratuite, en français, qui centralise quatre piliers dans un seul écosystème : gestion de tâches, suivi d'habitudes, agenda avec time-blocking et objectifs OKR (Objectives & Key Results). Un mode démo complet est accessible sans inscription. À ne pas confondre avec les applications mobiles homonymes : le seul site officiel est thecosmo.app.
+
+Cosmo se différencie de Notion (espace de notes flexible mais sans structure de productivité native) et de Todoist (gestionnaire de tâches sans habitudes, OKR ni time-blocking) en connectant les quatre piliers dans une seule application.
+
+## Fonctionnalités
+
+- Gestion de tâches : priorités 1-5, catégories colorées, deadlines, listes intelligentes, filtres avancés
+- Suivi d'habitudes : heatmap 26 semaines style GitHub, streaks, taux de complétion
+- Agenda : time-blocking par glisser-déposer, vues jour/semaine/mois
+- OKR : méthode Objectives & Key Results (Google, Intel, Netflix), progression calculée automatiquement
+- Statistiques multi-modules : temps investi sur tâches, habitudes, agenda et OKR
+- Collaboration : partage de tâches en équipe avec rôles Lecteur/Éditeur
+- Mode démo instantané : application complète pré-remplie (100 tâches, 100 habitudes, 150 événements, 8 OKR), sans compte ni email
+- Mobile-first : fonctionne dans tout navigateur iOS/Android, mode sombre/clair
+
+## Pages
+
+- [Accueil](https://thecosmo.app/) : présentation, fonctionnalités, FAQ (10 questions)
+- [Guide d'utilisation](https://thecosmo.app/guide) : prise en main, tâches, habitudes, agenda, OKR, statistiques
+- [Inscription gratuite](https://thecosmo.app/signup)
+
+## Infos
+
+- Langue : français (fr-FR)
+- Prix : gratuit (fonctionnalités principales sans limite)
+- Plateforme : web (aucun téléchargement)
+- Données : stockées sur Supabase avec Row Level Security ; en mode démo, données locales au navigateur
+
+## Articles du blog
+
+- [Tableau de bord de productivité : quoi y mettre (et quoi en retirer)](https://thecosmo.app/blog/tableau-de-bord-productivite) : Que doit afficher un tableau de bord de productivité personnel ? Les 6 indicateurs qui font agir, ceux qui ne servent à rien, et comment le construire.
+- [Gestion du temps efficace : 7 principes qui tiennent dans la durée](https://thecosmo.app/blog/gestion-du-temps-efficace) : Les 7 principes de gestion du temps qui survivent à une semaine chargée, sans méthode compliquée : arbitrage, créneaux, unité de travail, revue hebdomadaire.
+- [Suivi des habitudes : ce qu'il faut mesurer (et ce qui décourage)](https://thecosmo.app/blog/suivi-des-habitudes) : Streak, taux de complétion, heatmap : quels indicateurs de suivi des habitudes aident vraiment, lesquels sabotent la régularité, et comment bien démarrer.
+- [La matrice Eisenhower : prioriser ses tâches en 4 cases (+ exemples)](https://thecosmo.app/blog/matrice-eisenhower) : Urgent ou important ? La matrice Eisenhower classe vos tâches en 4 quadrants : faire, planifier, déléguer ou supprimer. Méthode complète avec exemples.
+- [OKR vs objectifs SMART vs KPI : quelle méthode choisir (et quand) ?](https://thecosmo.app/blog/okr-vs-smart-vs-kpi) : OKR, SMART et KPI ne répondent pas à la même question. Différences concrètes, tableau comparatif et règle simple pour savoir quand utiliser chaque méthode.
+- [Glossaire de la productivité : 20 termes enfin définis clairement](https://thecosmo.app/blog/glossaire-productivite) : OKR, time-blocking, deep work, habit stacking, loi de Parkinson… 20 termes de la productivité définis en français, clairement, avec leur usage concret.
+- [Template OKR gratuit (Excel) : personnel et équipe, prêt à remplir](https://thecosmo.app/blog/template-okr-gratuit) : Téléchargez notre template OKR gratuit au format Excel : exemples pré-remplis, progression automatique, versions perso et équipe. Sans email.
+- [Time-blocking : le guide complet pour reprendre le contrôle de vos journées](https://thecosmo.app/blog/time-blocking-guide) : Le time-blocking consiste à réserver des créneaux pour vos tâches au lieu de subir votre journée. Méthode pas à pas, variantes, erreurs à éviter et exemples.
+- [Combien de temps faut-il vraiment pour prendre une habitude ? (ce que dit la science)](https://thecosmo.app/blog/combien-de-temps-prendre-habitude) : 21 jours ? 66 jours ? La vraie réponse de la science est plus nuancée, et plus utile. Ce que montre l'étude de référence, et comment s'en servir concrètement.
+- [La méthode OKR expliquée simplement (+ 15 exemples concrets)](https://thecosmo.app/blog/methode-okr-exemples) : Qu'est-ce que la méthode OKR ? Définition simple, règles d'écriture et 15 exemples concrets d'OKR personnels et professionnels, prêts à adapter.
+- [Cosmo vs Todoist : lequel choisir en 2026 ?](https://thecosmo.app/blog/cosmo-vs-todoist) : Todoist est un excellent gestionnaire de tâches. Cosmo ajoute habitudes, agenda time-blocking et OKR dans une app gratuite. Comparatif honnête, point par point.
+
+## Cas d'usage
+
+- [L'application de productivité pensée pour les freelances](https://thecosmo.app/pour-freelances) : Freelance : gérez clients, deadlines, prospection et objectifs trimestriels dans une seule app gratuite. Time-blocking natif, démo sans inscription.
+- [L'application de productivité gratuite pour les étudiants](https://thecosmo.app/pour-etudiants) : Étudiant : organisez cours, révisions et deadlines avec le time-blocking, construisez des habitudes de travail durables. 100 % gratuit, sans carte bancaire.
+- [L'application de productivité pour managers et chefs d'équipe](https://thecosmo.app/pour-managers) : Manager : pilotez vos OKR, protégez votre temps de travail profond entre les réunions et suivez les tâches partagées avec votre équipe. Gratuit.
+- [L'application de gestion d'équipe pour les PME et les studios](https://thecosmo.app/pour-equipes) : Organigramme automatique, projets d'équipe, OKR pondérés et statistiques de pilotage dans une seule app. Gratuit jusqu'à 5 personnes, démo sans inscription.
+
+## Autres pages
+
+- [Blog](https://thecosmo.app/blog)
+- [À propos](https://thecosmo.app/a-propos)
+- [Flux RSS](https://thecosmo.app/rss.xml)

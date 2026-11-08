@@ -24,6 +24,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   CONDITION,
+  ENTREES,
   lireEtapes,
   verifierJob,
   resumer,
@@ -94,7 +95,9 @@ jobs:
     runs-on: ubuntu-latest
 `;
 
-const fautes = (yaml) => verifierJob(lireEtapes(yaml, 'j'));
+// Le job minimal ne lance que le budget de bundle : on ne lui demande que cette entrée.
+const ENTREES_DU_JOB_MINIMAL = ENTREES.filter((e) => e.commande === 'npm run check:bundle');
+const fautes = (yaml) => verifierJob(lireEtapes(yaml, 'j'), { entrees: ENTREES_DU_JOB_MINIMAL });
 const saboter = (chercher, remplacer) => {
   expect(CONFORME.split(chercher).length, `motif ambigu : ${chercher}`).toBe(2);
   return CONFORME.replace(chercher, remplacer);
@@ -165,6 +168,12 @@ describe('ci.yml et ci-noyau.yml réels', () => {
 
   it('lint-test-build : chaque garde joue après un rouge, et le job finit par le résumé', () => {
     expect(verifierJob(etapes)).toEqual([]);
+  });
+
+  // COD-04 (V14.4) : les instantanés du prérendu lisent `dist/`, comme le budget de bundle.
+  it('les deux gardes qui lisent dist/ sont déclarées, et le réel les respecte', () => {
+    expect(ENTREES.map((e) => e.commande)).toEqual(['npm run check:bundle', 'npm run check:prerender']);
+    expect(etapes.some((e) => e.run?.includes('npm run check:prerender'))).toBe(true);
   });
 
   // 🔴 CI-01 · CI-03 (2026-11-06) : les gardes de `lint-test-build` sont

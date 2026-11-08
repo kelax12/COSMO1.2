@@ -359,6 +359,25 @@ jobs:
           fi
           npm run check:bundle
 
+      # COD-04 (V14.4) : le HTML que servent les moteurs, comparé à des
+      # instantanés VERSIONNES (prerender/instantanes/). Il casse sur un <h1> en
+      # double, un JSON-LD modifie, un texte tronque, un hreflang ou un canonical
+      # faux. Sa mise a jour est explicite et locale (npm run
+      # prerender:instantanes:maj), jamais ici. Meme entree que le budget de
+      # bundle : un Build rouge laisse un dist/ partiel, la garde ECHOUE alors en
+      # le disant au lieu de comparer un reste.
+      - name: Instantanes du prerendu
+        id: prerender-instantanes
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        env:
+          ENTREE_BUILD: ${{ steps.build.outcome }}
+        run: |
+          if [ "$ENTREE_BUILD" != success ]; then
+            echo "::error title=Instantanes du prerendu::entree absente, l etape Build a rendu '$ENTREE_BUILD' : dist/ ne decrit aucun build complet, rien a comparer"
+            exit 1
+          fi
+          npm run check:prerender
+
       # Dernière étape : TOUTES les étapes rouges, en un endroit. Elle joue même
       # si `npm ci` a échoué, pour le dire, et sort en 1 s'il y a un rouge ou
       # une étape sautée alors que `npm ci` est vert.

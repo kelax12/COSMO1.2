@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Blog Cosmo, Productivité, OKR, habitudes et time-blocking</title>
+    <link>https://thecosmo.app/blog</link>
+    <atom:link href="https://thecosmo.app/rss.xml" rel="self" type="application/rss+xml" />
+    <description>Guides pratiques sur la méthode OKR, le suivi d'habitudes, le time-blocking et la productivité personnelle. Par l'équipe de Cosmo.</description>
+    <language>fr-FR</language>
+    <lastBuildDate>[date du build]</lastBuildDate>
+    <item>
+      <title><![CDATA[Suivi des habitudes : ce qu'il faut mesurer (et ce qui décourage)]]></title>
+      <link>https://thecosmo.app/blog/suivi-des-habitudes</link>
+      <guid isPermaLink="true">https://thecosmo.app/blog/suivi-des-habitudes</guid>
+      <pubDate>Wed, 12 Aug 2026 12:00:00 GMT</pubDate>
+      <description><![CDATA[Streak, taux de complétion, heatmap : quels indicateurs de suivi des habitudes aident vraiment, lesquels sabotent la régularité, et comment bien démarrer.]]></description>
+    </item>
+    <item>
+      <title><![CDATA[Gestion du temps efficace : 7 principes qui tiennent dans la durée]]></title>
+      <link>https://thecosmo.app/blog/gestion-du-temps-efficace</link>
+      <guid isPermaLink="true">https://thecosmo.app/blog/gestion-du-temps-efficace</guid>
+      <pubDate>Wed, 12 Aug 2026 12:00:00 GMT</pubDate>
+      <description><![CDATA[Les 7 principes de gestion du temps qui survivent à une semaine chargée, sans méthode compliquée : arbitrage, créneaux, unité de travail, revue hebdomadaire.]]></description>
+    </item>
+    <item>
+      <title><![CDATA[Tableau de bord de productivité : quoi y mettre (et quoi en retirer)]]></title>
+      <link>https://thecosmo.app/blog/tableau-de-bord-productivite</link>
+      <guid isPermaLink="true">https://thecosmo.app/blog/tableau-de-bord-productivite</guid>
+      <pubDate>Wed, 12 Aug 2026 12:00:00 GMT</pubDate>
+      <description><![CDATA[Que doit afficher un tableau de bord de productivité personnel ? Les 6 indicateurs qui font agir, ceux qui ne servent à rien, et comment le construire.]]></description>
+    </item>
+    <item>
+      <title><![CDATA[Cosmo vs Todoist : lequel choisir en 2026 ?]]></title>
+      <link>https://thecosmo.app/blog/cosmo-vs-todoist</link>
+      <guid isPermaLink="true">https://thecosmo.app/blog/cosmo-vs-todoist</guid>
+      <pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+      <description><![CDATA[Todoist est un excellent gestionnaire de tâches. Cosmo ajoute habitudes, agenda time-blocking et OKR dans une app gratuite. Comparatif honnête, point par point.]]></description>
+    </item>
+    <item>
+      <title><![CDATA[La méthode OKR expliquée simplement (+ 15 exemples concrets)]]></title>
+      <link>https://thecosmo.app/blog/methode-okr-exemples</link>
+      <guid isPermaLink="true">https://thecosmo.app/blog/methode-okr-exemples</guid>
+      <pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+      <description><![CDATA[Qu'est-ce que la méthode OKR ? Définition simple, règles d'écriture et 15 exemples concrets d'OKR personnels et professionnels, prêts à adapter.]]></description>
+    </item>
+    <item>
+      <title><![CDATA[Combien de temps faut-il vraiment pour prendre une habitude ? (ce que dit la science)]]></title>
+      <link>https://thecosmo.app/blog/combien-de-temps-prendre-habitude</link>
+      <guid isPermaLink="true">https://thecosmo.app/blog/combien-de-temps-prendre-habitude</guid>
+      <pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+      <description><![CDATA[21 jours ? 66 jours ? La vraie réponse de la science est plus nuancée, et plus utile. Ce que montre l'étude de référence, et comment s'en servir concrètement.]]></description>
+    </item>
+    <item>
+      <title><![CDATA[Time-blocking : le guide complet pour reprendre le contrôle de vos journées]]></title>
+      <link>https://thecosmo.app/blog/time-blocking-guide</link>
+      <guid isPermaLink="true">https://thecosmo.app/blog/time-blocking-guide</guid>
+      <pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+      <description><![CDATA[Le time-blocking consiste à réserver des créneaux pour vos tâches au lieu de subir votre journée. Méthode pas à pas, variantes, erreurs à éviter et exemples.]]></description>
+    </item>
+    <item>
+      <title><![CDATA[Template OKR gratuit (Excel) : personnel et équipe, prêt à remplir]]></title>
+      <link>https://thecosmo.app/blog/template-okr-gratuit</link>
+      <guid isPermaLink="true">https://thecosmo.app/blog/template-okr-gratuit</guid>
+      <pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+      <description><![CDATA[Téléchargez notre template OKR gratuit au format Excel : exemples pré-remplis, progression automatique, versions perso et équipe. Sans email.]]></description>
+    </item>
+    <item>
+      <title><![CDATA[Glossaire de la productivité : 20 termes enfin définis clairement]]></title>
+      <link>https://thecosmo.app/blog/glossaire-productivite</link>
+      <guid isPermaLink="true">https://thecosmo.app/blog/glossaire-productivite</guid>
+      <pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+      <description><![CDATA[OKR, time-blocking, deep work, habit stacking, loi de Parkinson… 20 termes de la productivité définis en français, clairement, avec leur usage concret.]]></description>
+    </item>
+    <item>
+      <title><![CDATA[OKR vs objectifs SMART vs KPI : quelle méthode choisir (et quand) ?]]></title>
+      <link>https://thecosmo.app/blog/okr-vs-smart-vs-kpi</link>
+      <guid isPermaLink="true">https://thecosmo.app/blog/okr-vs-smart-vs-kpi</guid>
+      <pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+      <description><![CDATA[OKR, SMART et KPI ne répondent pas à la même question. Différences concrètes, tableau comparatif et règle simple pour savoir quand utiliser chaque méthode.]]></description>
+    </item>
+    <item>
+      <title><![CDATA[La matrice Eisenhower : prioriser ses tâches en 4 cases (+ exemples)]]></title>
+      <link>https://thecosmo.app/blog/matrice-eisenhower</link>
+      <guid isPermaLink="true">https://thecosmo.app/blog/matrice-eisenhower</guid>
+      <pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+      <description><![CDATA[Urgent ou important ? La matrice Eisenhower classe vos tâches en 4 quadrants : faire, planifier, déléguer ou supprimer. Méthode complète avec exemples.]]></description>
+    </item>
+  </channel>
+</rss>

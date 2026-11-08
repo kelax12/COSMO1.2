@@ -28,6 +28,7 @@
 | `check:supabase-posture` | P | advisors Supabase + réglages de Dashboard, lus par l'API | `C-88` | `docs/SECURITY.md` |
 | `check:env` | N + P | contrat des variables d'environnement Vercel (moitié statique au noyau) | `C-105` | `docs/DEPLOYMENT.md` |
 | `check:bundle` | N | budget de bundle | | `docs/PERFORMANCE.md` |
+| `check:prerender` | N | HTML prérendu contre ses instantanés versionnés | `COD-04` | `docs/TESTING.md` |
 | `check:db-cost` | P | coût serveur et croissance | `C-87` | `docs/SCALABILITY.md` |
 | `check:cycles` | N | cycles d'imports | `C-103` | `docs/ARCHITECTURE.md` |
 | `check:test-floor` | N | un test supprimé avec le code qu'il gardait | `C-83` | `docs/TESTING.md` |
