@@ -2,25 +2,19 @@
 // Historique des focus, partage par `useModalA11y` (surfaces maison) et `useRadixFocusReturn`
 // (enveloppes Radix de `components/ui`).
 //
-// 🔴 INSTALLE AU DEMARRAGE DE L'APPLICATION (`src/main.tsx`), PAS AU PREMIER RENDU D'UNE MODALE.
-// Mesure du 2026-11-07 dans un navigateur (`/tasks`, « Nouvelle tâche ») : `TaskModal` n'est monte
-// qu'a l'ouverture, donc le premier `useRadixFocusReturn` tournait APRES le `focusin` du bouton
-// declencheur. L'historique etait vide, le bouton etait recree par le meme rendu, et le focus
-// tombait sur BODY. Les tests jsdom ne le voyaient pas : un test precedent avait deja installe
-// l'ecouteur au niveau du module.
+// Installe au demarrage de l'application (`src/main.tsx`), PAS au premier rendu d'une
+// modale : `TaskModal` n'est montee qu'a l'ouverture, donc le premier `useRadixFocusReturn`
+// tournerait APRES le `focusin` du bouton declencheur, et l'historique serait vide. Les tests
+// jsdom ne le voient pas si un test precedent a deja installe l'ecouteur au niveau du module.
 // ═══════════════════════════════════════════════════════════════════
 
 /**
  * Les derniers elements qui ont eu le focus, le plus recent en dernier.
  *
- * 🔴 POURQUOI UN HISTORIQUE, ET PAS `document.activeElement` A L'OUVERTURE.
- * Mesure du 2026-09-05 sur `HabitModal` : apres Echap, la trace des evenements
- * de focus ne contenait **aucun `focusin`** — la restitution ne partait jamais.
- * Cause : un `autoFocus` React est applique AU COMMIT, donc AVANT l'effet
- * passif qui capture le declencheur. A ce moment `document.activeElement` est
- * deja le champ de la modale, et le bouton d'origine est perdu.
- * `EventModal`, qui n'a pas d'`autoFocus`, restituait bien — d'ou une mesure
- * verte sur une surface et rouge sur l'autre, pour la meme implementation.
+ * Pourquoi un historique, et pas `document.activeElement` a l'ouverture : un `autoFocus` React
+ * est applique AU COMMIT, donc AVANT l'effet passif qui capture le declencheur. A ce moment
+ * `document.activeElement` est deja le champ de la modale, et le bouton d'origine est perdu
+ * (cas de `HabitModal`, que `EventModal`, sans `autoFocus`, ne montre pas).
  *
  * On remonte donc l'historique jusqu'au dernier element qui n'est PAS dans la
  * modale. Borne a 10 : c'est un cache de reprise, pas un journal.
@@ -49,8 +43,8 @@ export function installFocusHistory(): void {
  * Le dernier element focalise qui vit HORS de `root`.
  *
  * `allowDetached` garde un element que React a deja RETIRE du DOM : a l'ouverture d'une surface,
- * le bouton qui l'a ouverte est parfois recree par le meme rendu (mesure du 2026-11-07, « Nouvelle
- * tâche » de `/tasks`). Il faut alors le CAPTURER detache, puis lui retrouver un equivalent
+ * le bouton qui l'a ouverte est parfois recree par le meme rendu (cas de « Nouvelle tache » de
+ * `/tasks`). Il faut alors le CAPTURER detache, puis lui retrouver un equivalent
  * (`reconnected`) : le sauter ferait choisir un element sans rapport, ou aucun.
  */
 export function lastFocusedOutside(root: HTMLElement | null, allowDetached = false): HTMLElement | null {
