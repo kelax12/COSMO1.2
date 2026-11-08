@@ -1525,6 +1525,28 @@ juste sous le seuil.
 | `Posture` | voir `SECURITY.md` § AM-5 | trois hausses réelles relues, mig. `247`, référence recalée par écrit |
 | `Secrets age` | voir `SECURITY.md` § Rotation des secrets | rouge vrai, attend deux gestes d'Axel : décision jusqu'au 2026-11-21 |
 
+### V18.2 · règles React Compiler différées (2026-11-08, DEP-01)
+
+`eslint-plugin-react-hooks` 5 → 7 ajoute 14 règles au preset `recommended`. Mesure sur `94e1665e` :
+7 à zéro violation, gardées au niveau du preset (cliquet) ; 7 qui rougissent, **134 erreurs dans
+90 fichiers** de `src/`. Décision écrite dans `eslint.config.js` (`REACT_COMPILER_DIFFEREES`) :
+
+| Règle | Violations | Niveau |
+|---|---|---|
+| `set-state-in-effect` | 81 | `off` |
+| `refs` | 33 | `off` |
+| `purity`, `preserve-manual-memoization` | 6 chacune | `warn` |
+| `immutability` | 5 | `warn` |
+| `globals` (deux tests) | 2 | `warn` |
+| `static-components` (`Layout.tsx`) | 1 | `warn` |
+
+`rules-of-hooks` (erreur) et `exhaustive-deps` (avertissement) n'ont pas bougé.
+
+**Suite ouverte** : lire d'abord `static-components` et `immutability`, qui peuvent cacher un état
+remis à zéro à chaque rendu. Puis corriger les petites règles et les repasser en `error` une à une.
+Pour `set-state-in-effect` et `refs`, mesurer et corriger module par module. ❌ Une règle tenue à
+zéro ne rejoint jamais cette liste.
+
 ### Boucle locale : `npm run test:changed` (vague 2.4, DEV-01)
 
 La suite complète prend 54 min sur le poste de dev (4 cœurs, 8 Go). `test:changed`

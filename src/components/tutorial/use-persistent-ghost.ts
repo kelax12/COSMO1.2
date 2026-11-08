@@ -160,8 +160,7 @@ export function usePersistentGhost(
       timersRef.current.forEach(clearTimeout);
       timersRef.current = [];
     };
-    /* eslint-disable-next-line react-hooks/exhaustive-deps --
-       `ghostLabelOf` est une fonction de MODULE, donc stable, et `step` porte
+    /* `ghostLabelOf` est une fonction de MODULE, donc stable, et `step` porte
        déjà tout ce que la chorégraphie lit. `stepIndex` reste dans la liste
        parce qu'un retour en arrière peut ramener la MÊME étape : sans lui,
        l'animation ne rejouerait pas. */
