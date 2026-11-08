@@ -40,7 +40,7 @@ const TABLE_LABEL_KEYS: readonly string[] = [
  * ⚠️ Pourquoi Sentry ici
  *
  * L'utilisateur était prévenu (toast), mais PERSONNE côté équipe ne l'était :
- * `console.warn` est retiré au build prod (`vite.config.ts → esbuild.pure`).
+ * `console.warn` est retiré au build prod (`vite.config.ts → dropConsole`).
  * Concrètement, un power-user pouvait perdre des lignes à l'écran pendant des
  * mois sans qu'aucun signal ne remonte — et c'est précisément l'événement qui
  * doit déclencher le chantier « pagination serveur ».

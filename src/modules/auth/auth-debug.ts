@@ -4,7 +4,7 @@
 // d'ARC-03.
 //
 // `import.meta.env.DEV` : le build prod retire déjà `console.*`
-// (`vite.config.ts → esbuild.pure`), donc `dlog` n'y affichait rien. Mais
+// (`vite.config.ts → dropConsole`), donc `dlog` n'y affichait rien. Mais
 // chaque appel y gardait son message, évalué pour rien, dans le chunk `main`.
 // Avec la garde, Rollup élimine appels et messages ; en dev, `?debug` marche
 // comme avant. Même motif que le chargement d'eruda dans `src/main.tsx`.
