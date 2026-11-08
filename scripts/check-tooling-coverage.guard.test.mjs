@@ -72,7 +72,7 @@ describe('témoin — check-tooling-coverage (C-82)', () => {
     // Les sondes jetables et les outils lancés à la main sont hors périmètre :
     // les inclure ferait baisser un plancher pour du code qui n'est pas une
     // garde.
-    expect(attendus).not.toContain('scripts/visual-audit.mjs');
+    expect(attendus).not.toContain('scripts/analyze-entry.mjs');
     expect(attendus).not.toContain('scripts/profile-landing.mjs');
   });
 
@@ -100,7 +100,6 @@ describe('témoin — check-tooling-coverage (C-82)', () => {
     // un fichier que personne n'a décidé d'exclure, et on la ferait taire.
     const config = readFileSync(join(RACINE, 'vitest.tooling.config.ts'), 'utf8');
     for (const motif of [
-      'scripts/visual-audit*.mjs',
       'scripts/capture-*.mjs',
       'scripts/profile-landing.mjs',
       'scripts/analyze-entry.mjs',

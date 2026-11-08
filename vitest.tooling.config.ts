@@ -58,12 +58,7 @@ export default defineConfig({
       include: ['scripts/**/*.mjs', 'eslint-rules/**/*.js'],
       exclude: [
         'scripts/**/*.{test,spec}.mjs',
-        // Sondes jetables d'un audit daté : elles ne sont pas de la garde, et
-        // les inclure ferait baisser un plancher pour du code mort.
-        'scripts/_c5*-probe.mjs',
-        'scripts/_c5*-app-probe.mjs',
         // Outils d'exploration lancés à la main, jamais en CI.
-        'scripts/visual-audit*.mjs',
         'scripts/capture-*.mjs',
         'scripts/profile-landing.mjs',
         'scripts/landing-*-probe.mjs',

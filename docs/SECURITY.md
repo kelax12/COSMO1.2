@@ -335,7 +335,7 @@ supabase db push  # applique 017_processed_stripe_events.sql
 | 3 | `SET search_path = ''` sur toute fonction `SECURITY DEFINER` | `validate:migrations` règle 7, attributs lus avant ET après le corps | une fonction INVOKER au `search_path` mutable (l'advisor la voit, `check:supabase-posture`) |
 | 4 | Table à `user_id` : trigger `prevent_user_id_change` | `validate:migrations` règle 15, état final de l'historique | ⚠️ constaté le 2026-10-24 : **aucune** table des mig. `2xx` ne l'attache. Dette antérieure au cliquet, non jugée |
 | 5 | `raw_user_meta_data` recopié : `sanitize_display_name()` (M-2) | `validate:migrations` règle 14, par fonction qui écrit, et hors fonction | une recopie par une Edge Function, ou par une autre source tierce que `raw_user_meta_data` : **manuel** |
-| 6 | Le schéma de prod peut diverger des migrations : vérifier les colonnes avant d'écrire une policy | **manuel** · `check:drift` voit la dérive après coup | tout, avant l'écriture : une colonne se lit au catalogue |
+| 6 | Le schéma de prod peut diverger des migrations : vérifier les colonnes avant d'écrire une policy | **manuel** · `Migration coverage` voit un objet absent après coup | tout, avant l'écriture : une colonne se lit au catalogue |
 | 7 | Guillemets non échappés dans `CREATE POLICY` | `validate:migrations` règle 2 | |
 | 8 | Fonction citée par une policy : `EXECUTE`-able par `authenticated` | `check:rls` règle 3 (dont `get_subtree`, `has_subordinates`, `org_admin_count`, révoquées mig. `100`) | l'état réel en prod : requête ci-dessous |
 | 9 | Fonction `RETURNS trigger` : `SECURITY INVOKER` + `REVOKE ALL … FROM PUBLIC, anon, authenticated` | `validate:migrations` règle 5 (REVOKE, dès `109`) et règle 10 (DEFINER = **erreur** quel que soit le nom, dès `227`) | |
@@ -348,7 +348,7 @@ supabase db push  # applique 017_processed_stripe_events.sql
 | 16 | Surface admin gardée par `is_admin()`, jamais `admin_allowlisted()` | `validate:migrations` règle 12, pour les policies | une fonction `SECURITY DEFINER` gardée par `admin_allowlisted()` : **manuel** (l'affichage l'appelle légitimement) |
 | 17 | Auto-référence : `ON DELETE NO ACTION`, ni `CASCADE` ni `RESTRICT` | `validate:migrations` règle 13, `CREATE TABLE` et `ALTER TABLE` | |
 | 18 | Un correctif appliqué se versionne sous son propre numéro, jamais par édition d'un fichier appliqué | **manuel** · vérifiable par `git diff` contre `main`, pas par le texte des fichiers | tout |
-| 19 | Jamais de colonne, GRANT ou policy depuis le Dashboard | **manuel** · `check:drift` voit l'effet après coup | tout, avant |
+| 19 | Jamais de colonne, GRANT ou policy depuis le Dashboard | **manuel** · rien ne voit un ajout fait au Dashboard (`check:drift`, retiré le 2026-11-08, ne faisait qu'avertir) | tout, avant |
 | 20 | Lire le ledger AVANT d'appliquer | **manuel** · `check:migration-coverage` le relit après | tout, avant |
 | 21 | Prédicat de policy indépendant d'un argument pris dans la ligne (index) | **manuel** · seul `events` (mig. `128`) a un test dédié | toute autre table : une heuristique sur le texte se tromperait dans les deux sens |
 | 25 | Visibilité d'un projet d'équipe : une seule règle, `my_team_project_ids` (mig. `243`) ; `can_access_team_project` ne fait que la consulter | `e2e/rls/regle-unique-projet.test.ts` : lecture directe sous RLS = RPC `get_my_team_*`, huit acteurs types | une nouvelle RPC de lecture qui recalculerait son périmètre à la main : **manuel** |
@@ -631,8 +631,7 @@ est un journal de NOMS, pas un état de schéma : il ne sait rien dire d'une mig
 autrement, ni d'un `CREATE OR REPLACE` qui n'a pas pris (c'est exactement le défaut de la `144`,
 cf. la `147`). La seule preuve qui vaille reste celle qui a servi ici : interroger le CATALOGUE
 (`information_schema`, `pg_get_functiondef`) sur l'objet que la migration prétend créer.
-⚠️ Et `npm run check:drift` ne comble pas ce trou : il compare le schéma, pas le ledger, et il
-exige deux étapes manuelles.
+⚠️ L'ancien `check:drift` (retiré le 2026-11-08) ne comblait pas ce trou non plus.
 
 🟢 **UNE GARDE SURVEILLE CE RECOUVREMENT DEPUIS LE 2026-09-15** (`check:migration-coverage`,
 C-79). Elle fait exactement ce que le paragraphe ci-dessus prescrit : elle interroge le
@@ -847,7 +846,6 @@ Fonctions SECURITY DEFINER clés : `accept_friend_request_v2`, `accept_shared_ta
 npm run validate:migrations # Garde statique sur supabase/migration/*.sql (CI)
 npm run check:rls           # Invariants RLS : auth.uid() wrappé, 1 seule policy PERMISSIVE,
                             # + toute fonction citée par une policy exécutable par authenticated (CI)
-npm run check:drift         # Dérive repo ↔ prod (2 étapes : --print-sql puis <introspection.json>)
 npm run check:migration-coverage # Recouvrement des 152 fichiers de migration ↔ ledger de PROD.
                             # Répond à C-79. GATE CI depuis le 2026-09-15
                             # (`migration-coverage.yml`, quotidien 05:17 UTC + à
