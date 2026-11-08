@@ -517,7 +517,7 @@ La session retombe en `aal1` et l'écran d'enrôlement reparaît au prochain pas
 
 ## 2sexies. Traitements planifiés : pg_cron, Vault, journal (ARC-06, 2026-11-07)
 
-**Inventaire du 2026-11-07** (22 workflows planifiés). Cinq écrivent en production, par une Edge
+**Inventaire du 2026-11-07** (le nombre de workflows planifiés est dans [`FAITS.md`](./FAITS.md)). Cinq écrivent en production, par une Edge
 Function à `x-cron-secret`, et quittent GitHub : `renewal-notice.yml` (deux jobs : `renewal-notice`,
 `seat-alert`), `inactive-accounts.yml`, `org-digest.yml` (deux modes), `org-webhook-dispatch.yml`.
 Les dix-sept autres **restent** : ils lisent, comparent ou sondent (`uptime`, `posture`,
