@@ -14,68 +14,15 @@ npm run test:watch # mode watch
 npm run test:coverage # + couverture v8 (seuils par fichier — bloquant CI)
 ```
 
-### Couverture · mesure du 2026-09-11
+### Couverture
 
-✅ **VERTE au 2026-09-14** : **2 586 tests / 228 fichiers**, zéro échec, `exit 0`, aucun seuil
-franchi — 31,15 L · 30,73 S · 24,41 F · 26,31 B.
+`npm run test:coverage` applique des seuils **globaux** (planchers) et des seuils **par fichier** (cliquets, dont le glob `supabase.repository.ts`, qui mord avant le plancher global). Les seuils vivent dans `vitest.config.ts`, qui fait foi ; le nombre de tests et de fichiers est dans [`FAITS.md`](./FAITS.md).
 
-⚠️ **Les pourcentages BAISSENT alors que 116 tests ont été ajoutés** depuis le 09-11 (31,32 L pour
-2 470 / 221). Ce n'est pas une régression : le **dénominateur** bouge aussi, du code neuf étant
-arrivé avec. Un taux de couverture ne se lit jamais seul, toujours avec le nombre de lignes qu'il
-rapporte — sans quoi on « corrige » une baisse qui n'en est pas une, ou on rate une vraie.
+- Un taux de couverture ne se lit **jamais seul** : il se lit avec le nombre de lignes qu'il rapporte (le dénominateur bouge quand du code neuf arrive).
+- Ne jamais relever un seuil pour faire passer la CI, ni conclure d'un run mort (sans bloc « Coverage summary ») que la couverture a baissé : il n'a rien mesuré.
+- Ne jamais passer `--maxWorkers` en ligne de commande : `vitest.config.ts` le fixe (voir `CLAUDE.md`, § Scripts).
 
-*Mesure précédente, conservée :* ✅ **VERTE** : 2 470 tests / 221 fichiers, zéro échec, aucun seuil franchi.
-
-| | 2026-08-29 | **2026-09-11** | Seuil global |
-|---|---|---|---|
-| Lines | 29,17 | **31,32** | 26 |
-| Statements | 28,81 | **30,91** | 26 |
-| Functions | 23,41 | **24,56** | 21 |
-| Branches | 24,17 | **26,37** | 22 |
-
-🔴 **Le cliquet du glob `supabase.repository.ts` a MORDU le 2026-09-08.** `functions` est tombé
-à **89,83 %**, sous son seuil de 90, et la gate est passée au rouge. C'est exactement ce pour quoi
-ce cliquet-là existe : il mord avant le plancher global, qui, lui, montait tranquillement.
-
-**Les fonctions manquantes n'étaient pas dispersées, elles étaient datées.** 24 fonctions non
-couvertes sur 236, dont six livrées après la campagne de tests du 2026-08-25 :
-
-| Repository | Fonctions non couvertes | Livrées par |
-|---|---|---|
-| `tasks` | `getDependencies` · `addDependency` · `removeDependency` | mig. **132**, le 2026-08-30 |
-| `okrs` | `restoreCompletions` | contrat `useRestoreX` (R-08) |
-| `organizations` | `getMyOrgInbox` | mig. **129** + **142** |
-| `team-projects` | `addTaskDependency` · `removeTaskDependency` | mig. **108** + **117** |
-| `tasks` | `getPendingSharedTasks` · `delete` | antérieures, jamais couvertes |
-| `lists` | `getByTaskId` · `delete` | antérieures, jamais couvertes |
-| `habits` | `updateHabit` | antérieure, jamais couverte |
-
-❌ **Aucun seuil n'a été baissé.** 126 tests ont été écrits sur ces six fichiers, couvrant
-13 fonctions. Le glob est passé de **89,83 → 95,34 %** de fonctions, et **six repositories sont
-maintenant à 100 %** (`tasks`, `organizations`, `team-projects`, `habits`, `events`, `categories`).
-Restent sous la barre : `lists` (9/12) et `okrs` (28/33).
-
-Les seuils du glob sont **remontés** en conséquence (`vitest.config.ts`), à ~2 points sous le
-mesuré, comme le veut la convention du fichier :
-
-| | Avant | **Après** | Mesuré |
-|---|---|---|---|
-| lines | 88 | **90** | 92,99 |
-| statements | 74 | **76** | 78,85 |
-| functions | 90 | **93** | 95,34 |
-| branches | 63 | **65** | 67,91 |
-
-⚠️ **Les planchers GLOBAUX n'ont PAS été remontés**, et c'est une décision, pas un oubli : leurs
-marges valent maintenant 5,32 / 4,91 / 3,56 / 4,37 points. La marge de `functions` était de
-**0,32 point** le 2026-08-25 ; elle est confortable pour la première fois. À remonter à la
-prochaine mesure verte, pas dans le même geste que celui qui vient de réparer la gate.
-
-⚠️ **Comment mesurer sur cette machine.** Le run prend ~11 minutes, et il **meurt en silence** :
-pas de résumé, pas de rapport, pas de message, si une autre session fait tourner sa suite en
-parallèle (mesuré six fois le 2026-09-09 : workers qui ne démarrent pas, tests à 30 s de timeout,
-processus tué sans trace). Mesurer machine libre, ou dans un worktree isolé, avec
-`--maxWorkers=4`. ❌ **Ne jamais conclure d'un run mort que la couverture a baissé** : un run sans
-bloc « Coverage summary » n'a rien mesuré du tout.
+Les mesures datées (2026-08-29 au 2026-09-14), le récit du cliquet qui a mordu le 2026-09-08 et la façon de mesurer sur une machine saturée sont dans [`archive/TESTING-couverture-mesures-2026-08-25-au-2026-09-14.md`](./archive/TESTING-couverture-mesures-2026-08-25-au-2026-09-14.md).
 
 Couvre la logique pure et testable (pas de DOM, pas de réseau) :
 - `src/modules/okrs/progress.test.ts` — `recalcProgress` (moyenne, plafond 100 %, garde anti division par zéro B17, complétion).
@@ -132,65 +79,9 @@ refuse un commit qui touche `e2e/__screenshots__/**` sans `Captures-relues: <URL
   peut finir après le vert qui l'a réparé. `scripts/ci-alert-perime.mjs` tait l'issue ET le webhook
   sur ce seul cas, prouvé par l'API ; ❌ jamais dans le doute (API en panne, contexte vide : l'alerte part).
 
-### Décompte réel — mesuré le 2026-09-14 (`npx playwright test --list`)
+### Les projects Playwright
 
-**220 cas, 26 specs, 4 projects.**
-
-| Project | Cas | Ce qu'il joue |
-|---|---|---|
-| `chromium` | **107** | Desktop Chrome, mode démo |
-| `mobile-safari` | **96** | iPhone 12 / WebKit, mode démo |
-| `supabase-stub` | **16** | Desktop Chrome, **hors mode démo** (cf. plus bas) |
-| `supabase-stub-warmup` | **1** | Préalable de chauffe, pas un parcours (cf. plus bas) |
-
-**Ce que la passe du 2026-09-14 a ajouté** : `e2e/stubbed/delete-org.spec.ts`
-(4 cas), le parcours nominal de suppression d'entreprise — rembourser, résilier,
-supprimer — exigé par **C-39** et jamais joué jusque-là. Il prouve l'ordre en
-**retenant la réponse** de l'Edge Function : tant qu'elle ne part pas, aucune
-`rpc/delete_organization` ne doit exister. Vu ROUGE sur une mutation de
-`useDeleteOrgFlow` avant d'être commité.
-
-✅ **La sonde jetable `e2e/_tmp-probe.spec.ts` est SUPPRIMÉE** (2026-09-14). Elle
-était non suivie par git, rouge, et faussait de 2 cas tout recomptage local : la
-commande affichait 212 quand le dépôt en portait 210, et l'écart devait être
-expliqué à chaque mesure. Local et dépôt disent désormais le même nombre.
-⚠️ Ce que cet écart enseignait reste vrai : **un décompte local qu'on recopie
-sans regarder ce qui est SUIVI** est exactement la façon dont le précédent est
-devenu faux.
-
-⚠️ **`supabase-stub-warmup` n'est pas un parcours** : il compile les deux écrans
-du harnais avant que les douze autres cas ne commencent. Le compter avec eux
-gonflerait le total d'un test qui ne mesure pas le produit ; le taire ferait
-réapparaître un écart entre `--list` et ce fichier. Il est donc compté à part.
-
-**Mesures précédentes**, conservées pour montrer la dérive et pas pour être
-recopiées : **190 cas, 23 specs, 3 projects** le 2026-09-05 ; et avant cela
-« 62 × 2 = 124, 15/16 specs », qui datait du **2026-08-25** et a été **recopié**
-pendant onze jours au lieu d'être remesuré — il était déjà faux de 44 cas et de
-2 specs avant tout ajout de septembre. Un total qu'on recopie n'est pas une
-mesure.
-
-**Ce que cette passe a ajoutée, et elle seule** : le parcours de remboursement
-(C-65, 5 cas, cf. plus bas) et son préalable de chauffe (1). Le reste de l'écart
-avec le 2026-09-05 vient des autres chantiers de la fenêtre, et n'a pas été
-attribué ligne par ligne — l'attribuer de tête est précisément ce qui produit un
-chiffre faux qu'on recopie ensuite.
-
-❌ **Ne jamais écrire ce total sous la forme « N × 2 ».** Les projects ne jouent
-plus le même ensemble : `demo-calendar` et `demo-task-dependencies` sont hors de
-`mobile-safari` (raison mesurée, cf. ci-dessous), et `e2e/stubbed/**` n'est joué
-que par `supabase-stub`. Une multiplication redonnerait un chiffre faux, et
-c'est exactement comme ça que le précédent l'est devenu.
-
-Les 3 tests de `demo-touch-gestures.spec.ts` sont `skip` sur chromium
-(viewport ≥ 768 px). La CI joue `chromium` **et** `supabase-stub` (mêmes
-binaires Chrome) ; `mobile-safari` reste hors CI, WebKit coûtant une minute
-d'installation de plus.
-
-🔴 **Un project hors CI est un project qui ne tourne nulle part.** `supabase-stub`
-a été ajouté au job `e2e` le 2026-09-05 en même temps que les specs qu'il porte :
-sans ça, `FirstRunSetup` et le retour OAuth seraient des gardes posées sur `main`
-qui ne s'exécutent jamais — la faute déjà commise deux fois ici.
+Quatre projects : `chromium` (Desktop Chrome, mode démo), `mobile-safari` (iPhone 12, WebKit, mode démo), `supabase-stub` (Desktop Chrome, **hors mode démo**, voir plus bas) et `supabase-stub-warmup` (préalable de chauffe, pas un parcours). Le décompte des cas se mesure : `npx playwright test --list`. Les décomptes datés du 2026-09-14 et la passe qui a ajouté `delete-org.spec.ts` sont dans [`archive/TESTING-e2e-decompte-et-recits-2026-09-05-au-2026-11-01.md`](./archive/TESTING-e2e-decompte-et-recits-2026-09-05-au-2026-11-01.md).
 
 #### Le project `supabase-stub` — jouer ce que la démo ne peut pas atteindre
 
@@ -254,59 +145,13 @@ vide : **3,5 min**, puis 6 à 45 s par parcours.
 jusqu'à ce qu'il passe : ça déplace le seuil sans nommer la cause, et ça rend le
 détecteur muet le jour où l'écran est vraiment lent.
 
-#### C-65 — le parcours de REMBOURSEMENT (`e2e/stubbed/refund.spec.ts`, 5 cas) · ❌ retiré le 2026-11-01
+#### Le drapeau de facturation en e2e : substitution de module
 
-> ⚠️ **Récit historique.** Le bouton « Résilier et être remboursé » et cette spec ont disparu le
-> 2026-11-01 (`d765d9c5`) : aucun remboursement ne part plus de l'interface. Le parcours vivant
-> est `e2e/stubbed/retractation.spec.ts` (rétractation 14 jours, résiliation en fin de période),
-> doublé de `OrgBillingTab.retractation.parcours.test.tsx`. Le mécanisme de substitution du
-> drapeau ci-dessous reste celui en usage.
+Le parcours de remboursement (C-65) a été retiré le 2026-11-01 (aucun remboursement ne part plus de l'interface). Le parcours vivant est `e2e/stubbed/retractation.spec.ts`, doublé de `OrgBillingTab.retractation.parcours.test.tsx`. Le mécanisme qui sert encore :
 
-C-27 exigeait nommément ce parcours : « C-65 touche de l'argent, il ne part pas
-sans son parcours E2E ». Il manquait pour une raison **structurelle** : le bouton
-n'est monté nulle part tant que `ENTERPRISE_BILLING_ENFORCED` vaut `false`, et le
-mode démo rend `null` pour tout abonnement d'organisation.
+🔴 **Le drapeau est retourné par une substitution de MODULE, jamais par une variable d'environnement.** `vite.config.ts` remplace `@/modules/billing/premium-config` par `e2e/stubs/premium-config.e2e-stub.ts` **dans le seul mode `e2e-stub`** ; ce module réexporte le produit (`export *`) et ne change qu'un booléen. Dériver le drapeau d'un `import.meta.env` casserait la règle « le flag est la SEULE condition » dans le produit livré. Un montant de test ne s'écrit pas à la main : la spec importe le module que l'Edge Function appelle.
 
-🔴 **Le drapeau est retourné par une substitution de MODULE, jamais par une
-variable d'environnement.** `vite.config.ts` remplace
-`@/modules/billing/premium-config` par `e2e/stubs/premium-config.e2e-stub.ts`
-**dans le seul mode `e2e-stub`** ; ce module réexporte le produit (`export *`) et
-ne change qu'un booléen. C'est le même geste que le `vi.mock(…, importOriginal)`
-du test unitaire, au niveau du bundler. Faire dériver le drapeau d'un
-`import.meta.env` aurait cassé la règle écrite du dépôt — « le flag est la SEULE
-condition » — dans le produit livré, pas seulement dans les tests.
-
-Ce que les 5 cas prouvent, sur l'app réelle, avec le vrai routage et le vrai
-catalogue :
-
-| Cas | Ce qu'il mesure |
-|---|---|
-| mensuel | un seul appel à `stripe-org-refund`, authentifié, corps `{ orgId }` **sans aucun montant** ; montant affiché = celui du serveur ; résiliation visible **sans rechargement** ; plus aucun bouton pour recommencer ; zéro écriture cliente dans `org_subscriptions` |
-| annuel | même chose au **prorata des mois entiers** restants |
-| échec Stripe | le message dit « rien n'a été résilié », **aucun montant** n'est annoncé, et l'écran reste dans l'état d'avant — donc on peut réessayer |
-| non-propriétaire | `?tab=billing` tapé à la main retombe sur l'aperçu, aucun appel ne part |
-| témoin | rien n'a quitté le stub vers un vrai projet Supabase |
-
-⚠️ **Les deux montants ne sont pas écrits à la main** : la spec importe
-`supabase/functions/_shared/refund-amount.ts` — le module que l'Edge Function
-appelle — et vérifie que l'écran affiche exactement ce qu'il décide. Un montant
-en dur dans le test ferait de lui une **seconde définition** de la règle de
-remboursement, exactement le risque qui a imposé `org-tiers.parity.test.ts`.
-La spec épingle aussi la `reason` rendue (`monthly_full`, `yearly_prorata`), sans
-quoi les deux cas pourraient mesurer la même branche sans que rien ne le dise.
-
-🔴 **Ce que ce parcours NE prouve PAS, et qu'aucun test de ce poste ne peut
-prouver** : `refunds.create`, l'ordre « rembourser d'abord, résilier ensuite », la
-clé d'idempotence dérivée de l'`invoice_id`, le pré-contrôle qui retranche, et la
-ligne compensatoire écrite par `stripe-webhook`. La clé Stripe du projet est une
-clé de **test**, `org_subscriptions` est vide, il n'existe aucune facture à
-rembourser, et `APP_URL` épingle l'origine CORS sur la production.
-❌ **Ne pas déployer C-65 en s'appuyant sur ce fichier seul.**
-
-⚠️ Le cas d'échec se lit deux fois : c'est le **stub** qui décide de ne rien
-résilier, donc il ne mesure pas le serveur. Ce qu'il mesure est une propriété du
-**client**, et elle n'était pas acquise : sur un échec, l'écran ne doit pas
-anticiper une résiliation qui n'a pas eu lieu.
+Ce qu'un parcours `supabase-stub` ne prouve pas : tout ce qui vit côté Stripe (clé de test, `org_subscriptions` vide, aucune facture). Ne pas déployer un changement d'argent en s'appuyant sur un seul fichier de ce type. Le récit complet de C-65 (cinq cas, montants, limites) est dans [`archive/TESTING-e2e-decompte-et-recits-2026-09-05-au-2026-11-01.md`](./archive/TESTING-e2e-decompte-et-recits-2026-09-05-au-2026-11-01.md).
 
 #### TST-03 — `e2e/real/` : les parcours contre une VRAIE base (workflow `e2e-supabase`)
 
@@ -379,58 +224,9 @@ Les 4 specs de la vague entreprise couvrent le mode entreprise, arrivé jusque-l
 sans E2E : `demo-entreprise-dependencies` (9), `demo-entreprise-tasks-tab` (5),
 `demo-entreprise-session-fixes` (5), `demo-entreprise-okr-modal` (2).
 
-#### Les parcours ajoutés le 2026-09-05 (C-27)
+#### Parcours ajoutés par C-27
 
-| Spec | Cas | Ce qu'elle ferme |
-|---|---|---|
-| `stubbed/first-run.spec.ts` | 5 | `FirstRunSetup` : la garde s'ouvre sur un compte vide, **chaque étape écrit au moment où elle est validée** (mesuré sur les requêtes parties, pas sur un état React), la première tâche part sans échéance, l'accueil ne revient pas |
-| `demo-calendar.spec.ts` | 7 | Le calendrier COSMO sur ses **six** surfaces, plus `minDate` du report en masse et le focus au clavier dans la grille (défaut React 18 / `forwardRef`) |
-| `demo-task-dependencies.spec.ts` | 2 | Graphe **personnel** (mig. 132) : poser une arête et la relire, refuser un cycle **indirect à trois maillons**, ne jamais se proposer soi-même, retirer ; « Créer et lier » |
-| `demo-billing-consent.spec.ts` | 1 | Facturation armée depuis la bascule live (`5bf21a50`) : prix TTC affichés, et aucun « Choisir ce palier » tant que les DEUX cases de rétractation ne sont pas cochées (S-6, L221-28). S'appelait `demo-billing-disarmed` et vérifiait l'inverse jusqu'au 2026-10-22 |
-
-Les quatre premiers cas ont été **vus rouges avant d'être verts** : différer les
-créations de `FirstRunSetup` à la dernière étape fait tomber le premier ; le
-calcul du montant remboursé refait côté client fait tomber deux cas du parcours
-de remboursement.
-
-Les fichiers `e2e/rls/*.test.ts` ne sont **pas** des specs Playwright : ce sont
-des tests Vitest d'intégration (`npm run test:rls`, job CI `rls-integration`,
-stack Supabase locale). Ils sont **6** au 2026-08-25 : `tasks`, `get-my-tasks`,
-`shared-tasks`, `org-helpers-not-exposed`, `org-subscriptions`, et
-`org-permissions` (mig. 115).
-
-**Architecture** :
-- `e2e/fixtures.ts` : fixture `demoPage`. Clean localStorage/cookies → pose
-  `cosmo_cookie_consent` → goto / → clic CTA « Essayer maintenant — sans
-  inscription » → attend `/dashboard` → neutralise les flags
-  `cosmo_tutorial_seen_*_(desktop|mobile)`.
-- Tests smoke : `demo-create-task.spec.ts` (création réelle de bout en bout),
-  `demo-toggle-habit.spec.ts`, `demo-create-okr.spec.ts` +
-  `demo-journeys.spec.ts` (mutation + persistance SPA).
-
-**Règles** :
-- ✅ Naviguer via **clic sur les NavLink** (`navTo`) : ça teste au passage que le
-  lien existe. `page.goto()` est néanmoins **sûr** — le mode démo est persisté
-  (`cosmo_demo_active`, cf. `src/lib/app-mode.store.ts`) et `AuthContext` le
-  restaure au reload. À utiliser pour une route sans lien de nav (ex. `/premium`
-  quand `PREMIUM_ENFORCED=false`).
-- ✅ `baseURL` aligné sur `npm start` (port **3000**). `reuseExistingServer: true`
-  — ⚠️ **un serveur périmé qui squatte le port 3000 est réutilisé silencieusement**
-  et fait échouer toute la suite. Vérifier le port avant d'incriminer une spec.
-- ✅ Pas de sélecteur CSS `:has-text("..." i)` — utiliser `[data-sonner-toast][data-type="error"]`.
-- ✅ **Toujours `filter({ visible: true })`** : desktop (`<table>`) et mobile
-  (`TaskCard`) coexistent dans le DOM via `hidden md:block` / `md:hidden`, donc
-  `.first()` résout volontiers un élément **caché**.
-- ✅ `filter({ visible: true })` ≠ « dans le viewport ». Avant un geste
-  `page.mouse` (qui ne scrolle PAS), appeler `scrollIntoViewIfNeeded()`.
-- ✅ Cases de complétion de tâche : utiliser `TASK_TOGGLE*` de `fixtures.ts`.
-  Desktop = `role="checkbox"`/`aria-checked`, mobile = `<button aria-pressed>` —
-  **aucun rôle ARIA commun**, seul l'`aria-label` est partagé.
-- ✅ Scoper au sheet (`[data-mobile-more-sheet]`) pour cliquer un item du menu
-  « Plus » : la page reste montée derrière et ses contrôles matchent les mêmes noms.
-- ⚠️ Le **toaster Sonner** (`z-index: 999999999`) couvre y≈16→90 sur mobile et le
-  rappel « N en retard » ne se ferme pas seul : ne jamais cliquer un point fixe
-  en haut de l'écran.
+Les parcours `demo-calendar`, `demo-task-dependencies`, `demo-billing-consent` et `stubbed/first-run` se lisent dans `e2e/`. La table des cas ajoutés le 2026-09-05, avec ce que chacun ferme, est dans [`archive/TESTING-e2e-decompte-et-recits-2026-09-05-au-2026-11-01.md`](./archive/TESTING-e2e-decompte-et-recits-2026-09-05-au-2026-11-01.md).
 
 ## i18n — gardes de catalogues
 
