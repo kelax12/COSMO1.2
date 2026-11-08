@@ -3,7 +3,7 @@
 > Sécurité : `faille.md` (hors dépôt) = findings **ouverts** + priorités (source de vérité) ·
 > [`archive/faille-historique.md`](./archive/faille-historique.md) = historique des corrections (archive, non maintenue).
 > Ce document = règles permanentes à respecter. Les codes `(V1)`, `(N9)`, `(M-6)`… réfèrent aux fiches `faille.md`.
-> **Chiffres** : les comptes (tables, policies, migrations, Edge Functions) sont dans [`FAITS.md`](./FAITS.md), générés ; l'état de la production se mesure (`check:supabase-posture`, `check:drift`, `check:edge`). Les relevés datés qui figuraient ici (2026-09-14 au 2026-10-15, advisors, confrontation au catalogue) sont archivés : [`archive/SECURITY-releves-dates-2026-08-25-au-2026-10-15.md`](./archive/SECURITY-releves-dates-2026-08-25-au-2026-10-15.md). Aucune note /100 ici : [`INDICATEURS.md`](./INDICATEURS.md) (ADR 0012).
+> **Chiffres** : les comptes (tables, policies, migrations, Edge Functions) sont dans [`FAITS.md`](./FAITS.md), générés ; l'état de la production se mesure (`check:supabase-posture`, `check:migration-coverage`, `check:edge`). Les relevés datés qui figuraient ici (2026-09-14 au 2026-10-15, advisors, confrontation au catalogue) sont archivés : [`archive/SECURITY-releves-dates-2026-08-25-au-2026-10-15.md`](./archive/SECURITY-releves-dates-2026-08-25-au-2026-10-15.md). Aucune note /100 ici : [`INDICATEURS.md`](./INDICATEURS.md) (ADR 0012).
 
 ## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
 

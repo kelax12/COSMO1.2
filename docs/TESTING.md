@@ -269,17 +269,22 @@ seul**. Sa conclusion, et elle seule, bloque la poussée (`.githooks/pre-push`),
 liste de jobs devrait être recopiée dans les trois ; un job ajouté à l'une sans les autres
 bloquerait d'un côté et pas de l'autre.
 
-**Composition** : quatre jobs parallèles, sans `needs:`. Verdict au rythme du plus lent, `noyau`
+**Composition** : cinq jobs parallèles, sans `needs:`. Verdict au rythme du plus lent, `noyau`
 (4 min 30 mesurées le 2026-11-06 sur `081b477b`) ; cible < 15 min, donc pas de shards Vitest.
 
-- `noyau` : lint, `tsc -b`, `check:edge-coverage`, `test:coverage`, `test:coverage:tooling`.
+- `noyau` : lint, `tsc -b`, `check:edge-coverage`, `test:coverage` (témoins de `scripts/` compris).
+  `test:coverage:tooling` est sorti vers `Sabotages` (hebdo) le 2026-11-08 (V18.1) : les témoins
+  tournaient deux fois, seul le plancher de couverture de l'outillage reste planifié.
 - `lint-test-build` (venu de `ci.yml`) : `check:docs`, `validate:migrations`, `check:rls`, gardes
-  statiques (cycles, plancher, effacement, sous-traitants, portabilité, env, journal des CGU),
+  statiques (cycles, plancher, effacement, sous-traitants, portabilité, env, journal des CGU,
+  tableau de conformité `check:legal`, entré le 2026-11-08 : lancé par aucun workflow avant),
   `i18n:check` (parité), `i18n:scan` (chaînes en dur), `i18n:identical`, `i18n:pages` (pluriels),
   `i18n:quality`, build, budget de bundle.
 - `fichiers-sensibles` (venu de `ci.yml`) : voir plus bas.
 - `rls-integration` (venu de `ci.yml`) : stack Supabase locale (`supabase start`), rejoue
   **toutes** les migrations sur base vierge (`scripts/apply-migrations.mjs`), puis `npm run test:rls`.
+- `contrat-donnees` (ARC-07) : même base vierge, `check:contrat` compare `schema.sql`, l'inventaire
+  des RPC et les types générés aux fichiers commités.
 
 ❌ **Rien dans le noyau ne juge une date, un document qui vieillit ou un état extérieur** : un
 verdict qui change sans commit rend `main` rouge un matin, et un noyau rouge bloque tout.
@@ -289,12 +294,12 @@ Revus et gardés parce qu'aucun ne lit l'horloge ni le réseau : `check:docs`, `
 
 **Hors noyau, tournent encore, ne bloquent rien et ne sonnent plus** :
 
-- `ci.yml` (`CI etendue`) : `audit` (`npm audit` prod, peut rougir sans commit sur un avis publié ;
-  Dependabot couvre l'alerte), `e2e` (Playwright, 4 projects, ~30 min), `lighthouse`.
-- `visual.yml`, `mutation.yml`, `sabotages.yml`, `scalability-volume.yml`.
+- `ci.yml` (`CI etendue`) : `e2e` (Playwright, 4 projects, ~30 min), `lighthouse`. Le job `audit`
+  (`npm audit`) est retiré le 2026-11-08 : doublon des alertes de sécurité Dependabot, actives.
+- `visual.yml`, `mutation.yml`, `sabotages.yml` (dont `test:coverage:tooling`), `scalability-volume.yml`.
 - `gardes-calendrier.yml` (quotidien 06:29 UTC + `workflow_dispatch`) : `check:study`,
   `check:lecteurs-ecran`, `check:exercice-violation`,
-  `check:peremption-chantiers`, `check:acquisition`. Issue `calendrier-red`, refermée seule au vert.
+  `check:peremption-chantiers`, `check:acquisition`, `check:coffre`. Issue `calendrier-red`, refermée seule au vert.
 
 **Branches `noyau/**`** : le noyau y tourne sur `push`. C'est le chemin de réparation d'un noyau
 rouge (`DEPLOYMENT.md` § Hook `pre-push` : aucun contournement, seul un SHA déjà jugé vert passe
@@ -426,6 +431,35 @@ Ce que ça a fermé : le 2026-09-03, les trois sources en ligne divergeaient tou
 `VERCEL_TOKEN` / `VERCEL_PROJECT_ID` depuis le 2026-10-09 (`C-105`), et CodeQL est à 0 alerte
 depuis le 2026-10-16 (`C-89`). Ce paragraphe a dit le contraire jusqu'au 2026-10-20. Descendu de
 `scripts/CLAUDE.md` le 2026-11-06 ; CodeQL n'est plus à 0 depuis (`faille.md`).
+
+## Gardes : classes et outils standards
+
+Les récits d'incident qui fondent les règles des gardes et les mesures du tri V18.1 (MAI-02) sont
+dans [`archive/GARDES-recits-et-tri-2026-09-03-au-2026-11-08.md`](./archive/GARDES-recits-et-tri-2026-09-03-au-2026-11-08.md).
+Les règles elles-mêmes, l'inventaire classé et les retraits : [`scripts/CLAUDE.md`](../scripts/CLAUDE.md).
+
+**Quatre classes** (la colonne `Classe` de `scripts/CLAUDE.md` § Inventaire) :
+
+- **NOYAU** : bloquante, juge le commit, dans `ci-noyau.yml`. Ne lit ni l'horloge ni le réseau.
+- **PLANIFIÉE** : rapport non bloquant, sur cron, rouge suivi par la règle des 7 jours.
+- **REMPLACÉE** : un outil standard actif fait mieux. Actifs sur le dépôt et vérifiés le
+  2026-11-08 (`gh api repos/kelax12/COSMO1.2`) : alertes et mises à jour de sécurité
+  Dependabot (`.github/dependabot.yml`, alerte n° 65 ouverte le 2026-11-05), CodeQL
+  (`codeql.yml`, 11 alertes ouvertes), secret scanning et push protection, Lighthouse CI
+  (job `lighthouse` de `ci.yml`), Playwright `toHaveScreenshot` (`visual.yml`). Les advisors
+  Supabase sont lus par `Posture`, pas remplacés : aucune alerte native n'est vérifiable ici.
+- **RETIRÉE** : morte, redondante ou fausse. Une ligne par retrait dans `scripts/CLAUDE.md`.
+
+**Les workflows, par classe** :
+
+| Classe | Workflows |
+|---|---|
+| NOYAU | `ci-noyau.yml` (le verdict du commit), `ci-vert.yml` (tag `ci-vert/<sha>` lu par Vercel) |
+| PLANIFIÉE | `ci-alert.yml`, `ci.yml` (e2e, Lighthouse), `visual.yml`, `captures-regenerer.yml`, `sabotages.yml`, `mutation.yml`, `gardes-calendrier.yml`, `posture.yml`, `migration-coverage.yml`, `edge-deploy-drift.yml`, `deploy-sha-drift.yml`, `secrets-age.yml`, `restore-drill.yml`, `restore-drill-fraicheur.yml`, `db-backup.yml`, `indicateurs.yml`, `prod-errors.yml`, `stripe-prices.yml`, `seo-signals.yml`, `uptime.yml`, `smoke-prod.yml`, `scalability-volume.yml`, `e2e-supabase.yml` |
+| REMPLAÇANT standard | `codeql.yml` ; Dependabot (`.github/dependabot.yml`) et secret scanning, sans workflow |
+| DÉPLOIEMENT | `edge-deploy.yml` (après un noyau vert) |
+| PRODUIT | `daily-digest`, `weekly-digest`, `org-digest`, `org-webhook-dispatch`, `inactive-accounts`, `renewal-notice` : traitements de production, pas des gardes |
+| EN ATTENTE | `cron-journal.yml` : `schedule:` posé par la bascule pg_cron (V10.2) |
 
 ## Checklist avant push prod
 
