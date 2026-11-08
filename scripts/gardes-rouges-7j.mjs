@@ -36,6 +36,16 @@
 // `skipped` et `neutral` ne sont ni verts ni rouges et sont sautés.
 // `CI alert` lui-même est exclu (ses runs sont des `skipped` par construction).
 //
+// ── ET LES ALERTES DE DÉTECTION ÉCHUES (vague 6.1, OBS-01) ──────────
+//
+// Chaque issue `detection-violation` ouverte (`detection-violation.yml`)
+// porte son échéance de tri dans son marqueur. Passée l'échéance, elle entre
+// dans la même liste, la même issue `ci-red`, le même canal : une seule
+// règle de revue, pas une seconde. Une échéance illisible vaut échue.
+// REVUE DU LUNDI : le cron hebdomadaire de `ci-alert.yml` passe
+// `REVUE_HEBDO=true` ; s'il reste une alerte échue, la liste est republiée
+// même inchangée (une alerte échue ne doit pas se faire oublier en se taisant).
+//
 // ✅ ÉCHEC FERMÉ : API en panne, jeton refusé, fichier de décisions illisible
 //    ou mal formé = sortie 1. Jamais un vert sur une mesure qui n'a pas eu lieu.
 // ⚠️ Le dépôt est PUBLIC : l'issue ne porte que des noms de workflow, des
@@ -54,6 +64,7 @@ export const SEUIL_JOURS = 7;
 export const DECISION_MAX_JOURS = 30;
 export const EXCLUS = new Set(['CI alert']);
 export const MARQUEUR = '<!-- gardes-rouges-7j';
+export const LABEL_DETECTION = 'detection-violation';
 const ROUGES = new Set(['failure', 'timed_out', 'startup_failure']);
 const VERTS = new Set(['success']);
 
@@ -132,16 +143,45 @@ export function juger({ rouges, decisions, maintenant, seuil = SEUIL_JOURS }) {
   return { violations, recales, decisionsSansObjet };
 }
 
+/**
+ * Les alertes de détection ouvertes dont l'échéance est passée. `issues` :
+ * issues ouvertes du label `detection-violation`. L'échéance est lue dans le
+ * marqueur `echeance=<ISO>` du corps ; absente ou illisible, l'alerte est
+ * échue depuis sa création (échec fermé).
+ */
+export function alertesEchues(issues, maintenant) {
+  const out = [];
+  for (const i of issues ?? []) {
+    if (i.pull_request || i.state === 'closed') continue;
+    const lue = /echeance=(\S+?) -->/.exec(String(i.body ?? ''))?.[1];
+    const t = Date.parse(lue ?? '');
+    if (Number.isFinite(t) && maintenant.getTime() <= t) continue;
+    const echeance = Number.isFinite(t) ? t : Date.parse(i.created_at);
+    const connue = Number.isFinite(echeance);
+    out.push({
+      numero: i.number,
+      url: i.html_url,
+      echeance: connue ? new Date(echeance).toISOString().slice(0, 10) : 'inconnue',
+      lisible: Number.isFinite(t),
+      jours: connue ? Math.floor((maintenant.getTime() - echeance) / JOUR) : null,
+    });
+  }
+  return out.sort((a, b) => a.numero - b.numero);
+}
+
 /** Signature stable d'un verdict : ne commenter l'issue que quand elle change. */
-export function signature(violations) {
-  return violations.map((v) => `${v.workflow}@${String(v.depuis).slice(0, 10)}`).sort().join('|');
+export function signature(violations, alertes = []) {
+  return [
+    ...violations.map((v) => `${v.workflow}@${String(v.depuis).slice(0, 10)}`),
+    ...alertes.map((a) => `alerte#${a.numero}`),
+  ].sort().join('|');
 }
 
 /** Corps markdown de l'issue. Noms, dates, liens : rien d'autre (dépôt public). */
-export function corps({ violations, recales, decisionsSansObjet, maintenant, runUrl }) {
+export function corps({ violations, recales, decisionsSansObjet, alertes = [], maintenant, runUrl }) {
   const jour = maintenant.toISOString().slice(0, 10);
   const l = [];
-  l.push(`${MARQUEUR} ${signature(violations)} -->`);
+  l.push(`${MARQUEUR} ${signature(violations, alertes)} -->`);
   l.push(`**Gardes rouges depuis plus de ${SEUIL_JOURS} jours (${jour})**`);
   l.push('');
   if (violations.length) {
@@ -154,6 +194,14 @@ export function corps({ violations, recales, decisionsSansObjet, maintenant, run
     }
   } else {
     l.push('Aucune garde rouge depuis plus de 7 jours sans décision.');
+  }
+  if (alertes.length) {
+    l.push('');
+    l.push(`**Alertes de détection échues** (label \`${LABEL_DETECTION}\`, propriétaire Axel) : trier hors du dépôt, puis fermer l'issue avec sa qualification en une ligne.`);
+    for (const a of alertes) {
+      const quand = a.lisible ? `échue depuis ${a.jours} j (échéance du ${a.echeance})` : `échéance illisible, ouverte le ${a.echeance}`;
+      l.push(`- alerte n° ${a.numero} : ${quand} : ${a.url}`);
+    }
   }
   if (recales.length) {
     l.push('');
@@ -202,8 +250,14 @@ export async function mesurer({ token, repo }) {
   return rouges;
 }
 
-/** Ouvre ou met à jour l'issue `ci-red`. Rend { url, nouveau }. */
-export async function publier({ token, repo, texte, maintenant }) {
+/** Les issues de détection ouvertes (label `detection-violation`). */
+export async function mesurerAlertes({ token, repo }) {
+  return api(`/issues?state=open&labels=${LABEL_DETECTION}&per_page=100`, { token, repo });
+}
+
+/** Ouvre ou met à jour l'issue `ci-red`. Rend { url, nouveau }. `forcer` :
+ *  republier même si la liste n'a pas changé (revue du lundi). */
+export async function publier({ token, repo, texte, maintenant, forcer = false }) {
   const sig = /<!-- gardes-rouges-7j (.*?) -->/.exec(texte)?.[1] ?? '';
   const ouvertes = await api('/issues?state=open&labels=ci-red&per_page=1', { token, repo });
   if (!ouvertes.length) {
@@ -218,7 +272,7 @@ export async function publier({ token, repo, texte, maintenant }) {
     .reverse()
     .find((c) => String(c.body).startsWith(MARQUEUR));
   const sigPrecedente = precedent ? /<!-- gardes-rouges-7j (.*?) -->/.exec(precedent.body)?.[1] ?? null : null;
-  if (sigPrecedente === sig) return { url: precedent.html_url, nouveau: false };
+  if (sigPrecedente === sig && !forcer) return { url: precedent.html_url, nouveau: false };
   const c = await api(`/issues/${issue.number}/comments`, { token, repo, methode: 'POST', corpsJson: { body: texte } });
   return { url: c.html_url, nouveau: true };
 }
@@ -240,20 +294,25 @@ export async function run(env = process.env, maintenant = new Date()) {
   }
   const rouges = await mesurer({ token: env.GH_TOKEN, repo: env.REPO });
   const verdict = juger({ rouges, decisions: fichier.decisions, maintenant });
+  verdict.alertes = alertesEchues(await mesurerAlertes({ token: env.GH_TOKEN, repo: env.REPO }), maintenant);
   const texte = corps({ ...verdict, maintenant, runUrl: env.RUN_URL });
   lignes.push(texte);
+  const aSignaler = verdict.violations.length + verdict.alertes.length;
   let pub = { url: '', nouveau: false };
   // `DRY_RUN=1` : mesurer et imprimer, sans écrire l'issue (mesure locale).
-  if (verdict.violations.length && env.DRY_RUN !== '1') {
-    pub = await publier({ token: env.GH_TOKEN, repo: env.REPO, texte, maintenant });
-    lignes.push(`Issue ci-red : ${pub.url}${pub.nouveau ? ' (mise à jour)' : ' (inchangée, pas de nouveau commentaire)'}`);
+  if (aSignaler && env.DRY_RUN !== '1') {
+    const forcer = env.REVUE_HEBDO === 'true' && verdict.alertes.length > 0;
+    pub = await publier({ token: env.GH_TOKEN, repo: env.REPO, texte, maintenant, forcer });
+    const etat = pub.nouveau ? (forcer ? ' (revue du lundi)' : ' (mise à jour)') : ' (inchangée, pas de nouveau commentaire)';
+    lignes.push(`Issue ci-red : ${pub.url}${etat}`);
   }
-  if (verdict.violations.length) {
-    for (const v of verdict.violations) {
-      lignes.push(`::error title=gardes-7j · ${v.workflow}::rouge depuis ${v.complet ? '' : 'au moins '}${v.jours} j sans décision écrite`);
-    }
+  for (const v of verdict.violations) {
+    lignes.push(`::error title=gardes-7j · ${v.workflow}::rouge depuis ${v.complet ? '' : 'au moins '}${v.jours} j sans décision écrite`);
   }
-  return { exit: verdict.violations.length ? 1 : 0, lignes, verdict, pub };
+  for (const a of verdict.alertes) {
+    lignes.push(`::error title=gardes-7j · alerte de détection n° ${a.numero}::${a.lisible ? `échue depuis ${a.jours} j` : 'échéance illisible'}, non triée`);
+  }
+  return { exit: aSignaler ? 1 : 0, lignes, verdict, pub };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
@@ -265,7 +324,10 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   }
   for (const l of r.lignes) console.log(l);
   if (process.env.GITHUB_OUTPUT) {
-    const noms = (r.verdict?.violations ?? []).map((v) => v.workflow).join(', ');
+    const noms = [
+      ...(r.verdict?.violations ?? []).map((v) => v.workflow),
+      ...(r.verdict?.alertes ?? []).map((a) => `alerte de détection n° ${a.numero}`),
+    ].join(', ');
     appendFileSync(process.env.GITHUB_OUTPUT, `nouveau=${r.pub?.nouveau ? 'true' : 'false'}\nnoms=${noms}\nissue=${r.pub?.url ?? ''}\n`);
   }
   if (process.env.GITHUB_STEP_SUMMARY && r.lignes[0] && !r.lignes[0].startsWith('::')) {

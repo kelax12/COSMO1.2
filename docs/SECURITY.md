@@ -417,7 +417,8 @@ un préfixe de clé connu ou une longue suite opaque, dans le registre comme dan
 
 - Une entrée incomplète est un écart : le registre est rouge, pas seulement l'âge.
 - Un secret que rien ne lit n'est admis qu'avec une procédure de retrait (`variable-orpheline`,
-  `secret-sans-lecteur`) : on le supprime, ou on écrit pourquoi il reste.
+  `secret-sans-lecteur`, admise par la garde, sans entrée depuis que `SECURITY_ALERTS_TOKEN` a son
+  lecteur, vague 6.1) : on le supprime, ou on écrit pourquoi il reste.
 - `coffre: true` marque ce qui **ne se régénère pas** et que le coffre doit donc porter
   (aujourd'hui `BACKUP_PASSPHRASE`). Tout le reste se **fait tourner** : un jeton perdu se remplace,
   il ne se garde pas.

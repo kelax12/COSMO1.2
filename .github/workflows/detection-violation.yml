@@ -1,0 +1,112 @@
+# ──────────────────────────────────────────────────────────────────────
+# Detection violation · le delai CNIL de 72 h court depuis la DETECTION
+#
+# POURQUOI : `BK-1` (dumps de la base en clair dans les artefacts de ce depot
+# public, du 2026-08-29 au 2026-10-13) a ete trouvee par un audit, 45 jours
+# apres le debut de l'exposition, et par aucune garde. Puis le premier signal
+# du detecteur (PR n° 125, 2026-10-26) a ete pousse sur le salon et trie par
+# personne pendant 13 jours (OBS-01). D'ou les deux jobs :
+#
+#   detecter : `scripts/detection-violation.mjs` lit les alertes de secret
+#              scanning, le CONTENU des artefacts de 26 h et les journaux
+#              Supabase (agregats seulement). Resume du job : des nombres,
+#              jamais un compte ni une IP. Rouge sur un signal ou une source
+#              non lue (echec ferme).
+#   alerter  : `scripts/detection-violation-alerte.mjs`, SANS secret de
+#              production. Une issue `detection-violation` assignee a Axel,
+#              echeance de tri 72 h, au plus 3 publications sur 7 jours, puis
+#              le salon ops. Les issues echues : regle des 7 jours de
+#              `ci-alert.yml`, et sa revue du lundi.
+#
+# ⚠️ Ce workflow n'est PAS dans la liste de `ci-alert.yml`, pour la raison
+# d'`Uptime` : il ouvre deja sa propre issue. Deux alertes pour un incident
+# apprennent a en ignorer une.
+#
+# DROITS MINIMAUX : `detecter` lit (contents, actions) et ne peut rien ecrire
+# sur le depot. `SECURITY_ALERTS_TOKEN` est un jeton fin, ce depot seul,
+# « Secret scanning alerts: Read-only ». `SUPABASE_ACCESS_TOKEN` n'a pas de
+# portee en lecture seule chez Supabase (un PAT vaut administrateur) : le
+# script n'emet que des GET vers le point de lecture des journaux, et le
+# jeton ne quitte pas l'etape qui en a besoin.
+# ──────────────────────────────────────────────────────────────────────
+name: Detection violation
+
+on:
+  schedule:
+    - cron: '31 5 * * *' # quotidien, 05:31 UTC, minute decalee des autres crons
+  workflow_dispatch:
+    inputs:
+      exercice:
+        description: 'Exercice : lire les sources sans ouvrir d issue ni pousser le salon'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: detection-violation
+  cancel-in-progress: false
+
+jobs:
+  detecter:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      statut: ${{ steps.lire.outputs.statut }}
+      categories: ${{ steps.lire.outputs.categories }}
+      detecte_le: ${{ steps.lire.outputs.detecte_le }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Node est preinstalle sur le runner ; le script n'a aucune dependance
+      # hors bibliotheque standard.
+      - name: Lire les signaux de detection
+        id: lire
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SECURITY_ALERTS_TOKEN: ${{ secrets.SECURITY_ALERTS_TOKEN }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: node scripts/detection-violation.mjs
+
+  alerter:
+    needs: detecter
+    # `always()` : un detecteur rouge est justement celui qui a quelque chose
+    # a dire. Statut vide (detecteur tombe avant d'ecrire) = source non lue.
+    if: always() && needs.detecter.outputs.statut != 'rien'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Ouvrir ou mettre a jour l issue de detection
+        id: issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          STATUT: ${{ needs.detecter.outputs.statut }}
+          CATEGORIES: ${{ needs.detecter.outputs.categories }}
+          DETECTE_LE: ${{ needs.detecter.outputs.detecte_le }}
+          EXERCICE: ${{ github.event_name == 'workflow_dispatch' && inputs.exercice }}
+        run: node scripts/detection-violation-alerte.mjs
+      # Pousser seulement ce qui vient d'etre publie : le plafond et la
+      # deduplication valent aussi pour le salon.
+      - name: Pousser l alerte sur le webhook ops
+        if: steps.issue.outputs.publie == 'true'
+        env:
+          WEBHOOK: ${{ secrets.OPS_ALERT_WEBHOOK_URL }}
+          GITHUB_EVENT_NAME: schedule
+          WF: 'Detection violation, ${{ steps.issue.outputs.resume }}'
+          SHA: ${{ github.sha }}
+          RUN_URL: ${{ steps.issue.outputs.issue }}
+        run: node scripts/ops-alert.mjs
