@@ -77,5 +77,5 @@ Voir [`CONTRIBUTING.md`](./CONTRIBUTING.md). En bref : ouvrez d'abord une issue.
 
 ## Licence
 
-Aucune licence de réutilisation n'est accordée à ce jour. Le code est visible, pas réutilisable :
-tous droits réservés tant qu'un fichier `LICENSE` n'a pas été ajouté.
+Tous droits réservés (décision d'Axel du 2026-11-08) : voir [`LICENSE`](./LICENSE). Le code est
+visible, pas réutilisable ; toute réutilisation demande une autorisation écrite.
