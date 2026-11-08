@@ -71,7 +71,8 @@ const REACT_COMPILER_DIFFEREES = {
 
 /** Même périmètre que `src/architecture.guard.test.ts` (`EXCLUDED_DIRS`). */
 const PERIMETRE_COMPLEXITE = {
-  files: ['src/**/*.{ts,tsx}'],
+  // `prerender/**` : le prérendu est du TypeScript hors de `src/`, mêmes seuils.
+  files: ['src/**/*.{ts,tsx}', 'prerender/**/*.ts'],
   ignores: [
     'src/**/*.{test,spec}.{ts,tsx}',
     'src/**/ui/**',

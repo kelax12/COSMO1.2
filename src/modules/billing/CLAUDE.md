@@ -16,7 +16,7 @@ Elles ne partagent aucune colonne. Le client ne peut écrire ni l'une ni l'autre
 ## État courant
 
 - (historique) `PRICES_VISIBLE = false` du 2026-10-16 au 10-20 (acquisition sans monétisation) : aucun montant affiché, ni sur
-  la landing ni dans l'onglet Abonnement ni dans le prérendu (miroir `PRIX_VISIBLES` de `prerender.mjs`).
+  la landing ni dans l'onglet Abonnement ni dans le prérendu (miroir `PRIX_VISIBLES` de `prerender/flags.ts`).
   Rien n'est supprimé. Les surfaces entreprise testent `PRICES_VISIBLE || ENTERPRISE_BILLING_ENFORCED`.
 - 🟢 `PREMIUM_ENFORCED = false` (`premium-config.ts`) : `isPremium()` rend `true` pour tous,
   `/premium` redirige vers `/`. Le code de gating reste dormant, il ne se supprime pas.

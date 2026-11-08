@@ -18,6 +18,10 @@ import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { ABOUT_CONTENT } from '../../../prerender/content/about.ts';
+import { ENTREPRISE_CONTENT } from '../../../prerender/content/entreprise.ts';
+import { GUIDE_CONTENT } from '../../../prerender/content/guide.ts';
+import { LOGIN_CONTENT, SIGNUP_CONTENT } from '../../../prerender/content/short-pages.ts';
 import { LANDING_PROMISES, type LandingPromise, type PromiseProof } from '@/pages/landing/__test__/landing-promises.manifest';
 import {
   ENTERPRISE_PRICING_TIERS,
@@ -73,23 +77,25 @@ function catalog(locale: string, file: string, prefix = ''): Map<string, string>
   return out;
 }
 
-/** Pages écrites en dur dans le prérendu, découpées par chemin puis par langue. */
-export function prerenderPages(source: string): Map<string, { fr: string; en: string }> {
-  const a = source.indexOf('const ROUTES = [');
-  const b = source.indexOf("path: '/blog',");
+/** Les pages dont le corps est écrit en dur dans le prérendu (`prerender/content/`), par chemin. */
+const PAGES_DU_PRERENDU: Record<string, { fr?: string; en?: string }> = {
+  '/guide': GUIDE_CONTENT,
+  '/signup': SIGNUP_CONTENT,
+  '/login': LOGIN_CONTENT,
+  '/a-propos': ABOUT_CONTENT,
+  '/entreprise-presentation': ENTREPRISE_CONTENT,
+};
+
+/** Ces pages, balisage retiré, découpées par chemin puis par langue. */
+export function prerenderPages(
+  contenus: Record<string, { fr?: string; en?: string }> = PAGES_DU_PRERENDU,
+): Map<string, { fr: string; en: string }> {
   const pages = new Map<string, { fr: string; en: string }>();
-  const parts = source.slice(a, b).split(/^\s{4}path: '/m).slice(1);
-  for (const part of parts) {
-    const path = part.slice(0, part.indexOf("'"));
-    const body = part
-      .replace(/^\s*\/\/.*$/gm, '')
-      .replace(/\$\{PRIX_VISIBLES \? `/g, ' ')
-      .replace(/` : ''\}/g, ' ');
-    const lits = [...body.matchAll(/`([^`]*)`/g)].map((m) => m[1].replace(/<[^>]+>/g, ' '));
-    if (lits.length !== 2) {
-      throw new Error(`prérendu ${path} : ${lits.length} gabarits au lieu de 2 (fr, en), la garde ne sait plus le lire`);
+  for (const [path, c] of Object.entries(contenus)) {
+    if (typeof c.fr !== 'string' || typeof c.en !== 'string') {
+      throw new Error(`prérendu ${path} : gabarit fr ou en absent, la garde ne sait plus le lire`);
     }
-    pages.set(`prerender:${path}`, { fr: lits[0], en: lits[1] });
+    pages.set(`prerender:${path}`, { fr: c.fr.replace(/<[^>]+>/g, ' '), en: c.en.replace(/<[^>]+>/g, ' ') });
   }
   return pages;
 }
@@ -113,7 +119,7 @@ async function loadSurfaces(): Promise<Map<string, Surface>> {
     if (u.locales.en) flatten(u.locales.en, `usecase.${u.routeId}`, en);
     for (const [k, v] of fr) s.set(k, { fr: v, en: en.get(k) });
   }
-  for (const [k, v] of prerenderPages(read('prerender.mjs'))) s.set(k, v);
+  for (const [k, v] of prerenderPages()) s.set(k, v);
   return s;
 }
 
@@ -228,7 +234,7 @@ describe('mesures : les chiffres de limite tiennent', () => {
 
   it('la grille écrite dans le prérendu est celle des paliers', () => {
     const [fr, en] = ['fr', 'en'].map((l) => {
-      const page = prerenderPages(read('prerender.mjs')).get('prerender:/entreprise-presentation')!;
+      const page = prerenderPages().get('prerender:/entreprise-presentation')!;
       const text = l === 'fr' ? page.fr : page.en;
       const i = text.search(l === 'fr' ? /gratuit jusqu'à/ : /free up to/);
       return multiset(figuresOf(text.slice(i, i + 220).split('</p>')[0].split(/\. /)[0]));
@@ -341,6 +347,6 @@ describe('TÉMOINS : la garde voit ce qu’elle doit voir', () => {
   });
 
   it('le lecteur du prérendu échoue au lieu de se taire si la structure change', () => {
-    expect(() => prerenderPages("const ROUTES = [\n    path: '/x',\n    content: `a`,\n    path: '/blog',")).toThrow(/2 \(fr, en\)|au lieu de 2/);
+    expect(() => prerenderPages({ '/x': { fr: 'a' } })).toThrow(/gabarit fr ou en absent/);
   });
 });

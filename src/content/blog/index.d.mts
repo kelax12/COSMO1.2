@@ -1,5 +1,5 @@
 // Types du registre blog (index.mjs est en JS pur pour rester importable
-// par prerender.mjs sous Node — les types vivent ici).
+// par prerender/ sous Node — les types vivent ici).
 import type { Locale } from '@/i18n/locale';
 
 /** Ce qui se traduit d'un article. */
@@ -8,7 +8,7 @@ export interface BlogArticleContent {
   metaTitle: string;
   description: string;
   readingMinutes: number;
-  /** Paires [question, réponse] — FAQPage JSON-LD généré par prerender.mjs */
+  /** Paires [question, réponse] — FAQPage JSON-LD généré par prerender/ */
   faq?: [string, string][];
   html: string;
 }

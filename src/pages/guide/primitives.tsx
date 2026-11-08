@@ -101,7 +101,7 @@ export function useGuideSchemas() {
   // comme les balises meta. Il etait ecrit en dur en francais.
   const { t: guideT } = useT('seo');
   useEffect(() => {
-    // Pages pré-rendues (prerender.mjs) : les schémas sont déjà en statique
+    // Pages pré-rendues (prerender/) : les schémas sont déjà en statique
     // dans le <head>. Ne pas dupliquer côté client.
     if (document.getElementById('guide-breadcrumb')) return;
     const breadcrumb = {

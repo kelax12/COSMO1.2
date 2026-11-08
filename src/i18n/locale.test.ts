@@ -86,7 +86,7 @@ describe('detectLocale', () => {
   });
 
   it('sans navigator du tout (prérendu Node) → défaut, sans planter', () => {
-    // `prerender.mjs` tourne en Node brut : la fonction doit rester appelable
+    // `prerender/` tourne en Node brut : la fonction doit rester appelable
     // hors navigateur, sinon le build casse au lieu de rendre du français.
     vi.stubGlobal('navigator', undefined);
     expect(detectLocale()).toBe(DEFAULT_LOCALE);

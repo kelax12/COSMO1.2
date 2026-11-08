@@ -1,6 +1,6 @@
-// Helpers d'URL localisées pour le SEO — partagés par `prerender.mjs`.
+// Helpers d'URL localisées pour le SEO — partagés par `prerender/`.
 //
-// En `.mjs` et non en `.ts` : `prerender.mjs` tourne dans Node brut, après
+// En `.mjs` et non en `.ts` : `prerender/` tourne dans Node brut, après
 // `vite build`, sans bundler ni transpilation. Il ne peut pas importer du
 // TypeScript. La table des slugs, elle, est lue depuis le MÊME
 // `route-slugs.json` que `src/i18n/routes.ts` — c'est ce qui garantit que
@@ -25,7 +25,7 @@
 // ❌ Ne jamais ajouter une locale ici avant que son corps soit traduit : c'est
 // le duplicate content, du français sur des URLs anglaises, que toute cette
 // architecture existe pour empêcher. La garde structurelle est
-// `availableLocales()` dans prerender.mjs : une locale n'est publiée pour une
+// `availableLocales()` dans prerender/ : une locale n'est publiée pour une
 // route que si elle a À LA FOIS des méta et du contenu.
 
 import { readFileSync } from 'node:fs';

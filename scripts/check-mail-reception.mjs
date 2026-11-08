@@ -40,7 +40,8 @@ export const SURFACES = [
   'src/components',
   'src/lib/contact.mjs',
   'index.html',
-  'prerender.mjs',
+  'prerender/content',
+  'prerender/chrome.ts',
   'public/llms.txt',
 ];
 

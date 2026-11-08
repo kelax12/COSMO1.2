@@ -26,7 +26,7 @@ export function buildFaqSchema(items: FaqPair[]) {
 // ── FAQ Schema injection ──────────────────────────────────────────────────
 export function useFaqSchema() {
   useEffect(() => {
-    // Sur les pages pré-rendues (prerender.mjs), le FAQPage JSON-LD est déjà
+    // Sur les pages pré-rendues (prerender/), le FAQPage JSON-LD est déjà
     // présent en statique dans le <head> — ne pas le dupliquer côté client.
     if (document.getElementById('faq-schema')) return;
     const script = document.createElement('script');

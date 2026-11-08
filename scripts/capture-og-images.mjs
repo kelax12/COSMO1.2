@@ -14,7 +14,7 @@
  * branche une image si elle existe et retombe sur og-card sinon, donc une page
  * ajoutée sans relancer ce script garde une vignette, juste générique.
  *
- * ⚠️ La clé doit rester celle d'`ogKey()` dans prerender.mjs.
+ * ⚠️ La clé doit rester celle d'`ogKey()` dans prerender/ld.ts.
  * L'accueil français garde og-card.png, dessinée à la main.
  */
 import { chromium } from 'playwright';

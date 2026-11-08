@@ -2,11 +2,12 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
+import { lirePrerender, lireToutLePrerender } from './__test__/prerender-source';
 
 // Régression : au refresh ou au moindre plantage au démarrage, l'utilisateur
 // voyait le mur de texte SEO du prerender à la place d'un écran de chargement.
 //
-// Le contenu SEO est injecté par prerender.mjs DANS #root, où il reste peint
+// Le contenu SEO est injecté par le prérendu (prerender/page.ts) DANS #root, où il reste peint
 // tant que React n'a pas commité son premier render — donc pour toujours si le
 // bundle 404 (chunk périmé après redéploiement) ou si le boot lève.
 //
@@ -23,7 +24,7 @@ import { createHash } from 'node:crypto';
 
 const ROOT = join(__dirname, '..');
 const indexHtml = readFileSync(join(ROOT, 'index.html'), 'utf8');
-const prerender = readFileSync(join(ROOT, 'prerender.mjs'), 'utf8');
+const prerender = lireToutLePrerender();
 const vercelRaw = readFileSync(join(ROOT, 'vercel.json'), 'utf8');
 
 /** Les <script> inline EXÉCUTABLES (hors JSON-LD), commentaires HTML retirés. */
@@ -192,7 +193,7 @@ describe('C-116 · peindre le prérendu, mais seulement sur une page prérendue'
 
   it('le prérendu pose data-prerendered et écrit une coquille vierge app.html', () => {
     expect(prerender).toContain("'<html data-prerendered'");
-    expect(prerender).toMatch(/writeFileSync\(join\(DIST, 'app\.html'\), appShell/);
+    expect(lirePrerender('shell.ts')).toMatch(/writeFileSync\(join\(DIST, 'app\.html'\), appShell/);
   });
 
   it("app.html sort en noindex sans canonical vers la home (sinon toute URL inconnue est un soft-404 indexable)", () => {
@@ -210,7 +211,7 @@ describe('C-116 · peindre le prérendu, mais seulement sur une page prérendue'
   });
 });
 
-describe('prerender.mjs', () => {
+describe('prerender/', () => {
   it('injecte le contenu SEO dans #seo-fallback (masqué), pas en HTML nu', () => {
     expect(prerender).toContain('<div id="seo-fallback">');
     // L'ancien bug : un <div style="..."> visible, sans aucun garde-fou CSS.

@@ -8,7 +8,7 @@
 // rend ses titres en <div>, de mêmes classes (le preflight de Tailwind ne donne
 // déjà aucun style propre au <h1>). Le <h1> du texte SEO reste le seul.
 //
-// Module Node brut, partagé par prerender.mjs (qui fait échouer le build) et
+// Module Node brut, partagé par prerender/verify.ts (qui fait échouer le build) et
 // par src/prerender-h1.guard.test.ts.
 
 /** Le fragment, ses <h1> rendus en <div> (mêmes attributs). */

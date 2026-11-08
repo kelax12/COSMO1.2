@@ -22,7 +22,8 @@ import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 
-const SCAN_ROOTS = ['src'];
+// `prerender/` : le prérendu (TypeScript exécuté par Node), soumis aux mêmes plafonds que `src/`.
+const SCAN_ROOTS = ['src', 'prerender'];
 /**
  * shadcn (non modifiable) + vitrines marketing (déjà ignorées par ESLint) +
  * `generated` : types écrits par `scripts/contrat-donnees.mjs`, jamais à la

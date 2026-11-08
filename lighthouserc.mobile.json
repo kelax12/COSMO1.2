@@ -132,7 +132,7 @@
           "_comment": [
             "Cliquet LCP des pages de CONTENU (2026-10-25), meme plafond que la home.",
             "Elles peignent depuis ce jour leur propre rendu React, produit au build",
-            "(prerender.mjs, injectContentCopy) : 1 514 a 1 741 ms au run 40099712405",
+            "(prerender/copies.ts, injectContentCopy) : 1 514 a 1 741 ms au run 40099712405",
             "(66f76355), contre 4 450 a 5 610 ms avec le spinner (runs de main du",
             "2026-10-22). Plafond a 2 000 ms, 15 % au-dessus du pire. Le global passe",
             "en error a 3 000 ms, le plafond de l entreprise, la plus lente des pages",

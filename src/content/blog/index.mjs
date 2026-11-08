@@ -1,6 +1,6 @@
 // Registre des articles de blog, source de vérité unique, consommée par :
 //  - React : BlogIndexPage + BlogArticlePage (via src/modules, imports Vite)
-//  - prerender.mjs : génération des pages statiques /blog/* + sitemap
+//  - prerender/ : génération des pages statiques /blog/* + sitemap
 // ESM pur (pas de JSX, pas d'alias @/) pour rester importable par Node au build.
 //
 // ─── « Servie » et « indexable » sont deux questions différentes ───
@@ -29,7 +29,7 @@ import { article as gestionDuTemps } from './gestion-du-temps-efficace.mjs';
 import { article as suiviHabitudes } from './suivi-des-habitudes.mjs';
 
 // Miroir de `DEFAULT_LOCALE` (src/i18n/locale.ts). Recopié et non importé parce
-// que ce module doit rester chargeable par Node brut depuis prerender.mjs, donc
+// que ce module doit rester chargeable par Node brut depuis prerender/, donc
 // sans TypeScript. La parité est tenue par src/content/content-locales.test.ts.
 const DEFAULT_LOCALE = 'fr';
 

@@ -8,7 +8,7 @@ import { useT } from '@/i18n/useT';
  * pages légales, connexion…), un visiteur voyait le texte SEO brut sur fond
  * blanc, puis le `PageLoader` de l'app (un AUTRE spinner, aux couleurs du
  * thème, centré dans 60vh), puis la page : trois écrans. Ces pages peignent
- * désormais le spinner de démarrage (prerender.mjs ne leur pose plus
+ * désormais le spinner de démarrage (prerender/ ne leur pose plus
  * `data-prerendered`), et ce composant le prolonge pendant le chargement du
  * chunk de la page : même classe, donc même CSS (le <style> d'index.html),
  * mêmes couleurs de thème (`html[data-boot-theme]`), même position plein

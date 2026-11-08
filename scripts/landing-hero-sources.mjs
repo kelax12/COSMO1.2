@@ -10,7 +10,7 @@
 //
 // `capture-landing-hero.mjs` enregistre l'empreinte de ces fichiers à côté de
 // la capture ; `src/prerender-hero.guard.test.ts` la recalcule et échoue dès
-// qu'un d'eux a bougé. La CSS, elle, n'est pas concernée : `prerender.mjs`
+// qu'un d'eux a bougé. La CSS, elle, n'est pas concernée : `prerender/copies.ts`
 // l'extrait de la feuille BUILDÉE à chaque build.
 //
 // ⚠️ Fins de ligne normalisées avant hachage : un checkout Windows (CRLF) et la

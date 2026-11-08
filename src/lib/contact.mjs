@@ -9,7 +9,7 @@
 // volontairement l'adresse personnelle de l'éditeur : c'est une mention
 // d'identité, pas un canal de support.
 //
-// En `.mjs` (types dans `contact.d.mts`) parce que `prerender.mjs` l'importe
+// En `.mjs` (types dans `contact.d.mts`) parce que `prerender/` l'importe
 // sous Node, sans passer par Vite : c'est la seule façon d'avoir la MÊME
 // adresse dans le footer React et dans le footer statique servi aux crawlers.
 export const CONTACT_EMAIL = 'contact@thecosmo.app';

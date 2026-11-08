@@ -21,7 +21,7 @@ export const PREMIUM_ENFORCED = false;
 //  false → AUCUN montant n'est montré : ni la section tarifs de la landing
 //          entreprise (et son ancre, et le lien « Voir les tarifs » du héros),
 //          ni la grille de paliers de l'onglet Abonnement, ni le paragraphe
-//          « Tarifs » du prérendu (`prerender.mjs`, constante miroir). Rien
+//          « Tarifs » du prérendu (`prerender/flags.ts`, constante miroir). Rien
 //          n'est supprimé : textes, composants et montants restent ici et
 //          dans les catalogues, prêts à revenir.
 //  true  → les prix sont affichés comme avant.

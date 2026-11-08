@@ -176,7 +176,7 @@ export function volumesParPage(dist = DIST) {
  * dont le slug ne change pas.
  *
  * `route-slugs.json` est la seule table de correspondance du dépôt, et c'est
- * déjà elle que `prerender.mjs` utilise : on ne recrée pas une seconde table.
+ * déjà elle que le prérendu (`prerender/`) utilise : on ne recrée pas une seconde table.
  */
 export function decouper(url, slugs = SLUGS) {
   let locale = 'fr';
