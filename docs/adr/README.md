@@ -15,7 +15,7 @@ Format MADR léger : **Statut**, **Date**, **Contexte**, **Décision**, **Consé
   plus ce qui était vrai à sa date.
 - Statuts : `proposée`, `acceptée`, `remplacée par 00NN`, `abandonnée`.
 - Numérotation à quatre chiffres, nom de fichier `NNNN-sujet-en-minuscules.md`. Le suivant est le
-  **0014**, après avoir relu ce dossier.
+  **0015**, après avoir relu ce dossier.
 - ❌ Aucune liste de faiblesses ni de findings de sécurité ouverts : le dépôt est public (voir l'ADR 0008).
 
 ## Index
@@ -35,6 +35,7 @@ Format MADR léger : **Statut**, **Date**, **Contexte**, **Décision**, **Consé
 | [0011](./0011-charger-a-la-demande-ce-qui-ne-sert-pas-au-premier-ecran.md) | Charger à la demande tout ce qui ne sert pas au premier écran | acceptée | 2026-11-08 |
 | [0012](./0012-indicateurs-mesures-a-la-place-des-notes.md) | Des indicateurs mesurés à la place des notes sur 100, avec un audit externe semestriel | acceptée | 2026-11-08 |
 | [0013](./0013-validation-d-usage-avant-toute-fonctionnalite-longue.md) | Validation d'usage avant toute fonctionnalité de plus d'une semaine | acceptée | 2026-11-08 |
+| [0014](./0014-docs-d-etat-journaux-en-archive-sans-notes.md) | Des docs d'état courtes, les journaux en archive, plus de notes sur 100 | acceptée | 2026-11-08 |
 
 Le double backend de démonstration (`localStorage`) et sa parité avec Supabase n'ont pas encore leur
 ADR : il est en cours d'écriture dans un chantier à part.

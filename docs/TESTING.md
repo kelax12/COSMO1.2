@@ -497,7 +497,7 @@ Revus et gardés parce qu'aucun ne lit l'horloge ni le réseau : `check:docs`, `
   Dependabot couvre l'alerte), `e2e` (Playwright, 4 projects, ~30 min), `lighthouse`.
 - `visual.yml`, `mutation.yml`, `sabotages.yml`, `scalability-volume.yml`.
 - `gardes-calendrier.yml` (quotidien 06:29 UTC + `workflow_dispatch`) : `check:study`,
-  `check:docs-scored`, `check:lecteurs-ecran`, `check:exercice-violation`,
+  `check:lecteurs-ecran`, `check:exercice-violation`,
   `check:peremption-chantiers`, `check:acquisition`. Issue `calendrier-red`, refermée seule au vert.
 
 **Branches `noyau/**`** : le noyau y tourne sur `push`. C'est le chemin de réparation d'un noyau
