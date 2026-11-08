@@ -13,7 +13,7 @@ import OrgSizeStep from './OrgSizeStep';
 
 /**
  * Choix « créer ou rejoindre » de l'accueil entreprise. C'est la carte
- * d'avant la refonte du 2026-10-03, remise le 2026-10-09 à la demande
+ * d'avant la refonte, remise à la demande
  * d'Axel : plus sobre que l'écran de bienvenue en constellation, qui
  * empilait trois paragraphes avant les deux seuls gestes possibles.
  *
@@ -22,7 +22,7 @@ import OrgSizeStep from './OrgSizeStep';
  * place qui demandait équipe, invitations, projet et cap a été retiré le
  * 2026-10-14.
  *
- * Depuis le 2026-11-05, une création passe d'abord par « Combien serez-vous ? »
+ *, une création passe d'abord par « Combien serez-vous ? »
  * (`OrgSizeStep`) quand la facturation est active : un palier payant ouvre
  * le récapitulatif de paiement de l'onglet Facturation, le gratuit mène à
  * l'espace. Jamais en démo (aucune facturation réelle).

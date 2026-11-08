@@ -15,7 +15,7 @@ type DragEvent = MouseEvent | TouchEvent | PointerEvent;
 
 /**
  * Glisser-déposer des widgets d'`ApercuWidgetGrid` (sorti du composant le
- * 2026-10-29 : il dépassait le plafond de 600 lignes d'`architecture.guard`).
+ * il dépassait le plafond de 600 lignes d'`architecture.guard`).
  *
  * Le bloc survolé cède sa place au bloc tenu ; `onMove` reçoit la disposition
  * courante, l'id tenu et sa nouvelle position.
@@ -23,7 +23,7 @@ type DragEvent = MouseEvent | TouchEvent | PointerEvent;
  * Sous mouvement réduit, la grille n'a pas de `layout` Framer (cf. le
  * composant) : les blocs se téléportaient à chaque échange (vidéo du
  * 2026-10-26, Windows « Effets d'animation » coupés). Décision d'Axel du
- * 2026-10-29 : PENDANT un glisser, le déplacement s'anime quand même, le
+ * PENDANT un glisser, le déplacement s'anime quand même, le
  * geste de la personne le déclenche. Les flèches du clavier restent
  * instantanées, et aucune position finale ne dépend d'une animation.
  */
@@ -97,7 +97,7 @@ export function useWidgetDrag<Id extends string, P extends { id: Id }>(
     const now = performance.now();
     if (now - lastSwap.current < SWAP_COOLDOWN_MS) return;
     // Le CENTRE du bloc tenu, pas le pointeur : saisi par un bord, le bloc
-    // couvrait déjà son voisin sans que l'échange parte (vidéo du 2026-10-26 :
+    // couvrait déjà son voisin sans que l'échange parte (vidéo :
     // dix secondes au-dessus de « tete » sans rien déclencher).
     const held = gridRef.current?.querySelector<HTMLElement>(`[data-widget="${CSS.escape(id)}"]`)?.getBoundingClientRect();
     const x = held ? held.left + held.width / 2 : info.point.x - window.scrollX;
@@ -108,7 +108,7 @@ export function useWidgetDrag<Id extends string, P extends { id: Id }>(
     // Le bloc qui vient de céder sa place glisse SOUS le bloc tenu pendant
     // tout son trajet : il ne peut pas repermuter avec lui avant d'être
     // arrivé. La garde levée dès qu'il quittait le centre UNE image rendait
-    // l'échange aussitôt défait (mesuré le 2026-10-29, ordre final inchangé).
+    // l'échange aussitôt défait (mesuré, ordre final inchangé).
     if (!over) return;
     if (over.dataset.widget === lastSwapped.current && now - lastSwap.current < SWAP_SETTLE_MS) return;
     // Seul le CŒUR du bloc survolé déclenche l'échange : en traversant la

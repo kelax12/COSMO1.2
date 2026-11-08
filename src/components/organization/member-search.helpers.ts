@@ -4,7 +4,7 @@ import { normalize } from './pyramid.helpers';
 /**
  * Au-delà de ce nombre de personnes, un sélecteur de membres affiche un champ
  * de recherche. En dessous, la liste tient à l'écran et le champ serait du
- * bruit. Audit « passage à l'échelle » du 2026-09-24 : à 1 000 membres, les
+ * bruit. Audit « passage à l'échelle » : à 1 000 membres, les
  * sélecteurs d'assignation et d'ajout à une équipe étaient des listes brutes
  * qu'il fallait faire défiler à la main.
  */

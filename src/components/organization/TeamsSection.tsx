@@ -40,7 +40,7 @@ interface TeamsSectionProps {
 }
 
 /**
- * Audit « passage à l'échelle » du 2026-09-24 : à cent équipes, la section
+ * Audit « passage à l'échelle » : à cent équipes, la section
  * empilait cent cartes. Au-delà de ce seuil, la liste se replie et se cherche.
  */
 const TEAMS_LIMIT = 6;

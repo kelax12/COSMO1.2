@@ -258,7 +258,7 @@ export function instantiateTemplate(
 export const todayLocal = (): string => new Date().toLocaleDateString('en-CA');
 
 /**
- * « Mes projets » (audit du 2026-09-24, cas « une personne sur plusieurs
+ * « Mes projets » (audit, cas « une personne sur plusieurs
  * projets ») : ceux dont je suis responsable, ou où j'ai au moins une tâche
  * ouverte. La vue n'était jamais proposée dans l'onglet Projets.
  */

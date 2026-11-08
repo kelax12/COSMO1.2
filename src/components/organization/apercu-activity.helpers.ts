@@ -2,7 +2,7 @@ import type { TeamTaskActivity } from '@/modules/team-projects';
 import { buildActivityItems, type ActivityItem, type ActivityKind } from './my-work.helpers';
 
 /**
- * Widget « Activité de l'équipe » refait le 2026-10-20 : un chiffre et le
+ * Widget « Activité de l'équipe » refait : un chiffre et le
  * fait marquant (petit), la répartition par type (moyen), le fil groupé par
  * personne (grand). Tout se lit dans le JOURNAL des tâches.
  *

@@ -18,7 +18,7 @@ const DEFAULT_COUNT = 10;
 
 /**
  * Étape « Combien serez-vous ? » de la création d'entreprise (maquette 2,
- * choisie par Axel le 2026-11-05) : un curseur, et les six paliers qui
+ * choisie par Axel) : un curseur, et les six paliers qui
  * s'allument selon l'effectif annoncé. Le palier proposé suit `onboardingTier`
  * (gratuit jusqu'à 5, puis le plus petit palier qui laisse une place).
  *

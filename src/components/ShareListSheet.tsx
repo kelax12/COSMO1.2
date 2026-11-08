@@ -29,7 +29,7 @@ const ShareListSheet: React.FC<ShareListSheetProps> = ({ list, tasks, onClose })
   const { t } = useT('tasks');
   const sheetMotion = useSheetMotion();
   // La poignee de glissement ci-dessous promettait un geste inexistant
-  // (audit mobile 2026-08-14). `useBottomSheet` plutot que `useSheetDrag` :
+  // (audit mobile). `useBottomSheet` plutot que `useSheetDrag` :
   // il est MOBILE seulement et cede le geste a la liste d'amis des qu'elle
   // est defilee, la ou un `drag='y'` nu empecherait de la faire defiler.
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);

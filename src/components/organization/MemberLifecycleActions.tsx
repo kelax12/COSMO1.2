@@ -54,7 +54,7 @@ export const useMemberLifecycle = ({
           <ShieldOff size={14} aria-hidden="true" />
           {member.suspendedAt ? ta('lifecycle.menuReactivate') : ta('lifecycle.menuAccess')}
         </DropdownMenuItem>
-        {/* Transfert de responsabilité (audit du 2026-09-24) : tâches, subordonnés,
+        {/* Transfert de responsabilité (audit) : tâches, subordonnés,
             équipes, projets et KR passent à quelqu'un d'autre, la personne reste. */}
         <DropdownMenuItem onClick={() => setDepartureFor({ member, mode: 'transfer' })}>
           <ArrowRightLeft size={14} aria-hidden="true" /> {ta('lifecycle.menuTransfer')}

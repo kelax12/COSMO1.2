@@ -25,15 +25,15 @@ interface ProjectAudienceActionsProps {
 const chip = 'inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))]';
 
 /**
- * Trois gestes que la page projet ne proposait pas (audit du 2026-09-24) :
+ * Trois gestes que la page projet ne proposait pas (audit) :
  *
  * - **Projet mené par plusieurs équipes** : une seule `team_id` ne suffisait
  *   pas. Des équipes ASSOCIÉES (mig. 164) élargissent la lecture ; l'équipe
  *   principale reste celle de la carte. Elles s'ajoutent depuis la popup
  *   « Ajouter au projet » de l'en-tête (le bouton « Équipes du projet » est
- *   retiré le 2026-10-13). Elles se retirent par la croix de leur pastille :
+ *   retiré). Elles se retirent par la croix de leur pastille :
  *   sans elle, rien ne défaisait un ajout depuis ce retrait.
- * - **Suivre** (M14) : déplacé dans la barre d'actions de l'en-tête le 2026-10-13.
+ * - **Suivre** (M14) : déplacé dans la barre d'actions de l'en-tête.
  * - **Supprimer définitivement** un projet archivé : l'application n'avait
  *   que l'archivage, rien pour purger proprement. Irréversible, donc saisie du
  *   nom (modèle de `DeleteOrganizationDialog`).

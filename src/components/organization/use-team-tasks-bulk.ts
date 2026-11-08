@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════
 // Actions groupées branchées sur les mutations : PARTOUT où il y a une liste
-// de tâches (cohérence globale, 2026-09-25)
+// de tâches (cohérence globale)
 //
 // Elles n'existaient que dans l'onglet Projets. Le tableau de l'onglet Tâches,
 // « Mes tâches » de l'Aperçu et les tâches d'une fiche membre obligeaient à

@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// Effets de la page /entreprise sortis d'`OrganizationPage` (audit 2026-09-24)
+// Effets de la page /entreprise sortis d'`OrganizationPage` (audit)
 // ═══════════════════════════════════════════════════════════════════
 import { useEffect, useMemo } from 'react';
 import { useTeamProjects } from '@/modules/team-projects';

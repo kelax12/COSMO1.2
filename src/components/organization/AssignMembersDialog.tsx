@@ -34,7 +34,7 @@ const AssignMembersDialog = ({ orgId, task, members, onSave, onClose }: AssignMe
   // Portée d'assignation (mig. 115). Un membre déjà assigné reste listé : le
   // serveur ne contrôle que les AJOUTS, on doit pouvoir le retirer.
   const assignable = members.filter((m) => canAssign(m.userId) || assigneeIds.includes(m.userId));
-  // MÊME sélecteur que la fiche de tâche (audit des popups, 2026-09-25) :
+  // MÊME sélecteur que la fiche de tâche (audit des popups) :
   // recherche, équipes, pagination. Il ne filtre que l'AFFICHAGE.
 
   // `task` change à chaque ouverture (nouvelle tâche ciblée) — resynchronise

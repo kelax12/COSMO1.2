@@ -29,11 +29,11 @@ interface MobileMoreSheetProps {
 /**
  * ── Maquettes 93 et 94 : la feuille « Plus » ──────────────────────────────
  *
- * 🔴 **Ce qui a été mesuré, et ce qui était faux.** La maquette 93 annonçait
+ * **Ce qui a été mesuré, et ce qui était faux.** La maquette 93 annonçait
  * « 8 rangées de 122 px, soit 976 px sur un écran de 844, Déconnexion jamais
  * visible ». **C'est faux, et l'erreur vient de moi** : j'avais lu des hauteurs
  * sur une capture en densité 2×, donc doublées. Mesure réelle au navigateur en
- * 390 × 844, le 2026-09-20 : rangées à **60 px**, icônes à **40 px**, feuille à
+ * 390 × 844 : rangées à **60 px**, icônes à **40 px**, feuille à
  * **643 px** de haut pour un écran de 844. Rien ne débordait, rien n'était
  * coupé, et « Déconnexion » était visible sans défiler.
  *
@@ -164,7 +164,7 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
             // ⚠️ `useSheetMotion` et pas un `initial={{ y }}` en dur : sous
             // `prefers-reduced-motion`, Framer ne joue pas les transforms et
             // la valeur `initial` reste appliquee — la feuille s ouvrait
-            // 100 % sous l ecran. Mesure le 2026-08-24 (cf. mobile-motion.ts).
+            // 100 % sous l ecran. Mesure (cf. mobile-motion.ts).
             {...sheetMotion}
             className="fixed bottom-0 inset-x-0 z-50 rounded-t-[28px] bg-[rgb(var(--color-background))] flex flex-col"
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
@@ -338,7 +338,7 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
 
                 <div className="h-px bg-[rgb(var(--color-border-muted))] ml-[48px]" />
 
-                {/* 🔴 Maquette 94 : le SEUL rouge de la feuille. « Signaler un
+                {/* Maquette 94 : le SEUL rouge de la feuille. « Signaler un
                     bug » portait exactement la même tuile rouge, alors qu'il
                     ouvre un formulaire, là où celui-ci termine la session. */}
                 <button

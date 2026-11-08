@@ -10,7 +10,7 @@ const EVENT_KEYS: Record<string, KeyOf<'orgAccount'>> = {
 
 /**
  * Motif d'un paiement réussi, quand le journal le connaît (mig. 241). Depuis
- * que le portail facture le prorata immédiatement (2026-11-05), une organisation
+ * que le portail facture le prorata immédiatement, une organisation
  * peut payer deux fois dans le mois : la ligne doit dire pourquoi.
  */
 const REASON_KEYS: Record<string, KeyOf<'orgAccount'>> = {

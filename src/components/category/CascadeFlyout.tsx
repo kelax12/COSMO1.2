@@ -1,10 +1,10 @@
 // ═══════════════════════════════════════════════════════════════════
-// Sous-menu en cascade pour les sélecteurs de catégorie (2026-10-29).
+// Sous-menu en cascade pour les sélecteurs de catégorie.
 //
 // Survol d'un parent → ses enfants s'ouvrent dans un panneau collé à sa
 // droite, comme les menus de Windows. Clavier : → ouvre, ← referme.
 //
-// 🔴 Souris uniquement (`useCanHover`). Au doigt, le survol n'existe pas :
+// Souris uniquement (`useCanHover`). Au doigt, le survol n'existe pas :
 // les appelants gardent leur arbre indenté à chevrons.
 //
 // Un `CascadeLevel` = une colonne. Il tient l'identifiant du parent ouvert

@@ -96,7 +96,7 @@ const RemoveFriendConfirm: React.FC<RemoveFriendConfirmProps> = ({
             règle du module est écrite dans `useSheetDrag` — « une affordance
             qui promet un geste inexistant est moins bonne que pas
             d'affordance du tout ».
-            🔴 Et ici elle mentait DEUX fois : cette surface est un
+            Et ici elle mentait DEUX fois : cette surface est un
             `alertdialog`, c'est-à-dire une confirmation de SUPPRESSION qui
             demande un choix explicite. Une poignée la présente comme une
             feuille qu'on chasse d'un revers de pouce.

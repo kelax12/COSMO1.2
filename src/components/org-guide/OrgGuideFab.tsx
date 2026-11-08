@@ -17,7 +17,7 @@ const markSeen = () => {
 };
 
 /**
- * Le bouton arrive en lazy avec `OrganizationPage` (2026-10-15) ; le tiroir,
+ * Le bouton arrive en lazy avec `OrganizationPage` ; le tiroir,
  * les scénarios et la démo arrivent au premier clic. Desktop uniquement (v1). En bas à droite : sur desktop,
  * il n'y a pas de FAB de création rapide (`global-quick-add-fab` est mobile).
  */

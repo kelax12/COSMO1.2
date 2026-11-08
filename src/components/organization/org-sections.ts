@@ -45,14 +45,14 @@ export const ORG_SECTIONS: OrgSectionDef[] = [
   { id: 'okr', labelKey: 'tabs.okr', Icon: Target, group: 'steer' },
   // #13 : statistiques collectives — admin (toute l'org) / manager (son périmètre).
   { id: 'stats', labelKey: 'tabs.stats', Icon: BarChart3, group: 'steer', managerOnly: true, hidden: true },
-  // Masquée de la navigation le 2026-09-30 (code et route conservés).
+  // Masquée de la navigation (code et route conservés).
   // Rapports d'activité (mig. 202) : PAS une section. Fenêtre « bêta » ouverte
   // depuis Aperçu et Paramètres (OrganizationPage).
   // Un membre sans subordonné n'a rien à y arbitrer.
-  // Organigramme retiré le 2026-10-30 (mig. 229) : masqué, et `OrganizationPage`
+  // Organigramme retiré (mig. 229) : masqué, et `OrganizationPage`
   // renvoie `/entreprise/pyramid` sur l'Aperçu. Code conservé, `PyramidTab` non monté.
   { id: 'pyramid', labelKey: 'tabs.pyramid', Icon: Network, group: 'steer', managerOnly: true, hidden: true },
-  // Audit Membres du 2026-09-24 : la section tenait « quatre pages en une »
+  // Audit Membres : la section tenait « quatre pages en une »
   // (invitations, équipes, annuaire, zone de danger). Personnes garde
   // l'annuaire ; les équipes et les réglages ont leur propre adresse.
   { id: 'members', labelKey: 'tabs.members', Icon: Users, group: 'org' },

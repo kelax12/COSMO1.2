@@ -42,7 +42,7 @@ const OrganizationSettingsCard = () => {
         <p className="text-sm text-[rgb(var(--color-text-secondary))]">{t('settingsCard.loading')}</p>
       ) : myOrg ? (
         <>
-        {/* Maquette 214 (2026-10-10), mobile : deux lignes du même groupe.
+        {/* Maquette 214, mobile : deux lignes du même groupe.
             C'étaient deux boutons d'alignements différents (contour centré,
             puis bleu plein au texte calé à gauche). */}
         <ul className="md:hidden mt-1 -mx-1">
@@ -65,7 +65,7 @@ const OrganizationSettingsCard = () => {
         <div className="hidden md:flex flex-col sm:flex-row sm:flex-wrap sm:items-center justify-between gap-4 mt-3">
           {/* `sm:flex-wrap` : la carte occupe UNE colonne de la grille des Réglages.
               Sans retour à la ligne, « Abonnement et factures » poussait « Accéder »
-              hors de la carte et hors de l'écran (garde Visual, 2026-10-01). */}
+              hors de la carte et hors de l'écran (garde Visual). */}
           <div className="min-w-0">
             <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{myOrg.name}</p>
             <p className="text-xs text-[rgb(var(--color-text-secondary))] mt-0.5">

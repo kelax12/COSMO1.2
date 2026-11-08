@@ -11,7 +11,7 @@
 // sortent. Les mutations restent chez `InboxMenu`, seul à savoir ce qu'une
 // réponse invalide comme cache.
 //
-// Extrait le 2026-09-05 (C-09).
+// Extrait (C-09).
 // ═══════════════════════════════════════════════════════════════════
 import { Check, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';

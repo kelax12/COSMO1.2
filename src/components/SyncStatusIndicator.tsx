@@ -40,7 +40,7 @@ const SyncStatusIndicator: React.FC<{ compact?: boolean; hideWhenSynced?: boolea
   // une chaîne en valeur de propriété d'objet (`label:`), cinquième forme
   // aveugle après les quatre déjà documentées dans CLAUDE.md. Le compteur à 0
   // était juste de la MESURE et faux du produit — exactement la confusion que
-  // la note du 2026-09-02 met en garde de ne jamais reproduire.
+  // la note met en garde de ne jamais reproduire.
   const config = {
     offline: { icon: WifiOff, label: t('sync.offline'), className: 'text-amber-500' },
     syncing: { icon: Loader2, label: t('sync.syncing'), className: 'text-blue-500' },

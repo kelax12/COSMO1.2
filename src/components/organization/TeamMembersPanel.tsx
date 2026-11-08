@@ -28,14 +28,14 @@ import LeaveTeamConfirm from './LeaveTeamConfirm';
 
 /**
  * Au-delà, les pastilles se coupent avec un « +N » (audit « passage à
- * l'échelle » du 2026-09-24 : une équipe de deux cents personnes en peignait
+ * l'échelle » : une équipe de deux cents personnes en peignait
  * deux cents).
  */
 const TEAM_CHIPS_LIMIT = 24;
 
 /**
  * « Mettre responsable » et « Retirer de l'équipe » n'apparaissent qu'au
- * survol de la personne (2026-10-30). Restent visibles au focus clavier, et
+ * survol de la personne. Restent visibles au focus clavier, et
  * toujours sur écran tactile, où le survol n'existe pas.
  */
 const hoverOnlyClass =
@@ -58,7 +58,7 @@ const AddTeamMemberMenu = ({ teamName, addable, currentUserId, onAdd }: {
   const shown = searchable ? filterMembersByQuery(addable, query) : addable;
   return (
     <DropdownMenu onOpenChange={(open) => { if (!open) setQuery(''); }}>
-      {/* Lien bleu à droite du titre (2026-10-30), plus une pastille en bas de liste. */}
+      {/* Lien bleu à droite du titre, plus une pastille en bas de liste. */}
       <DropdownMenuTrigger
         data-guide-id="team-members-add"
         className="inline-flex items-center gap-1 min-h-9 text-sm font-semibold text-blue-500 hover:text-blue-600 transition-colors"
@@ -116,7 +116,7 @@ interface TeamMembersPanelProps {
 /**
  * Membres d'une équipe : pastilles (responsables en tête), couronne pour
  * nommer ou révoquer un responsable, retrait, ajout. Sorti de `TeamsSection`
- * quand l'équipe a eu sa page (audit Membres du 2026-09-24).
+ * quand l'équipe a eu sa page (audit Membres).
  */
 const TeamMembersPanel = ({ titleId, titleClass, orgId, team, members, memberships, currentUserId, isAdmin, canManage }: TeamMembersPanelProps) => {
   const { t, tp } = useT('org');
@@ -131,7 +131,7 @@ const TeamMembersPanel = ({ titleId, titleClass, orgId, team, members, membershi
   // Retrait qui coupe la vue sur des projets : confirmé, avec la liste.
   const [leaving, setLeaving] = useState<{ member: OrgMember; wasLead: boolean; lost: TeamProject[] } | null>(null);
 
-  // Chaque geste réversible a son « Annuler » (audit du 2026-09-24, cohérence
+  // Chaque geste réversible a son « Annuler » (audit, cohérence
   // des popups). Les tâches l'avaient, les équipes rien.
   const addWithUndo = (userId: string) =>
     addMember.mutate({ teamId: team.id, userId }, {
@@ -196,7 +196,7 @@ const TeamMembersPanel = ({ titleId, titleClass, orgId, team, members, membershi
       {teamMembers.length === 0 && (
         <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">{t('teamPage.noMembers')}</p>
       )}
-      {/* Une personne par ligne, responsables en tête (maquette du 2026-09-28). */}
+      {/* Une personne par ligne, responsables en tête (maquette). */}
       <ul className="flex flex-col gap-1.5">
       {shown.map((m) => {
         const isLead = leadIds.has(m.userId);

@@ -16,7 +16,7 @@ import React from 'react';
 /**
  * Le mot appuyé d'un titre d'accueil : Instrument Serif italique, au milieu
  * d'un titre en Inter demi-gras. `1.1em` compense l'œil plus petit et la
- * chasse plus étroite de la sérif (mesuré le 2026-10-04 une fois la police
+ * chasse plus étroite de la sérif (mesuré une fois la police
  * réellement servie : à taille égale, le mot paraissait plus petit que ses
  * voisins). Relatif au titre, donc juste à toutes les tailles de l'échelle.
  */

@@ -3,7 +3,7 @@
 //
 // « Comment je le regarde ? » (vue, colonnes, lignes, sélection) et « qu'est-ce
 // que je crée ? ». « Qu'est-ce que je regarde ? » (personne, équipe, état,
-// recherche) est passé le 2026-09-25 dans `OrgTaskFilterBar`, la barre de
+// recherche) est passé dans `OrgTaskFilterBar`, la barre de
 // filtres partagée avec l'onglet Tâches, et dans l'URL.
 // ═══════════════════════════════════════════════════════════════════
 
@@ -63,7 +63,7 @@ const ProjectsToolbar = ({
   const { filters, setFilters } = useOrgTaskFilters('all');
   const { t: pf } = useT('portfolio');
   // Vue, préréglages puis
-  // « Sélectionner » (même pastille), et le tri à droite (2026-09-29) ; `showArchived` reste sur la bascule contextuelle
+  // « Sélectionner » (même pastille), et le tri à droite ; `showArchived` reste sur la bascule contextuelle
   // du bas de liste, qui affiche le compte et n'existe que s'il y a des archives.
   const { timelineGroupBy } = prefs;
   const view = effectiveView;
@@ -119,7 +119,7 @@ const ProjectsToolbar = ({
 
       {/* Préréglages appliqués aux PROJETS (project-filters.ts). Bloquées
           exclue : c'est une lecture tâche par tâche. Le Tableau (kanban) est
-          passé dans l'onglet Tâches le 2026-09-27. */}
+          passé dans l'onglet Tâches. */}
       <FilterPresets filters={filters} setFilters={setFilters} defaultStatus="all" currentUserId={currentUserId} showBlocked={false} entity="projects" onToggleSelect={onStartSelect}
         hiddenKeys={view === 'timeline' ? ['overdue', 'thisWeek'] : []} />
 
@@ -132,13 +132,13 @@ const ProjectsToolbar = ({
 export default ProjectsToolbar;
 
 /** La seule action créative de la page, seul bouton plein : sur la ligne de la
- *  recherche, alignée à droite (2026-10-01). `PermissionGate` ne rend son
+ *  recherche, alignée à droite. `PermissionGate` ne rend son
  *  enveloppe QUE si `reason` est défini. */
 export const NewProjectButton = ({ canCreateProject, createDeniedReason, onNewProject, label, guideId }: {
   canCreateProject: boolean;
   createDeniedReason?: string;
   onNewProject: () => void;
-  /** Libellé : « Nouveau projet » par défaut ; l'onglet Tâches y passe « Nouvelle tâche » (2026-10-30). */
+  /** Libellé : « Nouveau projet » par défaut ; l'onglet Tâches y passe « Nouvelle tâche ». */
   label?: string;
   guideId?: string;
 }) => {

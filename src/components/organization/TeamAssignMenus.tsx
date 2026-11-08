@@ -134,7 +134,7 @@ const TeamAssignMenus = ({ orgId, team, projects, onNewProject, onNewTask }: Tea
                   <SearchBox value={taskQuery} onChange={setTaskQuery} placeholder={t('assign.searchPlaceholder')} />
                   {!loadingTasks && otherTasks.length === 0 && empty(t('team.menu.noTaskToAssign'))}
                   {/* Un clic choisit la tâche : elle rejoint le premier projet de l'équipe,
-                      sans panneau de choix de projet par-dessus (2026-10-31). */}
+                      sans panneau de choix de projet par-dessus. */}
                   {otherTasks.slice(0, LIST_LIMIT).map((task) => (
                     <DropdownMenuItem key={task.id} onClick={() => moveTask(task.id, task.projectId, own[0])}>
                       <span className={itemClass}>{task.name}</span>

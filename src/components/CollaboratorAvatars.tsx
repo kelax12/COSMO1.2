@@ -29,7 +29,7 @@ const CollaboratorAvatars: React.FC<CollaboratorAvatarsProps> = ({
   if (resolvedIds.length === 0) return null;
 
   // `lg` = size-9 (md) +70% de diamètre (36px → 61px) — TaskCard mobile
-  // uniquement (redesign 2026-09-17), aucun autre appelant n'utilise `lg`.
+  // uniquement (redesign), aucun autre appelant n'utilise `lg`.
   const sizeClasses = size === 'sm' ? 'size-7 text-caption' : size === 'lg' ? 'size-[61px] text-sm' : 'size-9 text-xs';
   const visible = resolvedIds.slice(0, maxVisible);
   const overflow = resolvedIds.length - maxVisible;

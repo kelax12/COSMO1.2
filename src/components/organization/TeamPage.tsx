@@ -43,7 +43,7 @@ const headingClass = 'text-base font-bold text-[rgb(var(--color-text-primary))]'
 const sectionLabelClass =
   'flex items-center gap-2 px-5 pt-6 pb-2 text-sm font-semibold text-[rgb(var(--color-text-secondary))]';
 const rowClass = 'flex items-center gap-3 px-5 py-3 min-h-12 hover:bg-[rgb(var(--color-hover))]';
-/** Un trait entre deux projets, deux OKR (2026-10-30). */
+/** Un trait entre deux projets, deux OKR. */
 const listClass = 'divide-y divide-[rgb(var(--color-border))] border-y border-[rgb(var(--color-border))]';
 
 /** Chiffre en ligne : valeur puis libellé. */
@@ -55,12 +55,12 @@ const StatInline = ({ label, value, tone }: { label: string; value: string; tone
 );
 
 /**
- * Page d'une équipe, `/entreprise/teams/:id` (audit Membres du 2026-09-24 :
+ * Page d'une équipe, `/entreprise/teams/:id` (audit Membres :
  * « l'équipe n'est qu'une étiquette »). Description, responsables, membres,
  * projets, OKR, statistiques et charge par membre, lus sous la RLS de
  * l'appelant : il ne voit que les projets et OKR auxquels il a déjà accès.
  *
- * Mise en page du 2026-09-27 : contenu en liste dense à gauche, l'équipe
+ * Mise en page : contenu en liste dense à gauche, l'équipe
  * dans un panneau latéral, la charge de travail en pleine largeur dessous.
  */
 const TeamPage = ({ orgId, teamId, members, currentUserId, isAdmin }: TeamPageProps) => {

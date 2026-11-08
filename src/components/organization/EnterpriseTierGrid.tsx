@@ -35,11 +35,11 @@ interface Props {
  * sur un prix (il passerait par 48 € avant de se poser sur 50 €). Au changement
  * de périodicité, le bloc prix se remplace en FONDU, rien ne défile.
  *
- * Depuis le 2026-11-02, la carte entière se clique (spec § 3.2) et porte un
+ *, la carte entière se clique (spec § 3.2) et porte un
  * `layoutId` : le récapitulatif reprend le même, la carte s'y déploie.
  * Sous mouvement réduit, PAS de `layoutId` : Framer rendrait l'animation de
  * layout instantanée puis replacerait l'élément à l'ancienne position pour une
- * frame (même constat que `ApercuWidgetGrid`, CI du 2026-10-22).
+ * frame (même constat que `ApercuWidgetGrid`, CI).
  *
  * Facturation éteinte (`dormant`) : le prix d'un palier payant est REMPLACÉ par
  * « Gratuit », le tarif d'après barré dessous, comme sur la landing.

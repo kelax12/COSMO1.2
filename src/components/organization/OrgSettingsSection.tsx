@@ -24,7 +24,7 @@ import MobileOrgSettingsHome, { MobileOrgSettingsBack } from './MobileOrgSetting
 import MyPermissionsCard from './MyPermissionsCard';
 import { useT } from '@/i18n/useT';
 
-// Section Paramètres, `/entreprise/settings` (audit Membres du 2026-09-24 :
+// Section Paramètres, `/entreprise/settings` (audit Membres :
 // « quatre pages en une »). Elle reprend à `/entreprise/members` les
 // invitations et la zone de danger, qui n'avaient rien à faire au-dessus d'un
 // annuaire de cent personnes.
@@ -50,7 +50,7 @@ const OrgRolesSettings = lazyWithRetry(() => import('@/components/organization/O
 // section, dans `OrganizationPage` (seul hôte que la garde des namespaces lit).
 const OrgReportsSection = lazyWithRetry(() => import('@/components/organization/OrgReportsSection'));
 const OrgAuditLogSection = lazyWithRetry(() => import('@/components/organization/OrgAuditLogSection'));
-// Export CSV des tâches : quitte la barre de l'onglet Tâches (2026-09-28).
+// Export CSV des tâches : quitte la barre de l'onglet Tâches.
 const OrgTasksExportSection = lazyWithRetry(() => import('@/components/organization/OrgTasksExportSection'));
 // Réglages, Sécurité, champs, automatisations, intégrations (mig. 195-199) :
 // leur catalogue `orgConfig` voyage avec eux (`org-config.lazy.ts`).
@@ -85,7 +85,7 @@ interface NavGroup {
 const CONFIG_PARTS: readonly string[] = ['general', 'security', 'automations', 'integrations'];
 const isConfigPart = (id: PanelId): id is ConfigPart => CONFIG_PARTS.includes(id);
 
-/** Automatisations et Intégrations masquées du menu (2026-10-30) ; `true` les rend. */
+/** Automatisations et Intégrations masquées du menu ; `true` les rend. */
 const SHOW_AUTOMATIONS_INTEGRATIONS = false;
 
 const CARD = 'rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4';
@@ -118,7 +118,7 @@ const OrgSettingsSection = ({
   const { t } = useT('org');
   const { t: ta } = useT('orgAdmin');
   const [notifOpen, setNotifOpen] = useState(false);
-  // Quitter en ayant d'abord tout transmis (audit du 2026-09-24, étape 3) :
+  // Quitter en ayant d'abord tout transmis (audit, étape 3) :
   // l'assistant de départ en mode `transfer` SEUL, jamais suspendre ou
   // retirer soi-même.
   const [organizingLeave, setOrganizingLeave] = useState(false);
@@ -137,7 +137,7 @@ const OrgSettingsSection = ({
   const [transferring, setTransferring] = useState(false);
   const leaveMutation = useLeaveOrganization();
   const transferMutation = useTransferOwnership();
-  // C-39 — « la suppression resilie ET REMBOURSE » (arbitrage du 2026-09-03) :
+  // C-39 — « la suppression resilie ET REMBOURSE » (arbitrage) :
   // un seul geste, aucun debit orphelin. L'enchainement et son ordre vivent
   // dans `useDeleteOrgFlow`, avec la raison de cet ordre.
   // Une fois l'entreprise supprimée, retour au tableau de bord PERSONNEL :
@@ -151,7 +151,7 @@ const OrgSettingsSection = ({
   // `member.invite` (le nouveau arrive alors sans supérieur).
   const canInviteByEmail = isAdmin || canInvite;
 
-  // Barre latérale (maquette du 2026-09-27) : une rubrique à la fois. Chaque
+  // Barre latérale (maquette) : une rubrique à la fois. Chaque
   // entrée porte la MÊME garde que le bloc qu'elle ouvre : une rubrique
   // invisible n'apparaît pas non plus dans le menu.
   const allGroups: NavGroup[] = [
@@ -163,13 +163,13 @@ const OrgSettingsSection = ({
     { label: ta('orgSettings.groupAccess'), items: [
       { id: 'invite', icon: UserPlus, label: ta('orgSettings.navInvite') },
       { id: 'myRights', icon: ShieldCheck, label: ta('orgSettings.navMyRights') },
-      // « Rôles » et « Rôles et permissions » fusionnés (2026-10-30) : une rubrique.
+      // « Rôles » et « Rôles et permissions » fusionnés : une rubrique.
       ...(isAdmin || canManageRoles ? [{ id: 'permissions' as const, icon: KeyRound, label: ta('orgSettings.navPermissions') }] : []),
       ...(isAdmin ? [{ id: 'security' as const, icon: Lock, label: ta('orgSettings.navSecurity') }] : []),
     ] },
     { label: ta('orgSettings.groupWork'), items: [
       ...(canManageCategories ? [{ id: 'categories' as const, icon: Tags, label: ta('orgSettings.navCategories') }] : []),
-      // Automatisations et Intégrations MASQUÉES (2026-10-30), pas supprimées :
+      // Automatisations et Intégrations MASQUÉES, pas supprimées :
       // remettre l'entrée suffit à les rouvrir.
       ...(SHOW_AUTOMATIONS_INTEGRATIONS && isAdmin ? [{ id: 'automations' as const, icon: Zap, label: ta('orgSettings.navAutomations') }] : []),
     ] },
@@ -236,7 +236,7 @@ const OrgSettingsSection = ({
 
       <div className={`space-y-5 min-w-0 ${mobileOpen ? '' : 'max-md:hidden'}`}>
       {mobileOpen && <MobileOrgSettingsBack label={t('tabs.settings')} onBack={() => setMobileOpen(false)} />}
-      {/* Profil : ÉDITÉ ici depuis l'audit du 2026-09-24 (il vivait dans une
+      {/* Profil : ÉDITÉ ici depuis l'audit (il vivait dans une
           feuille ouverte par un crayon de l'en-tête, qui mène désormais ici). */}
       {active === 'profile' && (
       <section className={CARD} id="org-profile">
@@ -267,7 +267,7 @@ const OrgSettingsSection = ({
       </section>
       )}
 
-      {/* Mes droits (audit du 2026-09-24) : la règle surcharge > défaut >
+      {/* Mes droits (audit) : la règle surcharge > défaut >
           admin était juste mais invisible pour la personne concernée. */}
       {active === 'myRights' && (
       <section className={CARD}>
@@ -315,7 +315,7 @@ const OrgSettingsSection = ({
         </section>
       )}
 
-      {/* Configuration d'entreprise (audit du 2026-09-24) : réglages propres,
+      {/* Configuration d'entreprise (audit) : réglages propres,
           rubrique Sécurité (M13), champs, automatisations, intégrations. */}
       {isConfigPart(active) && (
         <Suspense fallback={null}>
@@ -450,7 +450,7 @@ const OrgSettingsSection = ({
           l'entreprise (confirmation extrême, façon GitHub). Tous les
           autres, admins compris, quittent.
 
-          🔴 C-39 — cette zone etait montee sur `isAdmin`, alors que le
+          C-39 — cette zone etait montee sur `isAdmin`, alors que le
           bouton « Transferer la propriete » juste a cote etait deja
           reserve au proprietaire : la restriction existait, elle n'avait
           pas ete portee sur le geste DESTRUCTEUR. Une entreprise a deux

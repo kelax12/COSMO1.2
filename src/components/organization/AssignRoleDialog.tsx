@@ -38,7 +38,7 @@ interface AssignRoleDialogProps {
 const DATE_FORMAT = 'd MMM yyyy';
 
 /**
- * Attribuer un rôle à un membre (mig. 219, maquette 3 validée le 2026-10-12).
+ * Attribuer un rôle à un membre (mig. 219, maquette 3 validée).
  *
  * Porte aussi ses rôles ACTUELS (retirer), et la prolongation : réattribuer un
  * rôle déjà détenu remplace sa date de fin (une ligne par rôle et par membre).

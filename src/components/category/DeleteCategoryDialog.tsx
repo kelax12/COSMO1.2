@@ -12,7 +12,7 @@ import { descendantIdSet } from '@/modules/categories/tree';
 /**
  * Confirmation de suppression d'une catégorie — avec impact et réaffectation.
  *
- * 🔴 POURQUOI (risque R-02). Aucune clé étrangère ne pointe vers
+ * POURQUOI (risque R-02). Aucune clé étrangère ne pointe vers
  * `categories` : supprimer une catégorie laissait un identifiant mort dans
  * chaque tâche et chaque objectif qui la portait, sans avertissement. Mesuré
  * avant correctif : 13 tâches et 2 objectifs déjà orphelins en production.
@@ -27,7 +27,7 @@ import { descendantIdSet } from '@/modules/categories/tree';
  * confirmation OKR supprime tout de suite, la modale de couleurs met en
  * attente jusqu'à l'enregistrement. Ce composant décide, il n'écrit pas.
  *
- * 🔴 SUPPRESSION D'UNE BRANCHE (tâche 10). Une catégorie visée peut porter des
+ * SUPPRESSION D'UNE BRANCHE (tâche 10). Une catégorie visée peut porter des
  * sous-catégories. Deux issues, choisies par `childrenMode` :
  *
  * - `promote` (défaut) : les enfants DIRECTS prennent le parent du supprimé,
@@ -82,7 +82,7 @@ interface DeleteCategoryDialogProps {
 /**
  * Corps du dialogue — monté UNIQUEMENT pendant qu'il est ouvert.
  *
- * 🔴 POURQUOI cette coupure. `useTasks()` et `useOkrs()` vivent ici, pas dans le
+ * POURQUOI cette coupure. `useTasks()` et `useOkrs()` vivent ici, pas dans le
  * composant exporté. Le dialogue est rendu en permanence par sa page (c'est
  * `open` qui le masque) : garder les requêtes au-dessus faisait partir une
  * lecture des OKR sur des écrans qui n'en affichent aucun, pour une modale que

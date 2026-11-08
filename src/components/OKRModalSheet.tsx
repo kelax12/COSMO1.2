@@ -82,7 +82,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
   // masquée tant qu'elle est vide, auto-affichée si l'objectif édité en a déjà
   // une. Desktop inchangé (toujours visible).
   const [showDescriptionMobile, setShowDescriptionMobile] = useState(false);
-  // Repli mobile de Durée/Coef. par KR (redesign 2026-09-19) derrière
+  // Repli mobile de Durée/Coef. par KR (redesign) derrière
   // « Fonctionnalité avancée » — un Set plutôt qu'un booléen unique : chaque
   // résultat clé garde son propre état de repli. Desktop inchangé (toujours
   // visibles dans la grille à 4 colonnes).
@@ -133,7 +133,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
   const isMobile = useIsMobile();
   const hasKeyResult = keyResults.some((k) => k.title.trim().length > 0);
   const canSave = title.trim().length > 0 && hasKeyResult;
-  // Badge mobile à côté de « Résultats clés » (redesign 2026-09-19) : ne
+  // Badge mobile à côté de « Résultats clés » (redesign) : ne
   // compte que les KR effectivement nommés, comme `hasKeyResult`.
   const filledKrCount = keyResults.filter((k) => k.title.trim().length > 0).length;
 
@@ -178,14 +178,14 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
 
   return (
     <Sheet open={isOpen} onOpenChange={(o) => { if (!o) onClose(); }}>
-      {/* Plein écran sur mobile (redesign 2026-09-19), desktop inchangé
+      {/* Plein écran sur mobile (redesign), desktop inchangé
           (sheet latérale). Coin haut arrondi (2e retouche) — un plein écran
           à angle droit collait directement sous la barre de statut du
           téléphone, transition brutale ; même traitement que le coin
           arrondi de TaskModalMobileBody (`rounded-t-3xl`). */}
       <SheetContent
         className="flex w-full flex-col gap-0 p-0 border-0 rounded-t-3xl sm:rounded-tr-none sm:rounded-tl-2xl sm:rounded-bl-2xl sm:max-w-lg sm:border-l-0 overflow-hidden"
-        // Croix de fermeture agrandie sur mobile (2026-09-19), desktop inchangé.
+        // Croix de fermeture agrandie sur mobile, desktop inchangé.
         closeButtonClassName="max-sm:hidden"
         closeIconClassName="max-sm:size-6"
       >
@@ -198,7 +198,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
           onSubmit={handleSave}
         />
         <SheetHeader className="max-sm:pt-0 max-sm:-mt-12 max-sm:pointer-events-none max-sm:items-center">
-          {/* Titre agrandi sur mobile (redesign 2026-09-19), desktop inchangé. */}
+          {/* Titre agrandi sur mobile (redesign), desktop inchangé. */}
           <SheetTitle className="max-sm:text-body max-sm:font-semibold">{isEdit ? t('card.editObjective') : t('page.newObjective')}</SheetTitle>
           <SheetDescription className="max-sm:sr-only">{t('modal.description')}</SheetDescription>
         </SheetHeader>
@@ -244,11 +244,11 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
               </div>
             </div>
 
-            {/* Mobile (redesign 2026-09-19) : catégorie + échéance en lignes
+            {/* Mobile (redesign) : catégorie + échéance en lignes
                 « cellule » dans une carte, pattern repris de
                 TaskModalMobileBody (task-modal/primitives) — remplace la
                 grille de deux champs encadrés. Desktop inchangé ci-dessus. */}
-            {/* Espacement resserré (2026-09-19, 2e passe) : `pt-2` au lieu de
+            {/* Espacement resserré (2e passe) : `pt-2` au lieu de
                 `pt-5` (moins d'écart avec le champ Objectif au-dessus), et la
                 carte juste en dessous colle à cette ligne (`-mt-4` annule le
                 `gap-4` du parent — ne reste que le `pb-1` de la ligne). */}
@@ -333,7 +333,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
             <div className="flex items-center justify-between" data-guide-id="perso-okr-form-krs">
               <div className="flex items-center gap-2">
                 <Label className="max-sm:text-label max-sm:text-[rgb(var(--color-text-muted))]">{t('modal.keyResults')}</Label>
-                {/* Repère mobile (redesign 2026-09-19) : combien de KR sont
+                {/* Repère mobile (redesign) : combien de KR sont
                     déjà nommés, utile dès qu'on en empile plusieurs — remplace
                     en partie le message d'erreur qui n'apparaît qu'au pied du
                     formulaire. Desktop inchangé. */}
@@ -379,7 +379,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                     )}
                   </div>
 
-                  {/* Mobile (redesign 2026-09-19) : nom (80%) + cible/unité
+                  {/* Mobile (redesign) : nom (80%) + cible/unité
                       fusionnés dans un seul champ (20%) sur la même ligne —
                       Cible et Unité n'ont plus de ligne à elles. */}
                   <div className="flex sm:hidden items-end gap-2">

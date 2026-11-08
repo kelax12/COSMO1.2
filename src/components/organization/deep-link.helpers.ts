@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // Deep-links de l'espace entreprise
 //
-// Chaque section est une ROUTE (`/entreprise/projects`) depuis le 2026-09-23 ;
+// Chaque section est une ROUTE (`/entreprise/projects`) ;
 // `?task=` / `?project=` / `?member=` ouvrent en plus la bonne entité. C'est ce
 // qui rend une tâche collable dans une conversation — sans ça, « regarde cette
 // tâche » se termine toujours par « cherche-la dans l'onglet Projets ».
@@ -24,12 +24,12 @@ export const ORG_SECTION_SEGMENTS = [
   // Rapports d'activité (mig. 202) : entreprise et équipes, figés à minuit.
   'reports',
   'pyramid',
-  // Audit Membres du 2026-09-24 : « quatre pages en une ». Personnes garde
+  // Audit Membres : « quatre pages en une ». Personnes garde
   // l'adresse historique `members` (liens et e-mails déjà envoyés), Équipes et
   // Paramètres en sortent.
   'members',
   'teams',
-  // Paramètres de l'organisation (M13, audit du 2026-09-24) : profil,
+  // Paramètres de l'organisation (M13, audit) : profil,
   // organisations, forfait et zone dangereuse, réunis au même endroit.
   'settings',
   'billing',
@@ -79,7 +79,7 @@ export const isOrgPath = (pathname: string): boolean => {
 
 /**
  * Entités adressables par l'URL de /entreprise, DEPUIS N'IMPORTE QUELLE SECTION
- * (cohérence globale, 2026-09-25) : `OrgDeepLinkHost` les lit toutes, une fois,
+ * (cohérence globale) : `OrgDeepLinkHost` les lit toutes, une fois,
  * au niveau de la page. Avant, `?task=` n'était lu que par l'onglet Projets, et
  * un lien de tâche collé sur `/entreprise/tasks` n'ouvrait rien.
  */

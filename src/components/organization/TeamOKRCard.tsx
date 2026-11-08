@@ -188,7 +188,7 @@ const TeamOKRCard = ({
               {/* Maquette 252 : sur mobile, pas de crayon au repos, le titre ouvre la fiche. */}
               <button type="button" onClick={editDeniedReason ? undefined : onEdit} className="text-left md:pointer-events-none">{okr.title}</button>
             </h3>
-            {/* Pastilles à la suite du titre (2026-10-30), plus sous la description. */}
+            {/* Pastilles à la suite du titre, plus sous la description. */}
             {okr.teamIds.length === 0 && (okr.audience ?? 'org') === 'org' ? (
               <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 max-md:px-0 max-md:py-0 max-md:border-0 rounded-full border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))]">
                 <Building2 size={13} aria-hidden="true" /> {t('common.orgWideBadge')}

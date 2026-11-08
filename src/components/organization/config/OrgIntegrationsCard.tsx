@@ -50,7 +50,7 @@ function downloadText(filename: string, text: string, type: string) {
 }
 
 /**
- * Intégrations (audit du 2026-09-24, étape 6) : webhooks (mig. 199), export
+ * Intégrations (audit, étape 6) : webhooks (mig. 199), export
  * complet en CSV et échéances en .ics. Admins seulement.
  */
 const OrgIntegrationsCard = ({ orgId, members, currentUserId, isAdmin }: Props) => {

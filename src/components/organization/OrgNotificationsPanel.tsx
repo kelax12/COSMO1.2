@@ -50,7 +50,7 @@ const hasTarget = (n: OrgNotification): boolean =>
 /**
  * Panneau de la cloche d'entreprise : filtres, sections de récence, liens.
  *
- * Sorti de `OrgNotificationsBell` le 2026-09-25 et chargé à la PREMIÈRE
+ * Sorti de `OrgNotificationsBell` et chargé à la PREMIÈRE
  * ouverture : la cloche est montée à chaque visite de /entreprise, son panneau
  * ne s'ouvre que parfois. Les filtres et les nouveaux types (audit du
  * 2026-09-24) faisaient passer `OrganizationPage` au-dessus de son plafond.
@@ -62,7 +62,7 @@ const OrgNotificationsPanel = ({ notifications, members, onClose, onOpenSettings
   const [filter, setFilter] = useState<NotificationFilter>('all');
   // Refuser un créneau posé par quelqu'un d'autre (mig. 162) : la personne
   // POSSÈDE l'événement, elle peut le retirer de son agenda. Audit des popups
-  // du 2026-09-25 : la notification existait, le refus n'avait aucun bouton.
+  // : la notification existait, le refus n'avait aucun bouton.
   const deleteEvent = useDeleteEvent();
   const [declined, setDeclined] = useState<Set<string>>(() => new Set());
   const decline = (eventId: string) =>

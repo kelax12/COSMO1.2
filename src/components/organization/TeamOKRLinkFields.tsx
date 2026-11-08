@@ -10,7 +10,7 @@ import MenuSelect from '@/components/organization/MenuSelect';
 // ═══════════════════════════════════════════════════════════════════
 // Rattachements d'un OKR d'équipe (mig. 160, M3) : objectif parent,
 // projets reliés à un KR. La base les portait depuis la mig. 160, aucun
-// écran ne les montrait (audit des popups, 2026-09-25).
+// écran ne les montrait (audit des popups).
 // ═══════════════════════════════════════════════════════════════════
 
 const selectClass =

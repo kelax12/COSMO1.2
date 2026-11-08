@@ -83,7 +83,7 @@ export function filterByActivity(tasks: TeamTask[], start: Date | null): TeamTas
  * L'implémentation précédente s'appuyait sur `isPast`/`isToday` de date-fns,
  * qui lisent l'horloge système sans paramètre possible. Les tests posaient donc
  * des échéances relatives à une date FIGÉE (`NOW = 2026-07-18`) pendant que la
- * fonction, elle, comparait à la date RÉELLE : le 2026-08-07, une échéance
+ * fonction, elle, comparait à la date RÉELLE :, une échéance
  * « dans 3 jours » du référentiel de test était devenue passée, et deux tests
  * se sont mis à échouer tout seuls. Ce n'était pas une régression de code mais
  * une bombe à retardement dans les tests — le genre qui finit par entraîner

@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// Export complet d'une organisation et flux .ics (audit du 2026-09-24,
+// Export complet d'une organisation et flux .ics (audit,
 // étape 6 : « intégrations, export CSV complet »). Logique PURE pour les
 // fichiers ; la lecture passe par les dépôts, donc sous la RLS de l'admin.
 //

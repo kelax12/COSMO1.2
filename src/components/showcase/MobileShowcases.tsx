@@ -107,7 +107,7 @@ export const TaskCardMobileShowcase: React.FC = () => {
           <div className="self-center px-2 py-0.5 rounded text-[10px] font-bold" style={{ backgroundColor: SHOWCASE_TASKS[2].color + '30', color: P.tintText(SHOWCASE_TASKS[2].color) }}>
             P{SHOWCASE_TASKS[2].pri}
           </div>
-          {/* 🔴 C'EST UN DESSIN, PAS UNE COMMANDE (C-80). C'était un
+          {/* C'EST UN DESSIN, PAS UNE COMMANDE (C-80). C'était un
               `motion.button` avec `tabIndex={-1}` et aucun `onClick` : le seul
               élément de ces maquettes à porter un rôle interactif, tous ses
               voisins étant des `div`. Il rendait donc 16 x 24 px à la garde des

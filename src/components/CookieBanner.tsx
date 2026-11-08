@@ -27,7 +27,7 @@ const CookieBanner: React.FC = () => {
   // revient alors même si une réponse existe déjà.
   const [reviewing, setReviewing] = useState(false);
   const entrance = useSlideUpEntrance();
-  // Sur `/` (landing perso, BLANCHE depuis le 2026-09-22), le bandeau ne suit
+  // Sur `/` (landing perso, BLANCHE), le bandeau ne suit
   // pas le thème du visiteur : en thème sombre il posait une carte noire sur
   // une page blanche. Les couleurs y sont écrites en clair, sans `dark:` (la
   // classe `.dark` reste posée sur `<html>`) ni `--color-accent-solid` (blanc
@@ -43,8 +43,8 @@ const CookieBanner: React.FC = () => {
   // mesurer le LCP au premier geste : affiché après lui, le bandeau ne peut plus
   // l'être, à aucune largeur. Sans geste, rien n'est déposé (`null` n'est pas une
   // acceptation). Pas de `scroll` : un défilement programmatique le déclencherait
-  // sans geste (docs/PERFORMANCE.md, section du 2026-10-22).
-  // 🔴 2026-10-25 · Un geste RÉSOLU, jamais son début : `click`, `keydown`,
+  // sans geste (docs/PERFORMANCE.md, section).
+  // 2026-10-25 · Un geste RÉSOLU, jamais son début : `click`, `keydown`,
   // `wheel`, `touchmove`. Monté au `pointerdown` ou au `touchstart`, le bandeau
   // glissait sous le doigt AVANT le `click`, qui tombait alors sur lui : le
   // premier tap sur le CTA de la landing ne menait nulle part (e2e C-97, CPU ×4,
@@ -92,7 +92,7 @@ const CookieBanner: React.FC = () => {
     setVisible(false);
     setReviewing(false);
     // À CHAQUE refus, pas seulement au retrait : un identifiant de démo ou une
-    // source d'acquisition posés avant le 2026-10-13, sans consentement, ne
+    // source d'acquisition posés avant, sans consentement, ne
     // doivent pas survivre au premier « Refuser ».
     try {
       clearAttributionTraces(window.localStorage);
@@ -178,7 +178,7 @@ const CookieBanner: React.FC = () => {
                 </span>
               </div>
 
-              {/* 🔴 Ce texte est la surface de RECUEIL du consentement : il doit
+              {/* Ce texte est la surface de RECUEIL du consentement : il doit
                   décrire ce que « Accepter » déclenche, sinon le consentement
                   n'est pas éclairé (art. 82 loi I&L, art. 4.11 RGPD).
                   Il annonçait « uniquement des cookies strictement nécessaires »

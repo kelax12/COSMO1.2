@@ -25,7 +25,7 @@ const lastSevenDays = (): Date[] =>
 const dayKey = (d: Date) => d.toLocaleDateString('en-CA');
 
 /**
- * Widget Habitudes du tableau de bord (2026-10-21), deux vues :
+ * Widget Habitudes du tableau de bord, deux vues :
  * - `list` (maquette 1) : rangées à séparateurs, comme les widgets tâches ;
  * - `week` (maquette 5) : une case par jour sur les 7 derniers jours.
  * Par défaut liste en petit, semaine en moyen et grand ; la personne peut

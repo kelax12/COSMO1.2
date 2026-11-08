@@ -13,7 +13,7 @@ interface PreCreateCommentComposerProps {
  * Composeur affiché tant que la tâche n'existe pas : un commentaire référence
  * `taskId` (mig. 082), il ne peut pas précéder la tâche.
  *
- * 🔴 Il créait la tâche EN SILENCE au premier envoi (item #3) : un « Annuler »
+ * Il créait la tâche EN SILENCE au premier envoi (item #3) : un « Annuler »
  * ensuite laissait quand même la tâche en base (audit des popups du
  * 2026-09-25). Le bouton dit désormais ce qu'il fait, « Créer et commenter »,
  * avec la conséquence écrite juste au-dessus.

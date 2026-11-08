@@ -18,7 +18,7 @@ import { isGuideDemoActive } from '@/lib/guide-demo-active';
  *
  * ── Maquette 115 : personne n'apprend une interface avant de l'utiliser ──
  *
- * Compté le 2026-09-20 : **7 étapes** s'interposaient à la première ouverture
+ * Compté : **7 étapes** s'interposaient à la première ouverture
  * de /tasks, 6 sur l'agenda, 4 sur les habitudes, 5 sur les OKR. Plus de vingt
  * écrans avant qu'un nouvel arrivant ait touché quoi que ce soit, et la
  * première phrase annonçait elle-même « 7 étapes ». Un tutoriel qui précède
@@ -30,7 +30,7 @@ import { isGuideDemoActive } from '@/lib/guide-demo-active';
  * première ligne (`TaskCard`, jouée une fois par appareil) et le bandeau de
  * geste de `/tasks`.
  *
- * ✅ Depuis le 2026-10-09, Réglages > Guide porte « Relancer les tutoriels »
+ * ✅, Réglages > Guide porte « Relancer les tutoriels »
  * (`requestTutorialsReplay`) : c'est le seul chemin vers le tutoriel sur
  * mobile, où il ne s'ouvre jamais de lui-même.
  *

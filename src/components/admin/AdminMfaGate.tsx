@@ -32,12 +32,12 @@ const CODE_LENGTH = 6;
  * garde qui repose sur « la source est de confiance » n'est pas une garde.
  * `img-src 'self' data:` est déjà autorisé par la CSP (`vercel.json`).
  *
- * 🔴 **`supabase.auth.mfa.enroll()` ne rend PAS un SVG brut, malgré ce que
+ * **`supabase.auth.mfa.enroll()` ne rend PAS un SVG brut, malgré ce que
  * dit son propre JSDoc.** `GoTrueClient` préfixe la valeur lui-même avant de
  * nous la rendre (`data.totp.qr_code = \`data:image/svg+xml;utf-8,${...}\``).
  * Re-préfixer produisait donc une URI à DOUBLE en-tête, que le navigateur
  * refuse : le QR code de `/admin` n'a jamais été affiché, ni avant ni après
- * la refonte de cette fonction. Mesuré dans le navigateur le 2026-09-01 —
+ * la refonte de cette fonction. Mesuré dans le navigateur —
  * double préfixe : échec ; préfixe retiré puis ré-encodé : charge.
  *
  * On normalise donc : retirer un éventuel en-tête `data:image/svg+xml…,`,

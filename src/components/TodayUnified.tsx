@@ -31,13 +31,13 @@ import { TaskToEventModal } from '@/components/task-table/lazy-dialogs';
  * et `team_tasks` (équipe), sur deux écrans, avec deux modèles. Aucun endroit
  * ne répondait à « qu'est-ce que je dois faire aujourd'hui ? ».
  *
- * Maquette 376 (2026-10-21) : les retards ne sont plus listés un par un en
+ * Maquette 376 : les retards ne sont plus listés un par un en
  * rouge (19 cartes bordées, dont 8 teintées, « en retard de 1 j » répété huit
  * fois). Ils tiennent dans UN bandeau qui porte la seule action utile, tout
  * replanifier à aujourd'hui ; la liste ne montre que ce qui est prévu. Au
  * survol, une ligne expose à plat les actions du menu de TaskTable.
  *
- * 🔴 Cette vue ne persiste rien qui lui soit propre : chaque écriture passe par
+ * Cette vue ne persiste rien qui lui soit propre : chaque écriture passe par
  * la mutation du MODULE D'ORIGINE (perso : `tasks`, équipe : `team_tasks`).
  * Récurrence serveur côté perso, triggers de statut côté équipe : un chemin
  * d'écriture unifié les casserait tous deux.

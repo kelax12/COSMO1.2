@@ -3,8 +3,8 @@
 // Règle : toute nouvelle page ou liste mobile compose ces briques plutôt que
 // de redessiner un en-tête / une ligne / un contrôle. Cf. docs/MOBILE.md.
 //
-// 🗑️ `MobileScreen` et `ListRow` ont été SUPPRIMÉS le 2026-09-05 (C-10). Ils
-// étaient exportés ici depuis le 2026-07-22 sans qu'un seul écran ne les monte :
+// 🗑️ `MobileScreen` et `ListRow` ont été SUPPRIMÉS (C-10). Ils
+// étaient exportés ici sans qu'un seul écran ne les monte :
 // livrés, documentés, testés — jamais éprouvés. Une primitive qu'aucun écran
 // réel n'a contrainte ne décrit pas un besoin, elle décrit une supposition.
 //

@@ -2,8 +2,8 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-// `ref` est une prop ordinaire depuis React 19 (migration du 2026-10-23).
-// Sous React 18 il fallait un `forwardRef` : trouvé cassé le 2026-09-03
+// `ref` est une prop ordinaire depuis React 19 (migration).
+// Sous React 18 il fallait un `forwardRef` : trouvé cassé
 // (A-6), `AdminMfaGate` pose `ref={inputRef}` sur cet `Input` pour autofocus
 // le champ de code TOTP au montage, et sans `forwardRef` `inputRef.current`
 // restait `null`. Témoin : `input.test.tsx`.

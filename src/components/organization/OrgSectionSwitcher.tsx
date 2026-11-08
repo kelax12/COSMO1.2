@@ -54,7 +54,7 @@ const OrgSectionSwitcher: React.FC<Props> = ({ items, activeId, shortcuts, onSea
         <span className="flex-1 min-w-0 truncate text-body font-semibold text-[rgb(var(--color-text-primary))]">
           {active?.label}
         </span>
-        {/* Maquette 226 (2026-10-10) : plus de total ici. Le même écran
+        {/* Maquette 226 : plus de total ici. Le même écran
             affichait 1 (onglet), 3 (cloche), 6 (ce bouton), 6 (« En attente
             de moi ») : le nombre ne vit plus que dans la section qui le fait
             baisser, et dans la feuille, section par section. */}

@@ -48,7 +48,7 @@ const currentWeek = (now = new Date()): Date[] => {
  *
  * Rendu deux fois selon l'écran (scène à droite au-delà de `lg`, sous le
  * formulaire en dessous), jamais les deux à la fois : la version téléphone
- * existe depuis le 2026-10-05, l'écran principal de beaucoup de gens perdait
+ * existe, l'écran principal de beaucoup de gens perdait
  * sinon toute la moitié « comprendre ».
  */
 const PersoPreview = ({

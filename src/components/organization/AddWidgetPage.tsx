@@ -211,13 +211,13 @@ export interface AddWidgetPageProps<Id extends string> {
 }
 
 /**
- * Fenêtre « Ajouter un widget » (2026-10-19) : une vraie pop-up centrée aux
+ * Fenêtre « Ajouter un widget » : une vraie pop-up centrée aux
  * bords arrondis, sur un voile. Recherche, raccourcis horizontaux vers les
  * trois formats, une section par format, et pour chaque widget sa miniature
  * vivante.
  *
  * Un widget déjà posé ne propose QUE « Retirer » : un « Passer en petit » du
- * même bleu que « Ajouter » se confondait avec lui (retour d'Axel, 2026-10-19).
+ * même bleu que « Ajouter » se confondait avec lui (retour d'Axel).
  */
 const AddWidgetPage = <Id extends string>({ catalog, layout, onAdd, onRemove, renderWidget, onClose }: AddWidgetPageProps<Id>) => {
   const { t } = useT('orgAdmin');
@@ -317,7 +317,7 @@ const AddWidgetPage = <Id extends string>({ catalog, layout, onAdd, onRemove, re
                   // ⚠️ Jamais `scrollIntoView` : quand la section est la dernière,
                   // la liste ne peut pas la monter en haut et le navigateur fait
                   // défiler les ANCESTRES (overflow-hidden compris) — la fenêtre
-                  // partait dans le vide (2026-10-21). On ne fait défiler que la liste.
+                  // partait dans le vide. On ne fait défiler que la liste.
                   const list = scrollRef.current;
                   const section = sectionRefs.current[key];
                   if (list && section) list.scrollTo({ top: section.offsetTop - 16, behavior: 'smooth' });

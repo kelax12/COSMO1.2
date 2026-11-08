@@ -43,7 +43,7 @@ type ColorSettingsModalProps = {
 /**
  * Plan d'écriture d'un lot de créations.
  *
- * 🔴 POURQUOI. Un enfant créé dans le MÊME lot que son parent porte un
+ * POURQUOI. Un enfant créé dans le MÊME lot que son parent porte un
  * `parentId` en `temp-`, qui ne désigne aucune ligne serveur. Envoyer tout le
  * lot en parallèle (`Promise.all`) enverrait l'enfant avec une référence
  * invalide, puisque son parent n'existe pas encore côté serveur au moment de
@@ -63,7 +63,7 @@ export function planCreations(drafts: readonly Category[]): Category[] {
  * Ordre d'écriture d'un lot de SUPPRESSIONS (tâche 10, suppression de
  * branche).
  *
- * 🔴 POURQUOI feuilles-vers-racine. La FK `categories.parent_id` est
+ * POURQUOI feuilles-vers-racine. La FK `categories.parent_id` est
  * `ON DELETE NO ACTION` (mig. 143) : la contrainte se vérifie À LA FIN DE
  * CHAQUE INSTRUCTION, et l'app écrit une suppression PAR CATÉGORIE, en
  * requêtes séparées — jamais une suppression groupée où Postgres verrait la
@@ -86,7 +86,7 @@ export function planDeletions(removed: readonly Category[]): Category[] {
 /**
  * Contenu de la modale — monté UNIQUEMENT quand elle est ouverte.
  *
- * 🔴 POURQUOI cette coupure. Cinq écrans montent `<ColorSettingsModal>` en
+ * POURQUOI cette coupure. Cinq écrans montent `<ColorSettingsModal>` en
  * permanence (TasksSummary, EventModal, HabitModal, TaskModal, OKRModalSheet) :
  * tant que les requêtes vivaient au-dessus du `if (!isOpen)`, une lecture des
  * OKR partait depuis les pages Tâches, Agenda et Habitudes, qui n'en affichent
@@ -99,7 +99,7 @@ export function planDeletions(removed: readonly Category[]): Category[] {
 /**
  * Ce que la suppression de `targetId` fait à la liste EN COURS D'ÉDITION.
  *
- * 🔴 POURQUOI une fonction pure, hors du composant. La revue de la suppression
+ * POURQUOI une fonction pure, hors du composant. La revue de la suppression
  * de branche l'a relevé : rien n'exerçait ce branchement, et c'est le seul
  * endroit du chantier où se tromper DÉTRUIT des données. Le sortir de l'état
  * React le rend vérifiable sans monter un écran, comme `planCreations`.
@@ -371,7 +371,7 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
         })
         .map((lc) => moveCategoryMutation.mutateAsync({ id: lc.id, parentId: lc.parentId, position: lc.position }));
 
-      // 🔴 Les MOVES doivent être écrits AVANT les suppressions ci-dessous, et
+      // Les MOVES doivent être écrits AVANT les suppressions ci-dessous, et
       // non en parallèle avec elles (contrairement à l'ancien code). Un enfant
       // « remonté d'un cran » (`confirmDeleteLocal`, choix `promote`) porte un
       // `movePromises` qui le détache de son ancien parent — celui-là même
@@ -489,7 +489,7 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
             style={{ backgroundColor: 'rgb(var(--color-surface))' }}
           >
             <div className="flex justify-end mb-4">
-              {/* Refonte mobile (2026-09-17) : le rond bleu plein (24px dans un
+              {/* Refonte mobile : le rond bleu plein (24px dans un
                   cercle `p-2`) devient un bouton icône simple — même gabarit
                   que le « + » de TaskListsBar (accès rapide aux listes) —
                   plutôt qu'un simple rétrécissement du même style. Desktop

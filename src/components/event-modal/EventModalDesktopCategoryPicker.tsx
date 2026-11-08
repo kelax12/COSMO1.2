@@ -2,7 +2,7 @@
 // EventModalDesktopCategoryPicker — champ « Catégorie » du corps desktop
 // ════════════════════════════════════════════════════════════════
 //
-// Refait le 2026-10-29 (modale en une colonne, maquette 3) : la grille de
+// Refait (modale en une colonne, maquette 3) : la grille de
 // pastilles, sa bulle de sous-catégories et la légende repliable sont
 // remplacées par le menu déroulant commun `CategoryTreeSelect` (sous-catégories
 // en cascade à droite au survol).

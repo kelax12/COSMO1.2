@@ -48,7 +48,7 @@ export class AppErrorBoundary extends Component<Props, State> {
       // `getTranslator`. Résoudre au niveau du module figerait la langue au
       // premier import, et ce composant est monté au tout début de l'app.
       const { t } = getTranslator('common', localeStore.locale);
-      // 🔴 C-64 — ce repli n'offrait QUE « Rafraichir la page ». Quand la cause
+      // C-64 — ce repli n'offrait QUE « Rafraichir la page ». Quand la cause
       // est deterministe (une valeur de stockage, une reponse mise en cache,
       // une preference), le rechargement ramene le MEME ecran : mesure sur
       // C-61, trois entrees, trois fois la meme impasse. `RootErrorBoundary`

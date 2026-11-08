@@ -19,7 +19,7 @@ interface TaskListWidgetProps {
 }
 
 /**
- * Liste de tâches (widget du tableau de bord perso, 2026-10-21) : UNE liste
+ * Liste de tâches (widget du tableau de bord perso) : UNE liste
  * choisie par le même menu que le widget OKR (couleur, mini-barre = part
  * des tâches faites), ses tâches ouvertes en rangées `TaskRow`.
  * Posable plusieurs fois, une liste par exemplaire.

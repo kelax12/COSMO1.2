@@ -71,7 +71,7 @@ export function prefersReducedMotion(): boolean {
  * une feuille `fixed bottom-0` la laisse donc à 100 % sous l'écran, pour
  * toujours.
  *
- * MESURÉ dans le navigateur le 2026-08-24, `prefers-reduced-motion: reduce`
+ * MESURÉ dans le navigateur, `prefers-reduced-motion: reduce`
  * actif, viewport 375×812, mode démo : `MobileMoreSheet` (« Plus d'options »)
  * s'ouvrait à `transform: matrix(1, 0, 0, 1, 0, 510)`, soit `top: 812` pour un
  * viewport de 812 — **hauteur visible : 0 px**. Le voile s'affichait, la feuille
@@ -111,7 +111,7 @@ export function useSheetMotion() {
  *
  * Même bug que `useSheetMotion`, en moins visible et donc en plus durable :
  * avec `staggerChildren`, les enfants restent sur leur variante `hidden`
- * lorsque la clé animée est un transform. MESURÉ le 2026-08-24 sur
+ * lorsque la clé animée est un transform. MESURÉ sur
  * `/dashboard` en mouvement réduit : **dix blocs figés à
  * `transform: matrix(1, 0, 0, 1, 0, 20)`**, soit 20 px trop bas, définitivement.
  *
@@ -149,7 +149,7 @@ export function useRevealVariants(offset = 20): { container: Variants; item: Var
 /**
  * Geste « glisser vers le bas pour fermer » d'une feuille.
  *
- * POURQUOI CE HELPER. L'audit mobile du 2026-08-14 a compté ONZE feuilles
+ * POURQUOI CE HELPER. L'audit mobile a compté ONZE feuilles
  * réimplémentées à la main contre deux qui utilisent la primitive `BottomSheet`
  * — et surtout : **cinq affichaient une poignée de glissement qui ne faisait
  * rien**. Une affordance qui promet un geste inexistant est moins bonne que pas

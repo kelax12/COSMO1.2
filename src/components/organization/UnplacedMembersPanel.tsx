@@ -11,7 +11,7 @@
 // est la colonne de droite d'où l'on glisse les cartes. Les rendre séparément
 // avait produit deux copies du même bloc, divergentes sur le libellé.
 //
-// Extrait le 2026-09-05 (C-09).
+// Extrait (C-09).
 // ═══════════════════════════════════════════════════════════════════
 import { GripVertical } from 'lucide-react';
 import type { OrgMember } from '@/modules/organizations';

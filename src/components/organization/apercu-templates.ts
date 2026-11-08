@@ -1,7 +1,7 @@
 import type { PlacedWidget } from './apercu-widgets';
 
 /**
- * Modèles d'Aperçu par rôle (2026-10-19). Chacun répond à la question que
+ * Modèles d'Aperçu par rôle. Chacun répond à la question que
  * se pose la personne en ouvrant l'écran :
  * - membre : « qu'est-ce que je fais aujourd'hui ? »
  * - chef d'équipe : « mon équipe avance-t-elle, que dois-je valider ? »
@@ -40,7 +40,7 @@ export const TEMPLATES: Record<TemplateId, readonly PlacedWidget[]> = {
   ],
   admin: [
     { id: 'orgHealth', size: 'large' },
-    // Un admin a aussi des tâches attribuées (2026-10-20) : « Mes tâches » en tête.
+    // Un admin a aussi des tâches attribuées : « Mes tâches » en tête.
     { id: 'tasks', size: 'medium' },
     { id: 'riskProjects', size: 'medium' },
     { id: 'companyOkrs', size: 'medium' },

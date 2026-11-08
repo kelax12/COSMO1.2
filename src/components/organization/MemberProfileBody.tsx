@@ -52,7 +52,7 @@ export const MemberProfileBody = ({
 
   return (
     <>
-      {/* Grand format (maquette A, 2026-09-28) : coordonnées à gauche,
+      {/* Grand format (maquette A) : coordonnées à gauche,
           rattachement et équipes à droite ; une seule colonne sur téléphone. */}
       <div className="grid gap-3 sm:grid-cols-2 mb-5">
         <section className={CARD}>

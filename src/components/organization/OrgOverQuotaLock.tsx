@@ -15,7 +15,7 @@ interface Props {
 
 /**
  * Espace entreprise VERROUILLÉ : l'effectif dépasse le quota du palier
- * (baisse de palier, abonnement tombé). Décision d'Axel du 2026-11-05 : tant
+ * (baisse de palier, abonnement tombé). Décision d'Axel : tant
  * que l'organisation a des membres en trop, ses sections de travail sont
  * fermées ; seules restent celles qui permettent d'en sortir
  * (`sectionOpenWhileOverQuota`). Remplace le contenu de la section demandée,

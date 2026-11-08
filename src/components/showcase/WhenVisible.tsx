@@ -17,7 +17,7 @@ interface Props {
  * était statique, à un aller-retour près.
  *
  * ⚠️ **C'est ce qui se passait sur la landing, et la documentation affirmait le
- * contraire.** Mesuré le 2026-08-29 : `vendor-charts` (413 ko bruts, recharts +
+ * contraire.** Mesuré : `vendor-charts` (413 ko bruts, recharts +
  * d3) était téléchargé au chargement de `/`, alors que `PERFORMANCE.md` et la
  * roadmap le décrivaient comme « réellement lazy ». Le panneau Statistiques est
  * le cinquième d'une section défilante : la plupart des visiteurs ne le voient

@@ -69,7 +69,7 @@ const parse = (s: string | null | undefined): Date | null => {
 /**
  * Terminées dans [start, end[ — lues dans le JOURNAL (transition vers `done`),
  * comme le fil de l'Aperçu : une seule source pour « ce qui s'est passé »
- * (cohérence globale, 2026-09-25). Une tâche terminée deux fois compte à sa
+ * (cohérence globale). Une tâche terminée deux fois compte à sa
  * DERNIÈRE complétion, une seule fois.
  */
 const completedBetween = (activity: TeamTaskActivity[], start: Date, end: Date): number => {
@@ -169,7 +169,7 @@ export function buildWeeklyReview(
   };
 }
 
-// ─── Périmètre de la revue (audit du 2026-09-24, étape 3) ────────────
+// ─── Périmètre de la revue (audit, étape 3) ────────────
 //
 // « Limitée au sous-arbre, pas enregistrée. » La revue se fait désormais aussi
 // PAR ÉQUIPE ou PAR PROJET, et chacune est enregistrée (mig. 162,

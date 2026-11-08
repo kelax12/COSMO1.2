@@ -19,7 +19,7 @@ interface ConfirmLeaveOrgDialogProps {
 }
 
 /**
- * Confirmation avant de quitter l'entreprise (audit du 2026-09-24, étape 3).
+ * Confirmation avant de quitter l'entreprise (audit, étape 3).
  *
  * Le dialogue ne disait rien de ce qu'on laisse derrière soi. Il compte
  * désormais, avec ce que la personne VOIT : ses tâches ouvertes (qui seront

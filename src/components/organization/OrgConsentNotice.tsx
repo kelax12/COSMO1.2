@@ -20,7 +20,7 @@ const OrgConsentNotice = ({ checked, onChange }: OrgConsentNoticeProps) => {
     <ul className="text-xs text-[rgb(var(--color-text-secondary))] space-y-1.5 list-disc pl-4">
       <li>{t('consent.visibility')}</li>
       <li>{t('consent.agendaBefore')}<strong>{t('consent.agendaBold')}</strong>{t('consent.agendaMiddle')}<strong>{t('consent.agendaPrivate')}</strong>{t('consent.agendaAfter')}</li>
-      {/* Dernière activité (mig. 170) et rapports quotidiens (mig. 202) : absents de cette notice jusqu'au 2026-10-13. */}
+      {/* Dernière activité (mig. 170) et rapports quotidiens (mig. 202) : absents de cette notice. */}
       <li>{t('consent.reports')}</li>
       <li>{t('consent.personalSafe')}</li>
     </ul>

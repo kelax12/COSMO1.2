@@ -112,7 +112,7 @@ const OKRCardShowcase: React.FC = () => {
   const healthBg = `hsla(${hue}, ${saturation}%, ${lightness}%, 0.1)`;
   const healthBorder = `hsla(${hue}, ${saturation}%, ${lightness}%, 0.2)`;
   // Texte de santé : 28 % de luminosité en clair, 62 % en sombre. À 40 %, il
-  // rendait 2,4:1 sur sa pastille claire et 4,3:1 en gris (Lighthouse, 2026-10-22).
+  // rendait 2,4:1 sur sa pastille claire et 4,3:1 en gris (Lighthouse).
   const healthText = `hsl(${hue}, ${saturation}%, ${isLight ? 28 : 62}%)`;
 
   const doneMins = krs.reduce(
@@ -225,7 +225,7 @@ const OKRCardShowcase: React.FC = () => {
                 key={progress}
                 // Glissement sans fondu : le compteur change sans cesse, chaque
                 // valeur repartait d'une opacité nulle et passait la plupart du
-                // temps sous 4,5:1 (Lighthouse, 2026-10-22). Idem plus bas.
+                // temps sous 4,5:1 (Lighthouse). Idem plus bas.
                 initial={{ y: 4 }}
                 animate={{ y: 0 }}
                 transition={{ duration: 0.3 }}

@@ -32,14 +32,14 @@ const SEARCH_DAYS = 10;
 const normalize = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 /**
- * Créer un événement d'équipe (reco UI n° 30, demande d'Axel du 2026-09-29).
+ * Créer un événement d'équipe (reco UI n° 30, demande d'Axel).
  *
  * Un événement d'équipe est posé dans l'agenda de CHAQUE participant (une
  * ligne chacun, cf. `useCreateGroupEvent`). On ne peut inviter que soi et les
  * personnes qu'on encadre : c'est la règle d'écriture de la RLS (mig. 128),
  * l'écran ne propose donc que celles-là.
  *
- * Assistant en trois étapes (maquette 1 du 2026-09-29) : Qui, Quand, Détails.
+ * Assistant en trois étapes (maquette 1) : Qui, Quand, Détails.
  * « Quand » lit les agendas des participants sur dix jours ouvrés et propose
  * les premiers moments où personne n'est pris ; « Autre heure » ouvre la
  * saisie libre.

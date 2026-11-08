@@ -135,7 +135,7 @@ const TeamProjectCard = ({
 
   return (
     <div className="space-y-3">
-    {/* Le nom du projet titre le groupe, au-dessus de la carte (2026-10-01) :
+    {/* Le nom du projet titre le groupe, au-dessus de la carte :
         il n'est plus répété dans l'en-tête, sauf pendant un renommage. */}
     <h3 className="flex items-center gap-2 text-base font-semibold text-[rgb(var(--color-text-primary))] px-1 pt-1">
       <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${color.dot}`} aria-hidden="true" />
@@ -170,13 +170,13 @@ const TeamProjectCard = ({
           )}
           {teamName && (
             // Couleur de l'ÉQUIPE, pas du projet : c'était la couleur du projet
-            // qui habillait le nom de l'équipe (cohérence globale, 2026-09-25).
+            // qui habillait le nom de l'équipe (cohérence globale).
             <span className="inline-flex items-center gap-1 text-caption font-semibold px-1.5 py-0.5 rounded-full shrink-0 bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))]">
               <TeamColorDot color={projectTeam?.color} size={6} /> {teamName}
             </span>
           )}
           {/* La catégorie est une PASTILLE à sa propre couleur : elle n'écrase
-              plus la couleur du projet (audit 2026-09-24). */}
+              plus la couleur du projet (audit). */}
           {category && (
             <span className="hidden sm:inline-flex items-center gap-1 text-caption font-semibold px-1.5 py-0.5 rounded-full shrink-0 border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))]">
               <span
@@ -334,7 +334,7 @@ const TeamProjectCard = ({
 
       {!collapsed && (
         <div className="px-2 pb-2">
-          {/* Tâches ouvertes (deadline ↑ puis priorité ↓), séparées d'un trait léger (2026-10-30). */}
+          {/* Tâches ouvertes (deadline ↑ puis priorité ↓), séparées d'un trait léger. */}
           <div className="divide-y divide-[rgb(var(--color-border))]/60">
           {openTasks.map((task) => (
             <TeamTaskRow

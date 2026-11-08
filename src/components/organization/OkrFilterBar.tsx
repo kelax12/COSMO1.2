@@ -37,7 +37,7 @@ const STATE_DOT: Record<OkrState, string> = {
   done: 'bg-blue-500',
 };
 
-/** Filtres équipe · porteur · état de l'onglet OKR (audit 2026-09-24). */
+/** Filtres équipe · porteur · état de l'onglet OKR (audit). */
 const OkrFilterBar = ({ filters, setFilters, teams, members, currentUserId, categories = [], category = '', setCategory }: OkrFilterBarProps) => {
   const { t } = useT('portfolio');
   const stateLabel: Record<OkrState, string> = {

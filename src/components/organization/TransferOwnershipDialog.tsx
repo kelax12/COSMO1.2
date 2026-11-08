@@ -32,7 +32,7 @@ interface TransferOwnershipDialogProps {
  * l'owner actuel. Le destinataire devient admin ; l'owner sortant reste
  * admin et peut ensuite se rétrograder ou quitter.
  *
- * Audit du 2026-09-24 : le dialogue ne disait rien de la FACTURATION, qui suit
+ * Audit : le dialogue ne disait rien de la FACTURATION, qui suit
  * le propriétaire. Seul `organizations.owner_id` ouvre le portail Stripe
  * (`stripe-org-portal`) et souscrit (`stripe-org-checkout`) ; le client Stripe,
  * lui, appartient à l'organisation. Donc : l'abonnement continue, ses factures

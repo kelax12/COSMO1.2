@@ -1,7 +1,7 @@
 /**
  * Agrandir la zone tactile d'une commande SANS agrandir son dessin.
  *
- * 🔴 D'où ça vient (C-73, 2026-09-12). Le 2026-09-06, les pilules de listes de
+ * D'où ça vient (C-73)., les pilules de listes de
  * `/tasks` sont passées de `h-11` à `h-9` — de 44 px à 36 — pour une raison
  * assumée et purement visuelle : « 44 px de haut faisait une pilule
  * disproportionnée une fois pleine au lieu de bordée ». Le dessin y a gagné, la
@@ -65,7 +65,7 @@ export const TAP_AREA_44 =
  * Variante DEUX AXES pour une commande **déjà positionnée** (`absolute`,
  * `fixed`, `sticky`).
  *
- * 🔴 POURQUOI ELLE EXISTE (C-111, 2026-09-22). `TAP_AREA_44` commence par
+ * POURQUOI ELLE EXISTE (C-111). `TAP_AREA_44` commence par
  * `relative`, et `relative` comme `absolute` écrivent la MÊME propriété CSS.
  * Laquelle gagne ne dépend pas de l'ordre des classes dans l'attribut, mais de
  * l'ordre où Tailwind émet ses utilitaires de `position` — où `relative` vient

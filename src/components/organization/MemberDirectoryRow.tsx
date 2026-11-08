@@ -111,7 +111,7 @@ const MemberDirectoryRow = ({
   const primary = () => (selectMode ? onToggleSelect() : onOpen('profile'));
   // Chaque entrée du menu « … » ouvre une surface modale (fiche, attribution,
   // droits, rôle). En se refermant, Radix rend le focus à son déclencheur APRÈS
-  // que la modale l'a pris : il restait derrière le voile (mesuré le 2026-10-22
+  // que la modale l'a pris : il restait derrière le voile (mesuré
   // sur `AssignRoleDialog`, `a11y-keyboard-audit`). La modale porte le focus,
   // et le hook des modales le rendra à ce bouton en se fermant.
   const surfaceOpened = useRef(false);
@@ -202,7 +202,7 @@ const MemberDirectoryRow = ({
             {/* Chevron (reco UI n° 23) : sans lui, rien ne dit que la
                 pastille est un menu éditable sur place. */}
             {/* Le rôle CHOISI (rôle personnalisé) s'affiche ici ; « Membre »
-                n'apparaît qu'à défaut (2026-10-30). */}
+                n'apparaît qu'à défaut. */}
             <span className="inline-flex items-center gap-0.5">
               {roleBadges.length > 0 ? (
                 <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))] max-w-40">
