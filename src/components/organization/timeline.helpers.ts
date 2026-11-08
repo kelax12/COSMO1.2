@@ -220,7 +220,7 @@ function markerOf(task: TeamTask, deadline: Date, range: TimelineRange, todaySta
 
 /**
  * Point de départ du bandeau d'un projet. La date de début n'est plus saisie
- * (2026-10-02) : on part de celle déjà enregistrée, sinon de la création.
+ * : on part de celle déjà enregistrée, sinon de la création.
  */
 export const projectSpanStart = (project: TeamProject): string =>
   project.startDate || project.createdAt.slice(0, 10);

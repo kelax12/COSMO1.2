@@ -42,7 +42,7 @@ interface OrreryProps {
  * (`aria-hidden` posé par le parent) : tout ce qu'il montre est dit en texte
  * dans la colonne du formulaire.
  *
- * 🔴 Sous `prefers-reduced-motion` (actif sur la machine d'Axel), RIEN ne
+ * Sous `prefers-reduced-motion` (actif sur la machine d'Axel), RIEN ne
  * bouge tant que la personne ne l'a pas demandé : orbites rendues tracées,
  * comètes non montées (`<animateMotion>` est du SMIL, qui ignore ce réglage),
  * halo fixe. Le dessin final doit donc tenir seul.

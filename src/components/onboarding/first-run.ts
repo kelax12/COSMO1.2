@@ -1,6 +1,6 @@
 // Premier écran après inscription (T-23) — logique pure, sans React.
 //
-// POURQUOI CET ÉCRAN EXISTE. Mesuré en prod le 2026-08-28 sur 28 comptes :
+// POURQUOI CET ÉCRAN EXISTE. Mesuré en prod sur 28 comptes :
 // 36 % n'ont JAMAIS rien créé, et 50 % ne sont jamais revenus après leur
 // session d'inscription. Ce que voyait un nouveau compte : `/dashboard`, soit
 // sept sections toutes vides, plus trois tâches d'exemple créées sans écran,
@@ -107,7 +107,7 @@ export const HABIT_MINUTES = [10, 20, 30, 45, 60] as const;
 
 /** Mêmes valeurs par défaut que `HabitModal`, pour qu'une habitude créée ici
  *  soit indiscernable d'une habitude créée dans l'application. La durée est
- *  CHOISIE par la personne (2026-10-05) : « Se coucher avant 23 h » ne dure
+ *  CHOISIE par la personne : « Se coucher avant 23 h » ne dure
  *  pas trente minutes, et l'imposer faussait ses statistiques de temps. */
 export const buildHabitInput = (name: string, minutes = 30): CreateHabitInput => ({
   name: name.trim(),
@@ -187,12 +187,12 @@ export const setBusinessPending = (pending: boolean): void => {
  * qui fait fermer l'onglet. Sa cible chiffrée est facultative aussi : sans
  * nombre, le résultat clé est binaire (cible 1).
  *
- * 🔴 L'id du résultat clé est un UUID, jamais `kr-<horodatage>`. Le dépôt
+ * L'id du résultat clé est un UUID, jamais `kr-<horodatage>`. Le dépôt
  * Supabase refuse tout id de KR qui n'en est pas un avant de l'interpoler
  * dans un filtre PostgREST (M-1, `syncKRsToTable` → `invalid_input`) : cet
  * accueil insérait l'objectif puis échouait sur son résultat clé, et la
  * personne lisait « Impossible de créer l'OKR » à sa toute première minute.
- * Trouvé le 2026-10-03 en rejouant l'accueil hors démo ; le parcours e2e ne
+ * Trouvé en rejouant l'accueil hors démo ; le parcours e2e ne
  * le voyait pas, il comptait les écritures parties, pas la réponse.
  */
 /** Même repli que `OKRModalSheet` pour un navigateur sans `randomUUID`. */

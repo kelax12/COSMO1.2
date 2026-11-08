@@ -13,7 +13,7 @@ import { useT } from '@/i18n/useT';
  * coche qui revient en arrière sans explication fait douter de toutes les
  * autres, et le doute suffit à faire rouvrir un carnet papier.
  *
- * 🔴 CE QUE LE BANDEAU DIT EST CE QUI SE PASSE VRAIMENT, et ce n'est pas la
+ * CE QUE LE BANDEAU DIT EST CE QUI SE PASSE VRAIMENT, et ce n'est pas la
  * phrase de la maquette (« vos modifications partiront au retour du réseau »).
  * Cette phrase supposerait une file d'écritures différées : `App.tsx` fixe
  * `networkMode: 'always'` sur les mutations, délibérément et avec sa raison

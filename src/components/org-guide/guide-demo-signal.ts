@@ -9,10 +9,10 @@ import { useEffect, useState } from 'react';
  * - `off`  : pas de démo, la navigation de droite suit le choix de l'utilisateur.
  * - `nav`  : le curseur change de page. Repliée, la navigation sort de l'écran
  *            et devient inerte : on la fait ressortir, sinon le curseur vise
- *            un lien invisible (retour d'Axel du 2026-10-13).
+ *            un lien invisible (retour d'Axel).
  * - `hide` : la bonne page est atteinte. On la masque, sinon le curseur clique
  *            des boutons qu'elle recouvre et on ne comprend plus ce qu'il fait
- *            (retour d'Axel du 2026-10-13).
+ *            (retour d'Axel).
  */
 export type OrgGuideDemoPhase = 'off' | 'nav' | 'hide';
 

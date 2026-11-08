@@ -35,7 +35,7 @@ const BUCKET_LABEL: Record<LoadBucket, 'teamPage.loadOverdue' | 'teamPage.loadTh
 };
 
 /**
- * Charge de l'équipe (maquette du 2026-09-27) : une jauge par membre, puis
+ * Charge de l'équipe (maquette) : une jauge par membre, puis
  * une colonne de tâches par membre, pour voir qui porte quoi et répartir.
  */
 const TeamWorkloadSection = ({ orgId, tasks, projectIds, members, currentUserId }: TeamWorkloadSectionProps) => {

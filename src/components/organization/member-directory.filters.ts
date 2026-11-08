@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // Filtres de l'annuaire des membres (/entreprise/members)
 //
-// Audit « passage à l'échelle » du 2026-09-23 : à cent membres, la seule
+// Audit « passage à l'échelle » : à cent membres, la seule
 // recherche par nom ne suffit plus. On filtre par équipe, rôle et période
 // d'arrivée, et le filtre vit dans l'URL pour qu'un lien le partage. Les
 // filtres « manager direct » et « non placé » sont partis avec l'organigramme

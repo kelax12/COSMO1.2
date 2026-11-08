@@ -4,7 +4,7 @@
 // pas et ne se nomme pas. Dans l'URL, il survit à tout cela, et une vue
 // enregistrée n'est plus qu'un jeu de paramètres qu'on réécrit.
 //
-// 🔴 L'URL est une entrée NON FIABLE : chaque valeur passe par son `parse`,
+// L'URL est une entrée NON FIABLE : chaque valeur passe par son `parse`,
 // qui rend le défaut pour tout ce qu'il ne reconnaît pas. Une valeur égale au
 // défaut n'est jamais écrite, pour que l'adresse d'un écran « neuf » reste nue.
 

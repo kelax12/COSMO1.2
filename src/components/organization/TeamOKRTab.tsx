@@ -34,7 +34,7 @@ interface TeamOKRTabProps {
 
 }
 
-// Filtres équipe · porteur · état (audit 2026-09-24), dans l'URL : un lien
+// Filtres équipe · porteur · état (audit), dans l'URL : un lien
 // partage ce qu'on voit. Hors composant pour garder des spécifications stables.
 const OKR_FILTER_SPECS = {
   team: { param: 'oTeam', defaultValue: '', parse: (raw: string) => (raw === 'org' ? 'org' : anId('')(raw) ?? '') },

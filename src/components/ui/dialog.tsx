@@ -71,7 +71,7 @@ function DialogContent({
    *  modales entreprise custom, hors Radix, montent à z-[9999]). */
   overlayClassName?: string
 }) {
-  // 🔴 Le nom accessible de la croix était `<span className="sr-only">Close</span>`,
+  // Le nom accessible de la croix était `<span className="sr-only">Close</span>`,
   // en dur dans la source shadcn amont : sept composants du produit montent ce
   // bouton par défaut, et un lecteur d'écran francophone entendait « Close ».
   // `i18n:scan` ne pouvait pas le voir — il cherche du FRANÇAIS en dur.

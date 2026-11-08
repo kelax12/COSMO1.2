@@ -9,7 +9,7 @@ interface Props<Id extends string> {
 }
 
 /**
- * Paramètres de l'entreprise sur MOBILE (maquettes 295 et 303, 2026-10-11).
+ * Paramètres de l'entreprise sur MOBILE (maquettes 295 et 303).
  *
  * Les rubriques défilaient en pastilles à icône et la plupart étaient hors
  * champ. C'est désormais la même liste groupée que les Paramètres perso

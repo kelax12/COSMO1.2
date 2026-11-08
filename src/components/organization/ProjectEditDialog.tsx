@@ -53,7 +53,7 @@ interface ProjectEditDialogProps {
   onSubmit?: (input: UpdateTeamProjectInput) => Promise<unknown>;
   /**
    * Création : crée le projet ; `coLeadIds` deviennent co-responsables (mig. 190),
-   * `memberIds` des contributeurs ajoutés un par un (2026-10-30).
+   * `memberIds` des contributeurs ajoutés un par un.
    */
   onCreate?: (input: CreateTeamProjectInput, coLeadIds: string[], memberIds: string[]) => Promise<unknown>;
   onClose: () => void;
@@ -124,7 +124,7 @@ const ProjectEditDialog = ({
     label: project ? pf('edit.aria', { name: project.name }) : t('project.newAria'),
   });
 
-  /** Couleur du projet = celle de sa catégorie (2026-10-30) ; sans catégorie, on garde l'actuelle. */
+  /** Couleur du projet = celle de sa catégorie ; sans catégorie, on garde l'actuelle. */
   const colorFor = (catId: string | null) => {
     const hex = categories.find((c) => c.id === catId)?.color;
     return hex ? projectColorFromCategory(hex) : project?.color ?? 'blue';
@@ -272,7 +272,7 @@ const ProjectEditDialog = ({
             />
           </div>
 
-          {/* Catégorie et fin sur la même ligne (2026-10-30) ; la catégorie donne sa couleur au projet. */}
+          {/* Catégorie et fin sur la même ligne ; la catégorie donne sa couleur au projet. */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <span className={labelClass}>{t('project.category')}</span>

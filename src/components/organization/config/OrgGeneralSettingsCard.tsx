@@ -20,7 +20,7 @@ interface Props {
 }
 
 /**
- * Réglages PROPRES à l'organisation (audit du 2026-09-24, « aucun réglage
+ * Réglages PROPRES à l'organisation (audit, « aucun réglage
  * propre à l'organisation ») : langue et fuseau des e-mails, semaine de
  * travail, valeurs proposées par défaut. Chaque changement s'enregistre seul :
  * un formulaire de six réglages indépendants n'a pas besoin d'un bouton.

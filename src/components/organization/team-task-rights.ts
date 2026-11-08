@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // Droits sur UNE tâche d'équipe — miroir des policies (mig. 115, 152)
 //
-// Audit du 2026-09-24 : les menus « … » proposaient des actions que le serveur
+// Audit : les menus « … » proposaient des actions que le serveur
 // refusait ensuite (tableau des tâches). Chaque écran recalculait — ou ne
 // calculait pas — son droit ; la règle vit désormais ici, une fois.
 //

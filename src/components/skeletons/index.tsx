@@ -10,7 +10,7 @@ import { useDelayed } from '@/lib/hooks/use-delayed';
 /**
  * Maquette 47 — « Le chargement a la forme du résultat ».
  *
- * ⚠️ Ce squelette a cessé d'avoir la forme du résultat le 2026-09-05, quand les
+ * ⚠️ Ce squelette a cessé d'avoir la forme du résultat, quand les
  * lignes de tâches ont perdu leur carte : il continuait à dessiner un cadre
  * arrondi sur fond `surface` là où la liste rend des lignes à plat séparées par
  * un filet. Un squelette qui annonce une autre mise en page fait sauter l'écran
@@ -24,11 +24,11 @@ import { useDelayed } from '@/lib/hooks/use-delayed';
 export function TaskCardSkeleton() {
   return (
     <div className="flex items-center gap-3 px-3 py-2.5 min-h-[60px] border-b border-[rgb(var(--color-border))] md:min-h-0 md:p-3 md:rounded-xl md:border md:bg-[rgb(var(--color-surface))]">
-      {/* 🔴 La barre de catégorie de 4 px qui vivait ici n'existe plus dans la
+      {/* La barre de catégorie de 4 px qui vivait ici n'existe plus dans la
           ligne : `TaskCard` commence par sa case à cocher. Le squelette avait
           donc DÉRIVÉ une seconde fois, exactement comme l'avertit l'en-tête de
           ce fichier, et pour la même raison — on ne le voit qu'une fraction de
-          seconde. Retirée le 2026-09-20 (maquette 103). Elle reste sur desktop,
+          seconde. Retirée (maquette 103). Elle reste sur desktop,
           où la ligne la porte encore. */}
       <Skeleton className="hidden md:block md:h-10 w-1 rounded-full shrink-0" />
       <Skeleton className="w-6 h-6 rounded-full shrink-0 md:w-5 md:h-5 md:rounded-md" />

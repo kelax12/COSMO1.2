@@ -31,7 +31,7 @@ interface PageHeadingProps {
  * inchangées : la refonte de l'échelle est mobile, la toucher côté desktop
  * changerait un rendu qui n'a jamais été audité.
  *
- * POURQUOI (audit UI 2026-08-14, corrigé le 2026-08-24). Le `h1` d'une page
+ * POURQUOI (audit UI 2026-08-14, corrigé). Le `h1` d'une page
  * avait QUATRE tailles différentes sur mobile — 28 px sur /tasks (MobileHeader),
  * 24 px sur /habits /okr /statistics /settings (`standard`), 22 px sur
  * /dashboard (`hero`), 18 px sur /entreprise (`compact`) — pour des pages qu'on

@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // SATURATION — pourquoi le shader du hero entreprise se dégrade tout seul.
 //
-// Finding C-68, corrigé le 2026-09-05. `LightRays` peint le viewport ENTIER
+// Finding C-68, corrigé. `LightRays` peint le viewport ENTIER
 // dans un fragment shader, à chaque frame, indéfiniment. Quand la machine ne
 // sait pas exécuter une frame dans son budget, les commandes s'empilent : le
 // tampon de commandes se remplit, et le fil principal du rendu se met à
@@ -29,7 +29,7 @@
 /**
  * Les paliers, du moins cher au plus cher à quitter.
  *
- * ⚠️ ON PART BAS, ON NE DESCEND PAS DEPUIS LE HAUT. Mesuré le 2026-09-05 : une
+ * ⚠️ ON PART BAS, ON NE DESCEND PAS DEPUIS LE HAUT. Mesuré : une
  * échelle qui commence à 1 et se dégrade laisse un résidu STABLE de 315 à
  * 393 ms sur six passes, là où la même page sans canvas rend 0 sur six. Ce
  * résidu n'est ni du bruit ni le régime établi : c'est la DESCENTE elle-même.
@@ -57,7 +57,7 @@ export const COUT_SAIN = 4;
 /**
  * ms — une frame à ce prix est un accroc.
  *
- * ⚠️ Une médiane saine ne suffit PAS. Mesuré le 2026-09-05 : à demi-résolution
+ * ⚠️ Une médiane saine ne suffit PAS. Mesuré : à demi-résolution
  * la médiane du coût passait sous le seuil, et la page rendait quand même 270 à
  * 545 ms de tâches longues sur 4 s — quelques frames rares mais énormes,
  * invisibles pour une médiane. Une tâche longue au sens du navigateur commence

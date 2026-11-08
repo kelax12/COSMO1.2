@@ -1,5 +1,5 @@
 // Chemin des panneaux de sous-catégories ouverts dans la modale de gestion
-// (cascade au survol, 2026-10-29). `openPath[i]` = parent dont le panneau de
+// (cascade au survol). `openPath[i]` = parent dont le panneau de
 // profondeur i+1 est ouvert.
 //
 // ⚠️ La fermeture différée ne referme PAS un panneau qu'on est en train

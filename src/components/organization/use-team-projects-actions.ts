@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // Actions de l'onglet Projets — mutations et leurs filets (« Annuler »)
 //
-// Extrait de `TeamProjectsTab` le 2026-09-24 : l'onglet frôlait le plafond de
+// Extrait de `TeamProjectsTab` : l'onglet frôlait le plafond de
 // 600 lignes, et le portefeuille (M2) lui ajoutait archivage, duplication et
 // modèles. Ce hook ne rend rien : il porte les gestes, l'onglet les place.
 // ═══════════════════════════════════════════════════════════════════
@@ -52,7 +52,7 @@ export const useTeamProjectsActions = ({
 
   /**
    * Archiver avec « Annuler » : le reste de l'application en propose un pour
-   * chaque geste lourd, l'archivage n'en avait pas (audit 2026-09-24).
+   * chaque geste lourd, l'archivage n'en avait pas (audit).
    */
   const archiveWithUndo = (project: TeamProject) =>
     updateProject.mutate(

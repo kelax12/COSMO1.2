@@ -8,7 +8,7 @@
 // à savoir ce qu'un déplacement, une vue par équipe ou un calque de charge
 // veulent dire.
 //
-// Extrait le 2026-09-05 (C-09). Les 160 lignes de contrôles qu'il porte
+// Extrait (C-09). Les 160 lignes de contrôles qu'il porte
 // vivaient au milieu de l'orchestration de l'arbre, ce qui obligeait à les
 // traverser pour lire la mise en page de la pyramide elle-même.
 // ═══════════════════════════════════════════════════════════════════

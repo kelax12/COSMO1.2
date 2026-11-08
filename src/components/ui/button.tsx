@@ -57,7 +57,7 @@ type ButtonProps = React.ComponentProps<"button"> &
 // (vérifié : les seuls <Button> non typés d'un fichier contenant un <form>
 // sont hors de ce <form>). `type` reste surchargeable via les props.
 //
-// `ref` est une prop ordinaire depuis React 19 (migration du 2026-10-23) : la
+// `ref` est une prop ordinaire depuis React 19 (migration) : la
 // signature reprend celle de la source shadcn amont, sans `forwardRef`.
 //
 // Pourquoi ça compte ici : sous React 18, ce composant DEVAIT être un

@@ -17,7 +17,7 @@ interface MyPermissionsCardProps {
 }
 
 /**
- * « Mes droits » (audit du 2026-09-24, cas « permissions contradictoires »).
+ * « Mes droits » (audit, cas « permissions contradictoires »).
  *
  * La règle : l'admin court-circuite, puis un rôle actif, puis la fiche, sinon
  * le défaut de membre. Elle était INVISIBLE pour la personne : elle découvrait

@@ -29,7 +29,7 @@ import { useCategories } from '@/modules/categories';
  * portent. Cf. `buildMoments` pour la règle de placement — et pourquoi une
  * tâche n'est jamais affichée sous une heure inventée.
  *
- * 🔴 Écriture : la vue LIT deux tables et n'en écrit jamais une à la place de
+ * Écriture : la vue LIT deux tables et n'en écrit jamais une à la place de
  * l'autre — `useCompleteTodayItem` porte cet aiguillage, partagé avec
  * `TodayUnified` (desktop).
  *
@@ -183,7 +183,7 @@ const TodayMoments = () => {
               <li
                 key={entry.key}
                 // Le filet plutôt que la carte, comme les lignes de tâches
-                // (arbitrage du 2026-09-05).
+                // (arbitrage).
                 // `py-2` (tâches uniquement) : +20% de hauteur demandé côté
                 // mobile — desktop n'affiche pas ce composant (cf. TodayUnified).
                 className={`flex items-center gap-2.5 border-b border-[rgb(var(--color-border))] last:border-b-0 ${entry.task ? 'py-2' : ''}`}

@@ -52,10 +52,10 @@ const TABS: TabConfig[] = [
  * collaborative du produit, et il était jusqu'ici au 3e niveau de navigation
  * sur mobile (Plus → feuille → Entreprise).
  *
- * 🔴 Ce paragraphe affirmait « Habitudes reste atteignable dans Plus, qui la
+ * Ce paragraphe affirmait « Habitudes reste atteignable dans Plus, qui la
  * liste déjà » — FAUX, elle n'y a jamais été : un membre d'organisation
  * n'avait plus AUCUN chemin mobile vers /habits. Ajoutée dans
- * `MobileMoreSheet` (2026-09-06), conditionnelle au même déclencheur
+ * `MobileMoreSheet`, conditionnelle au même déclencheur
  * (`myOrg`) que ce remplacement, pour ne pas dupliquer l'onglet chez qui
  * l'a déjà en barre du bas.
  */
@@ -90,7 +90,7 @@ const tabLabelClasses = 'leading-tight max-w-full text-center hyphens-auto [over
  *   t'a assignée, une notification d'équipe non lue. Le compte n'apprend rien
  *   de plus que l'existence, et le point s'éteint à l'ouverture de l'onglet.
  *
- * 🔴 Ce qui a motivé la règle (mesuré le 2026-09-19) : « Accueil » portait un
+ * Ce qui a motivé la règle (mesuré) : « Accueil » portait un
  * « 2 » rouge et « Entreprise » un « 4 » rouge, en permanence, dans la couleur
  * de l'ERREUR, sans qu'aucun des deux ne dise ce qu'il comptait. Le rouge
  * devient un décor dès qu'il est toujours allumé, et il n'en reste plus pour

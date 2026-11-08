@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { SAVE_AS_TEMPLATE_ENABLED } from './projectTemplatesFlag';
 
-// « Dupliquer » masqué le 2026-10-13, en attendant de décider s'il reste.
+// « Dupliquer » masqué, en attendant de décider s'il reste.
 const DUPLICATE_ENABLED = false;
 const AVATARS_SHOWN = 5;
 import { getDateLocale } from '@/i18n/format';
@@ -353,7 +353,7 @@ const ProjectDetailPage = ({
               </button>
             )}
           </div>
-          {/* Trait léger entre les tâches (2026-10-30). */}
+          {/* Trait léger entre les tâches. */}
           <div className="divide-y divide-[rgb(var(--color-border))]/60">{openTasks.map(row)}</div>
           {tasks.length === 0 && <p className="px-3 py-3 text-xs text-[rgb(var(--color-text-muted))]">{t('projects.noTask')}</p>}
           {completedTasks.length > 0 && (

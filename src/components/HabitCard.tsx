@@ -84,10 +84,10 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
     // largeur (pas de scroll) : la case s'étire à la colonne au lieu d'une
     // taille fixe. Le desktop garde exactement sa taille fixe d'avant.
     // C-111 · la rangée de 7 jours mesurait 38 x 38 px sur téléphone (mesuré
-    // dans le navigateur le 2026-09-22, viewport 375, mode démo : grille de
+    // dans le navigateur, viewport 375, mode démo : grille de
     // 301,6 px, gap de 6 px).
     //
-    // 🔴 SEPT CELLULES DE 44 PX NE TIENNENT PAS, et c'est de l'arithmétique,
+    // SEPT CELLULES DE 44 PX NE TIENNENT PAS, et c'est de l'arithmétique,
     // pas un arbitrage : il faudrait 7 x 44 + 6 x 6 = 344 px de large, et même
     // avec un gap NUL, 7 x 44 = 308 > 301,6. La largeur ne peut donc pas
     // atteindre la cible sans refaire la carte.
@@ -109,7 +109,7 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
     return (
       <div className="flex flex-col items-center w-full md:w-auto">
         <div className="text-caption md:text-xs text-slate-500 mb-1 font-medium">{day.dayName}</div>
-        {/* 2026-09-23 · une case COCHÉE n'était qu'une icône : aucun nom
+        {/* une case COCHÉE n'était qu'une icône : aucun nom
             accessible (axe `button-name`, critique, WCAG 4.1.2 A), vu sous
             WebKit en CI. Non cochée, elle s'annonçait « 18 », et l'état
             « faite » n'était porté que par la couleur. Même sémantique que

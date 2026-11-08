@@ -63,7 +63,7 @@ export interface TutorialStep {
    * Même raison que `titleKey` : les tutoriels sont des constantes de MODULE,
    * évaluées au premier import. Et c'était une chaîne FRANÇAISE en dur,
    * affichée telle quelle à un visiteur anglophone — invisible à
-   * `i18n:scan` jusqu'au motif (9) du 2026-09-12.
+   * `i18n:scan` jusqu'au motif (9).
    */
   ghostLabelKey?: KeyOf<'tutorials'>;
   /** Pour action='drag-ghost' : sélecteur de la cible du drag */

@@ -84,7 +84,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
   const trendConfig = { rate: { label: ta('overview.completionRate'), color: trendColor } } satisfies ChartConfig;
   const [period, setPeriod] = useState<StatsPeriod>('30');
   const start = useMemo(() => periodStart(period), [period]);
-  // Lecture ciblée sur la période (audit du 2026-09-24) : les tâches OUVERTES,
+  // Lecture ciblée sur la période (audit) : les tâches OUVERTES,
   // plus celles terminées depuis le lundi de la semaine où commence la
   // fenêtre (premier seau de `weekBuckets`, et la semaine précédente que lit
   // la revue hebdomadaire). Avant, l'onglet lisait les 1 000 dernières tâches

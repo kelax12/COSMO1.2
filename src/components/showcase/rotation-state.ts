@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // C-69 — quand la vitrine du hero a-t-elle le droit de tourner ?
 //
-// 🔴 CE QUI ÉTAIT FAUX. `AppWindowShowcase` changeait de vue toutes les 2,5 s,
+// CE QUI ÉTAIT FAUX. `AppWindowShowcase` changeait de vue toutes les 2,5 s,
 // indéfiniment, sans bouton de pause, sans arrêt au survol ni au focus, et
 // **sans le moindre égard pour `prefers-reduced-motion`**. WCAG 2.2.2 (niveau A)
 // vise exactement ce cas : une information en mouvement qui démarre seule,
@@ -21,7 +21,7 @@
 //   `lecture` l'utilisateur a demandé le mouvement. Tourne MÊME en
 //             `prefers-reduced-motion`.
 //
-// 🔴 Le troisième état n'est pas un luxe, c'est ce qui rend le réglage
+// Le troisième état n'est pas un luxe, c'est ce qui rend le réglage
 // honnête. Sans lui, une personne en mouvement réduit verrait une fenêtre
 // figée sur « Tâches » pour toujours, et le hero — dont le message entier est
 // « quatre modules, une seule app » — ne dirait plus rien pour elle. WCAG
@@ -33,7 +33,7 @@
 // pointeur reprend là où on en était. Un survol n'est pas une décision, et
 // c'est pour ça que `suspendu` vit dans le composant et pas ici.
 //
-// 🔴 POURQUOI CE MODULE EXISTE À PART. Une règle qui décide d'un comportement
+// POURQUOI CE MODULE EXISTE À PART. Une règle qui décide d'un comportement
 // d'accessibilité doit être éprouvable sans monter un composant, sans
 // `IntersectionObserver` et sans horloge. Témoin :
 // `rotation-state.guard.test.ts`.

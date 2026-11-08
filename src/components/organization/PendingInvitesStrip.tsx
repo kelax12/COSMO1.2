@@ -7,7 +7,7 @@ import { useT } from '@/i18n/useT';
 /**
  * Invitations en attente, visibles depuis l'annuaire (reco UI n° 24).
  *
- * Elles vivent dans Paramètres depuis l'audit Membres du 2026-09-24 : c'est
+ * Elles vivent dans Paramètres depuis l'audit Membres : c'est
  * juste pour les GÉRER, mais un admin qui cherche « Paul, invité mardi » ouvre
  * l'annuaire, pas les réglages. Ce bandeau ne gère rien, il compte et renvoie.
  * Même lecture que la liste (RLS : créateur ou admin).

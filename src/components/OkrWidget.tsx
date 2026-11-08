@@ -17,7 +17,7 @@ interface OkrWidgetProps {
 }
 
 /**
- * Widget OKR du tableau de bord (2026-10-21) : UN objectif, choisi par un
+ * Widget OKR du tableau de bord : UN objectif, choisi par un
  * sélecteur, et TOUS ses résultats clés quel que soit le format
  * (alternative 2 : titre, valeur, barre fine à la couleur de la catégorie).
  * Seul widget posable plusieurs fois : un exemplaire par objectif suivi.
@@ -58,7 +58,7 @@ const OkrWidget = ({ okrId, fallbackIndex, onSelect }: OkrWidgetProps) => {
   return (
     <div className="card-plain-mobile p-gutter md:p-6 rounded-2xl">
       {/* Progression de l'OKR juste après son titre, à la couleur de sa
-          catégorie : plus de barre globale (2026-10-21). */}
+          catégorie : plus de barre globale. */}
       <div className="flex items-center gap-3 mb-4">
         <div className="flex min-w-0">
           <OkrPickerMenu

@@ -32,8 +32,8 @@ import { PLANETS, PLANET_COLOR, type Planet } from './perso/orrery-geometry';
 import { persoScope, readAppTheme } from './perso/perso-theme';
 
 /**
- * Premier écran d'un compte réel (T-23), refait le 2026-10-03 en planétaire,
- * corrigé le 2026-10-05 après une revue de ses points faibles : retour
+ * Premier écran d'un compte réel (T-23), refait en planétaire,
+ * corrigé après une revue de ses points faibles : retour
  * arrière, vrai créneau d'agenda, aperçu sur téléphone, durée d'habitude,
  * cible chiffrée, sorties concrètes, thème de l'app suivi, mouvement à la
  * demande.
@@ -113,9 +113,9 @@ const FirstRunSetup: React.FC = () => {
       alreadyDone,
     });
 
-  // 🔴 LA CONDITION D'OUVERTURE EST UN VERROU, PAS UNE CONDITION D'AFFICHAGE.
+  // LA CONDITION D'OUVERTURE EST UN VERROU, PAS UNE CONDITION D'AFFICHAGE.
   // `useCreateTask` écrit la tâche créée dans le cache : dès la PREMIÈRE
-  // réponse, `tasks.length` passe à 1 et la garde se referme (2026-09-08).
+  // réponse, `tasks.length` passe à 1 et la garde se referme.
   // **Une garde d'entrée se fige à l'entrée.**
   const [latched, setLatched] = useState(false);
   if (eligible && !latched) setLatched(true);

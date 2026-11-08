@@ -123,7 +123,7 @@ export function matchesQuery(member: OrgMember, query: string): boolean {
 
 // ─── Grande organisation : repli par défaut, recherche ciblée ─────────
 //
-// Audit « passage à l'échelle » du 2026-09-24 : le repli par branche existait,
+// Audit « passage à l'échelle » : le repli par branche existait,
 // mais tout s'ouvrait déplié. À mille personnes, la première lecture était un
 // arbre de mille cartes, et une recherche dépliait TOUT pour montrer un nom.
 
@@ -179,7 +179,7 @@ export function ancestorIds(members: OrgMember[], ids: Set<string>): Set<string>
 }
 
 /**
- * Ce qu'un déplacement change aux POSITIONS (audit du 2026-09-24, étape 4) :
+ * Ce qu'un déplacement change aux POSITIONS (audit, étape 4) :
  * « manager » est dérivé de la pyramide, donc déplacer quelqu'un peut faire
  * perdre à son ancien manager sa vue sur la Pyramide et les Statistiques, ou
  * la donner au nouveau, sans qu'aucun écran ne l'ait dit.

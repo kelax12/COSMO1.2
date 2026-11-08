@@ -1,11 +1,11 @@
 // ═══════════════════════════════════════════════════════════════════
-// Panneaux de sous-catégories de la modale de gestion (2026-10-29).
+// Panneaux de sous-catégories de la modale de gestion.
 //
 // Même principe que les sélecteurs (`CascadeFlyout`) : survol d'un parent →
 // ses enfants dans un panneau à sa droite. Différence : ici les lignes sont
 // ÉDITABLES (nom, couleur, menu d'actions).
 //
-// 🔴 Portail dans l'OVERLAY de la modale, pas dans `document.body` : le piège
+// Portail dans l'OVERLAY de la modale, pas dans `document.body` : le piège
 // de focus de la modale (hook a11y commun) reprend le focus à tout ce qui sort de son
 // conteneur, et on n'aurait pas pu taper dans un champ du panneau. La feuille
 // elle-même est en `overflow-hidden` : un panneau rendu dedans serait rogné.

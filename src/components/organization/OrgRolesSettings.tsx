@@ -43,7 +43,7 @@ const toInput = (role: OrgCustomRole): SaveCustomRoleInput => ({
 });
 
 /**
- * Paramètres › Rôles (mig. 219, maquette 1 validée le 2026-10-12).
+ * Paramètres › Rôles (mig. 219, maquette 1 validée).
  *
  * Liste des rôles de l'organisation : pastille, résumé, nombre de détenteurs
  * actifs, alerte si une attribution finit dans les 7 jours. Créer, modifier,

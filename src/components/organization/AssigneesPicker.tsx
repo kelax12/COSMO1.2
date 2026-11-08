@@ -47,7 +47,7 @@ const AssigneesPicker = ({ members, value, onChange, disabled, canAssign, reveal
     ? members.filter((m) => canAssign(m.userId) || value.includes(m.userId))
     : members;
 
-  // Recherche au-delà de quelques personnes (audit du 2026-09-24) : elle ne
+  // Recherche au-delà de quelques personnes (audit) : elle ne
   // filtre que l'affichage, une personne cochée puis masquée reste assignée.
   const [query, setQuery] = useState('');
   const searchable = selectable.length > MEMBER_SEARCH_THRESHOLD;
@@ -117,7 +117,7 @@ const AssigneesPicker = ({ members, value, onChange, disabled, canAssign, reveal
             />
           </div>
         )}
-        {/* « Tout désassigner » retiré (2026-10-30) : il prenait la première place pour un geste rare. */}
+        {/* « Tout désassigner » retiré : il prenait la première place pour un geste rare. */}
         {shown.length === 0 && (
           <p className="px-2 py-3 text-xs text-center text-[rgb(var(--color-text-muted))]">{t('assign.noMemberMatch')}</p>
         )}

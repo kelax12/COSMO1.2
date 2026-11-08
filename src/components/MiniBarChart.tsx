@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // MiniBarChart — la tendance d'une tuile de statistique du Dashboard.
 //
-// Extrait de `DashboardPage` le 2026-09-05 : la page venait de franchir le
+// Extrait de `DashboardPage` : la page venait de franchir le
 // budget de 600 lignes (garde `architecture.guard`), et ce composant n'avait
 // jamais eu de raison d'y vivre — il ne lit rien de la page, il reçoit sept
 // valeurs et les dessine. Comportement inchangé, y compris le résumé textuel

@@ -10,7 +10,7 @@ export const LARGEUR_BARRE_TACHES = 218;
 
 /**
  * Le calendrier de la landing est 30 % plus large que la place que lui
- * laisserait une colonne à moitié (demande du 2026-09-23). La barre, elle, ne
+ * laisserait une colonne à moitié (demande). La barre, elle, ne
  * bouge pas.
  */
 export const ELARGISSEMENT_CALENDRIER = 1.3;

@@ -4,11 +4,11 @@
 // ⚠️ Un parent reste SÉLECTIONNABLE : une tâche peut vivre dans « Travail »
 // même si « Travail › SEO » existe. C'est une décision produit, pas un oubli.
 //
-// 🔴 Souris : les enfants s'ouvrent en CASCADE à droite du parent survolé
-// (`CascadeFlyout`, demande 2026-10-29). Au doigt, pas de survol : on garde le
+// Souris : les enfants s'ouvrent en CASCADE à droite du parent survolé
+// (`CascadeFlyout`, demande). Au doigt, pas de survol : on garde le
 // panneau unique, indenté, à chevrons, qui tient à n'importe quelle profondeur.
 //
-// 🔴 Seules les RACINES sont visibles par défaut, repliées sur elles-mêmes.
+// Seules les RACINES sont visibles par défaut, repliées sur elles-mêmes.
 // État d'expansion LOCAL au composant (pas `useCollapsedCategories`, partagé
 // par ColorSettingsModal / CategoryFilterTree) : ces deux-là sont des écrans
 // de GESTION ou de FILTRE, où voir l'arbre entier d'emblée est le bon défaut
@@ -17,7 +17,7 @@
 // la fois précédente) fasse resurgir un arbre profond pour choisir une seule
 // racine.
 //
-// 🔴 Popover Radix, pas un panneau maison. La première version posait le
+// Popover Radix, pas un panneau maison. La première version posait le
 // panneau en `position: absolute` dans le flux du champ : à l'intérieur d'une
 // modale/sheet qui coupe le débordement (`overflow-hidden`, nécessaire pour
 // ses coins arrondis), le panneau élargi se faisait ROGNER — visible seulement

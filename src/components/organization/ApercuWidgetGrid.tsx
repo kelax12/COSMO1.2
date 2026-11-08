@@ -35,7 +35,7 @@ interface ApercuWidgetGridProps<Id extends string> {
   catalog?: WidgetCatalog<Id>;
   /**
    * Où monter la barre « Modifier les widgets » ; absent = au-dessus de la
-   * grille. Le dashboard perso la place sous la boîte de réception (2026-10-29).
+   * grille. Le dashboard perso la place sous la boîte de réception.
    */
   toolbarSlot?: HTMLElement | null;
 }
@@ -58,7 +58,7 @@ const POP = { type: 'spring', stiffness: 520, damping: 24 } as const;
 const INSTANT_DRAG_SNAP = { type: false } as unknown as InertiaOptions;
 
 /**
- * Aperçu composé de widgets, façon écran d'accueil d'iPhone (2026-10-19).
+ * Aperçu composé de widgets, façon écran d'accueil d'iPhone.
  *
  * « Modifier » fait VIBRER les blocs (pas de contour : la vibration est le
  * signal), chacun prend une croix, un choix de format et des flèches. Tout est
@@ -66,13 +66,13 @@ const INSTANT_DRAG_SNAP = { type: false } as unknown as InertiaOptions;
  * on déplace, un bloc retiré s'évanouit (avec « Annuler »), un bloc ajouté
  * arrive en rebondissant puis s'illumine.
  *
- * 🔴 Mouvement réduit (WCAG 2.3.3) : ce composant suit le `MotionConfig
+ * Mouvement réduit (WCAG 2.3.3) : ce composant suit le `MotionConfig
  * reducedMotion="user"` d'`App.tsx`. Il a porté un `reducedMotion="never"`
  * (2026-10-19 à 2026-10-22, « mode ouvert par la personne ») qui faisait
  * vibrer les blocs EN BOUCLE chez qui demande moins d'animation. ❌ Ne pas le
  * remettre : `e2e/reduced-motion-widgets.spec.ts` échoue s'il revient.
  * Sous mouvement réduit, ce que le `MotionConfig` ne couvre pas est coupé à la
- * main via `reduce`, trois trous mesurés en CI le 2026-10-22 :
+ * main via `reduce`, trois trous mesurés en CI :
  *   · `layout` / `layoutId` RETIRÉS : Framer rend l'animation de layout
  *     instantanée PUIS replace le bloc à son ancienne position pour une frame
  *     (`mixTargetDelta(0)`), un saut aller-retour de 260 px. Sans `layout`, la
@@ -82,7 +82,7 @@ const INSTANT_DRAG_SNAP = { type: false } as unknown as InertiaOptions;
  *   · la vibration (une boucle instantanée laisserait un `rotate` résiduel), le
  *     défilement doux.
  * Seule exception, pendant un glisser à la souris : les voisins glissent par
- * un FLIP natif (`snapshotForFlip`, décision du 2026-10-29).
+ * un FLIP natif (`snapshotForFlip`, décision).
  * Aucune position finale ne dépend d'une animation : la grille CSS place.
  *
  * ⚠️ Un geste n'est jamais le seul chemin (WCAG 2.1.1) : flèches et choix de
@@ -114,7 +114,7 @@ const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, re
   };
   const [editing, setEditing] = useState(false);
   /**
-   * Point de reprise (2026-10-20) : l'état VALIDÉ. Il est pris à l'ouverture
+   * Point de reprise : l'état VALIDÉ. Il est pris à l'ouverture
    * du mode édition et à chaque « Terminé ». « Réinitialiser » ramène à lui,
    * et n'apparaît que s'il y a quelque chose à défaire. Pour un modèle en
    * aperçu, le point de reprise est le modèle tel quel.

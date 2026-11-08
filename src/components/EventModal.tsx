@@ -421,7 +421,7 @@ const EventModal: React.FC<EventModalProps> = ({
 
   const calculateDuration = () => formatEventDuration(startDate, startTime, endDate, endTime);
   // Les helpers rendent des CLÉS, l'écran les met en mots : le module est pur
-  // et n'a pas de locale (revue du 2026-09-02, point 7).
+  // et n'a pas de locale (revue, point 7).
   const getHeaderTitle = () => t(headerTitleKey(mode) as Parameters<typeof t>[0]);
   const getSubmitButtonText = () => t(submitButtonKey(mode) as Parameters<typeof t>[0]);
 

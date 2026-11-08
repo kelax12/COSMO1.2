@@ -9,7 +9,7 @@ import { entityRedirect } from './entity-redirect';
 // ═══════════════════════════════════════════════════════════════════
 // Liens profonds de /entreprise : UN lecteur, pour toutes les sections
 //
-// Règle (cohérence globale, 2026-09-25) : toute URL d'objet ouvre sa fiche
+// Règle (cohérence globale) : toute URL d'objet ouvre sa fiche
 // depuis n'importe quel onglet. Avant, `?task=` n'était lu que par Projets :
 // une notification ou un lien collé qui arrivait ailleurs n'ouvrait rien.
 //

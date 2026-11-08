@@ -16,7 +16,7 @@ interface TemplatePickerProps {
 }
 
 /**
- * Choix d'un modèle d'Aperçu (2026-10-19). Choisir n'enregistre RIEN : le
+ * Choix d'un modèle d'Aperçu. Choisir n'enregistre RIEN : le
  * modèle s'affiche en aperçu sur la page, et c'est « Valider » là-bas qui le
  * rend effectif. La personne garde la main ensuite.
  */

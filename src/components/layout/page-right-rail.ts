@@ -9,7 +9,7 @@
 // dedans, la navigation laissait la barre de défilement de la page ENTRE elle
 // et le bord de la fenêtre, et un curseur poussé contre le bord atterrissait
 // sur la barre de défilement, pas sur la bande de 10 px censée rouvrir le
-// panneau. Mesuré dans le navigateur le 2026-09-23 : bande à x = 1007-1016,
+// panneau. Mesuré dans le navigateur : bande à x = 1007-1016,
 // barre de défilement à 1016-1024, fenêtre de 1024.
 //
 // Sur mobile, `Layout` ne pose pas cet emplacement : le portail ne rend rien.

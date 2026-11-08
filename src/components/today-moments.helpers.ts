@@ -47,7 +47,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
 /**
  * Range les rendez-vous du jour et les tâches à faire dans les trois moments.
  *
- * 🔴 Une tâche N'A PAS d'heure dans ce produit — ni `tasks`, ni `team_tasks`
+ * Une tâche N'A PAS d'heure dans ce produit — ni `tasks`, ni `team_tasks`
  * n'en portent (vérifié dans les deux modèles). Elle est donc placée dans le
  * moment COURANT, celui où il reste à la faire, et elle avance avec la journée.
  * On ne lui invente pas de créneau : une tâche affichée à « 11:00 » parce qu'un
@@ -169,7 +169,7 @@ export function todayCompletionReport({
   });
   const eventsToday = todaysEvents.length;
 
-  // 🔴 Un rendez-vous ne se « termine » pas d'un clic : il passe. Sans cette
+  // Un rendez-vous ne se « termine » pas d'un clic : il passe. Sans cette
   // distinction, « Tout est fait » ne pourrait JAMAIS s'afficher un jour où
   // l'agenda contient quoi que ce soit — la condition aurait été morte, et le
   // seul moyen de s'en apercevoir aurait été de tomber sur une journée sans

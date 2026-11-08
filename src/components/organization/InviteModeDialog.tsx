@@ -27,7 +27,7 @@ interface InviteModeDialogProps {
 }
 
 /**
- * Un seul bouton « Inviter » sur la page Personnes (maquette 2 du 2026-09-28) :
+ * Un seul bouton « Inviter » sur la page Personnes (maquette 2) :
  * les quatre canaux en onglets segmentés, un seul affiché en grand. Chaque
  * onglet n'apparaît qu'à qui a le droit correspondant, avec les mêmes règles
  * que la rubrique Inviter de Paramètres (`OrgInviteSection`).

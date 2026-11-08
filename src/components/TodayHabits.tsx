@@ -147,7 +147,7 @@ const TodayHabits: React.FC = () => {
         {isMobile ? (
           /* Mobile : tableau à une colonne, séparateur entre lignes — même
              traitement que le fil « Aujourd'hui » (TodayMoments), plus de
-             carte individuelle par habitude (arbitrage du 2026-09-05). */
+             carte individuelle par habitude (arbitrage). */
           /* Maquette 136 : ce qui RESTE d'abord. Les habitudes faites se
              replient en une ligne « N faites » ; elles passaient devant la
              seule qui restait, barrées, et « Voir plus (4 restantes) »

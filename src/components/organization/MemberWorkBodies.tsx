@@ -11,7 +11,7 @@ import { useT } from '@/i18n/useT';
 // ═══════════════════════════════════════════════════════════════════
 // Fiche membre : onglets « Équipes et projets » et « Historique »
 //
-// Audit des popups du 2026-09-25 : la fiche 360° ne disait ni dans quelles
+// Audit des popups : la fiche 360° ne disait ni dans quelles
 // équipes travaille la personne, ni sur quels projets, ni ce qu'elle a fait
 // récemment. Ces deux corps lisent des caches que l'espace entreprise charge
 // déjà (équipes, projets, tâches, journal) : aucune requête nouvelle.
@@ -51,7 +51,7 @@ export const MemberWorkBody = ({ orgId, member, teams, canSeeInsights }: WorkBod
     .sort((a, b) => Number(b.ownerId === member.userId) - Number(a.ownerId === member.userId) || a.name.localeCompare(b.name));
 
   return (
-    // Grand format (maquette A, 2026-09-28) : équipes à gauche, projets à droite.
+    // Grand format (maquette A) : équipes à gauche, projets à droite.
     <div className="grid gap-5 sm:grid-cols-[220px_minmax(0,1fr)]">
       <section>
         <h3 className={sectionTitle}><Users2 size={12} className="inline-block mr-1 align-[-1px]" aria-hidden="true" />{t('popups.member.teams')}</h3>
@@ -154,7 +154,7 @@ export const MemberHistoryBody = ({ orgId, member }: { orgId: string; member: Or
         : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
     }`;
 
-  // Grand format (maquette B, 2026-09-28) : journal filtrable par champ, en tableau.
+  // Grand format (maquette B) : journal filtrable par champ, en tableau.
   return (
     <>
       <p className="text-caption text-[rgb(var(--color-text-muted))] mb-3">{t('popups.member.historyScope', { days: HISTORY_DAYS })}</p>

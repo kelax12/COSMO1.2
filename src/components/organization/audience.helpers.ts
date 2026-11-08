@@ -6,7 +6,7 @@ import type { OrgMember } from '@/modules/organizations';
  * Miroir de la règle de `can_access_team_project` : sans équipe, toute
  * l'organisation ; avec une équipe, ses membres, la hiérarchie au-dessus de
  * chacun d'eux et les admins. Sert à AFFICHER l'audience avant de créer
- * (audit des popups du 2026-09-25 : « la visibilité se déduit d'une option
+ * (audit des popups : « la visibilité se déduit d'une option
  * Toute l'organisation »). La RLS reste la frontière, ce compte ne décide rien.
  */
 export function projectAudience(
@@ -45,7 +45,7 @@ interface ReachInput {
 /**
  * Ce qu'un membre VOIT, donc ce sur quoi ses droits s'exercent : projets
  * actifs et objectifs. Sert l'aperçu « peut supprimer les tâches de 42
- * projets » de la fiche de permissions (audit des popups, 2026-09-25).
+ * projets » de la fiche de permissions (audit des popups).
  */
 export function memberReach({ member, members, memberships, projects, okrs }: ReachInput): { projects: number; okrs: number } {
   const cache = new Map<string, boolean>();

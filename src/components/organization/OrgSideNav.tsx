@@ -41,7 +41,7 @@ const EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
  * Navigation de l'espace entreprise, à DROITE de la page (desktop, `md` et plus).
  *
  * Une carte FLOTTANTE aux coins arrondis, centrée verticalement (demande d'Axel
- * du 2026-09-23 : « format pop-up », plutôt qu'une vraie barre pleine hauteur).
+ * : « format pop-up », plutôt qu'une vraie barre pleine hauteur).
  *
  * - **Ouverte à l'arrivée**, toujours : la page lui réserve sa place.
  * - **Repliée** dès que le curseur QUITTE la carte : elle glisse hors de

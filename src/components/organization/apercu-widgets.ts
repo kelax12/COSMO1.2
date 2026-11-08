@@ -1,7 +1,7 @@
 import { safeGetItem, safeParse, safeSetItem } from '@/lib/safe-json';
 
 /**
- * Aperçu en widgets (2026-10-19) : chaque bloc de l'Aperçu devient un widget
+ * Aperçu en widgets : chaque bloc de l'Aperçu devient un widget
  * que la personne retire, ajoute, redimensionne et déplace.
  *
  * Trois formats, posés sur une grille de 6 colonnes (desktop) :
@@ -58,12 +58,12 @@ export const WIDGET_DEFS: readonly WidgetDef[] = [
   { id: 'waitingOn', sizes: ['small', 'medium', 'large'] },
   { id: 'activity', sizes: ['small', 'medium', 'large'] },
   { id: 'orgEvents', sizes: ['small', 'medium', 'large'] },
-  // Nouveaux (2026-10-19) : hors disposition par défaut, à ajouter depuis la page.
+  // Nouveaux : hors disposition par défaut, à ajouter depuis la page.
   { id: 'deadlines', sizes: ['small', 'medium', 'large'] },
   { id: 'mentions', sizes: ['small', 'medium', 'large'] },
   { id: 'blockedByMe', sizes: ['small', 'medium', 'large'] },
   { id: 'note', sizes: ['small', 'medium', 'large'] },
-  // Chef d'équipe et administrateur (2026-10-19), posés par les modèles.
+  // Chef d'équipe et administrateur, posés par les modèles.
   { id: 'teamLoad', sizes: ['small', 'medium', 'large'] },
   { id: 'teamOverdue', sizes: ['small', 'medium', 'large'] },
   { id: 'orgHealth', sizes: ['small', 'medium', 'large'] },
@@ -100,7 +100,7 @@ export const allowsSize = (id: WidgetId, size: WidgetSize): boolean =>
   !!DEF_BY_ID.get(id)?.sizes.includes(size);
 
 /**
- * Catalogue générique (2026-10-21) : la même grille sert l'Aperçu entreprise
+ * Catalogue générique : la même grille sert l'Aperçu entreprise
  * et le tableau de bord perso. Chaque écran fournit SES widgets ; les
  * opérations de disposition ne dépendent que de la liste des formats permis.
  */
@@ -108,7 +108,7 @@ export interface CatalogDef<Id extends string = string> {
   id: Id;
   sizes: readonly WidgetSize[];
   /**
-   * Widget posable PLUSIEURS fois (2026-10-21, OKR du tableau de bord perso).
+   * Widget posable PLUSIEURS fois (OKR du tableau de bord perso).
    * Chaque exemplaire porte l'id `<base>~<suffixe>` ; le premier peut garder
    * l'id nu.
    */
@@ -160,7 +160,7 @@ export function sanitizeLayoutIn<Id extends string>(
 }
 
 export function sanitizeLayout(raw: unknown): PlacedWidget[] | null {
-  // « OKR des équipes » a fusionné dans « OKR » (2026-10-20).
+  // « OKR des équipes » a fusionné dans « OKR ».
   return sanitizeLayoutIn(WIDGET_DEFS, raw, (id) => (id === 'teamOkrs' ? 'companyOkrs' : id));
 }
 

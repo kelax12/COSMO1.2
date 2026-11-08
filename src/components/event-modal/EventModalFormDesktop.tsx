@@ -291,7 +291,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
               )}
 
               {/* Catégorie + récurrence côte à côte, deux menus déroulants
-                  (modale en une colonne, maquette 3 du 2026-10-29). */}
+                  (modale en une colonne, maquette 3). */}
               <div className="pt-1">
                 <div className="grid grid-cols-2 gap-3">
                   <EventModalDesktopCategoryPicker

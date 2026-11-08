@@ -12,7 +12,7 @@ interface Props {
 }
 
 /**
- * « Changer de forfait » de la barre de l'annuaire (variante B, 2026-11-06) :
+ * « Changer de forfait » de la barre de l'annuaire (variante B) :
  * le palier en vigueur et les places occupées, là où l'on invite. Monté par
  * l'appelant pour le propriétaire seul ; il ouvre le récapitulatif de
  * facturation, jamais Stripe en direct.

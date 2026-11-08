@@ -10,7 +10,7 @@ import { buildOrgLink } from '@/components/organization/deep-link.helpers';
 import { reviewsForMe } from '@/components/organization/my-work.helpers';
 
 /**
- * Tâches d'ENTREPRISE dans le tableau de bord perso (2026-10-21), réservées
+ * Tâches d'ENTREPRISE dans le tableau de bord perso, réservées
  * aux membres d'une organisation. Chaque écriture passe par la mutation du
  * module d'équipe (`useUpdateTeamTask`) : les triggers de statut côté
  * serveur restent seuls juges, comme sur l'Aperçu.

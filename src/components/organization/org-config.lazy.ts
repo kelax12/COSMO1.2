@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════
 // Frontière paresseuse des écrans de configuration d'entreprise (mig. 195 à
-// 199, audit du 2026-09-24). Chaque écran charge SON catalogue `orgConfig`
+// 199, audit). Chaque écran charge SON catalogue `orgConfig`
 // avec lui : la route /entreprise n'en paie rien.
 //
 // ⚠️ Fichier déclaré dans `TAB_GATE_HOSTS` (scripts/i18n-shell-namespaces.mjs) :

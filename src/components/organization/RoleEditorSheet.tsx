@@ -50,12 +50,12 @@ const labelKey = (key: OrgPermissionKey) => `permissions.key.${key}` as const;
 const targetKey = (target: OrgAssignTarget) => `permissions.target.${target}` as const;
 
 /**
- * Éditeur d'un rôle personnalisé (mig. 219, maquette 2 validée le 2026-10-12).
+ * Éditeur d'un rôle personnalisé (mig. 219, maquette 2 validée).
  *
  * Interrupteurs à DEUX positions : le rôle définit tout. Désactivé = refusé,
  * même un droit qu'un membre a par défaut. Un nouveau rôle part tout
  * désactivé, portée « lui-même ». Pas de plafond : « Gérer les rôles » est un
- * droit de confiance (décision du 2026-10-12).
+ * droit de confiance (décision).
  */
 const RoleEditorSheet = ({ initial, editing, pending, onSave, onClose }: RoleEditorSheetProps) => {
   const { t } = useT('org');

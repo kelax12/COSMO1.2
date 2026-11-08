@@ -140,7 +140,7 @@ Aucune.
 | `get_team_okr_trash(p_org uuid)` | DEFINER | `""` | - | oui | oui | `src/modules/team-okrs/supabase.repository.ts`<br>~`src/components/organization/TeamTrashDialog.tsx` |
 | `get_team_project_task_stats(p_org uuid, p_today date)` | INVOKER | `""` | - | oui | oui | `src/modules/team-projects/supabase.access.ts`<br>~`src/components/organization/okr-execution.helpers.ts`<br>~`src/modules/team-projects/local.access.ts` |
 | `get_team_trash(p_org uuid)` | DEFINER | `""` | - | oui | oui | `src/modules/team-projects/supabase.repository.ts`<br>~`src/components/organization/TeamTrashDialog.tsx`<br>~`src/modules/team-projects/types.ts` |
-| `get_work_time_stats(p_ranges jsonb, p_tz text)` | INVOKER | `public` | - | oui | oui | `src/modules/stats/supabase.repository.ts`<br>~`src/lib/workTimeCalculator.ts`<br>~`src/modules/stats/repository.ts` |
+| `get_work_time_stats(p_ranges jsonb, p_tz text)` | INVOKER | `public` | - | oui | oui | `src/modules/stats/supabase.repository.ts`<br>~`src/modules/stats/repository.ts` |
 | `handle_new_user_profile()` (trigger) | INVOKER | `""` | - | - | oui | ~`src/lib/attribution.ts` |
 | `has_subordinates(p_org uuid, p_user uuid)` | DEFINER | `""` | - | - | oui | - |
 | `i_have_subordinates(p_org uuid)` | DEFINER | `""` | - | oui | oui | - |

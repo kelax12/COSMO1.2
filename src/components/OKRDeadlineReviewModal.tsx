@@ -232,7 +232,7 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
               </div>
             </div>
 
-            {/* Même design que OKRCard (2026-10-29) : plus de cercle, la
+            {/* Même design que OKRCard : plus de cercle, la
                 barre globale agrandie suffit. */}
             <div className="mb-6 w-full">
               <div className="flex justify-between items-baseline mb-2">

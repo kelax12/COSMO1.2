@@ -24,7 +24,7 @@ interface TeamProjectsTimelineProps {
   /** Axe des lignes : par projet (défaut) ou par personne — cf. ProjectsToolbar. */
   groupBy: 'project' | 'assignee';
   onOpenTask: (task: TeamTask) => void;
-  /** Clic sur le nom d'un projet (lignes par projet) : ouvre sa page (2026-10-30). */
+  /** Clic sur le nom d'un projet (lignes par projet) : ouvre sa page. */
   onOpenProject?: (projectId: string) => void;
   /** Mode sélection (actions groupées) : un clic coche la tâche au lieu de l'ouvrir. */
   selectable?: boolean;
@@ -221,7 +221,7 @@ const TeamProjectsTimeline = ({
   return (
     <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
       <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
-        {/* Légende et chemin critique retirés de l'en-tête (2026-10-30) : l'anneau
+        {/* Légende et chemin critique retirés de l'en-tête : l'anneau
             reste sur les points, son explication est dans leur card de survol. */}
         <span />
         {/* Zoom : la fenêtre par défaut est bornée à 8 semaines autour
@@ -429,7 +429,7 @@ const TeamProjectsTimeline = ({
                               <button
                                 type="button"
                                 // La card se referme au clic : elle ne doit pas rester
-                                // ouverte par-dessus la modale de la tâche (2026-10-01).
+                                // ouverte par-dessus la modale de la tâche.
                                 onClick={() => { closeHoverNow(); if (selectable) onToggleSelect?.(marker.task); else onOpenTask(marker.task); }}
                                 aria-pressed={selectable ? isSelected : undefined}
                                 onMouseEnter={() => scheduleHoverOpen(marker.task.id)}

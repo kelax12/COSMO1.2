@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // Filtres de l'onglet Projets : la barre commune (`OrgTaskFilterBar`) et les
 // préréglages (`FilterPresets`) y trient des PROJETS, plus des tâches
-// (répartition Projets / Tâches du 2026-09-27). Même état d'URL que l'onglet
+// (répartition Projets / Tâches). Même état d'URL que l'onglet
 // Tâches (`task-filters.ts`), autre lecture :
 //   - personne : les projets qu'elle porte ou où elle a une tâche ouverte ;
 //   - « en retard » : échéance du projet dépassée, ou une tâche ouverte en retard ;

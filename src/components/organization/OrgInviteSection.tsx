@@ -45,7 +45,7 @@ const TITLE = 'text-sm font-bold text-[rgb(var(--color-text-primary))]';
 const HINT = 'text-xs text-[rgb(var(--color-text-muted))] mt-0.5';
 
 /**
- * Rubrique Inviter de Paramètres (maquette du 2026-09-28) : l'e-mail en tête,
+ * Rubrique Inviter de Paramètres (maquette) : l'e-mail en tête,
  * les trois autres canaux en lignes comparables, puis ce qui attend une
  * réponse. Personnes et Équipes restent atteignables par la barre latérale.
  */
@@ -81,7 +81,7 @@ const OrgInviteSection = ({
             {/* Places du forfait : la même règle que `org_seats_allowed()`.
                 Tant que la facturation dort, un dépassement s'annonce sans
                 rien bloquer, comme la bannière de l'en-tête. La barre sépare
-                les places incluses de celles au-delà (maquette 1, 2026-09-29) :
+                les places incluses de celles au-delà (maquette 1) :
                 « 7 / 5 » seul se lisait mal. */}
             {seatsQuota == null ? (
               <p className="mt-2 text-xs font-semibold text-[rgb(var(--color-text-muted))]">

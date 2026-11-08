@@ -17,7 +17,7 @@ import { currentRelease, shouldCheckNow, shouldOfferReload } from '@/lib/app-ver
  * ⚠️ La position vient du CSS (`fixed bottom-4`), jamais d'une animation de
  * transform : sous `prefers-reduced-motion`, `MotionConfig reducedMotion="user"`
  * ne joue pas les transforms et la valeur `initial` RESTE appliquée. C'est
- * exactement le bug qui avait sorti `CookieBanner` de l'écran le 2026-08-14.
+ * exactement le bug qui avait sorti `CookieBanner` de l'écran.
  * `useSlideUpEntrance` porte déjà ce garde-fou.
  */
 const NewVersionBanner: React.FC = () => {

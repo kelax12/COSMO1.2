@@ -12,7 +12,7 @@ interface Props {
 }
 
 /**
- * Rubrique Sécurité de Paramètres (audit du 2026-09-24, M13) : domaines de
+ * Rubrique Sécurité de Paramètres (audit, M13) : domaines de
  * l'entreprise, vérifiés par un enregistrement DNS TXT, et invitations
  * limitées à ces domaines (mig. 195, trigger sur `org_invite_links`).
  * Admins seulement : la RLS le garantit, l'écran n'est monté que pour eux.

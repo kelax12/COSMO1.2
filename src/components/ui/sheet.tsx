@@ -59,7 +59,7 @@ function SheetContent({
   side?: "top" | "right" | "bottom" | "left"
   /** Classes ajoutées à la zone cliquable de la croix de fermeture — absent
    *  = comportement d'origine, inchangé pour tout appelant qui ne les passe
-   *  pas (redesign OKR mobile 2026-09-19). */
+   *  pas (redesign OKR mobile). */
   closeButtonClassName?: string
   /** Classes ajoutées à l'icône `X` elle-même (ex. une taille plus grande). */
   closeIconClassName?: string

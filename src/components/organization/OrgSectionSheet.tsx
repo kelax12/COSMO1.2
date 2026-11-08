@@ -1,6 +1,6 @@
 // Feuille des sections de l'espace entreprise, sur MOBILE.
 //
-// Sortie d'`OrgSectionSwitcher` le 2026-10-15 et chargée au premier toucher
+// Sortie d'`OrgSectionSwitcher` et chargée au premier toucher
 // (budget du chunk `OrganizationPage`) : le bouton est rendu à chaque visite,
 // la feuille seulement quand on l'ouvre. Elle suit `MobileMoreSheet` :
 // `useSheetMotion` (sûr sous mouvement réduit), `useBottomSheet` (la poignée

@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════
 // Filtres de l'onglet OKR : équipe, porteur, état (audit 2026-09-24,
-// « Filtres : 🔴 équipe, responsable, état »). Logique PURE.
+// « Filtres : équipe, responsable, état »). Logique PURE.
 //
 // « Porteur » : le responsable d'un KR (`assigneeId`) OU l'un de ses
 // contributeurs (mig. 160). Un objectif n'a pas de responsable propre (#10) :

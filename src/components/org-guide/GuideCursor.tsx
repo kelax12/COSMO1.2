@@ -13,7 +13,7 @@ const TIP = { x: 3, y: 2 };
  *
  * Glisse même sous « réduire les animations » (`MotionConfig` à `never`) : son
  * trajet EST le contenu de la démo, un curseur qui saute de cible en cible ne
- * montre plus le chemin (demande d'Axel du 2026-10-12, réglage Windows actif).
+ * montre plus le chemin (demande d'Axel, réglage Windows actif).
  * Courbe douce sans rebond plutôt qu'un ressort.
  */
 export function GuideCursor({ point, pressed }: { point: CursorPoint; pressed: boolean }) {

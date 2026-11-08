@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // use-persistent-ghost — la CHORÉGRAPHIE du fantôme de démonstration
 //
-// Extrait de `PageTutorial` le 2026-09-12 (C-09 / `architecture.guard`). La
+// Extrait de `PageTutorial` (C-09 / `architecture.guard`). La
 // frontière n'est pas une coupe à la ligne près : d'un côté le composant, qui
 // sait POSITIONNER une carte, une flèche et un projecteur autour d'une cible ;
 // de l'autre ce hook, qui sait comment un rectangle fantôme se DÉPLACE dans le
@@ -13,7 +13,7 @@
 // réelle : `PageTutorial` ne peut plus laisser filer un `setTimeout` de
 // chorégraphie, parce qu'il n'en tient plus aucun.
 //
-// 🔴 Les durées sont écrites en dur, et volontairement : ce sont des temps de
+// Les durées sont écrites en dur, et volontairement : ce sont des temps de
 // LECTURE (le temps qu'il faut pour comprendre qu'un bloc s'est déplacé), pas
 // des constantes de configuration. Les sortir dans un objet donnerait envie de
 // les régler ; elles se règlent à l'œil, sur l'écran, une fois.

@@ -18,7 +18,7 @@ interface KRContributorsFieldProps {
 
 /**
  * Contributeurs d'un résultat clé (colonne `contributor_ids`, mig. 160, sans
- * écran jusqu'à l'audit du 2026-09-24). La base refuse un non-membre
+ * écran jusqu'à l'audit). La base refuse un non-membre
  * (`contributor_not_in_org`) ; la liste ne propose donc que les membres.
  *
  * Replié par défaut : un KR se lit d'abord par sa cible, les personnes se

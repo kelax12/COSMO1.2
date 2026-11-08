@@ -108,7 +108,7 @@ const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, acc
 
   // La chorégraphie du fantôme vit dans son propre fichier : elle possède
   // son état ET ses minuteries, donc ce composant ne peut plus en laisser
-  // filer une (`use-persistent-ghost.ts`, extrait le 2026-09-12).
+  // filer une (`use-persistent-ghost.ts`, extrait).
   const ghost = usePersistentGhost(isOpen, step, stepIndex);
 
   // Verrou body scroll quand ouvert

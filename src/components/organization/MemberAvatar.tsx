@@ -52,7 +52,7 @@ function initialsOf(name: string): string {
  * colorées (si `name` fourni), ou fallback icône. Même logique de
  * classification que les avatars amis (lib/avatar).
  */
-// `neutral` (maquette 248, 2026-10-10) : initiales sur fond gris, sans teinte
+// `neutral` (maquette 248) : initiales sur fond gris, sans teinte
 // tirée du nom, là où huit pastilles colorées se disputaient l'œil.
 const MemberAvatar = ({ avatar, name, size = 36, className = '', neutral = false }: MemberAvatarProps) => {
   const showInitials = !isImageAvatar(avatar) && !isEmojiAvatar(avatar) && !!name?.trim();

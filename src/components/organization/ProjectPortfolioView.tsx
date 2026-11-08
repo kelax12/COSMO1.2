@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// Vue « Portefeuille » de l'onglet Projets (M2, audit 2026-09-24)
+// Vue « Portefeuille » de l'onglet Projets (M2, audit)
 //
 // Une ligne par projet, aucune tâche : responsable, statut, dates,
 // avancement, blocages. C'est la réponse au constat « la liste
@@ -61,7 +61,7 @@ interface ProjectPortfolioViewProps {
   allProjects: TeamProject[];
   onOpenProject: (projectId: string) => void;
   /**
-   * Actions groupées (audit du 2026-09-24) : `project.edit` pour le statut et
+   * Actions groupées (audit) : `project.edit` pour le statut et
    * le responsable, `project.delete` pour l'archivage. Sans l'un ni l'autre,
    * la sélection n'est pas proposée.
    */

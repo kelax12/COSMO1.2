@@ -13,7 +13,7 @@ interface PyramidPendingConfirmProps {
 }
 
 /**
- * Les deux confirmations de la pyramide (audit du 2026-09-24).
+ * Les deux confirmations de la pyramide (audit).
  *
  * - Annuler une réorganisation : remplace un `window.confirm`.
  * - Un déplacement qui change une POSITION : « manager » est dérivé de la

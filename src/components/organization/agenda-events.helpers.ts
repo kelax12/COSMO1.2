@@ -37,7 +37,7 @@ export interface DayTimeline {
 }
 
 /**
- * Frise de la journée (maquette 5 B, 2026-10-02) : les événements du jour
+ * Frise de la journée (maquette 5 B) : les événements du jour
  * posés sur une règle horaire. La fenêtre s'élargit pour contenir un
  * événement matinal ou tardif plutôt que de le couper.
  */

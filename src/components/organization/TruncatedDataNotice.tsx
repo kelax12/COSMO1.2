@@ -6,7 +6,7 @@ import { useT } from '@/i18n/useT';
  *
  * `warnIfTruncated` prévient par un toast, une fois par session : passé ce
  * toast, l'écran affichait des chiffres faux sans plus rien en dire (audit
- * « passage à l'échelle » du 2026-09-24). Ce bandeau reste tant que c'est vrai,
+ * « passage à l'échelle »). Ce bandeau reste tant que c'est vrai,
  * à l'endroit exact où l'on lit les chiffres concernés.
  *
  * `role="status"` et non `alert` : c'est un état de l'écran, pas un évènement.

@@ -123,14 +123,14 @@ const MemberSheet = ({
   };
 
   const isMe = member.userId === currentUserId;
-  // Mêmes mots que l'annuaire et le glossaire (cohérence globale, 2026-09-25).
+  // Mêmes mots que l'annuaire et le glossaire (cohérence globale).
   const roleTerm = member.role === 'admin' ? 'admin' : 'member';
   const roleLabel = <RoleTerm term={roleTerm}>{t(`roles.${roleTerm}`)}</RoleTerm>;
 
   // L'agenda est un calendrier plein écran, pas une carte : FullCalendar ne
   // sait se dimensionner que dans un conteneur à hauteur DÉFINIE. Le panneau
   // s'agrandit donc pour cet onglet — sans quoi la grille se rend écrasée.
-  // Les autres onglets sont en grand format aussi (maquettes du 2026-09-28) :
+  // Les autres onglets sont en grand format aussi (maquettes) :
   // colonnes et tableaux, plus une colonne étroite de téléphone.
   const wide = tab === 'agenda';
 
@@ -149,7 +149,7 @@ const MemberSheet = ({
     >
       <div
         className={`bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] w-full shadow-2xl flex flex-col rounded-t-[24px] sm:rounded-2xl ${
-          // Taille FIXE quel que soit l'onglet (2026-10-30) : la fenêtre ne saute plus.
+          // Taille FIXE quel que soit l'onglet : la fenêtre ne saute plus.
           wide ? 'h-[92dvh] sm:h-[90vh] sm:max-w-6xl' : 'h-[88vh] sm:h-[min(720px,85vh)] sm:max-w-4xl'
         }`}
         onClick={(e) => e.stopPropagation()}

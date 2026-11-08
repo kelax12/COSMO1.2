@@ -19,7 +19,7 @@ interface Props {
 export type OrgConfigPart = 'general' | 'security' | 'automations' | 'integrations';
 
 /**
- * Rubriques de configuration de Paramètres (audit du 2026-09-24) : réglages
+ * Rubriques de configuration de Paramètres (audit) : réglages
  * propres à l'organisation, Sécurité (M13), automatisations
  * d'entreprise, intégrations. Mig. 195 à 199.
  */

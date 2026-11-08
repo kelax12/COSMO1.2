@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// Exécution d'un geste EN MASSE (audit du 2026-09-24, étape 4)
+// Exécution d'un geste EN MASSE (audit, étape 4)
 //
 // « Changement de configuration en masse : pas d'actions groupées sur les
 // membres, les projets ou les équipes. » Chaque geste de lot passe ici : un

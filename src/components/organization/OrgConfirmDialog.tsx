@@ -53,7 +53,7 @@ const TONE_CLASS = {
 } as const;
 
 /**
- * LA confirmation du mode entreprise (audit du 2026-09-24, étapes 3 et 5).
+ * LA confirmation du mode entreprise (audit, étapes 3 et 5).
  *
  * Trois styles coexistaient : `window.confirm` (impossible à mettre au thème,
  * n'annonçant aucun impact), des dialogues maison, et la saisie du nom de

@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// Vitrine « tableau des tâches » (desktop) — refaite le 2026-09-23
+// Vitrine « tableau des tâches » (desktop) — refaite
 // ═══════════════════════════════════════════════════════════════════
 //
 // POURQUOI UNE REFONTE. L'ancienne vitrine était STATIQUE, et elle ne
@@ -19,7 +19,7 @@
 // et la mettre en favori, replanifier la tâche en retard depuis le bandeau,
 // puis trier par priorité.
 //
-// 🔴 LA GÉOMÉTRIE EST CALCULÉE, JAMAIS MESURÉE. La maquette est dessinée à une
+// LA GÉOMÉTRIE EST CALCULÉE, JAMAIS MESURÉE. La maquette est dessinée à une
 // largeur fixe (`W`) puis mise à l'échelle par un `transform`. Les animations
 // de mise en page de Framer (`layout`) mesurent l'écran et se trompent d'un
 // facteur d'échelle sous un parent transformé : les lignes, le curseur et les
@@ -202,7 +202,7 @@ const JETONS: Record<ShowcaseTheme, Jetons> = {
     caseBord: 'rgb(118, 131, 144)', survol: 'rgba(47, 53, 59, 0.8)',
     menu: 'rgb(43, 49, 55)', menuBord: 'rgb(68, 76, 86)', menuOmbre: '0 18px 40px -10px rgba(0,0,0,0.6)',
     retardFond: 'rgba(239,68,68,0.1)', retardBord: 'rgba(239,68,68,0.3)', retardTexte: '#FCA5A5', retardIcone: '#EF4444', echeanceRetard: '#F87171',
-    // 0,14 et pas 0,2 : l'encre secondaire y rendait 4,43:1 (2026-10-22).
+    // 0,14 et pas 0,2 : l'encre secondaire y rendait 4,43:1.
     favoriFond: 'rgba(234,179,8,0.14)',
     curseur: '#F8FAFC', curseurBord: '#24292E',
     priorites: {

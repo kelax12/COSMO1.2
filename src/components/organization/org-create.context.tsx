@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════
 // Création d'un projet ou d'une équipe : UN formulaire par objet, ouvrable
-// de partout (cohérence globale, 2026-09-25)
+// de partout (cohérence globale)
 //
 // Avant : un projet se créait à trois endroits (le formulaire complet de
 // Projets, un champ « nom seul » dans les puces de Tâches, un autre dans le

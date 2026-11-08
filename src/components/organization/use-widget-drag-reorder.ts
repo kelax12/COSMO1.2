@@ -35,7 +35,7 @@ export function useWidgetDragReorder<Id extends string>(
     const now = performance.now();
     if (now - lastSwap.current < SWAP_COOLDOWN_MS) return;
     // Le CENTRE du bloc tenu, pas le pointeur : saisi par un bord, le bloc
-    // couvrait déjà son voisin sans que l'échange parte (vidéo du 2026-10-26 :
+    // couvrait déjà son voisin sans que l'échange parte (vidéo :
     // dix secondes au-dessus de « tete » sans rien déclencher).
     const held = gridRef.current?.querySelector<HTMLElement>(`[data-widget="${CSS.escape(id)}"]`)?.getBoundingClientRect();
     const x = held ? held.left + held.width / 2 : info.point.x - window.scrollX;
@@ -46,7 +46,7 @@ export function useWidgetDragReorder<Id extends string>(
     // Le bloc qui vient de céder sa place glisse SOUS le bloc tenu pendant
     // tout son trajet : il ne peut pas repermuter avec lui avant d'être
     // arrivé. La garde levée dès qu'il quittait le centre UNE image rendait
-    // l'échange aussitôt défait (mesuré le 2026-10-29, ordre final inchangé).
+    // l'échange aussitôt défait (mesuré, ordre final inchangé).
     if (!over) return;
     if (over.dataset.widget === lastSwapped.current && now - lastSwap.current < SWAP_SETTLE_MS) return;
     // Seul le CŒUR du bloc survolé déclenche l'échange : en traversant la
@@ -67,9 +67,9 @@ export function useWidgetDragReorder<Id extends string>(
 
   /**
    * Glissement des voisins SOUS MOUVEMENT RÉDUIT, pendant un glisser
-   * seulement (décision d'Axel, 2026-10-29) : le geste de la personne
+   * seulement (décision d'Axel) : le geste de la personne
    * déclenche le mouvement, et sans lui les blocs se téléportaient
-   * (vidéo du 2026-10-26, Windows « Effets d'animation » coupés).
+   * (vidéo, Windows « Effets d'animation » coupés).
    * Framer ne peut pas le faire ici (cf. `layout` retiré, plus haut) : FLIP
    * en WAAPI, qui finit à `transform: none`. La position finale reste celle
    * de la grille CSS. Les flèches du clavier restent instantanées.

@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// Pastille « couleur personnalisée » en fin de palette (2026-10-29).
+// Pastille « couleur personnalisée » en fin de palette.
 //
 // Chaque palette de COSMO propose quelques teintes fixes ; cette pastille
 // ouvre le sélecteur de couleur du système pour en choisir une autre.
