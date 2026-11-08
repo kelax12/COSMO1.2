@@ -459,7 +459,7 @@ pas de clé étrangère entre `friends.email` et `profiles.email`.
 
 > Descendu de `src/modules/organizations/CLAUDE.md` le 2026-10-15 (plafond de 14 000 o dépassé),
 > sans une coupe. Le dossier n'en garde que les interdits. Trace « avant » et parité mesurée :
-> [`SCALABILITY.md`](./SCALABILITY.md) § « le rechargement était éteint, la LECTURE ne l'était pas ».
+> [`SCALABILITY.md`](./SCALABILITY.md) § 3 (récit dans l'archive citée à cet endroit).
 
 La même boîte de réception porte depuis le 2026-09-05 une section `badge_tasks`. `useOrgBadges`
 montait `useTeamTasks`, donc `get_my_team_tasks` + `.limit(1000)`, la lecture la plus chère du
