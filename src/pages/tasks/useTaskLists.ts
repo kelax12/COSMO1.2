@@ -42,6 +42,12 @@ import { todayKeyInTz } from '@/lib/timezone';
 import { VIRTUAL_TODAY_ID } from './task-page-filter';
 import type { Translator } from '@/i18n/useT';
 
+// Tableau vide STABLE pour la valeur par défaut de `useLists`. Un `= []` en ligne est un tableau NEUF
+// à chaque rendu : `lists` change donc à chaque rendu tant que la requête charge, l'effet sur
+// `[lists]` repose `orderedLists`, qui re-rend, et la boucle ne s'arrête qu'à l'arrivée des
+// données (sous `act()` de Testing Library, jamais : même défaut que `use-team-task-lists`).
+const NO_LISTS: TaskList[] = [];
+
 /** Visibilité de la chip virtuelle « Aujourd'hui », persistée par appareil. */
 const TODAY_HIDDEN_KEY = 'cosmo_lists_today_hidden';
 
@@ -52,7 +58,7 @@ interface Params {
 }
 
 export function useTaskLists({ updateTaskDeadline, t }: Params) {
-  const { data: lists = [] } = useLists();
+  const { data: lists = NO_LISTS } = useLists();
   const createListMutation = useCreateList();
   const updateListMutation = useUpdateList();
   const addTaskToListMutation = useAddTaskToList();
