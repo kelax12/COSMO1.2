@@ -31,6 +31,44 @@ const reglesComplexite = (plafonds) => ({
     { max: plafonds['max-lines-per-function'], skipBlankLines: true, skipComments: true },
   ],
 });
+// ── V18.2 (DEP-01) · règles « React Compiler » de react-hooks 7 (2026-11-08) ──
+//
+// `eslint-plugin-react-hooks` 5 → 7 ajoute 14 règles au preset `recommended`.
+// Les deux règles EXISTANTES (`rules-of-hooks` en erreur, `exhaustive-deps` en
+// avertissement) gardent leur niveau : on ne les touche pas.
+//
+// Mesuré à la montée, sur `94e1665e` (`npx eslint .`, 1 756 fichiers) :
+//   · 7 règles neuves à ZÉRO violation, gardées en ERREUR, comme le preset
+//     (`use-memo`, `error-boundaries`, `set-state-in-render`, `config`,
+//     `gating`) ou en avertissement (`incompatible-library`,
+//     `unsupported-syntax`) : un cliquet gratuit.
+//   · 7 règles neuves qui rougissent, 134 erreurs dans 90 fichiers de `src/` :
+//       set-state-in-effect 81 · refs 33 · purity 6 ·
+//       preserve-manual-memoization 6 · immutability 5 · globals 2 ·
+//       static-components 1
+//     Les corriger, c'est réécrire des composants : hors du périmètre d'une
+//     montée d'outillage, et sur des fichiers que l'autre compte modifie.
+//
+// DÉCISION : les deux règles massives sont COUPÉES (`off`) ; les cinq
+// petites passent en AVERTISSEMENT (20 sites visibles dans les annotations de
+// la CI, aucun ne bloque ; le lint passe de 31 à 51 avertissements, 0 erreur).
+// Suite ouverte : `docs/TESTING.md` § « V18.2 ·
+// règles React Compiler différées ». ⚠️ `static-components`
+// (`Layout.tsx`) et `immutability` (`PageTutorial.tsx`, `DeadlineCalendar.tsx`)
+// signalent peut-être de vrais défauts (état remis à zéro à chaque rendu) : à
+// lire en premier.
+// ❌ Ne pas étendre cette liste à une règle qui viendrait à rougir plus tard :
+// une règle tenue à zéro se corrige, elle ne se coupe pas.
+const REACT_COMPILER_DIFFEREES = {
+  'react-hooks/set-state-in-effect': 'off',
+  'react-hooks/refs': 'off',
+  'react-hooks/purity': 'warn',
+  'react-hooks/preserve-manual-memoization': 'warn',
+  'react-hooks/immutability': 'warn',
+  'react-hooks/globals': 'warn',
+  'react-hooks/static-components': 'warn',
+};
+
 /** Même périmètre que `src/architecture.guard.test.ts` (`EXCLUDED_DIRS`). */
 const PERIMETRE_COMPLEXITE = {
   files: ['src/**/*.{ts,tsx}'],
@@ -95,6 +133,7 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
+      ...REACT_COMPILER_DIFFEREES,
       // C-06 — voir l'en-tete de `eslint-rules/exhaustive-deps-justified.js`.
       // Le desarmement reste possible ; ce qui devient impossible, c'est de le
       // poser sans avoir ecrit pourquoi la dependance retiree ne peut pas
