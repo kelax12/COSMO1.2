@@ -38,6 +38,15 @@ Couvre aussi les **mappers de repository** (`src/modules/{tasks,habits,events}/m
 - ❌ Ne pas mettre de test qui dépend du DOM sans `// @vitest-environment jsdom`.
 - Cleanup auto via `src/test/setup.ts`. Ne pas remettre les mappers inline dans les repos.
 
+### Tests d'écran : vrais hooks, dépôts de démo (V15.1 et V15.2, TST-02)
+
+Un écran se teste avec ses VRAIS hooks React Query sur les dépôts de démo (`localStorage`), la session et la facturation étant seules simulées. Le harnais est `src/test/tasks-ui-harness.tsx` (client de requêtes, routeur, viewport, `lazyT`), complété pour l'entreprise par `src/test/org-ui-harness.ts` (« Nova Studio », droits d'un membre, rétrogradation de l'utilisateur de démo). Requêtes par rôle et nom accessible, jamais par classe CSS. Le dépôt n'a ni `user-event` ni `jest-dom` : `fireEvent` et des assertions simples.
+
+- ❌ **`const { data: x = [] } = useX()` nourrissant un effet sur `[x]`** : le `= []` est un tableau neuf à chaque rendu, l'effet repose un état neuf, et la boucle ne s'arrête qu'à l'arrivée des données. Dans l'application chaque tour rend la main au navigateur ; sous `act()` de Testing Library la boucle ne se vide jamais et le test ne rend pas la main. Corrigé dans `use-team-task-lists.ts` et `useTaskLists.ts` par un tableau vide stable (`NO_LISTS`).
+- ⚠️ Le dépôt de démo n'a qu'une identité (`getMyOrganizations` lit `demo-user`) : pour voir l'écran d'un non-administrateur, rétrograder `demo-user` dans l'annuaire (`demoteDemoUserToMember`), et pour un droit retiré à un membre, choisir un membre SANS rôle semé (`user-lucas` porte « Chef de projet », qui écrase toute surcharge).
+- ⚠️ Les événements de démo sont construits à l'import du module, dans la langue de cet instant : leurs titres changent avec l'environnement. Un test d'agenda pose ses propres événements dans `cosmo_demo_events`.
+- ⚠️ Sur une machine saturée, `pool: 'forks'` n'arrive pas à démarrer (`Timeout waiting for worker to respond`, y compris pour un test trivial). `--pool=threads` en local, sans toucher à `maxWorkers`. La CI garde `forks`.
+
 ## Suites de contrat des repositories (V12.2, constat ARC-01)
 
 La démo reste sur `localStorage` (décision V12.1). La parité démo / production se garantit donc par
