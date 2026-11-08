@@ -38,6 +38,45 @@ Couvre aussi les **mappers de repository** (`src/modules/{tasks,habits,events}/m
 - ❌ Ne pas mettre de test qui dépend du DOM sans `// @vitest-environment jsdom`.
 - Cleanup auto via `src/test/setup.ts`. Ne pas remettre les mappers inline dans les repos.
 
+## Suites de contrat des repositories (V12.2, constat ARC-01)
+
+La démo reste sur `localStorage` (décision V12.1). La parité démo / production se garantit donc par
+**une suite de cas par interface, jouée contre les deux implémentations**, pas par une démo sur
+vraie base.
+
+| Pièce | Rôle |
+|---|---|
+| `src/test/contracts/__test__/<concept>.contract.ts` | la suite : une fonction `xContract(side, make, opts)` qui pose les cas (création, lecture, mise à jour, suppression, règles métier, cas limites) |
+| `src/test/contracts/__test__/harness.ts` | `contractCase`, `rejects`, `unique`, `dayKey`, et la règle des divergences |
+| `src/test/contracts/demo.contract.test.ts` | côté **démo** : Vitest, jsdom, classes `LocalStorage…` |
+| `e2e/rls/contrats.test.ts` | côté **Supabase** : `npm run test:rls`, job `rls-integration` du noyau, base locale vierge, migrations rejouées |
+
+Interfaces couvertes : `tasks` et tâches d'équipe (`team-projects`), `okrs` et `team-okrs`,
+`categories` et `team-categories`, `lists` et `team-lists`, plus le temps OKR des statistiques
+(rejeu de l'incident C-77 dans `okrs.contract.ts`).
+
+🔴 **Côté Supabase, tout passe par un utilisateur AUTHENTIFIÉ** (clé anon + session) : le client
+`@/lib/supabase` est remplacé par le sien (`vi.mock`), donc les vraies classes `Supabase…Repository`
+tournent sous la RLS. `service_role` ne sert qu'à poser le décor (compte, organisation, abonnement)
+et à le retirer.
+
+**Une divergence ne se maquille pas.** Si la démo a tort, on corrige la démo (sa règle rejoue la base :
+CHECK, trigger, index). Si la production a tort, le cas est déclaré côté Supabase dans
+`divergences: { '<nom du cas>': '<constat>' }` et joué en `it.fails` ; le jour où la production est
+corrigée, `it.fails` rougit et la déclaration se retire. Un cas sans objet d'un côté va dans `skip`,
+avec sa raison.
+
+### Ajouter un module à la suite
+
+1. Écrire `src/test/contracts/__test__/<concept>.contract.ts` : un contexte (`{ repo, orgId?, … }`),
+   une fonction `<concept>Contract(side, make, opts)` qui ouvre un `describe` et déclare chaque cas par
+   `contractCase(opts, '<nom>', async () => …)`. Données uniques (`unique()`), jamais celles d'un seed.
+2. Côté démo, l'appeler dans `demo.contract.test.ts` avec la classe `LocalStorage…`.
+3. Côté Supabase, l'appeler dans `e2e/rls/contrats.test.ts` avec la classe `Supabase…` ; un concept
+   d'entreprise reçoit `orgId` (organisation du décor, abonnement actif).
+4. Jouer la démo en local (`npx vitest run src/test/contracts`) ; le côté Supabase ne joue qu'en CI
+   (Docker), sur une branche `noyau/<nom>`. Lire chaque rouge : démo fausse, ou production fausse.
+
 ## Playwright E2E — parcours critiques
 
 Dossier `e2e/`, config `playwright.config.ts`.
