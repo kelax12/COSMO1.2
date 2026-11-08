@@ -1101,6 +1101,28 @@ npm run test:e2e:report  # rapport HTML
 > project ne l'avait donc **jamais** été — la moitié mobile de chaque chiffre de
 > ce fichier venait de la CI, ou de nulle part. Installé depuis.
 
+### Références visuelles : la marche de régénération (V15.4, FRO-02)
+
+Les références `e2e/__screenshots__/linux/` ne sont écrites que par `.github/workflows/captures-regenerer.yml`
+(runner Linux, deux passes, artefact de revue `captures-revue`, branche `noyau/captures-<run>`, jamais `main`).
+`visual.yml` ne fait plus que COMPARER. Pas de PR : push direct sur `main`, la revue se trace dans le commit.
+
+1. Lancer **Captures regenerer** (`workflow_dispatch`) avec le motif.
+2. Ouvrir l'artefact `captures-revue` (`index.html` : avant, après, différence) et relire.
+3. Ramener la branche sur `main` avec le trailer : `git fetch origin noyau/captures-<run> && git merge --ff-only FETCH_HEAD && git commit --amend --trailer "Captures-relues: <URL du run>"`, `git push origin HEAD:main`.
+4. Supprimer la branche : `git push origin --delete noyau/captures-<run>`.
+
+Garde : `check:captures-relues` (`scripts/check-captures-relues.mjs`, job `fichiers-sensibles` de `CI noyau`, sur la plage poussée)
+refuse un commit qui touche `e2e/__screenshots__/**` sans `Captures-relues: <URL>`, puis interroge l'API : le run existe, vient de
+`captures-regenerer.yml`, a réussi. Témoins : `check-captures-relues.guard.test.mjs` (vrais commits dans un dépôt jetable),
+`captures-revue.guard.test.mjs` (vrais PNG). ⚠️ Le trailer est une trace, pas une preuve de lecture.
+
+### Alerte périmée (descendu de `scripts/CLAUDE.md` le 2026-11-08)
+
+- ⚠️ **2026-10-16 : les runs `CI` de `main` ne s'annulent plus** (un groupe par commit), donc un rouge
+  peut finir après le vert qui l'a réparé. `scripts/ci-alert-perime.mjs` tait l'issue ET le webhook
+  sur ce seul cas, prouvé par l'API ; ❌ jamais dans le doute (API en panne, contexte vide : l'alerte part).
+
 ### Décompte réel — mesuré le 2026-09-14 (`npx playwright test --list`)
 
 **220 cas, 26 specs, 4 projects.**

@@ -152,6 +152,10 @@ export const ARTEFACTS = {
     raison:
       "docs/INDICATEURS.md et son JSON (V20.2) : taux de vert, durée du drill, parcours, âge des secrets, sondes de dérive, issues ouvertes. Le job ne reçoit AUCUN secret du dépôt (le GITHUB_TOKEN du run suffit), le fichier est de toute façon poussé sur main, dépôt public : noms de workflow, dates, durées et liens de runs",
   },
+  'captures-regenerer.yml › captures-revue': {
+    nature: 'sans-prod',
+    raison: 'avant, après et différence des captures de régression visuelle en mode démo (V15.4) ; aucun secret',
+  },
   'visual.yml › visual-report': {
     nature: 'sans-prod',
     raison: 'captures de régression visuelle en mode démo, aucun secret',
