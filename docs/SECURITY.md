@@ -3,39 +3,7 @@
 > Sécurité : `faille.md` (hors dépôt) = findings **ouverts** + priorités (source de vérité) ·
 > [`archive/faille-historique.md`](./archive/faille-historique.md) = historique des corrections (archive, non maintenue).
 > Ce document = règles permanentes à respecter. Les codes `(V1)`, `(N9)`, `(M-6)`… réfèrent aux fiches `faille.md`.
-
-> ✅ **2026-10-01** : les douze Edge Functions sont **identiques au dépôt** (`Edge deploy drift`
-> vert), mig. `204`, `207`-`210` appliquées, les 23 tables `160`-`207` auditées acteur par acteur
-> en prod (`supabase/proofs/a1-tables-160-207.proof.sql`). Une règle en sort : une preuve de
-> migration se joue en prod dans un bloc `DO` dont la seule issue est `RAISE EXCEPTION`, avec une
-> passe témoin SANS la migration. Détail : `faille.md` (hors dépôt).
->
-> 🔎 **Relu le 2026-10-15** : **77** tables dans `public`, toutes sous RLS, **205** policies, ledger
-> **170**, advisors **`11 / 82 / 2 / 1`** (égaux à la référence de `Posture`, vert chaque jour depuis
-> le 2026-10-08), douze Edge Functions. Les chiffres du corps de ce document restent ceux de leur
-> date ; l'état courant et la note sont dans `faille.md` (hors dépôt).
->
-> 🔴 **Relu le 2026-09-30 : les chiffres ci-dessous sont PÉRIMÉS.** La base porte **76 tables**
-> dans `public` (toutes sous RLS, relevé de la session d'audit du jour) et les advisors rendent
-> `11 / 78 / 2 / 1`. Douze Edge Functions, pas huit. Surface nouvelle et findings :
-> `faille.md` (hors dépôt) § « Surface entreprise `160`-`207` ».
->
-> ✅ **Confronté à la production le 2026-09-14 au soir.** Les affirmations de ce document qui
-> portent sur un ÉTAT (par opposition aux règles) ont été vérifiées dans le catalogue Postgres, pas
-> relues :
->
-> | Affirmation | Mesure en base |
-> |---|---|
-> | Toute table `public` a RLS activée | **50 tables, 50 avec `relrowsecurity`** · 126 policies |
-> | Le client n'a AUCUN chemin d'écriture sur `subscriptions` | **0 policy UPDATE**, 2 policies au total |
-> | Le système de jetons n'existe plus (mig. `141`, C-04) | **0** RPC `consume_premium_token` / `credit_premium_token_from_ad` / `bump_win_streak`, **0** colonne `premium_tokens` / `win_streak` |
-> | Les journaux scellés sont en deny-all | `payment_records`, `payment_closures`, `renewal_notices` : **aucune policy**. `withdrawal_consents` en porte **une seule**, `SELECT` pour `authenticated`, c'est la lecture de sa propre preuve |
-> | `npm run check:rls` | **132 policies dans 106 migrations, 0 violation** |
->
-> Les advisors Supabase rendent **9 / 52 / 2 / 1**, à l'unité ce qu'annonce le tableau de gardes de
-> `faille.md` (hors dépôt). Détail de la passe : [`archive/README-journal-des-notes-2026-08-25-au-10-25.md`](./archive/README-journal-des-notes-2026-08-25-au-10-25.md) § « Mise à jour du
-> 2026-09-14 (soir) ».
-
+> **Chiffres** : les comptes (tables, policies, migrations, Edge Functions) sont dans [`FAITS.md`](./FAITS.md), générés ; l'état de la production se mesure (`check:supabase-posture`, `check:drift`, `check:edge`). Les relevés datés qui figuraient ici (2026-09-14 au 2026-10-15, advisors, confrontation au catalogue) sont archivés : [`archive/SECURITY-releves-dates-2026-08-25-au-2026-10-15.md`](./archive/SECURITY-releves-dates-2026-08-25-au-2026-10-15.md). Aucune note /100 ici : [`INDICATEURS.md`](./INDICATEURS.md) (ADR 0012).
 
 ## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
 
@@ -68,7 +36,7 @@
 
 | # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
-| AM-1 | 🔴 **Les RÈGLES de sécurité ne sont notées nulle part.** La note de sécurité (88) vit dans `faille.md` (hors dépôt), qui porte les **findings ouverts**. Ce document porte les **règles** : RLS, migrations, Edge Functions, secrets, CSP. Un finding se ferme et fait monter la note ; une règle qui se périme ici ne coûte rien à personne | `faille.md` porte la note, `SECURITY.md` n'en a aucune | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:docs-scored` (`C-109`) — 🔴 ne prouve PAS : que les notes soient **justes ni fraîches** : `non-note` OUVRE un audit, il ne le remplace pas · 🔎 2026-09-30 : le « (88) » de l'énoncé est la note du matin du 09-16 ; elle valait **83** du 09-16 au 09-30, **78** depuis (`faille.md` (hors dépôt)). Et la preuve de la limite ci-dessus : ce document n'a pas bougé du 09-24 au 09-30, pendant que le mode entreprise ajoutait 25 tables et 4 Edge Functions |
+| AM-1 | 🔴 **Les RÈGLES de sécurité ne sont notées nulle part.** La note de sécurité (88) vit dans `faille.md` (hors dépôt), qui porte les **findings ouverts**. Ce document porte les **règles** : RLS, migrations, Edge Functions, secrets, CSP. Un finding se ferme et fait monter la note ; une règle qui se périme ici ne coûte rien à personne | `faille.md` porte la note, `SECURITY.md` n'en a aucune | ✅ **SANS OBJET le 2026-11-08** : les notes /100 ont cessé (ADR 0012) et `check:docs-scored` (`C-109`) est retirée ; `npm run check:docs` refuse leur retour. L'énoncé de gauche est celui du 2026-09-16, conservé |
 | AM-2 | 🔴 **Les réglages du Dashboard Supabase ne sont surveillés par AUCUNE garde.** Protection des mots de passe compromis, expiration des OTP, politiques d'auth : ils se modifient **hors du dépôt**, sans commit, sans revue et sans trace. Un réglage désactivé par erreur ne se voit qu'au prochain audit manuel | aucun workflow ni script ne lit ces réglages ; seul un commentaire contient le mot « dashboard » | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:supabase-posture` · juge un **écart** à une référence commitée, jamais un absolu (`C-88`) · 🔴 ne prouve PAS : 🔴 rien pour l'instant : `reglages_auth` est à `null`, la référence exige un jeton. **La garde ÉCHOUE tant que ce n'est pas fait, exprès** · c'est **`M-58`** · 🔎 ✅ **2026-10-15 : `M-58` fait le 2026-10-08.** La référence porte huit réglages d'Auth (`password_hibp_enabled`, expiration des OTP, rotation des jetons, MFA, Google…) et `Posture` est vert chaque jour depuis |
 | AM-3 | **La rotation des secrets n'avait ni échéance ni rappel.** Le § « Rotation des secrets » disait comment faire, jamais quand, et rien ne mesurait l'âge d'un secret | `.github/secrets-registry.json` (noms seulement : propriétaire, criticité, échéance, dernière rotation), `scripts/check-secrets-age.mjs`, `.github/workflows/secrets-age.yml` (hebdomadaire, relié à `ci-alert.yml`) | 🟡 **OUTILLÉ le 2026-10-24, `M-54`**, rouge tant que les dates ne sont pas posées. La garde échoue sur un secret échu, de date **inconnue (= échu)**, vivant sans entrée au registre, ou inscrit sans exister ; jeton absent = exit 1. Témoin : `scripts/check-secrets-age.guard.test.mjs`. ⚠️ **Reste à Axel** : créer `SECRETS_AUDIT_TOKEN` (PAT fin, lecture des secrets du dépôt), puis renseigner `lastRotated` des secrets que ni GitHub ni Vercel ne datent (Edge, `SERVICE_ROLE_KEY`) ou les faire tourner. Le premier run réel dira aussi si le registre colle à la réalité (inventaire non relu en ligne le 10-24, l'API GitHub répondait en TLS timeout) |
 | AM-4 | **La checklist « avant tout commit qui touche `supabase/migration/*.sql` » est MANUELLE.** `validate:migrations` et `check:rls` en couvrent une partie ; le reste repose sur la lecture | les deux gardes vérifient des motifs nommés, pas la checklist entière | ✅ **OUTILLÉ le 2026-10-24** (ouvert du 09-16 au 10-23) · tableau ligne par ligne au § [« Avant tout commit qui touche `supabase/migration/*.sql` »](#avant-tout-commit-qui-touche-supabasemigrationsql) : sur **24** lignes, **16** ont une garde (`validate:migrations` règles 2, 5 et 6 à 16, `check:rls` règles 1 à 3, `check:erasure`), **8** restent **manuel** et le disent. Les onze règles neuves sont un cliquet à partir de la mig. `227`, chacune avec un témoin vu rouge et un sabotage rejoué par `check:sabotages` · 🔴 ne prouve PAS : l'historique `000` à `226` (non jugé, il diverge de la prod), ni qu'une migration fait ce qu'elle dit : la preuve en transaction annulée (mig. `150`, 2026-09-21) reste une discipline, pas une garde |
