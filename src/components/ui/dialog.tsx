@@ -60,7 +60,7 @@ function DialogContent({
   showCloseButton = true,
   variant = 'default',
   overlayClassName,
-  onOpenAutoFocus,
+  ref,
   onCloseAutoFocus,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
@@ -77,14 +77,14 @@ function DialogContent({
   // `i18n:scan` ne pouvait pas le voir — il cherche du FRANÇAIS en dur.
   const { t } = useT('common')
   // FRO-01 : Radix ne rend le focus qu'a `DialogTrigger`, que le produit n'utilise jamais.
-  const focusReturn = useRadixFocusReturn(onOpenAutoFocus, onCloseAutoFocus)
+  const focusReturn = useRadixFocusReturn(onCloseAutoFocus, ref)
   return (
     <DialogPortal data-slot="dialog-portal">
       <DialogOverlay className={overlayClassName} />
       <DialogPrimitive.Content
         data-slot="dialog-content"
         aria-modal="true"
-        onOpenAutoFocus={focusReturn.onOpenAutoFocus}
+        ref={focusReturn.ref}
         onCloseAutoFocus={focusReturn.onCloseAutoFocus}
         className={cn(
           "bg-background fixed z-50 grid w-full gap-4 border p-6 shadow-lg",

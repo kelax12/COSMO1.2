@@ -1,4 +1,10 @@
 import { useCallback, useLayoutEffect, useRef } from 'react';
+import {
+  installFocusHistory,
+  lastFocusedOutside,
+  menuTriggerOf,
+  reconnected,
+} from '@/lib/focus-history';
 
 // ═══════════════════════════════════════════════════════════════════
 // C-53 — le piège de focus des surfaces modales MAISON.
@@ -38,63 +44,6 @@ const openStack: symbol[] = [];
 /** Vrai si `id` est la modale du dessus de la pile. */
 function isTopmost(id: symbol): boolean {
   return openStack.length > 0 && openStack[openStack.length - 1] === id;
-}
-
-/**
- * Les derniers elements qui ont eu le focus, le plus recent en dernier.
- *
- * 🔴 POURQUOI UN HISTORIQUE, ET PAS `document.activeElement` A L'OUVERTURE.
- * Mesure du 2026-09-05 sur `HabitModal` : apres Echap, la trace des evenements
- * de focus ne contenait **aucun `focusin`** — la restitution ne partait jamais.
- * Cause : un `autoFocus` React est applique AU COMMIT, donc AVANT l'effet
- * passif qui capture le declencheur. A ce moment `document.activeElement` est
- * deja le champ de la modale, et le bouton d'origine est perdu.
- * `EventModal`, qui n'a pas d'`autoFocus`, restituait bien — d'ou une mesure
- * verte sur une surface et rouge sur l'autre, pour la meme implementation.
- *
- * On remonte donc l'historique jusqu'au dernier element qui n'est PAS dans la
- * modale. Borne a 10 : c'est un cache de reprise, pas un journal.
- */
-const focusHistory: HTMLElement[] = [];
-let historyInstalled = false;
-
-function installFocusHistory(): void {
-  if (historyInstalled || typeof document === 'undefined') return;
-  historyInstalled = true;
-  document.addEventListener(
-    'focusin',
-    () => {
-      const el = document.activeElement as HTMLElement | null;
-      if (!el || el === document.body) return;
-      const seen = focusHistory.indexOf(el);
-      if (seen !== -1) focusHistory.splice(seen, 1);
-      focusHistory.push(el);
-      if (focusHistory.length > 10) focusHistory.shift();
-    },
-    true,
-  );
-}
-
-/** Le dernier element focalise qui vit HORS de `root`, et existe encore. */
-function lastFocusedOutside(root: HTMLElement | null): HTMLElement | null {
-  for (let i = focusHistory.length - 1; i >= 0; i--) {
-    const el = focusHistory[i];
-    if (!el.isConnected) continue;
-    if (root && root.contains(el)) continue;
-    return el;
-  }
-  return null;
-}
-
-/**
- * Une modale ouverte depuis l'entrée d'un menu Radix a pour déclencheur cette
- * entrée, qui disparaît avec le menu. Le vrai déclencheur est le bouton qui a
- * ouvert le menu : Radix le désigne par l'`aria-labelledby` du menu.
- */
-function menuTriggerOf(el: HTMLElement | null): HTMLElement | null {
-  const menu = el?.closest('[role="menu"][aria-labelledby]');
-  const id = menu?.getAttribute('aria-labelledby');
-  return (id && document.getElementById(id)) || el;
 }
 
 const FOCUSABLE = [
@@ -161,55 +110,62 @@ export function mergeRefs<T>(
  * est nul, le focus tombait sur `body`. Pareil pour une surface ouverte depuis l'entree d'un
  * menu, qui disparait avec lui.
  *
- * Le declencheur est lu dans `onOpenAutoFocus`, au moment ou Radix monte son `FocusScope` et
- * AVANT qu'il ne deplace le focus : `document.activeElement` est alors l'element d'origine.
- * A la fermeture on ne touche a rien si Radix (ou l'appelant) a deja pose le focus quelque
- * part : seul un focus perdu sur `body` est rattrape.
+ * 🔴 LE DECLENCHEUR N'EST PAS LU DANS `onOpenAutoFocus` : il ne part pas quand un enfant
+ * `autoFocus` a deja pris le focus au commit (piege de `HabitModal`, cf. `focusHistory`). Il est
+ * lu par un `ref` pose sur le contenu, dans l'historique des focus.
  *
- * Les gestionnaires de l'appelant passent AVANT, et son `preventDefault()` est respecte
- * (un menu en cascade qui gere lui-meme son focus).
+ * 🔴 ET UN DECLENCHEUR PEUT AVOIR ETE RECREE. Mesure du 2026-11-07 dans un navigateur (`/tasks`,
+ * « Nouvelle tâche », Entree, Echap) : le meme rendu qui ouvre la surface RECREE le bouton, l'element
+ * d'origine est detache avant le montage de la surface, et le focus tombait sur BODY. La capture
+ * garde donc un element detache (`allowDetached`), et la restitution lui retrouve son equivalent
+ * (`reconnected`).
+ *
+ * A la fermeture on ne touche a rien si Radix (ou l'appelant) a deja pose le focus quelque
+ * part : seul un focus perdu sur `body` est rattrape. Le `preventDefault()` de l'appelant est
+ * respecte (un menu en cascade qui gere lui-meme son focus).
  */
 export function useRadixFocusReturn<E extends Event>(
-  userOnOpenAutoFocus?: (event: E) => void,
   userOnCloseAutoFocus?: (event: E) => void,
+  userRef?: React.Ref<HTMLDivElement>,
 ): {
-  onOpenAutoFocus: (event: E) => void;
+  ref: (node: HTMLDivElement | null) => void;
   onCloseAutoFocus: (event: E) => void;
 } {
   const openerRef = useRef<HTMLElement | null>(null);
-  const openRef = useRef(userOnOpenAutoFocus);
   const closeRef = useRef(userOnCloseAutoFocus);
-  openRef.current = userOnOpenAutoFocus;
+  const userRefRef = useRef(userRef);
   closeRef.current = userOnCloseAutoFocus;
+  userRefRef.current = userRef;
   installFocusHistory();
 
-  const onOpenAutoFocus = useCallback((event: E) => {
+  // Stable : un `ref` dont l'identite change est rappele a chaque rendu.
+  const ref = useCallback((node: HTMLDivElement | null) => {
+    const forwarded = userRefRef.current;
+    if (typeof forwarded === 'function') forwarded(node);
+    else if (forwarded) (forwarded as React.MutableRefObject<HTMLDivElement | null>).current = node;
+    // Une seule capture par ouverture : remise a zero par la fermeture.
+    if (!node || openerRef.current) return;
     const active = document.activeElement as HTMLElement | null;
-    openerRef.current = menuTriggerOf(
-      active && active !== document.body ? active : lastFocusedOutside(null),
-    );
-    openRef.current?.(event);
+    const activeIsOutside = !!active && active !== document.body && !node.contains(active);
+    openerRef.current = menuTriggerOf(activeIsOutside ? active : lastFocusedOutside(node, true));
   }, []);
 
   const onCloseAutoFocus = useCallback((event: E) => {
     closeRef.current?.(event);
-    if (event.defaultPrevented) {
-      // L'appelant a pris le focus en charge : on lui laisse, sans repli.
-      openerRef.current = null;
-      return;
-    }
     const opener = openerRef.current;
     openerRef.current = null;
+    // L'appelant a pris le focus en charge : on lui laisse, sans repli.
+    if (event.defaultPrevented) return;
     // Radix pose son propre focus dans la meme tache : le repli passe APRES lui.
     setTimeout(() => {
       const active = document.activeElement as HTMLElement | null;
       if (active && active !== document.body) return;
-      const target = opener?.isConnected ? opener : lastFocusedOutside(null);
+      const target = reconnected(opener) ?? lastFocusedOutside(null);
       target?.focus?.({ preventScroll: true });
     }, 0);
   }, []);
 
-  return { onOpenAutoFocus, onCloseAutoFocus };
+  return { ref, onCloseAutoFocus };
 }
 
 export interface ModalA11yOptions {
@@ -328,7 +284,7 @@ export function useModalA11y<T extends HTMLElement = HTMLDivElement>({
     const active = document.activeElement as HTMLElement | null;
     const activeIsOutside =
       !!active && active !== document.body && !(rootAtOpen && rootAtOpen.contains(active));
-    triggerRef.current = menuTriggerOf(activeIsOutside ? active : lastFocusedOutside(rootAtOpen));
+    triggerRef.current = menuTriggerOf(activeIsOutside ? active : lastFocusedOutside(rootAtOpen, true));
 
     // Après peinture : le contenu de la modale peut n'être monté qu'au frame
     // suivant (AnimatePresence, variantes mobile ou desktop).
@@ -391,23 +347,35 @@ export function useModalA11y<T extends HTMLElement = HTMLDivElement>({
       // part. Sinon quelqu'un l'a déjà déplacé volontairement (une modale
       // enfant, un champ ciblé par le code de fermeture) et le lui reprendre
       // serait pire que de ne rien faire.
-      const active = document.activeElement as HTMLElement | null;
-      const focusIsLoose =
-        !active ||
-        active === document.body ||
-        (rootAtOpen ? rootAtOpen.contains(active) : false);
-      // Un déclencheur DÉMONTÉ (l'entrée d'un menu Radix, refermé en ouvrant
-      // la modale) ne peut plus reprendre le focus : il revient alors au
-      // dernier élément extérieur encore monté, en pratique le bouton qui avait
-      // ouvert ce menu. Sans ce repli, le focus tombait sur `body` (mesuré le
-      // 2026-10-22, `AssignRoleDialog` ouverte depuis « Actions pour … »).
-      const trigger = triggerRef.current?.isConnected
-        ? triggerRef.current
-        : lastFocusedOutside(rootAtOpen);
+      const opener = triggerRef.current;
       triggerRef.current = null;
-      if (focusIsLoose && trigger) {
-        trigger.focus?.({ preventScroll: true });
-      }
+      // 🔴 EN MICROTACHE, PAS DANS LE NETTOYAGE. Mesure du 2026-11-07 dans un navigateur
+      // (`MobileDisplaySheet`, largeur mobile, Echap) : le nettoyage rendait bien le focus au
+      // declencheur, puis React le REPRENAIT. Apres un commit, `restoreSelection` refocalise
+      // l'element qui avait le focus AVANT le commit, s'il est encore dans le document, et une
+      // feuille en sortie (`AnimatePresence`) garde ses boutons montes pendant l'animation. Le
+      // focus retournait donc dans la feuille, puis tombait sur `body` quand elle disparaissait.
+      // La microtache passe APRES ce commit synchrone, et l'etat du focus y est lu a jour.
+      queueMicrotask(() => {
+        // Restitution : seulement si le focus est encore DANS la modale, ou nulle
+        // part. Sinon quelqu'un l'a déjà déplacé volontairement (une modale
+        // enfant, un champ ciblé par le code de fermeture) et le lui reprendre
+        // serait pire que de ne rien faire.
+        const active = document.activeElement as HTMLElement | null;
+        const focusIsLoose =
+          !active ||
+          active === document.body ||
+          (rootAtOpen ? rootAtOpen.contains(active) : false);
+        // Un déclencheur DÉMONTÉ (l'entrée d'un menu Radix, refermé en ouvrant
+        // la modale) ne peut plus reprendre le focus : il revient alors au
+        // dernier élément extérieur encore monté, en pratique le bouton qui avait
+        // ouvert ce menu. Sans ce repli, le focus tombait sur `body` (mesuré le
+        // 2026-10-22, `AssignRoleDialog` ouverte depuis « Actions pour … »).
+        const trigger = reconnected(opener) ?? lastFocusedOutside(rootAtOpen);
+        if (focusIsLoose && trigger) {
+          trigger.focus?.({ preventScroll: true });
+        }
+      });
     };
   }, [open, closeOnEscape, moveFocusIn]);
 

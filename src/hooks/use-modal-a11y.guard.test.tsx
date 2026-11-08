@@ -200,6 +200,63 @@ describe('useModalA11y — restitution du focus au déclencheur', () => {
     const trigger = await open();
     expect(document.activeElement).not.toBe(trigger);
     press('Escape');
+    // Rendu en microtache (cf. `use-modal-a11y.ts`) : on laisse passer le commit.
+    await act(async () => {});
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  // 🔴 Mesure du 2026-11-07 dans un navigateur (`MobileDisplaySheet`, largeur mobile, Echap) : le
+  // focus etait rendu au declencheur, puis REPRIS par React. Apres un commit, `restoreSelection`
+  // refocalise l'element qui avait le focus avant, s'il est encore dans le document ; une feuille
+  // en sortie (`AnimatePresence`) garde ses boutons montes. Le focus retournait dans la feuille,
+  // puis tombait sur `body` quand elle disparaissait. jsdom reproduit ce comportement de React.
+  it('une surface dont le DOM reste monte pendant sa sortie rend quand meme le focus', async () => {
+    function Lingering() {
+      const [open, setOpen] = useState(false);
+      const [mounted, setMounted] = useState(false);
+      const close = () => {
+        setOpen(false);
+        // La sortie animee : le DOM reste monte apres `open === false`.
+        setTimeout(() => setMounted(false), 50);
+      };
+      return (
+        <div>
+          <button
+            type="button"
+            onClick={() => {
+              setMounted(true);
+              setOpen(true);
+            }}
+          >
+            Ouvrir la feuille
+          </button>
+          {mounted && <LingeringBody open={open} onClose={close} />}
+        </div>
+      );
+    }
+    function LingeringBody({ open, onClose }: { open: boolean; onClose: () => void }) {
+      const { ref, dialogProps } = useModalA11y<HTMLDivElement>({ open, onClose, label: 'Feuille' });
+      return (
+        <div ref={ref} {...dialogProps}>
+          <button type="button">Premier</button>
+        </div>
+      );
+    }
+    render(<Lingering />);
+    const trigger = screen.getByRole('button', { name: 'Ouvrir la feuille' });
+    act(() => trigger.focus());
+    await act(async () => {
+      trigger.click();
+    });
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 40));
+    });
+    expect(screen.getByRole('dialog').contains(document.activeElement)).toBe(true);
+    press('Escape');
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 120));
+    });
+    expect(screen.queryByRole('dialog')).toBeNull();
     expect(document.activeElement).toBe(trigger);
   });
 });
@@ -242,7 +299,8 @@ describe('useModalA11y — modales empilées', () => {
     expect(screen.queryByRole('dialog', { name: 'Interne' })).toBeNull();
     expect(screen.getByRole('dialog', { name: 'Externe' })).toBeTruthy();
     // Et le focus revient au bouton qui l'avait ouverte, pas au premier
-    // focalisable de la modale parente.
+    // focalisable de la modale parente. Rendu en microtache : on laisse passer le commit.
+    await act(async () => {});
     expect(document.activeElement).toBe(opener);
   });
 });
