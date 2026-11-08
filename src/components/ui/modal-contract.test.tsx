@@ -23,8 +23,9 @@
 // ⚠️ jsdom ne simule pas Tab natif : le piege est donc mesure par `Tab` emis sur le DERNIER
 // puis le PREMIER element focalisable. C'est la limite deja dite dans `docs/ACCESSIBILITY.md`.
 import { useState } from 'react';
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, beforeAll } from 'vitest';
 import { render, screen, cleanup, act, fireEvent } from '@testing-library/react';
+import { installFocusHistory } from '@/lib/focus-history';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './dialog';
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from './sheet';
 import {
@@ -36,14 +37,16 @@ import {
   AlertDialogAction,
 } from './alert-dialog';
 
+// Comme `src/main.tsx` : l'historique des focus existe AVANT l'ouverture de toute surface.
+beforeAll(() => installFocusHistory());
 afterEach(cleanup);
 
 type Kind = 'dialog' | 'sheet' | 'alert';
 
-function Surface({ kind, onOpenChange }: { kind: Kind; onOpenChange: (o: boolean) => void }) {
+function Surface({ kind, onOpenChange, autoFocusField = false }: { kind: Kind; onOpenChange: (o: boolean) => void; autoFocusField?: boolean }) {
   const body = (
     <>
-      <input aria-label="Champ" />
+      <input aria-label="Champ" autoFocus={autoFocusField} />
       <button type="button">Dernier</button>
     </>
   );
@@ -82,7 +85,7 @@ function Surface({ kind, onOpenChange }: { kind: Kind; onOpenChange: (o: boolean
 }
 
 /** Surface PILOTEE de l'exterieur, sans `DialogTrigger` : la forme du produit. */
-function Controlled({ kind, viaMenu = false }: { kind: Kind; viaMenu?: boolean }) {
+function Controlled({ kind, viaMenu = false, autoFocusField = false, remountTrigger = false }: { kind: Kind; viaMenu?: boolean; autoFocusField?: boolean; remountTrigger?: boolean }) {
   const [open, setOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   return (
@@ -108,11 +111,11 @@ function Controlled({ kind, viaMenu = false }: { kind: Kind; viaMenu?: boolean }
           )}
         </>
       ) : (
-        <button type="button" onClick={() => setOpen(true)}>
+        <button key={remountTrigger && open ? 'recree' : 'initial'} type="button" aria-label="Ouvrir" onClick={() => setOpen(true)}>
           Ouvrir
         </button>
       )}
-      {open && <Surface kind={kind} onOpenChange={(o) => setOpen(o)} />}
+      {open && <Surface kind={kind} onOpenChange={(o) => setOpen(o)} autoFocusField={autoFocusField} />}
     </div>
   );
 }
@@ -197,6 +200,45 @@ describe.each<[Kind, 'dialog' | 'alertdialog']>([
     await tick();
     const surface = screen.getByRole(role, { name: 'Titre' });
     expect(surface.getAttribute('aria-modal')).toBe('true');
+  });
+});
+
+// Un enfant `autoFocus` prend le focus AU COMMIT, avant le `FocusScope` de Radix : le declencheur ne
+// doit donc pas etre lu dans `onOpenAutoFocus` (qui ne part pas alors). Ce cas ne reproduit PAS le
+// defaut mesure dans le navigateur (cf. le cas suivant) : il garde seulement ce chemin.
+describe.each<[Kind, 'dialog' | 'alertdialog']>([
+  ['dialog', 'dialog'],
+  ['sheet', 'dialog'],
+])('retour du focus avec un enfant autoFocus · %s', (kind, role) => {
+  it('(d) le focus revient au declencheur', async () => {
+    render(<Controlled kind={kind} autoFocusField />);
+    const trigger = openFromButton();
+    await tick();
+    expect(screen.getByRole(role).contains(document.activeElement)).toBe(true);
+    fireEvent.keyDown(screen.getByRole(role), { key: 'Escape' });
+    await tick();
+    expect(document.activeElement).toBe(trigger);
+  });
+});
+
+// 🔴 CAUSE REELLE du defaut mesure dans le navigateur le 2026-11-07 : a l'ouverture de « Nouvelle
+// tâche », le meme rendu RECREE le bouton declencheur. L'element d'origine est detache avant que la
+// surface ne monte ; l'historique des focus le sautait (`isConnected`), et rien n'etait restitue.
+describe.each<[Kind, 'dialog' | 'alertdialog']>([
+  ['dialog', 'dialog'],
+  ['sheet', 'dialog'],
+  ['alert', 'alertdialog'],
+])('declencheur recree par le rendu qui ouvre la surface · %s', (kind, role) => {
+  it('(d) le focus revient a son equivalent monte', async () => {
+    render(<Controlled kind={kind} remountTrigger />);
+    const original = openFromButton();
+    await tick();
+    expect(original.isConnected).toBe(false);
+    fireEvent.keyDown(screen.getByRole(role), { key: 'Escape' });
+    await tick();
+    const recreated = screen.getByRole('button', { name: 'Ouvrir' });
+    expect(recreated).not.toBe(original);
+    expect(document.activeElement).toBe(recreated);
   });
 });
 

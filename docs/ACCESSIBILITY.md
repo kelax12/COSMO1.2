@@ -887,9 +887,37 @@ continue de chiffrer la mesure navigateur de la famille maison.
   `event.preventDefault()` dans `onCloseAutoFocus` puis ne rend le focus qu'à `triggerRef`, nul : le
   focus tombait sur `body`. Même chute quand la surface s'ouvre depuis l'entrée d'un menu qui disparaît.
   Correctif : `useRadixFocusReturn` (`use-modal-a11y.ts`), même historique de focus que les surfaces
-  maison, branché dans `DialogContent`, `SheetContent` et `AlertDialogContent`. Le déclencheur est lu
-  dans `onOpenAutoFocus` (avant que Radix ne déplace le focus), et seul un focus perdu sur `body` est
-  rattrapé : un `preventDefault()` de l'appelant est respecté.
+  maison, branché dans `DialogContent`, `SheetContent` et `AlertDialogContent`. Seul un focus perdu sur
+  `body` est rattrapé : un `preventDefault()` de l'appelant est respecté.
+- (d) **Trois causes de plus, vues dans le navigateur et jamais en jsdom** (`/tasks`, « Nouvelle tâche »,
+  Entrée puis Échap : le focus tombait sur `body` après le premier correctif). La première hypothèse
+  (un enfant `autoFocus`) était fausse : l'ancien code passait ce cas. Les causes mesurées, avec une
+  trace des appels à `focus()` :
+  1. **Le bouton déclencheur est recréé par le rendu qui ouvre la surface.** L'élément d'origine est
+     détaché avant le montage ; l'historique le sautait (`isConnected`). La capture garde désormais un
+     élément détaché, et la restitution lui retrouve son équivalent monté par `id`, `aria-label` ou
+     `data-testid` sur la même balise, rien de plus vague.
+  2. **L'historique des focus n'existait pas encore.** Installé au premier rendu d'une modale, il
+     arrivait après le `focusin` du déclencheur de toute modale montée à l'ouverture (`TaskModal`).
+     Il vit désormais dans `src/lib/focus-history.ts` et est installé au démarrage par `src/main.tsx`,
+     ce que la garde vérifie. Les tests jsdom ne le voyaient pas : un test précédent avait déjà installé
+     l'écouteur au niveau du module.
+  3. **Le déclencheur n'est pas lu dans `onOpenAutoFocus`**, qui ne part pas si un enfant a déjà pris le
+     focus au commit : il est lu par un `ref` sur le contenu.
+  Témoin : `modal-contract.test.tsx` recrée le déclencheur à l'ouverture ; vu rouge (3 échecs) sur le
+  hook d'avant, vert après. Vu vert aussi dans le navigateur (desktop) : le focus revient au bouton recréé.
+- (d) **Les surfaces maison à animation de sortie perdaient le focus, par la faute de React.** Mesuré dans
+  un navigateur en largeur mobile (`MobileDisplaySheet`, Échap) : le hook rendait le focus au
+  déclencheur dans son nettoyage, puis React le REPRENAIT. Après un commit, `restoreSelection`
+  refocalise l'élément qui avait le focus avant le commit, s'il est encore dans le document ; une
+  feuille en sortie (`AnimatePresence`) garde ses boutons montés. Le focus retournait dans la
+  feuille, puis tombait sur `body` quand elle disparaissait (trace des appels à `focus()`, pile
+  `flushMutationEffects`). Touche toute feuille `BottomSheet`. Correctif : `useModalA11y` rend le focus
+  en microtâche, après le commit, en relisant l'état du focus à ce moment. Témoin :
+  `use-modal-a11y.guard.test.tsx` (surface dont le DOM reste monté pendant sa sortie), vu rouge avec une
+  restitution synchrone, vert avec la microtâche. ⚠️ **Non revu dans le navigateur après correctif** : le
+  serveur de dev, en démarrage à froid sur un poste saturé, a dépassé le garde de démarrage de
+  l'application à chaque essai.
 - (e) **`aria-modal` manquait sur les trois enveloppes Radix.** Ajouté.
 - (e) **La croix de `SheetContent` portait « Close » en dur**, entendu en anglais par un lecteur d'écran
   francophone. Traduite par `common.actions.close`, comme `DialogContent`.
@@ -898,8 +926,9 @@ continue de chiffrer la mesure navigateur de la famille maison.
 
 ⚠️ **Ce que ces mesures ne prouvent pas.** jsdom ne simule pas Tab natif (le piège se mesure en émettant
 Tab au bord de la surface), et aucune mesure n'a été jouée avec un lecteur d'écran ni sur un appareil
-réel : vagues 16.1, 16.2 et 16.4. Le retour du focus des surfaces Radix n'est mesuré qu'en jsdom ; le
-harnais Playwright ne le gate toujours pas (`focusReturned` reste imprimé, cf. ci-dessus).
+réel : vagues 16.1, 16.2 et 16.4. Le retour du focus des surfaces Radix est mesuré en jsdom, plus un
+contrôle manuel dans un navigateur sur UNE surface (`TaskModal`, desktop, clavier) : pas en largeur
+mobile, et le harnais Playwright ne le gate toujours pas (`focusReturned` reste imprimé, cf. ci-dessus).
 
 ### C-53 refermé le 2026-09-05 · un hook porte le piège, pas 58 fichiers
 
