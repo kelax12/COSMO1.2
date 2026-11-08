@@ -66,6 +66,7 @@ export const SECRETS_PROD = {
   CRON_SECRET: 'déclenche des Edge Functions qui lisent la production',
   VERCEL_TOKEN: 'configuration et journaux du déploiement de production',
   SENTRY_AUTH_TOKEN: 'lit les issues Sentry de production : titres d erreurs et événements',
+  SECURITY_ALERTS_TOKEN: 'lit les alertes de secret scanning du dépôt, dont la VALEUR de chaque secret fuité',
 };
 
 /** Secrets lus par les workflows SANS ouvrir de donnée personnelle. */
@@ -269,6 +270,10 @@ export const CONTACTS_PROD = {
   'prod-errors.yml › erreurs › Sentry, Vercel et Supabase sur 24 h': {
     affiche:
       "comptes d'erreurs par couple chemin+statut, familles de la passerelle, et titres des issues Sentry nouvelles (messages d'erreur déjà purgés d'emails et d'UUID par beforeSend) ; jamais une ligne de table",
+  },
+  'detection-violation.yml › detecter › Lire les signaux de detection': {
+    affiche:
+      "statut de chaque source, nombre d'artefacts inspectés et d'alertes de secret ouvertes, six maxima et comptes agrégés des journaux Supabase (aucune requête exécutée ne rend un compte ni une IP), numéro et type d'une alerte de secret (jamais sa valeur), nom d'un artefact suspect et de son fichier",
   },
   'inactive-accounts.yml › run › Avertir puis effacer les comptes inactifs': {
     affiche: 'code HTTP et réponse `{toWarn, warned, toDelete, deleted, …}` : compteurs, aucun e-mail',

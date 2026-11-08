@@ -87,6 +87,8 @@ on:
       - Journal des crons
       # ⚠️ `Gardes de calendrier` n'y est PAS, pour la meme raison qu'`Uptime`
       # ci-dessous : sa propre issue `calendrier-red`, refermee seule.
+      # ⚠️ `Detection violation` n'y est pas (vague 6.1) : sa propre issue
+      # `detection-violation`, assignée, échéance 72 h, plafonnée.
       # ⚠️ `Uptime` n'y est PAS NON PLUS, et ce n'est pas un oubli : il ouvre
       # DÉJÀ sa propre issue, qui se referme seule au retour du vert.
       # L'ajouter ici doublerait chaque panne d'une seconde alerte, et deux
@@ -102,8 +104,14 @@ on:
   # workflows actifs (pas une liste : une liste a laissé `Sabotages` et
   # `Mutation` hors de vue) dont le dernier run sur `main` est rouge depuis
   # plus de 7 jours, sans décision écrite et datée, vont dans l'issue `ci-red`.
+  # La même règle porte les alertes de DÉTECTION (`detection-violation.yml`)
+  # dont l'échéance de tri est passée (vague 6.1, OBS-01) : une seule règle.
+  # REVUE HEBDOMADAIRE (lundi) : s'il reste une alerte échue, la liste est
+  # republiée même inchangée, pour qu'une alerte échue ne se taise pas.
   schedule:
-    - cron: '43 7 * * *' # quotidien, 07:43 UTC, minute décalée des autres crons
+    # Un passage par jour : le lundi, c'est la revue qui joue la règle entière.
+    - cron: '43 7 * * 0,2-6' # mardi au dimanche, 07:43 UTC, minute décalée des autres crons
+    - cron: '47 7 * * 1' # revue hebdomadaire, lundi 07:47 UTC
 
 # Seul droit élevé du dépôt, strictement borné à l'ouverture d'issues.
 # `actions: read` (lecture seule, 2026-10-16) : lister les runs verts de `main`,
@@ -273,6 +281,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          REVUE_HEBDO: ${{ github.event.schedule == '47 7 * * 1' }}
         run: node scripts/gardes-rouges-7j.mjs
       # Pousser seulement quand la liste a changé : un salon qui reçoit la même
       # ligne chaque matin apprend à l'ignorer. `always()` : le scan sort en 1
