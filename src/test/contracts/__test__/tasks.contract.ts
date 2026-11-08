@@ -103,9 +103,22 @@ export function tasksContract(side: string, make: () => Promise<TasksContractCon
       expect(await rejects(repo.update(ghost, { name: 'fantôme' }))).toBe(true);
     });
 
-    contractCase(opts, 'une priorité hors de 1 à 5 est refusée (CHECK tasks_priority_check)', async () => {
+    contractCase(opts, 'une priorité au-delà de 5 ou négative est refusée', async () => {
       expect(await rejects(repo.create(input({ priority: 6 })))).toBe(true);
-      expect(await rejects(repo.create(input({ priority: 0 })))).toBe(true);
+      expect(await rejects(repo.create(input({ priority: -1 })))).toBe(true);
+    });
+
+    // La fiche (`useTaskModal`) crée par défaut avec la priorité 0, « sans
+    // priorité », et `createTaskSchema` l'admet : c'est le contrat de l'écran.
+    contractCase(opts, 'une tâche sans priorité (0), comme la fiche la crée par défaut, est acceptée', async () => {
+      const created = await repo.create(input({ priority: 0 }));
+      expect((await repo.getById(created.id))?.priority).toBe(0);
+    });
+
+    // Même chose pour l'échéance : `mapTaskToDb` la dit facultative (`''` → NULL).
+    contractCase(opts, 'une tâche sans échéance, comme la fiche la crée par défaut, est acceptée', async () => {
+      const created = await repo.create(input({ deadline: '' }));
+      expect((await repo.getById(created.id))?.deadline ?? '').toBe('');
     });
 
     contractCase(opts, 'dépendances : ajout, lecture, cycle et boucle refusés, retrait idempotent', async () => {

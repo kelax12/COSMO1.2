@@ -13,11 +13,15 @@ import { localizedDemoTasks } from './local.seed';
 const STORAGE_KEY = 'cosmo_demo_tasks';
 
 /**
- * Miroir du CHECK `tasks_priority_check` (1 à 5), trouvé absent par la suite de
- * contrat (V12.2) : la démo acceptait 0 ou 6, que la base refuse.
+ * Priorité de 0 (« sans priorité », la valeur par défaut de la fiche) à 5,
+ * comme `createTaskSchema`. Trouvé par la suite de contrat (V12.2) : la démo
+ * acceptait 6 ou -1. La base, elle, refuse aussi 0 (CHECK 1 à 5) : c'est la
+ * divergence PAR-01, signalée côté production, pas recopiée ici.
  */
-function assertPriorityInRange(priority: number): void {
-  if (!Number.isInteger(priority) || priority < 1 || priority > 5) throw makeApiError('invalid_input');
+function assertPriorityInRange(priority: number | undefined): void {
+  // Absente, la base prend son défaut : rien à refuser.
+  if (priority === undefined) return;
+  if (!Number.isInteger(priority) || priority < 0 || priority > 5) throw makeApiError('invalid_input');
 }
 
 export class LocalStorageTasksRepository implements ITasksRepository {
