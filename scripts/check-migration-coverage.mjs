@@ -55,8 +55,9 @@
 // reel dans une transaction annulee. Ce script automatise le grossier ; il ne
 // remplace pas le fin, et sa sortie le rappelle a chaque execution.
 //
-// ⚠️ `npm run check:drift` ne comble pas ce trou : il compare un SCHEMA
-// AGREGE, pas un journal, et ne sait donc pas dire QUEL fichier manque.
+// ⚠️ L'ancien `check:drift` (schema agrege, deux etapes a la main, retire le
+// 2026-11-08) ne comblait pas ce trou non plus : son seul verdict d'echec,
+// « objet attendu absent de la prod », est celui d'ABSENT DES DEUX ci-dessus.
 //
 // ── USAGE (2 etapes, lecture seule cote prod) ───────────────────────
 //
@@ -131,7 +132,7 @@ const norm = (s) => s.replace(/^public\./i, '').replace(/"/g, '').toLowerCase();
 /**
  * Les objets crees par un fichier de migration.
  *
- * ⚠️ On ne suit PAS les DROP ici, contrairement a `check-prod-drift.mjs`. La
+ * ⚠️ On ne suit PAS les DROP ici. La
  * question n'est pas « quel etat final le depot decrit-il » mais « ce fichier
  * a-t-il laisse une trace en base ». Un objet cree puis supprime par une
  * migration ULTERIEURE ne dit rien de celle-ci ; c'est justement pour ca que le
@@ -163,7 +164,7 @@ function objetsCrees(sql) {
   for (const m of propre.matchAll(
     // Le nom d'une policy peut etre entre guillemets OU nu : les deux formes
     // existent dans ce depot, et n'en reconnaitre qu'une a deja produit un faux
-    // positif dans `check-prod-drift.mjs` (mig. 135).
+    // positif dans l'ancien `check:drift` (mig. 135).
     /create\s+policy\s+(?:"([^"]+)"|([a-z_][\w$]*))\s+on\s+([\w."]+)/gi,
   )) {
     out.policies.push(`${(m[1] ?? m[2]).toLowerCase()}@@${norm(m[3])}`);

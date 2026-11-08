@@ -323,8 +323,9 @@ vérifié dans `supabase_migrations.schema_migrations`). Conséquence fonctionne
 [`ACQUISITION.md`](./ACQUISITION.md) : la chaîne d'attribution `?ref=` est complète en base et
 muette dans `/admin`.
 
-C'est la seule dérive détectée. `npm run check:drift` reste l'outil de référence avant tout
-déploiement comportant une migration.
+C'est la seule dérive détectée. Après une migration appliquée, la preuve est la relecture au
+catalogue de l'objet créé ; `Migration coverage` (quotidien) refuse un fichier dont aucun objet
+n'existe en prod.
 
 ## 6. ✅ Ce qui a tenu depuis l'audit du 2026-08-07
 
@@ -357,5 +358,5 @@ npm run check:cycles                                 # cycles, fan-in et fan-out
 grep -rl "<nom>" src --include="*.tsx" --include="*.ts" | grep -v "définition"
 
 # Gardes
-npm run check:rls && npm run validate:migrations && npm run check:drift
+npm run check:rls && npm run validate:migrations
 ```
