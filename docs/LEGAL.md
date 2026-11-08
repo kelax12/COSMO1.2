@@ -62,6 +62,8 @@
 
 Les audits juridiques du 2026-10-13 (« si je déploie maintenant ») et du 2026-09-24 (confrontation aux textes), ainsi que l'état des lieux du 2026-08-26, sont déplacés sans coupe dans [`archive/LEGAL-audits-et-etat-des-lieux-2026-08-26-au-2026-10-13.md`](./archive/LEGAL-audits-et-etat-des-lieux-2026-08-26-au-2026-10-13.md). Ils fondent des changements de contrat consignés dans [`LEGAL-JOURNAL.md`](./LEGAL-JOURNAL.md) ; l'état courant des obligations est dans le tableau de conformité ci-dessous, gardé par `check:legal`.
 
+**Hébergement des données** : Supabase, région `eu-west-1` (Irlande), donc dans l'Union. C'est la preuve de la promesse « données en Irlande » de la landing, que `src/pages/landing/landing-promises.guard.test.ts` relit dans ce document.
+
 ## 📋 Tableau de conformité
 
 **Légende** : ✅ bon · 🟡 partiellement bon · ❌ à faire · ⬜ sans objet aujourd'hui
