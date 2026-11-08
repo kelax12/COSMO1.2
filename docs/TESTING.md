@@ -429,6 +429,39 @@ remis à zéro à chaque rendu. Puis corriger les petites règles et les repasse
 Pour `set-state-in-effect` et `refs`, mesurer et corriger module par module. ❌ Une règle tenue à
 zéro ne rejoint jamais cette liste.
 
+### Instantanés du prérendu : le HTML servi aux moteurs, comparé à une page attendue (V14.4, COD-04)
+
+Le HTML que lisent les moteurs de recherche sort du prérendu (`prerender/`). Ses régressions
+récentes (double `h1`, guide tronqué, JSON-LD faux) n'ont été vues que par un `curl` sur la
+production : rien ne comparait la page produite à une page attendue. `npm run check:prerender`
+le fait, sur **chaque sortie** du prérendu (une page par route et par locale, plus `app.html`,
+`sitemap.xml`, `rss.xml`, `llms.txt`), contre les fichiers versionnés de
+`prerender/instantanes/`.
+
+- **Où il joue.** Dans le job `lint-test-build` de `ci-noyau.yml`, juste après `npm run build` et
+  `check:bundle`, sur le même `dist/`. Un `Build` rouge laisse un `dist/` partiel : l'étape échoue
+  alors en le disant (même entrée gardée que le budget de bundle), elle ne compare jamais un reste.
+- **Ce qui est normalisé, et rien d'autre.** L'empreinte des assets (`/assets/index-Bx3kQ9aZ.js`
+  devient `index-[empreinte].js`) et la `lastBuildDate` du flux RSS. Une date de contenu, un
+  `lastmod`, un `dateModified` qui bougent font échouer la comparaison : c'est voulu.
+- **Ce qu'il fait casser.** Un `<h1>` en double, un JSON-LD modifié, un texte tronqué, un `hreflang`
+  ou un `canonical` faux, une page produite sans instantané, un instantané dont la page a disparu.
+  Un témoin par cas : `scripts/check-prerender-snapshots.guard.test.mjs`.
+- **Mettre un instantané à jour, volontairement.** Après un `npm run build` local dont le HTML
+  change **exprès** (copie, méta, JSON-LD, nouvelle route) :
+
+  ```bash
+  npm run prerender:instantanes:maj
+  ```
+
+  puis relire `git diff prerender/instantanes/` : chaque ligne qui bouge doit s'expliquer par le
+  changement voulu, et se committer avec lui. La commande réécrit tous les instantanés, retire les
+  orphelins, et **refuse de tourner quand la variable `CI` est posée** : la CI ne met jamais un
+  instantané à jour. ❌ Ne jamais lancer la mise à jour pour faire passer un rouge dont on ne sait pas
+  expliquer le diff : un rouge qu'on n'explique pas est exactement ce que cette garde existe pour
+  attraper.
+- **Comparer sans reconstruire.** `npm run check:prerender` lit `dist/`. Sans `dist/` il échoue.
+
 ### Boucle locale : `npm run test:changed` (vague 2.4, DEV-01)
 
 La suite complète prend 54 min sur le poste de dev (4 cœurs, 8 Go). `test:changed`

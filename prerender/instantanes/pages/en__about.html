@@ -1,0 +1,333 @@
+<!doctype html>
+<html data-prerendered lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <!-- Icons & PWA -->
+    <!-- Favicon 64 px (5 ko) et non le logo 512 (255 ko) : `rel="icon"` est
+         telecharge a CHAQUE page. L'apple-touch-icon, lui, n'est lu que lors
+         d'un ajout a l'ecran d'accueil, il peut rester en pleine taille. -->
+    <link rel="icon" type="image/png" sizes="64x64" href="/favicon-64.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="/logo.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <!-- Mobile (<768px) démarre toujours en thème Noir (palette GitHub), cf.
+         src/lib/theme.ts → defaultTheme(). D'où la règle mobile en premier :
+         elle doit gagner sur la préférence système dark/light. -->
+    <meta name="theme-color" content="#24292e" media="(max-width: 767px)" />
+    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Cosmo" />
+    <meta name="application-name" content="Cosmo" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Primary SEO -->
+    <title>About Cosmo: a free, independent productivity app</title>
+    <meta name="description" content="Why Cosmo exists: a free, independent productivity app bringing tasks, habits, calendar and OKRs into a single ecosystem." />
+    <meta name="author" content="Cosmo" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <meta name="ahrefs-site-verification" content="80002af5d81e7c530940c5ca3c727907cfa66a2ee6671b35fd4c58be3a9de510" />
+    <link rel="canonical" href="https://thecosmo.app/en/about" />
+    <link rel="alternate" type="application/rss+xml" title="Blog Cosmo" href="https://thecosmo.app/rss.xml" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Cosmo" />
+    <meta property="og:title" content="About Cosmo: a free, independent productivity app" />
+    <meta property="og:description" content="Why Cosmo exists: a free, independent productivity app bringing tasks, habits, calendar and OKRs into a single ecosystem." />
+    <meta property="og:url" content="https://thecosmo.app/en/about" />
+    <meta property="og:image" content="https://thecosmo.app/og/en_about.jpg" />
+    <meta property="og:image:secure_url" content="https://thecosmo.app/og/en_about.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:alt" content="About Cosmo: a free, independent productivity app" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="About Cosmo: a free, independent productivity app" />
+    <meta name="twitter:description" content="Why Cosmo exists: a free, independent productivity app bringing tasks, habits, calendar and OKRs into a single ecosystem." />
+    <meta name="twitter:image" content="https://thecosmo.app/og/en_about.jpg" />
+    <meta name="twitter:image:alt" content="About Cosmo: a free, independent productivity app" />
+
+    <!-- Inter self-hosted (déclaré dans src/index.css) — préload du subset latin -->
+    <link rel="preload" href="/fonts/inter-var-latin.woff2" as="font" type="font/woff2" crossorigin>
+
+    <!-- 2026-10-16 · Une personne CONNECTÉE ne voit jamais le prérendu.
+         `/` est servi par la home prérendue (Vercel sert le fichier avant le
+         rewrite) : ouvrir ou rafraîchir l'app à la racine (raccourci, PWA
+         `start_url: "/"`, favori) peignait le texte SEO de la landing jusqu'à
+         ce que React redirige vers le dashboard. Avec une session Supabase ou
+         une démo persistée, on retire `data-prerendered` AVANT la première
+         peinture : spinner, et `boot.ts` charge l'app sans attendre.
+         2026-10-21 : il pose aussi `data-boot-theme` depuis le thème enregistré
+         (mêmes alias que resolveInitialTheme), pour que le spinner en ait les
+         couleurs dès la première image.
+         2026-10-23 : il pose le thème COMPLET, comme applyTheme() : celui
+         enregistré, sinon celui de defaultTheme() (Gris sous 768 px, sinon
+         celui du système), en `data-boot-theme` ET en classes `dark` / `gris`
+         / `noir`. La copie d'une page de contenu à thème (le guide) en lit
+         les variables avant React (prerender.mjs, injectContentCopy). Le
+         stockage seul est dans le try : bloqué, le thème par défaut s'applique.
+         Seul <script> inline exécutable du dépôt, autorisé par son empreinte
+         sha256 dans `script-src` (vercel.json). ❌ Le modifier d'un octet
+         sans recalculer l'empreinte le fait bloquer en prod, en silence :
+         `src/boot-screen.test.ts` compare les deux. Une seule ligne exprès :
+         des fins de ligne CRLF changeraient l'empreinte. -->
+    <script>(function(){var h=document.documentElement,t=null;try{var s=localStorage,a=s.getItem('cosmo_demo_active')==='1';for(var i=0;!a&&i<s.length;i++)a=/^sb-.+-auth-token$/.test(s.key(i)||'');if(a)h.removeAttribute('data-prerendered');t=s.getItem('theme')}catch(e){}if(t==='black'||t==='midnight'||t==='monochrome')t='gris';if(!/^(light|dark|gris|noir)$/.test(t||''))t=innerWidth<768?'gris':matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';h.setAttribute('data-boot-theme',t);if(t!=='light')h.classList.add('dark');if(t==='gris'||t==='noir')h.classList.add(t)})()</script>
+
+    <!-- ───────────────────────────────────────────────────────────────────
+         Écran de démarrage + contenu SEO. 100 % CSS, AUCUN JS.
+
+         La CSP de vercel.json est `script-src 'self'`, sans 'unsafe-inline'
+         ni nonce : tout <script> inline est bloqué en prod (et seulement en
+         prod, le serveur de dev n'envoie pas la CSP). Masquer le bloc SEO en
+         JS marcherait donc en local et échouerait silencieusement en ligne.
+         D'où le choix du CSS pur : `style-src` autorise bien 'unsafe-inline'.
+         Seule exception : le script juste au-dessus, autorisé par empreinte.
+
+         Règle du jeu :
+         - #boot-screen est peint immédiatement (overlay opaque plein écran),
+           puis React l'efface tout seul, createRoot().render() vide les
+           enfants de #root au premier commit. Aucun code à synchroniser.
+         - #seo-fallback (injecté par prerender.mjs dans dist/) est lu par les
+           crawlers qui ne lancent pas le JS (GPTBot, ClaudeBot,
+           PerplexityBot…). Depuis C-116 (2026-09-29) il est AUSSI peint, et
+           le spinner masqué, sur les seules pages prérendues
+           (`html[data-prerendered]`) : c'est leur premier rendu. Les routes
+           de l'app reçoivent app.html, sans l'attribut, donc le spinner.
+         - <noscript> ci-dessous : JS désactivé = pas de SPA possible, on rend
+           donc le contenu SEO visible et on retire le spinner (sinon l'écran
+           de chargement tournerait indéfiniment).
+         ─────────────────────────────────────────────────────────────────── -->
+    <style>
+      /* 2026-10-21 · Le spinner prend les couleurs EXACTES du thème (fond
+         --color-background, accent --color-accent-solid de src/index.css) :
+         #boot-screen avant React, puis .boot-screen (`BootScreen`, fallback des
+         pages publiques) pendant le chargement de la page. Les deux doivent
+         être indiscernables, sinon on voit un spinner en remplacer un autre.
+         Sans thème enregistré : celui de defaultTheme() (src/lib/theme.ts),
+         donc Clair ou Sombre selon le système, et Gris sous 768 px, d'où la
+         règle mobile APRÈS celle du système. Un thème enregistré arrive par
+         html[data-boot-theme], posé par le script inline puis par applyTheme(). */
+      #boot-screen,.boot-screen{--bs-bg:#f8fafc;--bs-ring:rgba(15,23,42,.14);--bs-accent:#2563eb;position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:var(--bs-bg)}
+      #boot-screen .ring,.boot-screen .ring{width:32px;height:32px;border:3px solid var(--bs-ring);border-top-color:var(--bs-accent);border-radius:50%;animation:boot-spin .7s linear infinite}
+      @keyframes boot-spin{to{transform:rotate(360deg)}}
+      @media (prefers-color-scheme:dark){#boot-screen,.boot-screen{--bs-bg:#0f172a;--bs-ring:rgba(255,255,255,.16);--bs-accent:#3472d8}}
+      @media (max-width:767px){#boot-screen,.boot-screen{--bs-bg:#24292e;--bs-ring:rgba(255,255,255,.16);--bs-accent:#2f75d5}}
+      html[data-boot-theme=light] :is(#boot-screen,.boot-screen){--bs-bg:#f8fafc;--bs-ring:rgba(15,23,42,.14);--bs-accent:#2563eb}
+      html[data-boot-theme=dark] :is(#boot-screen,.boot-screen){--bs-bg:#0f172a;--bs-ring:rgba(255,255,255,.16);--bs-accent:#3472d8}
+      html[data-boot-theme=gris] :is(#boot-screen,.boot-screen){--bs-bg:#24292e;--bs-ring:rgba(255,255,255,.16);--bs-accent:#2f75d5}
+      html[data-boot-theme=noir] :is(#boot-screen,.boot-screen){--bs-bg:#0a0a0a;--bs-ring:rgba(255,255,255,.16);--bs-accent:#f0f0f0}
+      @media (prefers-reduced-motion:reduce){#boot-screen .ring,.boot-screen .ring{animation-duration:2.4s}}
+      #seo-fallback{display:none;font-family:sans-serif;max-width:800px;margin:40px auto;padding:0 20px;color:#1e293b}
+      /* C-116 · 2026-09-29 : une page PRÉRENDUE (prerender.mjs pose
+         data-prerendered sur <html>) peint son contenu au lieu du spinner,
+         jusqu'au premier commit de React. Sans ça FCP = LCP = premier rendu
+         React, 5,4 à 8,3 s en 4G lente. La coquille de l'app (app.html,
+         servie à /dashboard, /tasks…) n'a pas l'attribut et garde le spinner.
+         Styles écrits en entier : le preflight Tailwind remet h1/p à zéro, et
+         le thème mobile sombre colorerait le fond. Police système : attendre
+         la police web retarderait le rendu qu'on cherche à avancer. */
+      html[data-prerendered] #boot-screen{display:none}
+      html[data-prerendered] #seo-fallback{display:block;box-sizing:border-box;max-width:none;min-height:100vh;margin:0;padding:32px max(16px,calc((100% - 760px) / 2));background:#fff;color:#1e293b;font:18px/1.75 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+      /* C-116 · 2026-10-10 : typographie alignée sur celle des articles React
+         (18-19 px, marge 16 px). Le LCP ne change de candidat que pour un
+         élément PLUS GRAND : un fallback en 16 px laissait le paragraphe React
+         reprendre le LCP sur /pour-freelances/ et les articles du blog.
+         L'interligne est volontairement PLUS large que celui des articles
+         (1,75 et 2 contre 1,625 et 1,75) : la police système est plus étroite
+         qu'Inter sous Windows et Android, le même texte y tient en une ligne
+         de moins, et l'élément React redevenait le plus grand. */
+      html[data-prerendered] #seo-fallback .lead{font-size:19px;line-height:2}
+      html[data-prerendered] #seo-fallback h1{font-size:2rem;line-height:1.2;font-weight:700;margin:0 0 16px}
+      html[data-prerendered] #seo-fallback h2{font-size:1.3rem;line-height:1.3;font-weight:600;margin:28px 0 8px}
+      html[data-prerendered] #seo-fallback p,html[data-prerendered] #seo-fallback ul,html[data-prerendered] #seo-fallback ol{margin:0 0 12px}
+      html[data-prerendered] #seo-fallback ul,html[data-prerendered] #seo-fallback ol{padding-left:24px;list-style:revert}
+      html[data-prerendered] #seo-fallback a{color:#4f46e5;text-decoration:underline}
+      html[data-prerendered] #seo-fallback img{max-width:100%;height:auto;border-radius:8px}
+      /* C-116 · 2026-10-10 : les captures du fallback ne sont PAS montrées.
+         React remplace ce contenu quelques instants après, avec ses propres
+         captures : les afficher ici faisait télécharger ~350 ko d'images
+         jetées aussitôt, et Lighthouse mobile les comptait dans le chemin du
+         LCP (5,1 s sur /entreprise-presentation/). Une image `loading=lazy`
+         en display:none n'est jamais demandée. Les robots lisent toujours
+         src et alt ; le <noscript> plus bas les réaffiche sans JS. */
+      html[data-prerendered] #seo-fallback img{display:none}
+      /* 2026-10-21 · Sur la HOME et l'ENTREPRISE, ce premier rendu n'est plus le
+         texte SEO : c'est #lp-hero, une copie du header et du hero du
+         parcours (prerender.mjs, `scripts/capture-landing-hero.mjs`), avec sa
+         propre CSS confinée. Un visiteur voyait un mur de texte, puis un
+         squelette gris, puis la landing. Elle vit HORS de #root, en calque :
+         createRoot ne l'efface pas, et la landing la retire dans l'image où
+         elle peint son hero. Pourquoi et sorties : src/lib/prerender-hero.ts.
+         Le texte SEO reste dans le balisage, pour les robots. */
+      #lp-hero{display:none}
+      html[data-prerendered] #lp-hero{display:block;position:fixed;inset:0;z-index:10000;overflow:hidden;background:#fff}
+      html[data-prerendered] #lp-hero[data-track=entreprise]{background:#08090C}
+      html[data-prerendered] #lp-hero ~ #root #seo-fallback{display:none}
+    </style>
+    <noscript>
+      <style>#boot-screen{display:none}#seo-fallback{display:block!important}html[data-prerendered] #seo-fallback img{display:inline}#lp-hero{display:none!important}</style>
+    </noscript>
+
+    <!-- ❌ Aucun script publicitaire, nulle part. Le mur-pub et le système de
+         jetons premium ont été supprimés le 2026-09-04 (C-04) : COSMO ne charge
+         plus AdSense, ni ici ni à la demande. Remettre ce script activerait les
+         « Auto ads » (vignettes interstitielles au changement de page, dont le
+         clic ouvre un nouvel onglet), et il n'a plus rien à financer. -->
+
+    <!-- JSON-LD : SoftwareApplication -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Cosmo",
+      "alternateName": ["Cosmo App", "The Cosmo App", "TheCosmo", "thecosmo", "thecosmo.app"],
+      "url": "https://thecosmo.app/",
+      "applicationCategory": "ProductivityApplication",
+      "applicationSubCategory": "Task Management",
+      "operatingSystem": "Web, iOS, Android",
+      "screenshot": [
+        "https://thecosmo.app/screenshots/dashboard.webp",
+        "https://thecosmo.app/screenshots/taches.webp",
+        "https://thecosmo.app/screenshots/habitudes.webp"
+      ],
+      "description": "Application de productivité tout-en-un : gestion de tâches avec priorités, suivi d'habitudes avec heatmap, agenda avec time-blocking, OKR (Objectives & Key Results) et statistiques multi-modules.",
+      "inLanguage": "en-US",
+      "datePublished": "2025-01-01",
+      "dateModified": "2026-08-17",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR",
+        "availability": "https://schema.org/InStock",
+        "description": "Version gratuite complète pour un usage personnel, sans publicité ni abonnement."
+      },
+      "featureList": [
+        "Gestion de tâches avec priorités 1-5 et catégories colorées",
+        "Suivi d'habitudes avec heatmap 26 semaines et streaks",
+        "Agenda intégré avec time-blocking par glisser-déposer",
+        "OKR (Objectives & Key Results) : méthode Google, Intel, Netflix",
+        "Statistiques multi-modules : tâches, habitudes, agenda, OKR",
+        "Collaboration et partage de tâches en équipe",
+        "Mode démo sans inscription avec 100 tâches et données réalistes",
+        "Listes de tâches intelligentes (smart lists) et filtres avancés",
+        "Mode sombre / clair automatique",
+        "Responsive mobile-first avec support iOS et Android"
+      ],
+      "author": {
+        "@type": "Organization",
+        "name": "Cosmo",
+        "url": "https://thecosmo.app"
+      }
+    }
+    </script>
+
+    <!-- JSON-LD : Organization -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Cosmo",
+      "legalName": "Cosmo",
+      "alternateName": ["Cosmo App", "The Cosmo App", "TheCosmo", "thecosmo.app"],
+      "url": "https://thecosmo.app",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://thecosmo.app/logo.png",
+        "width": 584,
+        "height": 586
+      },
+      "image": "https://thecosmo.app/logo.png",
+      "description": "Éditeur de l'application de productivité Cosmo – gestionnaire de tâches, habitudes et OKR",
+      "foundingDate": "2025",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "email": "axellongattepro@gmail.com",
+        "contactType": "customer service",
+        "availableLanguage": ["fr"]
+      },
+      "sameAs": []
+    }
+    </script>
+
+    <!-- JSON-LD : WebSite -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Cosmo",
+      "alternateName": ["Cosmo App", "The Cosmo App", "TheCosmo", "thecosmo.app"],
+      "url": "https://thecosmo.app/",
+      "description": "Application de productivité tout-en-un : gestionnaire de tâches, suivi d'habitudes, agenda avec time-blocking et méthode OKR. Gratuit.",
+      "inLanguage": "en-US",
+      "datePublished": "2025-01-01",
+      "dateModified": "2026-08-17",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Cosmo",
+        "url": "https://thecosmo.app"
+      },
+      "potentialAction": {
+        "@type": "RegisterAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://thecosmo.app/signup"
+        },
+        "name": "Créer un compte gratuit"
+      }
+    }
+    </script>
+    <script type="module" crossorigin src="/assets/index-[empreinte].js"></script>
+      <link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/a-propos" />
+    <link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/about" />
+    <link rel="alternate" hreflang="x-default" href="https://thecosmo.app/a-propos" />
+      <script type="application/ld+json" id="apropos-breadcrumb">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://thecosmo.app/en/"},{"@type":"ListItem","position":2,"name":"À propos","item":"https://thecosmo.app/en/about"}]}</script>
+      <style id="lp-hero-css">@font-face{font-family:Inter;font-style:normal;font-weight:300 700;font-display:block;src:url(/fonts/inter-var-latin-ext.woff2) format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}@font-face{font-family:Inter;font-style:normal;font-weight:300 700;font-display:block;src:url(/fonts/inter-var-latin.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}@font-face{font-family:"Instrument Serif";font-style:normal;font-weight:400;font-display:block;src:url(/fonts/instrument-serif-latin-ext.woff2) format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}@font-face{font-family:"Instrument Serif";font-style:normal;font-weight:400;font-display:block;src:url(/fonts/instrument-serif-latin.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}@font-face{font-family:"Instrument Serif";font-style:italic;font-weight:400;font-display:block;src:url(/fonts/instrument-serif-italic-latin-ext.woff2) format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}@font-face{font-family:"Instrument Serif";font-style:italic;font-weight:400;font-display:block;src:url(/fonts/instrument-serif-italic-latin.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}@font-face{font-family:Geist Mono;font-style:normal;font-weight:100 900;font-display:block;src:url(/fonts/geist-mono-latin-ext.woff2) format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}@font-face{font-family:Geist Mono;font-style:normal;font-weight:100 900;font-display:block;src:url(/fonts/geist-mono-latin.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}#lp-hero *, #lp-hero :before, #lp-hero :after{--tw-border-spacing-x: 0;--tw-border-spacing-y: 0;--tw-translate-x: 0;--tw-translate-y: 0;--tw-rotate: 0;--tw-skew-x: 0;--tw-skew-y: 0;--tw-scale-x: 1;--tw-scale-y: 1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness: proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width: 0px;--tw-ring-offset-color: #fff;--tw-ring-color: rgb(59 130 246 / .5);--tw-ring-offset-shadow: 0 0 #0000;--tw-ring-shadow: 0 0 #0000;--tw-shadow: 0 0 #0000;--tw-shadow-colored: 0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }#lp-hero ::backdrop{--tw-border-spacing-x: 0;--tw-border-spacing-y: 0;--tw-translate-x: 0;--tw-translate-y: 0;--tw-rotate: 0;--tw-skew-x: 0;--tw-skew-y: 0;--tw-scale-x: 1;--tw-scale-y: 1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness: proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width: 0px;--tw-ring-offset-color: #fff;--tw-ring-color: rgb(59 130 246 / .5);--tw-ring-offset-shadow: 0 0 #0000;--tw-ring-shadow: 0 0 #0000;--tw-shadow: 0 0 #0000;--tw-shadow-colored: 0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }#lp-hero *, #lp-hero :before, #lp-hero :after{box-sizing:border-box;border-width:0;border-style:solid;border-color:hsl(var(--border))}#lp-hero :before, #lp-hero :after{--tw-content: ""}#lp-hero, #lp-hero :host{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;-o-tab-size:4;tab-size:4;font-family:Inter,system-ui,sans-serif;font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}#lp-hero{margin:0;line-height:inherit}#lp-hero h1, #lp-hero h2{font-size:inherit;font-weight:inherit}#lp-hero a{color:inherit;text-decoration:inherit}#lp-hero strong{font-weight:bolder}#lp-hero button{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}#lp-hero button{text-transform:none}#lp-hero button{-webkit-appearance:button;background-color:transparent;background-image:none}#lp-hero :-moz-focusring{outline:auto}#lp-hero :-moz-ui-invalid{box-shadow:none}#lp-hero ::-webkit-inner-spin-button, #lp-hero ::-webkit-outer-spin-button{height:auto}#lp-hero [type=search]{-webkit-appearance:textfield;outline-offset:-2px}#lp-hero ::-webkit-search-decoration{-webkit-appearance:none}#lp-hero ::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}#lp-hero h1, #lp-hero h2, #lp-hero p{margin:0}#lp-hero ul{list-style:none;margin:0;padding:0}#lp-hero button, #lp-hero [role=button]{cursor:pointer}#lp-hero :disabled{cursor:default}#lp-hero svg{display:block;vertical-align:middle}#lp-hero [hidden]:where(:not([hidden=until-found])){display:none}#lp-hero{color-scheme:light;--color-primary: 71 85 105;--color-secondary: 100 116 139;--color-accent: 37 99 235;--color-accent-text: 29 78 216;--color-accent-solid: 37 99 235;--color-accent-solid-hover: 29 78 216;--color-accent-solid-foreground: 255 255 255;--color-success: 34 197 94;--color-warning: 245 158 11;--color-error: 220 38 38;--color-danger-text: 185 28 28;--color-surface: 255 255 255;--color-background: 248 250 252;--color-text-primary: 15 23 42;--color-text-secondary: 71 85 105;--color-text-muted: 105 116 131;--color-border: 226 232 240;--color-border-muted: 241 245 249;--color-border-strong: 203 213 225;--color-hover: 241 245 249;--color-active: 226 232 240;--color-chip-bg: 241 245 249;--color-chip-border: 203 213 225;--nav-bg: 255 255 255;--nav-border: 226 232 240;--nav-item-text: 100 116 139;--nav-item-hover-bg: 248 250 252;--nav-item-hover-text: 15 23 42;--nav-item-active-bg: 226 232 240;--nav-item-active-text: 15 23 42;--calendar-bg: 255 255 255;--calendar-border: 226 232 240;--calendar-header-bg: 248 250 252;--calendar-header-text: 71 85 105;--calendar-day-bg: 255 255 255;--calendar-day-hover: 248 250 252;--calendar-today-bg: 241 245 249;--table-bg: 255 255 255;--table-border: 226 232 240;--table-header-bg: 248 250 252;--table-header-text: 71 85 105;--table-row-hover: 248 250 252;--table-row-even: 255 255 255;--table-row-odd: 249 250 251;--background: 210 40% 98%;--foreground: 222 47% 11%;--card: 0 0% 100%;--card-foreground: 222 47% 11%;--popover: 0 0% 100%;--popover-foreground: 222 47% 11%;--primary: 215 25% 35%;--primary-foreground: 210 40% 98%;--secondary: 215 20% 65%;--secondary-foreground: 222 47% 11%;--muted: 210 40% 96%;--muted-foreground: 215 16% 47%;--accent: 217 91% 60%;--accent-foreground: 0 0% 100%;--accent-solid: 217 91% 60%;--accent-solid-hover: 224 76% 48%;--accent-solid-foreground: 0 0% 100%;--destructive: 0 84% 60%;--destructive-foreground: 0 0% 100%;--border: 214 32% 91%;--input: 214 32% 91%;--ring: 217 91% 60%;--radius: .75rem;--radius-sm: calc(var(--radius) - 4px);--radius-md: calc(var(--radius) - 2px);--radius-lg: var(--radius);--radius-xl: calc(var(--radius) + 4px);--t-display: 1.75rem;--t-title: 1.375rem;--t-headline: 1.0625rem;--t-body: .9375rem;--t-label: .8125rem;--t-caption: .6875rem;--gutter: 1rem;--gap-row: .75rem;--gap-section: 1.75rem;--r-row: .75rem;--r-card: 1rem;--r-sheet: 1.25rem;--touch-min: 2.75rem;--sidebar-background: 0 0% 100%;--sidebar-foreground: 215 16% 47%;--sidebar-primary: 222 47% 11%;--sidebar-primary-foreground: 0 0% 100%;--sidebar-accent: 210 40% 96%;--sidebar-accent-foreground: 222 47% 11%;--sidebar-border: 214 32% 91%;--sidebar-ring: 217 91% 60%;--chart-1: 12 76% 61%;--chart-2: 173 58% 39%;--chart-3: 197 37% 24%;--chart-4: 43 74% 66%;--chart-5: 27 87% 67%}html.dark #lp-hero{color-scheme:dark;--color-primary: 148 163 184;--color-secondary: 100 116 139;--color-accent: 59 130 246;--color-accent-text: 147 197 253;--color-accent-solid: 52 114 216;--color-accent-solid-hover: 37 99 235;--color-accent-solid-foreground: 255 255 255;--color-success: 52 211 153;--color-warning: 251 191 36;--color-error: 239 68 68;--color-danger-text: 244 112 103;--color-surface: 30 41 59;--color-background: 15 23 42;--color-text-primary: 248 250 252;--color-text-secondary: 203 213 225;--color-text-muted: 148 163 184;--color-border: 51 65 85;--color-border-muted: 51 65 85;--color-border-strong: 71 85 105;--color-hover: 51 65 85;--color-active: 71 85 105;--color-chip-bg: 51 65 85;--color-chip-border: 71 85 105;--nav-bg: 30 41 59;--nav-border: 51 65 85;--nav-item-text: 148 163 184;--nav-item-hover-bg: 51 65 85;--nav-item-hover-text: 203 213 225;--nav-item-active-bg: 71 85 105;--nav-item-active-text: 255 255 255;--calendar-bg: 30 41 59;--calendar-border: 71 85 105;--calendar-header-bg: 15 23 42;--calendar-header-text: 203 213 225;--calendar-day-bg: 15 23 42;--calendar-day-hover: 30 41 59;--calendar-today-bg: 51 65 85;--table-bg: 30 41 59;--table-border: 71 85 105;--table-header-bg: 15 23 42;--table-header-text: 203 213 225;--table-row-hover: 51 65 85;--table-row-even: 30 41 59;--table-row-odd: 15 23 42;--background: 222 47% 11%;--foreground: 210 40% 98%;--card: 217 33% 17%;--card-foreground: 210 40% 98%;--popover: 217 33% 17%;--popover-foreground: 210 40% 98%;--primary: 215 20% 65%;--primary-foreground: 222 47% 11%;--secondary: 215 25% 35%;--secondary-foreground: 210 40% 98%;--muted: 217 33% 17%;--muted-foreground: 215 20% 65%;--accent: 217 91% 60%;--accent-foreground: 0 0% 100%;--accent-solid: 217 91% 60%;--accent-solid-hover: 221 83% 53%;--accent-solid-foreground: 0 0% 100%;--destructive: 0 63% 31%;--destructive-foreground: 210 40% 98%;--border: 217 33% 27%;--input: 217 33% 27%;--ring: 217 91% 60%;--sidebar-background: 217 33% 17%;--sidebar-foreground: 215 20% 65%;--sidebar-primary: 210 40% 98%;--sidebar-primary-foreground: 222 47% 11%;--sidebar-accent: 217 33% 27%;--sidebar-accent-foreground: 210 40% 98%;--sidebar-border: 217 33% 27%;--sidebar-ring: 217 91% 60%;--chart-1: 220 70% 50%;--chart-2: 160 60% 45%;--chart-3: 30 80% 55%;--chart-4: 280 65% 60%;--chart-5: 340 75% 55%}html.gris #lp-hero{--color-primary: 173 186 199;--color-secondary: 118 131 144;--color-accent: 88 166 255;--color-accent-text: 145 198 255;--color-accent-solid: 47 117 213;--color-accent-solid-hover: 88 166 255;--color-accent-solid-foreground: 255 255 255;--color-success: 52 211 153;--color-warning: 251 191 36;--color-error: 239 68 68;--color-danger-text: 255 138 128;--color-surface: 43 49 55;--color-background: 36 41 46;--color-text-primary: 250 251 252;--color-text-secondary: 173 186 199;--color-text-muted: 143 153 164;--color-border: 55 62 71;--color-border-muted: 47 53 59;--color-border-strong: 68 76 86;--color-hover: 47 53 59;--color-active: 58 65 73;--color-chip-bg: 47 53 59;--color-chip-border: 55 62 71;--nav-bg: 36 41 46;--nav-border: 55 62 71;--nav-item-text: 143 153 164;--nav-item-hover-bg: 47 53 59;--nav-item-hover-text: 173 186 199;--nav-item-active-bg: 47 117 213;--nav-item-active-text: 255 255 255;--calendar-bg: 43 49 55;--calendar-border: 55 62 71;--calendar-header-bg: 36 41 46;--calendar-header-text: 173 186 199;--calendar-day-bg: 36 41 46;--calendar-day-hover: 47 53 59;--calendar-today-bg: 58 65 73;--table-bg: 43 49 55;--table-border: 55 62 71;--table-header-bg: 36 41 46;--table-header-text: 173 186 199;--table-row-hover: 47 53 59;--table-row-even: 43 49 55;--table-row-odd: 36 41 46;--background: 210 12% 16%;--foreground: 210 17% 98%;--card: 210 12% 19%;--card-foreground: 210 17% 98%;--popover: 212 11% 22%;--popover-foreground: 210 17% 98%;--primary: 210 19% 73%;--primary-foreground: 210 12% 16%;--secondary: 214 13% 25%;--secondary-foreground: 210 17% 98%;--muted: 210 11% 21%;--muted-foreground: 210 10% 51%;--accent: 212 100% 67%;--accent-foreground: 0 0% 100%;--accent-solid: 215 98% 61%;--accent-solid-hover: 212 100% 67%;--accent-solid-foreground: 0 0% 100%;--destructive: 0 63% 40%;--destructive-foreground: 210 17% 98%;--border: 214 13% 25%;--input: 214 13% 25%;--ring: 212 100% 67%;--sidebar-background: 210 12% 19%;--sidebar-foreground: 210 10% 51%;--sidebar-primary: 210 17% 98%;--sidebar-primary-foreground: 210 12% 16%;--sidebar-accent: 210 11% 21%;--sidebar-accent-foreground: 210 17% 98%;--sidebar-border: 214 13% 25%;--sidebar-ring: 212 100% 67%}html.noir #lp-hero{--color-primary: 200 200 200;--color-secondary: 138 138 138;--color-accent: 240 240 240;--color-accent-text: 240 240 240;--color-accent-solid: 240 240 240;--color-accent-solid-hover: 210 210 210;--color-accent-solid-foreground: 10 10 10;--color-focus: 95 202 139;--color-success: 95 202 139;--color-warning: 240 180 90;--color-error: 229 104 107;--color-danger-text: 239 138 140;--color-surface: 22 22 22;--color-background: 10 10 10;--color-text-primary: 237 237 237;--color-text-secondary: 168 168 168;--color-text-muted: 138 138 138;--color-border: 38 38 38;--color-border-muted: 28 28 28;--color-border-strong: 58 58 58;--color-hover: 28 28 28;--color-active: 38 38 38;--color-chip-bg: 28 28 28;--color-chip-border: 38 38 38;--nav-bg: 0 0 0;--nav-border: 22 22 22;--nav-item-text: 145 145 145;--nav-item-hover-bg: 22 22 22;--nav-item-hover-text: 210 210 210;--nav-item-active-bg: 22 22 22;--nav-item-active-text: 240 240 240;--calendar-bg: 22 22 22;--calendar-border: 38 38 38;--calendar-header-bg: 10 10 10;--calendar-header-text: 160 160 160;--calendar-day-bg: 10 10 10;--calendar-day-hover: 22 22 22;--calendar-today-bg: 38 38 38;--table-bg: 22 22 22;--table-border: 38 38 38;--table-header-bg: 10 10 10;--table-header-text: 160 160 160;--table-row-hover: 28 28 28;--table-row-even: 22 22 22;--table-row-odd: 10 10 10;--background: 0 0% 4%;--foreground: 0 0% 93%;--card: 0 0% 9%;--card-foreground: 0 0% 93%;--popover: 0 0% 9%;--popover-foreground: 0 0% 93%;--primary: 0 0% 94%;--primary-foreground: 0 0% 4%;--secondary: 0 0% 15%;--secondary-foreground: 0 0% 85%;--muted: 0 0% 11%;--muted-foreground: 0 0% 54%;--accent: 0 0% 94%;--accent-foreground: 0 0% 4%;--accent-solid: 0 0% 94%;--accent-solid-hover: 0 0% 82%;--accent-solid-foreground: 0 0% 4%;--destructive: 359 71% 65%;--destructive-foreground: 0 0% 4%;--border: 0 0% 15%;--input: 0 0% 15%;--ring: 145 50% 58%;--sidebar-background: 0 0% 0%;--sidebar-foreground: 0 0% 57%;--sidebar-primary: 0 0% 94%;--sidebar-primary-foreground: 0 0% 4%;--sidebar-accent: 0 0% 9%;--sidebar-accent-foreground: 0 0% 94%;--sidebar-border: 0 0% 9%;--sidebar-ring: 145 50% 58%}#lp-hero{background-color:rgb(var(--color-background));color:rgb(var(--color-text-primary));font-family:Inter,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;font-weight:400;line-height:1.6;transition:background-color .3s ease,color .3s ease}#lp-hero, #lp-hero{overflow-x:hidden;max-width:100vw}@supports (overflow-x: clip){#lp-hero, #lp-hero{overflow-x:clip;max-width:none}}#lp-hero button, #lp-hero a, #lp-hero [role=button]{touch-action:manipulation}#lp-hero h1, #lp-hero h2{font-weight:600;color:rgb(var(--color-text-primary));font-family:Inter,sans-serif;transition:color .3s ease}@media(prefers-contrast:high){#lp-hero{--color-text-primary: 0 0 0;--color-background: 255 255 255}html.dark #lp-hero{--color-text-primary: 255 255 255;--color-background: 0 0 0}}#lp-hero [data-slot=input], #lp-hero [data-slot=textarea], #lp-hero [data-slot=select-trigger]{border-radius:var(--radius)!important;border-width:1px!important;outline:2px solid transparent!important;outline-offset:2px!important;transition-property:all!important;transition-timing-function:cubic-bezier(.4,0,.2,1)!important;transition-duration:.15s!important;border-color:rgb(var(--color-border))!important}#lp-hero [data-state=open][data-slot=select-trigger]{outline:2px solid transparent!important;outline-offset:2px!important;--tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color) !important;--tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(0px + var(--tw-ring-offset-width)) var(--tw-ring-color) !important;box-shadow:var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow, 0 0 #0000)!important;--tw-ring-offset-width: 0px !important;border-color:rgb(var(--color-accent))!important;box-shadow:0 0 0 1px rgb(var(--color-accent))!important}#lp-hero .mx-auto{margin-left:auto;margin-right:auto}#lp-hero .mb-10{margin-bottom:2.5rem}#lp-hero .mb-2{margin-bottom:.5rem}#lp-hero .mb-4{margin-bottom:1rem}#lp-hero .mb-5{margin-bottom:1.25rem}#lp-hero .mt-12{margin-top:3rem}#lp-hero .flex{display:flex}#lp-hero .inline-flex{display:inline-flex}#lp-hero .min-h-\[100dvh\]{min-height:100dvh}#lp-hero .max-w-3xl{max-width:48rem}#lp-hero .list-disc{list-style-type:disc}#lp-hero .items-center{align-items:center}#lp-hero .gap-2{gap:.5rem}#lp-hero .space-y-2>:not([hidden])~:not([hidden]){--tw-space-y-reverse: 0;margin-top:calc(.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.5rem * var(--tw-space-y-reverse))}#lp-hero .space-y-3>:not([hidden])~:not([hidden]){--tw-space-y-reverse: 0;margin-top:calc(.75rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.75rem * var(--tw-space-y-reverse))}#lp-hero .rounded-2xl{border-radius:1rem}#lp-hero .rounded-xl{border-radius:.75rem}#lp-hero .border{border-width:1px}#lp-hero .border-b{border-bottom-width:1px}#lp-hero .border-white\/10{border-color:#ffffff1a}#lp-hero .bg-white{--tw-bg-opacity: 1;background-color:rgb(255 255 255 / var(--tw-bg-opacity, 1))}#lp-hero .bg-white\/5{background-color:#ffffff0d}#lp-hero .bg-gradient-to-br{background-image:linear-gradient(to bottom right,var(--tw-gradient-stops))}#lp-hero .from-slate-900{--tw-gradient-from: #0f172a var(--tw-gradient-from-position);--tw-gradient-to: rgb(15 23 42 / 0) var(--tw-gradient-to-position);--tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to)}#lp-hero .via-slate-800{--tw-gradient-to: rgb(30 41 59 / 0) var(--tw-gradient-to-position);--tw-gradient-stops: var(--tw-gradient-from), #1e293b var(--tw-gradient-via-position), var(--tw-gradient-to)}#lp-hero .to-slate-900{--tw-gradient-to: #0f172a var(--tw-gradient-to-position)}#lp-hero .p-6{padding:1.5rem}#lp-hero .px-4{padding-left:1rem;padding-right:1rem}#lp-hero .px-5{padding-left:1.25rem;padding-right:1.25rem}#lp-hero .py-12{padding-top:3rem;padding-bottom:3rem}#lp-hero .py-2\.5{padding-top:.625rem;padding-bottom:.625rem}#lp-hero .pb-2{padding-bottom:.5rem}#lp-hero .pl-5{padding-left:1.25rem}#lp-hero .text-center{text-align:center}#lp-hero .text-3xl{font-size:1.875rem;line-height:2.25rem}#lp-hero .text-lg{font-size:1.125rem;line-height:1.75rem}#lp-hero .text-sm{font-size:.875rem;line-height:1.25rem}#lp-hero .text-xl{font-size:1.25rem;line-height:1.75rem}#lp-hero .font-bold{font-weight:700}#lp-hero .font-semibold{font-weight:600}#lp-hero .leading-relaxed{line-height:1.625}#lp-hero .text-blue-400{--tw-text-opacity: 1;color:rgb(96 165 250 / var(--tw-text-opacity, 1))}#lp-hero .text-slate-300{--tw-text-opacity: 1;color:rgb(203 213 225 / var(--tw-text-opacity, 1))}#lp-hero .text-slate-400{--tw-text-opacity: 1;color:rgb(148 163 184 / var(--tw-text-opacity, 1))}#lp-hero .text-slate-900{--tw-text-opacity: 1;color:rgb(15 23 42 / var(--tw-text-opacity, 1))}#lp-hero .text-white{--tw-text-opacity: 1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}#lp-hero .transition-colors{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}#lp-hero .transition-transform{transition-property:transform;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}#lp-hero ::-webkit-scrollbar{width:8px;height:8px}#lp-hero ::-webkit-scrollbar-track{background:transparent}#lp-hero ::-webkit-scrollbar-thumb{background:rgb(var(--color-accent) / .2);border-radius:20px;border:2px solid transparent;background-clip:content-box}html.dark #lp-hero ::-webkit-scrollbar-thumb{background:rgb(var(--color-accent) / .3);background-clip:content-box}#lp-hero [data-sonner-toaster]{--border-radius: 16px}#lp-hero [data-sonner-toast]{border-radius:16px!important;border-width:1.5px!important;border-style:solid!important;font-family:Inter,system-ui,sans-serif!important}#lp-hero [data-sonner-toast] [data-icon]{width:32px!important;height:32px!important;min-width:32px!important;border-radius:50%!important;display:flex!important;align-items:center!important;justify-content:center!important;flex-shrink:0!important}#lp-hero [data-sonner-toast] [data-close-button]{background:transparent!important;border:1px solid transparent!important;opacity:.45!important;transition:opacity .15s!important;color:inherit!important}#lp-hero [data-sonner-toast][data-type=success]{background:#ecfdf5!important;border-color:#10b9818c!important;box-shadow:0 6px 24px #10b98124,0 2px 6px #10b9810f!important}#lp-hero [data-sonner-toast][data-type=success] [data-title]{color:#064e3b!important}#lp-hero [data-sonner-toast][data-type=success] [data-description]{color:#065f46!important}#lp-hero [data-sonner-toast][data-type=success] [data-icon]{background:#10b9812e!important;color:#059669!important}#lp-hero [data-sonner-toast][data-type=error]{background:#fef2f2!important;border-color:#ef44448c!important;box-shadow:0 6px 24px #ef444424,0 2px 6px #ef44440f!important}#lp-hero [data-sonner-toast][data-type=error] [data-title]{color:#7f1d1d!important}#lp-hero [data-sonner-toast][data-type=error] [data-description]{color:#991b1b!important}#lp-hero [data-sonner-toast][data-type=error] [data-icon]{background:#ef444424!important;color:#dc2626!important}#lp-hero [data-sonner-toast][data-type=info]{background:#eff6ff!important;border-color:#3b82f680!important;box-shadow:0 6px 24px #3b82f624,0 2px 6px #3b82f60f!important}#lp-hero [data-sonner-toast][data-type=info] [data-title]{color:#1e3a8a!important}#lp-hero [data-sonner-toast][data-type=info] [data-description]{color:#1d4ed8!important}#lp-hero [data-sonner-toast][data-type=info] [data-icon]{background:#3b82f624!important;color:#2563eb!important}#lp-hero [data-sonner-toast][data-type=warning]{background:#fffbeb!important;border-color:#f59e0b8c!important;box-shadow:0 6px 24px #f59e0b24,0 2px 6px #f59e0b0f!important}#lp-hero [data-sonner-toast][data-type=warning] [data-title]{color:#78350f!important}#lp-hero [data-sonner-toast][data-type=warning] [data-description]{color:#92400e!important}#lp-hero [data-sonner-toast][data-type=warning] [data-icon]{background:#f59e0b24!important;color:#d97706!important}#lp-hero [data-sonner-toaster][data-sonner-theme=dark] [data-sonner-toast][data-type=success], html.dark #lp-hero [data-sonner-toast][data-type=success]{background:#052e1c!important;border-color:#34d39973!important;box-shadow:0 6px 24px #34d3991f,0 2px 8px #00000059!important}#lp-hero [data-sonner-toaster][data-sonner-theme=dark] [data-sonner-toast][data-type=success] [data-title], html.dark #lp-hero [data-sonner-toast][data-type=success] [data-title]{color:#a7f3d0!important}#lp-hero [data-sonner-toaster][data-sonner-theme=dark] [data-sonner-toast][data-type=success] [data-description], html.dark #lp-hero [data-sonner-toast][data-type=success] [data-description]{color:#6ee7b7!important}#lp-hero [data-sonner-toaster][data-sonner-theme=dark] [data-sonner-toast][data-type=success] [data-icon], html.dark #lp-hero [data-sonner-toast][data-type=success] [data-icon]{background:#34d39926!important;color:#34d399!important}#lp-hero [data-sonner-toaster][data-sonner-theme=dark] [data-sonner-toast][data-type=error], html.dark #lp-hero [data-sonner-toast][data-type=error]{background:#2a0f0f!important;border-color:#f8717166!important;box-shadow:0 6px 24px #f871711f,0 2px 8px #00000059!important}#lp-hero [data-sonner-toaster][data-sonner-theme=dark] [data-sonner-toast][data-type=error] [data-title], html.dark #lp-hero [data-sonner-toast][data-type=error] [data-title]{color:#fecaca!important}#lp-hero [data-sonner-toaster][data-sonner-theme=dark] [data-sonner-toast][data-type=error] [data-description], html.dark #lp-hero [data-sonner-toast][data-type=error] [data-description]{color:#fca5a5!important}#lp-hero [data-sonner-toaster][data-sonner-theme=dark] [data-sonner-toast][data-type=error] [data-icon], html.dark #lp-hero [data-sonner-toast][data-type=error] [data-icon]{background:#f8717126!important;color:#f87171!important}#lp-hero [data-sonner-toaster][data-sonner-theme=dark] [data-sonner-toast][data-type=info], html.dark #lp-hero [data-sonner-toast][data-type=info]{background:#0c1a3a!important;border-color:#60a5fa66!important;box-shadow:0 6px 24px #60a5fa1f,0 2px 8px #00000059!important}#lp-hero [data-sonner-toaster][data-sonner-theme=dark] [data-sonner-toast][data-type=info] [data-title], html.dark #lp-hero [data-sonner-toast][data-type=info] [data-title]{color:#bfdbfe!important}#lp-hero [data-sonner-toaster][data-sonner-theme=dark] [data-sonner-toast][data-type=info] [data-description], html.dark #lp-hero [data-sonner-toast][data-type=info] [data-description]{color:#93c5fd!important}#lp-hero [data-sonner-toaster][data-sonner-theme=dark] [data-sonner-toast][data-type=info] [data-icon], html.dark #lp-hero [data-sonner-toast][data-type=info] [data-icon]{background:#60a5fa26!important;color:#60a5fa!important}#lp-hero [data-sonner-toaster][data-sonner-theme=dark] [data-sonner-toast][data-type=warning], html.dark #lp-hero [data-sonner-toast][data-type=warning]{background:#1c1200!important;border-color:#fbbf2466!important;box-shadow:0 6px 24px #fbbf241a,0 2px 8px #00000059!important}#lp-hero [data-sonner-toaster][data-sonner-theme=dark] [data-sonner-toast][data-type=warning] [data-title], html.dark #lp-hero [data-sonner-toast][data-type=warning] [data-title]{color:#fde68a!important}#lp-hero [data-sonner-toaster][data-sonner-theme=dark] [data-sonner-toast][data-type=warning] [data-description], html.dark #lp-hero [data-sonner-toast][data-type=warning] [data-description]{color:#fcd34d!important}#lp-hero [data-sonner-toaster][data-sonner-theme=dark] [data-sonner-toast][data-type=warning] [data-icon], html.dark #lp-hero [data-sonner-toast][data-type=warning] [data-icon]{background:#fbbf2426!important;color:#fbbf24!important}@media(min-width:640px){#lp-hero .sm\:p-8{padding:2rem}#lp-hero .sm\:px-6{padding-left:1.5rem;padding-right:1.5rem}#lp-hero .sm\:text-4xl{font-size:2.25rem;line-height:2.5rem}}</style>
+  </head>
+  <body>
+    <div id="lp-hero" inert data-locale="en" data-track="contenu"><div class="min-h-[100dvh] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white"><div class="max-w-3xl mx-auto px-4 sm:px-6 py-12"><button class="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-10 group"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left group-hover:-translate-x-1 transition-transform" aria-hidden="true"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg>Back</button><div class="text-3xl sm:text-4xl font-bold mb-2 text-white">About Cosmo</div><p class="text-slate-400 mb-10">A free, all-in-one productivity app.</p><div class="mb-10"><h2 class="text-xl font-bold text-white mb-4 pb-2 border-b border-white/10">Why Cosmo exists</h2><div class="text-slate-300 space-y-3 leading-relaxed"><p>Getting organized in 2026 too often looks like this: a to-do list somewhere, a habits app elsewhere, a calendar in a third tool, and new-year objectives… in a spreadsheet nobody opens again. Each tool is fine, but none of them talk to each other.</p><p>Cosmo starts from a simple conviction: <strong class="text-white">personal productivity rests on four pillars: tasks, habits, time and objectives</strong>, and they only really work when connected. A task gets scheduled in the calendar, a habit feeds an objective, and all of it is measured in one place.</p></div></div><div class="mb-10"><h2 class="text-xl font-bold text-white mb-4 pb-2 border-b border-white/10">What we believe</h2><div class="text-slate-300 space-y-3 leading-relaxed"><ul class="list-disc pl-5 space-y-2"><li><strong class="text-white">Free first.</strong> The core features are free, with no artificial limits. We would rather convince you than lock you in.</li><li><strong class="text-white">Try before you sign up.</strong> The demo opens with no account and no email, pre-filled with 12 months of realistic data. Judge for yourself.</li><li><strong class="text-white">One app, not a patchwork.</strong> Tasks, habits, calendar and objectives are designed together from the start, not bolted on afterwards.</li><li><strong class="text-white">Your data is yours.</strong> Secure storage with Row Level Security, and in demo mode nothing leaves your browser.</li></ul></div></div><div class="mb-10"><h2 class="text-xl font-bold text-white mb-4 pb-2 border-b border-white/10">Cosmo, The Cosmo App or thecosmo?</h2><div class="text-slate-300 space-y-3 leading-relaxed"><p>All three refer to the same app: <strong class="text-white">Cosmo</strong>, available at <strong class="text-white">thecosmo.app</strong>. People also look for us as “Cosmo app”, “The Cosmo” or “thecosmo app”, it&#x27;s always us. Not to be confused with other products of the same name on mobile stores: Cosmo is a web app, with nothing to download, and its only official site is thecosmo.app.</p></div></div><div class="mb-10"><h2 class="text-xl font-bold text-white mb-4 pb-2 border-b border-white/10">Who&#x27;s behind it?</h2><div class="text-slate-300 space-y-3 leading-relaxed"><p>Cosmo is an independent product, built in France by a very small team: no funding round, no aggressive growth hacking, just a product we improve every week by listening to what users tell us.</p><p>A question, a bug, an idea? Write to us: <a href="mailto:contact@thecosmo.app" class="text-blue-400 hover:underline">contact@thecosmo.app</a>. We reply fast.</p></div></div><div class="mt-12 rounded-2xl border border-white/10 bg-white/5 p-6 sm:p-8 text-center"><p class="text-lg font-semibold mb-2">Discover Cosmo in 2 minutes</p><p class="text-slate-400 text-sm mb-5">Tasks, habits, calendar and OKRs. Instant demo, no sign-up.</p><a class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-slate-900 font-semibold hover:bg-slate-200 transition-colors" href="/en/signup" data-discover="true">Commencer gratuitement<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right" aria-hidden="true"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg></a></div></div></div></div>
+    <div id="root">
+      <div id="seo-fallback">
+        <h1>About Cosmo</h1>
+        <p>Cosmo is a free, all-in-one productivity application built in France: tasks, habits, a calendar with time-blocking and OKRs connected in a single ecosystem. An independent product, developed in France.</p>
+
+        <h2>Why Cosmo exists</h2>
+        <p>Most organised people use three or four tools: a task manager, a habit tracker, a calendar, and a spreadsheet for the annual goals they reopen twice a year. Each does its job well, none sees the whole. The result is that underlying goals carry no weight against the urgency of the day, because they are not written anywhere you look every morning.</p>
+        <p>Cosmo came out of that observation. Bringing the four together in one product is not a convenience: it is what lets a quarterly goal come down into concrete tasks, a task receive a real slot in the calendar, and the statistics show the gap between what you are aiming at and what you actually do. None of those links is possible when the data lives in four separate applications.</p>
+
+        <h2>What we have chosen</h2>
+        <ul>
+          <li><strong>Free for the essentials.</strong> Tasks, habits, calendar, OKRs, statistics and task sharing are free, with no credit card and no time-limited trial. Collaboration in particular will stay free: an organisation app that charges you for inviting somebody removes the one thing that makes it useful with other people.</li>
+          <li><strong>Usable in two minutes.</strong> Demo mode opens the complete application, pre-filled with 12 months of realistic data, with no account and no email. You judge an organisation tool loaded, not in front of an empty screen.</li>
+          <li><strong>Mobile first.</strong> Cosmo is designed first for a phone held in one hand, then widened to a desktop screen, not the other way round. Nothing to install: it all works in the browser.</li>
+          <li><strong>Your data belongs to you.</strong> Storage on Supabase with Row Level Security: every row is partitioned to its owner at database level, not just in the interface. In demo mode nothing leaves your browser. Account deletion is permanent and complete, on request from the settings.</li>
+        </ul>
+
+        <h2>Cosmo, The Cosmo App or thecosmo?</h2>
+        <p>All three refer to the same application: Cosmo, available at thecosmo.app. People also look for us as "Cosmo app", "The Cosmo" or "thecosmo app", and that is always us. Several unrelated products carry the name Cosmo (a German radio station, various mobile apps): Cosmo is a web productivity application, with nothing to download, and its only official site is thecosmo.app.</p>
+
+        <h2>Write to us</h2>
+        <p>The project is developed by an independent team, in France. A question, a bug, a feature idea, a press request: write to contact@thecosmo.app, because user feedback genuinely steers the roadmap.</p>
+        <p><a href="/en/">Home</a> · <a href="/en/signup">Create a free account</a> · <a href="/en/blog">Blog</a> · <a href="/en/guide">User guide</a></p>
+        <p><a href="/en/guide">User guide</a> · <a href="/en/for-companies">Cosmo for companies</a> · <a href="/en/blog">Blog</a> · <a href="/en/for-freelancers">For freelancers</a> · <a href="/en/for-students">For students</a> · <a href="/en/for-managers">For managers</a> · <a href="/en/for-teams">For teams</a> · <a href="/en/about">About</a> · <a href="/en/signup">Free sign-up</a> · <a href="/en/login">Sign in</a> · <a href="/en/legal-notice">Legal notice</a> · <a href="/en/privacy-policy">Privacy</a> · <a href="/en/terms">Terms</a> · <a href="mailto:contact@thecosmo.app">contact@thecosmo.app</a></p>
+      </div>
+      <!-- Écran de démarrage — effacé par React au premier render. En prod,
+           prerender.mjs injecte #seo-fallback juste au-dessus. Voir le <style>
+           du <head> pour le pourquoi du 100 % CSS. -->
+      <div id="boot-screen" role="status" aria-label="Chargement de Cosmo">
+        <div class="ring"></div>
+      </div>
+    </div>
+    <!-- Fallback pour les crawlers sans JS — contenu indexable minimal.
+         Retiré de dist/ par prerender.mjs (remplacé par #seo-fallback). -->
+    <!-- `boot.ts` et non `main.tsx` : l'app n'est chargée qu'après la première
+         peinture du prérendu, pour que son JS et sa CSS sortent du chemin du
+         LCP. Pourquoi : en-tête de src/boot.ts. -->
+  </body>
+</html>

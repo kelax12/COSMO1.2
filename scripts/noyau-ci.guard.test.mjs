@@ -45,7 +45,7 @@ describe('ci-noyau.yml : la composition du noyau', () => {
     ['noyau', ['npm run lint', 'npx tsc -b', 'npm run test:coverage\n', 'npm run check:edge-coverage']],
     ['lint-test-build', [
       'npm run i18n:check', 'npm run i18n:scan', 'npm run i18n:pages', 'npm run i18n:identical',
-      'npm run i18n:quality', 'npm run build', 'npm run check:bundle', 'npm run validate:migrations',
+      'npm run i18n:quality', 'npm run build', 'npm run check:bundle', 'npm run check:prerender', 'npm run validate:migrations',
       'npm run check:rls', 'npm run check:legal-journal', 'npm run check:legal\n', 'npm run check:docs',
       'npm run check:commentaires', 'npm run check:faits',
     ]],
