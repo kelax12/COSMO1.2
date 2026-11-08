@@ -8,11 +8,11 @@
 > `.github/workflows/indicateurs.yml` le régénère chaque lundi et le pousse sur `main`.
 > Une valeur introuvable s'écrit « non mesuré », avec sa raison : jamais un chiffre de repli.
 
-Régénéré le **2026-11-08 08:58 UTC**, au commit `6022e0c`. Alertes en cours : **2**.
+Régénéré le **2026-11-08 09:09 UTC**, au commit `b5545e0`. Alertes en cours : **2**.
 
 | # | Indicateur | Valeur | Mesuré le | Source |
 |---|---|---|---|---|
-| 1 | Taux de vert de main (CI noyau) | 83,9 % (26 verts sur 31 runs) | 2026-11-08 | API GitHub Actions, [ci-noyau.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/ci-noyau.yml), branche main |
+| 1 | Taux de vert de main (CI noyau) | 84,4 % (27 verts sur 32 runs) | 2026-11-08 | API GitHub Actions, [ci-noyau.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/ci-noyau.yml), branche main |
 | 2 | Délai de restauration éprouvé (drill mensuel) | 5 s, dernier vert le 2026-11-08 (il y a 0 j) | 2026-11-08 | API GitHub Actions, [restore-drill.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/restore-drill.yml), job drill-auto |
 | 3 | Couverture des parcours critiques | 10 sur 10 parcours (100 %) | 2026-11-08 | scripts/indicateurs.config.json et dossier e2e/ du dépôt |
 | 4 | Âge maximal des secrets | 167 j (SUPABASE_SECRET_KEY, échéance 365 j) ; 13 sans date de rotation connue | 2026-11-07 | journal du dernier run de `Secrets age` (dates vivantes) et .github/secrets-registry.json |
@@ -30,11 +30,11 @@ Elles ouvrent ou mettent à jour l'issue `ci-red` (via `ci-alert.yml`), la liste
 
 ### 1. Taux de vert de main (CI noyau)
 
-- **Valeur** : 83,9 % (26 verts sur 31 runs)
+- **Valeur** : 84,4 % (27 verts sur 32 runs)
 - **Mesuré le** : 2026-11-08
 - **Source** : API GitHub Actions, [ci-noyau.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/ci-noyau.yml), branche main
-- Fenêtre : les 31 derniers runs conclus du `CI noyau` sur `main` (du 2026-11-06 au 2026-11-08), annulés et sautés exclus.
-- Dernier run : vert, https://github.com/kelax12/COSMO1.2/actions/runs/42463879245.
+- Fenêtre : les 32 derniers runs conclus du `CI noyau` sur `main` (du 2026-11-06 au 2026-11-08), annulés et sautés exclus.
+- Dernier run : vert, https://github.com/kelax12/COSMO1.2/actions/runs/42464977440.
 - Seuil d'alerte : moins de 80 %.
 
 ### 2. Délai de restauration éprouvé (drill mensuel)
