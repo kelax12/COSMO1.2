@@ -20,7 +20,7 @@ import { localeStore } from '@/i18n/store';
 //      captured », listée dans `ignoreErrors` (`src/main.tsx`) : les erreurs
 //      d'API étaient jetées à l'entrée ;
 //   3. le détail serveur ne partait que dans un `console.error`, supprimé du
-//      build de production (`vite.config.ts → esbuild.pure`).
+//      build de production (`vite.config.ts → dropConsole`).
 //
 // ❌ Ne JAMAIS revenir à un objet littéral ici. Ce qu'on lance doit être une
 //    `Error` : c'est ce que testent les prédicats en aval, et c'est ce qui

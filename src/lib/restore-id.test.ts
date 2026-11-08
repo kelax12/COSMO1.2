@@ -43,7 +43,7 @@ describe('splitRestore', () => {
 // Un « Annuler » qui rate doit se voir (revue du 2026-09-02)
 //
 // Les cinq hooks se contentaient d'un `console.error`, et le build de
-// production SUPPRIME `console.error` (`vite.config.ts → esbuild.pure`). En
+// production SUPPRIME `console.error` (`vite.config.ts → dropConsole`). En
 // prod, une restauration ratée ne produisait donc rien du tout : la personne
 // repartait en croyant son objet revenu.
 // ═══════════════════════════════════════════════════════════════════

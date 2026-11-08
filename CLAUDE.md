@@ -133,7 +133,7 @@ Détail des options : [`docs/AGENT-AJOUTER-TACHE.md`](./docs/AGENT-AJOUTER-TACHE
 
 ## Stack technique
 
-React 19 + TypeScript 5.5 strict · Vite 7 · React Router 8 (imports depuis `react-router`) ·
+React 19 + TypeScript 5.5 strict · Vite 8 (Rolldown) · React Router 8 (imports depuis `react-router`) ·
 TanStack Query 5 · Supabase 2 · shadcn/ui (Radix + Tailwind 3) · Framer Motion · recharts ·
 FullCalendar · date-fns 3 · zod · Vitest (`*.test.ts` à côté du code) + Playwright (`e2e/`) ·
 Sentry · Vercel. Versions : `package.json`. Ce qu'il ne dit pas :
@@ -164,7 +164,7 @@ Sentry · Vercel. Versions : `package.json`. Ce qu'il ne dit pas :
 **Boucle locale** : `lint` + `typecheck` + `test:changed` (des minutes, pas les 54 min de la
 suite). Le verdict est le **noyau CI** (`ci-noyau.yml`, ~5 min), qui joue tout après le push.
 
-> Le build prod **drope** `console.*` et `debugger` (`vite.config.ts → esbuild.pure/drop`).
+> Le build prod **drope** `console.*` et `debugger` (`vite.config.ts → minify.compress`, Oxc).
 > Les erreurs remontent via Sentry (`VITE_SENTRY_DSN`).
 
 🔴 **Trois règles de lecture, chacune payée d'une erreur réelle :**

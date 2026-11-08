@@ -63,7 +63,7 @@ export function splitRestore<T extends { id: string }>(
 // ═══════════════════════════════════════════════════════════════════
 //
 // Les `useRestoreX` n'avaient qu'un `onError` en `console.error`, supprimé du
-// bundle de production (`esbuild.pure` dans `vite.config.ts`) : une restauration
+// bundle de production (`dropConsole` dans `vite.config.ts`) : une restauration
 // ratée ne produisait ni toast, ni log, ni Sentry, au pire endroit pour un
 // échec muet (la personne vient de dire qu'elle ne voulait PAS supprimer).
 //

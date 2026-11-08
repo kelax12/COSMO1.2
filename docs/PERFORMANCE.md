@@ -165,6 +165,24 @@ Réencodage reproductible : `npm run images:check` (mesure) puis
 
 Les récits datés (les plafonds posés et abaissés du 2026-08-26 au 2026-10-22, les chunks ramenés sous le plafond, le levier `sonner` du 2026-09-11) et les résiduels de l'audit du 2026-05-29 sont dans [`archive/PERFORMANCE-budget-bundle-recits-2026-05-29-au-2026-10-22.md`](./archive/PERFORMANCE-budget-bundle-recits-2026-05-29-au-2026-10-22.md).
 
+### Découpage sous Vite 8 (Rolldown) : groupes priorisés
+
+`manualChunks` est déprécié sous Rolldown. La fonction `chunkFor` de `vite.config.ts` alimente
+`build.rolldownOptions.output.codeSplitting.groups` : un groupe par chunk nommé, avec une priorité
+(`GROUP_PRIORITY`). Le retrait des `console.*` passe par `output.minify.compress` (`dropConsole`,
+`dropDebugger`), Oxc ne reprenant pas `esbuild.pure`.
+
+- 🔴 Un groupe Rolldown aspire par défaut les dépendances de ses modules. Sans priorités, `clsx`
+  (partagé par `cn()` et recharts) part dans `vendor-charts`, qui devient un import statique de
+  l'entrée : chemin critique mesuré à 511,5 ko au passage à Vite 8 (V18.2), contre 314,3 ko avec
+  les priorités. Les socles partagés capturent donc avant les gros chunks lazy.
+- ❌ Ne pas couper l'aspiration (`includeDependenciesRecursively: false`) : les modules partagés
+  tombent alors dans des chunks de page (`LandingPage`, `OrganizationPage`) qui entrent dans le
+  chemin critique (515,7 ko mesurés).
+- ⚠️ Suite ouverte : le chemin critique compte 43 chunks (8 sous Rollup). Rolldown sort en petits
+  chunks communs les modules partagés entre l'entrée et les pages lazy. À mesurer en conditions
+  réelles (Lighthouse), puis essayer `codeSplitting.experimentalInlineCommonChunks`.
+
 ## Ce que coûte une ouverture d'application
 
 **29 requêtes REST au chargement, ramenées à 21 le 2026-08-27.** Le compte vient des

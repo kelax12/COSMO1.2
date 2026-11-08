@@ -120,7 +120,7 @@ export default defineConfig(({ mode }) => ({
         ? [
             {
               find: /^@\/modules\/billing\/premium-config$/,
-              replacement: path.resolve(__dirname, './e2e/stubs/premium-config.e2e-stub.ts'),
+              replacement: path.resolve(import.meta.dirname, './e2e/stubs/premium-config.e2e-stub.ts'),
             },
           ]
         : []),
@@ -128,7 +128,7 @@ export default defineConfig(({ mode }) => ({
       // meme remplacement de prefixe. Une expression reguliere ici obligerait a
       // recoller le separateur a la main, et sous Windows a melanger `\` et `/`
       // dans le chemin rendu au scanner d'esbuild.
-      { find: '@', replacement: path.resolve(__dirname, './src') },
+      { find: '@', replacement: path.resolve(import.meta.dirname, './src') },
     ],
   },
   // ─── Un cache de dependances PAR MODE ─────────────────────────────
@@ -144,15 +144,16 @@ export default defineConfig(({ mode }) => ({
   // ⚠️ Ne pas confondre avec un probleme de port : les serveurs demarraient
   // bien, c'est leur cache commun qui les faisait tourner en rond.
   cacheDir: mode === 'e2e-stub' ? 'node_modules/.vite-e2e-stub' : 'node_modules/.vite',
-  esbuild: {
-    drop: ['debugger'],
-    // En prod, drop tous les console.* — évite le leak de stack traces / IDs
-    // (cf. faille §14). Pour debug en local, utiliser le serveur dev (vite).
-    pure: ['console.log', 'console.debug', 'console.info', 'console.warn', 'console.error'],
-  },
   build: {
-    rollupOptions: {
+    rolldownOptions: {
       output: {
+        // En prod, drop tous les console.* — évite le leak de stack traces / IDs
+        // (cf. faille §14). Pour debug en local, utiliser le serveur dev (vite).
+        // Vite 8 minifie avec Oxc : c'est ici que vivent les anciens
+        // `esbuild.drop` / `esbuild.pure`, qu'Oxc ne reprend pas.
+        minify: {
+          compress: { dropConsole: true, dropDebugger: true },
+        },
         // Audit perf 2026-05-29 — chunking strategy revised. Goals:
         // 1. Isolate `recharts` (was bleeding 321 kB into auto-split
         //    chunks shared by Landing/Dashboard/Statistics). Now lazy and
@@ -161,140 +162,178 @@ export default defineConfig(({ mode }) => ({
         //    main entry — both are bulky and were defaulting to `index`.
         // 3. Split `react-router` from `react`/`react-dom` to parallelize
         //    over HTTP/2.
-        manualChunks(id) {
-          if (id.includes('node_modules/react-router')) {
-            return 'vendor-router';
-          }
-          // 🔴 Les trois chemins finissent par `/`, et ce n'est pas du style.
-          // Sans lui, `node_modules/react` attrapait AUSSI `react-day-picker`,
-          // `react-redux` (recharts), `react-remove-scroll`, `react-is`,
-          // `react-style-singleton`, et Rollup y hissait leurs dépendances
-          // (`date-fns` 4 de react-day-picker, `@date-fns/tz`, `use-sidecar`…).
-          // Tout ça partait dans `vendor-react`, donc dans le CHEMIN CRITIQUE,
-          // pour des modules que seuls des écrans lazy utilisent. Mesuré le
-          // 2026-10-23 à la migration React 19 : chemin critique 328,8 → 302,6 ko
-          // gzip, `vendor-react` 95,4 → 69,2 ko, sans toucher un plafond.
-          if (id.includes('node_modules/react/') ||
-              id.includes('node_modules/react-dom/') ||
-              id.includes('node_modules/scheduler/')) {
-            return 'vendor-react';
-          }
-          // ⚠️ PAS de chunk `vendor-radix`, et c'est délibéré.
-          //
-          // Regrouper les 20+ primitives Radix dans un chunk unique en faisait
-          // un import STATIQUE de l'entrée dès qu'UNE seule était utilisée par
-          // le shell (`TooltipProvider`, monté dans `App.tsx`). Vite préchargeait
-          // alors les 45 ko du lot pour tout visiteur, y compris les 90 % de
-          // primitives qui ne servent que dans une modale de page lazy.
-          //
-          // En laissant Rollup décider, chaque primitive part avec la page qui
-          // l'utilise, et seules celles du shell restent dans l'entrée.
-          //
-          // Mesuré le 2026-08-26 : chemin critique 420,3 → 393,9 ko gzip
-          // (−26,4 ko pour TOUT visiteur), contre +5,5 ko de duplication
-          // répartie sur l'ensemble des chunks de page. On échange 5 ko payés
-          // par quelques-uns contre 26 ko payés par tout le monde.
-          //
-          // 🔴 Ne pas « réoptimiser » en recréant un chunk Radix : ce serait
-          // refaire exactement le bug. `npm run check:bundle` mesure désormais
-          // le chemin critique COMPLET, pas la seule taille de l'entrée, donc
-          // la régression serait attrapée.
-          if (id.includes('node_modules/@radix-ui')) {
-            return undefined;
-          }
-          if (id.includes('node_modules/@fullcalendar')) {
-            return 'vendor-calendar';
-          }
-          if (id.includes('node_modules/framer-motion')) {
-            return 'vendor-animation';
-          }
-          // GSAP réservé à la landing (importé uniquement via src/lib/gsap.ts
-          // depuis LandingPage, déjà React.lazy) → chunk chargé seulement
-          // sur /welcome, zéro impact sur le bundle de l'app connectée.
-          if (id.includes('node_modules/gsap') ||
-              id.includes('node_modules/@gsap')) {
-            return 'vendor-gsap';
-          }
-          // OGL : micro-runtime WebGL (~25 kB gzip) utilisé par UN seul
-          // composant, le fond `LightRays` du hero entreprise, lui-même
-          // React.lazy dans la landing. Chunk séparé pour qu'il ne parte
-          // jamais avec `vendor-gsap` (chargé, lui, dès le track perso).
-          if (id.includes('node_modules/ogl')) {
-            return 'vendor-ogl';
-          }
-          if (id.includes('node_modules/recharts') ||
-              id.includes('node_modules/d3-') ||
-              id.includes('node_modules/victory-vendor')) {
-            return 'vendor-charts';
-          }
-          if (id.includes('node_modules/@supabase')) {
-            return 'vendor-supabase';
-          }
-          // @sentry N'EST PLUS force dans un chunk nomme : il est charge en
-          // import() dynamique (monitoring.ts). Un manualChunk le hissait et
-          // Vite le `modulepreload`ait depuis index.html — donc telecharge
-          // par tout le monde au chargement, ce qui annulait la mise en
-          // differe. Rollup lui donne desormais son propre chunk async.
-          // ⚠️ `clsx` / `tailwind-merge` / `cva` DOIVENT être assignés
-          // explicitement, et c'est le correctif le plus rentable du fichier.
-          //
-          // `cn()` (src/lib/utils.ts) est appelé par presque chaque composant,
-          // donc `clsx` est dans le graphe de l'entrée. Mais recharts l'importe
-          // AUSSI, et un module partagé entre l'entrée et un chunk manuel est
-          // absorbé par le chunk manuel. `clsx` atterrissait donc dans
-          // `vendor-charts` (117 ko gzip), ce qui en faisait un import STATIQUE
-          // de l'entrée : Vite émettait `<link rel="modulepreload">` sur
-          // `vendor-charts` dans `index.html`, et TOUT visiteur téléchargeait
-          // recharts + d3, sur la landing, sur /login, partout, pour une
-          // fonction utilitaire de 500 octets.
-          //
-          // Mesuré le 2026-08-25 : 117,6 ko gzip préchargés pour rien.
-          // Le contrôle qui l'empêche de revenir est `npm run check:bundle`.
-          // 2026-10-24 · SAUF la locale `en-US` (AM-6 de docs/PERFORMANCE.md) : seuls
-          // les visiteurs anglais s'en servent, `loadDateLocale()` (src/i18n/format.ts)
-          // la charge avant le montage. Gardée ici, elle partait chez TOUT visiteur
-          // dans ce chunk du chemin critique, revenu à 4,8 % de son plafond.
-          if (id.includes('node_modules/date-fns/locale/en-US')) return undefined;
-          // Sortis de `vendor-react` (cf. plus haut) : le calendrier et le
-          // verrou de défilement des modales Radix ont chacun leur chunk lazy.
-          // Laissés à Rollup, le second gonflait les barils `index-*` et faisait
-          // passer leur cliquet (90,4 > 89,5 ko).
-          if (id.includes('node_modules/react-day-picker') ||
-              id.includes('node_modules/@date-fns/tz')) {
-            return 'vendor-daypicker';
-          }
-          if (id.includes('node_modules/react-remove-scroll') ||
-              id.includes('node_modules/react-style-singleton') ||
-              id.includes('node_modules/use-callback-ref') ||
-              id.includes('node_modules/use-sidecar') ||
-              id.includes('node_modules/get-nonce') ||
-              id.includes('node_modules/detect-node-es')) {
-            return 'vendor-scroll-lock';
-          }
-          if (id.includes('node_modules/date-fns') ||
-              id.includes('node_modules/lucide-react') ||
-              id.includes('node_modules/clsx') ||
-              id.includes('node_modules/tailwind-merge') ||
-              id.includes('node_modules/class-variance-authority')) {
-            return 'vendor-utils';
-          }
-          // ⚠️ La virtualisation AVANT la règle `@tanstack` : elle n'a rien à
-          // faire dans `vendor-query`, qui est dans le CHEMIN CRITIQUE (préchargé
-          // par index.html pour tout le monde). Seuls deux écrans lazy s'en
-          // servent (tableau de /tasks, tableau Tâches de l'entreprise) ; la
-          // laisser là coûtait ~5 ko gzip à chaque visiteur et a fait déborder
-          // le cliquet de `vendor-query` (18,9 / 18,5, mesuré le 2026-10-03 :
-          // `virtual-core` + `react-virtual` = 48 ko bruts sur 141).
-          if (id.includes('node_modules/@tanstack/react-virtual') ||
-              id.includes('node_modules/@tanstack/virtual-core')) {
-            return 'vendor-virtual';
-          }
-          if (id.includes('node_modules/@tanstack')) {
-            return 'vendor-query';
-          }
-        }
-      }
+        //
+        // Vite 8 (Rolldown) : `manualChunks` est déprécié, la même fonction vit
+        // dans `codeSplitting.groups`. 🔴 `includeDependenciesRecursively:
+        // false` n'est pas un réglage de confort : par défaut, un groupe aspire
+        // les dépendances de ses modules. `clsx`, partagé par `cn()` et par
+        // recharts, partait ainsi dans `vendor-charts`, qui devenait un import
+        // statique de l'entrée : chemin critique 304 → 511,5 ko au premier
+        // build Vite 8. C'est le piège décrit plus bas pour `clsx`, que Rollup
+        // ne faisait qu'à la demande et que Rolldown fait par défaut.
+        codeSplitting: {
+          groups: Object.entries(GROUP_PRIORITY).map(([name, priority]) => ({
+            name,
+            priority,
+            test: (id: string) => chunkFor(id) === name,
+          })),
+        },
+      },
     },
     chunkSizeWarningLimit: 400,
   }
 }))
+
+// Ordre de capture des groupes Rolldown : le plus prioritaire capture d'abord
+// ses modules ET leurs dépendances. Les petits socles partagés passent avant
+// les gros chunks lazy, pour qu'un module commun (`clsx`…) ne parte pas avec
+// recharts ou FullCalendar.
+const GROUP_PRIORITY: Record<string, number> = {
+  'vendor-react': 100,
+  'vendor-router': 90,
+  'vendor-utils': 80,
+  'vendor-scroll-lock': 70,
+  'vendor-query': 60,
+  'vendor-virtual': 55,
+  'vendor-supabase': 50,
+  'vendor-animation': 40,
+  'vendor-daypicker': 30,
+  'vendor-calendar': 20,
+  'vendor-charts': 20,
+  'vendor-gsap': 20,
+  'vendor-ogl': 20,
+};
+
+function chunkFor(id: string): string | null | undefined {
+  if (id.includes('node_modules/react-router')) {
+    return 'vendor-router';
+  }
+  // 🔴 Les trois chemins finissent par `/`, et ce n'est pas du style.
+  // Sans lui, `node_modules/react` attrapait AUSSI `react-day-picker`,
+  // `react-redux` (recharts), `react-remove-scroll`, `react-is`,
+  // `react-style-singleton`, et Rollup y hissait leurs dépendances
+  // (`date-fns` 4 de react-day-picker, `@date-fns/tz`, `use-sidecar`…).
+  // Tout ça partait dans `vendor-react`, donc dans le CHEMIN CRITIQUE,
+  // pour des modules que seuls des écrans lazy utilisent. Mesuré le
+  // 2026-10-23 à la migration React 19 : chemin critique 328,8 → 302,6 ko
+  // gzip, `vendor-react` 95,4 → 69,2 ko, sans toucher un plafond.
+  if (id.includes('node_modules/react/') ||
+      id.includes('node_modules/react-dom/') ||
+      id.includes('node_modules/scheduler/')) {
+    return 'vendor-react';
+  }
+  // ⚠️ PAS de chunk `vendor-radix`, et c'est délibéré.
+  //
+  // Regrouper les 20+ primitives Radix dans un chunk unique en faisait
+  // un import STATIQUE de l'entrée dès qu'UNE seule était utilisée par
+  // le shell (`TooltipProvider`, monté dans `App.tsx`). Vite préchargeait
+  // alors les 45 ko du lot pour tout visiteur, y compris les 90 % de
+  // primitives qui ne servent que dans une modale de page lazy.
+  //
+  // En laissant Rollup décider, chaque primitive part avec la page qui
+  // l'utilise, et seules celles du shell restent dans l'entrée.
+  //
+  // Mesuré le 2026-08-26 : chemin critique 420,3 → 393,9 ko gzip
+  // (−26,4 ko pour TOUT visiteur), contre +5,5 ko de duplication
+  // répartie sur l'ensemble des chunks de page. On échange 5 ko payés
+  // par quelques-uns contre 26 ko payés par tout le monde.
+  //
+  // 🔴 Ne pas « réoptimiser » en recréant un chunk Radix : ce serait
+  // refaire exactement le bug. `npm run check:bundle` mesure désormais
+  // le chemin critique COMPLET, pas la seule taille de l'entrée, donc
+  // la régression serait attrapée.
+  if (id.includes('node_modules/@radix-ui')) {
+    return undefined;
+  }
+  if (id.includes('node_modules/@fullcalendar')) {
+    return 'vendor-calendar';
+  }
+  if (id.includes('node_modules/framer-motion')) {
+    return 'vendor-animation';
+  }
+  // GSAP réservé à la landing (importé uniquement via src/lib/gsap.ts
+  // depuis LandingPage, déjà React.lazy) → chunk chargé seulement
+  // sur /welcome, zéro impact sur le bundle de l'app connectée.
+  if (id.includes('node_modules/gsap') ||
+      id.includes('node_modules/@gsap')) {
+    return 'vendor-gsap';
+  }
+  // OGL : micro-runtime WebGL (~25 kB gzip) utilisé par UN seul
+  // composant, le fond `LightRays` du hero entreprise, lui-même
+  // React.lazy dans la landing. Chunk séparé pour qu'il ne parte
+  // jamais avec `vendor-gsap` (chargé, lui, dès le track perso).
+  if (id.includes('node_modules/ogl')) {
+    return 'vendor-ogl';
+  }
+  if (id.includes('node_modules/recharts') ||
+      id.includes('node_modules/d3-') ||
+      id.includes('node_modules/victory-vendor')) {
+    return 'vendor-charts';
+  }
+  if (id.includes('node_modules/@supabase')) {
+    return 'vendor-supabase';
+  }
+  // @sentry N'EST PLUS force dans un chunk nomme : il est charge en
+  // import() dynamique (monitoring.ts). Un manualChunk le hissait et
+  // Vite le `modulepreload`ait depuis index.html — donc telecharge
+  // par tout le monde au chargement, ce qui annulait la mise en
+  // differe. Rollup lui donne desormais son propre chunk async.
+  // ⚠️ `clsx` / `tailwind-merge` / `cva` DOIVENT être assignés
+  // explicitement, et c'est le correctif le plus rentable du fichier.
+  //
+  // `cn()` (src/lib/utils.ts) est appelé par presque chaque composant,
+  // donc `clsx` est dans le graphe de l'entrée. Mais recharts l'importe
+  // AUSSI, et un module partagé entre l'entrée et un chunk manuel est
+  // absorbé par le chunk manuel. `clsx` atterrissait donc dans
+  // `vendor-charts` (117 ko gzip), ce qui en faisait un import STATIQUE
+  // de l'entrée : Vite émettait `<link rel="modulepreload">` sur
+  // `vendor-charts` dans `index.html`, et TOUT visiteur téléchargeait
+  // recharts + d3, sur la landing, sur /login, partout, pour une
+  // fonction utilitaire de 500 octets.
+  //
+  // Mesuré le 2026-08-25 : 117,6 ko gzip préchargés pour rien.
+  // Le contrôle qui l'empêche de revenir est `npm run check:bundle`.
+  // 2026-10-24 · SAUF la locale `en-US` (AM-6 de docs/PERFORMANCE.md) : seuls
+  // les visiteurs anglais s'en servent, `loadDateLocale()` (src/i18n/format.ts)
+  // la charge avant le montage. Gardée ici, elle partait chez TOUT visiteur
+  // dans ce chunk du chemin critique, revenu à 4,8 % de son plafond.
+  if (id.includes('node_modules/date-fns/locale/en-US')) return undefined;
+  // Sortis de `vendor-react` (cf. plus haut) : le calendrier et le
+  // verrou de défilement des modales Radix ont chacun leur chunk lazy.
+  // Laissés à Rollup, le second gonflait les barils `index-*` et faisait
+  // passer leur cliquet (90,4 > 89,5 ko).
+  if (id.includes('node_modules/react-day-picker') ||
+      id.includes('node_modules/@date-fns/tz')) {
+    return 'vendor-daypicker';
+  }
+  if (id.includes('node_modules/react-remove-scroll') ||
+      id.includes('node_modules/react-style-singleton') ||
+      id.includes('node_modules/use-callback-ref') ||
+      id.includes('node_modules/use-sidecar') ||
+      id.includes('node_modules/get-nonce') ||
+      id.includes('node_modules/detect-node-es')) {
+    return 'vendor-scroll-lock';
+  }
+  if (id.includes('node_modules/date-fns') ||
+      id.includes('node_modules/lucide-react') ||
+      id.includes('node_modules/clsx') ||
+      id.includes('node_modules/tailwind-merge') ||
+      id.includes('node_modules/class-variance-authority')) {
+    return 'vendor-utils';
+  }
+  // ⚠️ La virtualisation AVANT la règle `@tanstack` : elle n'a rien à
+  // faire dans `vendor-query`, qui est dans le CHEMIN CRITIQUE (préchargé
+  // par index.html pour tout le monde). Seuls deux écrans lazy s'en
+  // servent (tableau de /tasks, tableau Tâches de l'entreprise) ; la
+  // laisser là coûtait ~5 ko gzip à chaque visiteur et a fait déborder
+  // le cliquet de `vendor-query` (18,9 / 18,5, mesuré le 2026-10-03 :
+  // `virtual-core` + `react-virtual` = 48 ko bruts sur 141).
+  if (id.includes('node_modules/@tanstack/react-virtual') ||
+      id.includes('node_modules/@tanstack/virtual-core')) {
+    return 'vendor-virtual';
+  }
+  if (id.includes('node_modules/@tanstack')) {
+    return 'vendor-query';
+  }
+  return null;
+}
