@@ -55,6 +55,20 @@ Les ajouter à un audit existant aurait noyé la question sous un autre sujet.
   supprime l'utilisateur, les en-têtes et les cookies. Le test rejoue un évènement rempli d'un e-mail,
   d'un UUID et d'un jeton et exige qu'aucun ne survive, avec un témoin qui prouve que l'évènement brut
   les contient.
+- **Sentry 11 (V18.2)** : deux reculs muets écartés dans `init`. `traceLifecycle: 'static'`, parce
+  que le mode diffusé par défaut ignore `beforeSendTransaction`, donc `scrubTransaction`.
+  `dataCollection` posé clé par clé à faux, parce qu'absent il vaut tout collecter ; seuls
+  `User-Agent` et `Referer`, déjà envoyés sous `sendDefaultPii: false` en v10, passent. Garde :
+  `sentry-tracing.test.ts`. `attachStacktrace: false` garde les groupes d'incidents de la v10.
+  **Poids** : avec l'`init` du SDK, `sentry-client` passait de 49,4 à 53,9 ko gzip (plafond 52,0,
+  non relevé), parce que la v11 ajoute trois intégrations par défaut référencées en dur. `init` est
+  donc écrit dans `sentry-client.ts` : un `BrowserClient` avec la liste explicite des intégrations
+  de la v10, moins `functionToString`, et sans les étiquettes `sentry.javascript.react` et contexte
+  `react`. Mesuré le 2026-11-08 : 51 987 octets, 13 sous le plafond. La prochaine hausse de ce
+  chunk demande un retrait, pas un plafond relevé. Liste figée par `sentry-client.test.ts`.
+  Le passage au mode diffusé (`beforeSendSpan`) reste à faire avant la v12, qui retire
+  `beforeSendTransaction`. Les Edge Functions restent sur `@sentry/deno` 10 : la monter demande un
+  redéploiement (`check:edge`).
 - **Propagation** : inchangée, `PostgREST` et `Auth` seulement, jamais `/functions/v1/`
   (`sentry-propagation.guard.test.ts`, M-32). Les spans des appels vers les Edge Functions existent
   côté navigateur, sans en-tête de trace.

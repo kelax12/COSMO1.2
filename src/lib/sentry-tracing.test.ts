@@ -149,4 +149,17 @@ describe('main.tsx : le branchement', () => {
     expect(main).toContain('scrubTransaction(scrubEvent(event), readConsent())');
     expect(main).toContain('parameterizeRoute(options.name)');
   });
+  // Sentry 11 : en mode diffusé (défaut), `beforeSendTransaction` est ignoré, et
+  // un `dataCollection` absent vaut tout collecter. Les deux reculs sont muets.
+  it('Sentry 11 : modèle à transactions gardé, collecte automatique coupée', () => {
+    expect(main).toContain("traceLifecycle: 'static'");
+    expect(main).not.toMatch(/^\s*sendDefaultPii:/m);
+    const block = main.match(/dataCollection:\s*\{([\s\S]*?)\n {4}\},/);
+    expect(block).not.toBeNull();
+    for (const key of ['userInfo', 'cookies', 'urlQueryParams', 'databaseQueryData', 'queues', 'stackFrameVariables']) {
+      expect(block?.[1]).toContain(`${key}: false`);
+    }
+    expect(block?.[1]).toContain('httpBodies: []');
+    expect(block?.[1]).toContain('response: false');
+  });
 });
