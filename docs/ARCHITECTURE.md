@@ -165,8 +165,8 @@ du périmètre (`src/` hors tests, `ui/`, `showcase/`, `generated/`) :
 Pour comparer, la complexité au-dessus de 15 aurait mis **162** fonctions au cliquet, au-dessus
 de 10, **321** ; la longueur au-dessus de 100, **239**.
 
-**Par module** (graphe d'imports statiques de `npm run check:cycles` : 1 087 modules,
-3 956 arêtes, 0 non résolu, 0 cycle) :
+**Par module** (graphe d'imports statiques de `npm run check:cycles` : 0 non résolu,
+0 cycle exigés) :
 
 | Fan-out (importe le plus) | | Fan-in (le plus importé) | |
 |---|---|---|---|
