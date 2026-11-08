@@ -1,7 +1,4 @@
-<!-- note-audit: couvert-par=ARCHITECTURE.md -->
 # Carte des modules · où est quoi
-
-> **Note d'audit** — carte de navigation, pas un audit : elle dit où se trouve quoi, et ses défauts sont ceux de l'architecture, que `ARCHITECTURE.md` note.
 
 **Relevée le 2026-10-11** dans `src/modules/*` : fichiers listés, tables lues par les appels
 `.from('…')` et RPC comptées par `.rpc('…')`. Les **règles** des modules (double mode,

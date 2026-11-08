@@ -1,6 +1,3 @@
-<!-- note-audit: non-note -->
-> **Note d'audit** — non noté : c'est un support commercial qui recense ce que fait le code, aucun audit ne le note.
-
 # Mode entreprise : liste des fonctionnalités
 
 Pour les commerciaux. Sert à présenter le mode entreprise et à répondre aux questions en rendez-vous.

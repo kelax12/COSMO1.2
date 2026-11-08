@@ -1,15 +1,3 @@
-<!-- note-audit: non-note -->
-<!--
-  🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
-  Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
-  ni baisser, donc **rien ne signalait qu'ils avaient vieilli**.
-  Chaque document de `docs/` déclare donc soit sa note, soit la note qui le
-  couvre, soit qu'il n'est pas noté ET pourquoi.
-  ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
-     une réponse honnête, un chiffre faux ne l'est pas.
--->
-> **Note d'audit** — 🔴 **NON NOTÉ, et c'est le plus coûteux des douze.** Ce document porte les obligations dont le non-respect se paie le plus cher (TVA, droit de la consommation, marque, sous-traitants), et il ne peut donc ni monter ni baisser : **rien ne signale qu'il a vieilli**. Lui inventer une note sans auditer le domaine serait un chiffre faux dans le document qu'on produit en contrôle. Ouvrir cet audit est un geste, pas du code.
-
 # LEGAL.md — obligations légales de COSMO
 
 > **Vivant.** Établi le 2026-08-26 à partir de l'état réel du code, de la base et des comptes
