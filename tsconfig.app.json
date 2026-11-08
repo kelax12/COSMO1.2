@@ -5,6 +5,9 @@
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
+    /* TypeScript 6 ne charge plus tous les @types par défaut (`types` vaut [])
+       : celui de Node était implicite, il devient explicite. */
+    "types": ["node"],
 
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -18,10 +21,10 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
-    /* Alias */
-    "baseUrl": ".",
+    /* Alias. Sans `baseUrl` (déprécié en TypeScript 6, supprimé en 7) :
+       `paths` se résout alors par rapport à ce fichier. */
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     },
 
     /* Linting */
