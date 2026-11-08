@@ -365,7 +365,7 @@
     "src/lib/task-import/todoist.ts": {
       "complexity": [24]
     },
-    "src/modules/admin/repository.ts": {
+    "src/modules/admin/supabase.repository.ts": {
       "complexity": [74, 24]
     },
     "src/modules/auth/AuthContext.tsx": {
