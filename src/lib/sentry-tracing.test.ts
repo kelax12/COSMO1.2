@@ -161,5 +161,7 @@ describe('main.tsx : le branchement', () => {
     }
     expect(block?.[1]).toContain('httpBodies: []');
     expect(block?.[1]).toContain('response: false');
+    // `Referer` peut porter `/invite/:token`, que `scrubEvent` ne relit pas dans les en-têtes.
+    expect(block?.[1]).toContain("request: { allow: ['User-Agent'] }");
   });
 });
