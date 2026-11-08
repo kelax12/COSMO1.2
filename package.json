@@ -78,7 +78,8 @@
     "check:exercice-violation": "node scripts/check-exercice-violation.mjs",
     "check:coffre": "node scripts/check-coffre.mjs",
     "check:peremption-chantiers": "node scripts/check-peremption-chantiers.mjs",
-    "check:fichiers-sensibles": "node scripts/check-fichiers-sensibles.mjs --arbre"
+    "check:fichiers-sensibles": "node scripts/check-fichiers-sensibles.mjs --arbre",
+    "check:captures-relues": "node scripts/check-captures-relues.mjs --plage origin/main..HEAD"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.10",
