@@ -65,6 +65,7 @@
 | `check:peremption-chantiers` | chaque chantier daté (relu 90 j, ou clos) | `AM-2` | `docs/POST-AUDIT-GUIDE.md` |
 | `check:study` | une **étude** décrit encore les versions installées | `C-108` | `docs/MIGRATION-REACT19.md` |
 | `check:fichiers-sensibles` | liste UNIQUE (hook, job CI, `fichiers-suivis`) : `prive/**`, documents, exports, dumps, `.env*` | `SEC-01` | `docs/TESTING.md` |
+| `check:captures-relues` | trailer `Captures-relues: <run>` sur tout commit qui touche les références visuelles | `V15.4` | `docs/TESTING.md` |
 | `check:mail` | SPF / DKIM / DMARC — **pas une gate** | | `docs/DEPLOYMENT.md` |
 | `images:check` | images non optimisées — **pas une gate** | | `docs/PERFORMANCE.md` |
 
@@ -163,7 +164,5 @@ chaque fois, et personne ne l'a ouverte pendant quatre jours.
   ⚠️ **Pas de shebang** sur `scripts/ops-alert.mjs` : son témoin l'importe, et la chaîne Vite/vitest
   ne retire pas le shebang que Node retire. Témoin : `scripts/ops-alert.guard.test.mjs`, 14 cas, vu
   rouge sur **six** sabotages, dont un `deliver` qui répond 204 sans rien poster.
-- ⚠️ **2026-10-16 : les runs `CI` de `main` ne s'annulent plus** (un groupe par commit), donc un rouge
-  peut finir après le vert qui l'a réparé. `scripts/ci-alert-perime.mjs` tait l'issue ET le webhook
-  sur ce seul cas, prouvé par l'API ; ❌ jamais dans le doute (API en panne, contexte vide : l'alerte part).
+- ⚠️ Un rouge périmé ne sonne pas : `scripts/ci-alert-perime.mjs` → `docs/TESTING.md` § Alerte périmée.
 

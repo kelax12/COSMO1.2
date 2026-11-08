@@ -376,15 +376,21 @@ jobs:
   # modifiée par les commits poussés : un fichier ajouté puis retiré dans la
   # même poussée reste dans l'historique public.
   # Node seul, sans `npm ci`. Témoin : `check-fichiers-sensibles.guard.test.mjs`.
+  # Il porte aussi `check-captures-relues` (V15.4), même plage poussée.
   # ──────────────────────────────────────────────────────────────────
   fichiers-sensibles:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # V15.4 : `check-captures-relues --verifier-runs` lit le run cité par un
+      # trailer (API Actions, lecture seule).
+      actions: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # L'historique complet : la plage poussée doit être lisible.
           fetch-depth: 0
-      - name: Fichiers sensibles (arbre et commits pousses)
+      - name: Plage poussee
         env:
           EVENEMENT: ${{ github.event_name }}
           AVANT: ${{ github.event.before }}
@@ -402,9 +408,20 @@ jobs:
           else
             PLAGE="$AVANT..$GITHUB_SHA"
           fi
-          # Pas de repli silencieux : une plage sans base (premier push d'une
-          # branche) est refusée par le script, qui le dit.
-          node scripts/check-fichiers-sensibles.mjs --arbre --plage "$PLAGE"
+          echo "PLAGE=$PLAGE" >> "$GITHUB_ENV"
+      - name: Fichiers sensibles (arbre et commits pousses)
+        # Pas de repli silencieux : une plage sans base (premier push d'une
+        # branche) est refusée par le script, qui le dit.
+        run: node scripts/check-fichiers-sensibles.mjs --arbre --plage "$PLAGE"
+      # V15.4 (FRO-02) · aucune référence visuelle ne change sur `main` sans
+      # le trailer `Captures-relues: <URL du run>`, et ce run doit exister,
+      # venir de `captures-regenerer.yml` et avoir réussi.
+      # Témoin : `check-captures-relues.guard.test.mjs`.
+      - name: Captures relues (trailer et run cite)
+        if: ${{ !cancelled() }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/check-captures-relues.mjs --plage "$PLAGE" --verifier-runs
 
   # ──────────────────────────────────────────────────────────────────
   # Tests RLS d'intégration : démarre une stack Supabase locale (GoTrue +

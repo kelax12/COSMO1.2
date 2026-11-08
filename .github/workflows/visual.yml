@@ -20,7 +20,11 @@
 #      la garde ;
 #   ❌ laisser le job rouge jusqu'à ce que quelqu'un y pense — un rouge
 #      permanent finit ignoré, et il rend muets les jobs voisins ;
-#   ✅ LES PRODUIRE ICI, sur `main`, au premier run, et les COMMITER.
+#   ✅ LES PRODUIRE SUR LE RUNNER LINUX, par `captures-regenerer.yml`, qui les
+#      pousse sur une branche `noyau/captures-<run>` avec un artefact de
+#      revue (V15.4, FRO-02). CE WORKFLOW-CI NE COMMITE PLUS RIEN :
+#      avant la vague 15.4, il régénérait seul et poussait sur `main` quatorze
+#      captures sans que personne ait vu ce qui changeait.
 #
 # ⚠️ CE QUE CE BOOTSTRAP NE GARANTIT PAS, et il faut le dire : la première
 # référence fige l'écran TEL QU'IL EST, défauts compris. Elle ne dit pas que
@@ -32,8 +36,10 @@
 #
 # Il dit « ça a changé », jamais « c'est cassé ». Trois suites, à choisir
 # explicitement :
-#   1. changement VOULU → `Run workflow` avec `regenerer = true`, et dire
-#      dans le commit ce qui a changé et pourquoi ;
+#   1. changement VOULU → lancer `Captures regenerer`, relire son artefact
+#      `captures-revue`, ramener la branche sur `main` avec le trailer
+#      `Captures-relues: <URL du run>` (`e2e/CLAUDE.md`) ; CI noyau refuse
+#      sinon ;
 #   2. changement NON VOULU → c'est une régression, corriger le produit ;
 #   3. BRUIT de rendu → discuter le seuil (`maxDiffPixelRatio`, justifié dans
 #      l'en-tête du spec), et surtout pas écraser la référence.
@@ -60,12 +66,6 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
-    inputs:
-      regenerer:
-        description: 'Régénérer les références et les committer (changement VOULU uniquement)'
-        type: boolean
-        required: false
-        default: false
 
 permissions:
   contents: read
@@ -78,11 +78,6 @@ jobs:
   captures:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    permissions:
-      # Nécessaire au bootstrap et à la régénération, qui committent les
-      # références. Le job n'écrit QUE dans `e2e/__screenshots__/`, et le
-      # commit le dit.
-      contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -98,21 +93,21 @@ jobs:
       # CHROMIUM. 🔴 C-115 : il dépendait de `mobile-safari-warmup`, et ce
       # commentaire affirmait que ce warmup ne demandait pas WebKit. Il tourne
       # sur un iPhone 12 : 19 runs, 19 échecs, aucune référence produite.
+      # Sans référence, rien ne se compare : c'est un ÉCHEC, jamais un bootstrap
+      # silencieux sur `main`. Les produire : `captures-regenerer.yml`.
       - name: Existe-t-il des references ?
         id: ref
         run: |
           set -euo pipefail
           if [ -d e2e/__screenshots__/linux ] && [ -n "$(ls -A e2e/__screenshots__/linux 2>/dev/null)" ]; then
-            echo "existent=true" >> "$GITHUB_OUTPUT"
             echo "$(ls e2e/__screenshots__/linux | wc -l) reference(s) presente(s)."
           else
-            echo "existent=false" >> "$GITHUB_OUTPUT"
-            echo "::notice title=visual::Aucune reference : bootstrap."
+            echo "::error title=visual::Aucune reference : lancer le workflow Captures regenerer, relire son artefact, ramener la branche sur main (e2e/CLAUDE.md)."
+            exit 1
           fi
 
       # ── Comparer ──────────────────────────────────────────────────
       - name: Comparer aux references
-        if: ${{ steps.ref.outputs.existent == 'true' && !inputs.regenerer }}
         run: |
           set -o pipefail
           if npx playwright test --project=visual 2>&1 | tee visual.log; then
@@ -140,47 +135,6 @@ jobs:
             echo "::error title=visual::${LIGNE}"
           done
           exit 1
-
-      # ── Produire ou régénérer ─────────────────────────────────────
-      - name: Produire les references
-        if: ${{ steps.ref.outputs.existent == 'false' || inputs.regenerer }}
-        run: |
-          set -o pipefail
-          # ⚠️ Deux passes. `--update-snapshots` ÉCRIT les références ; la
-          # seconde passe les COMPARE, et c'est elle qui prouve qu'elles sont
-          # reproductibles. Sans ça, on committerait des références qu'un
-          # second run ne saurait pas reproduire — une garde rouge dès le
-          # lendemain, donc désarmée la semaine suivante.
-          npx playwright test --project=visual --update-snapshots 2>&1 | tee visual.log
-          echo '--- seconde passe : les references sont-elles reproductibles ? ---'
-          npx playwright test --project=visual 2>&1 | tee -a visual.log
-
-      - name: Commiter les references
-        if: ${{ (steps.ref.outputs.existent == 'false' || inputs.regenerer) && github.ref == 'refs/heads/main' }}
-        run: |
-          set -euo pipefail
-          # 🔴 C-115 · `git status`, JAMAIS `git diff --quiet` : au bootstrap les
-          # références sont des fichiers NON SUIVIS, que `git diff` ne voit pas.
-          # Les runs du 2026-09-23 ont écrit 19 captures, conclu « aucune
-          # référence modifiée » et fini VERTS sans rien committer : chaque run
-          # suivant repartait en bootstrap, et rien n'était jamais comparé.
-          if [ -z "$(git status --porcelain -- e2e/__screenshots__)" ]; then
-            # Au bootstrap, « rien à committer » n'est pas un succès : c'est
-            # exactement le vert silencieux du 2026-09-23.
-            if [ "${{ steps.ref.outputs.existent }}" = 'false' ]; then
-              echo "::error title=visual::Bootstrap sans aucune reference a committer."
-              exit 1
-            fi
-            echo "Aucune reference modifiee."
-            exit 0
-          fi
-          git config user.name  'github-actions[bot]'
-          git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git add e2e/__screenshots__
-          COMBIEN=$(git diff --cached --name-only | wc -l)
-          git commit -m "chore(visual): ${COMBIEN} reference(s) de capture (C-95)"
-          git pull --rebase --autostash
-          git push
 
       - name: Rapport Playwright
         if: ${{ !cancelled() }}

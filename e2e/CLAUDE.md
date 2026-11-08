@@ -7,6 +7,15 @@
 - ❌ **Ne JAMAIS écrire le total en « N × 2 ».** Les projects ne jouent plus le même ensemble.
   C est exactement comme ça que le précédent (« 62 × 2 = 124 ») est devenu faux, puis a été recopié
   pendant onze jours au lieu d'être remesuré.
+- 🔴 **Les références visuelles ne changent que par `captures-regenerer.yml`, avec revue tracée**
+  (V15.4, FRO-02 : quatorze références régénérées d'un geste, sans regard). `CI noyau` refuse
+  (`check:captures-relues`) tout commit de `main` qui touche `e2e/__screenshots__/**` sans le trailer
+  `Captures-relues: <URL du run>`. Le run doit exister, venir de ce workflow et avoir réussi. Pas de PR.
+  1. Lancer le workflow **Captures regenerer** (Actions, `workflow_dispatch`), avec le motif en une phrase.
+  2. Ouvrir l'artefact `captures-revue` du run, puis `index.html` : avant, après, différence. Un changement non voulu est une régression à corriger dans le produit.
+  3. Ramener la branche : `git fetch origin noyau/captures-<run> && git merge --ff-only FETCH_HEAD && git commit --amend --trailer "Captures-relues: <URL du run>"`, puis `git push origin HEAD:main`.
+  4. Supprimer la branche : `git push origin --delete noyau/captures-<run>`.
+  ⚠️ Le trailer prouve qu'un run a produit un artefact, pas qu'on l'a ouvert. ❌ Jamais de référence produite sous Windows (`{platform}`), jamais de `--update-snapshots` en local.
 - ✅ Le total se RECOMPTE par `npx playwright test --list`, jamais de tête.
 - ⚠️ **Tous les projects ne tournent pas dans tous les workflows** : vérifier
   `.github/workflows/*.yml` avant d'affirmer qu'un parcours est couvert en CI. Relu le
