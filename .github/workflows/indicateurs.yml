@@ -1,0 +1,143 @@
+# ──────────────────────────────────────────────────────────────────────
+# Indicateurs · six mesures, chaque lundi, a la place des notes sur 100.
+#
+# V20.2 du plan de reprise, constat PRO-05 de l'audit externe du 2026-11-06 :
+# 964 sur 1100 attribues par soi-meme pendant que `main` etait rouge 56 runs
+# sur 75. Decision : `docs/adr/0012-indicateurs-mesures-a-la-place-des-notes.md`.
+#
+# CE QUE CA FAIT
+#   · `mesurer` (lecture seule) calcule les six indicateurs par
+#     `scripts/indicateurs.mjs`, ecrit `docs/INDICATEURS.md`, le copie dans le
+#     RESUME du job et en ARTEFACT (declare `sans-prod` dans
+#     `scripts/artefacts-donnees-prod.guard.test.mjs`), puis juge les SEUILS :
+#     `main` sous 80 % de vert, aucun drill vert depuis 35 jours, un secret
+#     au-dela de son echeance, une derive de production, un audit externe en
+#     retard, un indicateur illisible. Un seuil franchi = job ROUGE.
+#   · `publier` (seul job qui ecrit, `contents: write`) pousse le fichier sur
+#     `main`. Il joue MEME quand les seuils ont rougi : le doc doit dire
+#     l'alerte, pas la taire. Poussee refusee (protection de branche posee un
+#     jour) : le resultat reste dans le resume et l'artefact du job `mesurer`,
+#     et ce job echoue, parce qu'un doc qui ne se met plus a jour doit se voir.
+#
+# ALERTE : le rouge part par `ci-alert.yml` (nom `Indicateurs` dans sa liste
+# `workflows:`), donc par l'issue `ci-red` et le webhook ops. Aucun canal neuf.
+#
+# 🔴 AUCUN SECRET DU DEPOT : le `GITHUB_TOKEN` du run suffit (`actions: read`
+# pour les runs et leurs journaux, `issues: read` pour les etiquettes). Les
+# ages de secrets sont lus dans le journal du dernier run de `Secrets age`, qui
+# detient, lui, les jetons.
+# ⚠️ Un commit pousse avec `GITHUB_TOKEN` ne declenche pas `CI noyau` : meme
+# situation que le commit quotidien de `posture.yml`. Le doc ne touche aucun
+# code, mais Vercel n'y trouve pas de tag `ci-vert/<sha>` et n'en construit pas.
+# Cron : lundi 09:03 UTC, apres les gardes du lundi matin (`Secrets age` 06:17,
+# `Fraicheur du drill` 06:19) dont il lit le dernier verdict.
+# ──────────────────────────────────────────────────────────────────────
+name: Indicateurs
+
+on:
+  schedule:
+    - cron: '3 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: indicateurs
+  cancel-in-progress: false
+
+jobs:
+  mesurer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+      issues: read
+    outputs:
+      mesure: ${{ steps.mesure.outcome }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Node est preinstalle sur les runners : pas de `setup-node`, le script
+      # n'a aucune dependance hors bibliotheque standard.
+      - name: Mesurer les six indicateurs
+        id: mesure
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: node scripts/indicateurs.mjs --ecrire --json=indicateurs.json
+
+      # Le resultat sort ICI quoi qu'il arrive ensuite : resume et artefact.
+      - name: Resume du job
+        if: ${{ steps.mesure.outcome == 'success' }}
+        run: |
+          cat docs/INDICATEURS.md >> "$GITHUB_STEP_SUMMARY"
+          mkdir sortie
+          cp docs/INDICATEURS.md indicateurs.json sortie/
+
+      - name: Joindre le resultat
+        if: ${{ steps.mesure.outcome == 'success' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: indicateurs
+          path: sortie/
+          if-no-files-found: error
+          retention-days: 30
+
+      # Apres l'artefact et le resume : un seuil franchi rougit le job sans
+      # priver le doc de son contenu.
+      - name: Seuils d'alerte
+        if: ${{ steps.mesure.outcome == 'success' }}
+        run: node scripts/indicateurs.mjs --seuils=indicateurs.json
+
+  publier:
+    needs: mesurer
+    if: ${{ !cancelled() && needs.mesurer.outputs.mesure == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Seulement depuis main
+        if: ${{ github.ref != 'refs/heads/main' }}
+        run: |
+          echo "::error title=indicateurs::La poussee de docs/INDICATEURS.md ne se joue que sur main (ref : ${{ github.ref }}). Le resultat est dans l'artefact du job mesurer."
+          exit 1
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: indicateurs
+          path: sortie
+
+      - name: Pousser docs/INDICATEURS.md sur main
+        run: |
+          set -euo pipefail
+          cp sortie/INDICATEURS.md docs/INDICATEURS.md
+          if [ -z "$(git status --porcelain -- docs/INDICATEURS.md)" ]; then
+            echo "docs/INDICATEURS.md inchange."
+            exit 0
+          fi
+          git config user.name  'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add docs/INDICATEURS.md
+          git commit -m 'chore(indicateurs): regeneration hebdomadaire de docs/INDICATEURS.md'
+          for essai in 1 2 3; do
+            if git pull --rebase --autostash && git push; then
+              echo "Poussee reussie (essai $essai)."
+              exit 0
+            fi
+            sleep $((essai * 5))
+          done
+          {
+            echo '## Poussee refusee'
+            echo
+            echo 'Le bot n a pas pu pousser `docs/INDICATEURS.md` sur `main` (protection de branche, ou conflit repete).'
+            echo 'Le resultat est ci-dessous et dans l artefact `indicateurs` du job `mesurer`.'
+            echo
+            cat sortie/INDICATEURS.md
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::error title=indicateurs::Poussee de docs/INDICATEURS.md refusee apres 3 essais : le resultat est dans le resume du job et dans l artefact."
+          exit 1

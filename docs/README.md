@@ -135,6 +135,7 @@ Une ligne par document. Les notes sont dans le tableau de bord ci-dessus, pas ic
 | [`../README.md`](../README.md) | Point d'entrée **pour un humain** : ce qu'est COSMO, lancer, tester, déployer |
 | [`../CONTRIBUTING.md`](../CONTRIBUTING.md) · [`../SECURITY.md`](../SECURITY.md) | Conventions et processus de contribution ; politique de divulgation responsable des failles (à ne pas confondre avec [`SECURITY.md`](./SECURITY.md) de ce dossier, qui porte les règles internes) |
 | [`adr/`](./adr/README.md) | Décisions d'architecture déjà prises (Supabase et RLS, poussée sur `main`, i18n, Stripe, modules entreprise, migrations…), une par fichier |
+| [`INDICATEURS.md`](./INDICATEURS.md) · [`propositions/GABARIT.md`](./propositions/GABARIT.md) | Six indicateurs mesurés, datés et sourcés, générés chaque lundi à la place des notes (ADR 0012) ; gabarit de proposition d'une fonctionnalité de plus d'une semaine (ADR 0013) |
 | [`../CLAUDE.md`](../CLAUDE.md) | Point d'entrée : produit, carte de la doc, conventions, garde-fous |
 | `faille.md` (hors dépôt) | Sécurité : **source de vérité**, findings ouverts, ordre de priorité avant prod |
 | [`../a-faire-code.md`](../a-faire-code.md) · `a-faire-manuel.md` (hors dépôt) | Ce qui reste à faire, en code et à la main (consoles, guichets, décisions) |

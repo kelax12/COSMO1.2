@@ -75,6 +75,11 @@ on:
       # métier est de lire la production, son rouge n'a pas d'autre chemin.
       - Erreurs de prod
       - Secrets age
+      # `Indicateurs` (V20.2, 2026-11-08) : hebdomadaire, sans declencheur
+      # humain. Son rouge EST l'alerte : `main` sous 80 % de vert, aucun drill
+      # vert depuis 35 jours, un secret echu, une derive de production, ou la
+      # poussee de `docs/INDICATEURS.md` refusee. Aucun autre chemin.
+      - Indicateurs
       - Signaux SEO
       # `Journal des crons` (ARC-06, 2026-11-07) : un traitement de production
       # planifie dans pg_cron qui n a pas tourne. Son rouge n a pas d autre
