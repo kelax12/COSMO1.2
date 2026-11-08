@@ -18,7 +18,7 @@
 //   · un job du noyau resté en double dans `ci.yml`.
 // ═══════════════════════════════════════════════════════════════════
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { lireEtapes } from './ci-toutes-les-gardes.mjs';
 
@@ -42,11 +42,11 @@ describe('ci-noyau.yml : la composition du noyau', () => {
   });
 
   it.each([
-    ['noyau', ['npm run lint', 'npx tsc -b', 'npm run test:coverage', 'npm run test:coverage:tooling', 'npm run check:edge-coverage']],
+    ['noyau', ['npm run lint', 'npx tsc -b', 'npm run test:coverage\n', 'npm run check:edge-coverage']],
     ['lint-test-build', [
       'npm run i18n:check', 'npm run i18n:scan', 'npm run i18n:pages', 'npm run i18n:identical',
       'npm run i18n:quality', 'npm run build', 'npm run check:bundle', 'npm run validate:migrations',
-      'npm run check:rls', 'npm run check:legal-journal', 'npm run check:docs',
+      'npm run check:rls', 'npm run check:legal-journal', 'npm run check:legal\n', 'npm run check:docs',
       'npm run check:commentaires', 'npm run check:faits',
     ]],
     ['fichiers-sensibles', ['node scripts/check-fichiers-sensibles.mjs --arbre --plage']],
@@ -64,12 +64,23 @@ describe('ci-noyau.yml : la composition du noyau', () => {
       'check:study', 'check:lecteurs-ecran', 'check:exercice-violation',
       'check:peremption-chantiers', 'check:acquisition', 'check:coffre', 'playwright test', 'lhci', 'npm audit',
       'stryker', 'test:mutation', 'check:sabotages', 'test:e2e',
+      // V18.1 (2026-11-08) : plancher de couverture de l'outillage, planifie.
+      'test:coverage:tooling',
     ];
     // Les commandes et les actions, pas les commentaires (l'en-tête nomme ce qui est HORS noyau).
     const lance = jobsDe(NOYAU).flatMap((j) => lireEtapes(NOYAU, j)).map((e) => `${e.run ?? ''} ${e.uses ?? ''}`).join('\n');
     expect(lance).toContain('npm run lint');
     for (const g of interdits) expect(lance, g).not.toContain(g);
     expect(NOYAU).not.toMatch(/^\s+schedule:/m);
+  });
+
+  // V18.1 (2026-11-08) : sortie du noyau, la couverture de `scripts/` reste
+  // jouée chaque semaine. Une garde déplacée qui ne tourne plus nulle part
+  // serait un retrait déguisé.
+  it('TÉMOIN : la couverture de l outillage tourne encore, chaque semaine, dans Sabotages', () => {
+    const sabotages = lire('sabotages.yml');
+    expect(sabotages).toMatch(/^\s+run: npm run test:coverage:tooling$/m);
+    expect(sabotages).toMatch(/^\s+schedule:/m);
   });
 
   it('juge chaque poussée de main et des branches de réparation `noyau/**`, et chaque PR', () => {
@@ -88,7 +99,7 @@ describe('ci-noyau.yml : la composition du noyau', () => {
 describe('ci.yml : la CI étendue ne porte plus aucun job du noyau', () => {
   it('ses jobs sont les non bloquants, et aucun du noyau', () => {
     expect(ETENDUE).toMatch(/^name: CI etendue$/m);
-    expect(jobsDe(ETENDUE)).toEqual(['audit', 'e2e', 'lighthouse']);
+    expect(jobsDe(ETENDUE)).toEqual(['e2e', 'lighthouse']);
   });
 
   // Vague 2.3 : une alerte quand le noyau est rouge, plus aucune pour un job
@@ -108,5 +119,37 @@ describe('ci.yml : la CI étendue ne porte plus aucun job du noyau', () => {
     const deploy = lire('edge-deploy.yml');
     expect(deploy).toMatch(/^\s*workflows: \[CI noyau\]$/m);
     expect(deploy).not.toMatch(/CI etendue/);
+  });
+});
+
+// V18.1 (2026-11-08) : `check:legal` et `check:drift` n'étaient lancés par
+// AUCUN workflow ; le premier a été trouvé rouge à la main, le second ne
+// servait plus. Une garde que rien ne lance ne garde rien : chaque garde de
+// `package.json` est jouée par un workflow, ou nommée ici comme outil manuel.
+describe('package.json : chaque garde est lancée par un workflow', () => {
+  const OUTILS_MANUELS = new Map([
+    ['check:mail', 'SPF / DKIM / DMARC, lu à la main'],
+    ['check:tooling-coverage', 'seconde moitié de test:coverage:tooling, joué par Sabotages'],
+    ['i18n:namespaces', 'mesure importée par src/i18n/lazy-namespaces.guard.test.ts, donc par le noyau'],
+  ]);
+  const scripts = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf8')).scripts;
+  const workflows = readdirSync(join(process.cwd(), '.github/workflows'))
+    .filter((f) => f.endsWith('.yml'))
+    .map((f) => lire(f))
+    .join('\n');
+  const gardes = Object.keys(scripts).filter((n) => /^(check|i18n|validate):/.test(n));
+
+  it.each(gardes)('`%s` tourne quelque part', (nom) => {
+    if (OUTILS_MANUELS.has(nom)) return;
+    const fichier = scripts[nom].match(/scripts\/[\w./-]+\.mjs/)?.[0];
+    // `npm run check:legal` ne doit pas compter pour `check:legal-journal` :
+    // la commande est suivie d'une fin de ligne, d'une espace ou d'un `&`.
+    const lancee = [`npm run ${nom}\n`, `npm run ${nom} `, `npm run ${nom}&`].some((c) => workflows.includes(c))
+      || (fichier !== undefined && workflows.includes(`node ${fichier}`));
+    expect(lancee, `${nom} n'est lancé par aucun workflow : le brancher, ou le déclarer outil manuel`).toBe(true);
+  });
+
+  it('TÉMOIN : un outil manuel déclaré existe encore dans package.json', () => {
+    for (const nom of OUTILS_MANUELS.keys()) expect(scripts[nom], nom).toBeDefined();
   });
 });

@@ -8,10 +8,10 @@
 #
 # Cinq jobs PARALLELES, chacun juge le code du commit :
 #   · `noyau`            lint, `tsc -b`, temoins Edge, tests unitaires +
-#                        couverture, couverture de `scripts/` ;
+#                        couverture (temoins de `scripts/` compris) ;
 #   · `lint-test-build`  gardes statiques (migrations, RLS, cycles, plancher
-#                        de tests, RGPD, sous-traitants, env, journal des
-#                        CGU, `check:docs`), i18n (parite, chaines en dur,
+#                        de tests, RGPD, sous-traitants, env, journal et
+#                        tableau de conformite, `check:docs`), i18n (parite, chaines en dur,
 #                        valeurs recopiees, pluriels, glossaire), build et
 #                        budget de bundle ;
 #   · `fichiers-sensibles` l'arbre ET chaque version poussee ;
@@ -30,7 +30,8 @@
 # ❌ RIEN ICI NE JUGE UNE DATE, UN DOCUMENT QUI VIEILLIT OU UN ETAT EXTERIEUR.
 # Un verdict qui peut changer sans commit rend `main` rouge un matin, et un
 # noyau rouge bloque tout. Hors noyau, non bloquants : `ci.yml` (e2e,
-# Lighthouse, `npm audit`), `visual.yml`, `mutation.yml`, `sabotages.yml`,
+# Lighthouse), `visual.yml`, `mutation.yml`, `sabotages.yml` (dont la
+# couverture de `scripts/`, sortie du noyau le 2026-11-08, V18.1),
 # `gardes-calendrier.yml`.
 # ⚠️ `check:legal-journal` reste : il compare l'empreinte des CGU au journal,
 # donc ne bouge qu'avec un commit (une CGU modifiee sans entree est un defaut
@@ -95,15 +96,6 @@ jobs:
         id: tests
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run test:coverage
-
-      # C-82 · la couverture s'arretait a `src/`. Perimetre et seuils PROPRES
-      # pour `scripts/` (le code qui decide si la CI est verte, dont le
-      # selecteur de `edge-deploy.yml`). Le script verifie d'abord que le
-      # rapport est COMPLET, puis les seuils.
-      - name: Couverture de l outillage (scripts/)
-        id: tooling-coverage
-        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm run test:coverage:tooling
 
       # Son ENTREE est `coverage/`, ecrit par l'etape `tests`, et vitest ne
       # l'ecrit pas quand un test echoue. `if-no-files-found: error` : un envoi
@@ -257,6 +249,15 @@ jobs:
         id: legal-journal
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run check:legal-journal
+
+      # Le bloc de synthese du tableau de conformite de `docs/LEGAL.md` a ete
+      # faux trois fois le 2026-08-26 (total additionne de tete). Garde lancee
+      # par AUCUN workflow jusqu'au 2026-11-08 (V18.1), et trouvee rouge a la
+      # main le 2026-10-31 : une garde que rien ne lance ne garde rien.
+      - name: Tableau de conformite (arithmetique)
+        id: legal-table
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:legal
 
       # C-99, PREMIÈRE MOITIÉ — les pluriels et les locales déclarées. Le
       # moteur retombe clé par clé sur le français : une forme plurielle

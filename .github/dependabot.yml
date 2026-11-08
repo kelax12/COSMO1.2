@@ -7,9 +7,10 @@ updates:
   #
   # `cooldown` : on n'accepte pas une version publiée il y a deux heures.
   # C'est la fenêtre exploitée par les compromissions de mainteneurs (chalk /
-  # debug, sept. 2025), et le gate `npm audit --omit=dev --audit-level=high`
-  # de la CI ne la voit PAS — il se base sur les advisories publiés, or une
-  # version malveillante fraîche n'en a encore aucun. Deux débouchés qu'on
+  # debug, sept. 2025), et les alertes de sécurité (Dependabot, seules depuis
+  # le retrait de `npm audit` de la CI le 2026-11-08) ne la voient PAS : elles
+  # se basent sur les avis publiés, or une version malveillante fraîche n'en a
+  # encore aucun. Deux débouchés qu'on
   # ferme ici : le `postinstall` qui s'exécute sur la machine du dev (avec
   # .env et .env.cosmo-cli à portée), et le bundle client livré par Vercel.
   # 7 jours et pas plus : au-delà on retarderait aussi les correctifs. Les
