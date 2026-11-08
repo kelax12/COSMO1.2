@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config';
+import path from 'path';
 
 // ═══════════════════════════════════════════════════════════════════
 // Config Vitest DÉDIÉE aux tests RLS d'intégration (e2e/rls/*.test.ts).
@@ -11,6 +12,13 @@ import { defineConfig } from 'vitest/config';
 // Prérequis env : SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY.
 // ═══════════════════════════════════════════════════════════════════
 export default defineConfig({
+  // `@/` : les suites de contrat (`e2e/rls/contrats.test.ts`, V12.2) jouent les
+  // VRAIES classes `Supabase…Repository` de `src/`, qui importent par l'alias.
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
   test: {
     environment: 'node',
     include: ['e2e/rls/**/*.test.ts'],

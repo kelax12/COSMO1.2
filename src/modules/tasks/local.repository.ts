@@ -12,6 +12,14 @@ import { applyStatusSync, effectiveStatus } from './status-sync';
 import { localizedDemoTasks } from './local.seed';
 const STORAGE_KEY = 'cosmo_demo_tasks';
 
+/**
+ * Miroir du CHECK `tasks_priority_check` (1 à 5), trouvé absent par la suite de
+ * contrat (V12.2) : la démo acceptait 0 ou 6, que la base refuse.
+ */
+function assertPriorityInRange(priority: number): void {
+  if (!Number.isInteger(priority) || priority < 1 || priority > 5) throw makeApiError('invalid_input');
+}
+
 export class LocalStorageTasksRepository implements ITasksRepository {
   private getTasks(): Task[] {
     const stored = safeParseArray<Task>(safeGetItem(STORAGE_KEY));
@@ -102,6 +110,7 @@ export class LocalStorageTasksRepository implements ITasksRepository {
   // ═══════════════════════════════════════════════════════════════════
 
   async create(input: CreateTaskInput, options?: CreateOptions): Promise<Task> {
+    assertPriorityInRange(input.priority);
     const tasks = this.getTasks();
     // Mig. 214 : même règle que le trigger à l'INSERT. Une tâche née cochée
     // est `done`, une tâche née `done` est cochée.
@@ -125,6 +134,7 @@ export class LocalStorageTasksRepository implements ITasksRepository {
   }
 
   async update(id: string, updates: UpdateTaskInput): Promise<Task> {
+    if (updates.priority !== undefined) assertPriorityInRange(updates.priority);
     const tasks = this.getTasks();
     const index = tasks.findIndex(t => t.id === id);
     
