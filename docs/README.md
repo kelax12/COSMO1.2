@@ -35,72 +35,18 @@ vu rouge sur cinq sabotages.
 
 ---
 
-## 📊 Tableau de bord des notes · dernière notation : 2026-11-06 (964 / 1100)
+## 📊 État de santé : indicateurs mesurés, plus de notes
 
-Chaque note se justifie dans son document, par une entrée datée en tête de sa section « Note ».
-La notation précédente (2026-10-25, 968) et ses motifs se relisent au commit `a99df915` ; le journal
-des notations du 2026-08-25 au 2026-10-25 est archivé :
-[`archive/README-journal-des-notes-2026-08-25-au-10-25.md`](./archive/README-journal-des-notes-2026-08-25-au-10-25.md).
+Les notes sur 100 ont cessé le 2026-11-08 (ADR 0012, [`adr/0012-indicateurs-mesures-a-la-place-des-notes.md`](./adr/0012-indicateurs-mesures-a-la-place-des-notes.md)) :
+une note qu'on s'attribue ne mesure rien. L'état de santé se lit dans [`INDICATEURS.md`](./INDICATEURS.md),
+**six indicateurs mesurés, datés et sourcés**, régénérés chaque lundi (taux de vert de `main`, délai de
+restauration éprouvé, couverture des parcours critiques, âge des secrets, dérive de la production,
+incidents ouverts). Les chiffres du dépôt (tests, migrations, gardes, tables) sont dans
+[`FAITS.md`](./FAITS.md), générés. Les gestes qui restent à Axel sont listés dans
+[`CONTINUITE.md`](./CONTINUITE.md) § « Inventaire des gestes de production ».
 
-| Audit | 10-25 | **11-06** | Δ | Ce qui l'a décidé |
-|---|---|---|---|---|
-| Sécurité (`faille.md`, hors dépôt) | 84 | **87** | **+3** | SV-1, SV-2, SV-3, SV-8 en production (+4) ; CodeQL n° 19 `high` sans décision (−1). Advisors `24 / 87 / 2 / 1`, les objets d'affiliation relus au catalogue et légitimes |
-| [Tests / CI](./TESTING.md) | 96 | **94** | **−2** | `main` rouge 56 runs sur 75 depuis le 10-26 (−1) ; `Sabotages` rouge, cinq témoins non rejoués (−1) ; `Mutation` enfin joué (+1, AM-3) puis rouge à 90,78 % sous 99 (−1) |
-| [Performance](./PERFORMANCE.md) | 97 | **97** | 0 | plafonds `legalTerms` (14 000) et `legal` (3 800) relevés sur arbitrage écrit d'Axel, texte légal sur un chunk paresseux ; `check:bundle` et `lighthouse` verts |
-| [Accessibilité](./ACCESSIBILITY.md) | 84 | **84** | 0 | échéances des lecteurs d'écran tenues (2026-12-15, 2027-01-15) ; `e2e` vert à `ba169ba1` |
-| [UI / UX](./UI-PATTERNS.md) | 87 | **86** | **−1** | `Visual` rouge huit jours (10-29 → 11-06) pendant la nav, deux vagues entreprise, le thème Noir et la facturation ; 14 références régénérées d'un geste, sans revue tracée |
-| [Architecture](./ARCHITECTURE.md) | 94 | **94** | 0 | gardes de structure vertes à `074aa8c8`, module `affiliation` déclaré dans `MODULES.md` |
-| [Scalabilité](./SCALABILITY.md) | 91 | **91** | 0 | 90 tables, base à 30 Mo ; `scalability-volume` vert le 11-03 ; `unused_index` 75 → 57 |
-| [RGPD](./RGPD.md) | 88 | **86** | **−2** | affiliation absente du registre art. 30 (−1) ; signal du détecteur de violation du 10-26 (82 839 lignes lues par un compte en 24 h) jamais trié (−1) |
-| [i18n](./I18N.md) | 90 | **89** | **−1** | `No new hardcoded strings` rouge à `HEAD` (écran de démarrage, `c3294936` et `d938bc6e`) |
-| [SEO](./SEO.md) | 79 | **78** | **−1** | articles du blog à deux `<h1>` et `/guide/` à 682 mots servis (−2) ; `Signaux SEO` joué (+1, AM-4) |
-| [Mobile / DA](./MOBILE.md) | 78 | **78** | 0 | `e2e` mobile vert ; toujours aucune mesure sur appareil réel |
-
-**968 → 964.** Une note monte, celle qui attendait un déploiement. Les cinq qui baissent ont un
-point commun : un instrument qui a parlé sans que personne ne le reprenne (`main`, `Visual`,
-`Sabotages`, `Mutation`, le détecteur de violation). [`OBSERVABILITE.md`](./OBSERVABILITE.md) reste
-**non noté**.
-
-### Mesures de la passe (2026-11-06, `c3294936` puis `d938bc6e`)
-
-| Source | Verdict | Ce qu'elle dit |
-|---|---|---|
-| `CI` de `main` | 🔴 | 56 runs rouges sur 75 depuis le 2026-10-26 ; vert à `074aa8c8`, rouge à `c3294936` et `d938bc6e` (`No new hardcoded strings`) ; dernier `e2e` complet vert à `ba169ba1` |
-| `Edge deploy drift` | 🔴 | `stripe-webhook`, `stripe-org-subscription`, `stripe-org-refund`, `seat-alert`, `renewal-notice` en retard sur les commits du 2026-11-03 ; `edge-deploy.yml` ne déploie que sur une CI verte |
-| `Visual` | ✅ | vert à `c3294936` (relance) et `d938bc6e`, après huit jours rouge |
-| `Mutation` | 🔴 | 90,78 % sous le seuil 99 (2026-11-04) ; vert le 2026-10-28 |
-| `Sabotages` | 🔴 | cinq témoins non rejoués (2026-11-02) |
-| `Posture` | 🔴 | `unused_index` 57 contre 75 : une amélioration ; recalage = geste d'Axel ([`SECURITY.md`](./SECURITY.md) AM-7) |
-| `Secrets age` | 🔴 | rouge depuis sa pose (2026-10-26) : 9 dates de rotation inconnues, une trentaine de secrets hors registre |
-| `restore-drill` | ⚪ | dernier run le 2026-10-15, sans confirmation |
-| `Migration coverage`, `Grille Stripe`, `Erreurs de prod`, `Signaux SEO`, `db-backup`, `Uptime`, `Deploy SHA drift`, `inactive-accounts`, `renewal-notice` | ✅ | |
-| Alertes GitHub | 🟠 | CodeQL **3** (n° 19 `high`, n° 15 et 18 `medium`), Dependabot **1** (développement), secret scanning : la n° 1, connue |
-| Production | | 90 tables toutes sous RLS, 205 policies, ledger 192 (mig. `241`), base 30 Mo ; 2 abonnements d'organisation et 3 lignes au journal de paiement |
-| PR ouvertes | 🟠 | n° 164 (historique KR coupé à 500, COSMO-40 ; 401 sur `get_my_tasks`) depuis le 2026-10-26 et n° 167 (calendrier des échéances) depuis le 2026-10-29, jamais fusionnées ; n° 125 (détecteur de violation) depuis le 2026-10-23 |
-
-### Ce qui reste, et qui le porte
-
-Chaque item qui ne demande que du code part dans une session dédiée, trois à la fois au plus
-(au-delà, ce poste de 8 Go sature). Les autres attendent qu'une place se libère.
-
-| Item | Domaine | Porté par | Modèle · effort |
-|---|---|---|---|
-| Double `<h1>` des articles, `/guide/` à 682 mots, JSON-LD de l'accueil | SEO | session `seo-regressions` (2026-11-06) | Sonnet 5.5 · high |
-| CodeQL n° 15, 18, 19 et Dependabot `minimatch` | Sécurité | session `codeql-triage` (2026-11-06) | Opus 5.5 · high |
-| `Mutation` remonté au-dessus de 99 sans exclure | Tests | session `mutation-score` (2026-11-06) | Sonnet 5.5 · high |
-| `Sabotages` : cinq témoins à rebrancher ; retirer `tmp-webkit-repeat.yml` | Tests | en file d'attente | Sonnet 5.5 · medium |
-| Registre de `Secrets age` : déclarer les secrets présents, retirer les absents | Sécurité | en file d'attente | Sonnet 5.5 · medium |
-| PR n° 164 et n° 167 : vérifier, rebaser, porter sur `main` | Tests, UI | en file d'attente | Sonnet 5.5 · high |
-| `No new hardcoded strings` (écran de démarrage) | i18n | la session voisine qui l'a poussé, prévenue | |
-
-**Gestes d'Axel** (pas du code ; liste tenue, avec ce qui est déjà automatisé, dans
-[`CONTINUITE.md`](./CONTINUITE.md) § « Inventaire des gestes de production », relue le 2026-11-08) : recaler `Posture` (`gh workflow run posture.yml -f regenerer=true`) ;
-dater les rotations des 9 secrets ; trier le signal du détecteur du 2026-10-26 et décider du sort de
-la PR n° 125 ; arbitrer le périmètre de l'affiliation au registre art. 30, qu'une session pourra
-ensuite rédiger depuis la mig. `236` ; jouer `restore-drill` ; les séances VoiceOver (avant le
-2026-12-15) et NVDA (avant le 2027-01-15).
-
----
+Le dernier tableau de bord des notes (2026-11-06, 964 / 1100), ses mesures de passe et la liste de ce
+qui restait ce jour-là sont archivés : [`archive/README-tableau-de-bord-des-notes-2026-08-25-au-2027-01-15.md`](./archive/README-tableau-de-bord-des-notes-2026-08-25-au-2027-01-15.md).
 
 ## Deux statuts, jamais à confondre
 
@@ -116,7 +62,7 @@ vivants et `faille.md` reste la source de vérité sécurité ; aucun lien du d�
 
 ## Documents vivants
 
-Une ligne par document. Les notes sont dans le tableau de bord ci-dessus, pas ici.
+Une ligne par document. L'état de santé est dans [`INDICATEURS.md`](./INDICATEURS.md), pas ici.
 
 | Doc | Périmètre |
 |---|---|
@@ -165,7 +111,7 @@ Rangées par nature. Aucune n'est maintenue.
 - **Sécurité** : [`faille-historique.md`](./archive/faille-historique.md), `faille-jusqua-2026-10-11.md`,
   [`SECURITY-journal-migrations-150-223.md`](./archive/SECURITY-journal-migrations-150-223.md)
   (journal daté des migrations `150` → `240`).
-- **Notes d'audit** : [`README-journal-des-notes-2026-08-25-au-10-25.md`](./archive/README-journal-des-notes-2026-08-25-au-10-25.md).
+- **Notes d'audit et journaux de notes** (retirés des docs le 2026-11-08, ADR 0012) : [`README-journal-des-notes-2026-08-25-au-10-25.md`](./archive/README-journal-des-notes-2026-08-25-au-10-25.md), puis un `<DOC>-journal-des-notes-<dates>.md` par domaine (angles morts, mesures, récits d'incident, notes) : `ACCESSIBILITY-journal-des-notes-2026-08-24-au-2027-01-15.md`, `ARCHITECTURE-journal-des-notes-2026-07-01-au-2026-11-06.md`, `I18N-journal-des-notes-2026-08-14-au-2026-11-06.md`, `MOBILE-journal-des-notes-2026-08-14-au-2026-12-15.md`, `PERFORMANCE-journal-des-notes-2026-08-24-au-2026-11-06.md`, `README-journal-des-notes-2026-08-25-au-10-25.md`, `README-tableau-de-bord-des-notes-2026-08-25-au-2027-01-15.md`, `RGPD-journal-des-notes-2026-04-06-au-2026-11-06.md`, `SCALABILITY-journal-des-notes-2026-08-07-au-2026-11-06.md`, `SEO-journal-des-notes-2026-01-10-au-2026-11-06.md`, `TESTING-journal-des-notes-2026-06-21-au-2026-11-07.md`, `UI-PATTERNS-journal-des-notes-2026-07-23-au-2026-11-06.md`.
 - **Audits datés** : `AUDIT-*`, `audit-*`, `I18N-REVUE-2026-10-23.md`, `DEMO-DATA-EXPORT-2026-08-21.md`.
 - **Plans** : [`ROADMAP-60J-2026-08-28-au-10-26.md`](./archive/ROADMAP-60J-2026-08-28-au-10-26.md)
   (fenêtre close), `PLAN-ACQUISITION-30J-2026-08-13.md`, `a-faire-*` (lignes retirées, à l'identique).
@@ -187,3 +133,9 @@ Rangées par nature. Aucune n'est maintenue.
    sinon il devient un piège silencieux.
 4. **Un doc vivant qui n'a plus rien d'ouvert** part en archive ou disparaît — il ne reste pas à la
    racine à faire croire qu'il y a du travail en cours.
+5. **Un doc vivant décrit l'état courant, sans récit.** Un incident daté, une mesure ancienne ou une
+   chronologie part dans `archive/<DOC>-journal-<dates>.md` ; la règle qu'il fonde garde une ligne de
+   « pourquoi » qui y renvoie. Une décision structurante devient un ADR (`adr/`).
+6. **Un chiffre qui se compte se génère** : il renvoie vers [`FAITS.md`](./FAITS.md) au lieu d'être recopié.
+7. **Aucune note sur 100** (ADR 0012) : `npm run check:docs` la refuse. L'état de santé est dans
+   [`INDICATEURS.md`](./INDICATEURS.md).
