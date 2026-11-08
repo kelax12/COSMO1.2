@@ -965,11 +965,12 @@ Objets relus dans leurs migrations et par `get_advisors` le même jour, noms éc
   de moins d'une heure). Légitimes.
 - `unindexed_foreign_keys` 0 → 3 : **défaut**. `org_settings.default_role_id` (`230`),
   `team_tasks.validator_id` (`233`, parcourue par la suppression de compte),
-  `org_withdrawals.org_id` (`237`). Correctif : mig. **`247`**, écrite, **non appliquée** (geste
-  d'Axel). D'ici là, le compte de 3 est une **dette datée** dans la référence : la garde refuse la
-  quatrième au lieu de rester rouge sur les trois connues. Après application, l'advisor disparaît :
-  recaler (`regenerer`) pour revenir au refus de toute FK sans index. À relire au plus tard le
-  2026-12-07 si la 247 n'est pas appliquée.
+  `org_withdrawals.org_id` (`237`). Correctif : mig. **`247`**. Le compte de 3 a été une **dette
+  datée** dans la référence du 2026-11-07 au 11-08 (la garde refusait la quatrième).
+  ✅ **Soldée le 2026-11-08** : 247 appliquée (ledger `20261108001203`), trois index valides relus
+  dans `pg_indexes`, `unindexed_foreign_keys` absent de `get_advisors` ; référence recalée par
+  `regenerer` (run `42429102316`, commit `00ad13fd`) : l'advisor n'y figure plus, la garde refuse
+  de nouveau toute FK sans index. `unused_index` 56 → 59 : les trois index neufs, pas encore lus.
 
 Comptes recalés par le job `regenerer` du workflow Posture sur `main` (jamais à la main). Témoin :
 « la référence COMMITÉE rougit encore sur un objet de plus » (`gardes-posture.guard.test.mjs`).

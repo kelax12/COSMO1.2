@@ -50,7 +50,8 @@ compilait, la suite passait.
   `243` (`20261107091727`, corps de `can_access_team_project` = fichier, ACL inchangée), `244`
   (`20261107091936`, une SELECT permissive par table ; la prod n'avait déjà plus les doublons).
   `245`-`246` (ARC-06, pg_cron) commitées, **non appliquées** : `DEPLOYMENT.md` § 2sexies.
-  `247` (index des 3 FK nées par 230, 233, 237 ; V9.4) commitée, **non appliquée**.
+  ✅ `247` (index des 3 FK nées par 230, 233, 237 ; V9.4) en prod le 2026-11-08 (`20261108001203`),
+  relue au catalogue : trois index valides, définition = fichier ; `unindexed_foreign_keys` disparu.
   Prochain numéro libre : **`248`**. Journal daté de chaque application (preuves, relectures au catalogue) :
   [`docs/archive/SECURITY-journal-migrations-150-223.md`](../../docs/archive/SECURITY-journal-migrations-150-223.md).
 - ✅ **Forme de preuve à reprendre** : un seul bloc `DO` terminé par `RAISE EXCEPTION`
