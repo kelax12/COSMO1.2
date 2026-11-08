@@ -104,73 +104,7 @@
            donc le contenu SEO visible et on retire le spinner (sinon l'écran
            de chargement tournerait indéfiniment).
          ─────────────────────────────────────────────────────────────────── -->
-    <style>
-      /* 2026-10-21 · Le spinner prend les couleurs EXACTES du thème (fond
-         --color-background, accent --color-accent-solid de src/index.css) :
-         #boot-screen avant React, puis .boot-screen (`BootScreen`, fallback des
-         pages publiques) pendant le chargement de la page. Les deux doivent
-         être indiscernables, sinon on voit un spinner en remplacer un autre.
-         Sans thème enregistré : celui de defaultTheme() (src/lib/theme.ts),
-         donc Clair ou Sombre selon le système, et Gris sous 768 px, d'où la
-         règle mobile APRÈS celle du système. Un thème enregistré arrive par
-         html[data-boot-theme], posé par le script inline puis par applyTheme(). */
-      #boot-screen,.boot-screen{--bs-bg:#f8fafc;--bs-ring:rgba(15,23,42,.14);--bs-accent:#2563eb;position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:var(--bs-bg)}
-      #boot-screen .ring,.boot-screen .ring{width:32px;height:32px;border:3px solid var(--bs-ring);border-top-color:var(--bs-accent);border-radius:50%;animation:boot-spin .7s linear infinite}
-      @keyframes boot-spin{to{transform:rotate(360deg)}}
-      @media (prefers-color-scheme:dark){#boot-screen,.boot-screen{--bs-bg:#0f172a;--bs-ring:rgba(255,255,255,.16);--bs-accent:#3472d8}}
-      @media (max-width:767px){#boot-screen,.boot-screen{--bs-bg:#24292e;--bs-ring:rgba(255,255,255,.16);--bs-accent:#2f75d5}}
-      html[data-boot-theme=light] :is(#boot-screen,.boot-screen){--bs-bg:#f8fafc;--bs-ring:rgba(15,23,42,.14);--bs-accent:#2563eb}
-      html[data-boot-theme=dark] :is(#boot-screen,.boot-screen){--bs-bg:#0f172a;--bs-ring:rgba(255,255,255,.16);--bs-accent:#3472d8}
-      html[data-boot-theme=gris] :is(#boot-screen,.boot-screen){--bs-bg:#24292e;--bs-ring:rgba(255,255,255,.16);--bs-accent:#2f75d5}
-      html[data-boot-theme=noir] :is(#boot-screen,.boot-screen){--bs-bg:#0a0a0a;--bs-ring:rgba(255,255,255,.16);--bs-accent:#f0f0f0}
-      @media (prefers-reduced-motion:reduce){#boot-screen .ring,.boot-screen .ring{animation-duration:2.4s}}
-      #seo-fallback{display:none;font-family:sans-serif;max-width:800px;margin:40px auto;padding:0 20px;color:#1e293b}
-      /* C-116 · 2026-09-29 : une page PRÉRENDUE (prerender.mjs pose
-         data-prerendered sur <html>) peint son contenu au lieu du spinner,
-         jusqu'au premier commit de React. Sans ça FCP = LCP = premier rendu
-         React, 5,4 à 8,3 s en 4G lente. La coquille de l'app (app.html,
-         servie à /dashboard, /tasks…) n'a pas l'attribut et garde le spinner.
-         Styles écrits en entier : le preflight Tailwind remet h1/p à zéro, et
-         le thème mobile sombre colorerait le fond. Police système : attendre
-         la police web retarderait le rendu qu'on cherche à avancer. */
-      html[data-prerendered] #boot-screen{display:none}
-      html[data-prerendered] #seo-fallback{display:block;box-sizing:border-box;max-width:none;min-height:100vh;margin:0;padding:32px max(16px,calc((100% - 760px) / 2));background:#fff;color:#1e293b;font:18px/1.75 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-      /* C-116 · 2026-10-10 : typographie alignée sur celle des articles React
-         (18-19 px, marge 16 px). Le LCP ne change de candidat que pour un
-         élément PLUS GRAND : un fallback en 16 px laissait le paragraphe React
-         reprendre le LCP sur /pour-freelances/ et les articles du blog.
-         L'interligne est volontairement PLUS large que celui des articles
-         (1,75 et 2 contre 1,625 et 1,75) : la police système est plus étroite
-         qu'Inter sous Windows et Android, le même texte y tient en une ligne
-         de moins, et l'élément React redevenait le plus grand. */
-      html[data-prerendered] #seo-fallback .lead{font-size:19px;line-height:2}
-      html[data-prerendered] #seo-fallback h1{font-size:2rem;line-height:1.2;font-weight:700;margin:0 0 16px}
-      html[data-prerendered] #seo-fallback h2{font-size:1.3rem;line-height:1.3;font-weight:600;margin:28px 0 8px}
-      html[data-prerendered] #seo-fallback p,html[data-prerendered] #seo-fallback ul,html[data-prerendered] #seo-fallback ol{margin:0 0 12px}
-      html[data-prerendered] #seo-fallback ul,html[data-prerendered] #seo-fallback ol{padding-left:24px;list-style:revert}
-      html[data-prerendered] #seo-fallback a{color:#4f46e5;text-decoration:underline}
-      html[data-prerendered] #seo-fallback img{max-width:100%;height:auto;border-radius:8px}
-      /* C-116 · 2026-10-10 : les captures du fallback ne sont PAS montrées.
-         React remplace ce contenu quelques instants après, avec ses propres
-         captures : les afficher ici faisait télécharger ~350 ko d'images
-         jetées aussitôt, et Lighthouse mobile les comptait dans le chemin du
-         LCP (5,1 s sur /entreprise-presentation/). Une image `loading=lazy`
-         en display:none n'est jamais demandée. Les robots lisent toujours
-         src et alt ; le <noscript> plus bas les réaffiche sans JS. */
-      html[data-prerendered] #seo-fallback img{display:none}
-      /* 2026-10-21 · Sur la HOME et l'ENTREPRISE, ce premier rendu n'est plus le
-         texte SEO : c'est #lp-hero, une copie du header et du hero du
-         parcours (prerender.mjs, `scripts/capture-landing-hero.mjs`), avec sa
-         propre CSS confinée. Un visiteur voyait un mur de texte, puis un
-         squelette gris, puis la landing. Elle vit HORS de #root, en calque :
-         createRoot ne l'efface pas, et la landing la retire dans l'image où
-         elle peint son hero. Pourquoi et sorties : src/lib/prerender-hero.ts.
-         Le texte SEO reste dans le balisage, pour les robots. */
-      #lp-hero{display:none}
-      html[data-prerendered] #lp-hero{display:block;position:fixed;inset:0;z-index:10000;overflow:hidden;background:#fff}
-      html[data-prerendered] #lp-hero[data-track=entreprise]{background:#08090C}
-      html[data-prerendered] #lp-hero ~ #root #seo-fallback{display:none}
-    </style>
+    <style>#boot-screen,.boot-screen{--bs-bg:#f8fafc;--bs-ring:#0f172a24;--bs-accent:#2563eb;z-index:9999;background:var(--bs-bg);justify-content:center;align-items:center;display:flex;position:fixed;inset:0}#boot-screen .ring,.boot-screen .ring{border:3px solid var(--bs-ring);border-top-color:var(--bs-accent);border-radius:50%;width:32px;height:32px;animation:.7s linear infinite boot-spin}@keyframes boot-spin{to{transform:rotate(360deg)}}@media (prefers-color-scheme:dark){#boot-screen,.boot-screen{--bs-bg:#0f172a;--bs-ring:#ffffff29;--bs-accent:#3472d8}}@media (width<=767px){#boot-screen,.boot-screen{--bs-bg:#24292e;--bs-ring:#ffffff29;--bs-accent:#2f75d5}}html[data-boot-theme=light] :is(#boot-screen,.boot-screen){--bs-bg:#f8fafc;--bs-ring:#0f172a24;--bs-accent:#2563eb}html[data-boot-theme=dark] :is(#boot-screen,.boot-screen){--bs-bg:#0f172a;--bs-ring:#ffffff29;--bs-accent:#3472d8}html[data-boot-theme=gris] :is(#boot-screen,.boot-screen){--bs-bg:#24292e;--bs-ring:#ffffff29;--bs-accent:#2f75d5}html[data-boot-theme=noir] :is(#boot-screen,.boot-screen){--bs-bg:#0a0a0a;--bs-ring:#ffffff29;--bs-accent:#f0f0f0}@media (prefers-reduced-motion:reduce){#boot-screen .ring,.boot-screen .ring{animation-duration:2.4s}}#seo-fallback{color:#1e293b;max-width:800px;margin:40px auto;padding:0 20px;font-family:sans-serif;display:none}html[data-prerendered] #boot-screen{display:none}html[data-prerendered] #seo-fallback{box-sizing:border-box;color:#1e293b;background:#fff;max-width:none;min-height:100vh;margin:0;padding:32px max(16px,50% - 380px);font:18px/1.75 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;display:block}html[data-prerendered] #seo-fallback .lead{font-size:19px;line-height:2}html[data-prerendered] #seo-fallback h1{margin:0 0 16px;font-size:2rem;font-weight:700;line-height:1.2}html[data-prerendered] #seo-fallback h2{margin:28px 0 8px;font-size:1.3rem;font-weight:600;line-height:1.3}html[data-prerendered] #seo-fallback p,html[data-prerendered] #seo-fallback ul,html[data-prerendered] #seo-fallback ol{margin:0 0 12px}html[data-prerendered] #seo-fallback ul,html[data-prerendered] #seo-fallback ol{list-style:revert;padding-left:24px}html[data-prerendered] #seo-fallback a{color:#4f46e5;text-decoration:underline}html[data-prerendered] #seo-fallback img{border-radius:8px;max-width:100%;height:auto;display:none}#lp-hero{display:none}html[data-prerendered] #lp-hero{z-index:10000;background:#fff;display:block;position:fixed;inset:0;overflow:hidden}html[data-prerendered] #lp-hero[data-track=entreprise]{background:#08090c}html[data-prerendered] #lp-hero~#root #seo-fallback{display:none}</style>
     <noscript>
       <style>#boot-screen{display:none}#seo-fallback{display:block!important}html[data-prerendered] #seo-fallback img{display:inline}#lp-hero{display:none!important}</style>
     </noscript>
@@ -284,6 +218,7 @@
     }
     </script>
     <script type="module" crossorigin src="/assets/index-[empreinte].js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/rolldown-runtime-[empreinte].js">
       <link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/signup" />
     <link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/signup" />
     <link rel="alternate" hreflang="x-default" href="https://thecosmo.app/signup" />
