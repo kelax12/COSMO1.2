@@ -55,7 +55,8 @@
 | `check:erasure` | couverture d'effacement, sans liste en dur | `C-92` | `docs/RGPD.md` |
 | `check:portability` | export art. 20 comparé à l'inventaire des colonnes | `C-94` | `docs/RGPD.md` |
 | `check:stripe-prices` | grille **Stripe** comparée au code | `C-106` | `docs/STRIPE-LIVE.md` |
-| `check:secrets-age` | âge des secrets (GitHub, Edge, Vercel) contre `.github/secrets-registry.json` : échu, date inconnue, hors registre, jeton absent | `AM-3` | `docs/SECURITY.md` |
+| `check:secrets-age` | âge des secrets (GitHub, Edge, Vercel) contre `.github/secrets-registry.json` : échu, date inconnue, hors registre, jeton absent, entrée incomplète | `AM-3` | `docs/SECURITY.md` |
+| `check:coffre` | coffre vérifié sous 92 j | `V4.2` | `docs/SECURITY.md` |
 | `check:contrat` | `schema.sql`, `rpc-inventory.md` et types générés vs les migrations (CI seule, base vierge) | `ARC-07` | `supabase/migration/CLAUDE.md` |
 | `check:docs` | plafonds et pointeurs des `CLAUDE.md` | | ce fichier |
 | `check:docs-scored` | chaque doc de `docs/` déclare son rapport à une note | `C-109` | `docs/README.md` |
@@ -68,7 +69,7 @@
 | `images:check` | images non optimisées — **pas une gate** | | `docs/PERFORMANCE.md` |
 
 📅 **Gardes de calendrier** (`study`, `docs-scored`, `lecteurs-ecran`, `exercice-violation`,
-`peremption-chantiers`, `acquisition`) : `gardes-calendrier.yml`, quotidien, issue
+`peremption-chantiers`, `acquisition`, `coffre`) : `gardes-calendrier.yml`, quotidien, issue
 `calendrier-red`. ❌ Jamais dans un job bloquant (CI-01) → `docs/TESTING.md` § CI.
 
 🔒 **Hooks** : `pre-push` refuse un noyau rouge (`CI noyau` seul), sans contournement →
@@ -101,10 +102,10 @@ le plus lourd de la fenêtre 08-30 → 09-03, et il ne porte pas sur le produit 
 - ❌ **Ne jamais laisser une garde sauter silencieusement une moitié de son travail.** Un secret
   absent se solde par un **échec**, jamais par un `::warning::` dans un run vert.
 - ✅ **Toute garde corrigée repart avec un TÉMOIN** : une sonde qui refuse un parseur, un détecteur
-  ou une mesure qui ne détecterait plus rien. Trois des quatre en ont un aujourd'hui.
+  ou une mesure qui ne détecterait plus rien.
 - 🔴 **Une garde qui se trompe dans le sens rassurant est pire qu'une garde absente : elle donne
   une réponse, et on la croit.**
-- 🔴 **Toute étape de garde de `lint-test-build` joue après un rouge** (`if: ${{ !cancelled() && steps.deps.outcome == 'success' }}`, un `id`, jamais `continue-on-error`), et la dernière étape liste tous les rouges : le 2026-10-12, `check:docs` en a masqué dix pendant trois jours. Témoin : `ci-toutes-les-gardes.guard.test.mjs`.
+- 🔴 **Toute étape de garde de `lint-test-build` joue après un rouge** (`if: ${{ !cancelled() && steps.deps.outcome == 'success' }}`, un `id`, jamais `continue-on-error`), et la dernière étape liste tous les rouges. Témoin : `ci-toutes-les-gardes.guard.test.mjs`.
 
 #### Le cas symétrique : ce que AUCUNE garde ne regardait (C-35)
 

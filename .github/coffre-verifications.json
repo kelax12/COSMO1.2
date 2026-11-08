@@ -1,0 +1,6 @@
+{
+  "_note": "Journal des verifications du coffre (V4.2, SEC-04). Lu par scripts/check-coffre.mjs, joue chaque jour par gardes-calendrier.yml (issue `calendrier-red`). NOMS D'ELEMENTS ET DATES SEULEMENT : jamais un code, jamais une phrase, jamais un indice de valeur. Une verification se consigne APRES avoir ouvert le coffre, teste un code de recuperation par service et joint la personne de confiance (docs/SECURITY.md, section Coffre). `elements` : les identifiants verifies, tous exiges (mfa-github, mfa-supabase, mfa-vercel, mfa-stripe, mfa-hebergeur-courrier, admin-aal2, admin-aal2-sortie, acces-urgence, et tout secret du registre marque `coffre: true`). `par` : qui a verifie, un prenom. `periodeJours` ne se releve pas : 92 est la borne. `premiereEcheance` : tant qu'aucune verification n'est consignee, la garde reste verte jusqu'a cette date, puis rougit. Pose le 2026-11-08, premiere echeance un mois plus tard.",
+  "periodeJours": 92,
+  "premiereEcheance": "2026-12-08",
+  "verifications": []
+}
