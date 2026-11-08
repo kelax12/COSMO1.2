@@ -13,42 +13,21 @@ réagir à un incident. À lire avant toute mise en prod.
 
 ## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
 
-> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
-> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
-> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
-> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
->
-> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
-> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
-> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
->
-> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
-> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+> Ce document affirme des procédures que rien ne pèse : chaque ligne nomme une affirmation qui n'était
+> vérifiée par rien, et la garde qui la vérifie depuis. 🔴 **Une garde posée n'est pas un angle mort
+> fermé** : la dernière colonne dit ce que son vert ne prouve pas. L'énoncé du 2026-09-16, la colonne
+> « État » du 2026-09-21 et les mesures datées sont archivés sans une coupe :
+> [`archive/DEPLOYMENT-recits-et-releves-2026-06-07-au-2026-11-08.md`](./archive/DEPLOYMENT-recits-et-releves-2026-06-07-au-2026-11-08.md).
 
-
-
-> **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
-> `CLAUDE.md` a pesé 150 ko sans qu'aucune note ne bouge, parce qu'il était **cité comme source**
-> par les audits et **jamais mesuré par eux**. Il était le mètre, jamais l'objet.
->
-> 🔴 **Ce document n'a PAS de note, et c'est son premier angle mort.** Les onze documents notés
-> entrent dans le tableau de bord de [`README.md`](./README.md) et peuvent donc monter ou baisser.
-> Celui-ci ne le peut pas : rien ne le pèse, donc rien ne signale qu'il a vieilli. Les angles morts
-> ci-dessous ne sont **pas** des défauts du produit ; ce sont les endroits où **ce document affirme
-> sans que rien ne vérifie**.
->
-> Chaque ligne est vérifiée par une commande, jamais supposée. Elle se **referme** ou se
-> **reconduit avec sa date**, jamais ne se recopie.
-
-| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
+| # | Angle mort (énoncé du 2026-09-16) | Garde qui le couvre | 🔴 Ce qu'elle ne prouve pas |
 |---|---|---|---|
-| AM-1 | ✅ **COMBLÉ le 2026-09-16 par `npm run check:deploy`** (job `Deploy SHA drift`, horaire, branché sur `ci-alert.yml`). Était : **rien ne comparait le commit déployé sur Vercel à `main`.** C'est exactement le défaut C-35 des Edge Functions, **côté front**, et il n'a jamais été nommé. `check:edge` compare le code déployé des fonctions au dépôt ; **aucun équivalent n'existe pour l'application elle-même** | la garde lit `/version.json` **sur la production**, écrit au build par `VERCEL_GIT_COMMIT_SHA`, et distingue **à jour / retard / dérive** : un `!=` confondrait un déploiement en vol avec une dérive, et une prod **en avance** avec un simple retard | ✅ **COMBLÉ le 2026-09-16** · `npm run check:deploy` (`T-8`), job horaire branché sur `ci-alert.yml`. Cycle complet observé le même jour |
-| AM-2 | 🔴 **Le ROLLBACK n'a jamais été éprouvé.** Le runbook le décrit ; `restore-drill.yml` n'a qu'un `workflow_dispatch` avec confirmation. **Un chemin de récupération qui n'a pas été parcouru est une hypothèse**, et ce dépôt l'a déjà appris au prix fort avec la mig. `131` (`/admin` inaccessible deux jours) | `restore-drill.yml` : `on: workflow_dispatch` | ✅ **OUTILLÉ le 2026-09-20** · `dump-check` **trimestriel et automatique** (`C-86`) · 🔴 ne prouve PAS : qu'un dump soit restaurable, et surtout pas que le **rollback** fonctionne : personne ne l'a jamais parcouru, c'est **`M-47`** · 🔎 🔴 **2026-10-15 : l'outil lui-même ne tourne pas.** `restore-drill.yml` est désactivé à la main depuis le 2026-09-01 : `dump-check` n'a jamais été joué, et `gh run list` ne montre même pas qu'il manque |
-| AM-3 | **Les variables d'environnement Vercel ne sont comparées à rien.** Une `VITE_*` manquante ou périmée ne se voit qu'à l'exécution. Le cas a déjà mordu : `VITE_SENTRY_DSN` absente changeait la forme du bundle et rendait la garde de budget aveugle à ~45 ko | aucun job ne lit la configuration Vercel | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:env` · contrat statique des 8 `VITE_*` avec l'**effet d'absence** de chacune (`C-105`) — 🔴 ne prouve PAS : les **valeurs** : la moitié Vercel vérifie une présence, jamais un contenu. ⚠️ Et elle dort tant que `VERCEL_TOKEN` / `VERCEL_PROJECT_ID` ne sont pas posés (**`M-59`**) |
-| AM-4 | **L'état réel de Turnstile n'est écrit nulle part de vérifiable.** Le code existe (`TurnstileWidget.tsx`, `AuthForm.tsx`) ; son activation dépend d'une variable posée **hors du dépôt**. Ce document le dit « inerte au 2026-08-28 », et rien ne dirait qu'il a changé | 3 fichiers sources le référencent, 0 garde | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:env` (`C-105`) — 🔴 ne prouve PAS : rien de plus qu'AM-3 : même garde, même réserve |
-| AM-5 | **`uptime.yml` mesure qu'une page RÉPOND, jamais qu'elle FONCTIONNE.** Un HTTP 200 sur une coquille SPA vide est vert. C'est le même piège que la garde Lighthouse qui mesurait une 404 (`T-50`, corrigé le 2026-08-29) | `uptime.yml` : `-w '%{http_code}'` sur `/` et `/auth/v1/health` | ✅ **OUTILLÉ le 2026-09-20** · 3 marqueurs **absents de la coquille SPA** + une 2ᵉ page prérendue sondée + le corps de `/auth/v1/health` (`C-104`) — 🔴 ne prouve PAS : rien — mais ⚠️ **l'énoncé du 09-16 était périmé dans l'autre sens** : `uptime.yml` avait un marqueur (`grep -i cosmo`) qui **ne pouvait pas échouer**, la coquille contenant le mot 21 fois |
-| AM-6 | **Le déploiement des Edge Functions est un geste MANUEL.** `check:edge` voit la dérive après coup ; rien ne déploie depuis `main`. Le 2026-10-23, un correctif poussé sur `main` (`c161de2b`, mention 293 B) n'a pas pu être déployé par l'agent : la dérive est ouverte jusqu'au geste suivant | `grep -l "functions deploy" .github/workflows/*` : aucun | 🟡 **CODE LIVRÉ le 2026-10-23, pas encore exécuté** · `.github/workflows/edge-deploy.yml` : après `CI` verte sur un push de `main`, déploie (`--use-api`) les fonctions modifiées depuis le dernier SHA déployé, importatrices de `_shared/` comprises, puis rejoue `check:edge` et `check:edge-smoke`. Sélection : `scripts/edge-deploy-select.mjs`, témoin `edge-deploy-select.guard.test.mjs` vu rouge sur 3 sabotages. Fermé au premier run vert sur `main` (amorçage : les 13 fonctions) |
-| AM-7 | **Les artefacts de CI n'ont aucune durée de rétention.** Le quota du compte (11,5 Go) a été atteint le 2026-10-23 : c'est lui qui a bloqué la sauvegarde T11. Rien ne le borne ni ne le mesure | aucun `retention-days` sur les `upload-artifact` de rapports | 🟡 **OUTILLÉ le 2026-10-23** · `scripts/artefacts-retention.guard.test.mjs` (suite outillage) exige un `retention-days` entier de 1 à 30 sur chaque `upload-artifact` / `upload-pages-artifact`. Constat à la pose : les 8 dépôts du dépôt portaient déjà leur durée (7 à 30 jours), donc la garde protège contre une régression, pas un défaut présent. 🔴 Ne prouve PAS le quota : la taille stockée n'est mesurée nulle part ; le plafond de 30 jours est une décision à relire si un artefact doit durer plus |
+| AM-1 | **Rien ne comparait le commit déployé sur Vercel à `main`** (le défaut C-35 des Edge Functions, côté front) | `npm run check:deploy` (`T-8`), job `Deploy SHA drift` horaire branché sur `ci-alert.yml` : lit `/version.json` en production et distingue à jour, retard et dérive. Il compare au dernier commit **tagué vert** (§ 1) | Rien de plus que le SHA servi : pas que le déploiement fonctionne (voir AM-5) |
+| AM-2 | Le **rollback** n'avait jamais été éprouvé | `restore-drill.yml` › `drill-auto`, mensuel (`ROB-01`, § 7), qui a fondu le `dump-check` trimestriel (`C-86`) ; retour par `git revert` répété le 2026-10-16 (§ 3) | Que le **« Promote » de Vercel** fonctionne : geste d'Axel, jamais joué (`M-47`, § 3). Ni un vrai sinistre (§ 7) |
+| AM-3 | Les **variables d'environnement Vercel** ne sont comparées à rien (une `VITE_*` absente a déjà changé la forme du bundle et aveuglé la garde de budget de ~45 ko) | `npm run check:env` (`C-105`) : contrat statique des 8 `VITE_*` avec l'**effet d'absence** de chacune ; la moitié Vercel dort tant que `VERCEL_TOKEN` et `VERCEL_PROJECT_ID` ne sont pas posés (`M-59`) | Les **valeurs** : une présence, jamais un contenu |
+| AM-4 | L'**état réel de Turnstile** n'était écrit nulle part de vérifiable | `npm run check:env` (`C-105`) | Idem AM-3 |
+| AM-5 | `uptime.yml` mesure qu'une page **répond**, jamais qu'elle **fonctionne** (une coquille SPA vide rend 200) | `uptime.yml` (`C-104`) : trois marqueurs **absents de la coquille SPA**, une 2ᵉ page prérendue, le corps de `/auth/v1/health` (§ 9). L'ancien marqueur `grep -i cosmo` ne pouvait pas échouer (la coquille contient le mot 21 fois) | Rien de plus que le contenu servi |
+| AM-6 | Le **déploiement des Edge Functions** était un geste manuel (`check:edge` voit la dérive après coup, rien ne déployait depuis `main`) | `.github/workflows/edge-deploy.yml` (§ 2bis) ; sélection `scripts/edge-deploy-select.mjs`, témoin `edge-deploy-select.guard.test.mjs` | Une fonction déployée à la main hors `main` : c'est `check:edge` qui la voit, après coup |
+| AM-7 | Les **artefacts de CI** n'avaient aucune durée de rétention (le quota de 11,5 Go a été atteint le 2026-10-23 et a bloqué la sauvegarde) | `scripts/artefacts-retention.guard.test.mjs` : un `retention-days` entier de 1 à 30 sur chaque `upload-artifact` et `upload-pages-artifact` | Le **quota** : la taille stockée n'est mesurée nulle part ; le plafond de 30 jours se relit si un artefact doit durer plus |
 
 ---
 
@@ -254,12 +233,10 @@ supabase secrets set BUG_REPORT_FROM="Cosmo <bug@thecosmo.app>"
 
 3. Déployer : `supabase functions deploy report-bug`
 
-> ✅ **Déployée en production le 2026-08-29** (version 1, `verify_jwt` actif), après six
-> jours où `SECURITY.md` et ce fichier la décrivaient comme livrée sans qu'elle le soit.
-> Fumée passée en prod : `POST` sans corps → `503 mail_not_configured`, `GET` → `405`,
-> sans JWT → `401` du gateway. **Les secrets ne sont toujours pas posés**, donc le repli
-> `mailto` est ce que voit un utilisateur aujourd'hui. L'étape 1 ci-dessus dépend du même
-> domaine vérifié que §2ter : les deux se débloquent ensemble.
+> ✅ Déployée en production depuis le 2026-08-29 (`verify_jwt` actif). Fumée de référence : `POST` sans
+> corps → `503 mail_not_configured` quand les secrets manquent, `GET` → `405`, sans JWT → `401` du
+> gateway. L'étape 1 dépend du même domaine vérifié que § 2ter. *(Pourquoi cette ligne : la doc l'a dite
+> livrée six jours avant qu'elle le soit ; le récit est archivé.)*
 
 **Tant que `RESEND_API_KEY` est absente**, la fonction répond `503
 mail_not_configured` — et c'est un état prévu, pas une panne : le formulaire
@@ -275,27 +252,16 @@ l'utilisateur, et son identité vient du JWT, jamais du corps de la requête.
 
 ## 2ter. Emails d'authentification (Supabase Auth) · **SMTP EN SERVICE depuis le 2026-08-29 au soir ; les confirmations restent désactivées**
 
-> 🔴 **CE TITRE A DIT « NON CONFIGURÉS » PENDANT SEIZE JOURS APRÈS LA MISE EN SERVICE.**
-> Corrigé le 2026-09-14 au soir. La section qui suit décrit l'état du **27-29 août au matin** ;
-> la mise en service a eu lieu **le 29 au soir**, et elle est inscrite dans `faille.md` (ligne
-> 1quater de l'ordre de priorité) sans que ce runbook soit repassé derrière.
+> 🔴 **État à lire avant la procédure.** Le serveur d'envoi d'Auth est en service depuis le 2026-08-29 au soir
+> (domaine d'envoi `send.thecosmo.app`, `npm run check:mail` vert, seul avertissement : DMARC `p=none`,
+> correct pour démarrer). Les **confirmations d'inscription restent désactivées**, par décision d'Axel
+> (finding `G-2`) : aucune adresse inscrite par e-mail et mot de passe n'a jamais été prouvée, la colonne
+> `email_confirmed_at` dit « confirmé » parce que personne n'a demandé de confirmation. Activer les
+> confirmations ne dépend plus que d'une décision.
 >
-> **Mesuré ce soir, `npm run check:mail`** : DKIM Resend présent sur `send.thecosmo.app`, SPF du
-> Return-Path `v=spf1 include:amazonses.com ~all`, MX `feedback-smtp.eu-west-1.amazonses.com`, MX et
-> SPF de la racine intacts, DMARC présent. **Un seul avertissement : `p=none`**, surveillance seule,
-> correct pour démarrer. Le domaine d'envoi est donc en état de signer.
->
-> ⚠️ **Ce qui reste VRAI dans la section ci-dessous, et ne doit pas être lu comme corrigé** : les
-> **confirmations d'inscription sont toujours désactivées**, par décision d'Axel (finding `G-2`).
-> Remesuré ce soir : **28 comptes sur 28 portent `email_confirmed_at`, dont 26 à la seconde même de
-> leur création**, et **18 comptes sont créés par email + mot de passe**. Aucune de ces 18 adresses
-> n'a jamais été prouvée : la colonne dit « confirmé » parce que personne n'a demandé de
-> confirmation. Le point 1 des « deux conséquences » ci-dessous tient donc intégralement ; le
-> point 2, lui, ne tient plus : **le SMTP qui manquait est là**, activer les confirmations ne
-> dépend plus que d'une décision.
->
-> ⚠️ Le DNS ne prouve toujours pas qu'un email ARRIVE. La preuve reste un compte jetable vérifié
-> sur Gmail ET Outlook (§ « Vérification » plus bas).
+> ⚠️ Le DNS ne prouve toujours pas qu'un e-mail ARRIVE : la preuve reste un compte jetable vérifié sur
+> Gmail ET Outlook (§ « Vérification » plus bas). *(Pourquoi cet encadré : le titre de cette section a dit
+> « non configurés » seize jours après la mise en service ; la mesure du 2026-09-14 est archivée.)*
 
 > 🔴 **Ce sont les emails que Supabase envoie AUX UTILISATEURS**, pas ceux qu'envoient les Edge
 > Functions. Les deux passent par Resend, mais ce sont deux chemins distincts, avec deux
@@ -451,16 +417,10 @@ depuis un navigateur.
 
 ## 2quinquies. Second facteur sur `/admin` · **EN VIGUEUR : mig. `131` appliquée le 2026-08-31, TOTP enrôlé le 2026-09-01**
 
-> 🔴 **CE TITRE A DIT « NON APPLIQUéE » PENDANT QUINZE JOURS.** Corrigé le 2026-09-14 au soir.
-> La mig. `131` est au ledger de production, et `auth.mfa_factors` porte un facteur `totp` en statut
-> `verified` sur le compte admin depuis le 2026-09-01 à 14:20:27 UTC.
->
-> 🔴 **Et elle a été appliquée dans l'ordre que la procédure ci-dessous déconseille**, à la
-> demande explicite d'Axel : migration d'abord, enrôlement ensuite. Le coût a été réel et il est
-> exactement celui que l'avertissement de bas de section annonçait à moitié : `/admin` est resté
-> **inaccessible du 2026-08-31 au 2026-09-01**, parce que l'écran d'enrôlement, censé rester
-> atteignable, levait en phase de rendu. La procédure ci-dessous reste la bonne ; c'est de ne pas
-> l'avoir suivie qui a coûté une journée.
+> 🔴 **Suivre l'ordre ci-dessous.** La mig. `131` est au ledger de production et un facteur `totp` est
+> vérifié sur le compte admin depuis le 2026-09-01. Appliquée avant l'enrôlement, à la demande d'Axel, elle a
+> rendu `/admin` inaccessible du 2026-08-31 au 2026-09-01 : l'écran d'enrôlement, censé rester atteignable,
+> levait en phase de rendu. Ne pas suivre la procédure a coûté une journée ; le récit est archivé.
 
 `/admin` rend toute la volumétrie business du produit. Depuis T-06 (b), la garde serveur
 `public.is_admin()` exige que la **session** ait présenté un second facteur (`aal2`), pas
@@ -587,17 +547,9 @@ déploiement précédent** :
 
 ### ✅ Répété le 2026-10-16 : le retour arrière par `git revert` (moitié de `M-47`)
 
-Fait par un agent, sur `main`, avec un commit sans effet : `42ee5006` ajoute
-`public/repetition-retour-arriere.txt`, `2b9ad9d` le défait. Heures lues dans les statuts de
-déploiement que Vercel publie sur GitHub (`gh api repos/.../deployments?sha=…`) :
-
-| | Poussé (UTC) | Servi en production | Délai |
-|---|---|---|---|
-| Commit A | 19:01:16 | 19:01:56 | **40 s** |
-| Revert | 19:13:09 | 19:13:42 | **33 s** |
-
-Vérifié de l'extérieur : `version.json` rend le nouveau commit, et l'URL du fichier renvoie
-ensuite la page d'app générique.
+Un commit sans effet puis son revert, sur `main`, par un agent : **40 s** puis **33 s** de la poussée à la
+production (heures lues dans les statuts de déploiement GitHub), vérifiés de l'extérieur par `version.json`.
+Commits, heures et tableau : archive.
 
 **Ce que la répétition a appris :**
 - 🔴 **Vercel déploie sans attendre la CI.** Un revert est en ligne en ~35 s, mais un mauvais
@@ -669,24 +621,16 @@ Les mêmes secrets `VITE_*` doivent exister en **GitHub Actions secrets** (job
 
 ## 6. Schéma & ledger de migration (DR / ISO 27001)
 
-État vérifié **2026-06-07** (introspection `pg_proc` / `pg_trigger` vs migrations) :
-- ✅ **Toutes** les fonctions et triggers de prod sont versionnés → la base est
-  **reproductible** depuis `supabase/migration/*.sql` sur une instance vierge.
-- ✅ Tables orphelines `billing` / `user_profiles` supprimées (mig. 040).
-- ⚠️ **Ledger partiel** : `supabase_migrations.schema_migrations` ne liste que
-  ~22 des 40 fichiers (la majorité a été appliquée via SQL dashboard, pas
-  `db push`). Les objets existent tous et les migrations sont idempotentes, donc
-  pas de risque data/sécu — mais `supabase db push` tenterait de rejouer les
-  migrations non listées.
+Le dépôt est **reproductible** : toutes les fonctions et triggers de production sont versionnés, la base se
+rejoue depuis `supabase/migration/*.sql` sur une instance vierge (job `rls-integration`).
 
-**⚠️ Vérité opérationnelle (audit 2026-06-10)** : le repo stocke ses migrations
-dans `supabase/migration/` (singulier) avec des préfixes `NNN_` — un layout que
-la CLI Supabase **ne reconnaît pas** (`db push` / `migration repair` n'opèrent
-que sur `supabase/migrations/<timestamp14>_*.sql`). Le ledger n'a donc **jamais
-été** la source de vérité de ce projet et ne peut pas être « réparé » tel quel :
-les 23 entrées présentes viennent du dashboard et de l'outil MCP
-`apply_migration` (qui, lui, enregistre une entrée à chaque application — c'est
-le workflow courant et recommandé ici).
+**Vérité opérationnelle.** Le repo stocke ses migrations dans `supabase/migration/` (singulier) avec des
+préfixes `NNN_` : un layout que la CLI Supabase **ne reconnaît pas** (`db push` / `migration repair`
+n'opèrent que sur `supabase/migrations/<timestamp14>_*.sql`). Le ledger
+(`supabase_migrations.schema_migrations`) n'a donc **jamais été** la source de vérité de ce projet et ne peut
+pas être « réparé » tel quel : ses entrées viennent du dashboard et de l'outil MCP `apply_migration` (qui
+enregistre une entrée à chaque application : c'est le workflow courant et recommandé ici). *(Mesures du
+2026-06-07 et de l'audit du 2026-06-10 : archive.)*
 
 **Source de vérité réelle** : le dossier `supabase/migration/*.sql` (gardé par
 `npm run validate:migrations` en CI) + l'introspection live. Pas le ledger.
@@ -708,13 +652,17 @@ passer par `apply_migration` (MCP) ou le SQL editor avec le fichier versionné.
 
 ## 7. Backup & Disaster Recovery (runbook)
 
-> 🔎 **État au 2026-11-07 (ROB-01, vague 4.4).** Le dump quotidien est désormais **restauré
-> chaque mois, sans humain**, par le job `drill-auto` de `restore-drill.yml` (le 9 à 05:43 UTC),
-> et une garde d'**absence** (`restore-drill-fraicheur.yml`, hebdomadaire) rougit si aucun drill
-> n'est vert depuis 35 jours. Les deux sonnent par `ci-alert.yml`. Premier drill vert : **2026-11-07**
-> (run `42380272895`, 91 tables comptées, comptages identiques au manifeste).
-> Le `dump-check` trimestriel (C-86), qui ne lisait qu'une table des matières, est fondu dans ce
-> drill. Détail : § « Drill automatique mensuel » ci-dessous.
+> 🔎 **État au 2026-11-08 (ROB-01, vague 4.4).** Le dump quotidien est **restauré chaque mois, sans humain**,
+> par le job `drill-auto` de `restore-drill.yml` (le 9 à 05:43 UTC), et une garde d'**absence**
+> (`restore-drill-fraicheur.yml`, hebdomadaire) rougit si aucun drill n'est vert depuis 35 jours. Les deux
+> sonnent par `ci-alert.yml`. Le `dump-check` trimestriel (C-86), qui ne lisait qu'une table des matières,
+> est fondu dans ce drill. Détail : § « Drill automatique mensuel » ci-dessous.
+>
+> **Preuve sur `main`** (2026-11-08, SHA `88699890`) : sauvegarde avec manifeste (`db-backup`, run
+> `42463066645`), puis drill vert (`restore-drill`, run `42463160221` : 91 tables comptées, comptages
+> identiques au manifeste), puis **témoin rouge** (run `42463289640` : `public.tasks` altérée d'une unité dans
+> le manifeste lu, le drill rougit). Le premier drill vert, du 2026-11-07, avait tourné sur la branche
+> `noyau/drill-auto` (run `42380272895`) ; ces trois runs sont les premiers sur `main`.
 
 ### Drill automatique mensuel · `restore-drill.yml` › `drill-auto` (ROB-01, 2026-11-07)
 
@@ -757,6 +705,8 @@ message (il peut citer une valeur).
 | Date | Run drill | Run db-backup | Restauration | Tables comptées | Erreurs tolérées | Verdict |
 |---|---|---|---|---|---|---|
 | 2026-11-07 | `42380272895` (branche `noyau/drill-auto`) | `42378846309` | 1 s (job 39 s) | 91 : 90 de `public` + `auth.users` | 27 : pg_cron et Vault | ✅ comptages identiques, 205 policies, 90 tables sous RLS, isolation 289 / 940 |
+| 2026-11-08 | `42463160221` (`main`, SHA `88699890`) | `42463066645` (avec manifeste) | 1 s (drill complet 2 s) | 91 : 90 de `public` + `auth.users` | 27 : extensions Supabase absentes de l'image officielle, 0 bloquante | ✅ comptages identiques, 205 policies, 90 tables sous RLS, isolation 289 / 941 |
+| 2026-11-08 | `42463289640` (`main`, **témoin**, case *temoin* cochée) | `42463066645` | n/a | n/a | n/a | ❌ **voulu** : `public.tasks`, manifeste 942 contre 941 restaurées : « la restauration ne rend pas la base du dump » |
 
 ### Au passage en Pro (décision d'Axel, au premier client payant)
 
@@ -775,21 +725,9 @@ de passer en Pro est celui d'Axel ; ce qui suit est la liste à cocher le jour m
 - [ ] **Confirmation de l'adresse e-mail** à l'inscription : à rediscuter avec Axel (elle avait
   été écartée sur le plan Free).
 
-> 🔎 **État au 2026-10-15.** `db-backup` est vert tous les jours, **chiffré** depuis le 2026-10-13.
-> `restore-drill.yml` était **désactivé à la main du 2026-09-01 au 2026-10-15** (rangement
-> d'après-drill, rendu caduc par `C-86`) : le premier `dump-check` trimestriel, le 2026-10-05,
-> n'a pas eu lieu. ✅ **Réactivé le 2026-10-15**, et la relecture passe par
-> `scripts/dump-check.mjs` (témoin `dump-check.guard.test.mjs`) : elle refusait mal un `.gpg`
-> non chiffré et un clair posé à côté du chiffré.
-> ✅ **2026-10-15, run [`38787097174`](https://github.com/kelax12/COSMO1.2/actions/runs/38787097174)** :
-> `dump-check` **vert sur le dump CHIFFRÉ** du run db-backup `38711418682` (déchiffré,
-> 1 594 147 octets en clair, 2 214 objets, toutes les tables attendues). `drill` arrêté à sa
-> première garde (confirmation absente), rien écrit : c'est le rouge attendu.
-
-**État au 2026-09-01** : le plan Free n'offre **aucune sauvegarde native**, et le PITR a été
-écarté avec le plan Pro (T-01). La seule copie de la base qui existe est le dump quotidien de
-`.github/workflows/db-backup.yml`. **La restauration a été testée le 2026-09-01** (drill
-ci-dessous) : le dump se restaure, en 163 s, et l'isolation RLS survit.
+Plan Free : **aucune sauvegarde native**, PITR écarté avec le plan Pro (`T-01`). La seule copie de la base
+est le dump quotidien chiffré de `.github/workflows/db-backup.yml`. *(Relevés du 2026-09-01 et du
+2026-10-15, dont la réactivation de `restore-drill.yml` : archive.)*
 
 ### Restauration réelle (sinistre)
 1. Créer un projet Supabase neuf, récupérer sa chaîne de connexion en mode **session**.
@@ -833,28 +771,13 @@ juge sur ce qui compte vraiment.
 **Ce que le workflow ne prouve pas**, et qui reste un geste humain : pointer l'application sur le
 projet restauré, se connecter, créer une tâche. Un `select` réussi ne dit rien du parcours réel.
 
-> ⚠️ **Le tout premier run (2026-09-01, avant celui du tableau) a réussi avec un chiffre faux.**
-> `VISIBLES=$(tail -1 iso.txt)` capturait le mot `ROLLBACK` (tag de commande imprimé par `psql`
-> après `BEGIN`/`SET`/`SELECT`/`ROLLBACK`, même en `-tA`), jamais le compte réel : la comparaison
-> `VISIBLES = TOTAL` était donc garantie fausse quel que soit le vrai résultat, et ce contrôle ne
-> pouvait **jamais** déclencher — même si l'isolation avait été cassée par la restauration.
-> Corrigé par `grep -E '^[0-9]+$' iso.txt | tail -1`. Le run rejoué ensuite (celui du tableau) a
-> mesuré un vrai chiffre.
+> ⚠️ **Un contrôle qui ne peut pas échouer ne contrôle rien.** Le tout premier run (2026-09-01) a réussi avec
+> un chiffre faux : `VISIBLES=$(tail -1 iso.txt)` capturait le tag `ROLLBACK` de `psql`, jamais le compte,
+> donc `VISIBLES = TOTAL` était garanti faux. Corrigé par `grep -E '^[0-9]+$' iso.txt | tail -1`.
 
-**Résultat du dernier drill** : ✅ réussi. RTO mesuré 163 s, objectif < 2 h très large.
-
-| Date | Run db-backup | Durée | Tables sans RLS | Policies | Tâches visibles / total |
-|---|---|---|---|---|---|
-| 2026-09-01 | `33384797200` | 163 s | 0 | 129 | 289 / 724 |
-
-Le test humain (login + création d'une tâche sur le projet restauré) a été **volontairement
-sauté** (décision d'Axel, 2026-09-01) : l'app a chargé sans erreur sur le projet restauré
-(écran de connexion atteint, aucune erreur réseau/RLS), et le contrôle d'isolation automatisé
-avait déjà prouvé qu'un utilisateur authentifié ne voit que ses propres tâches. Le risque résiduel
-non couvert : un parcours applicatif complet (mutation, pas seulement lecture) n'a pas été rejoué.
-
-**Reste à faire, à la main, avant de clore le drill** : **supprimer le projet jetable ET le secret
-`DRILL_DB_URL`.**
+**Dernier drill manuel** : 2026-09-01, RTO mesuré **163 s** (objectif < 2 h), 0 table sans RLS, 129 policies,
+289 tâches visibles sur 724. Le parcours applicatif (login, création d'une tâche) a été volontairement sauté
+(décision d'Axel). Détail et tableau : archive.
 
 ### Export hors-fournisseur — automatisé le 2026-08-28
 
@@ -876,16 +799,14 @@ se restaure.
 > la perte du **compte** — suspension, litige, ou décision de partir. Les deux répondent à des
 > risques différents, aucun ne dispense de l'autre.
 >
-> 🔴 **L'artefact contient des données personnelles** (noms, emails, empreintes de mots de passe,
-> contenu des tâches). ❌ **Corrigé le 2026-10-15 : ce paragraphe disait « le dépôt est public, mais
-> les artefacts d'un run exigent une authentification ».** C'est faux : sur un dépôt public,
-> **n'importe quel compte GitHub connecté** télécharge un artefact. Cette phrase, recopiée du
-> commentaire du workflow, est exactement ce qui a produit la violation **`BK-1`** (dumps en clair
-> exposés du 2026-08-29 au 2026-10-13, cf. `faille.md` (hors dépôt)). Depuis `8c6a971d`
-> (2026-10-13), **seul un dump chiffré** (`gpg`, AES-256, phrase secrète `BACKUP_PASSPHRASE`) part
-> en artefact, relu à l'identique par sha256 avant dépôt ; sans la phrase secrète, le job
-> **échoue**. Ne **jamais** committer un dump. Pour une vraie copie longue durée, la télécharger et
-> la garder sur un disque chiffré : GitHub n'est pas un coffre.
+> 🔴 **L'artefact contient des données personnelles** (noms, e-mails, empreintes de mots de passe, contenu
+> des tâches). Sur un dépôt public, **n'importe quel compte GitHub connecté** télécharge un artefact : « les
+> artefacts d'un run exigent une authentification » est faux. **Seul un dump chiffré** (`gpg`, AES-256,
+> `BACKUP_PASSPHRASE`) part en artefact, relu à l'identique par sha256 avant dépôt ; sans la phrase secrète,
+> le job **échoue**. ❌ Ne **jamais** committer un dump. Pour une copie longue durée, la télécharger et la
+> garder sur un disque chiffré : GitHub n'est pas un coffre.
+> *Pourquoi : cette phrase fausse, recopiée du commentaire du workflow, a produit la violation `BK-1`
+> (dumps en clair exposés du 2026-08-29 au 2026-10-13) ; le récit est archivé et dans `faille.md`.*
 
 Manuellement, si besoin :
 ```bash
@@ -940,17 +861,15 @@ la fin du sujet.
 
 ## Délivrabilité des emails Auth · repris de `CLAUDE.md` (déplacé le 2026-09-16)
 
-> Commentaires de la section `## Scripts` de `CLAUDE.md`, où ils étaient chargés à chaque
-> session. Déplacés ici **sans une coupe**. La racine ne garde que la commande.
+> Les commentaires datés de la commande (mesures du 2026-09-02) sont archivés sans une coupe. La racine
+> ne garde que la commande.
 
 ```bash
-npm run check:mail          # Délivrabilité des emails Auth : MX, SPF, DKIM Resend, DMARC.
-                            # ✅ VERT au 2026-09-02 (remesuré) : DKIM, SPF et MX du Return-Path
-                            # en place sur `send.thecosmo.app`. Reste 1 avertissement, DMARC
-                            # `p=none` (surveillance seule), correct pour démarrer.
-                            # ⚠️ Le DNS ne prouve pas qu'un email ARRIVE : la preuve reste un
-                            # compte jetable vérifié sur Gmail ET Outlook (docs/DEPLOYMENT.md §2ter).
-                            # 🔴 Les confirmations d'inscription restent DÉSACTIVÉES, décision
-                            # d'Axel — cf. finding G-2 de faille.md.
-                            # PAS une gate CI — dépend d'un état DNS externe.
+npm run check:mail          # Délivrabilité des emails Auth : MX, SPF, DKIM Resend, DMARC
 ```
+
+- ⚠️ Le DNS ne prouve pas qu'un email ARRIVE : la preuve reste un compte jetable vérifié sur Gmail ET Outlook
+  (§ 2ter).
+- 🔴 Les confirmations d'inscription restent **désactivées**, décision d'Axel (finding `G-2` de `faille.md`).
+- Pas une gate CI : la commande dépend d'un état DNS externe. Dernier état mesuré (2026-09-02) : DKIM, SPF et
+  MX du Return-Path en place sur `send.thecosmo.app`, un seul avertissement, DMARC `p=none`.
