@@ -36,8 +36,8 @@ dépôt en a payé le prix : une ligne au ledger de Supabase prouve qu'un **nom*
 - **Positives.** Un changement de base est toujours un geste volontaire, relu, prouvé. Le dépôt peut
   reconstruire un schéma complet sur une base vierge, ce qui sert aussi la restauration.
 - **Négatives.** Un risque de dérive entre dépôt et production (une migration écrite mais pas
-  appliquée, ou l'inverse), que `check:migration-coverage` et `check:drift` mesurent mais ne
-  suppriment pas. Un geste manuel de plus à chaque déploiement qui touche la base.
+  appliquée, ou l'inverse), que `check:migration-coverage` mesure chaque jour mais ne
+  supprime pas. Un geste manuel de plus à chaque déploiement qui touche la base.
 - **À retenir.** Une présence ou une absence au ledger ne prouve rien seule. Les règles de détail, la
   forme de preuve et le journal des applications sont dans
   [`supabase/migration/CLAUDE.md`](../../supabase/migration/CLAUDE.md) et

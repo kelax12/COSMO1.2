@@ -77,30 +77,17 @@ npm run build
 npx playwright test --project=chromium
 ```
 
-### Vérifier la dérive repo ↔ prod (avant tout déploiement avec migration)
+### Vérifier la dérive repo ↔ prod (après toute migration appliquée)
 
-`check:drift` ne peut pas être une gate CI : elle a besoin d'une introspection
-**live** de la base, donc de secrets que la CI n'a pas (et un check qui exige
-des secrets finit désactivé). C'est une étape manuelle en 2 temps :
+1. Relire au catalogue l'objet que la migration crée (`pg_get_functiondef`,
+   `information_schema`, `pg_policies`) : c'est la seule preuve forte.
+2. `Migration coverage` (`migration-coverage.yml`, quotidien, lecture seule)
+   range chaque fichier contre le ledger ET le catalogue de prod, et rougit sur
+   un fichier dont aucun objet n'existe (= migration non appliquée).
 
-```bash
-npm run check:drift -- --print-sql
-```
-
-Exécuter le SQL affiché sur la prod (SQL editor ou MCP `execute_sql` — lecture
-seule), sauver la réponse JSON, puis :
-
-```bash
-npm run check:drift -- introspection.json
-```
-
-Sortie ≠ 0 si un objet attendu par le dépôt **manque** en prod (= migration non
-appliquée). Un objet EN TROP est un simple avertissement (héritage dashboard).
-
-> Historique : ce script existait depuis juin 2026 et n'avait jamais été
-> exécuté. Premier passage le 2026-08-07 — il a révélé une vraie dérive
-> (mig. 090) **et** un faux positif de son propre SQL (le schéma `storage`
-> était ignoré). Un détecteur jamais lancé ne détecte rien.
+`check:drift` (deux étapes à la main, jamais lancé en CI) est retiré le
+2026-11-08 (V18.1) : son seul verdict d'échec, « objet attendu absent de la
+prod », est celui d'`ABSENT DES DEUX` dans `check:migration-coverage`.
 
 ---
 
@@ -704,15 +691,8 @@ le workflow courant et recommandé ici).
 **Source de vérité réelle** : le dossier `supabase/migration/*.sql` (gardé par
 `npm run validate:migrations` en CI) + l'introspection live. Pas le ledger.
 
-**Garde anti-dérive** (ajouté 2026-06-10, suite aux findings 017/N15) :
-```bash
-node scripts/check-prod-drift.mjs --print-sql   # → SQL d'introspection (read-only)
-# Exécuter ce SQL sur la prod (SQL editor / MCP), sauver le JSON, puis :
-node scripts/check-prod-drift.mjs introspection.json   # exit ≠ 0 si objet manquant
-```
-À lancer **après chaque migration appliquée** et avant tout audit. Les
-divergences assumées (fresh-install only) et les équivalences de noms de
-policies sont documentées dans le script lui-même.
+**Garde anti-dérive** (findings 017/N15, 2026-06-10) : `Migration coverage`,
+quotidien, cf. « Vérifier la dérive repo ↔ prod » plus haut.
 
 **Si un jour on veut basculer sur le workflow CLI** (à faire une seule fois) :
 ```bash

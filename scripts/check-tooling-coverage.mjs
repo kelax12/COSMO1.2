@@ -119,8 +119,6 @@ const INCLUS = [
  */
 const EXCLUS = [
   /\.(test|spec)\.mjs$/,
-  /^scripts\/_c5\d-.*probe\.mjs$/,
-  /^scripts\/visual-audit.*\.mjs$/,
   /^scripts\/capture-.*\.mjs$/,
   /^scripts\/profile-landing\.mjs$/,
   /^scripts\/landing-.*-probe\.mjs$/,

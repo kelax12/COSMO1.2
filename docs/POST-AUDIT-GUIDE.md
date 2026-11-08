@@ -94,7 +94,7 @@ documente *pourquoi* et *comment re-vérifier*, car la procédure diffère de ce
    name="NNN_xxx", query=<contenu>)` — enregistre une entrée de ledger.
    Alternative : SQL editor du dashboard, coller le fichier versionné.
 3. Re-lancer `get_advisors(security)` ET `(performance)` → aucun **nouveau** warning.
-4. Lancer `node scripts/check-prod-drift.mjs` (cf. `DEPLOYMENT.md §6`) après application.
+4. Relire l'objet au catalogue après application ; `Migration coverage` (quotidien) refuse une migration absente de la prod.
 
 ### Re-vérification de l'index (lecture seule)
 ```sql
