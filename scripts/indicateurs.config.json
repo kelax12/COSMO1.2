@@ -1,0 +1,19 @@
+{
+  "_note": "Declarations lues par scripts/indicateurs.mjs (ADR 0012). Deux decisions humaines, pas des mesures : la liste des parcours dits critiques, et la date du dernier audit externe. Un parcours dont aucune spec n'existe est compte NON couvert, il n'est jamais retire d'ici pour faire monter le chiffre. Apres chaque audit externe, `dernier` est recale sur la date de son rapport (un geste d'Axel).",
+  "auditExterne": {
+    "dernier": "2026-11-06",
+    "periodiciteMois": 6
+  },
+  "parcours": [
+    { "id": "creer-tache", "libelle": "Creer une tache", "specs": ["e2e/demo-create-task.spec.ts", "e2e/real/tasks.spec.ts"] },
+    { "id": "cocher-habitude", "libelle": "Cocher une habitude", "specs": ["e2e/demo-toggle-habit.spec.ts", "e2e/real/habits.spec.ts"] },
+    { "id": "agenda", "libelle": "Planifier un evenement dans l'agenda", "specs": ["e2e/demo-calendar.spec.ts", "e2e/real/agenda.spec.ts"] },
+    { "id": "okr", "libelle": "Creer un objectif et ses resultats cles", "specs": ["e2e/demo-create-okr.spec.ts", "e2e/real/okr.spec.ts"] },
+    { "id": "partage", "libelle": "Partager une tache avec un ami", "specs": ["e2e/demo-collaboration.spec.ts", "e2e/real/sharing.spec.ts"] },
+    { "id": "connexion", "libelle": "S'inscrire et se connecter", "specs": ["e2e/real/auth.spec.ts", "e2e/stubbed/first-run.spec.ts"] },
+    { "id": "suppression-compte", "libelle": "Supprimer son compte", "specs": ["e2e/real/delete-account.spec.ts"] },
+    { "id": "creer-organisation", "libelle": "Creer une organisation et inviter", "specs": ["e2e/stubbed/org-onboarding.spec.ts", "e2e/real/organization.spec.ts"] },
+    { "id": "facturation-entreprise", "libelle": "Consentement, retractation et facturation entreprise", "specs": ["e2e/demo-billing-consent.spec.ts", "e2e/stubbed/retractation.spec.ts"] },
+    { "id": "supprimer-organisation", "libelle": "Rembourser, resilier puis supprimer une organisation", "specs": ["e2e/stubbed/delete-org.spec.ts"] }
+  ]
+}

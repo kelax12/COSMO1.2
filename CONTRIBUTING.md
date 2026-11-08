@@ -16,6 +16,26 @@ pas de file de revue de pull requests. Si vous voulez corriger un bug ou propose
 
 Les failles de sécurité ne passent **pas** par une issue : voir [`SECURITY.md`](./SECURITY.md).
 
+## Proposer une fonctionnalité de plus d'une semaine
+
+Décision du 2026-11-08 ([ADR 0013](./docs/adr/0013-validation-d-usage-avant-toute-fonctionnalite-longue.md)) :
+une fonctionnalité qui demande **plus d'une semaine de travail** (une personne, agents compris) se
+valide par l'usage **avant** le premier commit. Un bug, un correctif de sécurité, une obligation
+légale ou de l'outillage n'ont pas besoin de cette étape.
+
+La proposition suit le gabarit [`docs/propositions/GABARIT.md`](./docs/propositions/GABARIT.md), ou
+l'issue « Proposition de fonctionnalité » qui en reprend les rubriques :
+
+1. **Le problème**, pour qui, et ce que la personne fait aujourd'hui à la place.
+2. **La preuve d'usage** : ce qui existe déjà (demandes, abandons, contournements), pas ce qu'on suppose.
+3. **La maquette** : un écran visible, pas une description.
+4. **Le test auprès de N utilisateurs** (N au moins 5) : la tâche donnée, combien l'ont réussie sans aide.
+5. **La mesure d'activation** : l'action clé, la part visée, la date de lecture, fixées avant le code.
+6. **Le critère d'abandon** : le seuil et la date sous lesquels on retire, et ce que le retrait emporte.
+
+Sans résultat de test, la fonctionnalité est proposée, pas validée : le code ne commence pas. Ni nom
+ni capture d'utilisateur dans la proposition (le dépôt est public).
+
 Aucune licence de réutilisation n'est accordée à ce jour (voir [`README.md`](./README.md#licence)) :
 proposer du code ne vaut pas cession de droits, et le mainteneur peut vous demander de le préciser
 avant de l'intégrer.

@@ -989,7 +989,7 @@ export const CATALOGUE = [
     ['docs-forme-oubliee', 'detecteur', r('scripts/check-docs-scored.mjs', "  { re: /^tableau-de-bord$/, nom: 'tableau-de-bord' },", ''),
       'les quatre formes de marqueur sont reconnues',
       'Le tableau de bord des notes rendu « forme INCONNUE » : la garde rougirait sur le document qui porte les notes.'],
-    ['docs-phrase-mal-lue', 'detecteur', r('scripts/check-docs-scored.mjs', "/^>\\s*\\*\\*Note d'audit\\*\\*\\s*—\\s*(.+)$/m", "/^>\\s*\\*\\*Note d'audit\\*\\*\\s*:\\s*(.+)$/m"),
+    ['docs-phrase-mal-lue', 'detecteur', r('scripts/check-docs-scored.mjs', "/^>\\s*\\*\\*Note d'audit\\*\\*\\s*(?:—|:|-)\\s*(.+)$/m", "/^>\\s*\\*\\*Note d'audit\\*\\*\\s*(?:—)\\s*(.+)$/m"),
       'la phrase lisible est lue, et exigée',
       'Une phrase jamais lue rend « non-note » sans raison écrite : un document sans note et sans explication.'],
     ['docs-mauvaise-extension', 'detecteur', r('scripts/check-docs-scored.mjs', "filter((f) => f.endsWith('.md')).sort();", "filter((f) => f.endsWith('.mdx')).sort();"),

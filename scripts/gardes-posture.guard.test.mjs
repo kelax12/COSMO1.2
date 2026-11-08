@@ -624,6 +624,9 @@ describe('témoin — notes d audit déclarées (C-109)', () => {
   it('la phrase lisible est lue, et exigée', () => {
     expect(lirePhrase(`> **Note d'audit** — Couvert par RGPD.md, même domaine.`))
       .toBe('Couvert par RGPD.md, même domaine.');
+    // Séparateur « : » admis (V20.2) : un doc généré ne peut pas écrire de tiret cadratin.
+    expect(lirePhrase(`> **Note d'audit** : Document généré, ne porte aucune note.`))
+      .toBe('Document généré, ne porte aucune note.');
     expect(lirePhrase('# Rien')).toBeNull();
   });
 
