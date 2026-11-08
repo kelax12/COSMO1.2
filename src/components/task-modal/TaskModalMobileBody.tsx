@@ -278,7 +278,6 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                         }}
                         locale={getDateLocale()}
                         disabled={{ before: new Date() }}
-                        initialFocus
                         className="w-full [--cell-size:2.25rem]"
                       />
                     </div>
