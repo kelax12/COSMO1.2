@@ -24,6 +24,12 @@ import { todayKeyInTz } from '@/lib/timezone';
 import { VIRTUAL_TODAY_ID } from '@/pages/tasks/task-page-filter';
 import type { Translator } from '@/i18n/useT';
 
+// Tableau vide STABLE pour la valeur par défaut de `useTeamLists`. Un `= []` en ligne
+// est un tableau NEUF à chaque rendu : `lists` change donc à chaque rendu tant que la
+// requête charge, l'effet sur `[lists]` repose `orderedLists`, qui re-rend, et la
+// boucle ne s'arrête qu'à l'arrivée des données (sous `act()` de Testing Library, jamais).
+const NO_LISTS: TeamList[] = [];
+
 const todayHiddenKey = (orgId: string) => `cosmo_team_lists_today_hidden:${orgId}`;
 
 interface Params {
@@ -36,7 +42,7 @@ interface Params {
 }
 
 export function useTeamTaskLists({ orgId, tasks, setDeadline, t }: Params) {
-  const { data: rawLists = [] } = useTeamLists(orgId);
+  const { data: rawLists = NO_LISTS } = useTeamLists(orgId);
   const createListMutation = useCreateTeamList(orgId);
   const updateListMutation = useUpdateTeamList(orgId);
   const addTaskToList = useAddTaskToTeamList(orgId);
