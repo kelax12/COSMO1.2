@@ -58,8 +58,7 @@
 | `check:secrets-age` | âge des secrets (GitHub, Edge, Vercel) contre `.github/secrets-registry.json` : échu, date inconnue, hors registre, jeton absent, entrée incomplète | `AM-3` | `docs/SECURITY.md` |
 | `check:coffre` | coffre vérifié sous 92 j | `V4.2` | `docs/SECURITY.md` |
 | `check:contrat` | `schema.sql`, `rpc-inventory.md` et types générés vs les migrations (CI seule, base vierge) | `ARC-07` | `supabase/migration/CLAUDE.md` |
-| `check:docs` | plafonds et pointeurs des `CLAUDE.md` | | ce fichier |
-| `check:docs-scored` | chaque doc de `docs/` déclare son rapport à une note | `C-109` | `docs/README.md` |
+| `check:docs` | plafonds et pointeurs des `CLAUDE.md`, liens des docs vivantes, aucune note /100 ni marqueur `note-audit` (ADR 0012) | | ce fichier |
 | `check:lecteurs-ecran` | échéance des séances VoiceOver / NVDA, étapes à attendu | `M-52` | `docs/AUDIT-NVDA-WINDOWS.md` |
 | `check:exercice-violation` | exercice 72 h de moins de 12 mois, gabarits | `M-49` | `docs/RGPD-VIOLATION-EXERCICES.md` |
 | `check:peremption-chantiers` | chaque chantier daté (relu 90 j, ou clos) | `AM-2` | `docs/POST-AUDIT-GUIDE.md` |
@@ -69,7 +68,7 @@
 | `check:mail` | SPF / DKIM / DMARC — **pas une gate** | | `docs/DEPLOYMENT.md` |
 | `images:check` | images non optimisées — **pas une gate** | | `docs/PERFORMANCE.md` |
 
-📅 **Gardes de calendrier** (`study`, `docs-scored`, `lecteurs-ecran`, `exercice-violation`,
+📅 **Gardes de calendrier** (`study`, `lecteurs-ecran`, `exercice-violation`,
 `peremption-chantiers`, `acquisition`, `coffre`) : `gardes-calendrier.yml`, quotidien, issue
 `calendrier-red`. ❌ Jamais dans un job bloquant (CI-01) → `docs/TESTING.md` § CI.
 

@@ -1,15 +1,3 @@
-<!-- note-audit: note=86 -->
-<!--
-  🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
-  Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
-  ni baisser, donc **rien ne signalait qu'ils avaient vieilli**.
-  Chaque document de `docs/` déclare donc soit sa note, soit la note qui le
-  couvre, soit qu'il n'est pas noté ET pourquoi.
-  ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
-     une réponse honnête, un chiffre faux ne l'est pas.
--->
-> **Note d'audit** — Note **86 / 100** au 2026-11-06, au tableau de bord de [`README.md`](./README.md).
-
 # Patterns UI — COSMO
 
 ## Note UI / UX : 70 → 80 → 82 → 84 → 87 → 85 → 81 → 83 → 86 → 85 → 86 → 84 → 86 → 86 → 85 → 85 → 86 → 87 → **86 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir → 2026-10-01 → 2026-10-02 soir → 2026-10-03 → 2026-10-15 → 2026-10-16 → 2026-10-18 → 2026-10-20 → 2026-10-22 → 2026-10-22 (passe) → 2026-10-25 → **2026-11-06**)

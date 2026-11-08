@@ -43,6 +43,17 @@ const IGNORED = new Set([
   '.worktrees',
 ])
 
+/**
+ * Les marques d'une note /100 dans un doc vivant (ADR 0012) : le marqueur de
+ * l'ancienne garde, sa phrase, et l'en-tete `## Note ... : 80 → 94 / 100`.
+ */
+export const REGLES_NOTES = [
+  { re: /<!--\s*note-audit:/, dit: 'marqueur `note-audit` (ancienne garde C-109)' },
+  { re: /^>\s*\*\*Note d'audit\*\*/m, dit: "phrase « Note d'audit »" },
+  { re: /^#{1,4} .*\b\d{1,3} ?\/ ?100\b/m, dit: 'en-tete de note sur 100' },
+  { re: /^#{1,4} Note (?:de |d'|du )?[^\n]*:\s*\d{2,3}\s*(?:→|->)/m, dit: 'en-tete de journal de notes (80 → 94)' },
+]
+
 /** Tous les CLAUDE.md du depot, chemins POSIX relatifs a `root`. */
 export function findClaudeFiles(root) {
   const out = []
@@ -179,6 +190,25 @@ export function audit(root = process.cwd()) {
     for (const l of linksOf(root, f)) {
       if (!existsSync(join(root, l.rel))) {
         errors.push(`${f} pointe vers ${l.href}, qui n existe pas.`)
+      }
+    }
+  }
+
+  // ── 6 · aucune note /100 dans les docs vivantes (ADR 0012) ───────
+  //
+  // Les notes sur 100 auto-attribuees ont cesse le 2026-11-08 : elles se
+  // negociaient et sont restees hautes pendant que la CI etait rouge (audit
+  // externe, PRO-05). Les six indicateurs mesures de `docs/INDICATEURS.md` les
+  // remplacent. Cette regle remplace `check:docs-scored` (C-109), retiree par
+  // l'ADR 0012 : elle empeche le retour du marqueur et de l'en-tete de note.
+  for (const f of findLivingDocs(root)) {
+    const texte = readFileSync(join(root, f), 'utf8')
+    for (const r of REGLES_NOTES) {
+      if (r.re.test(texte)) {
+        errors.push(
+          `${f} : ${r.dit}. Les notes /100 ont cesse (ADR 0012) : renvoyer vers docs/INDICATEURS.md, ` +
+            `deplacer l'historique dans docs/archive/.`,
+        )
       }
     }
   }

@@ -37,7 +37,6 @@ import { sqlExplain, extraire, pente, REQUETES } from './check-db-cost.mjs';
 import { SONDES, jouer, cleAnonDepuisApi } from './check-edge-smoke.mjs';
 import { variablesLues, variablesDeLExemple, secretsExposes, serveurNonLues } from './check-env-contract.mjs';
 import { lignesAnnuaires, dateDeRemesure, ETATS } from './check-acquisition.mjs';
-import { lireMarqueur, lirePhrase, documents } from './check-docs-scored.mjs';
 import { CATALOGUE, verifierCatalogue } from './replay-sabotages.mjs';
 import { aplatir, grouperPluriels, categoriesAttendues, volumeIndexable, decouper } from './check-i18n-pages.mjs';
 
@@ -605,36 +604,6 @@ describe('témoin — acquisition (C-101)', () => {
                  '# Titre', 'Une note du 2026-09-20 sur autre chose.'].join(LF);
     expect(dateDeRemesure(doc)).toBe('2026-09-14');
     expect(dateDeRemesure('# Sans marqueur, mais daté 2026-09-30')).toBeNull();
-  });
-});
-
-// ═══════════════════════════════════════════════════════════════════
-describe('témoin — notes d audit déclarées (C-109)', () => {
-  it('les quatre formes de marqueur sont reconnues', () => {
-    expect(lireMarqueur('<!-- note-audit: note=84 -->')).toMatchObject({ forme: 'note', valeur: '84' });
-    expect(lireMarqueur('<!-- note-audit: couvert-par=RGPD.md -->')).toMatchObject({
-      forme: 'couvert-par', valeur: 'RGPD.md',
-    });
-    expect(lireMarqueur('<!-- note-audit: non-note -->')).toMatchObject({ forme: 'non-note' });
-    expect(lireMarqueur('<!-- note-audit: tableau-de-bord -->')).toMatchObject({ forme: 'tableau-de-bord' });
-    expect(lireMarqueur('<!-- note-audit: n_importe_quoi -->')).toMatchObject({ forme: 'INCONNUE' });
-    expect(lireMarqueur('# Sans marqueur')).toBeNull();
-  });
-
-  it('la phrase lisible est lue, et exigée', () => {
-    expect(lirePhrase(`> **Note d'audit** — Couvert par RGPD.md, même domaine.`))
-      .toBe('Couvert par RGPD.md, même domaine.');
-    // Séparateur « : » admis (V20.2) : un doc généré ne peut pas écrire de tiret cadratin.
-    expect(lirePhrase(`> **Note d'audit** : Document généré, ne porte aucune note.`))
-      .toBe('Document généré, ne porte aucune note.');
-    expect(lirePhrase('# Rien')).toBeNull();
-  });
-
-  it('les 28 documents de `docs/` sont vus', () => {
-    const d = documents();
-    expect(d.length).toBeGreaterThanOrEqual(20);
-    expect(d).toContain('SECURITY.md');
-    expect(d.every((f) => f.endsWith('.md'))).toBe(true);
   });
 });
 

@@ -1,11 +1,3 @@
-<!-- note-audit: non-note -->
-<!--
-  C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
-  Chaque document de `docs/` déclare soit sa note, soit la note qui le couvre,
-  soit qu'il n'est pas noté ET pourquoi.
--->
-> **Note d'audit** — **NON NOTÉ** : runbook de continuité : il décrit des gestes (arrivée, départ, inventaire de ce qui reste manuel). Les gardes qu'il cite sont notées ailleurs (`check:secrets-age`, `check:coffre` : [`SECURITY.md`](./SECURITY.md) ; drill : [`DEPLOYMENT.md`](./DEPLOYMENT.md) § 7).
-
 # Continuité : second administrateur et gestes de production (V5.4, V20.3)
 
 Rien de ce qui suit n'est de la sécurité de surface : c'est ce qui décide si COSMO survit à

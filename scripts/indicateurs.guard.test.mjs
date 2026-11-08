@@ -272,7 +272,7 @@ describe('rendu et verdict', () => {
   it('le markdown porte, pour chaque indicateur, valeur, date de mesure et source, sans tiret cadratin', () => {
     const r = calculer(sources(), MAINTENANT);
     const md = rendre({ ...r, meta: { genereLe: MAINTENANT, sha: 'abcdef1234', depot: 'o/r' } });
-    expect(md.startsWith('<!-- note-audit: non-note -->')).toBe(true);
+    expect(md).not.toContain('note-audit');
     expect(md).toContain('NE PAS EDITER A LA MAIN');
     expect(md).not.toContain('—');
     expect(md).not.toMatch(/undefined|NaN|\[object/);

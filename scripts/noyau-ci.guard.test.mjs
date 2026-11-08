@@ -61,7 +61,7 @@ describe('ci-noyau.yml : la composition du noyau', () => {
   // matin, et un noyau rouge bloque toute poussée, sans contournement.
   it('TÉMOIN : aucune garde de calendrier, aucun job lent ou variable dans le noyau', () => {
     const interdits = [
-      'check:study', 'check:docs-scored', 'check:lecteurs-ecran', 'check:exercice-violation',
+      'check:study', 'check:lecteurs-ecran', 'check:exercice-violation',
       'check:peremption-chantiers', 'check:acquisition', 'check:coffre', 'playwright test', 'lhci', 'npm audit',
       'stryker', 'test:mutation', 'check:sabotages', 'test:e2e',
     ];

@@ -1,6 +1,3 @@
-<!-- note-audit: non-note -->
-> **Note d'audit** — **NON NOTÉ** au 2026-10-23 : audit ouvert ce jour, aucune garde n'existe encore sur ce domaine. Une note ne se pose qu'après la première mesure en CI, jamais avant.
-
 # Observabilité de la production
 
 > **Vivant.** Créé le 2026-10-23. Répond à une seule question : **quand la production se trompe,
