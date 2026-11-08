@@ -116,6 +116,14 @@ jobs:
       # écrire dans l'arbre, et le vérifie lui-même ; un `git status` sale en
       # fin de job dirait qu'il s'est trompé — et sur un runner, personne ne
       # le verrait.
+      # C-82, sorti du noyau le 2026-11-08 (V18.1). Les temoins de `scripts/`
+      # tournent deja dans le `test:coverage` du noyau ; ce qui reste ici est le
+      # PLANCHER de couverture de l'outillage, une mesure lente a bouger, sans
+      # verdict de commit. Le script verifie d'abord que le rapport est COMPLET.
+      - name: Couverture de l outillage (scripts/)
+        if: ${{ !cancelled() }}
+        run: npm run test:coverage:tooling
+
       - name: L arbre est-il revenu intact ?
         if: ${{ always() }}
         run: |

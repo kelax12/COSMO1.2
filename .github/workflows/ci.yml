@@ -6,11 +6,11 @@
 # suit plus. Le verdict bloquant du commit est `ci-noyau.yml`.
 #
 # Restent ici :
-#   · `audit`      : `npm audit` peut rougir SANS commit (un avis publie la
-#                    nuit). Les avis de securite des dependances arrivent aussi
-#                    par Dependabot (`.github/dependabot.yml`).
 #   · `e2e`        : Playwright, 4 projects, ~30 min.
 #   · `lighthouse` : scores mesures sur un runner partage, variables.
+# `audit` (`npm audit`) retire le 2026-11-08 (V18.1) : les alertes et les
+# mises a jour de securite Dependabot sont actives sur le depot et couvrent
+# toutes les dependances du lockfile, dev comprises.
 # Lus a la demande (`gh run list --workflow "CI etendue"`), pas pousses.
 # ──────────────────────────────────────────────────────────────────────
 name: CI etendue
@@ -58,85 +58,6 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # ──────────────────────────────────────────────────────────────────
-  # Garde sécurité dépendances : échoue si une vulnérabilité high/critical
-  # touche une dépendance de PRODUCTION (ce qui est livré au navigateur).
-  # Les advisories dev-only (vite/vitest/jsdom) ne bloquent pas — leur fix
-  # demande des majeures cassantes et elles ne sont pas expédiées.
-  # ──────────────────────────────────────────────────────────────────
-  audit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: '22'
-          cache: 'npm'
-      - run: npm ci
-        id: deps
-      # Même dispositif que `lint-test-build` : un rouge sur les dépendances de
-      # prod ne doit pas masquer la lecture de la chaîne de build.
-      - name: npm audit (prod deps, high+)
-        id: audit-prod
-        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: npm audit --omit=dev --audit-level=high
-
-      # ── C-90 · le second passage, sur la chaine de BUILD ─────────
-      #
-      # L'etape ci-dessus ne regarde que ce qui part dans le navigateur. La
-      # chaine de build (vite, vitest, jsdom, playwright) n'etait vue par RIEN,
-      # sur un depot PUBLIC qui publie ses artefacts : une dependance de build
-      # compromise reecrit le bundle sans toucher une ligne de `src/`.
-      #
-      # 🔴 NON BLOQUANTE, et c'est un arbitrage ecrit, pas un oubli (cf. C-18) :
-      # les advisories dev-only de ce depot demandent des majeures cassantes,
-      # et une gate rouge en permanence finit ignoree — la regle du dossier.
-      # Ce qui CHANGE par rapport a l'absence de garde, c'est que le resultat
-      # est LU : compte par severite dans le resume du job, et une annotation
-      # quand il y en a. Un « 0 » ici est une mesure, pas un silence.
-      #
-      # ⚠️ `|| true` sur `npm audit` seul : il sort en 1 des qu'il trouve
-      # quelque chose. C'est `node` qui juge ensuite, et LUI doit echouer si le
-      # JSON est illisible — sinon cette etape deviendrait la garde qui repond
-      # sans mesurer que `scripts/CLAUDE.md` decrit.
-      - name: npm audit (chaine de build, non bloquant, resultat LU)
-        id: audit-build
-        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
-        run: |
-          set -uo pipefail
-          npm audit --json > audit-all.json || true
-          node -e '
-            const fs = require("fs");
-            const NL = String.fromCharCode(10);
-            let j;
-            try { j = JSON.parse(fs.readFileSync("audit-all.json", "utf8")); }
-            catch (e) {
-              console.log("::error title=audit-dev::sortie de npm audit illisible : " + e.message);
-              process.exit(1);
-            }
-            const v = (j.metadata && j.metadata.vulnerabilities) || null;
-            if (!v) {
-              console.log("::error title=audit-dev::npm audit n a pas rendu metadata.vulnerabilities");
-              process.exit(1);
-            }
-            const ordre = ["critical", "high", "moderate", "low", "info"];
-            const ligne = ordre.map((k) => k + "=" + (v[k] ?? 0)).join(" ");
-            const graves = (v.critical ?? 0) + (v.high ?? 0);
-            const noms = Object.keys(j.vulnerabilities || {})
-              .filter((n) => ["critical", "high"].includes(j.vulnerabilities[n].severity))
-              .sort();
-            console.log("::notice title=audit-dev::toutes deps · " + ligne);
-            if (graves > 0) {
-              console.log("::warning title=audit-dev::" + graves +
-                " advisory high/critical sur la chaine de build (non bloquant) : " + noms.join(", "));
-            }
-            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,
-              "### npm audit · toutes dependances (non bloquant)" + NL + NL +
-              "```" + NL + ligne + NL +
-              (noms.length ? "high/critical : " + noms.join(", ") + NL : "aucun high/critical" + NL) +
-              "```" + NL);
-          '
-
   # ──────────────────────────────────────────────────────────────────
   # Tests E2E Playwright (3 parcours démo + scan a11y axe-core, bloquant
   # sur impact=critical). Job séparé : Chromium ~150 MB, plus lent.

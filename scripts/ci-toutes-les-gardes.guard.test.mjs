@@ -200,10 +200,6 @@ describe('ci.yml et ci-noyau.yml réels', () => {
     expect(cal).toContain('--label calendrier-red');
   });
 
-  it('audit : la lecture de la chaîne de build joue après un audit prod rouge', () => {
-    expect(verifierJob(lireEtapes(CI, 'audit'), { resume: false, entrees: [] })).toEqual([]);
-  });
-
   it('lighthouse : après le Build, plus aucune étape ne dépend des précédentes', () => {
     const e = lireEtapes(CI, 'lighthouse');
     const iBuild = e.findIndex((x) => x.id === 'build');
