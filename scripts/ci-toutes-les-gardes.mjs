@@ -50,7 +50,10 @@ export const SCRIPT_RESUME = 'scripts/ci-toutes-les-gardes.mjs';
  * pas verte, l'entrée est absente ou partielle : la lectrice doit ÉCHOUER en
  * le disant, et pour ça elle doit recevoir l'issue de la productrice.
  */
-export const ENTREES = [{ commande: 'npm run check:bundle', productrice: 'build' }];
+export const ENTREES = [
+  { commande: 'npm run check:bundle', productrice: 'build' },
+  { commande: 'npm run check:prerender', productrice: 'build' },
+];
 
 /** Lève une erreur nommée : un parseur qui ignore ce qu'il ne comprend pas finit par ne plus rien voir. */
 function refuser(ligne, message) {
