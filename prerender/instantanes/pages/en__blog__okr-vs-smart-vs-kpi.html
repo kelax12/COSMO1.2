@@ -71,7 +71,7 @@
          enregistré, sinon celui de defaultTheme() (Gris sous 768 px, sinon
          celui du système), en `data-boot-theme` ET en classes `dark` / `gris`
          / `noir`. La copie d'une page de contenu à thème (le guide) en lit
-         les variables avant React (prerender.mjs, injectContentCopy). Le
+         les variables avant React (prerender/, injectContentCopy). Le
          stockage seul est dans le try : bloqué, le thème par défaut s'applique.
          Seul <script> inline exécutable du dépôt, autorisé par son empreinte
          sha256 dans `script-src` (vercel.json). ❌ Le modifier d'un octet
@@ -94,7 +94,7 @@
          - #boot-screen est peint immédiatement (overlay opaque plein écran),
            puis React l'efface tout seul, createRoot().render() vide les
            enfants de #root au premier commit. Aucun code à synchroniser.
-         - #seo-fallback (injecté par prerender.mjs dans dist/) est lu par les
+         - #seo-fallback (injecté par prerender/ dans dist/) est lu par les
            crawlers qui ne lancent pas le JS (GPTBot, ClaudeBot,
            PerplexityBot…). Depuis C-116 (2026-09-29) il est AUSSI peint, et
            le spinner masqué, sur les seules pages prérendues
@@ -342,14 +342,14 @@
         <p><a href="/en/guide">User guide</a> · <a href="/en/for-companies">Cosmo for companies</a> · <a href="/en/blog">Blog</a> · <a href="/en/for-freelancers">For freelancers</a> · <a href="/en/for-students">For students</a> · <a href="/en/for-managers">For managers</a> · <a href="/en/for-teams">For teams</a> · <a href="/en/about">About</a> · <a href="/en/signup">Free sign-up</a> · <a href="/en/login">Sign in</a> · <a href="/en/legal-notice">Legal notice</a> · <a href="/en/privacy-policy">Privacy</a> · <a href="/en/terms">Terms</a> · <a href="mailto:contact@thecosmo.app">contact@thecosmo.app</a></p>
       </div>
       <!-- Écran de démarrage — effacé par React au premier render. En prod,
-           prerender.mjs injecte #seo-fallback juste au-dessus. Voir le <style>
+           prerender/ injecte #seo-fallback juste au-dessus. Voir le <style>
            du <head> pour le pourquoi du 100 % CSS. -->
       <div id="boot-screen" role="status" aria-label="Chargement de Cosmo">
         <div class="ring"></div>
       </div>
     </div>
     <!-- Fallback pour les crawlers sans JS — contenu indexable minimal.
-         Retiré de dist/ par prerender.mjs (remplacé par #seo-fallback). -->
+         Retiré de dist/ par prerender/ (remplacé par #seo-fallback). -->
     <!-- `boot.ts` et non `main.tsx` : l'app n'est chargée qu'après la première
          peinture du prérendu, pour que son JS et sa CSS sortent du chemin du
          LCP. Pourquoi : en-tête de src/boot.ts. -->

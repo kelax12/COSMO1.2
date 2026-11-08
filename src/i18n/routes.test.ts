@@ -159,7 +159,7 @@ describe('canonicalUrl', () => {
   });
 
   it('garde la barre oblique finale de la racine', () => {
-    // `prerender.mjs` et `useSeoMeta` doivent produire exactement la même
+    // `prerender/` et `useSeoMeta` doivent produire exactement la même
     // chaîne, sinon le canonical et le hreflang se contredisent.
     expect(canonicalUrl('/', DEFAULT_LOCALE)).toBe(`${SITE_ORIGIN}/`);
   });

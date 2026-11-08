@@ -6,7 +6,7 @@
 ## Contexte
 
 L'application est bilingue, français et anglais, et ses pages publiques sont prérendues par locale
-pour le référencement (`prerender.mjs`). Elle charge ses textes à la demande, par page, pour tenir un
+pour le référencement (`prerender/`). Elle charge ses textes à la demande, par page, pour tenir un
 budget de bundle strict (voir [`docs/PERFORMANCE.md`](../PERFORMANCE.md)).
 
 ## Décision

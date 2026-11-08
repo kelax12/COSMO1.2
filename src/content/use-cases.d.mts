@@ -1,5 +1,5 @@
 // Types du registre use-cases (use-cases.mjs est en JS pur pour rester
-// importable par prerender.mjs sous Node).
+// importable par prerender/ sous Node).
 import type { Locale } from '@/i18n/locale';
 
 /** Ce qui se traduit d'une page cas d'usage. */

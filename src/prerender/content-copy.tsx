@@ -1,4 +1,4 @@
-// Rendu SERVEUR des pages de contenu, lu par `prerender.mjs` au build.
+// Rendu SERVEUR des pages de contenu, lu par `prerender/` au build.
 //
 // 🔴 POURQUOI (2026-10-23, AM-2 de docs/PERFORMANCE.md). Les pages de contenu
 // (blog, articles, `/pour-*`, à-propos, pages légales, guide) peignaient un
@@ -8,7 +8,7 @@
 // ressemblait pas à la page (arbitrage du 2026-10-21).
 //
 // Ici, la page est rendue par ses PROPRES composants, avec la même locale et les
-// mêmes catalogues que dans le navigateur. `prerender.mjs` pose ce balisage dans
+// mêmes catalogues que dans le navigateur. `prerender/` pose ce balisage dans
 // `#lp-hero`, le calque de la home, avec la CSS buildée qui lui revient : la
 // page est peinte dès la première image, puis React la relève à l'identique
 // (`PublicPageWithSuspense`, dans `App.tsx`), sans saut.

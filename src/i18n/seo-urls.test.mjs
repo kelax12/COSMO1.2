@@ -19,7 +19,7 @@ const ROUTE_IDS = Object.keys(ROUTE_SLUGS);
 // ──────────────────────────────────────────────────────────────────
 // Parité avec l'implémentation applicative
 //
-// C'est LE test qui compte : `prerender.mjs` calcule les `canonical` et les
+// C'est LE test qui compte : `prerender/` calcule les `canonical` et les
 // `hreflang`, l'app calcule les URLs réellement servies. S'ils divergent, on
 // déclare canonique une URL qui n'existe pas — un bug qu'on ne découvre qu'en
 // Search Console, des semaines plus tard.

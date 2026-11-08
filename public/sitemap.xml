@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   Socle du sitemap : volontairement VIDE. Toutes les URLs sont générées au
-  build par prerender.mjs, seul chemin qui développe un chemin sur chacune de
+  build par prerender/, seul chemin qui développe un chemin sur chacune de
   ses locales publiées et qui porte les `xhtml:link` réciproques exigés par
   Google.
 

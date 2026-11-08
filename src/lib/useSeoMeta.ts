@@ -16,7 +16,7 @@ interface SeoMeta {
  * Méta de la racine, restaurées au démontage.
  *
  * Lues dans `src/locales/<locale>/seo.json` — le MÊME fichier que
- * `prerender.mjs`. C'est ce qui garantit qu'une page prérendue et la même page
+ * `prerender/`. C'est ce qui garantit qu'une page prérendue et la même page
  * rendue côté client annoncent exactement le même titre : une divergence entre
  * les deux ferait osciller le titre indexé par Google.
  */
