@@ -221,7 +221,7 @@ export class Semeur {
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       this.erreurs.set(nom, msg);
-      throw new Error(msg);
+      throw new Error(msg, { cause: e });
     } finally {
       this.enCours.delete(nom);
     }
@@ -277,7 +277,7 @@ export class Semeur {
       try {
         parent = await this.semer(fk.tableRef);
       } catch (e) {
-        throw new Error(`dépend de ${fk.tableRef} : ${e instanceof Error ? e.message : String(e)}`);
+        throw new Error(`dépend de ${fk.tableRef} : ${e instanceof Error ? e.message : String(e)}`, { cause: e });
       }
       fk.colonnes.forEach((c, i) => valeurs.set(c, texte(parent[fk.colonnesRef[i]])));
     }
@@ -339,6 +339,7 @@ export class Semeur {
         `insertion refusée (${err.code ?? '?'}) ${err.message ?? String(e)}` +
           (err.detail ? ` · ${err.detail}` : '') +
           ` · colonnes posées : ${cols.join(', ') || 'aucune'}`,
+        { cause: e },
       );
     }
   }

@@ -67,7 +67,7 @@ function pingClick(slug: string): void {
 
 /** Lit `?aff=` au chargement, le stocke (dernier clic gagnant) et compte le clic. */
 export function captureAffiliate(): void {
-  let slug: string | null = null;
+  let slug: string | null;
   try {
     slug = normalizeAffiliateSlug(new URLSearchParams(window.location.search).get('aff'));
   } catch {

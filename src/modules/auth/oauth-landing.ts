@@ -97,7 +97,7 @@ export function clearOAuthRedirectIntent(): void {
 
 /** Lit l'intention en attente. `null` si absente, illisible ou malformée. */
 export function readOAuthRedirectIntent(): OAuthRedirectIntent | null {
-  let raw: string | null = null;
+  let raw: string | null;
   try {
     raw = sessionStorage.getItem(OAUTH_INTENT_KEY);
   } catch {

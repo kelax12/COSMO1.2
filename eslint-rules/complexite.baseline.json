@@ -360,7 +360,7 @@
       "complexity": [24]
     },
     "src/lib/quick-add-parser.ts": {
-      "complexity": [38]
+      "complexity": [30]
     },
     "src/lib/task-import/todoist.ts": {
       "complexity": [24]

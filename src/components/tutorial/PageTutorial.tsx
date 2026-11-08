@@ -165,7 +165,7 @@ const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, acc
   const CARD_W = 320;
   const CARD_H = 200; // estimé — le contenu est plutôt court
 
-  let cardStyle: React.CSSProperties = {};
+  let cardStyle: React.CSSProperties;
   let arrowStyle: React.CSSProperties = {};
 
   if (targetRect) {

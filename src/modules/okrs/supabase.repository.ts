@@ -351,7 +351,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
     // avant la table, JSONB-only), on bascule directement sur le fallback
     // JSONB — sinon l'UPDATE ne touche rien (0 row, pas d'erreur), le SELECT
     // suivant retourne [], et la JSONB serait écrasée avec un tableau vide.
-    let previousCurrentValue = 0;
+    let previousCurrentValue: number;
     {
       const { data: existing } = await supabase
         .from('key_results')
