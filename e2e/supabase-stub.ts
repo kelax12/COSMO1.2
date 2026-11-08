@@ -176,7 +176,7 @@ export async function installSupabaseStub(page: Page): Promise<SupabaseStub> {
     // remboursement aurait mesure « le serveur n'a rien rendu » sans jamais
     // savoir si la requete etait meme partie.
     if (url.pathname.startsWith('/functions/v1/')) {
-      let fnBody: unknown = null;
+      let fnBody: unknown;
       try {
         fnBody = request.postDataJSON();
       } catch {

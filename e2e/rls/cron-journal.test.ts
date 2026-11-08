@@ -81,7 +81,7 @@ describe('supabase/proofs : preuves 245 et 246 rejouées sur la base fraîche', 
     it(`245.proof.sql : PREUVE-ANNULEE 0 ECHEC (${avecSecrets ? 'avec' : 'sans'} secrets Vault)`, async () => {
       if (avecSecrets) await poserSecrets();
       else await retirerSecrets();
-      let verdict = '';
+      let verdict: string;
       try {
         await db.query(lire('supabase/proofs/245.proof.sql'));
         verdict = 'le bloc DO a VALIDÉ au lieu de lever : la preuve ne s’annule pas';
@@ -95,7 +95,7 @@ describe('supabase/proofs : preuves 245 et 246 rejouées sur la base fraîche', 
 
   it('246.proof.sql : PREUVE-ANNULEE 0 ECHEC (secrets Vault posés)', async () => {
     await poserSecrets();
-    let verdict = '';
+    let verdict: string;
     try {
       await db.query(lire('supabase/proofs/246.proof.sql'));
       verdict = 'le bloc DO a VALIDÉ au lieu de lever : la preuve ne s’annule pas';
