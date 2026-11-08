@@ -44,10 +44,11 @@ import './index.css';
 //    fichier. Tout ce qui les précède s'exécute sans filet.
 installEarlyHandlers();
 
-// M-9 — sendDefaultPii: false strips Sentry's auto-collected user identifiers
-// (IP, cookies). It does NOT scrub PII that lands in error.message itself, nor
-// the PAGE ADDRESSES (invitation tokens, OAuth codes). Both are stripped by
-// `@/lib/sentry-scrub` before the event leaves the browser (tested there).
+// M-9 — `dataCollection` (Sentry 11, successeur de `sendDefaultPii: false`)
+// coupe ce que le SDK collecte de lui-même : identité, cookies, corps, requêtes
+// d'URL. Il ne nettoie PAS la PII logée dans error.message, ni les ADRESSES de
+// page (jetons d'invitation, codes OAuth) : `@/lib/sentry-scrub` les retire
+// avant le départ de l'événement (testé là).
 
 const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
 
@@ -112,7 +113,30 @@ function initSentry(Sentry: typeof import('./lib/sentry-client')): void {
     // (M-32, 2026-10-16). PostgREST et Auth les acceptent. Garde :
     // `src/sentry-propagation.guard.test.ts`.
     tracePropagationTargets: [/^\//, /supabase\.co\/(?!functions\/v1\/)/],
-    sendDefaultPii: false,
+    // Sentry 11 : `dataCollection` ABSENT vaut TOUT collecter. Chaque clé est
+    // donc posée à faux, sauf `User-Agent` et `Referer`, que la v10 envoyait déjà
+    // sous `sendDefaultPii: false` (filtre des navigateurs anciens). Garde :
+    // `src/lib/sentry-tracing.test.ts`.
+    dataCollection: {
+      userInfo: false,
+      cookies: false,
+      httpHeaders: { request: { allow: ['User-Agent', 'Referer'] }, response: false },
+      httpBodies: [],
+      urlQueryParams: false,
+      graphQL: { document: false, variables: false },
+      genAI: { inputs: false, outputs: false },
+      mcp: { inputs: false, outputs: false },
+      databaseQueryData: false,
+      queues: false,
+      stackFrameVariables: false,
+    },
+    // Sentry 11 diffuse les spans au fil de l'eau par défaut, et ignore alors
+    // `beforeSendTransaction` : le nettoyage `scrubTransaction` ne tournerait
+    // plus. `'static'` garde le modèle à transactions, et donc ce nettoyage.
+    traceLifecycle: 'static',
+    // La v11 attache une pile à `captureMessage` par défaut : nouveaux groupes
+    // d'incidents. Comportement de la v10 conservé.
+    attachStacktrace: false,
     ignoreErrors: [
       'ResizeObserver loop limit exceeded',
       'ResizeObserver loop completed with undelivered notifications',
