@@ -816,10 +816,10 @@ Fonctions SECURITY DEFINER clés : `accept_friend_request_v2`, `accept_shared_ta
 
 ---
 
-### État des migrations (relu au ledger de production le 2026-11-07)
+### État des migrations
 
-- Dépôt : `000` → `240` (216 fichiers). **Tout est en production sauf `206`** (jalons, non
-  appliquée délibérément). `Migration coverage` vert les 2026-11-04 et 11-05.
+- Dépôt : le nombre de migrations est dans [`FAITS.md`](./FAITS.md), généré. **Tout est en production sauf `206`** (jalons, non
+  appliquée délibérément) ; `Migration coverage` (ledger de production) le vérifie.
 - En base **sans** ligne au ledger, par décision d'Axel : `164`, `181`, `190`-`195`, `197`-`199`.
   `196` est retirée par la `200`. ❌ **Ne jamais réappliquer la `164`** : elle retire la branche
   « membre du projet » de la `190`.
