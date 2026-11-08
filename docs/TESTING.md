@@ -66,6 +66,16 @@ CHECK, trigger, index). Si la production a tort, le cas est déclaré côté Sup
 corrigée, `it.fails` rougit et la déclaration se retire. Un cas sans objet d'un côté va dans `skip`,
 avec sa raison.
 
+### Divergences trouvées au premier passage (V12.2)
+
+| Cas | Côté fautif | Suite donnée |
+|---|---|---|
+| priorité 6 ou négative acceptée | démo | démo corrigée (0 à 5, comme `createTaskSchema`) |
+| catégorie d'entreprise : doublon de fratrie rendu au lieu d'être refusé | démo | démo corrigée (index partiels de la mig. 148) |
+| catégorie d'entreprise : boucle, cycle et profondeur non gardés | démo | démo corrigée (trigger `enforce_team_category_tree`) |
+| tâche sans priorité (0), défaut de la fiche, refusée par la base | production | `PAR-01`, `it.fails` côté Supabase, CHECK `tasks_priority_check` (mig. 001) |
+| tâche sans échéance (`''` → NULL), refusée par la base | production | `PAR-02`, `it.fails` côté Supabase, `tasks.deadline NOT NULL` (mig. 001) |
+
 ### Ajouter un module à la suite
 
 1. Écrire `src/test/contracts/__test__/<concept>.contract.ts` : un contexte (`{ repo, orgId?, … }`),

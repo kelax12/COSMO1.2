@@ -99,7 +99,7 @@ Aucune.
 | `enforce_org_role_write()` (trigger) | INVOKER | `""` | - | - | oui | - |
 | `enforce_org_settings_default_role()` (trigger) | INVOKER | `""` | - | - | oui | - |
 | `enforce_profile_integrity()` (trigger) | INVOKER | `""` | - | - | oui | - |
-| `enforce_team_category_tree()` (trigger) | INVOKER | `""` | - | - | oui | ~`src/components/organization/TeamCategoryTreeManager.tsx`<br>~`src/components/organization/TeamCategoryTreeSelect.tsx`<br>~`src/modules/team-categories/tree.ts` |
+| `enforce_team_category_tree()` (trigger) | INVOKER | `""` | - | - | oui | ~`src/components/organization/TeamCategoryTreeManager.tsx`<br>~`src/components/organization/TeamCategoryTreeSelect.tsx`<br>~`src/modules/team-categories/local.repository.ts`<br>~`src/modules/team-categories/tree.ts` |
 | `enforce_team_project_archive_scope()` (trigger) | INVOKER | `""` | - | - | oui | ~`src/modules/team-projects/repository.ts` |
 | `enforce_team_project_edit_scope()` (trigger) | INVOKER | `""` | - | - | oui | ~`src/components/organization/ProjectEditDialog.tsx` |
 | `enforce_team_task_assign_scope()` (trigger) | INVOKER | `""` | - | - | oui | - |
