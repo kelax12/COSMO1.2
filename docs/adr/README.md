@@ -15,7 +15,7 @@ Format MADR léger : **Statut**, **Date**, **Contexte**, **Décision**, **Consé
   plus ce qui était vrai à sa date.
 - Statuts : `proposée`, `acceptée`, `remplacée par 00NN`, `abandonnée`.
 - Numérotation à quatre chiffres, nom de fichier `NNNN-sujet-en-minuscules.md`. Le suivant est le
-  **0016**, après avoir relu ce dossier.
+  **0018**, après avoir relu ce dossier.
 - ❌ Aucune liste de faiblesses ni de findings de sécurité ouverts : le dépôt est public (voir l'ADR 0008).
 
 ## Index
@@ -37,6 +37,8 @@ Format MADR léger : **Statut**, **Date**, **Contexte**, **Décision**, **Consé
 | [0013](./0013-validation-d-usage-avant-toute-fonctionnalite-longue.md) | Validation d'usage avant toute fonctionnalité de plus d'une semaine | acceptée | 2026-11-08 |
 | [0014](./0014-docs-d-etat-journaux-en-archive-sans-notes.md) | Des docs d'état courtes, les journaux en archive, plus de notes sur 100 | acceptée | 2026-11-08 |
 | [0015](./0015-typescript-6-en-attendant-l-api-de-typescript-7.md) | TypeScript 6, en attendant l'API de TypeScript 7 | acceptée | 2026-11-08 |
+| [0016](./0016-fullcalendar-6-tant-que-l-agenda-n-est-pas-reecrit.md) | FullCalendar 6, tant que l'agenda n'est pas réécrit | acceptée | 2026-11-08 |
+| [0017](./0017-lucide-react-0-563-tant-que-la-1-coute-le-chemin-critique.md) | lucide-react 0.563, tant que la 1.x alourdit le chemin critique | acceptée | 2026-11-08 |
 
 Le double backend de démonstration (`localStorage`) et sa parité avec Supabase n'ont pas encore leur
 ADR : il est en cours d'écriture dans un chantier à part.
