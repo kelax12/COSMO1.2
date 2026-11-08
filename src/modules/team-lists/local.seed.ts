@@ -6,6 +6,7 @@
 // démo (`local.repository.ts`) l'ensemence au premier accès.
 
 import type { TeamList } from './types';
+import { localizeSeed } from '@/lib/seed-i18n';
 
 export type StoredList = Omit<TeamList, 'taskIds' | 'isDefault'>;
 export interface StoredLink { listId: string; taskId: string }
@@ -28,3 +29,6 @@ export const DEMO_LINKS: StoredLink[] = [
   { listId: 'tlist-vendredi', taskId: 'ttask-4' },
   { listId: 'tlist-vendredi', taskId: 'ttask-5' },
 ];
+
+/** Le seed dans la langue de l'interface (overlay anglais par id, cf. src/lib/seed-i18n.ts). */
+export const localizedDemoTeamLists = () => localizeSeed(DEMO_LISTS, DEMO_LISTS_EN);

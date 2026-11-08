@@ -28,12 +28,11 @@
 import { Category, CreateCategoryInput, UpdateCategoryInput } from './types';
 import { CATEGORIES_STORAGE_KEY, DEFAULT_CATEGORY_COLOR } from './constants';
 import { wouldCreateCycle, wouldExceedMaxDepth } from './tree';
-import { localizeSeed } from '@/lib/seed-i18n';
 import type { CreateOptions } from '@/lib/restore-id';
 import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
 import { makeApiError } from '@/lib/normalizeApiError';
 import type { ICategoriesRepository } from './repository';
-import { DEMO_CATEGORIES, DEMO_CATEGORIES_EN } from './local.seed';
+import { localizedDemoCategories } from './local.seed';
 
 // ═══════════════════════════════════════════════════════════════════
 // LOCAL STORAGE REPOSITORY IMPLEMENTATION
@@ -48,7 +47,7 @@ export class LocalStorageCategoriesRepository implements ICategoriesRepository {
     // Corrompu ou stockage indisponible : on re-seme plutot que de faire
     // tomber la page (regle B14, helper `safeParseArray`).
     if (!stored) {
-      const seeded = localizeSeed(DEMO_CATEGORIES, DEMO_CATEGORIES_EN);
+      const seeded = localizedDemoCategories();
       this.saveCategories(seeded);
       return seeded;
     }

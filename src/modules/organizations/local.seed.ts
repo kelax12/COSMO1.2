@@ -6,6 +6,7 @@
 // dépôt de démo voisin l'ensemence au premier accès.
 
 import { Organization, OrgMember, OrgJoinRequest } from './types';
+import { localizeSeed } from '@/lib/seed-i18n';
 
 export const DEMO_USER_ID = 'demo-user';
 export const DEMO_ORG_ID = 'org-demo-1';
@@ -79,3 +80,6 @@ export const DEMO_JOIN_REQUESTS: OrgJoinRequest[] = [
 export const DEMO_ORGS_EN: Record<string, Partial<Organization>> = {
   [DEMO_ORG_ID]: { description: 'Digital creative studio: websites, apps and brand identities.' },
 };
+
+/** Le seed dans la langue de l'interface (overlay anglais par id, cf. src/lib/seed-i18n.ts). */
+export const localizedDemoOrgs = () => localizeSeed(DEMO_ORGS, DEMO_ORGS_EN);

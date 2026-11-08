@@ -22,12 +22,12 @@ import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, Updat
 import { readDemoNotifications } from './notifications';
 import { ORGS_STORAGE_KEY, ORG_MEMBERS_STORAGE_KEY, ORG_JOIN_REQUESTS_STORAGE_KEY, ORG_INVITE_LINKS_STORAGE_KEY, ORG_MEMBER_PERMISSIONS_STORAGE_KEY } from './constants';
 import type { OrgMemberPermissions, SetOrgPermissionsInput } from './permissions';
-import { isEnglishSeed, localizeSeed } from '@/lib/seed-i18n';
+import { isEnglishSeed } from '@/lib/seed-i18n';
 import { readJsonArray, safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
 import { TEAM_PROJECTS_STORAGE_KEY, TEAM_TASKS_STORAGE_KEY } from '@/modules/team-projects/constants';
 import type { TeamProject, TeamTask } from '@/modules/team-projects/types';
 import { makeApiError } from '@/lib/normalizeApiError';
-import { DEMO_USER_ID, DEMO_ORGS, DEMO_MEMBERS, DEMO_JOIN_REQUESTS, DEMO_ORGS_EN } from './local.seed';
+import { DEMO_USER_ID, DEMO_MEMBERS, DEMO_JOIN_REQUESTS, localizedDemoOrgs } from './local.seed';
 export { DEMO_ORG_ID } from './local.seed';
 
 /**
@@ -88,7 +88,7 @@ function readOrSeed<T>(key: string, seed: T): T {
 
 export class LocalStorageOrganizationsRepository implements IOrganizationsRepository {
   private getOrgsArray(): Organization[] {
-    return readOrSeed<Organization[]>(ORGS_STORAGE_KEY, localizeSeed(DEMO_ORGS, DEMO_ORGS_EN));
+    return readOrSeed<Organization[]>(ORGS_STORAGE_KEY, localizedDemoOrgs());
   }
 
   private saveOrgs(orgs: Organization[]): void {

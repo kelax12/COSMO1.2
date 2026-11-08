@@ -6,6 +6,7 @@
 // dépôt de démo voisin l'ensemence au premier accès.
 
 import { Habit } from './types';
+import { localizeSeed } from '@/lib/seed-i18n';
 
 // Helper pour générer des dates — date LOCALE (en-CA → YYYY-MM-DD), même
 // convention que l'UI (HabitCard/HabitTable keyent les complétions en local) ;
@@ -89,3 +90,6 @@ export const DEMO_HABITS_EN: Record<string, Partial<Habit>> = {
   h009: { name: 'Duolingo', description: '15 min of language practice' },
   h010: { name: 'Tech watch', description: 'Read Hacker News + tech Reddit' },
 };
+
+/** Le seed dans la langue de l'interface (overlay anglais par id, cf. src/lib/seed-i18n.ts). */
+export const localizedDemoHabits = () => localizeSeed(DEMO_HABITS, DEMO_HABITS_EN);

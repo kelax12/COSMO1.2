@@ -2,10 +2,9 @@ import { IHabitsRepository } from './repository';
 import type { CreateOptions } from '@/lib/restore-id';
 import { Habit, CreateHabitInput, UpdateHabitInput } from './types';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
-import { localizeSeed } from '@/lib/seed-i18n';
 import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
 import { makeApiError } from '@/lib/normalizeApiError';
-import { DEMO_HABITS, DEMO_HABITS_EN } from './local.seed';
+import { localizedDemoHabits } from './local.seed';
 
 const STORAGE_KEY = 'cosmo_demo_habits';
 
@@ -15,7 +14,7 @@ export class LocalStorageHabitsRepository implements IHabitsRepository {
     // Corrompu ou stockage indisponible : on re-seme plutot que de faire
     // tomber la page (regle B14, helper `safeParseArray`).
     if (!stored) {
-      const seeded = localizeSeed(DEMO_HABITS, DEMO_HABITS_EN);
+      const seeded = localizedDemoHabits();
       this.saveHabits(seeded);
       return seeded;
     }

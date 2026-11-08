@@ -309,12 +309,15 @@ describe("architecture — forme unique d'un module à repository (V12.3)", () =
         "const DEMO_USER_ID = 'demo-user';\nconst DEMO_TASKS: Task[] = [\n];\nexport const DEMO_EN: Record<string, P> = {\n};",
       ),
     ).toEqual(['DEMO_TASKS', 'DEMO_EN']);
+    // Chemin assemblé : écrit d'un bloc, `scripts/tracked-imports.guard.test.mjs`
+    // le lirait comme un VRAI import d'un module absent du dépôt.
+    const fictif = ['@', 'modules', 'x', 'local.repository'].join('/');
     expect(
       staticDemoImportsIn(
-        "import { A } from '@/modules/x/local.repository';\nimport type { B } from './local.seed';\n" +
+        `import { A } from '${fictif}';\nimport type { B } from './local.seed';\n` +
           "const m = () => import('./local.repository');\nexport { C } from './local.seed';",
       ),
-    ).toEqual(['@/modules/x/local.repository', './local.seed']);
+    ).toEqual([fictif, './local.seed']);
   });
 
   it('TEMOIN : le balayage voit réellement les modules', () => {

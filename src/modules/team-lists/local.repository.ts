@@ -4,11 +4,10 @@
 
 import type { TeamList, CreateTeamListInput, UpdateTeamListInput } from './types';
 import { TEAM_LISTS_STORAGE_KEY, TEAM_LIST_TASKS_STORAGE_KEY } from './constants';
-import { localizeSeed } from '@/lib/seed-i18n';
 import { safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
 import { makeApiError } from '@/lib/normalizeApiError';
 import type { ITeamListsRepository } from './repository';
-import { DEMO_LISTS, DEMO_LISTS_EN, DEMO_LINKS } from './local.seed';
+import { DEMO_LINKS, localizedDemoTeamLists } from './local.seed';
 import type { StoredList, StoredLink } from './local.seed';
 
 /** Une valeur illisible est ré-ensemencée, comme dans les autres dépôts démo. */
@@ -24,7 +23,7 @@ function readOrSeed<T>(key: string, seed: () => T): T {
 
 export class LocalStorageTeamListsRepository implements ITeamListsRepository {
   private lists(): StoredList[] {
-    return readOrSeed(TEAM_LISTS_STORAGE_KEY, () => localizeSeed(DEMO_LISTS, DEMO_LISTS_EN));
+    return readOrSeed(TEAM_LISTS_STORAGE_KEY, () => localizedDemoTeamLists());
   }
   private links(): StoredLink[] {
     return readOrSeed(TEAM_LIST_TASKS_STORAGE_KEY, () => DEMO_LINKS);
