@@ -49,38 +49,17 @@ iPhone réel la referme.
 
 ## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
 
-> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
-> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
-> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
-> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
->
-> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
-> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
-> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
->
-> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
-> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+> Ce document affirme des choses que rien ne pèse : chaque ligne nomme une affirmation qui n'était vérifiée
+> par rien, et la garde qui la vérifie depuis. 🔴 **Une garde posée n'est pas un angle mort fermé** : la
+> dernière colonne dit ce que son vert ne prouve pas. L'énoncé du 2026-09-16, la colonne « État » du
+> 2026-09-21 et les mesures datées sont archivés sans une coupe :
+> [`archive/ANGLES-MORTS-2026-09-16-docs-vivantes.md`](./archive/ANGLES-MORTS-2026-09-16-docs-vivantes.md).
 
-
-
-> **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
-> `CLAUDE.md` a pesé 150 ko sans qu'aucune note ne bouge, parce qu'il était **cité comme source**
-> par les audits et **jamais mesuré par eux**. Il était le mètre, jamais l'objet.
->
-> 🔴 **Ce document n'a PAS de note, et c'est son premier angle mort.** Les onze documents notés
-> entrent dans le tableau de bord de [`README.md`](./README.md) et peuvent donc monter ou baisser.
-> Celui-ci ne le peut pas : rien ne le pèse, donc rien ne signale qu'il a vieilli. Les angles morts
-> ci-dessous ne sont **pas** des défauts du produit ; ce sont les endroits où **ce document affirme
-> sans que rien ne vérifie**.
->
-> Chaque ligne est vérifiée par une commande, jamais supposée. Elle se **referme** ou se
-> **reconduit avec sa date**, jamais ne se recopie.
-
-| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
+| # | Angle mort (énoncé du 2026-09-16) | Garde qui le couvre | 🔴 Ce qu'elle ne prouve pas |
 |---|---|---|---|
-| AM-1 | 🔴 **CE DOCUMENT EST LUI-MÊME UN ANGLE MORT.** Il l'écrit en tête : « Statut : à jouer. Rien dans ce fichier n'est coché ». Un audit jamais joué ne peut rien révéler, et il ne fait baisser aucune note : [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) est noté 82 **sans** que ce quatrième audit ait été passé | statut inchangé depuis le 2026-09-03 | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **`M-40`** (jouer la check-list) et **`M-52`** (lui donner une date). ❌ Il ne s'outille pas : `axe-core` voit des attributs, pas ce que VoiceOver prononce — *(jugé outillable le 09-16 : non : il se **joue**, il ne s'outille pas)* · 🟡 **2026-10-24 : l'exécution reste humaine (`M-40`), tout le reste est outillé.** Échéance **2026-12-15**, 94 étapes à résultat attendu vérifié, registre des séances, garde `npm run check:lecteurs-ecran` en CI (témoin vu rouge : échéance dépassée, séance absente, attendu vide). 🔴 ne prouve PAS qu'une séance a été bien faite, seulement qu'elle est consignée |
-| AM-2 | **Le coût de son absence n'est pas nommé dans la note d'accessibilité.** VoiceOver est la seule mesure de ce que le produit **annonce réellement** à une personne aveugle, et c'est aussi AM-3 de [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) | ce document n'est cité par aucun point de plafond | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **`M-56`** : tant que le coût d'un angle mort en points n'est pas arbitré, l'absence de ce quatrième audit ne fait baisser **aucune** note — `ACCESSIBILITY.md` est noté 84 sans qu'il ait jamais été passé — *(jugé outillable le 09-16 : oui : le nommer dans le plafond de la note)* · ✅ **ARBITRÉ le 2026-10-24** (`M-56`, volet lecteur d'écran) : [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) § « Arbitrage du coût de l'absence de séance lecteur d'écran ». Le coût est écrit, la note est appliquée par la coordination, pas ici |
-| AM-3 | **Aucune échéance.** « À jouer » sans date se reconduit indéfiniment, et c'est exactement ce qui s'est produit depuis le 2026-09-03 | 13 jours | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **`M-52`**, et c'est le seul des trois qui se ferme sans matériel : « à jouer » sans date se reconduit indéfiniment, et c'est ce qui s'est produit depuis le 2026-09-03 — *(jugé outillable le 09-16 : oui)* · ✅ **OUTILLÉ le 2026-10-24** · échéance **2026-12-15** dans le marqueur d'en-tête, `npm run check:lecteurs-ecran` échoue le lendemain sans séance consignée · 🔴 ne prouve PAS que la séance a lieu : elle rend son absence **rouge**, pas impossible |
+| AM-1 | **Ce document est lui-même un angle mort** : « Statut : à jouer », rien n'est coché, et un audit jamais joué ne révèle rien. Il ne s'outille pas (`axe-core` voit des attributs, pas ce que VoiceOver prononce) | **L'exécution reste humaine** (`M-40`) ; tout le reste est outillé : échéance **2026-12-15**, 94 étapes à résultat attendu vérifié, registre des séances, `npm run check:lecteurs-ecran` en CI (témoin vu rouge : échéance dépassée, séance absente, attendu vide) | Qu'une séance a été bien faite, seulement qu'elle est consignée |
+| AM-2 | **Le coût de son absence n'est pas nommé** dans la note d'accessibilité (VoiceOver est la seule mesure de ce que le produit **annonce** à une personne aveugle, comme AM-3 de [`ACCESSIBILITY.md`](./ACCESSIBILITY.md)) | **Arbitré le 2026-10-24** (`M-56`, volet lecteur d'écran) ; l'arbitrage est archivé avec le journal des notes d'accessibilité : [`archive/ACCESSIBILITY-journal-des-notes-2026-08-24-au-2027-01-15.md`](./archive/ACCESSIBILITY-journal-des-notes-2026-08-24-au-2027-01-15.md) | Sans objet depuis l'arrêt des notes /100 (ADR 0012) |
+| AM-3 | **Aucune échéance** : « à jouer » sans date se reconduit indéfiniment (c'est ce qui s'est produit depuis le 2026-09-03) | échéance **2026-12-15** dans le marqueur d'en-tête ; `npm run check:lecteurs-ecran` échoue le lendemain sans séance consignée (`M-52`) | Que la séance a lieu : son absence devient **rouge**, pas impossible |
 
 ---
 

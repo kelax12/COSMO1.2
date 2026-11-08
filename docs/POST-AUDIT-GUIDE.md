@@ -27,38 +27,17 @@
 
 ## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
 
-> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
-> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
-> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
-> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
->
-> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
-> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
-> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
->
-> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
-> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+> Ce document affirme des choses que rien ne pèse : chaque ligne nomme une affirmation qui n'était vérifiée
+> par rien, et la garde qui la vérifie depuis. 🔴 **Une garde posée n'est pas un angle mort fermé** : la
+> dernière colonne dit ce que son vert ne prouve pas. L'énoncé du 2026-09-16, la colonne « État » du
+> 2026-09-21 et les mesures datées sont archivés sans une coupe :
+> [`archive/ANGLES-MORTS-2026-09-16-docs-vivantes.md`](./archive/ANGLES-MORTS-2026-09-16-docs-vivantes.md).
 
-
-
-> **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
-> `CLAUDE.md` a pesé 150 ko sans qu'aucune note ne bouge, parce qu'il était **cité comme source**
-> par les audits et **jamais mesuré par eux**. Il était le mètre, jamais l'objet.
->
-> 🔴 **Ce document n'a PAS de note, et c'est son premier angle mort.** Les onze documents notés
-> entrent dans le tableau de bord de [`README.md`](./README.md) et peuvent donc monter ou baisser.
-> Celui-ci ne le peut pas : rien ne le pèse, donc rien ne signale qu'il a vieilli. Les angles morts
-> ci-dessous ne sont **pas** des défauts du produit ; ce sont les endroits où **ce document affirme
-> sans que rien ne vérifie**.
->
-> Chaque ligne est vérifiée par une commande, jamais supposée. Elle se **referme** ou se
-> **reconduit avec sa date**, jamais ne se recopie.
-
-| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
+| # | Angle mort (énoncé du 2026-09-16) | Garde qui le couvre | 🔴 Ce qu'elle ne prouve pas |
 |---|---|---|---|
-| AM-1 | 🔴 **Les points cochés ✅ sont des réglages de DASHBOARD, et rien ne vérifie qu'ils le sont ENCORE.** « Leaked Password Protection », l'index `048` : tout cela vit hors du dépôt, se désactive en deux clics, sans commit et sans trace. Un ✅ daté décrit un instant, pas un état | aucun workflow ne lit les réglages Supabase (cf. [`SECURITY.md`](./SECURITY.md) AM-2) | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:supabase-posture` (`C-88`) — 🔴 ne prouve PAS : 🔴 elle échoue tant que la référence n'est pas posée (**`M-58`**). Le volet purement manuel reste `M-15` / `M-16` / `M-17` |
-| AM-2 | **Un guide de chantiers ne dit pas lesquels sont périmés.** Le point 3 a été tranché le 2026-09-03 et exécuté le 09-04 (suppression des jetons, C-04) : ce qui reste ici en décrit le **contexte**, pas l'état | « Point 3 · TRANCHÉE le 2026-09-03 » | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **aucun item ne le porte.** Un guide de chantiers ne dit toujours pas lesquels sont périmés, et le point 3 en est l'exemple : tranché le 09-03, exécuté le 09-04 — *(jugé outillable le 09-16 : oui : une date de dernière revérification par point)* · ✅ **OUTILLÉ le 2026-10-24** · chaque « Point N » porte un marqueur `<!-- chantier: actif relu=… -->` (péremption à **90 jours**) ou `clos le=…` (exempt, mais daté). `npm run check:peremption-chantiers` en CI, témoin vu rouge. Le relevé du jour a trouvé deux autres chantiers périmés (4 et 5, exécutés) et un ouvert (2). **Point 3 marqué TRANCHÉ/CLOS.** 🔴 ne prouve PAS que la relecture a eu lieu, seulement qu'une date est écrite |
-| AM-3 | **Ce document n'a pas de note et n'entre dans aucun tableau de bord**, alors qu'il porte la séquence de réactivation du premium | absent du tableau de bord de [`README.md`](./README.md) | ✅ **SANS OBJET le 2026-11-08** : les notes /100 ont cessé (ADR 0012) et `check:docs-scored` (`C-109`) est retirée ; `npm run check:docs` refuse leur retour. L'énoncé de gauche est celui du 2026-09-16, conservé |
+| AM-1 | **Les points cochés ✅ sont des réglages de Dashboard**, et rien ne vérifie qu'ils le sont encore (« Leaked Password Protection », l'index `048`) | `npm run check:supabase-posture` (`C-88`), voir [`SECURITY.md`](./SECURITY.md) AM-2 | Le volet purement manuel : `M-15`, `M-16`, `M-17` |
+| AM-2 | **Un guide de chantiers ne dit pas lesquels sont périmés** (le point 3, tranché le 2026-09-03 et exécuté le 09-04, n'en décrit plus que le contexte) | chaque « Point N » porte un marqueur `<!-- chantier: actif relu=… -->` (péremption à **90 jours**) ou `clos le=…` (exempt, mais daté) ; `npm run check:peremption-chantiers` en CI, témoin vu rouge | Que la relecture a eu lieu : seulement qu'une date est écrite |
+| AM-3 | Ce document n'avait pas de note et n'entrait dans aucun tableau de bord | **Sans objet** depuis le 2026-11-08 : les notes /100 ont cessé (ADR 0012, ADR 0014), `npm run check:docs` refuse leur retour | Sans objet |
 
 ---
 

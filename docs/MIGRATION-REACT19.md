@@ -105,38 +105,17 @@ plan, et deux correctifs bornés livrés dans la foulée (cf. `a-faire-code.md` 
 
 ## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
 
-> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
-> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
-> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
-> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
->
-> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
-> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
-> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
->
-> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
-> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+> Ce document affirme des choses que rien ne pèse : chaque ligne nomme une affirmation qui n'était vérifiée
+> par rien, et la garde qui la vérifie depuis. 🔴 **Une garde posée n'est pas un angle mort fermé** : la
+> dernière colonne dit ce que son vert ne prouve pas. L'énoncé du 2026-09-16, la colonne « État » du
+> 2026-09-21 et les mesures datées sont archivés sans une coupe :
+> [`archive/ANGLES-MORTS-2026-09-16-docs-vivantes.md`](./archive/ANGLES-MORTS-2026-09-16-docs-vivantes.md).
 
-
-
-> **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
-> `CLAUDE.md` a pesé 150 ko sans qu'aucune note ne bouge, parce qu'il était **cité comme source**
-> par les audits et **jamais mesuré par eux**. Il était le mètre, jamais l'objet.
->
-> 🔴 **Ce document n'a PAS de note, et c'est son premier angle mort.** Les onze documents notés
-> entrent dans le tableau de bord de [`README.md`](./README.md) et peuvent donc monter ou baisser.
-> Celui-ci ne le peut pas : rien ne le pèse, donc rien ne signale qu'il a vieilli. Les angles morts
-> ci-dessous ne sont **pas** des défauts du produit ; ce sont les endroits où **ce document affirme
-> sans que rien ne vérifie**.
->
-> Chaque ligne est vérifiée par une commande, jamais supposée. Elle se **referme** ou se
-> **reconduit avec sa date**, jamais ne se recopie.
-
-| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
+| # | Angle mort (énoncé du 2026-09-16) | Garde qui le couvre | 🔴 Ce qu'elle ne prouve pas |
 |---|---|---|---|
-| AM-1 | 🔴 **C'est une ÉTUDE, et une étude périme.** Écrite le 2026-09-03 contre les versions de ce jour-là. Les composants shadcn audités « ref par ref », le chiffrage et la chronologie CVE décrivent un instant. Rien ne signale qu'une version a bougé depuis | aucune garde ne relit `package.json` contre ce document | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:study` · échoue si une majeure citée ici bouge (`C-108`) — 🔴 ne prouve PAS : le coût de **ne pas** migrer, qui se compte en incidents. Relu le 2026-09-21 : **5 comparaisons sur 5**, l'étude décrit encore les versions installées |
-| AM-2 | **La chronologie CVE n'est surveillée par rien de ciblé.** Dependabot alerte sur une vulnérabilité déclarée, jamais sur « React 18 approche de sa fin de support », qui est l'argument central de cette étude | `npm audit --omit=dev` ne voit pas une fin de support | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:study` (`C-108`) — 🔴 ne prouve PAS : idem AM-1 |
-| AM-3 | **Le coût de NE PAS migrer n'est pas mesuré.** Le piège `Button`/`forwardRef` (les flèches qui ne déplaçaient pas le focus dans le calendrier) est venu d'une source shadcn écrite **pour React 19**. Rien ne compte ces incidents, donc l'étude n'a pas de contrepartie chiffrée | l'incident est documenté, jamais agrégé | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:study` (`C-108`) — 🔴 ne prouve PAS : idem AM-1 : l'étude est fraîche, la décision de migrer reste différée (seuil de reprise : 283,5 ko) |
+| AM-1 | **C'est une ÉTUDE, et une étude périme** : écrite le 2026-09-03 contre les versions de ce jour, les composants shadcn audités « ref par ref », le chiffrage et la chronologie CVE décrivent un instant | `npm run check:study` : échoue si une majeure citée ici bouge (`C-108`) | Le coût de **ne pas** migrer, qui se compte en incidents |
+| AM-2 | **La chronologie CVE n'est surveillée par rien de ciblé** (Dependabot n'alerte pas sur « React 18 approche de sa fin de support », l'argument central de l'étude) | `check:study` (`C-108`) | Idem AM-1 |
+| AM-3 | **Le coût de NE PAS migrer n'est pas mesuré** (le piège `Button`/`forwardRef` est venu d'une source shadcn écrite pour React 19 ; rien ne compte ces incidents) | `check:study` (`C-108`) | Idem AM-1 : la décision de migrer reste différée (seuil de reprise : 283,5 ko) |
 
 ---
 

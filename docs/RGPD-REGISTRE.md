@@ -11,38 +11,17 @@ CNIL ou d'un client dans le cadre d'une due diligence.
 
 ## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
 
-> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
-> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
-> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
-> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
->
-> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
-> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
-> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
->
-> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
-> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+> Ce document affirme des choses que rien ne pèse : chaque ligne nomme une affirmation qui n'était vérifiée
+> par rien, et la garde qui la vérifie depuis. 🔴 **Une garde posée n'est pas un angle mort fermé** : la
+> dernière colonne dit ce que son vert ne prouve pas. L'énoncé du 2026-09-16, la colonne « État » du
+> 2026-09-21 et les mesures datées sont archivés sans une coupe :
+> [`archive/ANGLES-MORTS-2026-09-16-docs-vivantes.md`](./archive/ANGLES-MORTS-2026-09-16-docs-vivantes.md).
 
-
-
-> **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
-> `CLAUDE.md` a pesé 150 ko sans qu'aucune note ne bouge, parce qu'il était **cité comme source**
-> par les audits et **jamais mesuré par eux**. Il était le mètre, jamais l'objet.
->
-> 🔴 **Ce document n'a PAS de note, et c'est son premier angle mort.** Les onze documents notés
-> entrent dans le tableau de bord de [`README.md`](./README.md) et peuvent donc monter ou baisser.
-> Celui-ci ne le peut pas : rien ne le pèse, donc rien ne signale qu'il a vieilli. Les angles morts
-> ci-dessous ne sont **pas** des défauts du produit ; ce sont les endroits où **ce document affirme
-> sans que rien ne vérifie**.
->
-> Chaque ligne est vérifiée par une commande, jamais supposée. Elle se **referme** ou se
-> **reconduit avec sa date**, jamais ne se recopie.
-
-| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
+| # | Angle mort (énoncé du 2026-09-16) | Garde qui le couvre | 🔴 Ce qu'elle ne prouve pas |
 |---|---|---|---|
-| AM-1 | 🔴 **Les durées de conservation déclarées ne sont confrontées à AUCUNE donnée réelle.** Dix traitements annoncent une durée ; rien ne vérifie qu'aucune ligne ne la dépasse. C'est pourtant la pièce produite en contrôle CNIL, donc celle où un écart se paie | aucun script ne lit les dates de création par table | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:retention` (`C-93`) — 🔴 ne prouve PAS : que ce registre soit juste : la garde confronte la base à ce qu'il déclare, pas l'inverse |
-| AM-2 | **Un traitement NOUVEAU n'entre pas au registre tout seul.** Une table de données personnelles ajoutée par migration, ou un sous-traitant ajouté par une dépendance, ne déclenche rien | ni `validate:migrations` ni la CI ne testent ce lien | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:erasure` (`C-92`) — 🔴 ne prouve PAS : dérivé des migrations, pas de la base |
-| AM-3 | **La liste des sous-traitants est tenue à la main.** Un service SaaS ajouté au produit (analytics, mail, hébergement d'images) est un sous-traitant au sens de l'art. 28, et rien ne le signale | liste statique dans ce document | ✅ **OUTILLÉ le 2026-10-24** · `npm run check:subprocessors` (étape `ci.yml`, témoin `scripts/check-subprocessors.guard.test.mjs`, vu rouge) : les tiers sont dérivés de la CSP, des hôtes en littéral (`api/`, `supabase/functions/`, `src/`), des SDK et des workflows de sauvegarde, puis comparés au tableau des transferts de ce registre et au § 6 de `LEGAL.md`, dans les deux sens. Première exécution : **écart réel**, Resend, Cloudflare Turnstile, Google et GitHub étaient au registre mais absents de `LEGAL.md` § 6 (corrigé). 🔴 ne prouve PAS : qu'un DPA soit signé (ligne A5), ni les tiers à hôte non littéral (URL de webhook d'organisation, `OPS_ALERT_WEBHOOK_URL`), ni le SMTP et l'OAuth portés par le serveur Supabase ; Anthropic et IONOS (T11) vivent hors dépôt et sont déclarés tels quels dans la garde |
+| AM-1 | **Les durées de conservation déclarées ne sont confrontées à AUCUNE donnée réelle** (dix traitements annoncent une durée, c'est la pièce produite en contrôle CNIL) | `npm run check:retention` (`C-93`) | Que ce registre soit juste : la garde confronte la base à ce qu'il déclare, pas l'inverse |
+| AM-2 | **Un traitement NOUVEAU n'entre pas au registre tout seul** (table de données personnelles ajoutée par migration, sous-traitant ajouté par une dépendance) | `npm run check:erasure` (`C-92`) | Dérivé des migrations, pas de la base |
+| AM-3 | **La liste des sous-traitants est tenue à la main** (un service SaaS ajouté au produit est un sous-traitant, art. 28) | `npm run check:subprocessors` (étape `ci.yml`, témoin `scripts/check-subprocessors.guard.test.mjs`) : tiers dérivés de la CSP, des hôtes en littéral (`api/`, `supabase/functions/`, `src/`), des SDK et des workflows de sauvegarde, comparés au tableau des transferts de ce registre et au § 6 de `LEGAL.md`, dans les deux sens | Qu'un DPA soit signé (ligne A5) ; les tiers à hôte non littéral (URL de webhook d'organisation, `OPS_ALERT_WEBHOOK_URL`) ; le serveur d'envoi et l'OAuth portés par le serveur Supabase ; Anthropic et IONOS (T11), hors dépôt, déclarés tels quels dans la garde |
 
 ---
 
