@@ -18,6 +18,7 @@ import { applyRouterBootstrap } from './i18n/apply-bootstrap';
 import { loadCatalogs } from './i18n/catalog';
 import { loadDateLocale } from './i18n/format';
 import { afterFirstPaint } from './lib/after-first-paint';
+import { installFocusHistory } from './lib/focus-history';
 import './index.css';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -228,6 +229,10 @@ if (supabaseUrl) {
 try {
   startTrafficMeasurement({ win: window, doc: document });
 } catch { /* la mesure ne doit jamais empêcher l'app de démarrer */ }
+
+// Avant toute modale : le declencheur d'une surface doit deja etre dans l'historique des focus a son
+// ouverture (src/lib/focus-history.ts). Garde : modal-a11y.guard.test.ts.
+try { installFocusHistory(); } catch { /* un historique absent degrade la restitution du focus, jamais le demarrage */ }
 
 // Les comportements v7 (startTransition, relativeSplatPath) sont les defauts
 // depuis la 7.0 — le prop `future` n'a plus lieu d'etre. Ils ont ete adoptes

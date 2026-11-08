@@ -52,7 +52,7 @@ function SheetContent({
   side = "right",
   closeButtonClassName,
   closeIconClassName,
-  onOpenAutoFocus,
+  ref,
   onCloseAutoFocus,
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
@@ -67,14 +67,14 @@ function SheetContent({
   // Le nom de la croix etait `Close` en dur : un lecteur d'ecran francophone l'entendait en anglais.
   const { t } = useT('common')
   // FRO-01 : Radix ne rend le focus qu'a `SheetTrigger`, que le produit n'utilise jamais.
-  const focusReturn = useRadixFocusReturn(onOpenAutoFocus, onCloseAutoFocus)
+  const focusReturn = useRadixFocusReturn(onCloseAutoFocus, ref)
   return (
     <SheetPortal>
       <SheetOverlay />
       <SheetPrimitive.Content
         data-slot="sheet-content"
         aria-modal="true"
-        onOpenAutoFocus={focusReturn.onOpenAutoFocus}
+        ref={focusReturn.ref}
         onCloseAutoFocus={focusReturn.onCloseAutoFocus}
         className={cn(
           "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500",

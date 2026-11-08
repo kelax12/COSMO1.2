@@ -228,6 +228,14 @@ describe('FRO-01 : inventaire des surfaces Radix et BottomSheet', () => {
     expect(muettes, `Echap desactive sans justification :\n  ${muettes.join('\n  ')}`).toEqual([]);
   });
 
+  it("l'historique des focus est installe au demarrage de l'application (src/main.tsx)", () => {
+    // Installe au premier rendu d'une modale, il arrivait APRES le focus du declencheur de toute
+    // modale montee a l'ouverture : historique vide, focus perdu sur body a la fermeture.
+    const main = readFileSync(join(ROOT, 'main.tsx'), 'utf8');
+    expect(main, 'src/main.tsx doit appeler installFocusHistory()').toMatch(/installFocusHistory\(\)/);
+    expect(main).toMatch(/from '\.\/lib\/focus-history'/);
+  });
+
   it('le decompte, imprime', () => {
     // L'UNION, pas la somme : `MoveTaskSheet` et `ImportTasksDialog` sont cablees ET montent la
     // primitive `BottomSheet`. Les compter deux fois gonflerait le chiffre.
