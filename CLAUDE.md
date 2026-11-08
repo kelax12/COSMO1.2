@@ -138,7 +138,7 @@ TanStack Query 5 · Supabase 2 · shadcn/ui (Radix + Tailwind 3) · Framer Motio
 FullCalendar · date-fns 3 · zod · Vitest (`*.test.ts` à côté du code) + Playwright (`e2e/`) ·
 Sentry · Vercel. Versions : `package.json`. Ce qu'il ne dit pas :
 
-- `npm run build` = `vite build` + prérendu `prerender.mjs`.
+- `npm run build` = `vite build` + prérendu `prerender/main.ts` (TypeScript, lancé par Node sans transpileur).
 - i18n : **catalogues JSON maison** (`src/i18n/` + `src/locales/{fr,en}/`), pas d'i18next.
 - jsPDF (`vendor-pdf`) : `import()` au clic sur « Exporter en PDF » seulement.
 - Stripe **live** depuis le 2026-10-20, facturation entreprise seule : checkout par redirection

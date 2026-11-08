@@ -11,7 +11,7 @@
 // Écrit `scripts/landing-hero/<track>-<locale>.html` : le balisage RÉEL rendu
 // par React (header, rangée mobile, hero, bandeau), classes comprises, figé dans
 // son état final (`prefers-reduced-motion: reduce`, donc aucune entrée en
-// cours). `prerender.mjs` l'injecte dans `#lp-hero` avec la CSS extraite par
+// cours). `prerender/copies.ts` l'injecte dans `#lp-hero` avec la CSS extraite par
 // `landing-hero-css.mjs`. Pourquoi : `src/lib/prerender-hero.ts`.
 //
 // Ce qui est retiré ou masqué, et pourquoi :
@@ -41,7 +41,7 @@ const PAGES = [
 ];
 // Le hero entreprise se rend AUTREMENT sous 768 px (`useIsMobile` : pile
 // simple, pas de shader). Seconde capture à 412 px, `<track>-<locale>-mobile.html`,
-// que la copie affiche sous ce seuil (cf. injectHeroCopy de prerender.mjs).
+// que la copie affiche sous ce seuil (cf. injectHeroCopy de prerender/copies.ts).
 const VUES = {
   bureau: { width: 1440, height: 900, suffixe: '' },
   mobile: { width: 412, height: 823, suffixe: '-mobile' },

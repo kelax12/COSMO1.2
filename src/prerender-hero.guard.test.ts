@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-// @ts-expect-error module .mjs sans déclaration de types (Node brut, partagé avec prerender.mjs)
+import { lirePrerender } from './__test__/prerender-source';
+// @ts-expect-error module .mjs sans déclaration de types (Node brut, partagé avec le prérendu)
 import { heroSourcesDigest, sansCommentaires, HERO_SOURCES, SOURCES_MANIFEST } from '../scripts/landing-hero-sources.mjs';
-// @ts-expect-error idem
 import { scopedCssFor } from '../scripts/landing-hero-css.mjs';
 
 // 2026-10-21 · Le prérendu de la home peint une COPIE du header et du hero de
@@ -87,7 +87,7 @@ describe('copie du hero : fraîcheur de la capture', () => {
   });
 
   it('entreprise : deux vues, bureau et mobile, au seuil de useIsMobile (768 px)', () => {
-    const prerender = read('prerender.mjs');
+    const prerender = lirePrerender('copies.ts');
     expect(prerender).toContain('`${track}-${locale}-mobile.html`');
     expect(prerender).toContain('@media (max-width:767px){#lp-hero>.lp-vue-bureau{display:none}#lp-hero>.lp-vue-mobile{display:block}}');
     expect(read('src/lib/hooks/use-mobile.tsx')).toContain('const MOBILE_BREAKPOINT = 768;');
@@ -112,26 +112,30 @@ describe('copie du hero : visible pour le seul visiteur sans session', () => {
     expect(noscript).toContain('#seo-fallback{display:block!important}');
   });
 
-  it('prerender.mjs la pose HORS de #root (createRoot l’effacerait), inerte, avec sa langue', () => {
-    const prerender = read('prerender.mjs');
+  it('le prérendu la pose HORS de #root (createRoot l’effacerait), inerte, avec sa langue', () => {
+    const prerender = lirePrerender('copies.ts');
+    const generate = lirePrerender('generate.ts');
     expect(prerender).toContain('<div id="lp-hero" inert data-locale="${locale}" data-track="${track}">${demoteH1(fragment)}</div>');
-    expect(prerender).toMatch(/replace\('<div id="root">', \(\) => `<div id="lp-hero"/);
-    expect(prerender).toMatch(/let home = injectHeroCopy\(buildPage\(homeRoute/);
-    expect(prerender).toContain('if (route.heroTrack) sortie = injectHeroCopy(page, locale, route.heroTrack);');
-    expect(prerender).toContain('else if (route.copy) sortie = await injectContentCopy(page, locale, route.copy, path);');
+    // Le calque est posé AVANT #root, par une fonction de remplacement (pas de `$` interprété).
+    expect(prerender).toMatch(/\.replace\(ROOT_MARKER, \(\) => `\$\{calque\}\n\s+<div id="root">`\)/);
+    expect(generate).toMatch(/let home = injectHeroCopy\(buildPage\(html, HOME_ROUTE/);
+    expect(generate).toContain('if (route.heroTrack) return injectHeroCopy(page, locale, route.heroTrack);');
+    expect(generate).toContain('if (route.copy) return injectContentCopy(page, locale, route.copy, path);');
     // Même calque pour la copie des pages de contenu, rendue par React au build.
     expect(prerender).toContain('<div id="lp-hero" inert data-locale="${locale}" data-track="contenu">${demoteH1(fragment)}</div>');
   });
 
   it('home et entreprise peignent leur capture, les pages de contenu leur rendu React ; jamais le texte SEO brut', () => {
-    const prerender = read('prerender.mjs');
+    const page = lirePrerender('page.ts');
+    const copies = lirePrerender('copies.ts');
+    const routes = `${lirePrerender('routes.ts')}\n${lirePrerender('routes-registries.ts')}`;
     // Le texte SEO brut, sur fond blanc, peint sur le guide, le blog… : retiré le 2026-10-21.
     // Une page n'est PEINTE avant React que si elle porte une copie (capture ou rendu serveur).
-    expect(prerender).toContain("if (route.heroTrack) out = out.replace(/<html(?![^>]*data-prerendered)/, '<html data-prerendered');");
-    expect(prerender).toMatch(/async function injectContentCopy[\s\S]{0,1600}out = out\.replace\(\/<html\(\?!\[\^>\]\*data-prerendered\)\/, '<html data-prerendered'\)/);
-    expect((prerender.match(/heroTrack: '/g) ?? []).length).toBe(2);
+    expect(page).toContain("if (route.heroTrack) out = out.replace(/<html(?![^>]*data-prerendered)/, '<html data-prerendered');");
+    expect(copies).toMatch(/async function injectContentCopy[\s\S]{0,1600}out\.replace\(\/<html\(\?!\[\^>\]\*data-prerendered\)\/, '<html data-prerendered'\)/);
+    expect((routes.match(/heroTrack: '/g) ?? []).length).toBe(2);
     // Guide, à-propos, blog, articles, cas d'usage, trois pages légales.
-    expect((prerender.match(/^\s+copy: (?:'[a-zA-Z]+'|u\.routeId),$/gm) ?? []).length).toBe(8);
+    expect((routes.match(/\bcopy: (?:'[a-zA-Z]+'|u\.routeId),/g) ?? []).length).toBe(8);
     expect(index).toMatch(/html\[data-prerendered\] #lp-hero\[data-track=entreprise\]\{background:#08090C\}/);
   });
 

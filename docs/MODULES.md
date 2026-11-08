@@ -61,7 +61,7 @@ Tous suivent la même forme ([`src/modules/CLAUDE.md`](../src/modules/CLAUDE.md)
 |---|---|
 | Migrations SQL, RLS | `supabase/migration/` · [CLAUDE.md](../supabase/migration/CLAUDE.md) |
 | Edge Functions | `supabase/functions/` · [CLAUDE.md](../supabase/functions/CLAUDE.md) |
-| Landing, SEO, prérendu | `src/pages/landing/`, `prerender.mjs` |
+| Landing, SEO, prérendu | `src/pages/landing/`, `prerender/` |
 | Traductions | `src/locales/{fr,en}/`, `src/i18n/` |
 | Gardes CI | `scripts/` · [CLAUDE.md](../scripts/CLAUDE.md) |
 | CLI sur les vraies données | `scripts/cosmo/` · [`COSMO-CLI.md`](./COSMO-CLI.md) |

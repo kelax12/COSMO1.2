@@ -1,5 +1,5 @@
 // Pages cas d'usage (landing commerciales), contenu partagé entre React
-// (UseCasePage) et prerender.mjs. ESM pur, aucun import.
+// (UseCasePage) et prerender/. ESM pur, aucun import.
 //
 // ⚠️ Le registre est keyé par `routeId`, PAS par slug. Il l'était par slug
 // français, et c'est ce qui faisait redirriger les quatre pages anglaises vers
@@ -9,7 +9,7 @@
 // possibilité qu'une URL servie diverge de l'URL déclarée canonique.
 //
 // `locales` porte tout ce qui se traduit. Une locale absente ici est une
-// locale que le prérendu ne publiera pas pour cette page (cf. prerender.mjs,
+// locale que le prérendu ne publiera pas pour cette page (cf. prerender/,
 // `availableLocales`) : impossible de sortir une page anglaise au corps
 // français.
 export const USE_CASES = [

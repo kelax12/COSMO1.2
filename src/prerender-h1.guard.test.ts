@@ -1,16 +1,18 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-// @ts-expect-error module .mjs sans déclaration de types (Node brut, partagé avec prerender.mjs)
 import { demoteH1, countH1, bodyWords } from '../scripts/prerender-h1.mjs';
+import { lirePrerender } from './__test__/prerender-source';
 
 // 2026-11-06 · Un audit externe a compté DEUX <h1> sur chaque page de contenu
 // servie (régression de 66f76355 : la copie peinte avant React portait le sien,
 // à côté de celui du texte SEO), et 700 mots seulement pour le guide. Le build
-// (`verifierPage`, prerender.mjs) refuse les deux ; ce fichier tient les pièces.
+// (`verifierPage`, prerender/verify.ts) refuse les deux ; ce fichier tient les pièces.
 
 const ROOT = join(__dirname, '..');
-const prerender = readFileSync(join(ROOT, 'prerender.mjs'), 'utf8');
+const copies = lirePrerender('copies.ts');
+const generate = lirePrerender('generate.ts');
+const verify = lirePrerender('verify.ts');
 
 describe('un seul <h1> par page prérendue', () => {
   const copie = '<div class="x"><h1 class="font-display">Titre</h1><h1>Vue mobile</h1></div>';
@@ -31,12 +33,12 @@ describe('un seul <h1> par page prérendue', () => {
     expect(demoteH1(autres)).toBe('<header><hr><h10>x</h10><div>a</div></header>');
   });
 
-  it('prerender.mjs rétrograde les <h1> des DEUX copies et vérifie chaque page écrite', () => {
-    expect(prerender).toMatch(/data-track="\$\{track\}">\$\{demoteH1\(fragment\)\}/);
-    expect(prerender).toMatch(/data-track="contenu">\$\{demoteH1\(fragment\)\}/);
+  it('le prérendu rétrograde les <h1> des DEUX copies et vérifie chaque page écrite', () => {
+    expect(copies).toMatch(/data-track="\$\{track\}">\$\{demoteH1\(fragment\)\}/);
+    expect(copies).toMatch(/data-track="contenu">\$\{demoteH1\(fragment\)\}/);
     // Une page écrite sans passer par verifierPage échapperait à la garde.
-    expect((prerender.match(/verifierPage\(/g) ?? []).length).toBe(3);
-    expect((prerender.match(/writeFileSync\(join\((dir|DIST, localizePath\('\/', locale\)), 'index\.html'\)/g) ?? []).length).toBe(2);
+    expect((generate.match(/verifierPage\(/g) ?? []).length).toBe(2);
+    expect((generate.match(/writeFileSync\(join\((dir|DIST, localizePath\('\/', locale\)), 'index\.html'\)/g) ?? []).length).toBe(2);
   });
 });
 
@@ -55,8 +57,8 @@ describe('le guide servi porte le guide entier', () => {
     expect(bodyWords(page)).toBe(1);
   });
 
-  it('prerender.mjs fixe un plancher de mots pour /guide', () => {
-    expect(prerender).toMatch(/MOTS_MIN = \{ '\/guide': \d{4} \}/);
+  it('le prérendu fixe un plancher de mots pour /guide', () => {
+    expect(verify).toMatch(/MOTS_MIN[^=]*= \{ '\/guide': \d{4} \}/);
   });
 
   it('la copie du guide ne coupe plus ses sections derrière le contexte de prérendu', () => {

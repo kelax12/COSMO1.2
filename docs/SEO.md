@@ -53,7 +53,7 @@ elle a été mesurée avant la bascule, pas déduite : accueil, guide, à-propos
 (430 à 700 mots), les 4 pages métier (579 à 815 mots) et les 11 articles (657 à 1 985 mots) ont
 tous un corps anglais réel. Aucune page ne restait en français.
 
-Vérifié dans `dist/` après `npm run build`, jamais depuis la lecture de `prerender.mjs` :
+Vérifié dans `dist/` après `npm run build`, jamais depuis la lecture du code de `prerender/` :
 
 | Contrôle | Résultat |
 |---|---|
@@ -182,20 +182,49 @@ passe sous la position 30 sur une requête non-marque**.
 
 ## Règles permanentes
 
+### Prérendu : où vit quoi (V14.3, COD-04)
+
+Le HTML servi aux moteurs sort de `prerender/` (TypeScript, ancien `prerender.mjs`), lancé par
+`npm run build` après `vite build` : `node --disable-warning=ExperimentalWarning prerender/main.ts`.
+Il est dans `tsc -b` (`tsconfig.app.json`), dans le lint avec les seuils de complexité de `src/`, et
+dans le plafond de taille de fichier (`architecture.guard.test.ts`).
+
+| Fichier | Rôle |
+|---|---|
+| `main.ts` | l'ordre des étapes, rien d'autre |
+| `routes.ts`, `routes-registries.ts` | les routes : pages écrites ici, index du blog, articles, cas d'usage |
+| `content/` | les corps HTML indexables écrits en dur (guide, à-propos, entreprise, home, pages courtes) |
+| `page.ts` | une page : `<head>` réécrit (méta, OG, `canonical`, `hreflang`), JSON-LD de la route, corps |
+| `ld.ts`, `chrome.ts` | JSON-LD et image OG ; fil d'Ariane, pied de page et libellés par locale |
+| `copies.ts` | les copies peintes avant React (`#lp-hero`) : capture du hero, rendu React des pages de contenu |
+| `verify.ts` | un seul `<h1>` par page, plancher de mots du guide : le build échoue sinon |
+| `generate.ts` | écriture de `dist/<route>/index.html` pour chaque route et chaque locale publiée |
+| `sitemap.ts`, `feeds.ts` | `sitemap.xml` (avec `hreflang` réciproques), `rss.xml`, sections générées de `llms.txt` |
+| `config.ts`, `flags.ts`, `types.ts` | constantes et dates de contenu, miroir des prix, types |
+| `instantanes/` | le HTML attendu de chaque sortie : voir `docs/TESTING.md` § Instantanés du prérendu |
+
+- **Exécution.** Node retire les types lui-même (Node 22.18 et plus, `engines` impose >= 22.22.0),
+  sans `tsx` ni compilation préalable : aucune dépendance de plus, aucune étape de plus sur Vercel.
+  Conséquence : seule la syntaxe effaçable est permise (pas d'`enum`, de `namespace` ni de propriété
+  de paramètre), les imports relatifs portent leur extension `.ts`, et l'alias `@/` n'existe
+  que pour les types (`import type`, effacés).
+- **Changer le HTML sans le vouloir se voit.** `npm run check:prerender` compare chaque sortie à
+  `prerender/instantanes/` après le build, dans `ci-noyau.yml`.
+
 ### Ajouter une page publique indexable
 
 1. Créer la route dans `src/App.tsx` **et** son slug dans `src/i18n/route-slugs.json`.
 2. Ajouter ses méta dans `src/locales/<locale>/seo.json` (titre 50–60 car., description 140–155).
 3. Vérifier qu'elle sort dans `dist/` après `npm run build` — **le prérendu est la source de
    vérité de ce que Google voit**, pas le code React.
-4. Ne pas la lister à la main dans `public/sitemap.xml` : `prerender.mjs` s'en charge à partir des
+4. Ne pas la lister à la main dans `public/sitemap.xml` : `prerender/sitemap.ts` s'en charge à partir des
    registres. Le fichier source ne contient que les pages sans registre.
 5. Un `<h1>` et un seul. Un `alt` sur chaque image.
 
 > **Cas particulier : `/entreprise-presentation`** (2026-08-15). Cette route rend le **même
 > composant que `/`** (`LandingPage`), avec le parcours entreprise au lieu du parcours perso.
 > Elle a donc son propre `<h1>`, ses propres méta et son propre bloc `content` dans
-> `prerender.mjs` — 492 mots indexables — parce que « Cosmo pour une organisation » et « Cosmo
+> `prerender/` — 492 mots indexables — parce que « Cosmo pour une organisation » et « Cosmo
 > pour moi » ne répondent pas à la même requête. Priorité sitemap 0.9, juste sous la home.
 > ⚠️ Le corps prérendu reprend les arguments du track : **le retoucher quand la copie de
 > `src/pages/landing/entreprise/` change**, sinon le prérendu ment sur ce que la page affiche.
@@ -220,7 +249,7 @@ navigation à une route par section.
    en 16/10. La largeur compte : au-delà, l'UI devient illisible une fois réduite.
 4. WebP 1600 px, ré-encodés par le canvas de Chromium : l'ensemble tient sous 1 Mo.
 5. Mettre à jour les `alt` (`enterprise.shot.*Alt` des catalogues `landing`, et les `<img>` du
-   prérendu de `/entreprise-presentation` dans `prerender.mjs`) si le contenu des écrans a changé.
+   prérendu de `/entreprise-presentation` dans `prerender/content/entreprise.ts`) si le contenu des écrans a changé.
 
 ⚠️ L'onglet **Statistiques** est masqué de la navigation depuis le 2026-09-30 : ne pas le
 recapturer pour la landing. L'étape « Suivi » montre les rapports d'activité (`rapports.webp`).
@@ -239,7 +268,7 @@ Chaque page tire désormais sa date de son contenu :
 | Articles de blog | `dateModified` du registre `ARTICLES` (déjà le cas) |
 | Pages use-case | `dateModified` du registre `USE_CASES` (champ ajouté) |
 | Index du blog | la plus récente des `dateModified` des articles, calculée au build |
-| `/`, `/guide`, `/a-propos`, `/entreprise-presentation` | `CONTENT_LASTMOD` dans `prerender.mjs` |
+| `/`, `/guide`, `/a-propos`, `/entreprise-presentation` | `CONTENT_LASTMOD` dans `prerender/config.ts` |
 
 ❌ **Ne jamais réintroduire `TODAY` dans le sitemap ni dans un `dateModified`.** `TODAY` ne sert
 plus qu'au `lastBuildDate` du flux RSS, où « date du build » est la bonne réponse.
@@ -254,7 +283,7 @@ recevaient aucun lien entrant interne, dont `cosmo-vs-todoist`, la page à inten
 
 Chaque article porte maintenant un champ `related: [slug, slug, slug]`, résolu par
 `relatedArticles()` (`src/content/blog/index.mjs`) et consommé **aux deux endroits** :
-`BlogArticlePage.tsx` et `prerender.mjs`. Repli sur la récence si un slug devient inconnu.
+`BlogArticlePage.tsx` et `prerender/routes-registries.ts`. Repli sur la récence si un slug devient inconnu.
 
 - ✅ Un nouvel article déclare ses `related` **et** se fait citer en corps de texte par au moins
   deux articles existants. Un article qu'on publie sans toucher aux autres naît orphelin.
@@ -274,7 +303,7 @@ Dans cet ordre, sinon on publie du duplicate content :
 5. Nommer les routes applicatives sous le nouveau préfixe dans `robots.txt` : `Disallow:` est un
    **préfixe**, `/dashboard` ne couvre pas `/xx/dashboard`, et c'est le `noindex` global qu'on
    vient de retirer qui les bouchait.
-6. Faire tourner `npm run build` et vérifier dans `dist/`, jamais dans `prerender.mjs`.
+6. Faire tourner `npm run build` et vérifier dans `dist/`, jamais dans le code de `prerender/`.
 
 🔴 **Les points 3 et 4 se commitent ENSEMBLE.** L'état à moitié ouvert (contenu prérendu et
 `noindex` retiré, mais locale absente d'`INDEXABLE_LOCALES`) est le plus dangereux des trois :

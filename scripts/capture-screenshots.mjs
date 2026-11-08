@@ -12,7 +12,7 @@
  *   `CAPTURE_BASE=http://localhost:5293` vise un autre serveur de dev.
  *
  * ⚠ Les dimensions écrites ici doivent rester synchronisées avec les attributs
- * width/height du bloc HOME_STATIC de prerender.mjs : ce sont eux qui réservent
+ * width/height du gabarits de prerender/content/home.ts : ce sont eux qui réservent
  * la place et évitent le décalage de mise en page (CLS).
  */
 import { chromium } from 'playwright';

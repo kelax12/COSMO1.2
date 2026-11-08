@@ -134,7 +134,7 @@ const CONTRAT_SERVEUR = {
 };
 
 /** Les arbres où une `VITE_*` peut être lue par le produit. */
-const ARBRES = ['src', 'prerender.mjs', 'vite.config.ts', 'api'];
+const ARBRES = ['src', 'prerender', 'vite.config.ts', 'api'];
 
 /**
  * 🔴 Une `VITE_*` est INCLUSE DANS LE BUNDLE servi au navigateur. Un nom qui

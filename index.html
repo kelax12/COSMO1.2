@@ -71,7 +71,7 @@
          enregistré, sinon celui de defaultTheme() (Gris sous 768 px, sinon
          celui du système), en `data-boot-theme` ET en classes `dark` / `gris`
          / `noir`. La copie d'une page de contenu à thème (le guide) en lit
-         les variables avant React (prerender.mjs, injectContentCopy). Le
+         les variables avant React (prerender/, injectContentCopy). Le
          stockage seul est dans le try : bloqué, le thème par défaut s'applique.
          Seul <script> inline exécutable du dépôt, autorisé par son empreinte
          sha256 dans `script-src` (vercel.json). ❌ Le modifier d'un octet
@@ -94,7 +94,7 @@
          - #boot-screen est peint immédiatement (overlay opaque plein écran),
            puis React l'efface tout seul, createRoot().render() vide les
            enfants de #root au premier commit. Aucun code à synchroniser.
-         - #seo-fallback (injecté par prerender.mjs dans dist/) est lu par les
+         - #seo-fallback (injecté par prerender/ dans dist/) est lu par les
            crawlers qui ne lancent pas le JS (GPTBot, ClaudeBot,
            PerplexityBot…). Depuis C-116 (2026-09-29) il est AUSSI peint, et
            le spinner masqué, sur les seules pages prérendues
@@ -125,7 +125,7 @@
       html[data-boot-theme=noir] :is(#boot-screen,.boot-screen){--bs-bg:#0a0a0a;--bs-ring:rgba(255,255,255,.16);--bs-accent:#f0f0f0}
       @media (prefers-reduced-motion:reduce){#boot-screen .ring,.boot-screen .ring{animation-duration:2.4s}}
       #seo-fallback{display:none;font-family:sans-serif;max-width:800px;margin:40px auto;padding:0 20px;color:#1e293b}
-      /* C-116 · 2026-09-29 : une page PRÉRENDUE (prerender.mjs pose
+      /* C-116 · 2026-09-29 : une page PRÉRENDUE (prerender/ pose
          data-prerendered sur <html>) peint son contenu au lieu du spinner,
          jusqu'au premier commit de React. Sans ça FCP = LCP = premier rendu
          React, 5,4 à 8,3 s en 4G lente. La coquille de l'app (app.html,
@@ -160,7 +160,7 @@
       html[data-prerendered] #seo-fallback img{display:none}
       /* 2026-10-21 · Sur la HOME et l'ENTREPRISE, ce premier rendu n'est plus le
          texte SEO : c'est #lp-hero, une copie du header et du hero du
-         parcours (prerender.mjs, `scripts/capture-landing-hero.mjs`), avec sa
+         parcours (prerender/, `scripts/capture-landing-hero.mjs`), avec sa
          propre CSS confinée. Un visiteur voyait un mur de texte, puis un
          squelette gris, puis la landing. Elle vit HORS de #root, en calque :
          createRoot ne l'efface pas, et la landing la retire dans l'image où
@@ -287,14 +287,14 @@
   <body>
     <div id="root">
       <!-- Écran de démarrage — effacé par React au premier render. En prod,
-           prerender.mjs injecte #seo-fallback juste au-dessus. Voir le <style>
+           prerender/ injecte #seo-fallback juste au-dessus. Voir le <style>
            du <head> pour le pourquoi du 100 % CSS. -->
       <div id="boot-screen" role="status" aria-label="Chargement de Cosmo">
         <div class="ring"></div>
       </div>
     </div>
     <!-- Fallback pour les crawlers sans JS — contenu indexable minimal.
-         Retiré de dist/ par prerender.mjs (remplacé par #seo-fallback). -->
+         Retiré de dist/ par prerender/ (remplacé par #seo-fallback). -->
     <noscript id="seo-noscript">
       <div style="font-family:sans-serif;max-width:800px;margin:40px auto;padding:0 20px;color:#1e293b">
         <h1>Cosmo – Gestionnaire de tâches, habitudes et OKR</h1>

@@ -142,7 +142,7 @@ describe('CSP servie par Vercel', () => {
   it("SEC-09 : Stripe.js n'est chargé nulle part côté client (sinon, la CSP doit le rouvrir)", () => {
     // La raison du retrait doit rester vraie : un `<script src=js.stripe.com>`
     // ajouté plus tard serait bloqué en production, en silence.
-    const fichiers = ['index.html', 'prerender.mjs', 'src', 'public'].flatMap(clientFiles);
+    const fichiers = ['index.html', 'prerender', 'src', 'public'].flatMap(clientFiles);
     expect(fichiers.length).toBeGreaterThan(100);
     const charge = fichiers.filter((p) => STRIPE_JS.test(readFileSync(path.join(process.cwd(), p), 'utf8')));
     expect(charge).toEqual([]);

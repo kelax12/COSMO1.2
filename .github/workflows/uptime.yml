@@ -85,7 +85,7 @@ jobs:
           # coquille, verifie le 2026-09-20 sur `index.html` a la racine du
           # depot :
           #   · `id="seo-fallback"` — le bloc de contenu indexable, injecte par
-          #     `prerender.mjs` et par lui seul. Absent si le prerendu n'a pas
+          #     `prerender/` et par lui seul. Absent si le prerendu n'a pas
           #     tourne ou si Vercel sert le fallback SPA.
           #   · `"FAQPage"` — le JSON-LD propre a la HOME, injecte lui aussi au
           #     prerendu. Il distingue « la home » de « une page prerendue
@@ -115,7 +115,7 @@ jobs:
           fi
 
           # ── 1 bis. Une SECONDE page prerendue ────────────────────────
-          # La home a un chemin a elle dans `prerender.mjs` (FAQPage, contenu
+          # La home a un chemin a elle dans `prerender/` (FAQPage, contenu
           # statique). Une seule page ne dit rien du reste du site : si le
           # prerendu a tourne a moitie, seules les autres routes manquent. Le
           # guide est la page la plus stable du site et la deuxieme du sitemap.

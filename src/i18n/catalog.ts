@@ -1,6 +1,6 @@
 // Registre des catalogues de traduction + typage des clés.
 //
-// Les catalogues sont des `.json` (et non des `.ts`) : `prerender.mjs` est du
+// Les catalogues sont des `.json` (et non des `.ts`) : `prerender/` est du
 // Node brut sans bundler et doit lire exactement les mêmes fichiers. Effet de
 // bord utile : `vitest.config.ts` ne couvre que `src/**/*.{ts,tsx}`, donc les
 // clés de données sont hors des seuils de couverture.
@@ -231,7 +231,7 @@ interface CatalogShapes {
   orgGuide: Shape<'orgGuide'>;
   /** Guide perso (boussole du `Layout` desktop), chargé au premier clic avec `PersoGuideHost`. */
   persoGuide: Shape<'persoGuide'>;
-  /** Titres/descriptions des routes publiques — lu aussi par `prerender.mjs`. */
+  /** Titres/descriptions des routes publiques — lu aussi par `prerender/`. */
   seo: Shape<'seo'>;
   /** Réglages — profil, sécurité, apparence, modules, données, aide. */
   settings: Shape<'settings'>;

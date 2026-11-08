@@ -47,7 +47,7 @@ t('project.name')                // clé plate dans le namespace
   ❌ **Ne jamais ajouter une locale à `INDEXABLE_LOCALES` avant d'avoir traduit le CORPS des
   pages**, pas seulement les métas : c'est le duplicate content que toute l'architecture i18n
   existe pour empêcher. Pour `en`, les 50 pages ont été mesurées une par une avant la bascule.
-  🔴 **Les trois fichiers se commitent ENSEMBLE** (`src/i18n/seo-urls.mjs`, `prerender.mjs`,
+  🔴 **Les trois fichiers se commitent ENSEMBLE** (`src/i18n/seo-urls.mjs`, `prerender/`,
   `vercel.json`) : l'état à moitié ouvert, où le `noindex` est retiré mais la locale absente
   d'`INDEXABLE_LOCALES`, est le PIRE des trois, Google indexant alors `/en` sans `hreflang` ni
   sitemap. `npm run i18n:check` est la gate qui refuse cet état.

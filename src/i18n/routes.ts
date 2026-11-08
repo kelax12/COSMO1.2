@@ -25,7 +25,7 @@ export { localeFromPathname };
 /**
  * Slugs publics traduits, par identifiant de route.
  *
- * La table vit dans un `.json` et non ici : `prerender.mjs` (Node brut, sans
+ * La table vit dans un `.json` et non ici : `prerender/` (Node brut, sans
  * bundler) doit lire EXACTEMENT les mêmes slugs pour produire `canonical` et
  * `hreflang`. Deux tables tenues à la main finiraient par diverger, et une
  * divergence entre l'URL servie par l'app et l'URL déclarée canonique est

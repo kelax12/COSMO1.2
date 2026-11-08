@@ -20,7 +20,7 @@ const BlogArticlePage: React.FC = () => {
 
   useSeoMeta({
     // Sans suffixe de marque — doit rester identique au prérendu
-    // (prerender.mjs → ROUTES des articles), sinon le titre change au mount.
+    // (prerender/ → ROUTES des articles), sinon le titre change au mount.
     title: article ? article.metaTitle : 'Blog Cosmo',
     description: article?.description,
     canonical: article ? canonicalUrl(`/blog/${article.slug}`, locale) : undefined,

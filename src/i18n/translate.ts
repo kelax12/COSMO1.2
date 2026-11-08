@@ -2,7 +2,7 @@
 //
 // Volontairement maison (~120 LOC) plutôt qu'i18next, pour trois raisons
 // documentées dans le plan i18n :
-//   1. `prerender.mjs` est du Node brut sans bundler et doit lire les MÊMES
+//   1. `prerender/` est du Node brut sans bundler et doit lire les MÊMES
 //      catalogues → format JSON obligatoire, et aucun runtime à initialiser
 //      deux fois ;
 //   2. la locale est résolue avant le premier paint, donc le moteur atterrit

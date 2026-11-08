@@ -4,10 +4,11 @@ import { join } from 'node:path';
 import { ARTICLES, articleLocales } from './content/blog/index.mjs';
 import { isSupportedLocale } from './i18n/locale';
 import { localizePath } from './i18n/routes';
+import { lirePrerender } from './__test__/prerender-source';
 
 // Image Open Graph par page (2026-10-12).
 //
-// `prerender.mjs` retombe sur og-card.png quand `public/og/<clé>.jpg` manque :
+// Le prérendu (`prerender/ld.ts`) retombe sur og-card.png quand `public/og/<clé>.jpg` manque :
 // le site ne casse pas, mais un article neuf repartirait avec la vignette de
 // l'accueil, ce que cette passe a corrigé. Cette garde rend l'oubli visible
 // pour les ARTICLES, la seule famille de pages qui grossit au fil de l'eau.
@@ -15,7 +16,7 @@ import { localizePath } from './i18n/routes';
 // `node scripts/capture-og-images.mjs`, et commiter `public/og/`.
 
 const ROOT = join(__dirname, '..');
-const prerender = readFileSync(join(ROOT, 'prerender.mjs'), 'utf8');
+const prerender = lirePrerender('ld.ts');
 const script = readFileSync(join(ROOT, 'scripts', 'capture-og-images.mjs'), 'utf8');
 
 const ogKey = (path: string) => path.replace(/^\/+|\/+$/g, '').replace(/\//g, '_') || 'home';
