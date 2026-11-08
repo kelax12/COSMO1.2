@@ -87,7 +87,7 @@
     },
     "src/components/event-modal/EventModalFormDesktop.tsx": {
       "complexity": [47],
-      "max-lines-per-function": [405]
+      "max-lines-per-function": [404]
     },
     "src/components/event-modal/EventModalFormMobile.tsx": {
       "complexity": [24],
@@ -331,7 +331,7 @@
     },
     "src/components/task-modal/TaskModalMobileBody.tsx": {
       "complexity": [35],
-      "max-lines-per-function": [389]
+      "max-lines-per-function": [388]
     },
     "src/components/task-modal/useTaskModal.ts": {
       "complexity": [47],
