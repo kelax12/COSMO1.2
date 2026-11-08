@@ -105,7 +105,8 @@ Chaque item qui ne demande que du code part dans une session dédiée, trois à 
 | PR n° 164 et n° 167 : vérifier, rebaser, porter sur `main` | Tests, UI | en file d'attente | Sonnet 5.5 · high |
 | `No new hardcoded strings` (écran de démarrage) | i18n | la session voisine qui l'a poussé, prévenue | |
 
-**Gestes d'Axel** (pas du code) : recaler `Posture` (`gh workflow run posture.yml -f regenerer=true`) ;
+**Gestes d'Axel** (pas du code ; liste tenue, avec ce qui est déjà automatisé, dans
+[`CONTINUITE.md`](./CONTINUITE.md) § « Inventaire des gestes de production », relue le 2026-11-08) : recaler `Posture` (`gh workflow run posture.yml -f regenerer=true`) ;
 dater les rotations des 9 secrets ; trier le signal du détecteur du 2026-10-26 et décider du sort de
 la PR n° 125 ; arbitrer le périmètre de l'affiliation au registre art. 30, qu'une session pourra
 ensuite rédiger depuis la mig. `236` ; jouer `restore-drill` ; les séances VoiceOver (avant le
@@ -137,6 +138,7 @@ Une ligne par document. Les notes sont dans le tableau de bord ci-dessus, pas ic
 | [`../CLAUDE.md`](../CLAUDE.md) | Point d'entrée : produit, carte de la doc, conventions, garde-fous |
 | `faille.md` (hors dépôt) | Sécurité : **source de vérité**, findings ouverts, ordre de priorité avant prod |
 | [`../a-faire-code.md`](../a-faire-code.md) · `a-faire-manuel.md` (hors dépôt) | Ce qui reste à faire, en code et à la main (consoles, guichets, décisions) |
+| [`CONTINUITE.md`](./CONTINUITE.md) | Continuité : arrivée et départ d'un second administrateur, **inventaire des gestes de production** (automatisé, converti, manuel et pourquoi). Le coffre et le registre des secrets sont dans [`SECURITY.md`](./SECURITY.md) |
 | [`MODULES.md`](./MODULES.md) | **Carte** : module → fichiers, tables, RPC, écran |
 | [`FAITS.md`](./FAITS.md) | **Chiffres du dépôt** (Edge Functions, migrations, workflows, modules, tables), générés par `npm run faits:generer` et vérifiés dans le noyau : les autres docs y renvoient |
 | [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Invariants du projet et leur état vérifié |

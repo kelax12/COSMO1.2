@@ -16,6 +16,8 @@ Procédures opérationnelles : déployer, appliquer une migration DB, rollback,
 réagir à un incident. À lire avant toute mise en prod.
 
 > Sécurité des secrets & rotation : voir [`SECURITY.md → Rotation des secrets`](./SECURITY.md#rotation-des-secrets).
+> Coffre, accès d'urgence, second administrateur, gestes qui restent manuels :
+> [`SECURITY.md` § Coffre](./SECURITY.md#coffre-et-accès-durgence-v42-sec-04) et [`CONTINUITE.md`](./CONTINUITE.md).
 > Failles connues / posture : `faille.md`.
 
 ---

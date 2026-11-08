@@ -93,6 +93,15 @@ jobs:
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         run: npm run check:acquisition
 
+      # V4.2 (SEC-04) : le coffre (phrase des sauvegardes, codes de recuperation,
+      # sortie de secours de la console admin) se verifie chaque trimestre.
+      # Rouge = vérification absente ou de plus de 92 jours, ou incomplete.
+      # La garde lit `.github/coffre-verifications.json` : noms et dates seulement.
+      - name: Coffre verifie dans le trimestre
+        id: coffre
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: npm run check:coffre
+
       - name: Resume des gardes (toutes les etapes rouges)
         if: ${{ !cancelled() }}
         env:
