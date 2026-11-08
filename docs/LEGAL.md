@@ -22,39 +22,17 @@
 
 ## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
 
-> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
-> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
-> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
-> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
->
-> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
-> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
-> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
->
-> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
-> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+> Ce document affirme des choses que rien ne pèse : chaque ligne nomme une affirmation qui n'était vérifiée
+> par rien, et la garde qui la vérifie depuis. 🔴 **Une garde posée n'est pas un angle mort fermé** : la
+> dernière colonne dit ce que son vert ne prouve pas. L'énoncé du 2026-09-16, la colonne « État » du
+> 2026-09-21 et les mesures datées sont archivés sans une coupe :
+> [`archive/ANGLES-MORTS-2026-09-16-docs-vivantes.md`](./archive/ANGLES-MORTS-2026-09-16-docs-vivantes.md).
 
-
-
-> **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
-> `CLAUDE.md` a pesé 150 ko sans qu'aucune note ne bouge, parce qu'il était **cité comme source**
-> par les audits et **jamais mesuré par eux**. Il était le mètre, jamais l'objet.
->
-> 🔴 **Ce document n'a PAS de note, et c'est son premier angle mort.** Les onze documents notés
-> entrent dans le tableau de bord de [`README.md`](./README.md) et peuvent donc monter ou baisser.
-> Celui-ci ne le peut pas : rien ne le pèse, donc rien ne signale qu'il a vieilli. Les angles morts
-> ci-dessous ne sont **pas** des défauts du produit ; ce sont les endroits où **ce document affirme
-> sans que rien ne vérifie**.
->
-> Chaque ligne est vérifiée par une commande, jamais supposée. Elle se **referme** ou se
-> **reconduit avec sa date**, jamais ne se recopie.
-
-| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
+| # | Angle mort (énoncé du 2026-09-16) | Garde qui le couvre | 🔴 Ce qu'elle ne prouve pas |
 |---|---|---|---|
-| AM-1 | 🔴 **`npm run check:legal` vérifie l'ARITHMÉTIQUE du tableau, jamais la CONFORMITÉ.** Il recompte les lignes et refuse un total faux, parce que ce total l'a été trois fois dans la même journée. Mais **une ligne marquée ✅ à tort laisse la garde verte** : rien ne confronte une ligne à la réalité | en-tête de `scripts/check-legal-table.mjs` : « Garde du tableau de conformité », sur le **bloc de synthèse** | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:legal-journal` · une ligne ✅ doit porter une **date** (`C-107`) — 🔴 ne prouve PAS : 🔴 **la CONFORMITÉ.** Une ligne ✅ à tort **et datée** reste verte. 1ʳᵉ exécution : `C10` était la seule sans date, et sa relecture a trouvé une affirmation **fausse** |
-| AM-2 | **Les échéances légales ne sont surveillées par rien.** 15 lignes sont ❌ au tableau ; aucune ne porte de date butoir opposable dans un outil | tableau : ✅ 13 · 🟡 13 · ❌ 15 · ⬜ 5 | ✅ **OUTILLÉ le 2026-09-20** · cliquet à **21 lignes datées** (`C-107`) — 🔴 ne prouve PAS : idem AM-1 : la traçabilité, jamais le fond |
-| AM-3 | **Rien ne relie une modification des documents contractuels à leur préavis de 30 jours.** Les CGU, la politique de confidentialité et les mentions légales vivent dans le namespace `legal` : une modification de fond est un **changement de contrat**, et le préavis de l'article 11 ne se déclenche pas tout seul | `src/locales/{fr,en}/legal.json` est un catalogue i18n ordinaire pour la CI | ✅ **OUTILLÉ le 2026-09-20** · `docs/LEGAL-JOURNAL.md` + empreinte de `src/locales/{fr,en}/legal.json` exigée à chaque modification (`C-107`) — 🔴 ne prouve PAS : que le préavis de 30 jours de l'article 11 ait été servi : le journal date le changement, il ne notifie personne |
-| AM-4 | **Ce document n'a pas de note**, donc il ne peut ni monter ni baisser, alors qu'il porte les obligations dont le non-respect coûte le plus cher | absent du tableau de bord de [`README.md`](./README.md) | ✅ **SANS OBJET le 2026-11-08** : les notes /100 ont cessé (ADR 0012) et `check:docs-scored` (`C-109`) est retirée ; `npm run check:docs` refuse leur retour. L'énoncé de gauche est celui du 2026-09-16, conservé |
+| AM-1 | **`npm run check:legal` vérifie l'ARITHMÉTIQUE du tableau, jamais la CONFORMITÉ** : une ligne ✅ à tort laisse la garde verte | `npm run check:legal-journal` : une ligne ✅ doit porter une **date** (`C-107`) | 🔴 La **conformité** : une ligne ✅ à tort **et datée** reste verte (la première exécution a trouvé `C10` sans date, et sa relecture une affirmation **fausse**) |
+| AM-2 | **Les échéances légales ne sont surveillées par rien** (des lignes ❌ sans date butoir opposable dans un outil) | cliquet à **21 lignes datées** (`C-107`) | Idem AM-1 : la traçabilité, jamais le fond |
+| AM-3 | **Rien ne relie une modification des documents contractuels à leur préavis de 30 jours** (CGU, confidentialité, mentions légales : namespace `legal`, article 11) | `docs/LEGAL-JOURNAL.md` + empreinte de `src/locales/{fr,en}/legal.json` exigée à chaque modification (`C-107`) | Que le préavis de 30 jours ait été servi : le journal date le changement, il ne notifie personne |
 
 ---
 

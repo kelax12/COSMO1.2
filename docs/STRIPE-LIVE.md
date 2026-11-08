@@ -5,39 +5,18 @@
 
 ## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
 
-> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
-> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
-> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
-> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
->
-> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
-> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
-> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
->
-> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
-> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+> Ce document affirme des choses que rien ne pèse : chaque ligne nomme une affirmation qui n'était vérifiée
+> par rien, et la garde qui la vérifie depuis. 🔴 **Une garde posée n'est pas un angle mort fermé** : la
+> dernière colonne dit ce que son vert ne prouve pas. L'énoncé du 2026-09-16, la colonne « État » du
+> 2026-09-21 et les mesures datées sont archivés sans une coupe :
+> [`archive/ANGLES-MORTS-2026-09-16-docs-vivantes.md`](./archive/ANGLES-MORTS-2026-09-16-docs-vivantes.md).
 
-
-
-> **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
-> `CLAUDE.md` a pesé 150 ko sans qu'aucune note ne bouge, parce qu'il était **cité comme source**
-> par les audits et **jamais mesuré par eux**. Il était le mètre, jamais l'objet.
->
-> 🔴 **Ce document n'a PAS de note, et c'est son premier angle mort.** Les onze documents notés
-> entrent dans le tableau de bord de [`README.md`](./README.md) et peuvent donc monter ou baisser.
-> Celui-ci ne le peut pas : rien ne le pèse, donc rien ne signale qu'il a vieilli. Les angles morts
-> ci-dessous ne sont **pas** des défauts du produit ; ce sont les endroits où **ce document affirme
-> sans que rien ne vérifie**.
->
-> Chaque ligne est vérifiée par une commande, jamais supposée. Elle se **referme** ou se
-> **reconduit avec sa date**, jamais ne se recopie.
-
-| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
+| # | Angle mort (énoncé du 2026-09-16) | Garde qui le couvre | 🔴 Ce qu'elle ne prouve pas |
 |---|---|---|---|
-| AM-1 | 🔴 **AUCUNE garde ne compare la grille STRIPE au code.** `org-tiers.parity.test.ts` verrouille le Deno sur le TypeScript, donc **deux copies du dépôt l'une contre l'autre** ; rien ne confronte l'une ou l'autre aux prix réellement enregistrés chez Stripe. Or c'est le seul endroit où COSMO **annonce un montant** et où un tiers **en facture un autre** | aucun workflow ne contient `STRIPE_ORG_PRICE` ni d'appel à l'API Stripe | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:stripe-prices` · grille **lue** dans `premium-config.ts` (`C-106`) — ✅ **PLANIFIÉ le 2026-10-20** avec la bascule : secret live posé, `schedule:` décommenté, `Grille Stripe` dans `ci-alert.yml` |
-| AM-2 | **Les 8 prix live ont été vérifiés UNE FOIS, le 2026-08-26.** Un prix désactivé ou dupliqué depuis ne serait vu par personne. La dérivation annuelle refuse d'ailleurs de choisir entre deux candidates (`yearly_unavailable`), donc un doublon **coupe l'encaissement annuel en silence** | vérification datée dans ce document, jamais rejouée | ✅ **OUTILLÉ le 2026-09-20** · doublon de prix et `tax_behavior` vérifiés (`C-106`) — 🔴 ne prouve PAS : idem AM-1 : la garde existe et ne tourne pas encore |
-| AM-3 | **La liste des events du webhook live ne sera vérifiée par rien après enregistrement.** Ils sont **SIX** ; ce dépôt a écrit « 5 » pendant six jours, et en enregistrer 5 couperait le **remboursement** sans aucun signal | recompté dans le code le 2026-09-12 | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:stripe-prices` (`C-106`) — 🔴 ne prouve PAS : idem AM-1 |
-| AM-4 | **Le passage en live n'a pas de répétition à blanc.** La séquence (remettre à zéro les identifiants par la mig. `140`, recréer les prix, réenregistrer le webhook, remplacer trois secrets) n'a jamais été parcourue, et chaque étape manquante échoue **après** encaissement | mig. `140` écrite, **non appliquée**, par construction | ✅ **PARCOURUE le 2026-10-20** (bascule réelle, cf. « Ce qui reste à faire avant d'encaisser ») · avant : 🟠 ouvert au 2026-09-21 · **`M-48`** : la séquence de bascule n'a jamais été parcourue, même à blanc. Elle recoupe `M-43`, `M-06`, `M-07` et `M-08` — la répétition est ce qui transforme quatre lignes espérées en une séquence éprouvée — *(jugé outillable le 09-16 : partiellement : le compte de test permet la répétition)* |
+| AM-1 | **AUCUNE garde ne comparait la grille STRIPE au code** (`org-tiers.parity.test.ts` ne confronte que deux copies du dépôt, jamais les prix enregistrés chez Stripe) | `npm run check:stripe-prices` (`C-106`) : grille **lue** dans `premium-config.ts`, planifiée depuis la bascule du 2026-10-20 (secret live posé, `schedule:` actif, `Grille Stripe` dans `ci-alert.yml`) | Un encaissement réel : elle compare des prix enregistrés |
+| AM-2 | **Les 8 prix live n'avaient été vérifiés qu'une fois** (2026-08-26) ; la dérivation annuelle refuse de choisir entre deux candidates (`yearly_unavailable`), donc un doublon **coupe l'encaissement annuel en silence** | `check:stripe-prices` : doublon de prix et `tax_behavior` vérifiés (`C-106`) | Idem AM-1 |
+| AM-3 | **La liste des events du webhook live n'est vérifiée par rien après enregistrement** : ils sont **SIX**, en enregistrer 5 couperait le **remboursement** sans signal | `check:stripe-prices` (`C-106`) | Idem AM-1 |
+| AM-4 | **Le passage en live n'avait pas de répétition à blanc** (mig. `140`, prix recréés, webhook réenregistré, trois secrets remplacés : chaque étape manquante échoue **après** encaissement) | **Parcouru le 2026-10-20** (bascule réelle, § « Ce qui reste à faire avant d'encaisser ») ; `M-48` | Une répétition à blanc : elle n'a jamais eu lieu, la bascule réelle l'a remplacée |
 
 ---
 
