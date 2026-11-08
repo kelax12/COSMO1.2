@@ -28,7 +28,7 @@ interface Props {
  * s'y déploie : même `layoutId` (`org-tier-<palier>`).
  * Sous mouvement réduit, PAS de `layoutId` : Framer rendrait l'animation de
  * layout instantanée puis replacerait l'élément à l'ancienne position pour une
- * frame (même constat que `ApercuWidgetGrid`, CI du 2026-10-22).
+ * frame (même constat que `ApercuWidgetGrid`, CI).
  *
  * La case d'accès immédiat ne change pas sur le fond (L221-13, L221-25) : non
  * cochée par défaut, obligatoire, revérifiée par le serveur. Ce qui change :

@@ -94,7 +94,7 @@ const MemberPermissionsSheet = ({
 }: MemberPermissionsSheetProps) => {
   const { t, tp } = useT('org');
 
-  // Aperçu de l'EFFET (audit des popups, 2026-09-25) : un interrupteur
+  // Aperçu de l'EFFET (audit des popups) : un interrupteur
   // « supprimer n'importe quelle tâche » ne dit pas sur combien de projets il
   // porte. On compte ce que CETTE personne voit : c'est là que le droit s'exerce.
   const { data: projects = [] } = useTeamProjects(member.orgId);
@@ -165,7 +165,7 @@ const MemberPermissionsSheet = ({
   };
 
   /**
-   * Profils prêts à l'emploi (audit du 2026-09-24, « accès temporaire : ni
+   * Profils prêts à l'emploi (audit, « accès temporaire : ni
    * invité ni expiration »). « Invité » ne crée, ne supprime et n'invite rien,
    * et ne s'assigne qu'à lui-même ; la durée se règle dans « Accès et
    * suspension ». Ce sont des SURCHARGES, donc réversibles ligne à ligne.

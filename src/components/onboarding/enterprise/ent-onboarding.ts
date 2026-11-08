@@ -21,7 +21,7 @@ export const readMemberWelcomeSeen = (orgId: string, userId: string): boolean =>
 };
 
 /**
- * L'accueil membre est sorti le 2026-10-03. Une personne déjà membre AVANT
+ * L'accueil membre est sorti. Une personne déjà membre AVANT
  * n'en a pas besoin et le recevait pourtant, par surprise, à sa visite
  * suivante (Axel compris). Seuls les arrivés depuis sont accueillis. Tant que
  * l'annuaire n'est pas chargé, on ne sait pas : on n'ouvre rien.

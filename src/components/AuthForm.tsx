@@ -71,7 +71,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
   // confirmation d'email. Porte l'adresse à afficher, `null` sinon.
   //
   // ⚠️ Inerte tant que les confirmations sont désactivées sur le projet — et
-  // elles le sont au 2026-08-27 (mesuré : `confirmation_sent_at` renseigné sur
+  // elles le sont (mesuré : `confirmation_sent_at` renseigné sur
   // 1 compte sur 28, délai création → confirmation de 15 ms). Ce chemin existe
   // pour que les activer ne casse rien : sans lui, `signUp` renvoie
   // `session: null`, l'écran navigue quand même vers `/dashboard`, et
@@ -429,15 +429,15 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
             : mode === 'login' ? t('auth.signIn') : t('auth.createAccount')}
         </button>
 
-        {/* 🔴 Information au point de collecte (RGPD art. 13) et opposabilité
-            des CGU (C. civ. art. 1119). Jusqu'au 2026-09-24, l'inscription ne
+        {/* Information au point de collecte (RGPD art. 13) et opposabilité
+            des CGU (C. civ. art. 1119)., l'inscription ne
             montrait AUCUN des deux documents : les CGU se disaient acceptées
             « en créant un compte » sans jamais avoir été présentées.
             Une seule phrase traduite, les liens posés sur des jetons
             `{{terms}}` / `{{privacy}}` que chaque langue place où elle veut. Ils
             s'ouvrent dans un nouvel onglet : ce formulaire vit aussi dans une
             modale, et la saisie ne doit pas être perdue pour lire un contrat.
-            🔴 AUSSI en mode connexion depuis le 2026-10-13 : le bouton Google y
+            AUSSI en mode connexion : le bouton Google y
             est rendu, et il CRÉE un compte au premier passage. 6 inscriptions
             sur 7 passent par Google ; sans cette phrase, elles se faisaient sans
             avoir vu les CGU ni la politique. */}

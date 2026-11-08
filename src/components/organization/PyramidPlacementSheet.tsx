@@ -36,7 +36,7 @@ interface PyramidPlacementSheetProps {
 /**
  * « Placer dans l'organigramme », dans les DEUX sens.
  *
- * Audit des popups du 2026-09-25 : trois feuilles pour un seul geste.
+ * Audit des popups : trois feuilles pour un seul geste.
  * `MemberPlacementSheet` choisissait le responsable d'une personne,
  * `AddUnderSheet` n'invitait que des NOUVEAUX sous elle, et
  * `ReassignManagerSheet` a été remplacée par l'assistant de départ (M10).
@@ -90,12 +90,12 @@ const PyramidPlacementSheet = ({
   }, [members, target, currentUserId, isAdmin, mySubtree]);
 
   const list = direction === 'up' ? managers : reports;
-  // 2026-10-01 : barre de recherche toujours visible, liste unique sans
+  // barre de recherche toujours visible, liste unique sans
   // intertitres Managers / Membres (le rôle reste dit sous chaque nom).
   const shown = filterMembersByQuery(list, query);
   const [inviteOpen, setInviteOpen] = useState(false);
 
-  // Design C (2026-09-28) : on SÉLECTIONNE puis on confirme, le pied de page
+  // Design C : on SÉLECTIONNE puis on confirme, le pied de page
   // dit l'effet avant qu'il n'ait lieu. `'detach'` = retirer son responsable.
   const [selected, setSelected] = useState<OrgMember | 'detach' | null>(null);
   const switchDirection = (d: PlacementDirection) => { setDirection(d); setQuery(''); setSelected(null); };
@@ -282,7 +282,7 @@ const PyramidPlacementSheet = ({
 };
 
 /** Ex-`AddUnderSheet` : inviter une personne qui n'est PAS encore dans l'entreprise.
- *  Modale à part depuis le 2026-10-01 : en ligne, elle surchargeait la feuille. */
+ *  Modale à part : en ligne, elle surchargeait la feuille. */
 const InviteUnder = ({ orgId, under, name, onClose }: { orgId: string; under: OrgMember; name: string; onClose: () => void }) => {
   const { t } = useT('org');
   const title = t('popups.placement.inviteTitle');

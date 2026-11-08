@@ -83,7 +83,7 @@ const OrgNotificationsBell = ({ orgId, members }: OrgNotificationsBellProps) => 
         className="relative w-11 h-11 rounded-xl flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
       >
         <Bell size={18} aria-hidden="true" />
-        {/* Maquette 226 (2026-10-10) : sur mobile, un point (« du nouveau »),
+        {/* Maquette 226 : sur mobile, un point (« du nouveau »),
             plus un nombre de plus sur l'écran ; le nom accessible garde le
             compte. Desktop garde le nombre. */}
         {unread > 0 && (

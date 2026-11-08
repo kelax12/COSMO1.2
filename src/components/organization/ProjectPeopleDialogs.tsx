@@ -5,7 +5,7 @@
 //   (et un admin) la modifient ; les autres la lisent.
 // - `ProjectAddDialog` (bouton +, après le choix personne / équipe).
 //
-// Le rôle `viewer` (lecteur) n'est plus proposé (2026-10-13) : une ligne
+// Le rôle `viewer` (lecteur) n'est plus proposé : une ligne
 // existante s'affiche « Membre » et le devient au premier changement.
 
 import { useMemo, useState } from 'react';

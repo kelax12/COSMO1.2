@@ -13,7 +13,7 @@
 // (mig. 115). C'est le choix qui évite de construire un second écran pour un
 // geste qui reste occasionnel.
 //
-// 🔴 Seules les RACINES sont visibles par défaut, repliées — même choix que
+// Seules les RACINES sont visibles par défaut, repliées — même choix que
 // `CategoryTreeSelect` : état d'expansion LOCAL, remis à zéro à la fermeture.
 import React, { useMemo, useState } from 'react';
 import { ChevronRight, ChevronDown, Plus, FolderInput, Trash2, Pencil, MoreHorizontal, X } from 'lucide-react';
@@ -87,7 +87,7 @@ const TeamCategoryTreeSelect: React.FC<TeamCategoryTreeSelectProps> = ({ orgId, 
 
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
-  // Souris : enfants en cascade à droite (2026-10-29) ; doigt : arbre indenté.
+  // Souris : enfants en cascade à droite ; doigt : arbre indenté.
   const canHover = useCanHover();
   const [form, setForm] = useState<PendingForm>(null);
   const [name, setName] = useState('');
@@ -221,7 +221,7 @@ const TeamCategoryTreeSelect: React.FC<TeamCategoryTreeSelectProps> = ({ orgId, 
 
   // `siblingsHaveChildren` : une sœur ouvre une cascade, donc porte un chevron
   // après ses « … ». Les autres lignes réservent la même largeur, pour que
-  // TOUS les boutons d'action d'un niveau restent alignés (2026-10-30). Sans
+  // TOUS les boutons d'action d'un niveau restent alignés. Sans
   // aucune cascade au niveau, ils restent collés au bord droit.
   const renderNode = (node: TeamCategoryNode, depth: number, siblingsHaveChildren = false): React.ReactNode => {
     const cat = node.category;

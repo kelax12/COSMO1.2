@@ -15,7 +15,7 @@ import {
  *
  * - Persisté par organisation. L'org est mémorisée avec l'état pour ne pas
  *   écraser le stockage d'une autre org lors d'un changement d'org active.
- * - Repli par défaut d'un GRAND organigramme (audit du 2026-09-24), une seule
+ * - Repli par défaut d'un GRAND organigramme (audit), une seule
  *   fois, et seulement si aucune préférence n'existe.
  * - Pendant une recherche, seul le CHEMIN jusqu'aux résultats est déplié.
  */

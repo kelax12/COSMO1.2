@@ -1,7 +1,7 @@
 // Thème des vitrines animées : SOMBRE par défaut, CLAIR sur demande.
 //
 // POURQUOI DEUX THÈMES. Les vitrines ont été dessinées pour la landing sombre.
-// Le parcours perso est passé au BLANC le 2026-09-22 : des captures noires y
+// Le parcours perso est passé au BLANC : des captures noires y
 // faisaient des trous dans la page. Le sombre reste la valeur par défaut, à
 // l'identique au pixel près, parce que `/guide` les monte sans rien demander.
 //
@@ -21,7 +21,7 @@
 // classe `sc-ink`, et c'est elle seule que la feuille claire inverse.
 import { createContext, useContext } from 'react';
 
-// `gris` et `noir` (2026-10-12) : le guide monte les vitrines dans le thème de
+// `gris` et `noir` : le guide monte les vitrines dans le thème de
 // l'app du visiteur. Ce sont deux thèmes SOMBRES : même JSX que `dark`, seules
 // les surfaces changent (graphite, noir pur), re-teintées par
 // `showcase-gris-noir.css` et par les palettes ci-dessous.
@@ -88,7 +88,7 @@ const CRAN_700: Record<string, string> = {
 };
 
 // Teinte `-500` → son `-400`, pour un TEXTE de catégorie sur une carte SOMBRE.
-// Mesure Lighthouse/axe du 2026-10-22 sur /guide/ : la teinte brute y rendait
+// Mesure Lighthouse/axe sur /guide/ : la teinte brute y rendait
 // 3,1:1 (`#3B82F6` sur la pastille « Produit » en gris) à 4,3:1 (noir).
 const CRAN_400: Record<string, string> = {
   '#3B82F6': '#60A5FA',
@@ -107,14 +107,14 @@ const cran400 = (hex: string) => CRAN_400[hex.toUpperCase()] ?? hex;
 /**
  * Aplat d'un ÉVÉNEMENT d'agenda, qui porte un titre en blanc : le cran 700,
  * dans tous les thèmes. En `-500`, le blanc y rendait 2,1:1 (ambre) à 4,2:1
- * (violet), sous les 4,5:1 de WCAG 1.4.3 (Lighthouse, 2026-10-22).
+ * (violet), sous les 4,5:1 de WCAG 1.4.3 (Lighthouse).
  */
 export const eventFill = (hex: string): string => CRAN_700[hex.toUpperCase()] ?? hex;
 
 export const SHOWCASE_PALETTES: Record<ShowcaseTheme, ShowcasePalette> = {
   // ⚠️ Chaque valeur SOMBRE est celle qui était écrite en dur dans les vitrines
-  // avant le 2026-09-22. Ne pas les « harmoniser » : ce thème-là ne doit pas
-  // changer. Seules exceptions, le contraste (2026-10-22) : `textMuted`,
+  // avant. Ne pas les « harmoniser » : ce thème-là ne doit pas
+  // changer. Seules exceptions, le contraste : `textMuted`,
   // `accentText` et `tintText`, qui rendaient 3,1 à 4,1:1 sur les cartes.
   dark: {
     panel: '#132237',
@@ -129,7 +129,7 @@ export const SHOWCASE_PALETTES: Record<ShowcaseTheme, ShowcasePalette> = {
     textPrimary: '#F1F5F9',
     textSecondary: '#94A3B8',
     textMuted: '#8A99AE',
-    // blue-400 : le blue-500 d'origine rendait 4,1:1 sur la carte (2026-10-22).
+    // blue-400 : le blue-500 d'origine rendait 4,1:1 sur la carte.
     accentText: '#60A5FA',
     track: 'rgba(255,255,255,0.08)',
     ringTrack: '#334155',

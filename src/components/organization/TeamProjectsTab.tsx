@@ -75,14 +75,14 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, canEditDependencies, i
   const create = useOrgCreate();
   const [editProjectId, setEditProjectId] = useState<string | null>(null);
   const [taskModal, setTaskModal] = useState<TaskModalState>(null);
-  // « Ajouter une tâche… » d'une carte : sélecteur d'abord, création en option (2026-10-30).
+  // « Ajouter une tâche… » d'une carte : sélecteur d'abord, création en option.
   const [addTaskProjectId, setAddTaskProjectId] = useState<string | null>(null);
   // Sélection de PROJETS du Portefeuille : distincte de la sélection de tâches.
   const [portfolioSelect, setPortfolioSelect] = useState(false);
   const isMobile = useIsMobile();
   const [filtersOpen, setFiltersOpen] = useState(false);
   // Filtres : le MÊME état d'URL que l'onglet Tâches (task-filters.ts), mais
-  // ils trient ici des PROJETS (project-filters.ts, répartition du 2026-09-27) :
+  // ils trient ici des PROJETS (project-filters.ts, répartition) :
   // personne, équipe, recherche, « En retard », « Cette semaine ».
   const { filters, setFilters } = useOrgTaskFilters('all');
   useRememberedTaskFilters(orgId, 'projects');
@@ -201,7 +201,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, canEditDependencies, i
   });
 
   // `?task=<id>` n'est plus lu ici : `OrgDeepLinkHost` l'ouvre depuis TOUTES
-  // les sections (cohérence globale, 2026-09-25).
+  // les sections (cohérence globale).
 
   const modalCreate = (input: CreateTeamTaskInput) => actions.createTaskAsync(input);
   const modalUpdate = (taskId: string, input: UpdateTeamTaskInput) =>
@@ -356,7 +356,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, canEditDependencies, i
     );
   }
 
-  // Ligne « Sélectionner / Trier » (maquette du 2026-09-27) : le tri n'a de
+  // Ligne « Sélectionner / Trier » (maquette) : le tri n'a de
   // sens qu'en Liste et Portefeuille ; la sélection multiple vaut pour la
   // Liste et le Planning (des tâches y sont visibles), jamais le Portefeuille
   // (aucune tâche affichée).
@@ -389,7 +389,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, canEditDependencies, i
         <ProjectsPulse projectCount={activeProjects.length} totalEstimated={totalEstimated} />
       )}
 
-      {/* Recherche et vues, collées : deux lignes d'une même barre (2026-10-01). */}
+      {/* Recherche et vues, collées : deux lignes d'une même barre. */}
       <div className="space-y-2">
       <OrgTaskFilterBar
         filters={filters}

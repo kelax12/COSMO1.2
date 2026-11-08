@@ -73,7 +73,7 @@ export function findCommonSlots(busyByPerson: Busy[][], opts: SlotOptions): Slot
 // Volontairement PAS `expandRecurringEvents` (modules/events/recurrence) :
 // l'importer depuis ce seul écran sortait `recurrence` en lot partagé, et
 // chaque lot de plus s'ajoute aux préchargements de `OrganizationPage`, qui
-// est à son plafond (mesuré le 2026-09-29). Ici on ne veut que des
+// est à son plafond (mesuré). Ici on ne veut que des
 // intervalles, pas des événements à afficher : quinze lignes suffisent.
 
 export interface BusySource {

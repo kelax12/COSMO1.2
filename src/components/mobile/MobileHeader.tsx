@@ -51,7 +51,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
     // ⚠️ NE PAS revenir à `window.scrollY`. Ce composant a passé des semaines à
     // ne jamais se compacter, sur la seule page qui l'utilisait.
     //
-    // MESURÉ le 2026-08-24 (viewport 375×812, mode démo) : sur `/tasks`, après
+    // MESURÉ (viewport 375×812, mode démo) : sur `/tasks`, après
     // 500 px de scroll, le `h1` restait à 28 px, le fond du header restait
     // transparent, et `window.scrollY` valait **0**. La fenêtre ne scrolle pas :
     // `Layout.tsx` met tout le contenu dans un `<main class="flex-1
@@ -82,7 +82,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
     return () => scroller.removeEventListener('scroll', onScroll);
   }, [compactAt]);
 
-  // ── La place de l'en-tête dans le flux ne bouge JAMAIS (2026-10-11) ──────
+  // ── La place de l'en-tête dans le flux ne bouge JAMAIS ──────
   // Compacter change sa hauteur (59 → 43 px sur /habits, 39 → 49 sur le
   // Dashboard). Or il est `sticky`, donc DANS le flux : tout le contenu se
   // décalait d'autant, et l'ancrage de scroll du navigateur corrigeait
@@ -170,7 +170,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
         </div>
         {/* `flex-wrap` et non `shrink-0` : à 200 % de police (WCAG 1.4.4) une
             cible de 44 px en mesure 88, et quatre actions dépassaient l'écran
-            de 20 px sur /tasks (2026-10-09, icône Tableau ajoutée). Elles
+            de 20 px sur /tasks (icône Tableau ajoutée). Elles
             passent à la ligne au lieu de sortir ; à taille normale elles
             tiennent sur une rangée, comme avant. */}
         {actions && <div className="flex flex-wrap items-center justify-end gap-1 min-w-0">{actions}</div>}

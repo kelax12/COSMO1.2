@@ -14,7 +14,7 @@ interface DeleteTeamOkrConfirmProps {
 }
 
 /**
- * Suppression d'un OKR d'équipe (audit du 2026-09-24, étape 3).
+ * Suppression d'un OKR d'équipe (audit, étape 3).
  *
  * Remplace un `window.confirm` qui ne disait rien de l'impact : les résultats
  * clés et leurs points d'étape partent avec l'objectif, les liens vers des

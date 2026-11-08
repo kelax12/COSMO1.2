@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════
 // Audience des projets d'équipe — ce qu'un changement d'équipe fait perdre
-// (audit du 2026-09-24, cas « changement d'équipe »).
+// (audit, cas « changement d'équipe »).
 //
 // Retirer quelqu'un d'une équipe lui retirait IMMÉDIATEMENT la vue sur les
 // projets de cette équipe, y compris ceux où il avait ses propres tâches, sans

@@ -13,7 +13,7 @@ export const ORG_WELCOME_VIDEO = {
 
 // Habillage sur les jetons du thème choisi (Clair, Sombre, Gris, Noir), pas sur
 // la DA nuit figée qu'avait l'ancien accueil entreprise : le lecteur s'ouvre
-// PAR-DESSUS l'app, il en prend les couleurs (demande d'Axel, 2026-10-20).
+// PAR-DESSUS l'app, il en prend les couleurs (demande d'Axel).
 // Bouton plein : `accent-solid` + son `-foreground`, le duo de chaque thème
 // (texte quasi-noir sur quasi-blanc en Noir, blanc sur bleu ailleurs).
 const FOCUS = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]';
@@ -30,7 +30,7 @@ interface OrgWelcomeVideoProps {
 /**
  * Accueil vidéo du premier passage dans l'espace d'une entreprise (créateur
  * comme membre), sur le modèle de RemNote : le lecteur s'ouvre par-dessus
- * l'Aperçu et la vidéo démarre seule. Remplace le 2026-10-14 l'assistant de
+ * l'Aperçu et la vidéo démarre seule. Remplace l'assistant de
  * mise en place (équipe, invitations, projet, cap) et la carte « lieux à
  * connaître » : la vidéo montre ce qu'ils demandaient de remplir.
  *
@@ -45,7 +45,7 @@ interface OrgWelcomeVideoProps {
  * Fermer (croix, Échap, « Passer », fond) marque l'accueil comme vu : un
  * lecteur qu'on ne peut pas quitter est un mur, pas un accueil.
  *
- * ⚠️ Limite du lecteur NATIF (mesuré dans Chromium le 2026-10-16) : quand le
+ * ⚠️ Limite du lecteur NATIF (mesuré dans Chromium) : quand le
  * focus est dans ses commandes (lecture, volume…), aucune touche n'atteint la
  * page, Échap compris. Ce n'est pas un piège (Tab en ressort vers « Passer »),
  * mais Échap n'y ferme rien. Seules des commandes maison lèveraient la limite.

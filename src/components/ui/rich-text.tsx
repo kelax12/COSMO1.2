@@ -28,7 +28,7 @@ import React from 'react';
  *
  * ⚠️ Un chemin INTERNE (`/cgu`) n'est volontairement pas accepté : les slugs de
  * routes sont localisés (`src/i18n/routes.ts`), donc un chemin écrit dans un
- * catalogue rendrait une 404 dans l'autre langue — le bug mesuré le 2026-09-02
+ * catalogue rendrait une 404 dans l'autre langue — le bug mesuré
  * sur les liens du bandeau cookies. La navigation interne passe par un `<Link>`
  * et `useLocalizedPath()`, jamais par le texte traduit.
  *

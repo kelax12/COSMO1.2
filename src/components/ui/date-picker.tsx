@@ -80,7 +80,7 @@ export function DateCalendarPanel({ value, onSelect, allowClear = true, minDate 
         selected={selectedDate}
         // `selected` ne pilote PAS le mois affiché en react-day-picker 9 :
         // sans `defaultMonth`, le calendrier s'ouvre sur le mois COURANT même
-        // quand le champ porte déjà une date. Mesuré le 2026-09-03 : champ à
+        // quand le champ porte déjà une date. Mesuré : champ à
         // « 2 décembre 2026 », calendrier ouvert sur « septembre 2026 ». Le
         // jour focalisé était alors hors de la grille affichée, et les
         // flèches ne déplaçaient plus rien.
@@ -88,13 +88,13 @@ export function DateCalendarPanel({ value, onSelect, allowClear = true, minDate 
         onSelect={(date) => { if (date) onSelect(format(date, "yyyy-MM-dd")) }}
         disabled={floor ? { before: floor } : undefined}
         locale={getDateLocale()}
-        // 🔴 `initialFocus` est MORT depuis react-day-picker 9 : la prop
+        // `initialFocus` est MORT depuis react-day-picker 9 : la prop
         // survit dans les types (dépréciée) mais `useFocus` ne lit plus que
-        // `autoFocus`. Mesuré le 2026-09-03 : ouvrir le calendrier au clavier
+        // `autoFocus`. Mesuré : ouvrir le calendrier au clavier
         // posait le focus sur la rangée de presets, où les flèches ne font
         // rien — la grille n'était atteignable que par un Maj+Tab qui
         // rebouclait. Même classe que le `Button` non-forwardRef du
-        // 2026-08-30 : une prop écrite pour une autre version majeure, qui
+        // une prop écrite pour une autre version majeure, qui
         // ne fait silencieusement rien.
         autoFocus
         // react-day-picker ne traduit AUCUN de ses libellés ARIA : `locale`
@@ -169,7 +169,7 @@ interface DatePickerProps {
    * Fourni = trigger rendu en ligne « cellule » (label à gauche, valeur +
    * icône à droite, pleine largeur, sans bordure ni fond) au lieu du champ
    * encadré par défaut — pattern des `Cell` de `task-modal/primitives`
-   * (redesign OKR mobile 2026-09-19). Absent = comportement d'origine,
+   * (redesign OKR mobile). Absent = comportement d'origine,
    * inchangé pour tous les autres appelants.
    */
   cellLabel?: React.ReactNode

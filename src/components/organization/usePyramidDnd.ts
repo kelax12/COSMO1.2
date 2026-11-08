@@ -131,7 +131,7 @@ export function usePyramidDnd({ orgId, members, currentUserId, isAdmin }: Params
   };
 
   /**
-   * Confirmation EN ATTENTE (audit du 2026-09-24) : annuler une réorganisation,
+   * Confirmation EN ATTENTE (audit) : annuler une réorganisation,
    * ou un déplacement qui fait perdre / gagner la position de manager. Rendue
    * par `PyramidPendingConfirm` avec `OrgConfirmDialog` : `window.confirm` ne se
    * mettait pas au thème et ne disait rien de l'impact.

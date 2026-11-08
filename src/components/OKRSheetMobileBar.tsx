@@ -4,7 +4,7 @@ import type { KeyResult } from '@/modules/okrs';
 import { useT } from '@/i18n/useT';
 
 /**
- * Tête mobile de la création d'objectif (maquette 335, 2026-10-11) : la même
+ * Tête mobile de la création d'objectif (maquette 335) : la même
  * que la fiche tâche, « Annuler · Nouvel objectif · Créer ». Pas de poignée :
  * la feuille Radix ne se glisse pas, et une poignée promettrait un geste (C-07).
  */
@@ -45,7 +45,7 @@ const timeValueToMinutes = (value: string): number => {
 };
 
 /**
- * Mobile (redesign 2026-09-19) : Durée + Coef. repliés derrière « Plus
+ * Mobile (redesign) : Durée + Coef. repliés derrière « Plus
  * d'options » (maquette 342), sous le résultat clé : réglages secondaires,
  * sortis du parcours par défaut. Desktop inchangé (toujours visibles).
  */

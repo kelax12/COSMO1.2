@@ -192,7 +192,7 @@ const HabitTableShowcase: React.FC = () => {
 
           {/* Period nav */}
           <div className="flex items-center gap-1.5">
-            {/* 🔴 CE SONT DES DESSINS, PAS DES COMMANDES (C-80). Les deux
+            {/* CE SONT DES DESSINS, PAS DES COMMANDES (C-80). Les deux
                 fleches etaient des `button` avec `tabIndex={-1}`,
                 `cursor-default` et aucun `onClick` : elles rendaient 28 x 28 px
                 a la garde des cibles tactiles, pour un geste qui n'existe pas.
@@ -243,7 +243,7 @@ const HabitTableShowcase: React.FC = () => {
       </div>
 
       {/* Table : défile en largeur sur téléphone, donc focalisable pour défiler
-          au clavier (axe `scrollable-region-focusable`, 2026-10-22). */}
+          au clavier (axe `scrollable-region-focusable`). */}
       <div className="overflow-x-auto" tabIndex={0} role="region" aria-label={t('showcase.habitsTable')}>
         <table className="w-full border-collapse">
           <thead className="border-b" style={{ borderColor: border }}>

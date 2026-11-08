@@ -1,7 +1,7 @@
 // Primitives des pages entreprise : fil d'Ariane (reco UI n° 3) et état
 // vide (reco UI n° 46). Réunies dans UN module exprès : séparées, elles
 // formaient deux lots partagés de plus, et chaque lot partagé s'ajoute aux
-// préchargements de `OrganizationPage`, à son plafond (mesuré le 2026-09-29).
+// préchargements de `OrganizationPage`, à son plafond (mesuré).
 import { Fragment, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { ChevronRight, type LucideIcon } from 'lucide-react';

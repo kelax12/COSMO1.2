@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // Aperçu entreprise (« Mon travail ») — dérivations pures
 //
-// Audit du 2026-09-24 : l'Aperçu lisait toute l'organisation pour n'en garder
+// Audit : l'Aperçu lisait toute l'organisation pour n'en garder
 // que mes tâches, reconstruisait le fil d'activité depuis l'état courant des
 // tâches, et ne répondait pas à la première question d'un membre : « qu'est-ce
 // qui m'attend ? ». Tout ce qui se calcule ici se teste sans React ni base.
@@ -191,7 +191,7 @@ const splitIds = (v: string | null): string[] => (v ? v.split(',').filter(Boolea
 
 /**
  * Fil d'activité lu dans le JOURNAL (`team_task_activity`), SEULE source
- * (cohérence globale, 2026-09-25). Les créations y figurent depuis la mig. 181
+ * (cohérence globale). Les créations y figurent depuis la mig. 181
  * (trigger AFTER INSERT) : elles ne sont plus reconstruites depuis l'état
  * courant des tâches, qui oubliait une tâche supprimée et ne connaissait pas
  * son auteur réel. Priorité, projet et intitulé sont écartés : utiles à
@@ -221,7 +221,7 @@ export const buildActivityItems = (
   return out.sort((a, b) => (a.date > b.date ? -1 : 1)).slice(0, max);
 };
 
-// ─── Digest du jour (maquette 8 C, 2026-10-02) ──────────────────────
+// ─── Digest du jour (maquette 8 C) ──────────────────────
 
 export interface ActivityDigest {
   completed: number;

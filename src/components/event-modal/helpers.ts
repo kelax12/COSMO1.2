@@ -5,7 +5,7 @@ import { formatDurationMinutes } from '@/lib/duration';
 
 // ⚠️ Ce module est PUR : il n'a pas de locale. Il rendait des libellés
 // FRANÇAIS EN DUR — jours abrégés, titres de la modale, bouton de validation —
-// affichés tels quels à un anglophone (revue du 2026-09-02, point 7). Il rend
+// affichés tels quels à un anglophone (revue, point 7). Il rend
 // désormais des CLÉS du catalogue `eventModal`, mises en mots par l'écran.
 
 /** Clés des jours abrégés, indexées sur Date.getDay() (0 = dimanche). */

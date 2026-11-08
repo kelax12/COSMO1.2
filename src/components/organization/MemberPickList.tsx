@@ -21,19 +21,19 @@ interface MemberPickListProps {
   label: string;
   /**
    * Création d'équipe : une couronne par ligne désigne le responsable, dans la
-   * liste même (maquette 1 du 2026-09-27) au lieu d'un menu séparé.
+   * liste même (maquette 1) au lieu d'un menu séparé.
    */
   lead?: { id: string; onChange: (userId: string) => void };
   /** Recherche affichée quel que soit l'effectif (sinon au-delà du seuil). */
   alwaysSearchable?: boolean;
-  /** Ligne posée entre la recherche et la première personne (OKR : « Ajouter une équipe », 2026-10-30). */
+  /** Ligne posée entre la recherche et la première personne (OKR : « Ajouter une équipe »). */
   afterSearch?: import('react').ReactNode;
 }
 
 /**
  * LE sélecteur de plusieurs personnes du mode entreprise : fiche de tâche,
  * « Attribuer à quelqu'un », création d'équipe. Audit des popups du
- * 2026-09-25 : ces trois écrans avaient chacun leur liste, dont une sans
+ * ces trois écrans avaient chacun leur liste, dont une sans
  * recherche, une sans groupes d'équipe et une sans pagination.
  *
  * La recherche et la pagination ne filtrent que l'AFFICHAGE, jamais la

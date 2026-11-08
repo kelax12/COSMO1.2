@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // Filtres de tâches du mode entreprise : UN état, dans l'URL
 //
-// Cohérence globale (2026-09-25) : l'onglet Tâches filtrait dans un état local
+// Cohérence globale : l'onglet Tâches filtrait dans un état local
 // (perdu au rechargement, impossible à partager), l'onglet Projets dans des
 // préférences enregistrées (qui revenaient trois jours plus tard sur une liste
 // filtrée sans qu'on s'en souvienne). Deux grammaires pour la même question,
@@ -41,7 +41,7 @@ export interface OrgTaskFilters {
   noDue: boolean;
   /** Catégorie d'entreprise (sous-catégories comprises), ou null. */
   category: string | null;
-  /** Tri ET regroupement du tableau : UN seul critère (fusion du 2026-09-27,
+  /** Tri ET regroupement du tableau : UN seul critère (fusion,
    *  cf. `GROUPABLE_SORT_CRITERIA`). */
   group: TaskSortCriterion;
   /** Seulement les tâches bloquées par une dépendance non terminée (onglet Tâches). */
@@ -124,7 +124,7 @@ export function readTaskFilters(params: URLSearchParams, defaultStatus: TaskStat
     group: (TASK_SORT_CRITERIA as readonly string[]).includes(params.get(TASK_FILTER_PARAMS.group) ?? '')
       ? (params.get(TASK_FILTER_PARAMS.group) as TaskSortCriterion)
       // Défaut ET repli d'une ancienne valeur (l'ex-'none' du regroupement
-      // séparé, retiré le 2026-09-27) : « Par priorité » était déjà le tri
+      // séparé, retiré) : « Par priorité » était déjà le tri
       // par défaut, donc rien ne change pour qui n'avait jamais regroupé.
       : 'priority',
     blocked: params.get(TASK_FILTER_PARAMS.blocked) === '1',

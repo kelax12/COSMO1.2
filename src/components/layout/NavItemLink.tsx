@@ -13,7 +13,7 @@
 //   • l'écart entre l'icône et le libellé vient du seul `gap` de
 //     `.sidebar-item` : un `ml-3` ici s'y ajoutait, pour 24 px cumulés.
 //
-// Extrait de `Layout.tsx` le 2026-09-05 (C-09).
+// Extrait de `Layout.tsx` (C-09).
 // ═══════════════════════════════════════════════════════════════════
 import React, { useState } from 'react';
 import { NavLink, useMatch, useResolvedPath } from 'react-router';
@@ -30,7 +30,7 @@ interface NavItemLinkProps {
   icon: React.ReactNode;
   hoverColor: string;
   collapsed: boolean;
-  /** Barre réduite : libellé affiché sous l'icône (œil ouvert, 2026-10-29). */
+  /** Barre réduite : libellé affiché sous l'icône (œil ouvert). */
   showLabel?: boolean;
   onMouseEnterExtra?: () => void;
   badge?: number;

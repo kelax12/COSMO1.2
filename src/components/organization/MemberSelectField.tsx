@@ -14,7 +14,7 @@ interface MemberSelectFieldProps {
 
 /**
  * Sélecteur d'UNE personne : un menu déroulant seul. Le champ de recherche
- * posé au-dessus a été retiré le 2026-10-13 (demande d'Axel).
+ * posé au-dessus a été retiré (demande d'Axel).
  */
 const MemberSelectField = ({ label, members, value, onChange, emptyLabel, hint }: MemberSelectFieldProps) => {
   const id = useId();

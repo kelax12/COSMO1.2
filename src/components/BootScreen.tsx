@@ -4,7 +4,7 @@ import { useT } from '@/i18n/useT';
 /**
  * Le spinner de démarrage d'index.html (`#boot-screen`), rendu par React.
  *
- * 🔴 POURQUOI (2026-10-21). Sur une page publique (guide, blog, cas d'usage,
+ * POURQUOI. Sur une page publique (guide, blog, cas d'usage,
  * pages légales, connexion…), un visiteur voyait le texte SEO brut sur fond
  * blanc, puis le `PageLoader` de l'app (un AUTRE spinner, aux couleurs du
  * thème, centré dans 60vh), puis la page : trois écrans. Ces pages peignent

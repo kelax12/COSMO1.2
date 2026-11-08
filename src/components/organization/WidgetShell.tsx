@@ -4,7 +4,7 @@ import { useT } from '@/i18n/useT';
 import { TONE_BADGE, type Pager, type WidgetTone } from './widget-shell.helpers';
 
 /**
- * Coque commune des formats petit et moyen de l'Aperçu (2026-10-19) : un
+ * Coque commune des formats petit et moyen de l'Aperçu : un
  * en-tête (icône, titre, compteur), un corps, et une BARRE DE CONTRÔLE en bas.
  *
  * Règle des maquettes : la taille change la PRÉSENTATION, jamais ce qui est
@@ -48,7 +48,7 @@ export const WidgetShell = ({
   return (
     <section className={`${SHELL} ${tinted}`} aria-label={title}>
       <header className="flex items-center gap-2 mb-3">
-        {/* Pas d'icône devant le titre (retour d'Axel, 2026-10-20) : `icon` reste
+        {/* Pas d'icône devant le titre (retour d'Axel) : `icon` reste
             accepté pour ne pas toucher chaque appel, mais n'est plus peint. */}
         <h3 className={`${titleControl ? 'shrink-0' : 'flex-1'} min-w-0 truncate text-sm font-bold text-[rgb(var(--color-text-primary))]`}>
           {title}

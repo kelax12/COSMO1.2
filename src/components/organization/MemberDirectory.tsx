@@ -76,7 +76,7 @@ interface MemberDirectoryProps {
  * (rôles) ne se modifie plus ici (#1), sauf par l'action groupée « changer de
  * manager », bornée à la portée de l'appelant.
  *
- * Audit « passage à l'échelle » (2026-09-23) : filtres partageables par l'URL,
+ * Audit « passage à l'échelle » : filtres partageables par l'URL,
  * sélection + actions groupées, export CSV (admins), dernière activité.
  */
 const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, inviteAction, planAction }: MemberDirectoryProps) => {
@@ -226,7 +226,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, invi
   // (`offboard_org_member`). L'ancien retrait nu les laissait orphelins.
   const lifecycle = useMemberLifecycle({ orgId, members, ownerId, currentUserId, isAdmin });
 
-  // Suspension EN MASSE (audit du 2026-09-24, étape 4 : « configuration en
+  // Suspension EN MASSE (audit, étape 4 : « configuration en
   // masse »). Le propriétaire et soi-même sont écartés AVANT l'appel : le
   // serveur (`set_member_access`) les refuserait un par un.
   const accessRun = useBulkRun([orgKeys.all, governanceKeys.all]);
@@ -408,7 +408,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin, invi
           projects={activeProjects.length > 0 ? activeProjects : projects}
           members={members}
           // Plus jamais « le premier projet venu » : celui choisi dans la
-          // feuille, sinon la fiche demande (audit des popups, 2026-09-25).
+          // feuille, sinon la fiche demande (audit des popups).
           defaultProjectId={creatingTaskFor.projectId ?? undefined}
           requireProjectChoice={!creatingTaskFor.projectId}
           defaultAssigneeIds={[creatingTaskFor.member.userId]}

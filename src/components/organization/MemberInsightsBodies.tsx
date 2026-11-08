@@ -183,7 +183,7 @@ interface RowSelection {
   onStart: () => void;
 }
 
-// Grand format (maquette B, 2026-09-28) : une ligne de tableau par tâche,
+// Grand format (maquette B) : une ligne de tableau par tâche,
 // projet, échéance et priorité en colonnes dès que la largeur le permet.
 const ROW_GRID = 'grid grid-cols-[16px_minmax(0,1fr)_auto] sm:grid-cols-[16px_minmax(0,1fr)_150px_90px_32px] items-center gap-x-3';
 
@@ -223,7 +223,7 @@ const TaskRow = ({ task, project, canEdit, onEdit, selection }: { task: TeamTask
     </>
   );
   // Sélection : même grille, la case remplace le cercle. Les colonnes
-  // disparaissaient et la liste sautait au clic sur « Sélectionner » (2026-10-30).
+  // disparaissaient et la liste sautait au clic sur « Sélectionner ».
   if (selection?.active) {
     return (
       <li className={`${ROW_GRID} p-2.5 rounded-xl border border-[rgb(var(--color-border))] cursor-pointer hover:bg-[rgb(var(--color-hover))]`} onClick={() => selection.onToggle(task)}>
@@ -322,7 +322,7 @@ const TasksView = ({
             {t('projects.selectMode')}
           </button>
         )}
-        {/* « Ajouter » à droite de « Sélectionner », sur la même ligne (2026-10-30). */}
+        {/* « Ajouter » à droite de « Sélectionner », sur la même ligne. */}
         <AddTaskButton onAddTask={onAddTask} />
       </div>
       <div className={`${ROW_GRID} hidden sm:grid px-2.5 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]`} aria-hidden="true">
@@ -349,7 +349,7 @@ const TasksView = ({
 const HEATMAP_DAYS = 30;
 const HEAT_TONES = ['bg-[rgb(var(--color-hover))]', 'bg-indigo-500/25', 'bg-indigo-500/50', 'bg-indigo-500/75', 'bg-indigo-500'];
 
-// Grand format (maquette C, 2026-09-28) : calendrier des 30 derniers jours,
+// Grand format (maquette C) : calendrier des 30 derniers jours,
 // puis trois indicateurs dont la complétion rapportée à l'entreprise.
 const ContributionView = ({ total, done, open, overdue, completionRate, orgRate, doneTasks }: {
   total: number; done: number; open: number; overdue: number; completionRate: number; orgRate: number; doneTasks: TeamTask[];

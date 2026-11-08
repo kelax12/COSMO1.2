@@ -1,5 +1,5 @@
 // Option « Sans catégorie » en tête de chaque sélecteur de catégorie
-// (demande 2026-10-11). Valeur portée : chaîne vide côté perso, `null` côté
+// (demande). Valeur portée : chaîne vide côté perso, `null` côté
 // entreprise — c'est l'appelant qui choisit, ce composant ne fait que l'afficher.
 import React from 'react';
 import { Ban, Check } from 'lucide-react';
@@ -38,7 +38,7 @@ const NoCategoryOption: React.FC<NoCategoryOptionProps> = ({ selected, onSelect,
       role="option"
       aria-selected={selected}
       onClick={onSelect}
-      // 20 % plus petite que les catégories (2026-10-30) : 35 px de haut, texte 11 px.
+      // 20 % plus petite que les catégories : 35 px de haut, texte 11 px.
       className="flex w-full items-center gap-1.5 min-h-[35px] ps-[2.25rem] text-left text-[11px] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]"
     >
       <Ban size={10} className="shrink-0 text-[rgb(var(--color-text-muted))]" aria-hidden="true" />

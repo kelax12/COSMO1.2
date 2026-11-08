@@ -173,7 +173,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
   }, [viewTeamId, orgTeams]);
 
   // Retrait d'un membre (admin) : l'assistant de départ, qui transmet tâches,
-  // subordonnés, rôles, projets et KR AVANT de retirer (audit du 2026-09-24).
+  // subordonnés, rôles, projets et KR AVANT de retirer (audit).
   const handleRemove = (m: OrgMember) => lifecycle.openDeparture(m, 'remove');
 
   // Équipes transverses par membre (pastilles couleur sur les cartes).

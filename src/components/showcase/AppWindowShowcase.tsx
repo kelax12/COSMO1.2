@@ -61,7 +61,7 @@ const ROTATE_MS = 2500;
 
 // ═══════════════════════════════════════════════════════════════════
 // UNE transition, courte, sans chevauchement. Ce qu'il y avait avant, et
-// pourquoi ça a sauté (mesuré le 2026-08-30 sur la vraie page) :
+// pourquoi ça a sauté (mesuré sur la vraie page) :
 //
 //   • deux effets « lourds » alternés (cube 3D, puis portail : entrée à
 //     `scale(0.18)` avec `blur(10px)`, sortie à `scale(2.4)`), joués en
@@ -192,7 +192,7 @@ const AppWindowShowcaseBase: React.FC<AppWindowShowcaseProps> = ({ compact = fal
       onBlurCapture={() => setSuspendu(false)}
     >
       {/* Cadre fenêtre commun (chrome) — unifie la rotation.
-          🔴 `aria-hidden` vit ICI, et plus sur le conteneur : le bouton de
+          `aria-hidden` vit ICI, et plus sur le conteneur : le bouton de
           pause de C-69 est le SEUL élément de ce composant qui doit rester
           annoncé. Le laisser sous un `aria-hidden` en ferait une commande
           invisible aux technologies d'assistance — c'est-à-dire un mécanisme

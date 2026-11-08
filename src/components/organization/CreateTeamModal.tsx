@@ -35,7 +35,7 @@ interface CreateTeamModalProps {
   /** Nom pré-rempli. */
   initialName?: string;
   /**
-   * Modification d'une équipe existante (2026-10-30) : le même formulaire,
+   * Modification d'une équipe existante : le même formulaire,
    * pré-rempli, avec la description en plus. Les membres actuels restent
    * proposés même hors du périmètre d'ajout, pour pouvoir les décocher.
    */
@@ -52,9 +52,9 @@ const labelStyle = { color: 'rgb(var(--color-text-secondary))' };
  * LE formulaire de création d'équipe (#2) : nom, couleur, responsable, membres.
  * Monté par la modale ci-dessous, ouverte de partout par `org-create.context`.
  * Un seul formulaire, un seul résultat : `useCreateTeamWithMembers`
- * (cohérence globale, 2026-09-25).
+ * (cohérence globale).
  *
- * Audit des popups du 2026-09-25 : le responsable se choisit ICI (il ne se
+ * Audit des popups : le responsable se choisit ICI (il ne se
  * nommait qu'après coup, depuis la section Équipes), et la liste des membres
  * passe par `MemberPickList` : recherche et affichage par tranches, là où
  * elle rendait mille lignes d'un bloc.
@@ -190,7 +190,7 @@ export const CreateTeamForm = ({ members, currentUserId, isAdmin, initialMemberI
               {t('team.membersCount', { count: selected.length })}
             </span>
             {/* Responsable : gère les membres et les projets de l'équipe (mig. 107).
-                Il se désigne dans la liste même, par la couronne (maquette 1, 2026-09-27). */}
+                Il se désigne dans la liste même, par la couronne (maquette 1). */}
             {addable.length === 0 ? (
               <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
                 {t('team.noMember')}
@@ -314,7 +314,7 @@ interface EditTeamModalProps {
 }
 
 /**
- * « Modifier l'équipe » ouvre cette même modale, pré-remplie (2026-10-30) :
+ * « Modifier l'équipe » ouvre cette même modale, pré-remplie :
  * nom, couleur, description, membres et responsable au même endroit. Elle
  * remplace `TeamProfileEditor`, qui ne touchait qu'à la fiche. Rangée ici,
  * avec le formulaire qu'elle réutilise (garde `org-create.guard.test.ts`).

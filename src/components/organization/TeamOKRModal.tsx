@@ -3,7 +3,7 @@
 // (cloisonnement). L'objectif ne s'assigne pas (#10), mais chaque KR porte un
 // responsable et des contributeurs, attribuables aussi par équipe entière.
 //
-// Audit des popups du 2026-09-25 : cycle, objectif parent et projets reliés
+// Audit des popups : cycle, objectif parent et projets reliés
 // aux KR (mig. 160) arrivent ici ; la création d'équipe en est RETIRÉE. Elle
 // faisait de cette fiche un point d'entrée de plus pour les équipes, sans
 // responsable ni membres : l'équipe naissait vide.
@@ -77,7 +77,7 @@ interface KRDraft {
    * Responsable et durée par unité : la fiche ne les montre pas, mais la
    * synchronisation écrit TOUS les champs du KR. Sans les reporter, modifier
    * un objectif remettait `assignee_id` à NULL et la durée à 30 min sur
-   * chacun de ses KR (constaté le 2026-09-26).
+   * chacun de ses KR (constaté).
    */
   assigneeId?: string | null;
   estimatedTime?: number;
@@ -121,7 +121,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose, onDelete }: T
   const [categoryId, setCategoryId] = useState<string | null>(editingOKR?.categoryId ?? null);
   const [endDate, setEndDate] = useState(editingOKR?.endDate ? editingOKR.endDate.slice(0, 10) : '');
   const [teamIds, setTeamIds] = useState<string[]>(editingOKR?.teamIds ?? []);
-  // Le champ « Contribue à l'objectif » est retiré de la fiche (2026-10-01) ;
+  // Le champ « Contribue à l'objectif » est retiré de la fiche ;
   // le lien existant est conservé tel quel à l'enregistrement.
   const parentOkrId = editingOKR?.parentOkrId ?? null;
   const [keyResults, setKeyResults] = useState<KRDraft[]>(
@@ -255,7 +255,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose, onDelete }: T
   // Visibilité : « Équipes » reste ouvert même tant qu'aucune équipe n'est
   // cochée, sinon le segment se refermerait sous le premier clic.
   const [visMode, setVisMode] = useState<TeamOKRAudience>(
-    // « Équipe » retiré (2026-10-30) : « Personnaliser » porte déjà les équipes.
+    // « Équipe » retiré : « Personnaliser » porte déjà les équipes.
     editingOKR?.audience === 'teams' || (!editingOKR && teamIds.length > 0) ? 'custom' : editingOKR?.audience ?? 'org',
   );
   // Personnes nommées d'un OKR « Personnaliser » (mig. 205).
@@ -340,7 +340,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose, onDelete }: T
                     {tOrgAdmin('okrModal.customOption')}
                   </button>
                 </div>
-                {/* Personnaliser (2026-10-30) : UNE liste, celle des personnes ; les
+                {/* Personnaliser : UNE liste, celle des personnes ; les
                     équipes s'ajoutent depuis « Ajouter une équipe », dont le
                     panneau s'ouvre à droite au survol, comme une sous-catégorie. */}
                 {visMode === 'custom' && (

@@ -19,7 +19,7 @@ export interface MemberTabAccess {
 
 /**
  * Onglets visibles, dans l'ordre d'affichage. Le profil est toujours là, et
- * « Équipes et projets » aussi (audit des popups, 2026-09-25) : les équipes
+ * « Équipes et projets » aussi (audit des popups) : les équipes
  * et les projets pilotés sont déjà publics dans l'organisation. L'historique
  * dit ce qu'une personne a FAIT : il suit le même droit que ses tâches.
  */

@@ -9,7 +9,7 @@ import { useDocumentTheme } from '@/hooks/useDocumentTheme';
 const DEFAULT_COLOR = '#3B82F6';
 
 /**
- * Agenda du jour (widget du tableau de bord perso, 2026-10-21) : les
+ * Agenda du jour (widget du tableau de bord perso) : les
  * rendez-vous d'aujourd'hui dans l'ordre, récurrences comprises. Ceux déjà
  * passés s'estompent, le prochain est signalé.
  */

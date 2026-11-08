@@ -219,7 +219,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                       />
                     </div>
 
-                    {/* Maquettes 326 à 334 (2026-10-11) : un seul groupe, comme la
+                    {/* Maquettes 326 à 334 : un seul groupe, comme la
                         fiche tâche (332). Durée lue « 30 min » (326) ; catégorie en
                         une ligne point et nom (328), choisie PAR IDENTIFIANT : par
                         couleur, trois catégories bleues paraissaient choisies (329). */}

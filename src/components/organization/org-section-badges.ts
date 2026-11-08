@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
-// Pastilles de section de l'espace entreprise (audit du 2026-09-24)
+// Pastilles de section de l'espace entreprise (audit)
 //
-// Séparé de `notifications.helpers.ts` le 2026-09-25 : ce calcul est lu par
+// Séparé de `notifications.helpers.ts` : ce calcul est lu par
 // `OrganizationPage` à chaque visite, le reste (regroupement, filtres) par le
 // seul panneau de la cloche, chargé à l'ouverture. Les réunir gardait tout le
 // module dans le chunk de la page.

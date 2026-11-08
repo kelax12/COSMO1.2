@@ -54,7 +54,7 @@ export const projectColorHex = (color: string): string =>
 
 /**
  * Couleur d'un projet tirée de sa catégorie (décision d'Axel, 2026-10-30 :
- * on ne choisit plus la couleur d'un projet). Elle annule celle du 2026-09-25,
+ * on ne choisit plus la couleur d'un projet). Elle annule celle,
  * qui laissait la couleur au choix de l'équipe.
  *
  * `project.color` reste un NOM de la palette fixe ci-dessus : Tailwind ne
@@ -186,7 +186,7 @@ export const formatDuration = (minutes: number): string => {
 };
 
 // ─── Prefs UI persistées (vue, tri, projets repliés) ──────────────────
-// Les FILTRES n'y sont plus (2026-09-25) : ils vivent dans l'URL, partagés
+// Les FILTRES n'y sont plus : ils vivent dans l'URL, partagés
 // avec l'onglet Tâches (`task-filters.ts`). Une ancienne valeur enregistrée
 // (`teamFilter`, `assigneeFilter`, `statusFilter`) est relue et ignorée.
 
@@ -205,7 +205,7 @@ export interface ProjectsUiPrefs {
   /** Axe des colonnes du kanban : charge par personne, ou flux par statut. */
   kanbanGroupBy: 'assignee' | 'status';
   /** Vue de l'onglet Tâches : la table, ou le Tableau (kanban, venu de
-   *  l'onglet Projets le 2026-09-27). */
+   *  l'onglet Projets). */
   tasksView: 'table' | 'kanban';
   /** Axe des lignes du Planning : une ligne par projet, ou par personne. */
   timelineGroupBy: 'project' | 'assignee';

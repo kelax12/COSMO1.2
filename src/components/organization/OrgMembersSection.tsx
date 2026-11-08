@@ -9,7 +9,7 @@ import OrgPlanSeatsButton from './OrgPlanSeatsButton';
 // Section Membres, `/entreprise/members`. Rendue seulement sur cette
 // section, donc jamais téléchargée par qui ne l'ouvre pas.
 //
-// Audit Membres du 2026-09-24 : elle tenait « quatre pages en une »
+// Audit Membres : elle tenait « quatre pages en une »
 // (invitations, équipes, annuaire, zone de danger), et à vingt équipes
 // l'annuaire était enterré. Elle ne garde que l'annuaire ; les équipes vivent
 // sur `/entreprise/teams`, invitations et zone de danger sur

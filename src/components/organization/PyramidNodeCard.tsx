@@ -2,7 +2,7 @@
 // PyramidNodeCard — une carte de l'organigramme, et l'état de glissement
 // qu'elle reçoit.
 //
-// Extrait de `PyramidTab.tsx` le 2026-08-24. Ce n'est pas un rangement :
+// Extrait de `PyramidTab.tsx`. Ce n'est pas un rangement :
 // `PyramidTab` était à 1 506 lignes, le plus gros fichier du dépôt et de très
 // loin le premier de la liste `KNOWN_OVERSIZED` du cliquet
 // (`src/architecture.guard.test.ts`). Un god component ne se répare jamais

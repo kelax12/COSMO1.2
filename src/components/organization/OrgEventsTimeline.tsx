@@ -10,7 +10,7 @@ interface OrgEventsTimelineProps {
 
 /**
  * Couleur d'une pastille : uniquement la distance à aujourd'hui.
- * Maquette 231 (2026-10-10) : une échéance PROCHE n'est pas en retard, elle
+ * Maquette 231 : une échéance PROCHE n'est pas en retard, elle
  * n'est donc plus rouge (« 12 oct. » l'était alors qu'il était à venir) ; le
  * rouge est réservé au retard (règle 121).
  */
@@ -67,7 +67,7 @@ const OrgEventsTimeline = ({ events }: OrgEventsTimelineProps) => {
         </span>
       </div>
 
-      {/* Rail vertical à toutes les largeurs (maquette 9 A, 2026-10-02) : la
+      {/* Rail vertical à toutes les largeurs (maquette 9 A) : la
           carte vit désormais dans une demi-colonne, où la frise horizontale
           faisait se chevaucher ses libellés comme sur un téléphone. */}
       <ul className="mt-3 ml-1.5 pl-3 border-l border-[rgb(var(--color-border-strong))] space-y-3">

@@ -7,7 +7,7 @@
 // liste visible et les mutations. Le sortir garde l'onglet lisible et rend ce
 // comportement testable sans monter tout l'écran.
 //
-// Depuis le 2026-09-24, la sélection vaut pour TOUTES les vues (liste, tableau,
+//, la sélection vaut pour TOUTES les vues (liste, tableau,
 // planning) et le lot sait réassigner, déplacer et changer de statut, chaque
 // geste avec son « Annuler » : c'est le même filet que la suppression.
 
@@ -150,7 +150,7 @@ export const useTeamTasksSelection = ({
       labels?.statusChanged,
     );
 
-  // Priorité et échéance en lot (audit du 2026-09-24 : « trois actions
+  // Priorité et échéance en lot (audit : « trois actions
   // seulement »). Même filet que les autres gestes : un « Annuler » qui réécrit
   // la valeur d'avant, tâche par tâche.
   const bulkSetPriority = (priority: number) =>

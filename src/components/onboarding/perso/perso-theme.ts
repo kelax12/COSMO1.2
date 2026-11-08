@@ -6,7 +6,7 @@ import type { Planet } from './orrery-geometry';
 //
 // La première version imposait le blanc de la landing perso à tout le monde :
 // sur téléphone, où le thème par défaut est Noir, l'accueil arrivait en éclair
-// blanc plein écran (relevé le 2026-10-04). L'accueil suit désormais le thème
+// blanc plein écran (relevé). L'accueil suit désormais le thème
 // de l'app, lu UNE fois à l'ouverture (`.dark` est posé pour Sombre, Gris et
 // Noir, cf. `src/lib/theme.ts`).
 //

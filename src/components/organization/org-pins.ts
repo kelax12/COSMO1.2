@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// Projets épinglés et récents de l'espace entreprise (audit du 2026-09-24)
+// Projets épinglés et récents de l'espace entreprise (audit)
 //
 // Au-delà d'une vingtaine de projets, on refaisait le même chemin à chaque
 // fois. Le panneau de droite porte donc un groupe « Épinglés » (choisis) et,

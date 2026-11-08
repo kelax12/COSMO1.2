@@ -23,7 +23,7 @@ interface Props {
 }
 
 /**
- * Rétractation et résiliation (REMBOURSEMENT-RESILIATION.md, 2026-11-01).
+ * Rétractation et résiliation (REMBOURSEMENT-RESILIATION.md).
  *
  * - « Se rétracter du contrat ici » (L221-21) : visible pendant les 14 jours
  *   suivant la conclusion, puis masqué. Ouvre un récapitulatif prérempli, puis
@@ -92,7 +92,7 @@ export function OrgWithdrawCancel({ orgId, subscription, memberCount }: Props) {
           )}
           {periodEnd && memberCount > ORG_FREE_SEATS && (
             // Effectif au-dessus du gratuit à la fin de l'accès : l'espace se
-            // mettra en pause (2026-11-05). Annoncé ici, au ton d'alerte, pour
+            // mettra en pause. Annoncé ici, au ton d'alerte, pour
             // qu'il ne se découvre pas le jour même.
             <p className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-700/60 dark:bg-amber-900/20 dark:text-amber-300">
               {tp('billing.endsOverQuota', memberCount, { date: periodEnd, quota: ORG_FREE_SEATS })}

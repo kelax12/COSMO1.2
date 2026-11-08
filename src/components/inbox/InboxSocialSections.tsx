@@ -11,7 +11,7 @@
 // invalide comme cache — accepter une tâche partagée n'invalide pas les
 // mêmes clés que refuser, et c'est une décision de cache, pas de rendu.
 //
-// Extrait le 2026-09-05 (C-09).
+// Extrait (C-09).
 // ═══════════════════════════════════════════════════════════════════
 import { Check, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';

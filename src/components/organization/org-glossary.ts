@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// Glossaire du mode entreprise (cohérence globale, 2026-09-25)
+// Glossaire du mode entreprise (cohérence globale)
 //
 // « Manager », « responsable d'équipe », « admin », « propriétaire » ;
 // « catégorie », « projet », « équipe » : des mots voisins,
@@ -31,7 +31,7 @@ const claimed = new Set<string>();
 /**
  * Une info-bulle de premier affichage à la fois : l'annuaire montre Admin,
  * Manager et Membre d'un coup, et trois bulles ouvertes se recouvraient
- * (mesuré dans le navigateur, 2026-09-25). Les autres termes attendent un
+ * (mesuré dans le navigateur). Les autres termes attendent un
  * prochain affichage ; ils ne sont PAS marqués vus.
  */
 let showingFirstSight = false;

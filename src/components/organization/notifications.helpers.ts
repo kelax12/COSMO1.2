@@ -79,7 +79,7 @@ export const groupNotifications = (
   });
 };
 
-// ─── Filtre par type (audit du 2026-09-24, M14) ──────────────────────
+// ─── Filtre par type (audit, M14) ──────────────────────
 //
 // Douze types dans un seul flux : on ne retrouvait plus « qui m'a mentionné ».
 // Les filtres regroupent les types par QUESTION qu'on se pose, pas un bouton

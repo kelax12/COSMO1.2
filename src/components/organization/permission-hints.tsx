@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // Droits : toujours `can[…]`, et un geste interdit se GRISE en disant pourquoi
 //
-// Cohérence globale (2026-09-25) : selon l'écran, un geste interdit était
+// Cohérence globale : selon l'écran, un geste interdit était
 // masqué (on ne savait pas qu'il existait), ou affiché puis refusé par le
 // serveur (on ne savait pas pourquoi). Règle : le bouton reste là, grisé, et
 // son explication nomme le droit qui manque et qui peut l'accorder.

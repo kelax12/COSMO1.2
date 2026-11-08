@@ -22,7 +22,7 @@ interface TeamProjectsKanbanProps {
   /**
    * « + » d'une colonne. Par personne : `memberId` (null = non assignées).
    * Par statut : `status` de la colonne, pour que la tâche naisse LÀ où on a
-   * cliqué. Le projet, lui, n'est jamais deviné ici (audit 2026-09-24) : il
+   * cliqué. Le projet, lui, n'est jamais deviné ici (audit) : il
    * vient du filtre actif, sinon la fiche le demande.
    */
   onAddToColumn: (target: { memberId: string | null; status?: TeamTaskStatus }) => void;

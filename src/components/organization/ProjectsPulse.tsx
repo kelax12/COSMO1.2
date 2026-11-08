@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // Onglet Projets — squelette, pouls (pastilles de synthèse) et recherche
 //
-// Extrait de `TeamProjectsTab` le 2026-09-24 pour le garder sous le plafond
+// Extrait de `TeamProjectsTab` pour le garder sous le plafond
 // de 600 lignes. Rien n'a changé dans le comportement des pastilles.
 // ═══════════════════════════════════════════════════════════════════
 
@@ -33,7 +33,7 @@ export const ProjectsSkeleton = () => (
 /**
  * Pouls : ce qui ne filtre pas (nombre de projets, reste à faire estimé). Les
  * pastilles d'état qui vivaient ici, avec leurs compteurs, sont passées dans
- * `OrgTaskFilterBar`, la barre partagée avec l'onglet Tâches (2026-09-25).
+ * `OrgTaskFilterBar`, la barre partagée avec l'onglet Tâches.
  */
 export const ProjectsPulse = ({ projectCount, totalEstimated }: {
   projectCount: number;
@@ -62,7 +62,7 @@ const SORTS: PortfolioSort[] = ['recent', 'name', 'dueDate', 'progress', 'status
  * La recherche est dans `OrgTaskFilterBar` (`?fQ=`), avec les autres filtres.
  * Le tri (`sort`/`onSortChange`) n'a de sens qu'en Liste et Portefeuille ;
  * absent, seul « Sélectionner » s'affiche (rendu aussi en Planning, maquette
- * du 2026-09-27, pour ne pas perdre l'accès aux actions groupées).
+ *, pour ne pas perdre l'accès aux actions groupées).
  */
 export const ProjectsSearchBar = ({ sort, onSortChange, sortDesc = false, onToggleSortDirection, onStartSelect }: {
   sort?: PortfolioSort;

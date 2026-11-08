@@ -7,7 +7,7 @@ import { WEEK_CAPACITY_MINUTES } from './my-work.helpers';
 
 /**
  * Dérivations des widgets d'équipe et d'administration de l'Aperçu
- * (2026-10-19). Toutes PURES : elles lisent les tâches ouvertes que la
+ *. Toutes PURES : elles lisent les tâches ouvertes que la
  * personne voit déjà (la RLS décide), jamais plus.
  */
 

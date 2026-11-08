@@ -161,7 +161,7 @@ const AgendaShowcase: React.FC = () => {
                 ref={isAnimated ? sourceCardRef : undefined}
                 // Une tâche planifiée n'est plus estompée (opacité 50 % + voile
                 // noir) : son texte tombait à 1,2:1. Le nom barré et « ✓ Déjà
-                // planifiée » le disent déjà (Lighthouse, 2026-10-22).
+                // planifiée » le disent déjà (Lighthouse).
                 className={`rounded-lg p-2.5 border relative transition-all ${
                   isAnimated && phase === 'highlight' ? 'ring-2 ring-orange-400/70' : ''
                 }`}
@@ -224,7 +224,7 @@ const AgendaShowcase: React.FC = () => {
         <div className="flex-1 overflow-hidden relative">
           {/* `overflow-hidden` : rien ne fait défiler cette grille (barre masquée,
               aucun `scrollTop`). Une zone défilante non focalisable est un échec
-              axe `scrollable-region-focusable` (2026-10-22). */}
+              axe `scrollable-region-focusable`. */}
           <div className="h-full overflow-hidden">
             <div
               className="relative"
@@ -334,7 +334,7 @@ const AgendaShowcase: React.FC = () => {
                 {dropVisible && (
                   // Échelle seule, sans fondu, ici comme sur la sélection et le
                   // fantôme : un texte saisi à mi-fondu par Lighthouse rendait
-                  // 1,6 à 4:1 (mesure axe du 2026-10-22, quatre thèmes).
+                  // 1,6 à 4:1 (mesure axe, quatre thèmes).
                   <motion.div
                     key="drop-event"
                     initial={{ scaleY: 0.5 }}

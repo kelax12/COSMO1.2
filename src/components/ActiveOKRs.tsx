@@ -51,7 +51,7 @@ const ActiveOKRs = ({ limit = 3 }: ActiveOKRsProps) => {
                 /* Mobile : tableau à une colonne, séparateur entre lignes —
                    même traitement que le fil « Aujourd'hui » et les
                    habitudes, plus de carte individuelle par OKR (arbitrage
-                   du 2026-09-05). */
+). */
                 <ul>
                   {activeOKRs.map(okr => {
                     const progress = getProgress(okr.keyResults);
@@ -88,7 +88,7 @@ const ActiveOKRs = ({ limit = 3 }: ActiveOKRsProps) => {
                   })}
                 </ul>
               ) : (
-              /* Desktop : alternative 2 (2026-10-21) — titre, pourcentage et
+              /* Desktop : alternative 2 — titre, pourcentage et
                  barre fine à la couleur de la catégorie ; plus de carte. */
               <ul className="space-y-4">
                 {activeOKRs.map(okr => {

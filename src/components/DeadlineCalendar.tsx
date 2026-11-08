@@ -68,7 +68,7 @@ const DeadlineCalendar: React.FC = () => {
       return (
         <CalendarDayButton
           {...props}
-          // Jour choisi en bleu (2026-10-29) : `bg-primary` du calendrier commun
+          // Jour choisi en bleu : `bg-primary` du calendrier commun
           // le rendait gris ici.
           className={`${props.className ?? ''} data-[selected-single=true]:bg-blue-600 data-[selected-single=true]:text-white data-[selected-single=true]:data-[today=true]:text-white`}
         >

@@ -63,7 +63,7 @@ const Empty = ({ children }: { children: React.ReactNode }) => (
 const WeeklyReviewSheet = ({ orgId, tasks: baseTasks, members: baseMembers, baseScope, onOpenTask, onClose }: WeeklyReviewSheetProps) => {
   const { t } = useT('org');
   const { t: ta, tp: tpa } = useT('orgAdmin');
-  // ─── Périmètre (audit du 2026-09-24) : équipe ou projet, en plus du ─────
+  // ─── Périmètre (audit) : équipe ou projet, en plus du ─────
   // périmètre de base. Un périmètre RESTREINT, jamais n'élargit.
   const { data: teams = [] } = useOrgTeams(orgId);
   const { data: memberships = [] } = useOrgTeamMembers(orgId);

@@ -53,7 +53,7 @@ const QuickAddBar = lazy(() => import('./QuickAddBar'));
 // Rappel habitudes du soir (#24) — lazy également.
 // Aide raccourcis clavier (#48) — touche « ? ».
 const ShortcutsHelp = lazy(() => import('./ShortcutsHelp'));
-// Accueil du premier compte (T-23, planétaire du 2026-10-03). Son catalogue
+// Accueil du premier compte (T-23, planétaire). Son catalogue
 // `onboarding` voyage AVEC lui (`lazyWithRetry`, hôte déclaré dans
 // `scripts/i18n-shell-namespaces.mjs`), et il n'est même pas téléchargé une
 // fois l'accueil vu sur cet appareil (`firstRunDone`, plus bas).
@@ -111,7 +111,7 @@ const ORG_SECTION_TITLE_KEYS: Record<string, KeyOf<'org'>> = {
  * Le FAB global était rendu par une liste NOIRE (« partout sauf dashboard,
  * habitudes, OKR »). Une liste noire accueille par défaut toute route future,
  * et c'est ce qui l'avait posé sur des pages où « créer une tâche » n'a aucun
- * sens. Mesuré le 2026-09-19 en 390 × 844, thème Gris :
+ * sens. Mesuré en 390 × 844, thème Gris :
  *
  * - `/settings` : le FAB recouvre le bouton **Sauvegarder** du formulaire de
  *   profil. L'action principale d'un écran était cachée sous une action qui
@@ -128,7 +128,7 @@ const ORG_SECTION_TITLE_KEYS: Record<string, KeyOf<'org'>> = {
  * ❌ Ne pas revenir à une liste noire : une route ajoutée demain hériterait
  * d'un bouton que personne n'a décidé d'y mettre.
  */
-// `/tasks` en est sorti le 2026-10-10 (maquette 150) : son « + » vit dans la
+// `/tasks` en est sorti (maquette 150) : son « + » vit dans la
 // barre de recherche du bas (`MobileTaskSearch`), une couche flottante de moins.
 const FAB_ROUTES = new Set(['/agenda']);
 
@@ -156,13 +156,13 @@ const Layout: React.FC = () => {
   ).length;
   // Cet initialiseur s'exécute EN PHASE DE RENDU, et `Layout` est le parent de
   // toutes les pages protégées : ce qui lève ici ne remonte dans aucun
-  // `onError`, ça remonte à l'`AppErrorBoundary`. Mesuré le 2026-09-03 (audit
+  // `onError`, ça remonte à l'`AppErrorBoundary`. Mesuré (audit
   // A-7) : une valeur non-JSON, OU un navigateur qui refuse le stockage
   // (navigation privée stricte), rendaient « Une erreur inattendue s'est
   // produite » sur toute l'app authentifiée — et « Rafraîchir la page », seule
   // sortie proposée, relisait la même clé et rendait le même écran.
   // Un repli d'agrément ne doit jamais pouvoir fermer le produit (règle B14).
-  // Depuis le 2026-10-29 la barre reste ÉTROITE : le bouton d'agrandissement
+  // la barre reste ÉTROITE : le bouton d'agrandissement
   // est devenu un œil qui affiche ou masque les libellés sous les icônes.
   // Œil fermé = la barre réduite d'avant, au pixel près.
   const isCollapsed = true;
@@ -292,7 +292,7 @@ const NavItems = () =>
           ) : undefined} />
       )}
 
-      {/* Le « + » inviter/rejoindre est retiré de la barre (2026-10-29) :
+      {/* Le « + » inviter/rejoindre est retiré de la barre :
           l'icône Entreprise propose déjà créer et rejoindre. La modale reste
           ouvrable par l'événement `open-invite-join` (feuille « Plus » mobile). */}
     </>;
@@ -378,7 +378,7 @@ const NavItems = () =>
         <SkipLink targetId={MAIN_CONTENT_ID} label={t('nav.skipToContent')} />
         {/* Bannière conversion démo → compte (#9) */}
         <OfflineBanner />
-        {/* Maquette 222 (2026-10-10) : sur mobile, plus de bandeau « Mode démo »
+        {/* Maquette 222 : sur mobile, plus de bandeau « Mode démo »
             en tête de chaque page (une ligne de liste en permanence) ; la
             mention vit dans la feuille « Plus » (`MobileMoreSheet`). */}
         {/* État sync mobile (#37) — visible uniquement hors ligne / en cours */}
@@ -461,7 +461,7 @@ const NavItems = () =>
             <Logo showText={!isCollapsed} />
           </div>
 
-            {/* Thème seul : la loupe est retirée (2026-10-29), la palette reste
+            {/* Thème seul : la loupe est retirée, la palette reste
                 ouvrable au clavier (Ctrl/Cmd+K). */}
             <div className={`mt-6 flex items-center gap-3 w-full ${isCollapsed ? 'flex-col' : 'flex-row justify-center'}`}>
               <ThemeToggle />

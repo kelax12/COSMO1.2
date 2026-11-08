@@ -77,7 +77,7 @@ const ListActionsSheet: React.FC<ListActionsSheetProps> = ({
             // ⚠️ `useSheetMotion` et pas un `initial={{ y }}` en dur : sous
             // `prefers-reduced-motion`, Framer ne joue pas les transforms et
             // la valeur `initial` reste appliquee — la feuille s ouvrait
-            // 100 % sous l ecran. Mesure le 2026-08-24 (cf. mobile-motion.ts).
+            // 100 % sous l ecran. Mesure (cf. mobile-motion.ts).
             {...sheetMotion}
             onClick={(e) => e.stopPropagation()}
             className="w-full flex flex-col"

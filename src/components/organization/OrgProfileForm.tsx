@@ -16,7 +16,7 @@ const inputClasses =
 /**
  * Profil d'entreprise (admin) : image (#12), nom, description, secteur.
  *
- * Audit du 2026-09-24 : c'était une feuille ouverte par un crayon de
+ * Audit : c'était une feuille ouverte par un crayon de
  * l'en-tête, à côté de Paramètres qui ne faisait que la rouvrir. Le profil
  * vit désormais DANS Paramètres, en formulaire ; le crayon y mène.
  */

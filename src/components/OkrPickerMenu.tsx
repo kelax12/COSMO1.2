@@ -28,7 +28,7 @@ interface OkrPickerMenuProps {
 }
 
 /**
- * Choix de l'objectif d'un widget OKR (maquette « menu enrichi », 2026-10-21) :
+ * Choix de l'objectif d'un widget OKR (maquette « menu enrichi ») :
  * le titre se clique, et chaque objectif du menu montre sa couleur, sa
  * mini-barre et son pourcentage, pour comparer avant de choisir.
  * Partagé par le widget OKR perso et le widget OKR de l'Aperçu entreprise.

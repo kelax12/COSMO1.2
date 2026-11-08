@@ -4,7 +4,7 @@
 // filtres (`useRememberedTaskFilters`) : ce qui manquait n'était pas la
 // mémoire, c'était un départ rapide.
 //
-// ❌ Le lien copiable a été retiré le 2026-09-27 (redondant avec le partage
+// ❌ Le lien copiable a été retiré (redondant avec le partage
 // d'URL natif du navigateur, et jamais le premier geste attendu ici).
 // ═══════════════════════════════════════════════════════════════════
 
@@ -25,7 +25,7 @@ interface FilterPresetsProps {
   showBlocked?: boolean;
   /** Onglet Projets : les préréglages y trient des projets (« Mes projets »). */
   entity?: 'tasks' | 'projects';
-  /** Préréglages masqués (vue Planning : « En retard », « Cette semaine », 2026-10-30). */
+  /** Préréglages masqués (vue Planning : « En retard », « Cette semaine »). */
   hiddenKeys?: readonly string[];
   /**
    * Entrée/sortie du mode sélection, rendue comme DERNIÈRE pastille de la
@@ -117,8 +117,8 @@ const FilterPresets = ({
   const { t } = useT('org');
   const { t: tOrgAdmin } = useT('orgAdmin');
   // Côté Projets, « Moi » (dans la barre de filtres) fait déjà le même filtre
-  // que « Mes projets » : le doublon est retiré (maquette du 2026-09-27).
-  // « Mes tâches » retiré le 2026-09-28 (doublon de « Moi » dans la barre) ;
+  // que « Mes projets » : le doublon est retiré (maquette).
+  // « Mes tâches » retiré (doublon de « Moi » dans la barre) ;
   // « Terminées cette semaine » y arrive depuis la barre, onglet Tâches seul.
   const presets = (showBlocked ? PRESETS : PRESETS.filter((p) => p.key !== 'blocked'))
     .filter((p) => p.key !== 'mine')
@@ -134,7 +134,7 @@ const FilterPresets = ({
     setFilters(preset.apply(base, currentUserId));
   };
 
-  // UNE ligne (2026-09-28) : pastilles et « Sélectionner » défilent ensemble
+  // UNE ligne : pastilles et « Sélectionner » défilent ensemble
   // à l'horizontale plutôt que de passer à la ligne.
   return (
     <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden min-w-0">

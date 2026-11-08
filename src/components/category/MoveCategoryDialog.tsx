@@ -9,7 +9,7 @@ import type { Category } from '@/modules/categories';
 /**
  * « Déplacer vers… » — le SEUL chemin de reparentage.
  *
- * 🔴 Pas de glisser-déposer, décision du 2026-09-09 : la fonctionnalité doit
+ * Pas de glisser-déposer, décision : la fonctionnalité doit
  * rester simple et intuitive. Ce menu marche partout, à la souris, au doigt et
  * au clavier, sans cas particulier ni auto-défilement, et il n'a pas besoin
  * d'un second chemin qui ferait la même chose autrement.
