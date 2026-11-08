@@ -114,13 +114,13 @@ function initSentry(Sentry: typeof import('./lib/sentry-client')): void {
     // `src/sentry-propagation.guard.test.ts`.
     tracePropagationTargets: [/^\//, /supabase\.co\/(?!functions\/v1\/)/],
     // Sentry 11 : `dataCollection` ABSENT vaut TOUT collecter. Chaque clé est
-    // donc posée à faux, sauf `User-Agent` et `Referer`, que la v10 envoyait déjà
-    // sous `sendDefaultPii: false` (filtre des navigateurs anciens). Garde :
+    // donc posée à faux, sauf `User-Agent` (filtre des navigateurs anciens). La v10
+    // envoyait aussi `Referer`, qui peut porter un jeton d'invitation : retiré. Garde :
     // `src/lib/sentry-tracing.test.ts`.
     dataCollection: {
       userInfo: false,
       cookies: false,
-      httpHeaders: { request: { allow: ['User-Agent', 'Referer'] }, response: false },
+      httpHeaders: { request: { allow: ['User-Agent'] }, response: false },
       httpBodies: [],
       urlQueryParams: false,
       graphQL: { document: false, variables: false },

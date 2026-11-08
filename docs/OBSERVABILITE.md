@@ -57,8 +57,8 @@ Les ajouter à un audit existant aurait noyé la question sous un autre sujet.
   les contient.
 - **Sentry 11 (V18.2)** : deux reculs muets écartés dans `init`. `traceLifecycle: 'static'`, parce
   que le mode diffusé par défaut ignore `beforeSendTransaction`, donc `scrubTransaction`.
-  `dataCollection` posé clé par clé à faux, parce qu'absent il vaut tout collecter ; seuls
-  `User-Agent` et `Referer`, déjà envoyés sous `sendDefaultPii: false` en v10, passent. Garde :
+  `dataCollection` posé clé par clé à faux, parce qu'absent il vaut tout collecter ; seul
+  `User-Agent` passe. La v10 envoyait aussi `Referer`, qui peut porter un jeton d'invitation : retiré. Garde :
   `sentry-tracing.test.ts`. `attachStacktrace: false` garde les groupes d'incidents de la v10.
   **Poids** : avec l'`init` du SDK, `sentry-client` passait de 49,4 à 53,9 ko gzip (plafond 52,0,
   non relevé), parce que la v11 ajoute trois intégrations par défaut référencées en dur. `init` est
