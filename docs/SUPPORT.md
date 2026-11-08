@@ -13,38 +13,17 @@
 
 ## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
 
-> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
-> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
-> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
-> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
->
-> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
-> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
-> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
->
-> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
-> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+> Ce document affirme des choses que rien ne pèse : chaque ligne nomme une affirmation qui n'était vérifiée
+> par rien, et la garde qui la vérifie depuis. 🔴 **Une garde posée n'est pas un angle mort fermé** : la
+> dernière colonne dit ce que son vert ne prouve pas. L'énoncé du 2026-09-16, la colonne « État » du
+> 2026-09-21 et les mesures datées sont archivés sans une coupe :
+> [`archive/ANGLES-MORTS-2026-09-16-docs-vivantes.md`](./archive/ANGLES-MORTS-2026-09-16-docs-vivantes.md).
 
-
-
-> **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
-> `CLAUDE.md` a pesé 150 ko sans qu'aucune note ne bouge, parce qu'il était **cité comme source**
-> par les audits et **jamais mesuré par eux**. Il était le mètre, jamais l'objet.
->
-> 🔴 **Ce document n'a PAS de note, et c'est son premier angle mort.** Les onze documents notés
-> entrent dans le tableau de bord de [`README.md`](./README.md) et peuvent donc monter ou baisser.
-> Celui-ci ne le peut pas : rien ne le pèse, donc rien ne signale qu'il a vieilli. Les angles morts
-> ci-dessous ne sont **pas** des défauts du produit ; ce sont les endroits où **ce document affirme
-> sans que rien ne vérifie**.
->
-> Chaque ligne est vérifiée par une commande, jamais supposée. Elle se **referme** ou se
-> **reconduit avec sa date**, jamais ne se recopie.
-
-| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
+| # | Angle mort (énoncé du 2026-09-16) | Garde qui le couvre | 🔴 Ce qu'elle ne prouve pas |
 |---|---|---|---|
-| AM-1 | 🔴 **Aucune mesure du support lui-même** : ni volume reçu, ni délai de première réponse, ni taux de résolution. Un canal de support qu'on n'instrumente pas ne se distingue pas d'un canal que personne n'utilise | aucun job, aucun compteur | ✅ **OUTILLÉ le 2026-09-20** · mig. `150` · `support_reports` + `record_support_report` + `get_support_stats`, **appliquée le 2026-09-21** (ledger `20260921075529`) (`C-110`) — 🔴 ne prouve PAS : 🔴 **que le compteur compte.** `report-bug` n'est pas redéployée (**`M-61`**), donc **rien n'appelle `record_support_report`** : la table restera vide. `/admin` passe de « non installé » à **zéro**, et zéro se lit « aucun rapport » — c'est le plus trompeur des trois états |
-| AM-2 | **Rien ne vérifie que l'adresse de contact publiée reçoit vraiment.** `check:mail` vérifie SPF, DKIM et DMARC de l'expédition **sortante** ; la réception n'est testée par rien | `scripts/check-auth-email.mjs` mesure le DNS d'envoi | 🟡 **OUTILLÉ le 2026-10-23** · **`M-53`** : `check:mail` mesure aussi la **réception** (`scripts/check-mail-reception.mjs`). Les adresses publiées sont relues dans `src/locales`, `src/pages`, `src/components`, `contact.mjs`, `index.html` (JSON-LD) et `prerender.mjs`, hors exemples de saisie : `contact@thecosmo.app` et l'adresse de l'éditeur. Pour chaque domaine : MX présents (un MX nul RFC 7505 compte comme absent) et hôtes résolus ; pour chaque adresse : domaine à MX valide ; puis dialogue SMTP jusqu'à `RCPT TO` et `QUIT`, **jamais `DATA`**. Témoin `check-mail-reception.guard.test.mjs`, 18 cas, vu rouge sur 3 sabotages (`check:sabotages`). **Mesuré le 2026-10-23 par `--doh`** : `thecosmo.app` → `mx00` / `mx01.ionos.fr`, `gmail.com` → 5 MX, les deux adresses OK. 🔴 ne prouve PAS : **(1)** le `RCPT TO` n'a jamais été joué en vrai : le conteneur Claude Code bloque le port 25 sortant (rapport « NON MESURÉ », jamais « refusé ») ; les runners GitHub hébergés le bloquent en général aussi (non mesuré ici) ; il reste à lancer `npm run check:mail` depuis une connexion qui laisse sortir le 25 (Axel) ; **(2)** même un `250` ne dit ni que la boîte n'est pas pleine au dépôt réel, ni que le courrier évite le spam, ni **qu'un humain lise la boîte** : cela, seul un envoi daté vers `contact@thecosmo.app` et sa réponse le prouvent (Axel) |
-| AM-3 | **`report-bug` est déployée, mais ce que ses rapports deviennent n'est mesuré par rien.** `notDeployed` est vide depuis le 2026-09-12, donc la fonction est en ligne ; aucun compteur ne dit si un rapport a été lu | `.github/edge-deploy.json` | ✅ **OUTILLÉ le 2026-09-20** · encart « Support » sur `/admin`, à **trois états distincts** (`null` ≠ `0` ≠ n) (`C-110`) — 🔴 ne prouve PAS : idem AM-1. ⚠️ Et `first_response_at` / `resolved_at` resteront **NULL** : ils se posent à la main, la réponse partant d'une boîte mail que ce dépôt ne lit pas |
+| AM-1 | **Aucune mesure du support lui-même** (volume, délai de première réponse, taux de résolution) | mig. `150` : `support_reports` + `record_support_report` + `get_support_stats`, appliquée le 2026-09-21 (`C-110`) ; encart « Support » de `/admin` à **trois états distincts** (`null` ≠ `0` ≠ n) | 🔴 **Que le compteur compte** : tant que `report-bug` n'appelle pas `record_support_report` (`M-61`), la table reste vide et « zéro » se lit « aucun rapport », le plus trompeur des trois états. `first_response_at` et `resolved_at` restent **NULL** : ils se posent à la main |
+| AM-2 | **Rien ne vérifiait que l'adresse de contact publiée reçoit vraiment** (`check:mail` ne mesurait que l'envoi) | `check:mail` mesure aussi la **réception** (`scripts/check-mail-reception.mjs`, `M-53`) : adresses publiées relues dans `src/locales`, `src/pages`, `src/components`, `contact.mjs`, `index.html` (JSON-LD) et `prerender.mjs` ; pour chaque domaine, MX valides (un MX nul RFC 7505 compte comme absent) ; pour chaque adresse, dialogue jusqu'à `RCPT TO` et `QUIT`, **jamais `DATA`**. Témoin `check-mail-reception.guard.test.mjs` (18 cas, 3 sabotages rejoués par `check:sabotages`) | (1) Le `RCPT TO` n'a jamais été joué en vrai : le port 25 sortant est bloqué dans l'environnement de l'agent (rapport « NON MESURÉ », jamais « refusé ») ; à lancer depuis une connexion qui le laisse sortir (geste d'Axel). (2) Même un `250` ne dit ni que la boîte n'est pas pleine, ni que le courrier évite le spam, ni **qu'un humain lise la boîte** : seul un envoi daté vers `contact@thecosmo.app` et sa réponse le prouvent |
+| AM-3 | **Ce que deviennent les rapports de `report-bug` n'est mesuré par rien** (la fonction est en ligne, aucun compteur ne dit si un rapport a été lu) | encart « Support » de `/admin` (`C-110`) | Idem AM-1 |
 
 ---
 

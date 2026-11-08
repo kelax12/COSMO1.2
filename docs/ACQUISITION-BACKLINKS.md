@@ -11,38 +11,17 @@
 
 ## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
 
-> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
-> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
-> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
-> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
->
-> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
-> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
-> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
->
-> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
-> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+> Ce document affirme des choses que rien ne pèse : chaque ligne nomme une affirmation qui n'était vérifiée
+> par rien, et la garde qui la vérifie depuis. 🔴 **Une garde posée n'est pas un angle mort fermé** : la
+> dernière colonne dit ce que son vert ne prouve pas. L'énoncé du 2026-09-16, la colonne « État » du
+> 2026-09-21 et les mesures datées sont archivés sans une coupe :
+> [`archive/ANGLES-MORTS-2026-09-16-docs-vivantes.md`](./archive/ANGLES-MORTS-2026-09-16-docs-vivantes.md).
 
-
-
-> **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
-> `CLAUDE.md` a pesé 150 ko sans qu'aucune note ne bouge, parce qu'il était **cité comme source**
-> par les audits et **jamais mesuré par eux**. Il était le mètre, jamais l'objet.
->
-> 🔴 **Ce document n'a PAS de note, et c'est son premier angle mort.** Les onze documents notés
-> entrent dans le tableau de bord de [`README.md`](./README.md) et peuvent donc monter ou baisser.
-> Celui-ci ne le peut pas : rien ne le pèse, donc rien ne signale qu'il a vieilli. Les angles morts
-> ci-dessous ne sont **pas** des défauts du produit ; ce sont les endroits où **ce document affirme
-> sans que rien ne vérifie**.
->
-> Chaque ligne est vérifiée par une commande, jamais supposée. Elle se **referme** ou se
-> **reconduit avec sa date**, jamais ne se recopie.
-
-| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
+| # | Angle mort (énoncé du 2026-09-16) | Garde qui le couvre | 🔴 Ce qu'elle ne prouve pas |
 |---|---|---|---|
-| AM-1 | 🔴 **Aucun suivi des backlinks obtenus ni PERDUS.** Ce document liste des actions manuelles ; rien ne vérifie qu'un lien posé existe encore. Un backlink retiré est invisible, alors que c'est le seul levier que ce document déclare débloquant | données Search Console lues à la main le 2026-08-19, jamais depuis | ✅ **OUTILLÉ le 2026-10-23** · `scripts/seo-signals.mjs`, chaque lundi (`seo-signals.yml`, relié à `ci-alert.yml`) : chaque ligne `fait` du tableau des annuaires est relue, sa page source (première URL hors thecosmo.app de la colonne Note) doit répondre et contenir un lien vers thecosmo.app, `rel` noté en série ; page disparue, lien retiré, `fait` sans page source ou lien suivi devenu `nofollow` = **rouge**. Témoin vu rouge au rejeu. 🔴 ne prouve PAS : un lien d'une page rendue en JavaScript (rouge à relire à la main), ni un backlink jamais déclaré ici : pour ceux-là, voir AM-2 |
-| AM-2 | **L'autorité de domaine n'est mesurée par rien en continu**, alors que le document en fait le blocage principal | aucun job | 🟡 **OUTILLÉ le 2026-10-23, rouge jusqu'au secret** · même script : domaines référents et liens entrants vus par l'**API Bing Webmaster** (`BING_WEBMASTER_API_KEY`), gratuits et reproductibles, en série datée `docs/seo-signals-series.json` ; un domaine présent au point précédent et absent du suivant = **rouge** (`M-55`). 🔴 ne prouve PAS : rien tant que la clé n'est pas posée (geste d'Axel) ; ensuite, Bing ne compte que les liens que Bing a explorés, ce n'est pas l'autorité vue par Google |
-| AM-3 | **Les actions d'Axel n'ont ni date ni état.** Une liste d'actions manuelles sans colonne « fait le » ne permet pas de distinguer « pas encore tenté » de « tenté sans effet », et les deux appellent des décisions opposées | relevé dans ce document | ✅ **OUTILLÉ le 2026-09-20** · colonne **État** (5 valeurs, date obligatoire) + `npm run check:acquisition` (`C-101`) — 🔴 ne prouve PAS : que l'état déclaré soit vrai : la garde exige une date, pas une vérification |
+| AM-1 | **Aucun suivi des backlinks obtenus ni PERDUS** : un lien retiré est invisible, alors que c'est le seul levier que ce document déclare débloquant | `scripts/seo-signals.mjs`, chaque lundi (`seo-signals.yml`, relié à `ci-alert.yml`) : chaque ligne `fait` du tableau des annuaires est relue, sa page source (première URL hors thecosmo.app de la colonne Note) doit répondre et contenir un lien vers thecosmo.app, `rel` noté en série. Page disparue, lien retiré, `fait` sans page source ou lien devenu `nofollow` = **rouge** | Un lien d'une page rendue en JavaScript (rouge à relire à la main) ; un backlink jamais déclaré ici (voir AM-2) |
+| AM-2 | **L'autorité de domaine n'est mesurée par rien en continu**, alors que le document en fait le blocage principal | même script : domaines référents et liens entrants vus par l'**API Bing Webmaster** (`BING_WEBMASTER_API_KEY`), série datée `docs/seo-signals-series.json` ; un domaine présent au point précédent et absent du suivant = **rouge** (`M-55`). Rouge tant que la clé n'est pas posée (geste d'Axel) | Rien tant que la clé n'est pas posée ; ensuite, Bing ne compte que les liens qu'il a explorés, ce n'est pas l'autorité vue par Google |
+| AM-3 | **Les actions d'Axel n'ont ni date ni état** : « pas encore tenté » et « tenté sans effet » appellent des décisions opposées | colonne **État** (5 valeurs, date obligatoire) + `npm run check:acquisition` (`C-101`) | Que l'état déclaré soit vrai : la garde exige une date, pas une vérification |
 
 ---
 
