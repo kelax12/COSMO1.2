@@ -586,11 +586,11 @@ Les règles elles-mêmes, l'inventaire classé et les retraits : [`scripts/CLAUD
 | Classe | Workflows |
 |---|---|
 | NOYAU | `ci-noyau.yml` (le verdict du commit), `ci-vert.yml` (tag `ci-vert/<sha>` lu par Vercel) |
-| PLANIFIÉE | `ci-alert.yml`, `ci.yml` (e2e, Lighthouse), `visual.yml`, `captures-regenerer.yml`, `sabotages.yml`, `mutation.yml`, `gardes-calendrier.yml`, `posture.yml`, `migration-coverage.yml`, `edge-deploy-drift.yml`, `deploy-sha-drift.yml`, `secrets-age.yml`, `restore-drill.yml`, `restore-drill-fraicheur.yml`, `db-backup.yml`, `indicateurs.yml`, `prod-errors.yml`, `stripe-prices.yml`, `seo-signals.yml`, `uptime.yml`, `smoke-prod.yml`, `scalability-volume.yml`, `e2e-supabase.yml` |
+| PLANIFIÉE | `ci-alert.yml`, `ci.yml` (e2e, Lighthouse), `visual.yml`, `captures-regenerer.yml`, `sabotages.yml`, `mutation.yml`, `gardes-calendrier.yml`, `posture.yml`, `migration-coverage.yml`, `edge-deploy-drift.yml`, `deploy-sha-drift.yml`, `secrets-age.yml`, `restore-drill.yml`, `restore-drill-fraicheur.yml`, `db-backup.yml`, `indicateurs.yml`, `prod-errors.yml`, `stripe-prices.yml`, `seo-signals.yml`, `uptime.yml`, `smoke-prod.yml`, `scalability-volume.yml`, `e2e-supabase.yml`, `cron-journal.yml` (la sonde des crons de production) |
 | REMPLAÇANT standard | `codeql.yml` ; Dependabot (`.github/dependabot.yml`) et secret scanning, sans workflow |
 | DÉPLOIEMENT | `edge-deploy.yml` (après un noyau vert) |
-| PRODUIT | `daily-digest`, `weekly-digest`, `org-digest`, `org-webhook-dispatch`, `inactive-accounts`, `renewal-notice` : traitements de production, pas des gardes |
-| EN ATTENTE | `cron-journal.yml` : `schedule:` posé par la bascule pg_cron (V10.2) |
+| PRODUIT | `daily-digest`, `weekly-digest` : résumés en lecture seule, planifiés |
+| RATTRAPAGE MANUEL | `org-digest`, `org-webhook-dispatch`, `inactive-accounts`, `renewal-notice` : traitements de production planifiés par pg_cron depuis la bascule (mig. `246`, `DEPLOYMENT.md` § 2sexies), `workflow_dispatch` seulement ici |
 
 ## Checklist avant push prod
 

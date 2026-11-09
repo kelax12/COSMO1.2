@@ -192,13 +192,13 @@ describe('fonctions planifiées · le bail est pris, au bon endroit', () => {
 // `Journal des crons` lit une table qui n'existe pas encore. Ce volet fige
 // l'ordre : tant que `BASCULE_FAITE` vaut `false`, les quatre workflows gardent
 // leur `schedule:` et la sonde n'en a pas. Le commit de bascule (`DEPLOYMENT.md`
-// § 2sexies, étape 6) retourne la constante ET les workflows, ensemble, après
+// § 2sexies, étape 8) retourne la constante ET les workflows, ensemble, après
 // le verdict `cron_runs_verdict()` à six `ok`.
 //
 // ❌ Ne jamais passer cette constante à `true` seule, ni la retourner pour
 //    « faire passer » un retrait de `schedule:` : le test dit que la production
 //    n'a pas encore pris le relais.
-const BASCULE_FAITE = false;
+const BASCULE_FAITE = true;
 const WORKFLOWS_DE_PRODUCTION = ['renewal-notice', 'inactive-accounts', 'org-digest', 'org-webhook-dispatch'];
 const aUnSchedule = (yml: string) => /^\s+schedule:/m.test(yml);
 

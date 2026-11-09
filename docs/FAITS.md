@@ -11,7 +11,7 @@ Les chiffres de production (tables vivantes, ledger, taille de base) ne sont pas
 | Migrations SQL | **222** | fichiers `NNN_*.sql` de `supabase/migration/` |
 | Dernière migration | **247** | plus grand préfixe numérique de `supabase/migration/` |
 | Workflows GitHub | **35** | fichiers de `.github/workflows/` |
-| dont planifiés | **26** | workflows portant un `schedule:` |
+| dont planifiés | **23** | workflows portant un `schedule:` |
 | Modules applicatifs | **23** | dossiers de `src/modules/` |
 | Namespaces i18n | **34** | fichiers de `src/locales/fr/` |
 | Gardes `check:` / `i18n:` / `validate:` | **45** | scripts de `package.json` |
