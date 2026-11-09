@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { TaskFilters } from './types';
+import type { TaskQuery } from './task-query';
 
 /**
  * LocalStorage key for persisting tasks in demo mode
@@ -20,6 +21,19 @@ export const taskKeys = {
   all: ['tasks'] as const,
   lists: () => [...taskKeys.all, 'list'] as const,
   list: (filters: TaskFilters) => [...taskKeys.lists(), filters] as const,
+  /**
+   * V14.1 (PER-01). Trois familles SOUS `lists()`, pour que toute invalidation
+   * de liste les atteigne. La requête est passée normalisée
+   * (`normalizeTaskQuery`) : deux écrans qui veulent le même ensemble
+   * partagent le même cache.
+   *
+   * - `archive` : pages serveur (useInfiniteQuery), l'archive « Terminées » ;
+   * - `subset`  : un sous-ensemble entier, borné par nature (`listAll`) ;
+   * - `count`   : un nombre, compté côté serveur.
+   */
+  archive: (query: TaskQuery) => [...taskKeys.lists(), 'archive', query] as const,
+  subset: (query: TaskQuery) => [...taskKeys.lists(), 'subset', query] as const,
+  count: (query: TaskQuery) => [...taskKeys.lists(), 'count', query] as const,
   details: () => [...taskKeys.all, 'detail'] as const,
   detail: (id: string) => [...taskKeys.details(), id] as const,
   byDate: (date: string) => [...taskKeys.all, 'date', date] as const,

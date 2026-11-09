@@ -1,4 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useMemo } from 'react';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { toast } from '@/lib/toast';
 import { showUndoToast } from '@/lib/undo-toast';
 import { getTasksRepository } from '@/lib/repository.factory';
@@ -13,6 +14,12 @@ import { dependencyErrorCode } from './dependency-errors';
 import { validateAsync } from '@/lib/validation/lazy';
 import { translator } from '@/i18n/useT';
 import { recordDemoCreationIfDemo } from '@/lib/demo-engagement';
+import { loadWorkingSet } from './working-set';
+import { normalizeTaskQuery, isEmptyTaskQuery, type TaskQuery } from './task-query';
+import {
+  patchTaskCaches, snapshotTaskCaches, restoreTaskCaches, findTaskInCaches,
+  invalidateSecondaryTaskQueries,
+} from './cache-patch';
 
 /**
  * Filet de sécurité si le canal Realtime tombe sans se reconnaître déconnecté.
@@ -39,12 +46,20 @@ const useTasksRepository = (): ITasksRepository => getTasksRepository();
 /**
  * Fetch all tasks
  */
+/**
+ * Le JEU DE TRAVAIL : toutes les tâches non terminées, plus celles terminées
+ * depuis `RECENT_COMPLETED_DAYS` jours (cf. `working-set.ts`).
+ *
+ * 🔴 Ce n'est PAS « toutes les tâches » depuis la V14.1 (PER-01). Un écran qui
+ * compte, cherche ou calcule sur l'historique complet passe par sa propre
+ * requête : `useTaskArchive`, `useTaskSubset`, `useTaskCount`.
+ */
 export const useTasks = (options?: { enabled?: boolean }) => {
   const repository = useTasksRepository();
   const isDemo = useIsDemo();
   return useQuery({
     queryKey: taskKeys.lists(),
-    queryFn: () => withTimeout(repository.getAll(), 10_000),
+    queryFn: () => withTimeout(loadWorkingSet(repository), 10_000),
     enabled: options?.enabled ?? true,
     // Collaboration sans realtime : les modifications d'un collaborateur, ET
     // surtout une NOUVELLE tâche qu'un ami vient de partager, ne se propagent
@@ -155,10 +170,103 @@ export const useFilteredTasks = (filters: TaskFilters, options?: { enabled?: boo
 // liste de suppressions sûres.
 
 /**
- * Get pending tasks (not completed)
+ * Tâches non terminées.
+ *
+ * V14.1 : dérivées du jeu de travail, qui les contient TOUTES (sans plafond).
+ * L'ancienne lecture `getFiltered({ completed: false })` n'avait pas de
+ * `range` et retombait sur le plafond PostgREST par défaut (1 000 lignes),
+ * en plus de doubler la requête du jeu de travail.
  */
+const selectPending = (tasks: Task[]) => tasks.filter((t) => !t.completed);
 export const usePendingTasks = () => {
-  return useFilteredTasks({ completed: false });
+  const query = useTasks();
+  const data = useMemo(() => (query.data ? selectPending(query.data) : undefined), [query.data]);
+  return { ...query, data };
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// Lectures au-delà du jeu de travail (V14.1, PER-01)
+// ═══════════════════════════════════════════════════════════════════
+
+/** Taille d'une page de l'archive : de quoi remplir deux écrans, rendu virtualisé. */
+export const ARCHIVE_PAGE_SIZE = 50;
+
+/**
+ * Pages serveur d'un sous-ensemble (l'archive « Terminées » d'abord) : curseur
+ * de clé, `created_at` puis `id` décroissants. `fetchNextPage` charge la
+ * suite ; rien n'est jamais tronqué, la dernière page dit `hasMore: false`.
+ */
+export const useTaskArchive = (query: TaskQuery, options?: { enabled?: boolean; pageSize?: number }) => {
+  const repository = useTasksRepository();
+  const normalized = normalizeTaskQuery(query);
+  const pageSize = options?.pageSize ?? ARCHIVE_PAGE_SIZE;
+  return useInfiniteQuery({
+    queryKey: [...taskKeys.archive(normalized), pageSize] as const,
+    queryFn: ({ pageParam }) =>
+      repository.getPage({
+        query: normalized,
+        limit: pageSize,
+        cursor: pageParam?.cursor,
+        cursorDate: pageParam?.cursorDate,
+      }),
+    initialPageParam: null as null | { cursor: string; cursorDate: string },
+    getNextPageParam: (last) =>
+      last.hasMore && last.nextCursor && last.nextCursorDate !== null
+        ? { cursor: last.nextCursor, cursorDate: last.nextCursorDate }
+        : undefined,
+    enabled: options?.enabled ?? true,
+  });
+};
+
+/**
+ * Un sous-ensemble ENTIER, borné par nature : une fenêtre de `completed_at`
+ * (statistiques, graphiques), les tâches d'une catégorie (impact d'une
+ * suppression), une liste d'identifiants (créneaux de l'agenda).
+ */
+export const useTaskSubset = (query: TaskQuery, options?: { enabled?: boolean }) => {
+  const repository = useTasksRepository();
+  const normalized = normalizeTaskQuery(query);
+  return useQuery({
+    queryKey: taskKeys.subset(normalized),
+    queryFn: () => repository.listAll(normalized),
+    enabled: (options?.enabled ?? true) && !isEmptyTaskQuery(normalized),
+    placeholderData: keepPreviousData,
+  });
+};
+
+/** Nombre exact de tâches d'un sous-ensemble, compté côté serveur. */
+export const useTaskCount = (query: TaskQuery, options?: { enabled?: boolean }) => {
+  const repository = useTasksRepository();
+  const normalized = normalizeTaskQuery(query);
+  return useQuery({
+    queryKey: taskKeys.count(normalized),
+    queryFn: () => repository.count(normalized),
+    enabled: options?.enabled ?? true,
+  });
+};
+
+/**
+ * Lecture ponctuelle de TOUTES les tâches, hors cache (export CSV). Une
+ * fonction et non un hook : l'export se déclenche au clic, il n'a aucune
+ * raison de tenir l'historique complet en mémoire le reste du temps.
+ */
+export const useLoadAllTasks = () => {
+  const repository = useTasksRepository();
+  return useCallback(() => repository.getAll(), [repository]);
+};
+
+/**
+ * Une tâche par son identifiant, où qu'elle soit en cache (jeu de travail,
+ * page d'archive), sinon relue par `getById`. Pour une fiche ouverte depuis
+ * l'archive : une tâche terminée il y a six mois n'est pas dans le jeu de
+ * travail, et la chercher là seulement rendait `undefined`.
+ */
+export const useKnownTask = (id: string | null | undefined) => {
+  const queryClient = useQueryClient();
+  const { data: working } = useTasks();
+  const cached = id ? working?.find((t) => t.id === id) ?? findTaskInCaches(queryClient, id) : undefined;
+  const { data: fetched } = useTask(id ?? '', { enabled: !!id && !cached });
+  return cached ?? fetched ?? undefined;
 };
 
 // ═══════════════════════════════════════════════════════════════════
@@ -199,6 +307,8 @@ export const useCreateTask = () => {
         queryKey: taskKeys.lists(),
         refetchType: 'none',
       });
+      // Archive, sous-ensembles et compteurs montés : recomptés tout de suite.
+      void invalidateSecondaryTaskQueries(queryClient);
     },
     onError: (error: Error) => {
       toast.error(translator('errors').t('mutation.createTask', { message: error.message }));
@@ -222,14 +332,13 @@ export const useUpdateTask = () => {
     // Optimistic update : la liste reflète la modification immédiatement
     onMutate: async ({ id, updates }) => {
       await queryClient.cancelQueries({ queryKey: taskKeys.lists() });
-      const previousTasks = queryClient.getQueryData<Task[]>(taskKeys.lists());
-      if (previousTasks) {
-        queryClient.setQueryData<Task[]>(taskKeys.lists(), (old) =>
-          // Mig. 214 : la carte change de colonne tout de suite, et du bon côté.
-          old?.map((task) => (task.id === id ? { ...task, ...applyStatusSync(task, updates) } : task))
-        );
-      }
-      return { previousTasks };
+      const snapshot = snapshotTaskCaches(queryClient);
+      // Mig. 214 : la carte change de colonne tout de suite, et du bon côté.
+      // V14.1 : dans TOUS les caches, l'archive comprise.
+      patchTaskCaches(queryClient, (old) =>
+        old.map((task) => (task.id === id ? { ...task, ...applyStatusSync(task, updates) } : task))
+      );
+      return { snapshot };
     },
 
     onSuccess: (updatedTask) => {
@@ -241,9 +350,7 @@ export const useUpdateTask = () => {
 
     // Rollback on error
     onError: (error: Error, _vars, context) => {
-      if (context?.previousTasks) {
-        queryClient.setQueryData(taskKeys.lists(), context.previousTasks);
-      }
+      if (context?.snapshot) restoreTaskCaches(queryClient, context.snapshot);
       toast.error(translator('errors').t('mutation.updateTask2', { message: error.message }));
     },
   });
@@ -262,13 +369,9 @@ export const useDeleteTask = () => {
     // Optimistic update : la tâche disparaît immédiatement de la liste
     onMutate: async (id: string) => {
       await queryClient.cancelQueries({ queryKey: taskKeys.lists() });
-      const previousTasks = queryClient.getQueryData<Task[]>(taskKeys.lists());
-      if (previousTasks) {
-        queryClient.setQueryData<Task[]>(taskKeys.lists(), (old) =>
-          old?.filter((task) => task.id !== id)
-        );
-      }
-      return { previousTasks };
+      const snapshot = snapshotTaskCaches(queryClient);
+      patchTaskCaches(queryClient, (old) => old.filter((task) => task.id !== id));
+      return { snapshot };
     },
 
     onSuccess: (_result, deletedId) => {
@@ -280,9 +383,7 @@ export const useDeleteTask = () => {
 
     // Rollback on error
     onError: (error: Error, _id, context) => {
-      if (context?.previousTasks) {
-        queryClient.setQueryData(taskKeys.lists(), context.previousTasks);
-      }
+      if (context?.snapshot) restoreTaskCaches(queryClient, context.snapshot);
       toast.error(translator('errors').t('mutation.deleteTask', { message: error.message }));
     },
   });
@@ -313,8 +414,10 @@ export const useToggleTaskComplete = () => {
     // dupliquait si l'utilisateur décochait puis recochait. Elle est désormais
     // atomique (même transaction) et idempotente (index unique serveur).
     mutationFn: (id: string) => {
-      const cached = queryClient.getQueryData<Task[]>(taskKeys.lists());
-      const task = cached?.find((t) => t.id === id);
+      // Lu AVANT la bascule optimiste ? Non : `onMutate` passe d'abord. La
+      // tâche lue ici est donc déjà basculée ; `nextOccurrenceDeadline` ne lit
+      // que l'échéance et la récurrence, que la bascule ne touche pas.
+      const task = findTaskInCaches(queryClient, id);
       const nextDeadline = task
         ? nextOccurrenceDeadline(task.deadline, task.recurrence ?? 'none')
         : null;
@@ -343,9 +446,9 @@ export const useToggleTaskComplete = () => {
         // (sans attendre un refresh). L'occurrence générée disparaît en même
         // temps — c'est le serveur qui la retire réellement, dans la même
         // transaction que la dé-validation, et seulement si elle est intacte.
-        queryClient.setQueryData<Task[]>(taskKeys.lists(), (old) =>
+        patchTaskCaches(queryClient, (old) =>
           old
-            ?.filter((t) => t.recurrenceParentId !== updatedTask.id)
+            .filter((t) => t.recurrenceParentId !== updatedTask.id)
             .map((t) => (t.id === updatedTask.id ? { ...t, ...applyStatusSync(t, { completed: false }) } : t))
         );
         repository
@@ -368,34 +471,32 @@ export const useToggleTaskComplete = () => {
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: taskKeys.all });
 
-      // Snapshot current state
-      const previousTasks = queryClient.getQueryData<Task[]>(taskKeys.lists());
+      const snapshot = snapshotTaskCaches(queryClient);
+      const toggle = (task: Task): Task => ({
+        ...task,
+        ...applyStatusSync(task, {
+          completed: !task.completed,
+          completedAt: !task.completed ? new Date().toISOString() : undefined,
+        }),
+      });
 
-      // Optimistically update
-      if (previousTasks) {
-        queryClient.setQueryData<Task[]>(taskKeys.lists(), (old) =>
-          old?.map((task) =>
-            task.id === id
-              ? {
-                  ...task,
-                  ...applyStatusSync(task, {
-                    completed: !task.completed,
-                    completedAt: !task.completed ? new Date().toISOString() : undefined,
-                  }),
-                }
-              : task
-          )
-        );
+      // V14.1 : une tâche décochée DEPUIS L'ARCHIVE (terminée il y a plus de
+      // `RECENT_COMPLETED_DAYS` jours) n'est pas dans le jeu de travail. Elle
+      // y entre, puisqu'elle redevient du travail en cours ; `patchTaskCaches`
+      // la retire de l'archive, qui ne garde que des terminées.
+      const working = queryClient.getQueryData<Task[]>(taskKeys.lists());
+      const original = findTaskInCaches(queryClient, id);
+      if (working && original && !working.some((t) => t.id === id)) {
+        queryClient.setQueryData<Task[]>(taskKeys.lists(), [original, ...working]);
       }
+      patchTaskCaches(queryClient, (old) => old.map((task) => (task.id === id ? toggle(task) : task)));
 
-      return { previousTasks };
+      return { snapshot };
     },
 
     // Rollback on error
     onError: (error: Error, _id, context) => {
-      if (context?.previousTasks) {
-        queryClient.setQueryData(taskKeys.lists(), context.previousTasks);
-      }
+      if (context?.snapshot) restoreTaskCaches(queryClient, context.snapshot);
       toast.error(translator('errors').t('mutation.updateTask', { message: error.message }));
     },
 
@@ -406,6 +507,8 @@ export const useToggleTaskComplete = () => {
         queryKey: taskKeys.lists(),
         refetchType: 'none',
       });
+      // Les compteurs ne se patchent pas : ils se recomptent.
+      void invalidateSecondaryTaskQueries(queryClient);
       // Invalide uniquement le détail de la tâche modifiée
       queryClient.invalidateQueries({ queryKey: taskKeys.detail(id) });
     },
@@ -427,26 +530,16 @@ export const useToggleTaskBookmark = () => {
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: taskKeys.lists() });
 
-      // Snapshot current state
-      const previousTasks = queryClient.getQueryData<Task[]>(taskKeys.lists());
-
-      // Optimistically update
-      if (previousTasks) {
-        queryClient.setQueryData<Task[]>(taskKeys.lists(), (old) =>
-          old?.map((task) =>
-            task.id === id ? { ...task, bookmarked: !task.bookmarked } : task
-          )
-        );
-      }
-
-      return { previousTasks };
+      const snapshot = snapshotTaskCaches(queryClient);
+      patchTaskCaches(queryClient, (old) =>
+        old.map((task) => (task.id === id ? { ...task, bookmarked: !task.bookmarked } : task))
+      );
+      return { snapshot };
     },
 
     // Rollback on error
     onError: (error: Error, _id, context) => {
-      if (context?.previousTasks) {
-        queryClient.setQueryData(taskKeys.lists(), context.previousTasks);
-      }
+      if (context?.snapshot) restoreTaskCaches(queryClient, context.snapshot);
       toast.error(translator('errors').t('mutation.toggleBookmark', { message: error.message }));
     },
 
@@ -464,34 +557,26 @@ export const useToggleTaskBookmark = () => {
 };
 
 // ═══════════════════════════════════════════════════════════════════
-// `useTasksInfinite` a été SUPPRIMÉ le 2026-08-25. Ne pas le recréer sans
-// avoir d'abord réglé ce qui suit.
+// PAGINATION DES TÂCHES (V14.1, constat PER-01 de l'audit du 2026-11-06)
 //
-// Il était livré depuis des mois avec ZÉRO consommateur (vérifié : aucune
-// occurrence hors sa propre définition et le barrel). C'est le motif que
-// `docs/ARCHITECTURE.md` §4 documente : on construit la brique générique, on
-// ne migre jamais l'écran, et la doc finit par décrire une architecture qui
-// n'existe pas.
+// La note qui vivait ici disait : « paginer sans pousser filtres, tri et
+// comptage côté SQL donnerait des compteurs FAUX ». C'est la règle qu'a
+// suivie la V14.1, et elle reste vraie : la pagination ne s'est pas faite en
+// coupant `useTasks()` en pages, mais en séparant ce qui est borné de ce qui
+// ne l'est pas.
 //
-// ⚠️ CE N'EST PAS LE HOOK QUI MANQUAIT, C'EST LE PRÉREQUIS.
-// `TasksPage` calcule ses compteurs par chip, ses smart lists (`overdue` /
-// `this-week` / `high-priority`) et son tri EN MÉMOIRE, sur le dataset
-// complet. Paginer sans pousser filtres, tri et comptage côté SQL donnerait
-// des compteurs FAUX et des smart lists incomplètes — un bug bien pire que le
-// payload qu'on cherchait à réduire.
+//   • `useTasks()` : le jeu de travail, sans plafond (`working-set.ts`). Les
+//     compteurs par chip, les smart lists et le tri de la page Tâches ne
+//     lisent que des tâches NON terminées, toutes présentes.
+//   • `useTaskArchive` : l'archive « Terminées », en pages serveur (curseur
+//     de clé, filtres poussés en SQL), rendue virtualisée.
+//   • `useTaskCount` : les nombres qui portent sur l'historique, comptés par
+//     le serveur, jamais une longueur de tableau partiel.
+//   • `useTaskSubset` : un sous-ensemble entier borné par nature (fenêtre de
+//     `completed_at`, catégorie, identifiants).
 //
-// L'ordre de travail, le jour où le volume le justifie :
-//   1. une RPC d'agrégats (compteurs par chip, calculés en SQL) ;
-//   2. filtres et tri poussés côté serveur ;
-//   3. alors seulement, la pagination de la liste.
-//
-// Marge actuelle : plafond `MAX_ROWS` = 5 000 par compte, maximum observé en
-// prod = 289 tâches. Facteur ×17. Le rendu est déjà virtualisé au-delà de
-// 50 items — l'affichage n'a jamais été le problème.
-//
-// `getPage()` est CONSERVÉ sur le repository : ce n'est pas du code mort mais
-// une capacité d'interface, implémentée et testée sur tous les modules
-// (tasks, events, habits, okrs…). C'est la brique de l'étape 3.
+// ❌ Ne jamais compter, chercher ou calculer une statistique sur `useTasks()`
+// en la prenant pour l'historique complet : elle ne l'est plus.
 // ═══════════════════════════════════════════════════════════════════
 
 // ═══════════════════════════════════════════════════════════════════

@@ -1,6 +1,7 @@
-import { ITasksRepository, ToggleCompleteResult } from './repository';
+import { ITasksRepository, ToggleCompleteResult, type TaskPageParams } from './repository';
+import { type TaskQuery, matchesTaskQuery, compareTaskKeyset, isAfterCursor, isEmptyTaskQuery, assertSupportedTaskQuery } from './task-query';
 import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskDependency } from './types';
-import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
+import { PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
 import { reachableSets } from '@/lib/dependency-graph';
 import { TASK_DEPENDENCIES_STORAGE_KEY } from './constants';
 import { deadlineDayKey } from '@/lib/deadline';
@@ -269,23 +270,47 @@ export class LocalStorageTasksRepository implements ITasksRepository {
     return updatedTask;
   }
 
-  async getPage(params: PaginationParams = {}): Promise<PaginatedResult<Task>> {
-    const tasks = this.getTasks();
+  // ═══════════════════════════════════════════════════════════════════
+  // LECTURES PAR SOUS-ENSEMBLE (V14.1, PER-01) — même contrat que Supabase
+  // ═══════════════════════════════════════════════════════════════════
+  //
+  // Même filtre (`matchesTaskQuery`), même ordre (`created_at` puis `id`
+  // décroissants), même curseur de clé. L'ancienne version paginait par
+  // POSITION dans le tableau stocké : une tâche créée entre deux pages (posée
+  // en tête du tableau) ne décalait rien par chance, mais une tâche supprimée
+  // avant le curseur, si, et l'ordre n'était pas celui de la production.
+
+  private selectSorted(query: TaskQuery): Task[] {
+    assertSupportedTaskQuery(query);
+    if (isEmptyTaskQuery(query)) return [];
+    return this.getTasks()
+      .filter((t) => matchesTaskQuery(t, query))
+      .sort(compareTaskKeyset);
+  }
+
+  async listAll(query: TaskQuery = {}): Promise<Task[]> {
+    return this.selectSorted(query);
+  }
+
+  async count(query: TaskQuery = {}): Promise<number> {
+    return this.selectSorted(query).length;
+  }
+
+  async getPage(params: TaskPageParams = {}): Promise<PaginatedResult<Task>> {
     const limit = params.limit ?? DEFAULT_PAGE_SIZE;
-    // En mode démo, simule la pagination en mémoire
-    let startIndex = 0;
+    let rows = this.selectSorted(params.query ?? {});
     if (params.cursor) {
-      const cursorIndex = tasks.findIndex(t => t.id === params.cursor);
-      if (cursorIndex !== -1) startIndex = cursorIndex + 1;
+      const cursor = { id: params.cursor, createdAt: params.cursorDate ?? '' };
+      rows = rows.filter((t) => isAfterCursor(t, cursor));
     }
-    const slice = tasks.slice(startIndex, startIndex + limit + 1);
-    const hasMore = slice.length > limit;
-    const items = hasMore ? slice.slice(0, limit) : slice;
+    const hasMore = rows.length > limit;
+    const items = hasMore ? rows.slice(0, limit) : rows;
+    const last = items[items.length - 1];
     return {
       data: items,
       hasMore,
-      nextCursor: hasMore ? items[items.length - 1]?.id ?? null : null,
-      nextCursorDate: null,
+      nextCursor: hasMore && last ? last.id : null,
+      nextCursorDate: hasMore && last ? last.createdAt ?? '' : null,
     };
   }
 

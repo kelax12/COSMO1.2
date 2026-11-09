@@ -3,6 +3,7 @@
 import { describe, expect, beforeAll } from 'vitest';
 import type { ITasksRepository } from '@/modules/tasks/repository';
 import type { CreateTaskInput } from '@/modules/tasks/types';
+import type { TaskQuery } from '@/modules/tasks/task-query';
 import { deadlineDayKey, deadlineFromDayKey } from '@/lib/deadline';
 import { contractCase, dayKey, rejects, unique, type ContractOptions } from './harness';
 
@@ -179,6 +180,94 @@ export function tasksContract(side: string, make: () => Promise<TasksContractCon
       await repo.addDependency(a.id, b.id);
       await repo.delete(b.id);
       expect((await repo.getDependencies()).filter((d) => d.taskId === a.id || d.dependsOnId === b.id)).toEqual([]);
+    });
+
+    // ── Pagination (V14.1, constat PER-01) ────────────────────────────
+    // Chaque cas isole SES tâches par un jeton unique dans le nom (`search`) :
+    // ni le seed de démo ni un autre cas ne s'y mêlent.
+
+    /** Toutes les pages d'une requête, curseur après curseur. */
+    async function allPages(query: TaskQuery, limit: number, between?: () => Promise<void>): Promise<string[]> {
+      const ids: string[] = [];
+      let cursor: string | undefined;
+      let cursorDate: string | undefined;
+      for (let guard = 0; guard < 100; guard++) {
+        const page = await repo.getPage({ query, limit, cursor, cursorDate });
+        expect(page.data.length).toBeLessThanOrEqual(limit);
+        ids.push(...page.data.map((t) => t.id));
+        if (!page.hasMore) return ids;
+        expect(page.nextCursor).toBeTruthy();
+        expect(page.nextCursorDate).toBeTruthy();
+        cursor = page.nextCursor!;
+        cursorDate = page.nextCursorDate!;
+        if (guard === 0 && between) await between();
+      }
+      throw new Error('pagination sans fin');
+    }
+
+    contractCase(opts, 'pagination : pages stables, ordre created_at puis id décroissants, ni doublon ni trou', async () => {
+      const token = unique('Pagine');
+      const created = [];
+      for (let i = 0; i < 7; i++) created.push(await repo.create(input({ name: `${token} ${i}` })));
+      const ids = await allPages({ search: token }, 3);
+      expect(new Set(ids).size).toBe(ids.length);
+      expect([...ids].sort()).toEqual(created.map((t) => t.id).sort());
+      // Même ordre que la lecture entière, qui fait foi.
+      expect((await repo.listAll({ search: token })).map((t) => t.id)).toEqual(ids);
+    });
+
+    contractCase(opts, 'pagination : une tâche créée entre deux pages ne décale rien (curseur de clé)', async () => {
+      const token = unique('Insertion');
+      const created = [];
+      for (let i = 0; i < 6; i++) created.push(await repo.create(input({ name: `${token} ${i}` })));
+      let late = '';
+      const ids = await allPages({ search: token }, 2, async () => {
+        late = (await repo.create(input({ name: `${token} tardive` }))).id;
+      });
+      // Aucun doublon, aucune des tâches d'origine manquante. La tardive, plus
+      // récente que le curseur, tombe AVANT lui : elle n'a rien à faire dans
+      // les pages suivantes (un `offset` l'aurait fait rejouer une ligne).
+      expect(new Set(ids).size).toBe(ids.length);
+      for (const t of created) expect(ids).toContain(t.id);
+      expect(late).not.toBe('');
+      expect((await repo.listAll({ search: token })).map((t) => t.id)).toContain(late);
+    });
+
+    contractCase(opts, 'count et listAll disent la même chose, filtres de statut compris', async () => {
+      const token = unique('Compte');
+      const open = await repo.create(input({ name: `${token} ouverte` }));
+      const done = await repo.create(input({ name: `${token} faite` }));
+      await repo.toggleComplete(done.id);
+      expect(await repo.count({ search: token })).toBe(2);
+      expect((await repo.listAll({ search: token, status: 'active' })).map((t) => t.id)).toEqual([open.id]);
+      expect((await repo.listAll({ search: token, status: 'completed' })).map((t) => t.id)).toEqual([done.id]);
+      expect(await repo.count({ search: token, status: 'completed' })).toBe(1);
+    });
+
+    contractCase(opts, 'fenêtre de complétion : completedSince inclus, completedBefore exclu', async () => {
+      const token = unique('Fenetre');
+      const done = await repo.create(input({ name: `${token} faite` }));
+      const { task } = await repo.toggleComplete(done.id);
+      const at = task.completedAt!;
+      const t = new Date(at).getTime();
+      const iso = (ms: number) => new Date(ms).toISOString();
+      expect((await repo.listAll({ search: token, completedSince: iso(t - 60_000) })).map((x) => x.id)).toEqual([done.id]);
+      expect(await repo.listAll({ search: token, completedSince: iso(t + 60_000) })).toEqual([]);
+      expect((await repo.listAll({ search: token, completedBefore: iso(t + 60_000) })).map((x) => x.id)).toEqual([done.id]);
+      expect(await repo.listAll({ search: token, completedBefore: iso(t - 60_000) })).toEqual([]);
+    });
+
+    contractCase(opts, 'une liste de filtres vide ne rend rien, sans erreur', async () => {
+      expect(await repo.listAll({ ids: [] })).toEqual([]);
+      expect(await repo.count({ categories: [] })).toBe(0);
+      expect((await repo.getPage({ query: { priorities: [] } })).data).toEqual([]);
+    });
+
+    contractCase(opts, 'recherche : sous-chaîne sans casse, % et _ pris à la lettre', async () => {
+      const token = unique('Joker');
+      const hit = await repo.create(input({ name: `${token} 100%_fait` }));
+      await repo.create(input({ name: `${token} 100 fait` }));
+      expect((await repo.listAll({ search: `${token} 100%_`.toUpperCase() })).map((t) => t.id)).toEqual([hit.id]);
     });
   });
 }

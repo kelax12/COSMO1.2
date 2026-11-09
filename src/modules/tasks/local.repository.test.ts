@@ -89,8 +89,10 @@ describe('écriture', () => {
     const p1 = await repo.getPage({ limit: 5 });
     expect(p1.data).toHaveLength(5);
     expect(p1.hasMore).toBe(true);
-    const p2 = await repo.getPage({ limit: 5, cursor: p1.nextCursor! });
-    expect(p2.data[0].id).not.toBe(p1.data[0].id);
+    const p2 = await repo.getPage({ limit: 5, cursor: p1.nextCursor!, cursorDate: p1.nextCursorDate! });
+    expect(p2.data).not.toHaveLength(0);
+    const ids1 = new Set(p1.data.map((t) => t.id));
+    expect(p2.data.some((t) => ids1.has(t.id))).toBe(false);
   });
 });
 
