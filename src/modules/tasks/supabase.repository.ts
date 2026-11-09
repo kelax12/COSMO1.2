@@ -1,12 +1,14 @@
 import { supabase } from '@/lib/supabase';
 import { getCurrentUser } from '@/lib/auth-user';
 import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
-import { ITasksRepository, ToggleCompleteResult } from './repository';
+import { ITasksRepository, ToggleCompleteResult, type TaskPageParams } from './repository';
 import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskDependency } from './types';
 import { TaskRow, TaskDbInput, mapTaskFromDb, mapTaskToDb } from './mappers';
-import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE, assertValidCursor } from '@/lib/pagination.types';
-import { warnIfTruncated } from '@/lib/pagination.warning';
-import { fetchAllPages, MAX_ROWS } from '@/lib/fetch-all-pages';
+import { PaginatedResult, DEFAULT_PAGE_SIZE, assertValidCursor } from '@/lib/pagination.types';
+import { fetchAllByCursor } from '@/lib/fetch-all-pages';
+import {
+  type TaskQuery, type TaskCursor, isEmptyTaskQuery, wantsCompleted, escapeLikePattern, assertSupportedTaskQuery,
+} from './task-query';
 import type { CreateOptions } from '@/lib/restore-id';
 import { dayEndInTz, dayStartISOInTz } from '@/lib/timezone';
 
@@ -24,42 +26,125 @@ type TaskDbCreateInput = Omit<TaskDbInput, 'user_id'> & { user_id: string };
 const TASK_LIST_COLUMNS =
   'id,name,priority,category,deadline,estimated_time,created_at,updated_at,bookmarked,completed,completed_at,subtasks,kr_id,recurrence,is_collaborative,pending_invites,user_id,status,health' as const;
 
+/** Taille d'une page de clé quand on enchaîne tout un sous-ensemble (listAll). */
+const LIST_ALL_PAGE_SIZE = 1000;
+
+/** Ce que `applyQuery` appelle sur un constructeur PostgREST. */
+interface TaskFilterBuilder {
+  eq(column: string, value: unknown): TaskFilterBuilder;
+  gte(column: string, value: unknown): TaskFilterBuilder;
+  lt(column: string, value: unknown): TaskFilterBuilder;
+  lte(column: string, value: unknown): TaskFilterBuilder;
+  ilike(column: string, pattern: string): TaskFilterBuilder;
+  in(column: string, values: readonly unknown[]): TaskFilterBuilder;
+  is(column: string, value: null): TaskFilterBuilder;
+}
+
 export class SupabaseTasksRepository implements ITasksRepository {
   // ═══════════════════════════════════════════════════════════════════
   // READ OPERATIONS
   // ═══════════════════════════════════════════════════════════════════
-
   async getAll(): Promise<Task[]> {
+    return this.listAll({});
+  }
+
+  // ⚠️ Toutes les lectures de liste passent par la RPC `get_my_tasks()` et NON
+  // `.from('tasks')` : c'est le correctif C1 de l'audit architecture 2026-08-07.
+  //
+  // La policy `tasks_select_own_or_shared` (mig. 049) est un OR entre une
+  // égalité et un EXISTS : Postgres ne peut alors PAS utiliser
+  // `idx_tasks_user_id` et fait un Seq Scan de la table GLOBALE, puis trie.
+  // `get_my_tasks()` (mig. 085) exprime les deux ensembles en UNION de deux
+  // branches indexables. PostgREST applique select/filtres/order/limit à une
+  // RPC `SETOF` exactement comme à une table.
+  //
+  // V14.1 (PER-01) : plus de `fetchAllPages` plafonné à 5 000 lignes. Les
+  // écrans lisent un SOUS-ENSEMBLE (`TaskQuery`), page par page ou en entier
+  // quand il est borné par nature, et le compte vient de `count()`.
+
+  /** Applique les filtres d'une `TaskQuery` (miroir : `matchesTaskQuery`). */
+  private applyQuery<B>(builder: B, q: TaskQuery): B {
+    // Typage volontairement minimal : les génériques de PostgREST, rappliqués
+    // filtre après filtre, dépassent la profondeur d'instanciation de tsc.
+    let b = builder as unknown as TaskFilterBuilder;
+    if (q.status === 'active') b = b.eq('completed', false);
+    if (wantsCompleted(q)) b = b.eq('completed', true);
+    if (q.completedSince) b = b.gte('completed_at', q.completedSince);
+    if (q.completedBefore) b = b.lt('completed_at', q.completedBefore);
+    if (q.search) b = b.ilike('name', `%${escapeLikePattern(q.search)}%`);
+    if (q.categories) {
+      // `''` (sans catégorie) est NULL en base (`mapTaskToDb`) : cf.
+      // `assertSupportedTaskQuery`, la démo refuse la même combinaison.
+      assertSupportedTaskQuery(q);
+      b = q.categories.includes('') ? b.is('category', null) : b.in('category', [...q.categories]);
+    }
+    if (q.priorities) b = b.in('priority', [...q.priorities]);
+    if (q.ids) b = b.in('id', [...q.ids]);
+    // Clés de jour → instants du fuseau retenu, sinon Postgres les caste en
+    // minuit UTC et la borne glisse d'un jour (même règle que getFiltered).
+    if (q.deadlineFrom) b = b.gte('deadline', dayStartISOInTz(q.deadlineFrom));
+    if (q.deadlineTo) b = b.lte('deadline', dayEndInTz(q.deadlineTo).toISOString());
+    return b as unknown as B;
+  }
+
+  /** Une page de clé, lignes brutes : la brique commune de getPage et listAll. */
+  private async fetchKeysetPage(
+    q: TaskQuery,
+    limit: number,
+    cursor: TaskCursor | null,
+  ): Promise<{ rows: TaskRow[]; hasMore: boolean }> {
     if (!supabase) throw new Error('Supabase not configured');
-    const db = supabase;
-    // ⚠️ Lecture via la RPC `get_my_tasks()` et NON `.from('tasks')` — c'est
-    // le correctif C1 de l'audit architecture 2026-08-07.
-    //
-    // La policy `tasks_select_own_or_shared` (mig. 049) est un OR entre une
-    // égalité et un EXISTS : Postgres ne peut alors PAS utiliser
-    // `idx_tasks_user_id` et fait un Seq Scan de la table GLOBALE, puis trie.
-    // Vérifié par EXPLAIN en prod. Le coût d'une lecture croissait donc avec le
-    // volume total de la plateforme, pas avec celui de l'utilisateur.
-    //
-    // `get_my_tasks()` (mig. 085) exprime les deux ensembles en UNION de deux
-    // branches indexables → Index Scan. Le périmètre reste dérivé de
-    // `auth.uid()` seul (aucun paramètre), et les policies RLS restent en place
-    // sur la table pour tout accès direct.
-    //
-    // PostgREST applique select/order/range à une RPC `SETOF` exactement comme
-    // à une table : la pagination et la réduction de colonnes sont préservées.
-    const rows = await fetchAllPages(async (from, to) => {
-      const { data, error } = await db
+    if (isEmptyTaskQuery(q)) return { rows: [], hasMore: false };
+    let query = this.applyQuery(
+      supabase
         .rpc('get_my_tasks')
         .select(TASK_LIST_COLUMNS)
         .order('created_at', { ascending: false })
-        .order('id', { ascending: false })
-        .range(from, to);
-      if (error) throw normalizeApiError(error);
-      return (data || []) as unknown as TaskRow[];
-    });
+        .order('id', { ascending: false }),
+      q,
+    ).limit(limit + 1); // +1 pour savoir s'il y a une page suivante
 
-    return this.enrichSharedBy(warnIfTruncated(rows, MAX_ROWS, 'tasks').map(mapTaskFromDb));
+    if (cursor) {
+      // Validé AVANT d'être interpolé dans `.or()` (faille N6).
+      assertValidCursor(cursor.id, cursor.createdAt);
+      query = query.or(
+        `created_at.lt.${cursor.createdAt},and(created_at.eq.${cursor.createdAt},id.lt.${cursor.id})`
+      );
+    }
+
+    const { data, error } = await query;
+    if (error) throw normalizeApiError(error);
+    const rows = (data || []) as unknown as TaskRow[];
+    const hasMore = rows.length > limit;
+    return { rows: hasMore ? rows.slice(0, limit) : rows, hasMore };
+  }
+
+  async listAll(query: TaskQuery = {}): Promise<Task[]> {
+    const rows = await fetchAllByCursor<TaskRow, TaskCursor>(
+      async (cursor) => {
+        const page = await this.fetchKeysetPage(query, LIST_ALL_PAGE_SIZE, cursor);
+        const last = page.rows[page.rows.length - 1];
+        return {
+          rows: page.rows,
+          next: page.hasMore && last?.created_at ? { id: last.id, createdAt: last.created_at } : null,
+        };
+      },
+      (a, b) => a.id === b.id && a.createdAt === b.createdAt,
+    );
+    return this.enrichSharedBy(rows.map(mapTaskFromDb));
+  }
+
+  async count(query: TaskQuery = {}): Promise<number> {
+    if (!supabase) throw new Error('Supabase not configured');
+    if (isEmptyTaskQuery(query)) return 0;
+    // `head` : aucune ligne transférée, PostgREST rend le total dans
+    // `Content-Range`. Même chemin indexable que les lectures (C1).
+    const { count, error } = await this.applyQuery(
+      supabase.rpc('get_my_tasks', undefined, { head: true, count: 'exact' }),
+      query,
+    );
+    if (error) throw normalizeApiError(error);
+    return count ?? 0;
   }
 
   /**
@@ -102,41 +187,16 @@ export class SupabaseTasksRepository implements ITasksRepository {
     );
   }
 
-  async getPage(params: PaginationParams = {}): Promise<PaginatedResult<Task>> {
-    if (!supabase) throw new Error('Supabase not configured');
-
+  async getPage(params: TaskPageParams = {}): Promise<PaginatedResult<Task>> {
     const limit = params.limit ?? DEFAULT_PAGE_SIZE;
-
-    // Même chemin indexable que getAll (cf. C1) : une RPC `SETOF` se filtre,
-    // s'ordonne et se pagine comme une table côté PostgREST.
-    let query = supabase
-      .rpc('get_my_tasks')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .order('id', { ascending: false })
-      .limit(limit + 1); // +1 pour détecter s'il y a une page suivante
-
-    // Applique le cursor si fourni (pagination cursor-based)
-    if (params.cursor && params.cursorDate) {
-      assertValidCursor(params.cursor, params.cursorDate);
-      query = query.or(
-        `created_at.lt.${params.cursorDate},and(created_at.eq.${params.cursorDate},id.lt.${params.cursor})`
-      );
-    }
-
-    const { data, error } = await query;
-    if (error) throw normalizeApiError(error);
-
-    const rows = data || [];
-    const hasMore = rows.length > limit;
-    const items = hasMore ? rows.slice(0, limit) : rows;
-    const lastItem = items[items.length - 1];
-
+    const cursor = params.cursor && params.cursorDate ? { id: params.cursor, createdAt: params.cursorDate } : null;
+    const { rows, hasMore } = await this.fetchKeysetPage(params.query ?? {}, limit, cursor);
+    const lastItem = rows[rows.length - 1];
     return {
-      data: await this.enrichSharedBy(items.map(mapTaskFromDb)),
+      data: await this.enrichSharedBy(rows.map(mapTaskFromDb)),
       hasMore,
       nextCursor: hasMore && lastItem ? lastItem.id : null,
-      nextCursorDate: hasMore && lastItem ? lastItem.created_at : null,
+      nextCursorDate: hasMore && lastItem ? lastItem.created_at ?? null : null,
     };
   }
 
