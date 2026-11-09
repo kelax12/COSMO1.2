@@ -271,6 +271,8 @@ const TABLES_NON_EXPORTEES = {
   user_activity_days: 'Compteur de présence agrégé, dérivé, jamais saisi.',
   account_inactivity_notices: "Date d'un avertissement de suppression pour inactivité (mig. 226, C-121), produite par le système. Un compte qui peut demander son export est, par définition, revenu : la ligne n'ouvre alors plus rien.",
   admin_users: "Allowlist d'administration, pas une donnée de compte.",
+  // ⚠️ Pas une exclusion de fond : la même donnée sort par `habits.completions`.
+  habit_completions: "Mêmes jours cochés que `habits.completions` (mig. 248), dont elle est la copie pendant la transition : ils sortent par `exportHabitsCSV` (en-tête `completions`). À faire entrer dans EXPORTS le jour où la colonne est retirée.",
   affiliate_contacts: "Fiche saisie par les affiliateurs (mig. 236), pas fournie par la personne (art. 20 : données fournies). Effacée avec le compte.",
   email_lookup_quota: 'Compteur anti-abus, technique.',
   org_member_permissions: "Droits accordés PAR l'organisation, pas fournis par la personne.",
