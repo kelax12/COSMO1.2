@@ -99,7 +99,7 @@ const ident = (s) => `"${String(s).replace(/"/g, '""')}"`;
  * buckets et des taches `pg_cron`. Rendus en texte stable a partir du
  * catalogue (aucun identifiant interne, aucun jobid).
  */
-export function rendreComplements({ triggers, policies, buckets, cron }) {
+export function rendreComplements({ triggers, policies, buckets, cron, publications = [] }) {
   const out = ['-- ─── Objets poses hors du schema `public` par les migrations ───', ''];
   out.push('-- Triggers hors `public` qui appellent une fonction de `public`', '');
   for (const t of triggers) out.push(`${t.def};`);
@@ -122,6 +122,11 @@ export function rendreComplements({ triggers, policies, buckets, cron }) {
   out.push('', '-- pg_cron (nom, planning, commande)', '');
   for (const c of cron) out.push(`SELECT cron.schedule(${guillemets(c.jobname)}, ${guillemets(c.schedule)}, ${guillemets(c.command)});`);
   if (cron.length === 0) out.push('-- (aucune)');
+  // Realtime (ROB-02, 2026-11-09) : une table hors de la publication ne pousse
+  // plus rien au front, et `pg_dump --schema=public` ne le montre pas.
+  out.push('', '-- Publications (tables diffusees par Realtime)', '');
+  for (const p of publications) out.push(`ALTER PUBLICATION ${ident(p.pubname)} ADD TABLE ${ident(p.schemaname)}.${ident(p.tablename)};`);
+  if (publications.length === 0) out.push('-- (aucune)');
   return out.join('\n') + '\n';
 }
 
@@ -177,6 +182,11 @@ select id, public, file_size_limit, allowed_mime_types
 export const SQL_CRON = `
 select jobname, schedule, command from cron.job order by jobname, schedule, command`;
 
+export const SQL_PUBLICATIONS = `
+select pubname, schemaname, tablename from pg_publication_tables
+ where schemaname = 'public'
+ order by pubname, schemaname, tablename`;
+
 const tri = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 
 /** Une table optionnelle (storage, cron) : absente de la stack, la liste est vide et on le dit. */
@@ -193,7 +203,8 @@ export async function lireBase(client) {
   const policies = (await client.query(SQL_POLICIES_HORS_PUBLIC)).rows;
   const buckets = await lireOptionnel(client, 'storage.buckets', SQL_BUCKETS);
   const cron = await lireOptionnel(client, 'cron.job', SQL_CRON);
-  return { fonctions, complements: { triggers, policies, buckets, cron } };
+  const publications = (await client.query(SQL_PUBLICATIONS)).rows;
+  return { fonctions, complements: { triggers, policies, buckets, cron, publications } };
 }
 
 const EXCLUS_DOSSIER = new Set(['node_modules', '.git', 'dist', 'coverage', '__test__', '__tests__', 'test', 'generated']);

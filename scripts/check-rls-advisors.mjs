@@ -36,10 +36,14 @@
 //
 // Sortie : 1 si au moins une violation, 0 sinon.
 // ═══════════════════════════════════════════════════════════════════
-import { readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync } from 'node:fs';
 
-const DIR = 'supabase/migration';
+import { listerMigrations } from './migrations-fichiers.mjs';
+
+// L'historique `supabase/migration/` puis les migrations posterieures de
+// `supabase/migrations/`, baseline exclue (ROB-02, `migrations-fichiers.mjs`).
+const ENTREES = new Map(listerMigrations().map((e) => [e.fichier, e]));
+const lire = (f) => readFileSync(ENTREES.get(f).chemin, 'utf8');
 
 // ── Plancher : à partir de quelle migration la règle s'applique ─────
 //
@@ -68,9 +72,9 @@ const EXEMPT = new Set([
   // (aucune aujourd'hui)
 ]);
 
-const allFiles = readdirSync(DIR).filter((f) => f.endsWith('.sql')).sort();
+const allFiles = [...ENTREES.keys()];
 
-const files = allFiles.filter((f) => Number.parseInt(f.slice(0, 3), 10) >= RULE_FLOOR);
+const files = allFiles.filter((f) => ENTREES.get(f).num >= RULE_FLOOR);
 
 // ── Droits d'EXÉCUTION des fonctions, rejoués dans l'ordre ──────────
 //
@@ -85,7 +89,7 @@ const GRANT_RE =
   /(REVOKE|GRANT)\s+(?:ALL|EXECUTE)(?:\s+PRIVILEGES)?\s+ON\s+FUNCTION\s+(?:public\.)?(\w+)\s*\([^)]*\)\s*(FROM|TO)\s+([^;]+);/gi;
 
 for (const file of allFiles) {
-  const sql = readFileSync(join(DIR, file), 'utf8');
+  const sql = lire(file);
   for (const m of sql.matchAll(GRANT_RE)) {
     const [, verb, fn, , roles] = m;
     if (!/\bauthenticated\b/i.test(roles)) continue;
@@ -104,7 +108,7 @@ for (const file of files) {
   // sauvegarde en en-tête le corps des policies qu'elle remplace (retour
   // arrière, mig. 243 et 244). Un `CREATE POLICY` écrit dans un `--` n'est
   // pas du code, et le compter ressusciterait la policy qu'on vient de retirer.
-  const sql = readFileSync(join(DIR, file), 'utf8')
+  const sql = lire(file)
     .replace(/\/\*[\s\S]*?\*\//g, ' ')
     .replace(/--[^\n]*/g, '');
 

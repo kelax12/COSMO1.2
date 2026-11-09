@@ -187,7 +187,7 @@ describe('appelants du front, trouves par texte', () => {
 });
 
 describe('schema.sql et complements hors `public`', () => {
-  const vide = { triggers: [], policies: [], buckets: [], cron: [] };
+  const vide = { triggers: [], policies: [], buckets: [], cron: [], publications: [] };
 
   it('assemblage : en-tete, dump normalise, complements', () => {
     const s = assemblerSchema('-- Dumped from x\nCREATE TABLE t;\n', vide);
@@ -214,7 +214,12 @@ describe('schema.sql et complements hors `public`', () => {
   });
 
   it('les sections vides le disent au lieu de disparaitre', () => {
-    expect(rendreComplements(vide).match(/-- \(aucun/g)).toHaveLength(4);
+    expect(rendreComplements(vide).match(/-- \(aucun/g)).toHaveLength(5);
+  });
+
+  it('rend les tables publiees par Realtime (ROB-02) : une table retiree de la publication se voit', () => {
+    const t = rendreComplements({ ...vide, publications: [{ pubname: 'supabase_realtime', schemaname: 'public', tablename: 'shared_tasks' }] });
+    expect(t).toContain('ALTER PUBLICATION "supabase_realtime" ADD TABLE "public"."shared_tasks";');
   });
 });
 

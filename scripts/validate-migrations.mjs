@@ -31,11 +31,17 @@
 //
 // Codes de sortie : 1 si au moins une ERREUR, 0 sinon (les WARN n'échouent pas).
 // ═══════════════════════════════════════════════════════════════════
-import { readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync } from 'node:fs';
 
-const DIR = 'supabase/migration';
-const NAME_RE = /^\d{3}_[a-z0-9_]+\.sql$/;
+import { listerMigrations, DOSSIER_CLI } from './migrations-fichiers.mjs';
+
+// L'historique `supabase/migration/` puis les migrations posterieures de
+// `supabase/migrations/`, baseline exclue (ROB-02, `migrations-fichiers.mjs`).
+const ENTREES = new Map(listerMigrations().map((e) => [e.fichier, e]));
+const valide = (f) => ENTREES.get(f).valide;
+const lire = (f) => readFileSync(ENTREES.get(f).chemin, 'utf8');
+const numDe = (f) => ENTREES.get(f).num;
+const estCli = (f) => ENTREES.get(f).dossier === DOSSIER_CLI;
 
 // Plancher de la regle 5 — CLIQUET, pas audit retroactif.
 //
@@ -69,19 +75,19 @@ let warnings = 0;
 const err = (f, m) => { console.error(`✖ ${f}: ${m}`); errors++; };
 const warn = (f, m) => { console.warn(`⚠ ${f}: ${m}`); warnings++; };
 
-const files = readdirSync(DIR).filter((f) => f.endsWith('.sql')).sort();
+const files = [...ENTREES.keys()];
 const seenNumbers = new Map();
 
 for (const f of files) {
-  if (!NAME_RE.test(f)) {
-    err(f, 'nom invalide (attendu NNN_snake_case.sql)');
+  if (!valide(f)) {
+    err(f, `nom invalide (attendu ${estCli(f) ? '<14 chiffres>_snake_case.sql' : 'NNN_snake_case.sql'})`);
     continue;
   }
-  const num = f.slice(0, 3);
+  const num = estCli(f) ? f.slice(0, 14) : f.slice(0, 3);
   if (seenNumbers.has(num)) warn(f, `numéro ${num} déjà utilisé par ${seenNumbers.get(num)}`);
   else seenNumbers.set(num, f);
 
-  const sql = readFileSync(join(DIR, f), 'utf8');
+  const sql = lire(f);
 
   // (2) Guillemets échappés dans une policy.
   if (/CREATE\s+POLICY[\s\S]*?\\"/i.test(sql)) {
@@ -90,7 +96,7 @@ for (const f of files) {
 
   // (4) UPDATE policy sans WITH CHECK — avertissement (faille N1).
   //     A partir du cliquet, c'est une ERREUR, jugee par la regle 8.
-  if (Number(num) >= CHECKLIST_FLOOR) continue;
+  if (numDe(f) >= CHECKLIST_FLOOR) continue;
   for (const stmt of sql.match(/CREATE\s+POLICY[\s\S]*?;/gi) ?? []) {
     if (/FOR\s+UPDATE/i.test(stmt) && !/WITH\s+CHECK/i.test(stmt)) {
       warn(f, 'policy FOR UPDATE sans WITH CHECK — vérifier (faille N1)');
@@ -121,9 +127,9 @@ const REVOKE_FN_RE =
   /REVOKE\s+(?:ALL|EXECUTE)(?:\s+PRIVILEGES)?\s+ON\s+FUNCTION\s+(?:public\.)?(\w+)\s*\([^)]*\)\s*FROM\s+([^;]+);/gi;
 
 for (const f of files) {
-  if (!NAME_RE.test(f)) continue;
-  const sql = readFileSync(join(DIR, f), 'utf8');
-  const num = Number.parseInt(f.slice(0, 3), 10);
+  if (!valide(f)) continue;
+  const sql = lire(f);
+  const num = numDe(f);
 
   for (const m of sql.matchAll(
     // `RETURNS TRIGGER` doit suivre IMMÉDIATEMENT la liste d'arguments :
@@ -293,9 +299,9 @@ const tablesUserId = new Map(); // table -> fichier
 const fonctionsNeuves = new Map(); // nom -> { file, ...fonction }
 
 for (const f of files) {
-  if (!NAME_RE.test(f)) continue;
-  const num = Number.parseInt(f.slice(0, 3), 10);
-  const sql = sansCommentaires(readFileSync(join(DIR, f), 'utf8'));
+  if (!valide(f)) continue;
+  const num = numDe(f);
+  const sql = sansCommentaires(lire(f));
   const neuve = num >= CHECKLIST_FLOOR;
   const rlsIci = new Set(); // tables dont CE fichier active la RLS
 
