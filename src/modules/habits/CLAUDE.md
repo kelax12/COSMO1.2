@@ -40,6 +40,19 @@ calculés **serveur sur l'historique entier** : `streak_current`, `streak_best`,
   par habitude). La RPC plafonne à 3 650 quoi qu'on demande.
 - La table n'est PAS modifiée : rien n'est supprimé, c'est la LECTURE qui est bornée.
 
+### 🗂️ `habit_completions` (mig. 248, DAT-02) : commitée, PAS appliquée en prod
+
+Une ligne par habitude et par jour COCHÉ (date locale, mêmes clés que le JSON). Les trois RPC
+(`get_my_habits`, `toggle_habit_completion_v2`, `get_work_time_stats`) gardent signature et forme :
+le front marche avant comme après application.
+
+- 🔴 **La carte `completions` ne porte que les jours cochés** : décocher RETIRE la clé
+  (`toggleCompletionDay`, `streak.ts`), en démo comme dans le cache optimiste. Jamais `false`.
+- ⚠️ **Transition** : `habits.completions` reste exacte (le toggle v2 recopie, le trigger
+  `habit_completions_mirror` recopie toute autre écriture de la colonne). Lecteurs restants de la
+  colonne : CLI agent (`scripts/cosmo/api.mjs`, v1), export CSV, `getPage`, `e2e/real/habits.spec.ts`.
+  ❌ Ne pas retirer la colonne avant de les avoir basculés.
+
 
 ---
 

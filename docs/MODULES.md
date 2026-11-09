@@ -25,7 +25,7 @@ Tous suivent la même forme ([`src/modules/CLAUDE.md`](../src/modules/CLAUDE.md)
 | Module | Tables | RPC | À savoir | Écran |
 |---|---|---|---|---|
 | `tasks` | `tasks`, `task_dependencies` | 3 | récurrence, `snooze.ts`, `status-sync.ts`, Realtime des partagées · [CLAUDE.md](../src/modules/tasks/CLAUDE.md) | `pages/TasksPage.tsx`, `components/task-*` |
-| `habits` | `habits` | 1 | `completions` en date machine (gelé) · `streak.ts` · [CLAUDE.md](../src/modules/habits/CLAUDE.md) | `pages/HabitsPage.tsx`, `components/Habit*` |
+| `habits` | `habits`, `habit_completions` (mig. 248, non appliquée) | 1 | `completions` en date machine (gelé) · `streak.ts` · [CLAUDE.md](../src/modules/habits/CLAUDE.md) | `pages/HabitsPage.tsx`, `components/Habit*` |
 | `okrs` | `okrs`, `key_results`, `kr_completions` | 0 | `progress.ts`, restauration du journal · [CLAUDE.md](../src/modules/okrs/CLAUDE.md) | `pages/OKRPage.tsx`, `pages/okr/` |
 | `kr-completions` | `kr_completions` | 0 | journal append-only lu par les graphiques (cap 100/write) | dashboard, statistiques |
 | `categories` | `categories` | 0 | arbre (`tree.ts`), impact de suppression (`impact.ts`) · [CLAUDE.md](../src/modules/categories/CLAUDE.md) | `components/category/` |
