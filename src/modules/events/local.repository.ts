@@ -14,6 +14,35 @@ import { DEMO_EVENTS, seedMemberEvents, KNOWN_DEMO_MEMBER_IDS } from './local.se
 
 const MEMBER_EVENTS_STORAGE_KEY = 'cosmo_demo_member_events';
 
+// Mêmes refus et mêmes valeurs par défaut que la base (contrat de parité V12.2) :
+// CHECK `end_after_start` (mig. 004), CHECK `events_recurrence_check` (mig. 010, 030),
+// défauts de colonnes (`recurrence`, `recurrence_days`, `exceptions`, `is_private`)
+// que `mapEventFromDb` rend à la lecture.
+const RECURRENCES: ReadonlySet<string> = new Set(['none', 'daily', 'weekly', 'custom']);
+
+function assertEvent(e: Pick<CalendarEvent, 'start' | 'end' | 'recurrence'>): void {
+  if (e.recurrence !== undefined && !RECURRENCES.has(e.recurrence)) throw makeApiError('invalid_input');
+  const start = Date.parse(e.start);
+  const end = Date.parse(e.end);
+  if (!Number.isNaN(start) && !Number.isNaN(end) && end < start) throw makeApiError('invalid_input');
+}
+
+/** Une entrée de création, avec les valeurs que la base lui donnerait. */
+function withDbDefaults(input: CreateEventInput): CreateEventInput {
+  assertEvent(input);
+  return {
+    ...input,
+    recurrence: input.recurrence ?? 'none',
+    recurrenceDays: input.recurrenceDays ?? [],
+    exceptions: input.exceptions ?? [],
+    isPrivate: input.isPrivate ?? false,
+    reviewDismissedAt: input.reviewDismissedAt ?? null,
+  };
+}
+
+const byStartAsc = (a: CalendarEvent, b: CalendarEvent): number =>
+  Date.parse(a.start) - Date.parse(b.start) || a.id.localeCompare(b.id);
+
 // ═══════════════════════════════════════════════════════════════════
 // LOCAL STORAGE REPOSITORY IMPLEMENTATION
 // ═══════════════════════════════════════════════════════════════════
@@ -44,8 +73,9 @@ export class LocalStorageEventsRepository implements IEventsRepository {
   // READ OPERATIONS
   // ═══════════════════════════════════════════════════════════════════
 
+  // Même ordre que la base : début croissant (`ORDER BY start_time, id`).
   async getAll(): Promise<CalendarEvent[]> {
-    return this.getEvents();
+    return [...this.getEvents()].sort(byStartAsc);
   }
 
   async getByTaskId(taskId: string): Promise<CalendarEvent[]> {
@@ -54,7 +84,7 @@ export class LocalStorageEventsRepository implements IEventsRepository {
   }
 
   async getWindow(startISO: string, endISO: string): Promise<CalendarEvent[]> {
-    return selectEventsInWindow(this.getEvents(), startISO, endISO);
+    return selectEventsInWindow(this.getEvents(), startISO, endISO).sort(byStartAsc);
   }
 
   // ── Agendas des membres (mode entreprise démo) ─────────────────────
@@ -92,14 +122,14 @@ export class LocalStorageEventsRepository implements IEventsRepository {
     const list = store[userId] ?? this.getMemberEvents(userId);
     // createdBy = le manager (utilisateur démo courant) : dans l'agenda perso
     // du subordonné, l'avatar du manager distinguera cet événement pro.
-    const newEvent: CalendarEvent = { ...input, id: crypto.randomUUID(), createdBy: 'demo-user' };
+    const newEvent: CalendarEvent = { ...withDbDefaults(input), id: crypto.randomUUID(), createdBy: 'demo-user' };
     store[userId] = [...list, newEvent];
     this.saveMemberStore(store);
     return newEvent;
   }
 
   async getFiltered(filters: EventFilters): Promise<CalendarEvent[]> {
-    let events = this.getEvents();
+    let events = [...this.getEvents()].sort(byStartAsc);
 
     if (filters.taskId) {
       events = events.filter(e => e.taskId === filters.taskId);
@@ -131,7 +161,7 @@ export class LocalStorageEventsRepository implements IEventsRepository {
   async create(input: CreateEventInput, options?: CreateOptions): Promise<CalendarEvent> {
     const events = this.getEvents();
     const newEvent: CalendarEvent = {
-      ...input,
+      ...withDbDefaults(input),
       // Parite avec le repository Supabase : `restoreId` vient d'un
       // « Annuler », jamais d'un formulaire (R-08).
       id: options?.restoreId ?? crypto.randomUUID(),
@@ -150,6 +180,7 @@ export class LocalStorageEventsRepository implements IEventsRepository {
     }
 
     const updatedEvent: CalendarEvent = { ...events[index], ...updates };
+    assertEvent(updatedEvent);
     events[index] = updatedEvent;
     this.saveEvents(events);
     return updatedEvent;
@@ -161,6 +192,7 @@ export class LocalStorageEventsRepository implements IEventsRepository {
       const idx = store[uid].findIndex(e => e.id === id);
       if (idx !== -1) {
         const updated: CalendarEvent = { ...store[uid][idx], ...updates };
+        assertEvent(updated);
         store[uid][idx] = updated;
         this.saveMemberStore(store);
         return updated;
@@ -184,14 +216,17 @@ export class LocalStorageEventsRepository implements IEventsRepository {
           return;
         }
       }
-      throw makeApiError('not_found');
+      // Identifiant inconnu : sans effet, comme le DELETE de la base (zéro ligne,
+      // pas d'erreur). Le retirer deux fois, c'est l'avoir retiré.
+      return;
     }
 
     this.saveEvents(filtered);
   }
 
   async getPage(params: PaginationParams = {}): Promise<PaginatedResult<CalendarEvent>> {
-    const events = this.getEvents();
+    // Même ordre que la base : début décroissant (`ORDER BY start_time DESC, id DESC`).
+    const events = [...this.getEvents()].sort((a, b) => byStartAsc(b, a));
     const limit = params.limit ?? DEFAULT_PAGE_SIZE;
     let startIndex = 0;
     if (params.cursor) {

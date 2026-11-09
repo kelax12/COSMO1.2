@@ -217,7 +217,11 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
 
     const keyResults: TeamKeyResult[] = [];
     if (input.keyResults.length > 0) {
-      const rows = input.keyResults.map((kr) => {
+      // PAR-03 : un lot partage le `NOW()` de son instruction, donc le même
+      // `created_at`, et la relecture (`ORDER BY created_at, id`) retombait sur
+      // l'UUID, c'est-à-dire un ordre aléatoire. Chaque KR reçoit sa milliseconde.
+      const batchStart = Date.now();
+      const rows = input.keyResults.map((kr, index) => {
         const target = kr.targetValue > 0 ? kr.targetValue : 1;
         const current = Math.max(0, Math.min(kr.currentValue ?? 0, target));
         return {
@@ -235,6 +239,7 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
           contributor_ids: kr.contributorIds ?? [],
           completed: current >= target,
           completed_at: current >= target ? new Date().toISOString() : null,
+          created_at: new Date(batchStart + index).toISOString(),
         };
       });
       const { error: krErr } = await supabase.from('team_key_results').insert(rows);

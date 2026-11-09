@@ -8,6 +8,21 @@ import { localizedDemoHabits } from './local.seed';
 
 const STORAGE_KEY = 'cosmo_demo_habits';
 
+// Mêmes refus que la base (contrat de parité V12.2) : CHECK `habits_frequency_check`
+// (mig. 002) et format de `p_date` de `toggle_habit_completion_v2` (mig. 121).
+const FREQUENCIES: ReadonlySet<string> = new Set(['daily', 'weekly', 'monthly']);
+
+function assertFrequency(frequency: unknown): void {
+  if (frequency !== undefined && !FREQUENCIES.has(frequency as string)) throw makeApiError('invalid_input');
+}
+
+/** Jour réel au format `YYYY-MM-DD` (le 30 février est refusé, comme par le cast `::date`). */
+function assertDayKey(date: string): void {
+  const parsed = new Date(`${date}T00:00:00Z`);
+  const valid = /^\d{4}-\d{2}-\d{2}$/.test(date) && !Number.isNaN(parsed.getTime()) && parsed.toISOString().startsWith(date);
+  if (!valid) throw makeApiError('invalid_input');
+}
+
 export class LocalStorageHabitsRepository implements IHabitsRepository {
   private getHabits(): Habit[] {
     const stored = safeParseArray<Habit>(safeGetItem(STORAGE_KEY));
@@ -30,6 +45,7 @@ export class LocalStorageHabitsRepository implements IHabitsRepository {
   }
 
   async createHabit(input: CreateHabitInput, options?: CreateOptions): Promise<Habit> {
+    assertFrequency(input.frequency);
     const habits = this.getHabits();
     const newHabit: Habit = {
       ...input,
@@ -44,6 +60,7 @@ export class LocalStorageHabitsRepository implements IHabitsRepository {
   }
 
   async updateHabit(id: string, updates: UpdateHabitInput): Promise<Habit> {
+    assertFrequency(updates.frequency);
     const habits = this.getHabits();
     const index = habits.findIndex(h => h.id === id);
     if (index === -1) throw makeApiError('not_found');
@@ -61,6 +78,7 @@ export class LocalStorageHabitsRepository implements IHabitsRepository {
   }
 
   async toggleCompletion(id: string, date: string): Promise<Habit> {
+    assertDayKey(date);
     const habits = this.getHabits();
     const index = habits.findIndex(h => h.id === id);
     if (index === -1) throw makeApiError('not_found');
