@@ -57,9 +57,9 @@ describe('date-fns sans parseur ni formatRelative dans le bundle', () => {
   // Une montée de date-fns qui change la forme des fichiers ferait échouer le
   // build ; ce test le dit plus tôt, et dit pourquoi.
   it.each(['fr', 'en-US'])('la locale %s a toujours la forme que le plugin attend', (locale) => {
-    const source = readFileSync(`node_modules/date-fns/locale/${locale}.mjs`, 'utf8');
+    const source = readFileSync(`node_modules/date-fns/locale/${locale}.js`, 'utf8');
     for (const part of LOCALE_PARTS) {
-      expect(source).toContain(`import { ${part} } from "./${locale}/_lib/${part}.mjs";`);
+      expect(source).toContain(`import { ${part} } from "./${locale}/_lib/${part}.js";`);
       expect(source).toContain(`  ${part}: ${part},`);
     }
   });

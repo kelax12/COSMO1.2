@@ -47,15 +47,22 @@ const emitVersionFile = (release: string) => ({
 // `Invalid Date` silencieuse. Cliquet : `src/i18n/date-fns-no-parse.guard.test.ts`.
 //
 // ⚠️ Si une montée de date-fns change la forme de ces fichiers, le build
-// ÉCHOUE ici plutôt que de livrer en silence la locale entière.
+// ÉCHOUE ici plutôt que de livrer en silence la locale entière. Et si elle change
+// leur NOM (date-fns 4 : `fr.js` au lieu de `fr.mjs`), le plugin ne verrait plus
+// rien passer : `generateBundle` exige donc d'avoir transformé les deux.
 const DATE_FNS_UNUSED_LOCALE_PARTS = ['match', 'formatRelative'] as const;
-const stripDateFnsLocaleParsers = () => ({
+const DATE_FNS_STRIPPED_LOCALES = ['fr', 'en-US'] as const;
+const stripDateFnsLocaleParsers = () => {
+  const seen = new Set<string>();
+  return {
   name: 'cosmo-strip-date-fns-locale-parsers',
   transform(code: string, id: string) {
-    if (!/[\\/]node_modules[\\/]date-fns[\\/]locale[\\/](fr|en-US)\.mjs$/.test(id)) return null;
+    const hit = /[\\/]node_modules[\\/]date-fns[\\/]locale[\\/](fr|en-US)\.m?js$/.exec(id);
+    if (!hit) return null;
+    seen.add(hit[1]);
     let out = code;
     for (const part of DATE_FNS_UNUSED_LOCALE_PARTS) {
-      const importLine = new RegExp(`^import \\{ ${part} \\} from "\\./(fr|en-US)/_lib/${part}\\.mjs";\\r?\\n`, 'm');
+      const importLine = new RegExp(`^import \\{ ${part} \\} from "\\./(fr|en-US)/_lib/${part}\\.m?js";\\r?\\n`, 'm');
       if (!importLine.test(out) || !out.includes(`  ${part}: ${part},`)) {
         throw new Error(`cosmo-strip-date-fns-locale-parsers : forme inattendue de ${id} (${part}), plugin à revoir`);
       }
@@ -66,7 +73,14 @@ const stripDateFnsLocaleParsers = () => ({
       ' throw new Error("COSMO : parse() et formatRelative() de date-fns retirés du bundle, cf. vite.config.ts"); } });\n';
     return { code: stub + out, map: null };
   },
-});
+  generateBundle() {
+    const missing = DATE_FNS_STRIPPED_LOCALES.filter((l) => !seen.has(l));
+    if (missing.length > 0) {
+      throw new Error(`cosmo-strip-date-fns-locale-parsers : locale(s) jamais transformée(s) : ${missing.join(', ')}. Nom de fichier changé par une montée de date-fns ? Plugin à revoir.`);
+    }
+  },
+  };
+};
 
 const APP_RELEASE = (process.env.VERCEL_GIT_COMMIT_SHA ?? '').slice(0, 7) || 'dev';
 
