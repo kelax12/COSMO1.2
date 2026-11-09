@@ -9,7 +9,7 @@ import { localizedDemoHabits } from './local.seed';
 const STORAGE_KEY = 'cosmo_demo_habits';
 
 // Mêmes refus que la base (contrat de parité V12.2) : CHECK `habits_frequency_check`
-// (mig. 002) et format de `p_date` de `toggle_habit_completion_v2` (mig. 121).
+// (mig. 002) et format du jour que la bascule serveur accepte (mig. 121).
 const FREQUENCIES: ReadonlySet<string> = new Set(['daily', 'weekly', 'monthly']);
 
 function assertFrequency(frequency: unknown): void {

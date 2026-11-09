@@ -155,6 +155,18 @@ export default defineConfig({
         // reamorcerait des cette semaine le piege qu'on vient de desamorcer.
         // On banque la marge, on remontera quand elle sera confortable.
         branches: 22,
+        // ── Planchers PAR DOSSIER d'écrans (V15.3, constat TST-02) ──
+        // Le plancher global (26 / 26 / 21 / 22) laissait `components/` à 20,4 %
+        // et `pages/` à 7,9 % (2026-10-31) : les parcours vivent là, et la
+        // moyenne de tout le dépôt les masquait. Posés sur l'artefact `coverage`
+        // du run `CI noyau` 42630208868 (2026-11-09), jamais sur un run local :
+        //   components  36,20 L / 35,04 S / 26,82 F / 32,13 B
+        //   pages       32,03 L / 30,83 S / 24,98 F / 23,89 B
+        // Règle : seuil = mesure − 0,25 point, arrondi vers le bas au demi-point
+        // (marge de 0,25 à 0,75 point, jamais plus d'un point). Remontée par
+        // paliers et interdiction de baisser : `docs/TESTING.md` § Couverture.
+        'src/components/**': { lines: 35.5, statements: 34.5, functions: 26.5, branches: 31.5 },
+        'src/pages/**': { lines: 31.5, statements: 30.5, functions: 24.5, branches: 23.5 },
         // ── Gates par fichier (code à fort risque) ──
         'src/modules/**/mappers.ts': { lines: 95, functions: 100, statements: 95, branches: 85 },
         // Repositories Supabase = frontière sécurité (anti-mass-assignment,
