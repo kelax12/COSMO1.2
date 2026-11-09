@@ -119,6 +119,26 @@ describe('zip · lu par son répertoire central', () => {
     await expect(inspecterZip(l2.taille, l2.lire)).rejects.toThrow(/lecture partielle refusée/);
   });
 
+  it('un SCHÉMA seul (schema.sql du contrat de données) n est pas un dump de données, même au-delà de 64 Ko', async () => {
+    const ddl = `--\n-- PostgreSQL database dump\n--\n${'CREATE TABLE public.t (id uuid);\n'.repeat(4000)}`;
+    const corpsFonction = '\nCREATE FUNCTION public.f() RETURNS trigger AS $$\nBEGIN\n  INSERT INTO public.notifications (id) VALUES (NEW.id);\nEND $$;\n';
+    const z = zip([{ nom: 'supabase/schema.sql', contenu: Buffer.from(ddl + corpsFonction) }]);
+    expect(await inspecterZip(z.length, lecteur(z))).toEqual([]);
+  });
+
+  it('TÉMOIN : le même dump avec des lignes de table APRÈS les 64 premiers Ko rougit (COPY ou INSERT)', async () => {
+    const ddl = `--\n-- PostgreSQL database dump\n--\n${'CREATE TABLE public.t (id uuid);\n'.repeat(4000)}`;
+    const copie = 'COPY public.profiles (id, email) FROM stdin;\n1\tpersonne@exemple.fr\n\\.\n';
+    const inserts = "INSERT INTO public.profiles (id, email) VALUES (1, 'personne@exemple.fr');\n";
+    for (const donnees of [copie, inserts]) {
+      const z = zip([{ nom: 'dump.sql', contenu: Buffer.from(ddl + donnees) }]);
+      expect((await inspecterZip(z.length, lecteur(z)))[0]?.pourquoi).toMatch(/avec des lignes de table/);
+    }
+    // Une table VIDE : COPY suivi aussitôt de la fin de bloc, pas une donnée.
+    const vide = zip([{ nom: 'dump.sql', contenu: Buffer.from(`${ddl}COPY public.t (id) FROM stdin;\n\\.\n`) }]);
+    expect(await inspecterZip(vide.length, lecteur(vide))).toEqual([]);
+  });
+
   it('un zip sans répertoire central est une ERREUR, jamais « rien trouvé »', async () => {
     const b = Buffer.from('pas un zip du tout');
     await expect(inspecterZip(b.length, lecteur(b))).rejects.toThrow(/EOCD/);
