@@ -135,7 +135,7 @@ Détail des options : [`docs/AGENT-AJOUTER-TACHE.md`](./docs/AGENT-AJOUTER-TACHE
 
 React 19 + TypeScript 6 strict (pas 7 : ADR 0015) · Vite 8 (Rolldown) · React Router 8 (imports depuis `react-router`) ·
 TanStack Query 5 · Supabase 2 · shadcn/ui (Radix + Tailwind 3) · Framer Motion · recharts ·
-FullCalendar · date-fns 3 · zod · Vitest (`*.test.ts` à côté du code) + Playwright (`e2e/`) ·
+FullCalendar · date-fns 4 · zod · Vitest (`*.test.ts` à côté du code) + Playwright (`e2e/`) ·
 Sentry · Vercel. Versions : `package.json`. Ce qu'il ne dit pas :
 
 - `npm run build` = `vite build` + prérendu `prerender/main.ts` (TypeScript, lancé par Node sans transpileur).
