@@ -61,8 +61,11 @@ vraie base.
 | `e2e/rls/contrats.test.ts` | côté **Supabase** : `npm run test:rls`, job `rls-integration` du noyau, base locale vierge, migrations rejouées |
 
 Interfaces couvertes : `tasks` et tâches d'équipe (`team-projects`), `okrs` et `team-okrs`,
-`categories` et `team-categories`, `lists` et `team-lists`, plus le temps OKR des statistiques
-(rejeu de l'incident C-77 dans `okrs.contract.ts`).
+`categories` et `team-categories`, `lists` et `team-lists`, `habits` et `events` (agenda personnel),
+plus le temps OKR des statistiques (rejeu de l'incident C-77 dans `okrs.contract.ts`).
+Hors contrat, volontairement : `getWindowForUser` et `createForUser` de `events` (agenda d'un
+subordonné), qui exigent une hiérarchie à deux comptes ; leur frontière est la RLS `events_manager_*`
+(mig. 077), jouée par `e2e/rls/`.
 
 🔴 **Côté Supabase, tout passe par un utilisateur AUTHENTIFIÉ** (clé anon + session) : le client
 `@/lib/supabase` est remplacé par le sien (`vi.mock`), donc les vraies classes `Supabase…Repository`
@@ -84,7 +87,14 @@ avec sa raison.
 | catégorie d'entreprise : boucle, cycle et profondeur non gardés | démo | démo corrigée (trigger `enforce_team_category_tree`) |
 | tâche sans priorité (0), défaut de la fiche, refusée par la base | production | `PAR-01`, `it.fails` côté Supabase, CHECK `tasks_priority_check` (mig. 001) |
 | tâche sans échéance (`''` → NULL), refusée par la base | production | `PAR-02`, `it.fails` côté Supabase, `tasks.deadline NOT NULL` (mig. 001) |
-| KR d'équipe créés en un lot relus dans un ordre aléatoire (même `created_at`, départage par UUID) | production | `PAR-03`, `it.fails` côté Supabase (six KR : un ordre juste par hasard une fois sur 720) |
+| KR d'équipe créés en un lot relus dans un ordre aléatoire (même `created_at`, départage par UUID) | production | `PAR-03`, **corrigée** : `SupabaseTeamOKRsRepository.create` pose un `created_at` par KR du lot (le cas pose six KR : un ordre juste par hasard une fois sur 720) |
+| habitude : fréquence hors `daily` / `weekly` / `monthly` acceptée | démo | démo corrigée (CHECK `habits_frequency_check`, mig. 002) |
+| habitude : jour de cochage non réel (`demain`, `2026-02-30`) accepté | démo | démo corrigée (format et existence du jour, `toggle_habit_completion_v2`) |
+| agenda : fin avant début acceptée | démo | démo corrigée (CHECK `end_after_start`, mig. 004) |
+| agenda : récurrence hors énumération acceptée | démo | démo corrigée (CHECK `events_recurrence_check`, mig. 030) |
+| agenda : `recurrence`, `recurrenceDays`, `exceptions`, `isPrivate`, `reviewDismissedAt` absents à la relecture | démo | démo corrigée (défauts de colonnes que `mapEventFromDb` rend) |
+| agenda : lectures dans l'ordre de saisie au lieu de `start_time` (croissant ; `getPage` décroissant) | démo | démo corrigée |
+| agenda : supprimer un identifiant inconnu levait `not_found` | démo | démo corrigée (le `DELETE` de la base ne lève rien : zéro ligne) |
 
 ### Ajouter un module à la suite
 
