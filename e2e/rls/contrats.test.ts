@@ -36,6 +36,8 @@ vi.mock('@/lib/supabase', () => ({
 import { SupabaseTasksRepository } from '@/modules/tasks/supabase.repository';
 import { SupabaseCategoriesRepository } from '@/modules/categories/supabase.repository';
 import { SupabaseListsRepository } from '@/modules/lists/supabase.repository';
+import { SupabaseHabitsRepository } from '@/modules/habits/supabase.repository';
+import { SupabaseEventsRepository } from '@/modules/events/supabase.repository';
 import { SupabaseOKRsRepository } from '@/modules/okrs/supabase.repository';
 import { SupabaseKRCompletionsRepository } from '@/modules/kr-completions/supabase.repository';
 import { SupabaseStatsRepository } from '@/modules/stats/supabase.repository';
@@ -47,6 +49,8 @@ import { tasksContract } from '@/test/contracts/__test__/tasks.contract';
 import { categoriesContract } from '@/test/contracts/__test__/categories.contract';
 import { listsContract } from '@/test/contracts/__test__/lists.contract';
 import { okrsContract } from '@/test/contracts/__test__/okrs.contract';
+import { habitsContract } from '@/test/contracts/__test__/habits.contract';
+import { eventsContract } from '@/test/contracts/__test__/events.contract';
 import { teamTasksContract } from '@/test/contracts/__test__/team-tasks.contract';
 import { teamOkrsContract } from '@/test/contracts/__test__/team-okrs.contract';
 import { teamCategoriesContract } from '@/test/contracts/__test__/team-categories.contract';
@@ -103,6 +107,16 @@ tasksContract(SIDE, async () => ({ repo: new SupabaseTasksRepository() }), {
 });
 categoriesContract(SIDE, async () => ({ repo: new SupabaseCategoriesRepository() }));
 listsContract(SIDE, async () => ({ repo: new SupabaseListsRepository() }));
+habitsContract(SIDE, async () => ({ repo: new SupabaseHabitsRepository() }));
+eventsContract(SIDE, async () => {
+  const tasks = new SupabaseTasksRepository();
+  return {
+    repo: new SupabaseEventsRepository(),
+    // `events.task_id` est une clé étrangère : la tâche liée doit exister.
+    newTaskId: async () =>
+      (await tasks.create({ name: 'Tâche de l’agenda', priority: 2, category: '', deadline: new Date().toISOString(), estimatedTime: 30, bookmarked: false, completed: false })).id,
+  };
+});
 okrsContract(SIDE, async () => ({
   okrs: new SupabaseOKRsRepository(),
   krCompletions: new SupabaseKRCompletionsRepository(),
@@ -110,12 +124,10 @@ okrsContract(SIDE, async () => ({
 }));
 
 teamTasksContract(SIDE, async () => ({ repo: new SupabaseTeamProjectsRepository(), orgId, userId: user.id }));
-// PAR-03 : les KR créés en un seul lot partagent `created_at` ; la relecture
-// (`ORDER BY created_at, id`) retombe sur des UUID aléatoires, l'ordre saisi est
-// perdu. Le cas pose six KR, donc ne passe par hasard qu'une fois sur 720.
-teamOkrsContract(SIDE, async () => ({ repo: new SupabaseTeamOKRsRepository(), orgId, userId: user.id }), {
-  divergences: { 'les KR se relisent dans l’ordre où ils ont été saisis': 'PAR-03' },
-});
+// PAR-03 (corrigée dans `SupabaseTeamOKRsRepository.create` : un `created_at`
+// distinct par KR du lot) : le cas d'ordre pose six KR, donc il ne passerait par
+// hasard qu'une fois sur 720 si la divergence revenait.
+teamOkrsContract(SIDE, async () => ({ repo: new SupabaseTeamOKRsRepository(), orgId, userId: user.id }));
 teamCategoriesContract(SIDE, async () => ({ repo: new SupabaseTeamCategoriesRepository(), orgId }));
 teamListsContract(SIDE, async () => {
   const projects = new SupabaseTeamProjectsRepository();

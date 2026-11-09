@@ -53,16 +53,18 @@ describe('LocalStorageEventsRepository', () => {
     await expect(repo.update('absent', { title: 'x' })).rejects.toThrow();
     await repo.delete(created.id);
     expect((await repo.getAll()).some((e) => e.id === created.id)).toBe(false);
-    await expect(repo.delete('absent')).rejects.toThrow();
+    // Identifiant inconnu : sans effet, comme le DELETE de la base (contrat de parité).
+    await expect(repo.delete('absent')).resolves.toBeUndefined();
   });
 
   it('getPage pagine avec curseur', async () => {
     seed([ev({ id: 'e1' }), ev({ id: 'e2' }), ev({ id: 'e3' })]);
     const p1 = await repo.getPage({ limit: 2 });
-    expect(p1.data.map((e) => e.id)).toEqual(['e1', 'e2']);
+    // Début décroissant, départage par identifiant décroissant : l'ordre de la base.
+    expect(p1.data.map((e) => e.id)).toEqual(['e3', 'e2']);
     expect(p1.hasMore).toBe(true);
     const p2 = await repo.getPage({ limit: 2, cursor: 'e2' });
-    expect(p2.data.map((e) => e.id)).toEqual(['e3']);
+    expect(p2.data.map((e) => e.id)).toEqual(['e1']);
     expect(p2.hasMore).toBe(false);
   });
 });

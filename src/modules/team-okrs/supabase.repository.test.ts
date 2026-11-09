@@ -150,6 +150,22 @@ describe('SupabaseTeamOKRsRepository — create', () => {
     expect(result.keyResults).toHaveLength(1);
   });
 
+  it('create: les KR d’un lot portent des created_at strictement croissants (PAR-03)', async () => {
+    supabaseMock.queueTable('team_okrs', { data: okrRow });
+    supabaseMock.queueTable('team_key_results', { data: [] });
+
+    await repo.create('org1', {
+      title: 'Ordre',
+      keyResults: ['un', 'deux', 'trois'].map((title) => ({ title, targetValue: 1 })),
+    });
+
+    const rows = supabaseMock.argsOf('team_key_results', 'insert')?.[0] as { title: string; created_at: string }[];
+    expect(rows.map((r) => r.title)).toEqual(['un', 'deux', 'trois']);
+    const instants = rows.map((r) => Date.parse(r.created_at));
+    expect(instants[1]).toBeGreaterThan(instants[0]);
+    expect(instants[2]).toBeGreaterThan(instants[1]);
+  });
+
   it('create: sans équipes ni KR → un seul INSERT (team_okrs)', async () => {
     supabaseMock.queueTable('team_okrs', { data: okrRow });
     const result = await repo.create('org1', { title: 'Simple', keyResults: [] });

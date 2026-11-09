@@ -21,6 +21,8 @@ import { tasksContract } from './__test__/tasks.contract';
 import { categoriesContract } from './__test__/categories.contract';
 import { listsContract } from './__test__/lists.contract';
 import { okrsContract } from './__test__/okrs.contract';
+import { habitsContract } from './__test__/habits.contract';
+import { eventsContract } from './__test__/events.contract';
 import { teamTasksContract } from './__test__/team-tasks.contract';
 import { teamOkrsContract } from './__test__/team-okrs.contract';
 import { teamCategoriesContract } from './__test__/team-categories.contract';
@@ -35,6 +37,16 @@ beforeAll(() => {
 tasksContract(SIDE, async () => ({ repo: new LocalStorageTasksRepository() }));
 categoriesContract(SIDE, async () => ({ repo: new LocalStorageCategoriesRepository() }));
 listsContract(SIDE, async () => ({ repo: new LocalStorageListsRepository() }));
+habitsContract(SIDE, async () => ({ repo: new LocalStorageHabitsRepository() }));
+eventsContract(SIDE, async () => {
+  const tasks = new LocalStorageTasksRepository();
+  return {
+    repo: new LocalStorageEventsRepository(),
+    // La démo n'a pas de clé étrangère : un identifiant de tâche suffit, mais on en crée une vraie.
+    newTaskId: async () =>
+      (await tasks.create({ name: 'Tâche de l’agenda', priority: 2, category: '', deadline: '', estimatedTime: 30, bookmarked: false, completed: false })).id,
+  };
+});
 okrsContract(SIDE, async () => {
   const okrs = new LocalStorageOKRsRepository();
   const krCompletions = new LocalStorageKRCompletionsRepository();
