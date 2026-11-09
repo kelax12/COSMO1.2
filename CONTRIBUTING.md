@@ -16,6 +16,11 @@ pas de file de revue de pull requests. Si vous voulez corriger un bug ou propose
 
 Les failles de sécurité ne passent **pas** par une issue : voir [`SECURITY.md`](./SECURITY.md).
 
+Le backlog du projet vit dans les issues étiquetées `backlog` (type, zone, priorité, propriétaire,
+échéance), plus dans un fichier Markdown : gabarit « Tâche de backlog »,
+[`a-faire-code.md`](./a-faire-code.md) pour le détail. Dépôt public : jamais de faiblesse
+exploitable, de donnée personnelle, de secret ni de détail d'incident dans une issue.
+
 ## Proposer une fonctionnalité de plus d'une semaine
 
 Décision du 2026-11-08 ([ADR 0013](./docs/adr/0013-validation-d-usage-avant-toute-fonctionnalite-longue.md)) :
@@ -35,6 +40,22 @@ l'issue « Proposition de fonctionnalité » qui en reprend les rubriques :
 
 Sans résultat de test, la fonctionnalité est proposée, pas validée : le code ne commence pas. Ni nom
 ni capture d'utilisateur dans la proposition (le dépôt est public).
+
+## Gel fonctionnel
+
+Décision du 2026-11-09 ([ADR 0020](./docs/adr/0020-definition-of-done-et-gel-fonctionnel.md)), qui
+complète la règle précédente :
+
+- **Pas de nouvelle fonctionnalité de plus d'une semaine sans proposition validée.** Validée veut dire
+  que les six rubriques sont remplies et que le test auprès d'au moins 5 utilisateurs a eu lieu.
+  Dans le doute sur la durée, on écrit la proposition.
+- **Une fonctionnalité à la fois.** Une seule proposition au statut « en cours » à un instant donné.
+  Les autres attendent, même validées : mieux vaut finir une fonctionnalité, tests, doc et mesure
+  d'activation compris, que d'en ouvrir une deuxième.
+- **Ce que le gel ne touche pas** : bugs, sécurité, obligations légales, outillage et CI, dette
+  technique, et les tâches du backlog qui ne sont pas des fonctionnalités.
+- Le gel n'a pas de date de fin. Il se lève fonctionnalité par fonctionnalité, par une proposition
+  validée, jamais en bloc.
 
 Aucune licence de réutilisation n'est accordée à ce jour (voir [`README.md`](./README.md#licence)) :
 proposer du code ne vaut pas cession de droits, et le mainteneur peut vous demander de le préciser
@@ -116,3 +137,36 @@ automatique.
 
 Si vous contribuez de l'extérieur, rien de tout cela ne vous est demandé : proposez, le mainteneur
 porte.
+
+## Definition of Done
+
+Une tâche est **terminée** quand les cinq critères ci-dessous sont vrais, pas quand le code est
+écrit ([ADR 0020](./docs/adr/0020-definition-of-done-et-gel-fonctionnel.md)). Ils valent pour toute
+issue de backlog et toute poussée sur `main`. Le mainteneur les relit à la clôture de l'issue.
+
+1. **`CI noyau` vert sur le SHA exact poussé.** Pas sur le commit d'avant, ni sur une branche
+   voisine : le verdict se lit sur le SHA livré
+   (`gh run list --workflow ci-noyau.yml --commit <sha>` rend `success`). Rouge, on répare tout de
+   suite, car le hook `pre-push` refuse toute autre poussée sur `main`.
+2. **Tests du parcours touché.** Le parcours de la personne qui utilise la chose, pas seulement
+   l'unité : un correctif de bug a le test qui l'aurait attrapé, vu rouge avant le correctif, et un
+   parcours d'écran a sa spec `e2e/` jouée par la CI (en local, seule la spec modifiée se lance).
+   `lint`, `typecheck` et `test:changed` à zéro erreur avant de pousser.
+3. **Double mode, démo et Supabase.** Le changement marche dans les deux backends, derrière la même
+   interface de repository. Ce qui touche le schéma suit la règle des migrations (numérotée,
+   prouvée avant application) et garde les données de démo alignées sur la base.
+4. **Doc d'état à jour dans le même commit.** Le `CLAUDE.md` du dossier, `docs/MODULES.md` ou le doc
+   de domaine qui décrivait l'ancien état. Les chiffres se génèrent (`npm run faits:generer`), ils ne
+   se recopient pas ; `npm run check:docs` reste vert. L'issue se ferme par le commit
+   (`Closes #N`), pas par une ligne retirée d'un fichier.
+5. **Revue pour tout changement de base ou de sécurité.** Migration SQL, policy RLS, repository
+   Supabase, Edge Function, authentification, facturation, CSP, secrets, workflows : une seconde
+   paire d'yeux avant `main`, soit **une seconde session** (pas celle qui a écrit le changement),
+   soit **Axel**. Le changement se pousse d'abord sur `noyau/<nom>`, `main` n'avance à ce même SHA
+   qu'une fois le noyau vert et la revue faite, et le message du commit la nomme
+   (`Revu-par : Axel` ou `Revu-par : session <nom>`). Les autres changements gardent la poussée
+   directe de l'ADR 0002, sans revue.
+
+Aucun de ces critères n'est une garde de CI en soi, à l'exception du critère 1 et de ce que le noyau
+joue déjà : ils se contrôlent à la clôture, comme la poussée directe se contrôle par ses gardes et
+non par une revue.

@@ -3,7 +3,7 @@
 # Audit VoiceOver iOS · check-list à jouer d'une traite
 
 **Statut : à jouer, ÉCHÉANCE 2026-12-15. Rien dans ce fichier n'est coché.** C'est le **quatrième** des audits
-d'accessibilité listés par `C-24` (`a-faire-code.md`), et le seul que le 2026-09-03 n'a pas passé.
+d'accessibilité listés par `C-24` (devenu l'issue n° 183, voir `a-faire-code.md`), et le seul que le 2026-09-03 n'a pas passé.
 Les trois autres (parcours clavier, modales, `/agenda`) l'ont été, sur **Chromium desktop**, avec le
 harnais `e2e/a11y-keyboard-audit.spec.ts`.
 
@@ -41,7 +41,7 @@ iPhone réel la referme.
   tu joues l'annexe A en entier).
 - **Où** : `https://thecosmo.app`, **en mode démo**. Aucune donnée réelle n'est touchée, et les
   seeds garantissent qu'il y a quelque chose à lire sur chaque écran.
-- **Ce que ça produit** : des findings `V-xx`, qui rejoignent `a-faire-code.md` comme les autres.
+- **Ce que ça produit** : des findings `V-xx`, qui rejoignent le backlog comme les autres : une issue chacune, gabarit « Tâche de backlog ».
   Pas de correctif pendant la séance : on mesure, on note, on corrige après.
 
 ---
@@ -501,7 +501,7 @@ n'est pas la même mesure que « joué au doigt ».
 
 Une ligne par séance **réellement jouée**, jamais avant. Statuts : `✅ joué` (les 12 étapes, témoin
 compris), `⚠️ partiel` (à refaire : n'éteint **pas** l'échéance). Le détail des findings va dans
-`a-faire-code.md`, avec le verbatim.
+des issues (étiquette `zone:accessibilite`), avec le verbatim.
 
 | Date | Appareil (modèle · iOS · Safari) | Statut | Findings |
 |---|---|---|---|
@@ -517,8 +517,8 @@ ne le voit pas, sur l'appareil où il est le plus utilisé.
 
 ## Après la séance
 
-1. Reporter chaque finding dans `a-faire-code.md`, en gardant le verbatim.
-2. Refermer **C-24** : c'est le quatrième et dernier des quatre audits. 🔴 **Et seulement là.**
+1. Ouvrir une issue par finding (étiquette `zone:accessibilite`), en gardant le verbatim.
+2. Refermer l'issue n° 183 (ex `C-24`) : c'est le quatrième et dernier des quatre audits. 🔴 **Et seulement là.**
    Tant qu'aucune ligne de ce fichier n'a été jouée sur un appareil réel, C-24 reste ouvert :
    écrire le protocole ne mesure rien, et une check-list à jour n'est pas une check-list jouée.
 3. Renoter l'accessibilité dans [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) et dans le tableau de bord
