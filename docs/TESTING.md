@@ -18,6 +18,35 @@ npm run test:coverage # + couverture v8 (seuils par fichier — bloquant CI)
 
 `npm run test:coverage` applique des seuils **globaux** (planchers) et des seuils **par fichier** (cliquets, dont le glob `supabase.repository.ts`, qui mord avant le plancher global). Les seuils vivent dans `vitest.config.ts`, qui fait foi ; le nombre de tests et de fichiers est dans [`FAITS.md`](./FAITS.md).
 
+#### Planchers par dossier d'écrans (V15.3, constat TST-02)
+
+`src/components/**` et `src/pages/**` ont chacun leur plancher (lignes, instructions, fonctions,
+branches), en plus du plancher global : la moyenne du dépôt masquait des écrans à 20,4 % et 7,9 %
+(2026-10-31). Les valeurs sont dans `vitest.config.ts` (qui fait foi), avec la mesure dont elles
+sont tirées.
+
+| Dossier | Mesure CI du 2026-11-09 (L / S / F / B) | Plancher posé |
+|---|---|---|
+| `src/components/**` | 36,20 / 35,04 / 26,82 / 32,13 | 35,5 / 34,5 / 26,5 / 31,5 |
+| `src/pages/**` | 32,03 / 30,83 / 24,98 / 23,89 | 31,5 / 30,5 / 24,5 / 23,5 |
+
+Règle de **pose** : seuil = mesure − 0,25 point, arrondi vers le bas au demi-point (marge de
+0,25 à 0,75 point, jamais plus d'un point). La mesure se lit sur l'artefact `coverage` du run
+`CI noyau` (`gh run download <id> -n coverage`, `coverage-summary.json`), jamais sur un run local :
+un run local où des fichiers échouent ou ne démarrent pas sous-mesure.
+
+Règle de **remontée par paliers** : après chaque vague de tests d'écrans, relire la mesure du
+dernier `CI noyau` vert de `main`. Si un dossier dépasse son plancher de **plus de 1,5 point** sur
+une des quatre métriques, remonter CETTE métrique au calcul ci-dessus, dans le commit qui apporte
+les tests (un palier = un commit, jamais plusieurs dossiers « pour faire propre »).
+Remonter moins souvent que ça laisse de la marge à une régression ; plus souvent, c'est faire
+mordre le plancher sur le bruit d'un test instable.
+
+🔴 **Jamais de baisse.** Un plancher qui mord dit qu'un écran perd ses tests ou que du code neuf
+arrive sans eux : le contenu bouge, pas la borne (règle 3 de `CLAUDE.md` § Scripts). Un plancher
+qui mord sur un run dont des fichiers n'ont pas démarré (`Test Files … failed`) ne dit rien non
+plus : rejouer avant de conclure.
+
 - Un taux de couverture ne se lit **jamais seul** : il se lit avec le nombre de lignes qu'il rapporte (le dénominateur bouge quand du code neuf arrive).
 - Ne jamais relever un seuil pour faire passer la CI, ni conclure d'un run mort (sans bloc « Coverage summary ») que la couverture a baissé : il n'a rien mesuré.
 - Ne jamais passer `--maxWorkers` en ligne de commande : `vitest.config.ts` le fixe (voir `CLAUDE.md`, § Scripts).
