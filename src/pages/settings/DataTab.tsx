@@ -5,7 +5,7 @@
 import React, { Suspense, lazy, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Download, FileSpreadsheet, FileUp } from 'lucide-react';
-import { useTasks, useTaskDependencies } from '@/modules/tasks';
+import { useTaskCount, useLoadAllTasks, useTaskDependencies } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
 import { useEvents } from '@/modules/events';
 import { useOkrs } from '@/modules/okrs';
@@ -38,7 +38,12 @@ const ImportTasksDialog = lazy(() => import('./ImportTasksDialog'));
 
 export function DataTab() {
   const { t, tp } = useT('settings');
-  const { data: tasks = [] } = useTasks();
+  // V14.1 (PER-01) : l'export de portabilité (art. 20) doit être COMPLET. Le
+  // jeu de travail (`useTasks`) ne garde que 35 jours de terminées : l'export
+  // relit donc tout l'historique au clic, sans plafond, et le compte affiché
+  // vient du serveur.
+  const { data: taskCount = 0 } = useTaskCount({});
+  const loadAllTasks = useLoadAllTasks();
   // Le graphe « bloquée par » (mig. 132) est saisi par la personne : il est dû
   // au titre de l'article 20 au même titre que les tâches qu'il ordonne.
   const { data: taskDependencies = [] } = useTaskDependencies();
@@ -68,9 +73,9 @@ export function DataTab() {
     autoValidation: user?.autoValidation,
   };
 
-  const exports: { label: string; icon: React.ElementType; count: number; run: () => void }[] = [
-    { label: t('data.tasks'), icon: FileSpreadsheet, count: tasks.length, run: () => { exportTasksCSV(tasks); toast.success(t('data.tasksExported', { count: tasks.length })); } },
-    { label: t('data.taskDependencies'), icon: FileSpreadsheet, count: taskDependencies.length, run: () => { exportTaskDependenciesCSV(taskDependencies, tasks); toast.success(t('data.taskDependenciesExported', { count: taskDependencies.length })); } },
+  const exports: { label: string; icon: React.ElementType; count: number; run: () => void | Promise<void> }[] = [
+    { label: t('data.tasks'), icon: FileSpreadsheet, count: taskCount, run: async () => { const tasks = await loadAllTasks(); exportTasksCSV(tasks); toast.success(t('data.tasksExported', { count: tasks.length })); } },
+    { label: t('data.taskDependencies'), icon: FileSpreadsheet, count: taskDependencies.length, run: async () => { exportTaskDependenciesCSV(taskDependencies, await loadAllTasks()); toast.success(t('data.taskDependenciesExported', { count: taskDependencies.length })); } },
     { label: t('data.habits'), icon: FileSpreadsheet, count: habits.length, run: () => { exportHabitsCSV(habits); toast.success(t('data.habitsExported', { count: habits.length })); } },
     { label: t('data.events'), icon: FileSpreadsheet, count: events.length, run: () => { exportEventsCSV(events); toast.success(t('data.eventsExported', { count: events.length })); } },
     { label: t('data.okrs'), icon: FileSpreadsheet, count: okrs.length, run: () => { exportOKRsCSV(okrs); toast.success(t('data.okrsExported', { count: okrs.length })); } },
@@ -81,7 +86,8 @@ export function DataTab() {
     { label: t('data.profile'), icon: FileSpreadsheet, count: 1, run: () => { exportProfileCSV(profile); toast.success(t('data.profileExported')); } },
   ];
 
-  const handleExportAll = () => {
+  const handleExportAll = async () => {
+    const tasks = await loadAllTasks();
     exportAllCSV({ tasks, taskDependencies, habits, events, okrs, categories, lists, krCompletions, orgRoles, profile });
     toast.success(t('data.exportingAll'), {
       description: t('data.exportingAllHint', {

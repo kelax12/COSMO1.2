@@ -20,9 +20,9 @@
 
 import { useCallback } from 'react';
 import { useUpdateTask } from '@/modules/tasks';
+import { getTasksRepository } from '@/lib/repository.factory';
 import { useUpdateOkr } from '@/modules/okrs';
 import { categoryDependents } from './impact';
-import type { Task } from '@/modules/tasks/types';
 import type { OKR } from '@/modules/okrs/types';
 
 export interface ReassignResult {
@@ -50,14 +50,19 @@ export function useReassignCategory() {
    * `toCategoryId` vaut `NO_CATEGORY` (chaîne vide) pour « laisser sans
    * catégorie ». Lève si une écriture échoue, pour que l'appelant renonce à
    * supprimer la catégorie.
+   *
+   * V14.1 (PER-01) : les tâches de la catégorie sont RELUES ici, toutes, par
+   * le repository. Elles venaient de `useTasks()`, qui ne garde plus que le
+   * jeu de travail : une tâche terminée il y a six mois serait restée sur la
+   * catégorie supprimée (puis passée à NULL par la base, sans réaffectation).
    */
   return useCallback(
     async (
       fromCategoryId: string,
       toCategoryId: string,
-      tasks: readonly Task[],
       okrs: readonly OKR[],
     ): Promise<ReassignResult> => {
+      const tasks = await getTasksRepository().listAll({ categories: [fromCategoryId] });
       const { taskIds, okrIds } = categoryDependents(fromCategoryId, tasks, okrs);
 
       for (const id of taskIds) {

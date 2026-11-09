@@ -408,12 +408,12 @@ export function exportListsCSV(lists: TaskList[]): void {
  * fonction, sinon l'export cesse silencieusement d'être complet.
  */
 /**
- * ⚠️ PLAFOND. `getAll()` passe par `fetchAllPages`, borné à `MAX_ROWS = 5000`.
- * Au-delà, l'export est TRONQUÉ et seul un toast le signale (cf.
- * `pagination.warning.ts`). Pour un export de portabilité, une troncature
- * silencieuse est un défaut de conformité, pas un détail de performance :
- * si un compte s'approche du plafond, il faut lever la borne ou exporter par
- * lots avant de livrer le fichier.
+ * ✅ Tâches : relues au clic par `getAll()`, SANS plafond depuis la V14.1
+ * (pages de clé enchaînées, `fetchAllByCursor`).
+ * ⚠️ PLAFOND restant : habitudes, événements, OKR et journal des KR passent
+ * encore par `fetchAllPages`, borné à `MAX_ROWS = 5000` ; au-delà, un toast
+ * le signale (cf. `pagination.warning.ts`). Pour un export de portabilité,
+ * c'est un défaut de conformité à lever avant qu'un compte n'approche la borne.
  */
 export function exportAllCSV(data: {
   tasks: Task[];
