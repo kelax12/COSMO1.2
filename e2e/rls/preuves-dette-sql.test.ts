@@ -25,6 +25,9 @@ const PREUVES: { preuve: string; migration: string }[] = [
   { preuve: '242.proof.sql', migration: '242_ferme_par_defaut_anon.sql' },
   { preuve: '243.proof.sql', migration: '243_regle_unique_projet_equipe.sql' },
   { preuve: '244.proof.sql', migration: '244_select_permissive_unique.sql' },
+  // DAT-02 (V13.3, V13.4) : séries, totaux et temps investi inchangés par le
+  // passage de `habits.completions` à `habit_completions`.
+  { preuve: '248.proof.sql', migration: '248_habit_completions.sql' },
 ];
 
 const lire = (chemin: string) => readFileSync(join(process.cwd(), chemin), 'utf8').replace(/\r\n/g, '\n');
@@ -34,7 +37,7 @@ afterAll(async () => {
   await db.end();
 });
 
-describe('supabase/proofs : preuves 242 à 244 rejouées sur la base fraîche', () => {
+describe('supabase/proofs : preuves 242 à 244 et 248 rejouées sur la base fraîche', () => {
   for (const { preuve, migration } of PREUVES) {
     it(`${preuve} embarque le texte exact de ${migration}`, () => {
       const texte = lire(`supabase/proofs/${preuve}`);

@@ -123,6 +123,11 @@ const DECISIONS = {
   // 2026-10-22 : la ligne ne sert qu'à ouvrir l'effacement 30 jours plus tard.
   // Le compte parti, elle n'a plus d'objet ; aucune adresse n'y est stockée.
   account_inactivity_notices: { decision: 'cascade' },
+  // Jours cochés des habitudes (mig. 248, DAT-02), décidé le 2026-11-09 : la
+  // ligne n'a pas d'existence sans son habitude ni sans son compte. `user_id`
+  // cascade vers `auth.users`, ET la clé composée `(habit_id, user_id)` part
+  // avec l'habitude, que `delete-account` purge explicitement.
+  habit_completions: { decision: 'cascade' },
 
   // ── Conservées, par obligation légale ───────────────────────────
   payment_records: {
