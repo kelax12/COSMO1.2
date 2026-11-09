@@ -33,7 +33,16 @@ export {
   useFilteredTasks,
   usePendingTasks,
   useTaskDependencies,
+  // V14.1 (PER-01) : lectures au-delà du jeu de travail.
+  useTaskArchive,
+  useTaskSubset,
+  useTaskCount,
+  useLoadAllTasks,
+  useKnownTask,
+  ARCHIVE_PAGE_SIZE,
 } from './hooks';
+export type { TaskQuery } from './task-query';
+export { RECENT_COMPLETED_DAYS, workingSetSince } from './working-set';
 
 // ═══════════════════════════════════════════════════════════════════
 // WRITE HOOKS

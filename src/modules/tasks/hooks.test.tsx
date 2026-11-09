@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Fake repository — only the methods exercised here.
 const fakeRepo = {
-  getAll: vi.fn(),
+  listAll: vi.fn(),
   create: vi.fn(),
   delete: vi.fn(),
 };
@@ -39,26 +39,29 @@ function makeWrapper() {
 }
 
 beforeEach(() => {
-  fakeRepo.getAll.mockReset();
+  fakeRepo.listAll.mockReset();
   fakeRepo.create.mockReset();
   fakeRepo.delete.mockReset();
 });
 
 describe('useTasks', () => {
   it('fetches tasks from the repository', async () => {
-    fakeRepo.getAll.mockResolvedValue([sampleTask]);
+    // V14.1 : le jeu de travail = non terminées + terminées récemment, deux
+    // lectures sans plafond, jamais getAll().
+    fakeRepo.listAll.mockImplementation(async (q: { status?: string }) => (q.status === "active" ? [sampleTask] : []));
     const { wrapper } = makeWrapper();
     const { result } = renderHook(() => useTasks(), { wrapper });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual([sampleTask]);
-    expect(fakeRepo.getAll).toHaveBeenCalledTimes(1);
+    expect(fakeRepo.listAll).toHaveBeenCalledTimes(2);
+    expect(fakeRepo.listAll.mock.calls.map((c) => Object.keys(c[0]).sort())).toEqual([["status"], ["completedSince"]]);
   });
 
   it('does not fetch when disabled', () => {
-    fakeRepo.getAll.mockResolvedValue([]);
+    fakeRepo.listAll.mockResolvedValue([]);
     const { wrapper } = makeWrapper();
     renderHook(() => useTasks({ enabled: false }), { wrapper });
-    expect(fakeRepo.getAll).not.toHaveBeenCalled();
+    expect(fakeRepo.listAll).not.toHaveBeenCalled();
   });
 });
 

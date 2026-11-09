@@ -1,6 +1,16 @@
 import type { Task, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskDependency } from './types';
 import type { PaginationParams, PaginatedResult } from '@/lib/pagination.types';
 import type { CreateOptions } from '@/lib/restore-id';
+import type { TaskQuery } from './task-query';
+
+/**
+ * Page de tâches : le curseur (`cursor` = id, `cursorDate` = `created_at` de la
+ * dernière ligne vue) et le sous-ensemble visé. Ordre : `created_at` puis `id`,
+ * décroissants (cf. `task-query.ts`).
+ */
+export interface TaskPageParams extends PaginationParams {
+  query?: TaskQuery;
+}
 
 /**
  * Résultat d'un basculement de complétion.
@@ -31,9 +41,22 @@ export interface ITasksRepository {
   // ═══════════════════════════════════════════════════════════════════
   
   /**
-   * Fetch all tasks
+   * TOUTES les tâches du compte, sans plafond (pages de clé enchaînées).
+   *
+   * ⚠️ Réservé à ce qui doit vraiment tout voir (export CSV). Les écrans lisent
+   * un sous-ensemble : `listAll(query)`, `getPage`, `count`.
    */
   getAll(): Promise<Task[]>;
+
+  /**
+   * Toutes les tâches qui répondent à `query`, sans plafond : les pages de clé
+   * s'enchaînent jusqu'à la dernière. Pour un sous-ensemble BORNÉ par nature
+   * (le travail en cours, une fenêtre de dates, une catégorie, des ids).
+   */
+  listAll(query?: TaskQuery): Promise<Task[]>;
+
+  /** Nombre exact de tâches qui répondent à `query`, compté côté serveur. */
+  count(query?: TaskQuery): Promise<number>;
   
   /**
    * Tâches partagées AVEC l'utilisateur courant et pas encore acceptées.
@@ -96,9 +119,10 @@ export interface ITasksRepository {
   toggleBookmark(id: string): Promise<Task>;
 
   /**
-   * Fetch a page of tasks (cursor-based pagination)
+   * Une page de tâches, curseur de clé (`created_at`, `id`) décroissant.
+   * Pages stables : une tâche créée entre deux pages ne décale rien.
    */
-  getPage(params?: PaginationParams): Promise<PaginatedResult<Task>>;
+  getPage(params?: TaskPageParams): Promise<PaginatedResult<Task>>;
 
   // ═══════════════════════════════════════════════════════════════════
   // DÉPENDANCES (mig. 132)
