@@ -219,7 +219,13 @@ export function masquer(texte) {
     .replace(/postgres(ql)?:\/\/[^\s'"]+/g, '<url>');
 }
 
-export function rapport(e, { maxLignes = 60 } = {}) {
+/**
+ * Le rapport : la liste des ecarts, puis (`complet`) la definition ENTIERE de
+ * chaque objet tel qu'il est en production, entre `<<< prod <cle>` et `>>>`.
+ * C'est elle qui se reporte dans la baseline : un diff de lignes ne dit pas
+ * l'ordre des colonnes d'une table.
+ */
+export function rapport(e, { maxLignes = 60, complet = false } = {}) {
   const out = [];
   out.push(`Objets compares : ${e.total} cote depot, ${e.b.size} cote production.`);
   out.push(`En production seulement : ${e.seulementProd.length}`);
@@ -233,6 +239,10 @@ export function rapport(e, { maxLignes = 60 } = {}) {
   for (const k of e.differents) {
     out.push(`  ~ ${k}`);
     for (const l of diffLignes(e.a.get(k), e.b.get(k)).slice(0, maxLignes)) out.push(`      ${l}`);
+  }
+  if (complet) {
+    out.push('', 'Definitions de production des objets en ecart :');
+    for (const k of [...e.seulementProd, ...e.differents]) out.push(`<<< prod ${k}`, e.b.get(k), '>>>');
   }
   return masquer(out.join('\n'));
 }
@@ -292,7 +302,7 @@ export async function main(argv = process.argv.slice(2), env = process.env) {
       const e = ecarts(fraiche, prod);
       const texte = rapport(e);
       const n = e.seulementProd.length + e.seulementDepot.length + e.differents.length;
-      console.log(texte);
+      console.log(rapport(e, { complet: true }));
       resumer(`### Base fraiche contre production : ${n === 0 ? 'identiques' : `${n} ecart(s)`}\n\n\`\`\`\n${texte.split('\n').slice(0, 400).join('\n')}\n\`\`\`\n`);
       if (n === 0) {
         console.log(`\n✓ La base fraiche reconstruite par la CLI egale la production (${e.total} objets).`);
