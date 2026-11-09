@@ -347,17 +347,29 @@ export async function lireArtefacts({ depot, token, maintenant, fetchImpl = fetc
 
 // ─── 5 · Décision (pure : le témoin la rejoue sans réseau) ──────────
 
+/** Un nom venu de l'extérieur (artefact, fichier de zip : une PR depuis une
+ *  fourche peut déposer un artefact) ne doit ni injecter une commande de
+ *  workflow (`::`, `%`, retour à la ligne) ni casser le bloc du résumé
+ *  (accent grave). Caractères de contrôle retirés, longueur bornée. */
+export function propre(s, max = 80) {
+  const t = String(s ?? '')
+    .replace(/[\u0000-\u001f\u007f-\u009f]/g, ' ')
+    .replace(/[`%]/g, '_')
+    .replace(/::/g, ': :');
+  return t.length > max ? `${t.slice(0, max)}…` : t;
+}
+
 export function decider(sources) {
   const signaux = [];
   const s = sources;
   if (s.secretScanning?.ok) {
     for (const a of s.secretScanning.valeur) {
-      signaux.push({ categorie: 'secret-scanning', resume: `alerte de secret scanning n° ${a.numero} ouverte (${a.type}, depuis le ${String(a.cree).slice(0, 10)})` });
+      signaux.push({ categorie: 'secret-scanning', resume: `alerte de secret scanning n° ${propre(a.numero, 10)} ouverte (${propre(a.type, 60)}, depuis le ${propre(String(a.cree).slice(0, 10), 10)})` });
     }
   }
   if (s.artefacts?.ok) {
     for (const x of s.artefacts.valeur.suspects) {
-      signaux.push({ categorie: 'artefact-suspect', resume: `artefact « ${x.artefact} » (run ${x.run}), fichier « ${x.fichier} » : ${x.pourquoi}` });
+      signaux.push({ categorie: 'artefact-suspect', resume: `artefact « ${propre(x.artefact)} » (run ${propre(x.run, 20)}), fichier « ${propre(x.fichier)} » : ${x.pourquoi}` });
     }
   }
   const mesures = s.journaux?.ok ? s.journaux.valeur.mesures : {};

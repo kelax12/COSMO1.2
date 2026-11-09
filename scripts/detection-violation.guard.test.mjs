@@ -18,7 +18,7 @@ import { resolve } from 'node:path';
 import { deflateRawSync } from 'node:zlib';
 import { load } from 'js-yaml';
 import {
-  classer, entreesZip, inspecterZip, lecteurArtefact, decider, executer, MESURES, CATEGORIES, SQL_JOURNAUX, SQL_TRI,
+  classer, entreesZip, inspecterZip, lecteurArtefact, decider, executer, propre, MESURES, CATEGORIES, SQL_JOURNAUX, SQL_TRI,
 } from './detection-violation.mjs';
 import * as alerte from './detection-violation-alerte.mjs';
 import { alertesEchues, signature, corps, run as revue } from './gardes-rouges-7j.mjs';
@@ -167,6 +167,15 @@ describe('décider', () => {
     expect(d.categories).toEqual(['artefact-suspect', 'secret-scanning']);
   });
 
+  it('TÉMOIN INJECTION : un nom d artefact venu d une fourche ne porte ni commande de workflow ni retour à la ligne', () => {
+    const nom = 'x\n::add-mask::y %0A`fin`';
+    const d = decider(sources({ artefacts: lue({ lus: 1, suspects: [{ artefact: nom, run: 9, fichier: 'a\r::error::b', pourquoi: 'PGDMP' }] }) }));
+    const r = d.signaux[0].resume;
+    expect(r).not.toMatch(/[\r\n`%]/);
+    expect(r).not.toContain('::');
+    expect(propre('a'.repeat(200)).length).toBeLessThanOrEqual(81);
+  });
+
   it('les catégories sont un vocabulaire FERMÉ (seul mot qui sort du job)', () => {
     for (const def of Object.values(MESURES)) expect(CATEGORIES.has(def.categorie)).toBe(true);
     expect([...CATEGORIES].every((c) => /^[a-z-]+$/.test(c))).toBe(true);
@@ -313,7 +322,8 @@ describe('alerte · ce qui sort du job, et vers où', () => {
     expect(t).not.toMatch(/@kelax12/);
   });
 
-  const fil = (body, jours) => ({ body, created_at: new Date(MAINTENANT.getTime() - jours * 86_400_000).toISOString() });
+  const BOT = { login: 'github-actions[bot]' };
+  const fil = (body, jours, user = BOT) => ({ body, user, created_at: new Date(MAINTENANT.getTime() - jours * 86_400_000).toISOString() });
   const marque = (cats) => `${alerte.MARQUEUR} empreinte=${alerte.empreinte(cats)} echeance=x -->`;
 
   it('une seule issue ouverte : même signal = rien de nouveau ; signal changé = un commentaire', () => {
@@ -329,6 +339,14 @@ describe('alerte · ce qui sort du job, et vers où', () => {
     expect(n).toBe(3);
     expect(alerte.decider({ cats: ['e'], ouverte: null, recentes: n }).action).toBe('plafond');
     expect(alerte.PLAFOND_7J).toBe(3);
+  });
+
+  it('TÉMOIN USURPATION : un commentaire tiers qui recopie le marqueur ne fait ni « inchangé » ni plafond', () => {
+    const tiers = { login: 'quelquun' };
+    const ouverte = { number: 4, elements: [fil(marque(['a']), 1), fil(marque(['export-massif']), 0, tiers)] };
+    expect(alerte.decider({ cats: ['export-massif'], ouverte, recentes: 1 }).action).toBe('commenter');
+    const remplissage = [1, 2, 3].map((k) => fil(marque([`x${k}`]), k, tiers));
+    expect(alerte.publicationsRecentes(remplissage, MAINTENANT)).toBe(0);
   });
 
   function github(etat) {
@@ -361,7 +379,7 @@ describe('alerte · ce qui sort du job, et vers où', () => {
   });
 
   it('plafond atteint : rien n est écrit, le job rougit', async () => {
-    const issues = [1, 2, 3].map((k) => ({ number: k, state: 'closed', body: marque([`x${k}`]), created_at: fil('', k).created_at }));
+    const issues = [1, 2, 3].map((k) => ({ number: k, state: 'closed', body: marque([`x${k}`]), user: BOT, created_at: fil('', k).created_at }));
     const { fetchImpl, ecrits } = github({ issues });
     const r = await alerte.run(ENV_A, { maintenant: MAINTENANT, fetchImpl });
     expect(r.exit).toBe(1);
@@ -406,7 +424,7 @@ describe('revue · une alerte échue entre dans la règle des 7 jours', () => {
   afterEach(() => vi.unstubAllGlobals());
 
   /** GitHub simulé pour `run()` de la règle : aucun workflow rouge, une alerte échue, une issue ci-red déjà à jour. */
-  function githubRevue() {
+  function githubRevue({ auteur = 'github-actions[bot]' } = {}) {
     const ecrits = [];
     const alertes = [issue(5, '2026-11-04T05:31:00.000Z')];
     const texteActuel = corps({ violations: [], recales: [], decisionsSansObjet: [], alertes: alertesEchues(alertes, NOW), maintenant: NOW });
@@ -416,12 +434,20 @@ describe('revue · une alerte échue entre dans la règle des 7 jours', () => {
       if ((o.method ?? 'GET') === 'POST') { ecrits.push(u.pathname); return ok({ html_url: 'https://x.test/c' }); }
       if (u.pathname.endsWith('/actions/workflows')) return ok({ workflows: [] });
       if (u.searchParams.get('labels') === 'detection-violation') return ok(alertes);
-      if (u.searchParams.get('labels') === 'ci-red') return ok([{ number: 64, body: texteActuel, html_url: 'https://x.test/64' }]);
-      if (u.pathname.endsWith('/comments')) return ok([]);
+      if (u.searchParams.get('labels') === 'ci-red') {
+        return ok([{ number: 64, body: 'issue ci-red', html_url: 'https://x.test/64', user: { login: 'github-actions[bot]' } }]);
+      }
+      if (u.pathname.endsWith('/comments')) return ok([{ body: texteActuel, html_url: 'https://x.test/64#c', user: { login: auteur } }]);
       return ok([]);
     });
     return ecrits;
   }
+
+  it('TÉMOIN USURPATION : la même liste recopiée par un tiers ne fait pas taire la règle', async () => {
+    const ecrits = githubRevue({ auteur: 'quelquun' });
+    await revue({ GH_TOKEN: 't', REPO: 'kelax12/r', REVUE_HEBDO: 'false' }, NOW);
+    expect(ecrits).toEqual(['/repos/kelax12/r/issues/64/comments']);
+  });
 
   it('un jour ordinaire, la liste inchangée ne recommente pas ; le job rougit quand même', async () => {
     const ecrits = githubRevue();

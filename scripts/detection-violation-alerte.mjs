@@ -40,6 +40,11 @@ export const LABEL = 'detection-violation';
 export const ECHEANCE_H = 72;
 export const PLAFOND_7J = 3;
 export const MARQUEUR = '<!-- detection-violation';
+/** Seule identité dont les écrits comptent. Sur un dépôt public, n'importe
+ *  quel compte peut commenter en recopiant le marqueur : il ferait croire à
+ *  un signal « inchangé », ou remplirait le plafond, et l'alerte se tairait. */
+export const AUTEUR = 'github-actions[bot]';
+const duBot = (e) => e?.user?.login === AUTEUR;
 
 // ═══════════════ NOYAU PUR ═══════════════
 
@@ -77,12 +82,12 @@ export function texte({ cats, detecteLe, echeance, runUrl, proprietaire, premier
 /** Publications de ce script sur 7 jours glissants (corps d'issue et commentaires marqués). */
 export function publicationsRecentes(elements, maintenant) {
   const depuis = maintenant.getTime() - 7 * JOUR;
-  return elements.filter((e) => String(e.body ?? '').startsWith(MARQUEUR) && Date.parse(e.created_at) >= depuis).length;
+  return elements.filter((e) => duBot(e) && String(e.body ?? '').startsWith(MARQUEUR) && Date.parse(e.created_at) >= depuis).length;
 }
 
-/** La dernière empreinte écrite sur l'issue ouverte. */
+/** La dernière empreinte écrite PAR LE BOT sur l'issue ouverte. */
 export function derniereEmpreinte(elements) {
-  const m = [...elements].reverse().find((e) => String(e.body ?? '').startsWith(MARQUEUR));
+  const m = [...elements].reverse().find((e) => duBot(e) && String(e.body ?? '').startsWith(MARQUEUR));
   return m ? /empreinte=([0-9a-f]+)/.exec(m.body)?.[1] ?? null : null;
 }
 
@@ -122,7 +127,7 @@ async function etat({ token, repo, maintenant, fetchImpl }) {
   let ouverte = null;
   for (const i of issues) {
     const commentaires = await api(`/issues/${i.number}/comments?since=${depuis}&per_page=100`, { token, repo, fetchImpl });
-    const fil = [{ body: i.body, created_at: i.created_at }, ...commentaires];
+    const fil = [{ body: i.body, created_at: i.created_at, user: i.user }, ...commentaires];
     elements.push(...fil);
     if (i.state === 'open' && !ouverte) ouverte = { number: i.number, html_url: i.html_url, elements: fil };
   }
