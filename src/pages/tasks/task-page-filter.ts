@@ -3,7 +3,7 @@
 // circulaire tasks ↔ lists (lists importe déjà les types tasks).
 // Comportement déplacé verbatim depuis TasksPage.tsx.
 import { tasksInList, tasksDueToday, type TaskList } from '@/modules/lists';
-import type { Task } from '@/modules/tasks';
+import type { Task, TaskQuery } from '@/modules/tasks';
 import type { Category } from '@/modules/categories';
 import { descendantIdSet } from '@/modules/categories/tree';
 
@@ -88,4 +88,51 @@ export function filterTasksForPage(tasks: Task[], params: TaskPageFilterParams):
   }
 
   return result;
+}
+
+/**
+ * Les mêmes filtres que `filterTasksForPage`, traduits en requête SERVEUR pour
+ * l'archive « Terminées » (V14.1, PER-01). Le jeu de travail ne garde que
+ * 35 jours de terminées : l'archive, elle, se lit en pages, filtrée en SQL.
+ *
+ * Rend `null` quand aucune terminée ne peut répondre : la liste virtuelle
+ * « Aujourd'hui » et les listes smart n'admettent que des tâches NON
+ * terminées (`smart-rules.ts`), interroger serait inutile.
+ *
+ * ⚠️ Doit rester d'accord avec `filterTasksForPage` sur les terminées : mêmes
+ * descendants de catégorie, même règle « priorité 0 toujours visible ». Le
+ * test `task-page-filter.test.ts` compare les deux sur un même lot.
+ */
+export function archiveQueryForPage(params: TaskPageFilterParams): TaskQuery | null {
+  const {
+    searchTerm, selectedCategories, priorityRange, selectedListId,
+    selectingTasksForListId, lists, categories = [],
+  } = params;
+  const query: TaskQuery = { status: 'completed' };
+
+  const search = searchTerm.trim();
+  if (search) query.search = searchTerm;
+
+  if (selectedCategories.length > 0) {
+    const matchSet = new Set(selectedCategories);
+    for (const id of selectedCategories) {
+      for (const descendant of descendantIdSet(id, categories)) matchSet.add(descendant);
+    }
+    query.categories = [...matchSet];
+  }
+
+  // Priorité facultative : 0 reste toujours visible, comme en mémoire.
+  const priorities = [0];
+  for (let p = Math.ceil(priorityRange[0]); p <= priorityRange[1]; p++) if (p > 0) priorities.push(p);
+  if (priorities.length < 6) query.priorities = priorities;
+
+  if (selectedListId && !selectingTasksForListId) {
+    if (selectedListId === VIRTUAL_TODAY_ID) return null;
+    const list = lists.find((l) => l.id === selectedListId);
+    if (list) {
+      if (list.type === 'smart' && list.smartRule) return null;
+      query.ids = [...list.taskIds];
+    }
+  }
+  return query;
 }

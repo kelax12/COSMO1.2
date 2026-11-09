@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import TaskTable from '@/components/TaskTable';
 import TaskFilter from '@/components/TaskFilter';
 import TaskModal from '@/components/TaskModal';
@@ -11,7 +11,8 @@ import { useLocation } from 'react-router';
 import { useLazyMount } from '@/hooks/use-lazy-mount';
 
 // Module tasks - Hooks indépendants
-import { useTasks, useUpdateTask } from '@/modules/tasks';
+import { useTasks, useUpdateTask, useTaskArchive, useTaskCount } from '@/modules/tasks';
+import { useQuickFilter } from '@/components/task-table/quick-filter.store';
 import { useCategories } from '@/modules/categories';
 
 // Module lists
@@ -30,7 +31,7 @@ import { tasksTutorialStepsDesktop } from '@/tutorials/tasks.desktop';
 import { tasksTutorialStepsMobile } from '@/tutorials/tasks.mobile';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { TaskListSkeleton } from '@/components/skeletons';
-import { filterTasksForPage, VIRTUAL_TODAY_ID } from './tasks/task-page-filter';
+import { filterTasksForPage, archiveQueryForPage, VIRTUAL_TODAY_ID } from './tasks/task-page-filter';
 import TaskListsBar from './tasks/TaskListsBar';
 import { colorOptions, resolveListColor } from './tasks/list-colors';
 import TasksHeader from './tasks/TasksHeader';
@@ -231,6 +232,47 @@ const TasksPage: React.FC = () => {
       categories,
     }),
     [tasks, searchTerm, selectedCategories, priorityRange, selectedListId, selectingTasksForListId, lists, categories]
+  );
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Archive « Terminées » (V14.1, PER-01) : pages serveur, mêmes filtres
+  // ═══════════════════════════════════════════════════════════════════
+  // Le jeu de travail (`useTasks`) ne garde que 35 jours de terminées. La vue
+  // terminées lit donc l'archive en pages, filtrée en SQL, et le nombre de
+  // terminées masquées vient d'un COMPTE serveur, jamais d'une longueur de
+  // tableau partiel.
+  const { activeQuickFilter } = useQuickFilter();
+  const archiveMode = showCompleted || activeQuickFilter === 'completed';
+  const hasActiveFilter = !!selectedListId || selectedCategories.length > 0 || searchTerm.trim() !== '';
+  const archiveQuery = useMemo(
+    () => archiveQueryForPage({
+      searchTerm, selectedCategories, priorityRange, selectedListId,
+      selectingTasksForListId, lists, categories,
+    }),
+    [searchTerm, selectedCategories, priorityRange, selectedListId, selectingTasksForListId, lists, categories]
+  );
+  const archivePages = useTaskArchive(archiveQuery ?? { ids: [] }, { enabled: archiveMode && archiveQuery !== null });
+  const archiveTotal = useTaskCount(archiveQuery ?? { ids: [] }, {
+    enabled: archiveQuery !== null && (archiveMode || hasActiveFilter),
+  });
+  const archiveTasks = useMemo(
+    () => archivePages.data?.pages.flatMap((page) => page.data) ?? [],
+    [archivePages.data]
+  );
+  const { fetchNextPage, hasNextPage, isFetchingNextPage } = archivePages;
+  const loadMoreArchive = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+  const archiveFeed = useMemo(
+    () => ({
+      tasks: archiveQuery === null ? [] : archiveTasks,
+      isLoading: archiveQuery !== null && archivePages.isLoading,
+      hasMore: archiveQuery !== null && !!hasNextPage,
+      isFetchingMore: isFetchingNextPage,
+      loadMore: loadMoreArchive,
+      total: archiveQuery === null ? 0 : archiveTotal.data,
+    }),
+    [archiveQuery, archiveTasks, archivePages.isLoading, hasNextPage, isFetchingNextPage, loadMoreArchive, archiveTotal.data]
   );
 
   // Résumé de l'en-tête mobile (maquette 04). Il porte sur la vue COURANTE
@@ -454,7 +496,9 @@ const TasksPage: React.FC = () => {
                   showQuickFilters={false}
                   searchTerm={searchTerm}
                   listFilterActive={!!selectedListId}
-                  hasActiveFilter={!!selectedListId || selectedCategories.length > 0 || searchTerm.trim() !== ''}
+                  hasActiveFilter={hasActiveFilter}
+                  archive={archiveFeed}
+                  completedCount={archiveQuery === null ? 0 : archiveTotal.data ?? 0}
                   quickFiltersTrailing={<ActiveFiltersRow {...activeFiltersProps} className="!mb-0" />}
                 />
                 )}

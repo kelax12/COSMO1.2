@@ -41,6 +41,13 @@ interface Params {
   /** Une liste perso est active en filtre : les tâches d'équipe n'appartiennent
    * jamais à une liste perso, donc aucune n'y correspond — cf. en-tête. */
   listFilterActive?: boolean;
+  /**
+   * V14.1 : les tâches perso viennent de l'archive paginée, DÉJÀ filtrées
+   * et ordonnées par le serveur (curseur de clé). Les re-trier en mémoire ne
+   * trierait que les pages chargées et présenterait cet ordre partiel comme
+   * celui de toute l'archive : on garde l'ordre reçu.
+   */
+  serverOrdered?: boolean;
 }
 
 export function useUnifiedTaskRows({
@@ -56,10 +63,11 @@ export function useUnifiedTaskRows({
   sortDirection,
   searchTerm,
   listFilterActive = false,
+  serverOrdered = false,
 }: Params): { unifiedRows: UnifiedTaskRow[]; hiddenCompletedCount: number } {
   // Filtrage et tri mémoïsés — logique pure extraite (task-filtering.ts, testée).
   const sortedTasks = useMemo(
-    () => filterAndSortTasks({
+    () => serverOrdered ? tasks : filterAndSortTasks({
       tasks,
       quickFilter,
       showCompleted,
@@ -67,7 +75,7 @@ export function useUnifiedTaskRows({
       sortField,
       sortDirection,
     }),
-    [tasks, quickFilter, showCompleted, priorityRange, sortField, sortDirection],
+    [tasks, quickFilter, showCompleted, priorityRange, sortField, sortDirection, serverOrdered],
   );
 
   // ── Tâches d'équipe assignées à moi, filtrées comme les tâches perso ──
@@ -117,7 +125,7 @@ export function useUnifiedTaskRows({
       })),
     ];
 
-    if (!sortField) return rows;
+    if (!sortField || serverOrdered) return rows;
 
     const sortValue = (row: UnifiedTaskRow) => {
       const t = row.task;
@@ -146,7 +154,7 @@ export function useUnifiedTaskRows({
         : (va as number) - (vb as number);
       return sortDirection === 'asc' ? comparison : -comparison;
     });
-  }, [scopedPersoTasks, scopedTeamTasks, teamProjectsById, sortField, sortDirection, showCompleted]);
+  }, [scopedPersoTasks, scopedTeamTasks, teamProjectsById, sortField, sortDirection, showCompleted, serverOrdered]);
 
   return { unifiedRows, hiddenCompletedCount };
 }

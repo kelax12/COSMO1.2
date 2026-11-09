@@ -166,7 +166,13 @@
     "seeCompleted_many": "Voir les {{count}} de tâches terminées",
     "seeCompleted_other": "Voir les {{count}} terminées",
     "selectTaskAria": "Sélectionner « {{name}} »",
-    "deselectTaskAria": "Désélectionner « {{name}} »"
+    "deselectTaskAria": "Désélectionner « {{name}} »",
+    "archiveOrder": "Tâches terminées, des plus récemment créées aux plus anciennes",
+    "archiveLoadMore": "Charger la suite",
+    "archiveLoading": "Chargement de la suite…",
+    "archiveShown_one": "{{count}} tâche terminée affichée sur {{total}}",
+    "archiveShown_many": "{{count}} de tâches terminées affichées sur {{total}}",
+    "archiveShown_other": "{{count}} tâches terminées affichées sur {{total}}"
   },
   "toast": {
     "leftShared": "Vous avez quitté la tâche partagée",
