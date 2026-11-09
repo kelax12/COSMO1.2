@@ -26,18 +26,16 @@ import { useT } from '@/i18n/useT';
 import type { Category } from '@/modules/categories';
 import { useDeleteCategory, useRestoreCategory } from '@/modules/categories';
 import { useAssignCategory, useReassignCategory } from '@/modules/categories/useReassignCategory';
-import type { Task } from '@/modules/tasks/types';
 import type { OKR } from '@/modules/okrs/types';
 
 interface DeleteCategoryFlowArgs {
   categories: Category[];
-  tasks: Task[];
   objectives: OKR[];
   /** Remet le filtre sur « toutes » si la catégorie filtrée disparaît. */
   onDeleted: (deletedId: string) => void;
 }
 
-export function useDeleteCategoryFlow({ categories, tasks, objectives, onDeleted }: DeleteCategoryFlowArgs) {
+export function useDeleteCategoryFlow({ categories, objectives, onDeleted }: DeleteCategoryFlowArgs) {
   const { t } = useT('okr');
   const { t: tCommon } = useT('common');
   const { tp: tpOv } = useT('overlays');
@@ -56,7 +54,7 @@ export function useDeleteCategoryFlow({ categories, tasks, objectives, onDeleted
     let movedTaskIds: string[] = [];
     let movedOkrIds: string[] = [];
     try {
-      const { moved, taskIds, okrIds } = await reassignCategory(categoryToDeleteId, reassignTo, tasks, objectives);
+      const { moved, taskIds, okrIds } = await reassignCategory(categoryToDeleteId, reassignTo, objectives);
       movedTaskIds = taskIds;
       movedOkrIds = okrIds;
       if (moved > 0) toast.success(tpOv('deleteCategory.doneReassigned', moved));

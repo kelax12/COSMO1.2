@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/chart';
 import { useColorSettings } from '@/modules/ui-states';
 import { useCategories } from '@/modules/categories';
-import { useTasks } from '@/modules/tasks';
+import { useTasks, useTaskSubset } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
 import { useEvents } from '@/modules/events';
 import { useOkrs } from '@/modules/okrs';
@@ -57,6 +57,9 @@ export default function StatisticsPage() {
   // rend plus que des faits (revue du 2026-09-02, point 6).
   const insightText = useInsightText();
   const isMobile = useIsMobile();
+  // Jeu de travail (35 j de terminées) : suffit aux insights, qui regardent
+  // 30 jours en arrière au plus. La période choisie, elle, peut couvrir un an :
+  // elle a sa propre requête plus bas (V14.1, PER-01).
   const { data: tasks = [] } = useTasks();
   const { data: events = [] } = useEvents();
   const { data: okrs = [] } = useOkrs();
@@ -177,11 +180,20 @@ export default function StatisticsPage() {
     return { start, end };
   }, [selectedPeriod, now]);
 
-  const rollingTasks = useMemo(() => tasks.filter(task => {
+  // V14.1 (PER-01) : les terminées de la période viennent d'une requête sur
+  // `completed_at`, pas du jeu de travail (35 j) ni d'une liste plafonnée.
+  // Bornes élargies d'un jour de chaque côté : le serveur compare des
+  // instants, la page des jours locaux ; le filtre exact reste celui d'avant.
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const { data: periodCompleted = [] } = useTaskSubset({
+    completedSince: new Date(rollingRange.start.getTime() - DAY_MS).toISOString(),
+    completedBefore: new Date(rollingRange.end.getTime() + DAY_MS).toISOString(),
+  });
+  const rollingTasks = useMemo(() => periodCompleted.filter(task => {
     if (!task.completed || !task.completedAt) return false;
     const d = parseLocalDate(task.completedAt);
     return d >= rollingRange.start && d <= rollingRange.end;
-  }), [tasks, rollingRange]);
+  }), [periodCompleted, rollingRange]);
 
   const rollingEvents = useMemo(() => events.filter(event => {
     const d = parseLocalDate(event.start);
