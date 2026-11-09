@@ -43,15 +43,23 @@ export class SupabaseKRCompletionsRepository implements IKRCompletionsRepository
 
   async getAll(): Promise<KRCompletion[]> {
     if (!supabase) throw new Error('Supabase not configured');
+    const client = supabase;
 
-    const { data, error } = await supabase
-      .from('kr_completions')
-      .select('*')
-      .order('completed_at', { ascending: false })
-      .limit(500);
-
-    if (error) throw normalizeApiError(error);
-    return warnIfTruncated((data || []) as KRCompletionRow[], 500, 'kr_completions').map(mapFromDb);
+    // COSMO-40 : un `.limit(500)` sec coupait le journal d'un compte actif, et
+    // avec lui le graphique « KR réalisés », l'historique OKR et /statistics.
+    // Même pagination que les autres getAll() ; `id` départage deux complétions
+    // horodatées à l'identique, sans quoi une ligne peut sauter entre deux pages.
+    const rows = await fetchAllPages<KRCompletionRow>(async (from, to) => {
+      const { data, error } = await client
+        .from('kr_completions')
+        .select('*')
+        .order('completed_at', { ascending: false })
+        .order('id', { ascending: false })
+        .range(from, to);
+      if (error) throw normalizeApiError(error);
+      return (data || []) as KRCompletionRow[];
+    });
+    return warnIfTruncated(rows, MAX_ROWS, 'kr_completions').map(mapFromDb);
   }
 
   async getAllForExport(): Promise<KRCompletion[]> {
