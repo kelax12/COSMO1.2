@@ -181,3 +181,42 @@ describe('fonctions planifiées · le bail est pris, au bon endroit', () => {
     expect(new Set(chemins)).toEqual(new Set(Object.keys(PLANIFIEES)));
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// Garde · ordre de la bascule pg_cron (ARC-06, vague 10.1)
+// ═══════════════════════════════════════════════════════════════════
+//
+// Retirer les `schedule:` GitHub AVANT d'avoir appliqué les mig. 245 et 246 en
+// production arrête les six traitements (avis L215-1, alertes de sièges, comptes
+// inactifs, notifications, webhooks) sans qu'aucune alerte ne sonne : la sonde
+// `Journal des crons` lit une table qui n'existe pas encore. Ce volet fige
+// l'ordre : tant que `BASCULE_FAITE` vaut `false`, les quatre workflows gardent
+// leur `schedule:` et la sonde n'en a pas. Le commit de bascule (`DEPLOYMENT.md`
+// § 2sexies, étape 6) retourne la constante ET les workflows, ensemble, après
+// le verdict `cron_runs_verdict()` à six `ok`.
+//
+// ❌ Ne jamais passer cette constante à `true` seule, ni la retourner pour
+//    « faire passer » un retrait de `schedule:` : le test dit que la production
+//    n'a pas encore pris le relais.
+const BASCULE_FAITE = false;
+const WORKFLOWS_DE_PRODUCTION = ['renewal-notice', 'inactive-accounts', 'org-digest', 'org-webhook-dispatch'];
+const aUnSchedule = (yml: string) => /^\s+schedule:/m.test(yml);
+
+describe('bascule pg_cron · les plannings GitHub suivent l’état de la production', () => {
+  it('TÉMOIN : le détecteur voit un `schedule:` et ne confond pas un commentaire avec lui', () => {
+    expect(aUnSchedule('on:\n  schedule:\n    - cron: "1 1 * * *"\n  workflow_dispatch:\n')).toBe(true);
+    expect(aUnSchedule('on:\n  # PLUS DE `schedule:` ici\n  workflow_dispatch:\n')).toBe(false);
+  });
+
+  for (const wf of WORKFLOWS_DE_PRODUCTION) {
+    it(`${wf}.yml : ${BASCULE_FAITE ? 'plus de schedule' : 'schedule GitHub conservé'}, rattrapage manuel gardé`, () => {
+      const yml = read(`.github/workflows/${wf}.yml`);
+      expect(aUnSchedule(yml), `${wf}.yml : schedule ${BASCULE_FAITE ? 'revenu' : 'retiré avant la bascule'}`).toBe(!BASCULE_FAITE);
+      expect(yml, `${wf}.yml : rattrapage manuel perdu`).toMatch(/^\s+workflow_dispatch:/m);
+    });
+  }
+
+  it(`cron-journal.yml : ${BASCULE_FAITE ? 'planifié à l’heure' : 'sans schedule tant que 245 et 246 ne sont pas en production'}`, () => {
+    expect(aUnSchedule(read('.github/workflows/cron-journal.yml'))).toBe(BASCULE_FAITE);
+  });
+});
