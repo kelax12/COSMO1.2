@@ -65,6 +65,7 @@ export const DECISION_MAX_JOURS = 30;
 export const EXCLUS = new Set(['CI alert']);
 export const MARQUEUR = '<!-- gardes-rouges-7j';
 export const LABEL_DETECTION = 'detection-violation';
+export const AUTEUR_BOT = 'github-actions[bot]';
 const ROUGES = new Set(['failure', 'timed_out', 'startup_failure']);
 const VERTS = new Set(['success']);
 
@@ -268,9 +269,11 @@ export async function publier({ token, repo, texte, maintenant, forcer = false }
   const issue = ouvertes[0];
   const commentaires = await api(`/issues/${issue.number}/comments?per_page=100`, { token, repo });
   // L'issue créée par ce script porte le marqueur dans son CORPS : il compte comme précédent.
-  const precedent = [{ body: issue.body ?? '', html_url: issue.html_url }, ...commentaires]
+  // Seuls les écrits du bot comptent (vague 6.1) : sur un dépôt public, un commentaire
+  // tiers qui recopierait le marqueur ferait taire la liste.
+  const precedent = [{ body: issue.body ?? '', html_url: issue.html_url, user: issue.user }, ...commentaires]
     .reverse()
-    .find((c) => String(c.body).startsWith(MARQUEUR));
+    .find((c) => c?.user?.login === AUTEUR_BOT && String(c.body).startsWith(MARQUEUR));
   const sigPrecedente = precedent ? /<!-- gardes-rouges-7j (.*?) -->/.exec(precedent.body)?.[1] ?? null : null;
   if (sigPrecedente === sig && !forcer) return { url: precedent.html_url, nouveau: false };
   const c = await api(`/issues/${issue.number}/comments`, { token, repo, methode: 'POST', corpsJson: { body: texte } });
