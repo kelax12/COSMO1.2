@@ -15,7 +15,7 @@ Format MADR léger : **Statut**, **Date**, **Contexte**, **Décision**, **Consé
   plus ce qui était vrai à sa date.
 - Statuts : `proposée`, `acceptée`, `remplacée par 00NN`, `abandonnée`.
 - Numérotation à quatre chiffres, nom de fichier `NNNN-sujet-en-minuscules.md`. Le suivant est le
-  **0020**, après avoir relu ce dossier.
+  **0021**, après avoir relu ce dossier.
 - ❌ Aucune liste de faiblesses ni de findings de sécurité ouverts : le dépôt est public (voir l'ADR 0008).
 
 ## Index
@@ -41,6 +41,7 @@ Format MADR léger : **Statut**, **Date**, **Contexte**, **Décision**, **Consé
 | [0017](./0017-lucide-react-0-563-tant-que-la-1-coute-le-chemin-critique.md) | lucide-react 0.563, tant que la 1.x alourdit le chemin critique | acceptée | 2026-11-08 |
 | [0018](./0018-framer-motion-12-tant-que-la-14-alourdit-le-chemin-critique.md) | Framer Motion 12, tant que la 14 alourdit le chemin critique | acceptée | 2026-11-09 |
 | [0019](./0019-tailwind-3-tant-que-le-css-maison-n-est-pas-repris.md) | Tailwind 3, tant que le CSS maison n'est pas repris | acceptée | 2026-11-09 |
+| [0020](./0020-definition-of-done-et-gel-fonctionnel.md) | Definition of Done en cinq critères, backlog en issues, gel fonctionnel | acceptée | 2026-11-09 |
 
 Le double backend de démonstration (`localStorage`) et sa parité avec Supabase n'ont pas encore leur
 ADR : il est en cours d'écriture dans un chantier à part.
