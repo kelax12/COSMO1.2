@@ -3724,25 +3724,21 @@ $$;
 CREATE FUNCTION public.get_my_habits(p_days integer DEFAULT 400, p_today date DEFAULT NULL::date) RETURNS TABLE(id uuid, name text, description text, frequency text, estimated_time integer, color text, icon text, completions jsonb, user_id uuid, created_at timestamp with time zone, streak_current integer, streak_best integer, completions_total integer, first_completion_date date, window_days integer)
     LANGUAGE sql STABLE
     SET search_path TO ''
-    AS $_$
+    AS $$
   WITH params AS (
     SELECT
       GREATEST(1, LEAST(COALESCE(p_days, 400), 3650)) AS win,
-      -- « Aujourd'hui » selon le CLIENT, borné à ± 1 jour autour du serveur.
+      -- « Aujourd'hui » selon le CLIENT, borné à ± 1 jour autour du serveur
+      -- (mig. 122 : la base est en UTC, les jours sont en date locale).
       GREATEST(CURRENT_DATE - 1,
                LEAST(COALESCE(p_today, CURRENT_DATE), CURRENT_DATE + 1)) AS today
   ),
   days AS (
-    SELECT h.id AS habit_id, (kv.key)::date AS d
-    FROM public.habits h
-    CROSS JOIN LATERAL jsonb_each(COALESCE(h.completions, '{}'::jsonb)) kv
+    SELECT c.habit_id, c.day AS d
+    FROM public.habit_completions c
     CROSS JOIN params p
-    WHERE kv.value = 'true'::jsonb
-      AND kv.key ~ '^\d{4}-\d{2}-\d{2}$'
-      -- Jours futurs exclus, mais RELATIVEMENT AU CLIENT : c'est ce « today »
-      -- qui rendait la complétion du jour invisible entre minuit et 2 h en
-      -- Europe, parce qu'elle était future pour un serveur resté à la veille.
-      AND (kv.key)::date <= p.today
+    -- Jours futurs exclus, relativement au client (mig. 122).
+    WHERE c.day <= p.today
   ),
   grouped AS (
     SELECT habit_id, d,
@@ -3770,11 +3766,13 @@ CREATE FUNCTION public.get_my_habits(p_days integer DEFAULT 400, p_today date DE
   )
   SELECT
     h.id, h.name, h.description, h.frequency, h.estimated_time, h.color, h.icon,
+    -- Fenêtre bornée : seuls les jours cochés (l'absence vaut « non coché »).
     COALESCE(
-      (SELECT jsonb_object_agg(kv.key, kv.value)
-         FROM jsonb_each(COALESCE(h.completions, '{}'::jsonb)) kv
-        WHERE kv.key ~ '^\d{4}-\d{2}-\d{2}$'
-          AND (kv.key)::date >= p.today - p.win),
+      (SELECT jsonb_object_agg(to_char(c.day, 'YYYY-MM-DD'), true)
+         FROM public.habit_completions c
+        WHERE c.habit_id = h.id
+          AND c.user_id = h.user_id
+          AND c.day >= p.today - p.win),
       '{}'::jsonb
     ) AS completions,
     h.user_id, h.created_at,
@@ -3787,14 +3785,14 @@ CREATE FUNCTION public.get_my_habits(p_days integer DEFAULT 400, p_today date DE
   CROSS JOIN params p
   LEFT JOIN agg a ON a.habit_id = h.id
   ORDER BY h.created_at DESC, h.id DESC;
-$_$;
+$$;
 
 
 --
 -- Name: FUNCTION get_my_habits(p_days integer, p_today date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_my_habits(p_days integer, p_today date) IS 'Lecture bornee des habitudes. `completions` limite a p_days jours ; series et totaux calcules sur l historique ENTIER. `p_today` est la date LOCALE du client (bornee a CURRENT_DATE +/- 1) : la base est en UTC et les cles de completions sont ecrites en date locale, juger avec CURRENT_DATE affichait une serie fausse hors UTC (mig. 122).';
+COMMENT ON FUNCTION public.get_my_habits(p_days integer, p_today date) IS 'Lecture bornee des habitudes, depuis habit_completions (mig. 248). `completions` = jours coches des p_days derniers jours ; series et totaux calcules sur l historique ENTIER. `p_today` est la date LOCALE du client (bornee a CURRENT_DATE +/- 1, mig. 122).';
 
 
 --
@@ -4734,18 +4732,15 @@ event_days AS MATERIALIZED (
   WHERE e.user_id = me.uid
     AND (e.start_time AT TIME ZONE p_tz)::date BETWEEN b.lo AND b.hi
 ),
--- Une ligne par (habitude, jour coché) : la somme des `estimated_time` de ces
--- lignes est exactement l'ancien `SUM(nombre_de_coches * estimated_time)`.
+-- Une ligne par (habitude, jour coché), lue dans `habit_completions`
+-- (mig. 248) par l'index (user_id, day). Le jour est déjà une date LOCALE
+-- validée : plus de dépliage du JSON ni de filtre de forme.
 habit_days AS MATERIALIZED (
-  SELECT kv.day::date AS d, h.estimated_time AS v
-  FROM habits h
-  CROSS JOIN LATERAL jsonb_each(h.completions) AS kv(day, done), me, bounds b
-  WHERE h.user_id = me.uid
-    AND kv.done = 'true'::jsonb
-    -- ⚠️ Le filtre de forme n'est pas cosmétique : une clé malformée ferait
-    -- LEVER le cast `::date` et casserait la lecture de toutes les habitudes.
-    AND kv.day ~ '^\d{4}-\d{2}-\d{2}$'
-    AND kv.day::date BETWEEN b.lo AND b.hi
+  SELECT c.day AS d, h.estimated_time AS v
+  FROM habit_completions c
+  JOIN habits h ON h.id = c.habit_id AND h.user_id = c.user_id, me, bounds b
+  WHERE c.user_id = me.uid
+    AND c.day BETWEEN b.lo AND b.hi
 ),
 -- Minutes estimées par KR. Table dédiée d'abord, JSONB en repli pour les OKR
 -- antérieurs à la mig. 008 (cf. l'en-tête : une jointure interne les perdrait).
@@ -4808,7 +4803,81 @@ $_$;
 -- Name: FUNCTION get_work_time_stats(p_ranges jsonb, p_tz text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_work_time_stats(p_ranges jsonb, p_tz text) IS 'Temps investi par plage. Une lecture par table (mig. 127). Le temps OKR vient du journal kr_completions (mig. 136) : la version precedente lisait un champ kr.history qui n''existe pas, donc okrTime valait toujours 0. Les filtres user_id = auth.uid() sont le correctif A-1 (mig. 085), ne pas les retirer.';
+COMMENT ON FUNCTION public.get_work_time_stats(p_ranges jsonb, p_tz text) IS 'Temps investi par plage. Une lecture par table (mig. 127). Le temps OKR vient du journal kr_completions (mig. 136), le temps des habitudes de habit_completions (mig. 248). Les filtres user_id = auth.uid() sont le correctif A-1 (mig. 085), ne pas les retirer.';
+
+
+--
+-- Name: habit_completions_mirror(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.habit_completions_mirror() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_old jsonb := '{}'::jsonb;
+  v_on  date[];
+  v_off date[];
+BEGIN
+  IF TG_OP = 'UPDATE' THEN
+    v_old := COALESCE(OLD.completions, '{}'::jsonb);
+  END IF;
+
+  SELECT array_agg(d.day) FILTER (WHERE d.nv = 'true'::jsonb),
+         array_agg(d.day) FILTER (WHERE d.nv IS DISTINCT FROM 'true'::jsonb)
+    INTO v_on, v_off
+    FROM (
+      SELECT public.habit_day_from_key(COALESCE(n.key, o.key)) AS day, n.value AS nv
+        FROM jsonb_each(COALESCE(NEW.completions, '{}'::jsonb)) n
+        FULL JOIN jsonb_each(v_old) o ON o.key = n.key
+       WHERE n.value IS DISTINCT FROM o.value
+    ) d
+   WHERE d.day IS NOT NULL;
+
+  IF v_off IS NOT NULL THEN
+    DELETE FROM public.habit_completions c
+     WHERE c.habit_id = NEW.id
+       AND c.user_id = NEW.user_id
+       AND c.day = ANY (v_off);
+  END IF;
+
+  IF v_on IS NOT NULL THEN
+    INSERT INTO public.habit_completions (habit_id, user_id, day)
+    SELECT NEW.id, NEW.user_id, x.day FROM unnest(v_on) AS x(day)
+    ON CONFLICT (habit_id, user_id, day) DO NOTHING;
+  END IF;
+
+  RETURN NULL;
+END;
+$$;
+
+
+--
+-- Name: habit_day_from_key(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.habit_day_from_key(p_key text) RETURNS date
+    LANGUAGE sql IMMUTABLE STRICT PARALLEL SAFE
+    SET search_path TO ''
+    AS $_$
+  SELECT CASE
+    WHEN p_key ~ '^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$'
+         AND left(p_key, 4) <> '0000'
+    THEN CASE
+      WHEN substr(p_key, 9, 2)::int <= extract(day from (
+             make_date(left(p_key, 4)::int, substr(p_key, 6, 2)::int, 1)
+             + interval '1 month' - interval '1 day'))::int
+      THEN p_key::date
+    END
+  END;
+$_$;
+
+
+--
+-- Name: FUNCTION habit_day_from_key(p_key text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.habit_day_from_key(p_key text) IS 'Cle YYYY-MM-DD de habits.completions vers une date, ou NULL si ce n est pas une date reelle. Ne leve jamais (mig. 248).';
 
 
 --
@@ -8721,46 +8790,62 @@ $_$;
 CREATE FUNCTION public.toggle_habit_completion_v2(p_habit_id uuid, p_date text, p_days integer DEFAULT 400, p_today date DEFAULT NULL::date) RETURNS TABLE(id uuid, name text, description text, frequency text, estimated_time integer, color text, icon text, completions jsonb, user_id uuid, created_at timestamp with time zone, streak_current integer, streak_best integer, completions_total integer, first_completion_date date, window_days integer)
     LANGUAGE plpgsql
     SET search_path TO ''
-    AS $_$
+    AS $$
 DECLARE
+  v_uid   UUID := (SELECT auth.uid());
   v_id    UUID;
+  v_day   DATE;
+  v_on    BOOLEAN;
   v_win   INTEGER := GREATEST(1, LEAST(COALESCE(p_days, 400), 3650));
   v_today DATE := GREATEST(CURRENT_DATE - 1,
                            LEAST(COALESCE(p_today, CURRENT_DATE), CURRENT_DATE + 1));
 BEGIN
-  IF (SELECT auth.uid()) IS NULL THEN
+  IF v_uid IS NULL THEN
     RAISE EXCEPTION 'Not authenticated';
   END IF;
 
-  IF p_date !~ '^\d{4}-\d{2}-\d{2}$' THEN
+  -- Forme ET calendrier : `2026-02-30` est refusé ici, et non plus par un
+  -- cast qui levait plus loin, dans la lecture.
+  v_day := public.habit_day_from_key(p_date);
+  IF v_day IS NULL THEN
     RAISE EXCEPTION 'Invalid date format (expected YYYY-MM-DD)';
   END IF;
 
-  -- Bascule ATOMIQUE, inchangée (correctif TOCTOU-1, mig. 023).
-  UPDATE public.habits h
-  SET completions = jsonb_set(
-        COALESCE(h.completions, '{}'::jsonb),
-        ARRAY[p_date],
-        to_jsonb(NOT COALESCE((h.completions->>p_date)::boolean, false)),
-        true
-      )
-  WHERE h.id = p_habit_id
-    AND h.user_id = (SELECT auth.uid())
-  RETURNING h.id INTO v_id;
+  -- Verrou de la ligne d'habitude : deux bascules concurrentes du même jour
+  -- (deux onglets) se sérialisent, la seconde voit l'état laissé par la
+  -- première (correctif TOCTOU-1, mig. 023). Ne JAMAIS décider sans ce verrou.
+  SELECT h.id INTO v_id
+    FROM public.habits h
+   WHERE h.id = p_habit_id
+     AND h.user_id = v_uid   -- défense en profondeur (la RLS filtre déjà)
+   FOR UPDATE;
 
   IF v_id IS NULL THEN
     RAISE EXCEPTION 'Habit not found';
   END IF;
 
+  DELETE FROM public.habit_completions c
+   WHERE c.habit_id = v_id AND c.user_id = v_uid AND c.day = v_day;
+  v_on := NOT FOUND;
+  IF v_on THEN
+    INSERT INTO public.habit_completions (habit_id, user_id, day)
+    VALUES (v_id, v_uid, v_day);
+  END IF;
+
+  -- Miroir de transition : la colonne reste exacte pour ses lecteurs
+  -- (CLI, export, onglets anciens). Le trigger n'y trouve rien à refaire.
+  UPDATE public.habits h
+     SET completions = jsonb_set(COALESCE(h.completions, '{}'::jsonb),
+                                 ARRAY[p_date], to_jsonb(v_on), true)
+   WHERE h.id = v_id;
+
   RETURN QUERY
   WITH days AS (
-    SELECT (kv.key)::date AS d
-    FROM public.habits h
-    CROSS JOIN LATERAL jsonb_each(COALESCE(h.completions, '{}'::jsonb)) kv
-    WHERE h.id = v_id
-      AND kv.value = 'true'::jsonb
-      AND kv.key ~ '^\d{4}-\d{2}-\d{2}$'
-      AND (kv.key)::date <= v_today
+    SELECT c.day AS d
+    FROM public.habit_completions c
+    WHERE c.habit_id = v_id
+      AND c.user_id = v_uid
+      AND c.day <= v_today
   ),
   grouped AS (
     SELECT d, d - (row_number() OVER (ORDER BY d))::int AS island FROM days
@@ -8779,10 +8864,11 @@ BEGIN
   SELECT
     h.id, h.name, h.description, h.frequency, h.estimated_time, h.color, h.icon,
     COALESCE(
-      (SELECT jsonb_object_agg(kv.key, kv.value)
-         FROM jsonb_each(COALESCE(h.completions, '{}'::jsonb)) kv
-        WHERE kv.key ~ '^\d{4}-\d{2}-\d{2}$'
-          AND (kv.key)::date >= v_today - v_win),
+      (SELECT jsonb_object_agg(to_char(c.day, 'YYYY-MM-DD'), true)
+         FROM public.habit_completions c
+        WHERE c.habit_id = v_id
+          AND c.user_id = v_uid
+          AND c.day >= v_today - v_win),
       '{}'::jsonb
     ),
     h.user_id, h.created_at,
@@ -8794,14 +8880,14 @@ BEGIN
   FROM public.habits h
   WHERE h.id = v_id;
 END;
-$_$;
+$$;
 
 
 --
 -- Name: FUNCTION toggle_habit_completion_v2(p_habit_id uuid, p_date text, p_days integer, p_today date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.toggle_habit_completion_v2(p_habit_id uuid, p_date text, p_days integer, p_today date) IS 'Bascule atomique avec retour borne. `p_today` est la date LOCALE du client (bornee a CURRENT_DATE +/- 1) : sans elle, cocher entre minuit et 2 h en Europe faisait BAISSER le compteur, le jour etant futur pour un serveur UTC reste a la veille (mig. 122).';
+COMMENT ON FUNCTION public.toggle_habit_completion_v2(p_habit_id uuid, p_date text, p_days integer, p_today date) IS 'Bascule d un jour dans habit_completions, sous verrou de la ligne d habitude, recopiee dans habits.completions le temps de la transition (mig. 248). Retour borne, meme forme que get_my_habits. `p_today` : date LOCALE du client (mig. 122).';
 
 
 --
@@ -9956,6 +10042,25 @@ CREATE TABLE public.friend_requests (
 );
 
 ALTER TABLE ONLY public.friend_requests REPLICA IDENTITY FULL;
+
+
+--
+-- Name: habit_completions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.habit_completions (
+    habit_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    day date NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: TABLE habit_completions; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.habit_completions IS 'DAT-02 : un jour coche par ligne (date LOCALE du client, fuseaux geles C-03). Absence = non coche. Lue par get_my_habits, toggle_habit_completion_v2 et get_work_time_stats (mig. 248). habits.completions en est le miroir le temps de la transition.';
 
 
 --
@@ -11528,6 +11633,14 @@ ALTER TABLE ONLY public.friends
 
 
 --
+-- Name: habit_completions habit_completions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.habit_completions
+    ADD CONSTRAINT habit_completions_pkey PRIMARY KEY (habit_id, user_id, day);
+
+
+--
 -- Name: habits habits_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -12242,6 +12355,20 @@ CREATE INDEX cron_runs_job_started_idx ON public.cron_runs USING btree (job, sta
 --
 
 CREATE INDEX cron_runs_pending_idx ON public.cron_runs USING btree (request_id) WHERE (status = 'started'::text);
+
+
+--
+-- Name: habit_completions_user_day_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX habit_completions_user_day_idx ON public.habit_completions USING btree (user_id, day);
+
+
+--
+-- Name: habits_id_user_id_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX habits_id_user_id_key ON public.habits USING btree (id, user_id);
 
 
 --
@@ -14030,6 +14157,20 @@ CREATE TRIGGER trg_freeze_team_membership_identity BEFORE UPDATE ON public.org_t
 
 
 --
+-- Name: habits trg_habit_completions_mirror; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_habit_completions_mirror AFTER INSERT OR UPDATE OF completions ON public.habits FOR EACH ROW EXECUTE FUNCTION public.habit_completions_mirror();
+
+
+--
+-- Name: habit_completions trg_habit_completions_user_id_immutable; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_habit_completions_user_id_immutable BEFORE UPDATE ON public.habit_completions FOR EACH ROW EXECUTE FUNCTION public.prevent_user_id_change();
+
+
+--
 -- Name: team_tasks trg_init_team_task_status; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -14672,6 +14813,22 @@ ALTER TABLE ONLY public.friends
 
 ALTER TABLE ONLY public.friends
     ADD CONSTRAINT friends_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: habit_completions habit_completions_habit_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.habit_completions
+    ADD CONSTRAINT habit_completions_habit_fkey FOREIGN KEY (habit_id, user_id) REFERENCES public.habits(id, user_id) ON DELETE CASCADE;
+
+
+--
+-- Name: habit_completions habit_completions_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.habit_completions
+    ADD CONSTRAINT habit_completions_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 
 
 --
@@ -16476,6 +16633,33 @@ CREATE POLICY friend_requests_update_sender_or_receiver ON public.friend_request
 --
 
 ALTER TABLE public.friends ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: habit_completions; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.habit_completions ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: habit_completions habit_completions_delete; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY habit_completions_delete ON public.habit_completions FOR DELETE TO authenticated USING ((( SELECT auth.uid() AS uid) = user_id));
+
+
+--
+-- Name: habit_completions habit_completions_insert; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY habit_completions_insert ON public.habit_completions FOR INSERT TO authenticated WITH CHECK ((( SELECT auth.uid() AS uid) = user_id));
+
+
+--
+-- Name: habit_completions habit_completions_select; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY habit_completions_select ON public.habit_completions FOR SELECT TO authenticated USING ((( SELECT auth.uid() AS uid) = user_id));
+
 
 --
 -- Name: habits; Type: ROW SECURITY; Schema: public; Owner: -
@@ -19054,6 +19238,23 @@ GRANT ALL ON FUNCTION public.get_work_time_stats(p_ranges jsonb, p_tz text) TO s
 
 
 --
+-- Name: FUNCTION habit_completions_mirror(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.habit_completions_mirror() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.habit_completions_mirror() TO service_role;
+
+
+--
+-- Name: FUNCTION habit_day_from_key(p_key text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.habit_day_from_key(p_key text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.habit_day_from_key(p_key text) TO authenticated;
+GRANT ALL ON FUNCTION public.habit_day_from_key(p_key text) TO service_role;
+
+
+--
 -- Name: FUNCTION handle_new_user_profile(); Type: ACL; Schema: public; Owner: -
 --
 
@@ -20439,6 +20640,14 @@ GRANT ALL ON TABLE public.events TO service_role;
 GRANT ALL ON TABLE public.friend_requests TO anon;
 GRANT ALL ON TABLE public.friend_requests TO authenticated;
 GRANT ALL ON TABLE public.friend_requests TO service_role;
+
+
+--
+-- Name: TABLE habit_completions; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON TABLE public.habit_completions TO service_role;
+GRANT SELECT,INSERT,DELETE ON TABLE public.habit_completions TO authenticated;
 
 
 --
