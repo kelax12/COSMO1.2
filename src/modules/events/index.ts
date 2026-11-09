@@ -37,6 +37,7 @@ export type { IEventsRepository } from './repository';
 export {
   useEvents,
   useEventsWindow,
+  useTaskLinkedEvents,
   useMemberEventsWindow,
   useUpcomingEvents,
   useGroupEventsWindow,

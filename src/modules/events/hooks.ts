@@ -49,6 +49,19 @@ export const useEventsWindow = (startISO: string | null, endISO: string | null) 
   });
 };
 
+/**
+ * Événements liés à une tâche, où qu'ils soient dans le temps (V14.2). Pour
+ * la barre de tâches de l'agenda, qui chargeait `useEvents()` en entier.
+ * Clé sous lists() : les mutations la patchent comme les fenêtres.
+ */
+export const useTaskLinkedEvents = () => {
+  const repository = useEventsRepository();
+  return useQuery({
+    queryKey: eventsKeys.linkedToTasks(),
+    queryFn: () => repository.getLinkedToTasks(),
+  });
+};
+
 // ═══════════════════════════════════════════════════════════════════
 // MUTATION HOOKS
 // ═══════════════════════════════════════════════════════════════════

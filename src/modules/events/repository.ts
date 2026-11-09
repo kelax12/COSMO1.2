@@ -22,6 +22,13 @@ export interface IEventsRepository {
   /** Événements de la fenêtre [startISO, endISO] + TOUS les récurrents (cf. window.ts). */
   getWindow(startISO: string, endISO: string): Promise<CalendarEvent[]>;
   /**
+   * Tous les événements PERSONNELS liés à une tâche (`task_id` non nul), sans
+   * plafond (V14.2). C'est ce que lit la barre de tâches de l'agenda pour dire
+   * si une tâche est déjà placée, où que soit son créneau dans le temps : la
+   * fenêtre visible n'y suffit pas, l'historique complet n'y sert à rien.
+   */
+  getLinkedToTasks(): Promise<CalendarEvent[]>;
+  /**
    * Agenda d'un AUTRE membre (mode entreprise) : réservé à sa hiérarchie
    * (RLS `events_manager_select`, mig. 077). Même sémantique que getWindow.
    */

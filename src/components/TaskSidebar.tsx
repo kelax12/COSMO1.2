@@ -10,7 +10,7 @@ import { showUndoToast } from '@/lib/undo-toast';
 import { useTasks, useDeleteTask, useCreateTask, useRestoreTask, Task } from '@/modules/tasks';
 
 // Module events - Hooks indépendants
-import { useEvents, useDeleteEvent, useRestoreEvent } from '@/modules/events';
+import { useTaskLinkedEvents, useDeleteEvent, useRestoreEvent } from '@/modules/events';
 
 // Module categories
 import { useCategories, buildTree } from '@/modules/categories';
@@ -51,7 +51,9 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
   const { data: tasks = [] } = useTasks();
 
   // EVENTS - Depuis le module events
-  const { data: events = [] } = useEvents();
+  // V14.2 : seulement les événements liés à une tâche (placée ou non), pas
+  // tout l'agenda. La barre ne lit `events` que par `taskId`.
+  const { data: events = [] } = useTaskLinkedEvents();
   const deleteEventMutation = useDeleteEvent();
   // « Annuler » de la suppression des evenements lies (C-43) : rend chaque
   // evenement sous SON identifiant, comme le fait deja `useAgendaEventActions`.

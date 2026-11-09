@@ -28,7 +28,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { useDarkMode } from '@/hooks/useDarkMode';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { PREMIUM_ENFORCED } from '@/modules/billing/premium-config';
-import { useTasks } from '@/modules/tasks';
+import { useTasks, useTaskArchive } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
 import { useEvents } from '@/modules/events';
 import { useOkrs } from '@/modules/okrs';
@@ -100,10 +100,19 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
 
   const q = normalize(query);
 
-  const matchedTasks = useMemo(
-    () => tasks.filter((t) => normalize(t.name).includes(q)).slice(0, MAX_DATA_RESULTS),
-    [tasks, q]
+  // V14.1 (PER-01) : `useTasks()` est le jeu de travail (non terminées et
+  // 35 jours de terminées). Une tâche terminée plus tôt se cherche dans
+  // l'archive, côté SERVEUR, après la même pause de frappe que l'entreprise.
+  const { data: archived } = useTaskArchive(
+    { status: 'completed', search: serverQuery },
+    { enabled: serverQuery.length >= 2, pageSize: MAX_DATA_RESULTS },
   );
+  const matchedTasks = useMemo(() => {
+    const local = tasks.filter((t) => normalize(t.name).includes(q));
+    const seen = new Set(local.map((t) => t.id));
+    const fromArchive = (archived?.pages[0]?.data ?? []).filter((t) => !seen.has(t.id));
+    return [...local, ...fromArchive].slice(0, MAX_DATA_RESULTS);
+  }, [tasks, archived, q]);
   const matchedHabits = useMemo(
     () => habits.filter((h) => normalize(h.name).includes(q)).slice(0, MAX_DATA_RESULTS),
     [habits, q]
