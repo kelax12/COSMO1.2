@@ -1,0 +1,85 @@
+# ──────────────────────────────────────────────────────────────────────
+# BASE FRAICHE CONTRE PRODUCTION (ROB-02, V8.1-8.2, 2026-11-09)
+#
+# Mesure provisoire de la V8.1 : la base que le depot reconstruit
+# (`supabase/migration/` rejoue, moins les migrations commitees mais pas
+# encore appliquees) est-elle la production ? Rendu objet par objet par
+# `scripts/schema-prod.mjs`, aucune ecriture en production.
+# ──────────────────────────────────────────────────────────────────────
+name: Schema prod
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['noyau/migrations-cli']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: schema-prod-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  candidat-baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - uses: supabase/setup-cli@d239d1052f6f024a8d746d7e5aeddead63b9cb53 # v3.1.0
+        with:
+          version: 2.122.1
+      - run: npm ci
+      - name: Start Supabase stack (local)
+        run: supabase start
+      - name: Rejouer l historique moins les migrations pas en prod
+        run: |
+          set -o pipefail
+          rm supabase/migration/206_*.sql supabase/migration/245_*.sql supabase/migration/246_*.sql
+          DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres node scripts/apply-migrations.mjs
+      - name: Dump executable de la base fraiche
+        run: |
+          mkdir -p candidat
+          supabase db dump --local -f candidat/baseline.sql
+          DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres node scripts/contrat-donnees.mjs --verifier --sortie candidat || true
+          wc -l candidat/baseline.sql
+      - name: Artefact candidat-baseline
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: candidat-baseline
+          path: candidat/
+          if-no-files-found: error
+          retention-days: 7
+      - name: Stop Supabase stack
+        if: ${{ always() }}
+        run: supabase stop
+
+  ecart-prod:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - uses: supabase/setup-cli@d239d1052f6f024a8d746d7e5aeddead63b9cb53 # v3.1.0
+        with:
+          version: 2.122.1
+      - run: npm ci
+      - name: Start Supabase stack (local)
+        run: supabase start
+      - name: Rejouer l historique moins les migrations pas en prod
+        run: |
+          set -o pipefail
+          rm supabase/migration/206_*.sql supabase/migration/245_*.sql supabase/migration/246_*.sql
+          DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres node scripts/apply-migrations.mjs
+      - name: Comparer la base fraiche a la production
+        env:
+          PROD_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: node scripts/schema-prod.mjs comparer
+      - name: Stop Supabase stack
+        if: ${{ always() }}
+        run: supabase stop
