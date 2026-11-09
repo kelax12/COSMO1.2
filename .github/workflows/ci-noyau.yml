@@ -445,8 +445,8 @@ jobs:
 
   # ──────────────────────────────────────────────────────────────────
   # Tests RLS d'intégration : démarre une stack Supabase locale (GoTrue +
-  # PostgREST + Postgres), rejoue TOUTES les migrations sur base vierge via
-  # scripts/apply-migrations.mjs, puis vérifie que la RLS isole bien les
+  # PostgREST + Postgres), construit la base vierge depuis supabase/migrations/ (`supabase start`,
+  # ledger relu par scripts/verifier-migrations.mjs), puis vérifie que la RLS isole bien les
   # données entre utilisateurs (e2e/rls/). Filet de sécurité du modèle
   # d'accès (cf. récursion 42P17, mig. 045). Job séparé : Docker + images.
   # ──────────────────────────────────────────────────────────────────
@@ -463,8 +463,18 @@ jobs:
         with:
           version: latest
       - run: npm ci
-      - name: Start Supabase stack (local)
-        run: supabase start
+      - name: Start Supabase stack (local), applique supabase/migrations/
+        run: |
+          set -o pipefail
+          # ROB-02 (2026-11-09) : `supabase start` construit la base depuis
+          # supabase/migrations/ (baseline de production, puis les migrations
+          # posterieures). Un echec de migration sort ICI : sa fin part au
+          # resume du job (public) et en annotation, comme l'ancien rejeu.
+          if supabase start 2>&1 | tee start.log; then exit 0; fi
+          { echo '### ✖ supabase start (supabase/migrations/) en echec'; echo; echo '```'; tail -n 60 start.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          TAIL=$(tail -n 20 start.log | sed 's/%/%25/g; s/\r//g' | awk '{printf "%s%%0A", $0}')
+          echo "::error title=supabase start::${TAIL}"
+          exit 1
       - name: Export Supabase env
         run: |
           supabase status -o env > supabase.env
@@ -490,7 +500,7 @@ jobs:
             echo "SUPABASE_ANON_KEY=$ANON_KEY"
             echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
           } >> "$GITHUB_ENV"
-      - name: Apply migrations on fresh DB
+      - name: Verify the CLI applied supabase/migrations/
         id: migrate
         run: |
           set -o pipefail   # sans ça, le statut serait celui de `tee`, jamais celui de node
@@ -500,11 +510,11 @@ jobs:
           # c'est ce qui a rendu ce job indiagnosticable depuis le 2026-06-21.
           # `2>&1` capture aussi un crash de Node (module absent, parse), qui
           # sort AVANT toute annotation applicative.
-          if node scripts/apply-migrations.mjs 2>&1 | tee migrate.log; then
+          if node scripts/verifier-migrations.mjs 2>&1 | tee migrate.log; then
             exit 0
           fi
           {
-            echo '### ✖ Replay des migrations sur base vierge — échec'
+            echo '### ✖ Ledger local et supabase/migrations/ divergent'
             echo ''
             echo '```'
             tail -n 60 migrate.log
@@ -561,8 +571,9 @@ jobs:
 
   # ──────────────────────────────────────────────────────────────────
   # CONTRAT DE DONNEES (MAI-01, API-01, ARC-07, 2026-11-06). Le schema vivant
-  # se lit depuis le depot : une stack Supabase locale vierge, toutes les
-  # migrations rejouees, puis trois fichiers COMMITES sont regeneres et
+  # se lit depuis le depot : une stack Supabase locale vierge construite par
+  # `supabase start` depuis supabase/migrations/ (ROB-02, 2026-11-09), puis
+  # trois fichiers COMMITES sont regeneres et
   # compares : `supabase/schema.sql`, `supabase/rpc-inventory.md`,
   # `src/generated/database.types.ts`. Un ecart fait echouer le job : une
   # migration, un droit `EXECUTE` ou une colonne ne passent plus sans que le
@@ -589,9 +600,19 @@ jobs:
         with:
           version: 2.122.1
       - run: npm ci
-      - name: Start Supabase stack (local)
-        run: supabase start
-      - name: Apply migrations on fresh DB
+      - name: Start Supabase stack (local), applique supabase/migrations/
+        run: |
+          set -o pipefail
+          # ROB-02 (2026-11-09) : `supabase start` construit la base depuis
+          # supabase/migrations/ (baseline de production, puis les migrations
+          # posterieures). Un echec de migration sort ICI : sa fin part au
+          # resume du job (public) et en annotation, comme l'ancien rejeu.
+          if supabase start 2>&1 | tee start.log; then exit 0; fi
+          { echo '### ✖ supabase start (supabase/migrations/) en echec'; echo; echo '```'; tail -n 60 start.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          TAIL=$(tail -n 20 start.log | sed 's/%/%25/g; s/\r//g' | awk '{printf "%s%%0A", $0}')
+          echo "::error title=supabase start::${TAIL}"
+          exit 1
+      - name: Verify the CLI applied supabase/migrations/
         id: migrate
         run: |
           set -o pipefail
@@ -602,11 +623,11 @@ jobs:
             DB_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
           fi
           echo "DATABASE_URL=$DB_URL" >> "$GITHUB_ENV"
-          if DATABASE_URL="$DB_URL" node scripts/apply-migrations.mjs 2>&1 | tee migrate.log; then
+          if DATABASE_URL="$DB_URL" node scripts/verifier-migrations.mjs 2>&1 | tee migrate.log; then
             exit 0
           fi
           {
-            echo '### ✖ Replay des migrations sur base vierge, echec'
+            echo '### ✖ Ledger local et supabase/migrations/ divergent'
             echo ''
             echo '```'
             tail -n 60 migrate.log

@@ -25,6 +25,8 @@ export function calculerFaits(racine = process.cwd()) {
 
   const migrations = fichiers(join(racine, 'supabase', 'migration'), /^\d{3}_.*\.sql$/)
   const derniere = migrations.length ? migrations[migrations.length - 1].slice(0, 3) : '000'
+  // ROB-02 (2026-11-09) : le dossier de la CLI, baseline comprise.
+  const cli = fichiers(join(racine, 'supabase', 'migrations'), /^\d{14}_.*\.sql$/)
 
   const wfDir = join(racine, '.github', 'workflows')
   const workflows = fichiers(wfDir, /\.ya?ml$/)
@@ -45,6 +47,8 @@ export function calculerFaits(racine = process.cwd()) {
     edgeFunctions: edge.length,
     migrations: migrations.length,
     derniereMigration: derniere,
+    migrationsCli: cli.length,
+    derniereMigrationCli: cli.length ? cli[cli.length - 1].replace(/\.sql$/, '') : '(aucune)',
     workflows: workflows.length,
     workflowsPlanifies: planifies.length,
     modules: modules.length,
@@ -62,8 +66,10 @@ export function calculerFaits(racine = process.cwd()) {
 export function rendre(f) {
   const lignes = [
     ['Edge Functions déployables', f.edgeFunctions, 'dossiers de `supabase/functions/` portant un `index.ts` (hors `_shared`)'],
-    ['Migrations SQL', f.migrations, 'fichiers `NNN_*.sql` de `supabase/migration/`'],
+    ['Migrations SQL', f.migrations, 'fichiers `NNN_*.sql` de `supabase/migration/` (historique figé le 2026-11-09)'],
     ['Dernière migration', f.derniereMigration, 'plus grand préfixe numérique de `supabase/migration/`'],
+    ['Migrations de la CLI', f.migrationsCli, 'fichiers `<horodatage>_*.sql` de `supabase/migrations/`, baseline comprise'],
+    ['Dernière migration de la CLI', f.derniereMigrationCli, 'dernier fichier de `supabase/migrations/`, dans l ordre de la CLI'],
     ['Workflows GitHub', f.workflows, 'fichiers de `.github/workflows/`'],
     ['dont planifiés', f.workflowsPlanifies, 'workflows portant un `schedule:`'],
     ['Modules applicatifs', f.modules, 'dossiers de `src/modules/`'],

@@ -84,7 +84,7 @@ describe('juger', () => {
   });
 
   it('la sonde compte autant de jobs que cron_runs_verdict() en déclare', () => {
-    const sql = readFileSync(join(process.cwd(), 'supabase/migration/245_cron_journal.sql'), 'utf8');
+    const sql = readFileSync(join(process.cwd(), 'supabase/migrations/20261109120200_245_cron_journal.sql'), 'utf8');
     const bloc = sql.slice(sql.indexOf('WITH attendus (job, fenetre)'), sql.indexOf('SELECT a.job'));
     expect([...bloc.matchAll(/\('([a-z-]+)',\s+interval/g)].map((m) => m[1]).sort()).toEqual(SIX);
   });

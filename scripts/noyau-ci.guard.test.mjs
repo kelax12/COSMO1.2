@@ -50,8 +50,8 @@ describe('ci-noyau.yml : la composition du noyau', () => {
       'npm run check:commentaires', 'npm run check:faits',
     ]],
     ['fichiers-sensibles', ['node scripts/check-fichiers-sensibles.mjs --arbre --plage']],
-    ['rls-integration', ['node scripts/apply-migrations.mjs', 'npm run test:rls']],
-    ['contrat-donnees', ['node scripts/apply-migrations.mjs', 'node scripts/contrat-donnees.mjs --verifier --sortie']],
+    ['rls-integration', ['node scripts/verifier-migrations.mjs', 'npm run test:rls']],
+    ['contrat-donnees', ['node scripts/verifier-migrations.mjs', 'node scripts/contrat-donnees.mjs --verifier --sortie']],
   ])('TÉMOIN : le job `%s` lance ses gardes', (job, attendues) => {
     const texte = commandes(job);
     for (const c of attendues) expect(texte, `${job} : ${c}`).toContain(c);

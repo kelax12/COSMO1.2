@@ -82,8 +82,18 @@ jobs:
         with:
           version: latest
       - run: npm ci
-      - name: Start Supabase stack (local)
-        run: supabase start
+      - name: Start Supabase stack (local), applique supabase/migrations/
+        run: |
+          set -o pipefail
+          # ROB-02 (2026-11-09) : `supabase start` construit la base depuis
+          # supabase/migrations/ (baseline de production, puis les migrations
+          # posterieures). Un echec de migration sort ICI : sa fin part au
+          # resume du job (public) et en annotation, comme l'ancien rejeu.
+          if supabase start 2>&1 | tee start.log; then exit 0; fi
+          { echo '### ✖ supabase start (supabase/migrations/) en echec'; echo; echo '```'; tail -n 60 start.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          TAIL=$(tail -n 20 start.log | sed 's/%/%25/g; s/\r//g' | awk '{printf "%s%%0A", $0}')
+          echo "::error title=supabase start::${TAIL}"
+          exit 1
 
       - name: Export DATABASE_URL
         run: |
@@ -99,14 +109,14 @@ jobs:
           fi
           echo "DATABASE_URL=$DB_URL" >> "$GITHUB_ENV"
 
-      - name: Apply migrations on fresh DB
+      - name: Verify the CLI applied supabase/migrations/
         run: |
           set -o pipefail
-          if node scripts/apply-migrations.mjs 2>&1 | tee migrate.log; then
+          if node scripts/verifier-migrations.mjs 2>&1 | tee migrate.log; then
             exit 0
           fi
           {
-            echo '### ✖ Replay des migrations — echec'
+            echo '### ✖ Ledger local et supabase/migrations/ divergent'
             echo ''
             echo '```'
             tail -n 60 migrate.log

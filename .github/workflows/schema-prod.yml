@@ -1,17 +1,43 @@
 # ──────────────────────────────────────────────────────────────────────
 # BASE FRAICHE CONTRE PRODUCTION (ROB-02, V8.1-8.2, 2026-11-09)
 #
-# Mesure provisoire de la V8.1 : la base que le depot reconstruit
-# (`supabase/migration/` rejoue, moins les migrations commitees mais pas
-# encore appliquees) est-elle la production ? Rendu objet par objet par
-# `scripts/schema-prod.mjs`, aucune ecriture en production.
+# Question posee a chaque run : une base construite par la CLI Supabase
+# depuis `supabase/migrations/` (la baseline, puis les migrations
+# posterieures que la production a recues) est-elle IDENTIQUE a la
+# production ? Reponse objet par objet par `scripts/schema-prod.mjs` :
+# « en prod seulement », « dans le depot seulement », « different ».
+#
+# Avant ce job, rien ne le disait. Le premier passage (2026-11-09) a trouve
+# 6 objets en prod seulement, 23 dans le depot seulement et 73 definitions
+# differentes entre le rejeu de `supabase/migration/` et la prod : c'est ce
+# qui a fixe la baseline (`supabase/migration/CLAUDE.md`).
+#
+# 🔴 AUCUNE ecriture en production : session `read only`, `select` sur le
+# ledger et le catalogue, `pg_dump --schema-only`. Aucun artefact. Le journal
+# (public) porte la liste des objets en ecart et leur definition de prod,
+# masquee (adresses, jetons, URL) : du schema, jamais une ligne de table.
+#
+# Les migrations commitees mais pas encore appliquees (absentes du ledger de
+# prod par version ET par nom) sont retirees de l'arbre du RUNNER avant
+# `supabase start`, et listees dans le resume : un ecart attendu est nomme,
+# jamais tu. Une derive nait d'une APPLICATION, pas d'un commit : d'ou le
+# passage quotidien en plus du push.
+# ⚠️ Pas de `if: secrets.X != ''` : sans secret, le job ROUGIT (scripts/CLAUDE.md).
 # ──────────────────────────────────────────────────────────────────────
 name: Schema prod
 
 on:
+  schedule:
+    - cron: '41 5 * * *' # tous les jours, 05:41 UTC (decale des autres crons)
   workflow_dispatch:
   push:
-    branches: ['noyau/migrations-cli']
+    branches: [main, 'noyau/**']
+    paths:
+      - supabase/migrations/**
+      - scripts/schema-prod.mjs
+      - scripts/contrat-donnees.mjs
+      - scripts/verifier-migrations.mjs
+      - .github/workflows/schema-prod.yml
 
 permissions:
   contents: read
@@ -21,7 +47,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  candidat-baseline:
+  base-egale-prod:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -29,53 +55,25 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
+      # Meme CLI que `contrat-donnees` : meme Postgres, meme pg_dump, des deux cotes.
       - uses: supabase/setup-cli@d239d1052f6f024a8d746d7e5aeddead63b9cb53 # v3.1.0
         with:
           version: 2.122.1
       - run: npm ci
-      - name: Start Supabase stack (local)
-        run: supabase start
-      - name: Rejouer l historique moins les migrations pas en prod
+      - name: Migrations en attente de production
+        env:
+          PROD_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: node scripts/schema-prod.mjs en-attente --retirer
+      - name: Start Supabase stack (local), applique supabase/migrations/
         run: |
           set -o pipefail
-          rm supabase/migration/206_*.sql supabase/migration/245_*.sql supabase/migration/246_*.sql
-          DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres node scripts/apply-migrations.mjs
-      - name: Dump executable de la base fraiche
-        run: |
-          mkdir -p candidat
-          supabase db dump --local -f candidat/baseline.sql
-          DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres node scripts/contrat-donnees.mjs --verifier --sortie candidat || true
-          wc -l candidat/baseline.sql
-      - name: Artefact candidat-baseline
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: candidat-baseline
-          path: candidat/
-          if-no-files-found: error
-          retention-days: 7
-      - name: Stop Supabase stack
-        if: ${{ always() }}
-        run: supabase stop
-
-  ecart-prod:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: '22'
-          cache: 'npm'
-      - uses: supabase/setup-cli@d239d1052f6f024a8d746d7e5aeddead63b9cb53 # v3.1.0
-        with:
-          version: 2.122.1
-      - run: npm ci
-      - name: Start Supabase stack (local)
-        run: supabase start
-      - name: Rejouer l historique moins les migrations pas en prod
-        run: |
-          set -o pipefail
-          rm supabase/migration/206_*.sql supabase/migration/245_*.sql supabase/migration/246_*.sql
-          DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres node scripts/apply-migrations.mjs
+          if supabase start 2>&1 | tee start.log; then exit 0; fi
+          { echo '### ✖ supabase start (supabase/migrations/) en echec'; echo; echo '```'; tail -n 60 start.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          TAIL=$(tail -n 20 start.log | sed 's/%/%25/g; s/\r//g' | awk '{printf "%s%%0A", $0}')
+          echo "::error title=supabase start::${TAIL}"
+          exit 1
+      - name: Verify the CLI applied supabase/migrations/
+        run: node scripts/verifier-migrations.mjs
       - name: Comparer la base fraiche a la production
         env:
           PROD_DB_URL: ${{ secrets.SUPABASE_DB_URL }}

@@ -12,8 +12,8 @@
 //     compilation.
 //
 // La source est la base FRAICHE du job `contrat-donnees` de `CI noyau` : une
-// stack Supabase locale vierge, toutes les migrations rejouees par
-// `scripts/apply-migrations.mjs`. Trois fichiers sont derives de cette base et
+// stack Supabase locale vierge construite par `supabase start` depuis
+// `supabase/migrations/` (ROB-02, ledger relu par `scripts/verifier-migrations.mjs`). Trois fichiers sont derives de cette base et
 // COMMITES :
 //   · supabase/schema.sql              `pg_dump --schema-only`, normalise ;
 //   · supabase/rpc-inventory.md        fonctions, droits, appelants du front ;
@@ -50,7 +50,7 @@ export const CHEMINS = {
 /** Les dossiers ou l'on cherche des appels `rpc('nom'`. */
 export const DOSSIERS_APPELANTS = ['src', 'supabase/functions', 'api'];
 
-const REGENERER = 'npm run contrat:generer (Docker, supabase start, node scripts/apply-migrations.mjs) '
+const REGENERER = 'npm run contrat:generer (Docker, supabase start qui applique supabase/migrations/) '
   + 'ou copier les fichiers de l\'artefact `contrat-donnees` du job CI';
 
 // ─── pg_dump ────────────────────────────────────────────────────────
@@ -84,7 +84,7 @@ export function normaliserDump(brut) {
 const ENTETE_SCHEMA = [
   '-- GENERE par scripts/contrat-donnees.mjs. NE PAS EDITER A LA MAIN.',
   '-- Instantane du schema `public` d\'une base vierge sur laquelle toutes les migrations de',
-  '-- supabase/migration/ ont ete rejouees (pg_dump --schema-only, normalise), suivi des objets',
+  '-- supabase/migrations/ ont ete appliquees par la CLI (pg_dump --schema-only, normalise), suivi des objets',
   '-- poses hors `public` par ces migrations. La CI echoue si ce fichier diverge.',
   `-- Regenerer : ${REGENERER}.`,
   '',
@@ -298,8 +298,8 @@ export function rendreInventaire(fonctions, appelants) {
     '<!-- GENERE par scripts/contrat-donnees.mjs. NE PAS EDITER A LA MAIN. -->',
     '# Inventaire des fonctions SQL du schema `public`',
     '',
-    'Genere depuis une base vierge sur laquelle toutes les migrations de `supabase/migration/` ont ete',
-    'rejouees. La CI echoue si ce fichier diverge de ce que les migrations produisent : chaque ajout',
+    'Genere depuis une base vierge sur laquelle toutes les migrations de `supabase/migrations/` ont ete',
+    'appliquees par la CLI. La CI echoue si ce fichier diverge de ce que les migrations produisent : chaque ajout',
     'ou changement de droit d\'une fonction est donc relu dans le diff.',
     '',
     `Regenerer : ${REGENERER}.`,
@@ -338,7 +338,7 @@ export function rendreInventaire(fonctions, appelants) {
 
 const ENTETE_TYPES = [
   '// @generated par scripts/contrat-donnees.mjs (supabase gen types typescript). NE PAS EDITER A LA MAIN.',
-  '// Source : une base vierge sur laquelle toutes les migrations de supabase/migration/ ont ete rejouees.',
+  '// Source : une base vierge sur laquelle toutes les migrations de supabase/migrations/ ont ete appliquees.',
   '// La CI echoue si ce fichier diverge. Les mappers s\'y accrochent par src/lib/db-contract.ts :',
   '// un renommage de colonne casse `tsc`.',
   `// Regenerer : ${REGENERER}.`,

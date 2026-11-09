@@ -62,15 +62,15 @@ afterAll(async () => {
 
 describe('supabase/proofs : preuves 245 et 246 rejouées sur la base fraîche', () => {
   const PREUVES = [
-    { preuve: '245.proof.sql', migration: '245_cron_journal.sql' },
-    { preuve: '246.proof.sql', migration: '246_cron_planification.sql' },
+    { preuve: '245.proof.sql', migration: '20261109120200_245_cron_journal.sql' },
+    { preuve: '246.proof.sql', migration: '20261109120300_246_cron_planification.sql' },
   ];
   for (const { preuve, migration } of PREUVES) {
     it(`${preuve} embarque le texte exact de ${migration}`, () => {
       const m = lire(`supabase/proofs/${preuve}`).match(/EXECUTE \$mig\$\n([\s\S]*?)\n\$mig\$;/);
       expect(m, `${preuve} : aucun bloc EXECUTE $mig$ … $mig$`).not.toBeNull();
       expect(m![1], `${preuve} : le texte embarqué a dérivé de ${migration}`).toBe(
-        lire(`supabase/migration/${migration}`).replace(/\n+$/, ''),
+        lire(`supabase/migrations/${migration}`).replace(/\n+$/, ''),
       );
     });
   }

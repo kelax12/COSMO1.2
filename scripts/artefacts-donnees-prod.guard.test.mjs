@@ -196,6 +196,14 @@ export const CONTACTS_PROD = {
   'db-backup.yml › dump › Chiffrer le manifeste de comptages': {
     affiche: 'nombre de tables de public et de lignes mal formées du manifeste (deux `grep -c`) ; jamais son contenu',
   },
+  'schema-prod.yml › base-egale-prod › Migrations en attente de production': {
+    affiche:
+      'noms de fichiers de supabase/migrations/ absents du ledger de production, lus par `select version, name` sur supabase_migrations.schema_migrations (session read only) ; aucune ligne de table',
+  },
+  'schema-prod.yml › base-egale-prod › Comparer la base fraiche a la production': {
+    affiche:
+      "objets du schéma en écart entre base fraîche et production, et leur définition de prod (pg_dump --schema-only, catalogue, session read only), masquée par schema-prod.mjs (adresses, jetons, clés, URL) ; jamais une ligne de table, aucun artefact",
+  },
   'migration-coverage.yml › couverture › Lire le ledger et le catalogue de production': {
     affiche: "taille de l'introspection en octets ; la sortie de psql va dans un fichier",
   },

@@ -53,6 +53,7 @@
 
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, sep } from 'node:path';
+import { sqlDe } from './migrations-fichiers.mjs';
 
 const RACINE = process.cwd();
 const MIGRATIONS = join(RACINE, 'supabase', 'migration');
@@ -179,8 +180,9 @@ const DECISIONS = {
 export function tablesAvecUserId(dossier = MIGRATIONS) {
   const out = new Map();
   if (!existsSync(dossier)) return out;
-  for (const f of readdirSync(dossier).filter((f) => f.endsWith('.sql')).sort()) {
-    const sql = readFileSync(join(dossier, f), 'utf8');
+  // ROB-02 : le dossier par defaut vaut aussi `supabase/migrations/` (hors baseline).
+  for (const { fichier: f, chemin } of sqlDe(dossier, RACINE)) {
+    const sql = readFileSync(chemin, 'utf8');
     for (const m of sql.matchAll(
       /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:public\.)?([a-z_0-9]+)\s*\(([\s\S]*?)\n\s*\);/gi,
     )) {

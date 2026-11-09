@@ -176,7 +176,7 @@ describe('fonctions planifiées · le bail est pris, au bon endroit', () => {
   }
 
   it('chaque job appelé par cron_invoke (mig. 245) a sa fonction sous bail', () => {
-    const sql = read('supabase/migration/245_cron_journal.sql');
+    const sql = read('supabase/migrations/20261109120200_245_cron_journal.sql');
     const chemins = [...sql.matchAll(/WHEN '[a-z-]+'\s+THEN '([a-z-]+)(?:\?mode=[a-z]+)?'/g)].map((m) => m[1]);
     expect(new Set(chemins)).toEqual(new Set(Object.keys(PLANIFIEES)));
   });

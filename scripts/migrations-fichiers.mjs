@@ -65,3 +65,14 @@ export function listerMigrations(racine = process.cwd()) {
     }));
   return [...historique, ...cli];
 }
+
+/**
+ * Pour les gardes qui prennent un dossier en parametre (leurs temoins passent
+ * un dossier de fixtures) : le dossier d'historique de la racine vaut les DEUX
+ * dossiers (`listerMigrations`), tout autre dossier se lit tel quel.
+ * Rend `[{ fichier, chemin }]` dans l'ordre d'application.
+ */
+export function sqlDe(dossier, racine) {
+  if (racine && dossier === join(racine, DOSSIER_HISTORIQUE)) return listerMigrations(racine);
+  return readdirSync(dossier).filter((f) => f.endsWith('.sql')).sort().map((fichier) => ({ fichier, chemin: join(dossier, fichier) }));
+}

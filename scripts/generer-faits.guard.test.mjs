@@ -21,6 +21,8 @@ function arbre() {
   ecrire(racine, 'supabase/migration/001_a.sql')
   ecrire(racine, 'supabase/migration/002_b.sql')
   ecrire(racine, 'supabase/migration/README.md')
+  ecrire(racine, 'supabase/migrations/20261109120000_baseline.sql')
+  ecrire(racine, 'supabase/migrations/20261110080000_ajout.sql')
   ecrire(racine, '.github/workflows/a.yml', 'on:\n  schedule:\n    - cron: "0 0 * * *"\n')
   ecrire(racine, '.github/workflows/b.yml', '# schedule: en commentaire\non:\n  push:\n')
   ecrire(racine, 'src/modules/tasks/index.ts')
@@ -45,7 +47,8 @@ describe('calculerFaits : chaque chiffre vient de la source', () => {
     const racine = arbre()
     try {
       expect(calculerFaits(racine)).toEqual({
-        edgeFunctions: 2, migrations: 2, derniereMigration: '002', workflows: 2, workflowsPlanifies: 1,
+        edgeFunctions: 2, migrations: 2, derniereMigration: '002',
+        migrationsCli: 2, derniereMigrationCli: '20261110080000_ajout', workflows: 2, workflowsPlanifies: 1,
         modules: 1, namespaces: 2, gardes: 3, adr: 1,
         tables: 2, tablesRls: 1, policies: 1, fonctionsSql: 1,
       })
