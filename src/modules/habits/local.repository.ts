@@ -5,6 +5,7 @@ import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagi
 import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
 import { makeApiError } from '@/lib/normalizeApiError';
 import { localizedDemoHabits } from './local.seed';
+import { toggleCompletionDay } from './streak';
 
 const STORAGE_KEY = 'cosmo_demo_habits';
 
@@ -84,8 +85,9 @@ export class LocalStorageHabitsRepository implements IHabitsRepository {
     if (index === -1) throw makeApiError('not_found');
 
     const habit = habits[index];
-    const completions = { ...habit.completions };
-    completions[date] = !completions[date];
+    // Même contrat que `habit_completions` (mig. 248) : un jour décoché
+    // disparaît de la carte.
+    const completions = toggleCompletionDay(habit.completions, date);
 
     const updatedHabit = { ...habit, completions };
     habits[index] = updatedHabit;
