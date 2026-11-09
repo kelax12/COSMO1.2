@@ -344,6 +344,26 @@ isOneToOne: false
                   Relationships: [
 
                   ]
+                },"habit_completions": {
+                  Row: {
+                    "created_at": string,"day": string,"habit_id": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"day": string,"habit_id": string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"day"?: string,"habit_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "habit_completions_habit_fkey"
+      columns: ["habit_id","user_id"]
+isOneToOne: false
+      referencedRelation: "habits"
+      referencedColumns: ["id","user_id"]
+    }
+                  ]
                 },"habits": {
                   Row: {
                     "color": string,"completions": NonNullable<Json>,"created_at": string | null,"description": string | null,"estimated_time": number,"frequency": string,"icon": string,"id": string,"name": string,"updated_at": string | null,"user_id": string
@@ -2454,6 +2474,9 @@ isOneToOne: false
                            },
 "get_work_time_stats":
 { Args: { "p_ranges": Json,"p_tz"?: string }; Returns: Json
+                           },
+"habit_day_from_key":
+{ Args: { "p_key": string }; Returns: string
                            },
 "has_subordinates":
 { Args: { "p_org": string,"p_user": string }; Returns: boolean
