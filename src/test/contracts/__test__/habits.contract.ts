@@ -7,13 +7,20 @@
 // chaque cas retrouve SES habitudes par identifiant, jamais par position absolue.
 import { describe, expect, beforeAll } from 'vitest';
 import type { IHabitsRepository } from '@/modules/habits/repository';
+import type { IStatsRepository } from '@/modules/stats/repository';
 import type { CreateHabitInput, Habit } from '@/modules/habits/types';
 import { habitStreak } from '@/modules/habits/streak';
 import { contractCase, dayKey, rejects, unique, type ContractOptions } from './harness';
 
 export interface HabitsContractContext {
   repo: IHabitsRepository;
+  /** Temps investi (`get_work_time_stats` côté Supabase, mig. 248 : lu dans `habit_completions`). */
+  stats: IStatsRepository;
 }
+
+/** `n` jours consécutifs cochés, finissant `fin` jours avant aujourd'hui. */
+const serie = (n: number, fin = 1): Record<string, boolean> =>
+  Object.fromEntries(Array.from({ length: n }, (_, i) => [dayKey(-(fin + i)), true]));
 
 const input = (over: Partial<CreateHabitInput> = {}): CreateHabitInput => ({
   name: unique('Contrat habitude'),
@@ -28,8 +35,9 @@ const input = (over: Partial<CreateHabitInput> = {}): CreateHabitInput => ({
 export function habitsContract(side: string, make: () => Promise<HabitsContractContext>, opts?: ContractOptions): void {
   describe(`contrat IHabitsRepository · ${side}`, () => {
     let repo: IHabitsRepository;
+    let stats: IStatsRepository;
     beforeAll(async () => {
-      ({ repo } = await make());
+      ({ repo, stats } = await make());
     });
 
     const find = async (id: string): Promise<Habit | undefined> => (await repo.fetchHabits()).find((h) => h.id === id);
@@ -119,6 +127,48 @@ export function habitsContract(side: string, make: () => Promise<HabitsContractC
       // Décocher le jour du milieu la coupe.
       await repo.toggleCompletion(created.id, dayKey(-1));
       expect(habitStreak((await find(created.id))!)).toBe(1);
+    });
+
+    // ── DAT-02 (mig. 248) : la carte ne porte que les jours cochés ──
+    contractCase(opts, 'décocher retire le jour de la carte (absent, jamais `false`)', async () => {
+      const created = await repo.createHabit(input());
+      const day = dayKey(-1);
+      await repo.toggleCompletion(created.id, day);
+      const off = await repo.toggleCompletion(created.id, day);
+      expect(Object.prototype.hasOwnProperty.call(off.completions, day)).toBe(false);
+      expect(Object.prototype.hasOwnProperty.call((await find(created.id))!.completions, day)).toBe(false);
+    });
+
+    contractCase(opts, 'une série plus longue que la fenêtre de 400 jours se lit entière', async () => {
+      const created = await repo.createHabit(input({ completions: serie(450) }));
+      const read = (await find(created.id))!;
+      expect(habitStreak(read)).toBe(450);
+      // Côté Supabase, le total vient du serveur (historique entier) ; côté
+      // démo, la carte EST l'historique entier.
+      expect(read.completionsTotal ?? Object.values(read.completions).filter(Boolean).length).toBe(450);
+    });
+
+    contractCase(opts, 'des jours ajoutés autour d’une série la prolongent ou la coupent, des deux côtés', async () => {
+      const created = await repo.createHabit(input({ completions: serie(5, 2) }));
+      // Hier manque : la série en cours est nulle (elle finit avant-hier).
+      expect(habitStreak((await find(created.id))!)).toBe(0);
+      await repo.toggleCompletion(created.id, dayKey(-1));
+      expect(habitStreak((await find(created.id))!)).toBe(6);
+      await repo.toggleCompletion(created.id, dayKey(-4));
+      expect(habitStreak((await find(created.id))!)).toBe(3);
+    });
+
+    contractCase(opts, 'le temps investi compte les minutes estimées × les jours cochés de la plage', async () => {
+      const range = { start: dayKey(-3), end: dayKey(-1) };
+      const habitsTime = async () => (await stats.getWorkTimeStats([range]))[0].habitsTime;
+      const before = await habitsTime();
+      const created = await repo.createHabit(input({ estimatedTime: 25 }));
+      await repo.toggleCompletion(created.id, dayKey(-1));
+      await repo.toggleCompletion(created.id, dayKey(-2));
+      await repo.toggleCompletion(created.id, dayKey(-5)); // hors plage
+      expect((await habitsTime()) - before).toBe(50);
+      await repo.toggleCompletion(created.id, dayKey(-2));
+      expect((await habitsTime()) - before).toBe(25);
     });
 
     contractCase(opts, 'un jour qui n’est pas une date `YYYY-MM-DD` réelle est refusé', async () => {

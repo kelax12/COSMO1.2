@@ -107,7 +107,7 @@ tasksContract(SIDE, async () => ({ repo: new SupabaseTasksRepository() }), {
 });
 categoriesContract(SIDE, async () => ({ repo: new SupabaseCategoriesRepository() }));
 listsContract(SIDE, async () => ({ repo: new SupabaseListsRepository() }));
-habitsContract(SIDE, async () => ({ repo: new SupabaseHabitsRepository() }));
+habitsContract(SIDE, async () => ({ repo: new SupabaseHabitsRepository(), stats: new SupabaseStatsRepository() }));
 eventsContract(SIDE, async () => {
   const tasks = new SupabaseTasksRepository();
   return {

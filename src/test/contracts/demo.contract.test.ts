@@ -37,7 +37,16 @@ beforeAll(() => {
 tasksContract(SIDE, async () => ({ repo: new LocalStorageTasksRepository() }));
 categoriesContract(SIDE, async () => ({ repo: new LocalStorageCategoriesRepository() }));
 listsContract(SIDE, async () => ({ repo: new LocalStorageListsRepository() }));
-habitsContract(SIDE, async () => ({ repo: new LocalStorageHabitsRepository() }));
+habitsContract(SIDE, async () => ({
+  repo: new LocalStorageHabitsRepository(),
+  stats: new LocalStatsRepository(
+    new LocalStorageTasksRepository(),
+    new LocalStorageEventsRepository(),
+    new LocalStorageHabitsRepository(),
+    new LocalStorageOKRsRepository(),
+    new LocalStorageKRCompletionsRepository(),
+  ),
+}));
 eventsContract(SIDE, async () => {
   const tasks = new LocalStorageTasksRepository();
   return {
