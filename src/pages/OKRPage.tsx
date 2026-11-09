@@ -31,7 +31,6 @@ import OKRCategorySelect from './okr/OKRCategorySelect';
 import { useT } from '@/i18n/useT';
 import { useDeadlineReview } from './okr/useDeadlineReview';
 import { useDeleteCategoryFlow } from './okr/useDeleteCategoryFlow';
-import { useTasks } from '@/modules/tasks';
 import { useInlineCategoryEdit } from './okr/useInlineCategoryEdit';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { formatDurationMinutes } from '@/lib/duration';
@@ -65,7 +64,6 @@ const OKRPage: React.FC = () => {
   const createEventMutation = useCreateEvent();
   const { data: categories = [] } = useCategories();
   // Sert au décompte d'impact d'une suppression de catégorie (R-02).
-  const { data: tasks = [] } = useTasks();
   const createCategoryMutation = useCreateCategory();
   // Restauration d'un « Annuler » : recree la categorie sous SON identifiant,
   // sinon les taches et objectifs qui la portaient restent orphelins (R-08).
@@ -106,7 +104,6 @@ const OKRPage: React.FC = () => {
     confirmDelete: confirmDeleteCategory,
   } = useDeleteCategoryFlow({
     categories,
-    tasks,
     objectives,
     onDeleted: (deletedId) => {
       setActiveCategoryIds((prev) => {

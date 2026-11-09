@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
-import { useTasks } from '@/modules/tasks';
+import { useTaskSubset } from '@/modules/tasks';
 import { useOkrs } from '@/modules/okrs';
 import type { Category } from '@/modules/categories';
 import { branchImpact, categoryImpact, NO_CATEGORY } from '@/modules/categories/impact';
@@ -98,7 +98,14 @@ const DeleteCategoryDialogBody: React.FC<{
   isWorking: boolean;
 }> = ({ category, categories, categoriesTree, onCancel, onConfirm, isWorking }) => {
   const ov = useT('overlays');
-  const { data: tasks = [] } = useTasks();
+  // V14.1 (PER-01) : TOUTES les tâches de la branche, terminées comprises,
+  // lues pour ce dialogue. `useTasks()` ne garde que le jeu de travail : un
+  // impact compté dessus sous-annoncerait au moment de confirmer (R-02).
+  const branchIds = useMemo(
+    () => [category.id, ...descendantIdSet(category.id, categoriesTree)],
+    [category.id, categoriesTree],
+  );
+  const { data: tasks = [] } = useTaskSubset({ categories: branchIds });
   const { data: okrs = [] } = useOkrs();
 
   // `promote` par défaut : l'issue qui ne détruit rien, la moins surprenante —

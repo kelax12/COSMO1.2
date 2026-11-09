@@ -18,7 +18,6 @@ import { toast } from '@/lib/toast';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
-import { useTasks } from '@/modules/tasks';
 import { useOkrs } from '@/modules/okrs';
 import { resolveReassignTargets } from '@/modules/categories/impact';
 import { descendantIdSet } from '@/modules/categories/tree';
@@ -136,7 +135,6 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
   const { t } = useT('tasks');
   const { t: tCommon } = useT('common');
   const { tp: tpOv } = useT('overlays');
-  const { data: tasks = [] } = useTasks();
   const { data: okrs = [] } = useOkrs();
   const reassignCategory = useReassignCategory();
 
@@ -331,12 +329,12 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
       // On peut supprimer DEUX categories d'un coup et designer la seconde comme
       // destination de la premiere. `resolveReassignTargets` suit la chaine
       // jusqu'a une categorie qui survit : sans lui, des elements partaient vers
-      // une categorie supprimee une ligne plus bas, et l'instantane `tasks` ne
-      // les montrait deja plus sous leur ancienne categorie au tour suivant.
+      // une categorie supprimee une ligne plus bas. Chaque tour relit les taches
+      // de SA categorie (V14.1), donc deja deplacees au tour precedent.
       const finalTargets = resolveReassignTargets(removed.map(c => c.id), reassignTargets);
       let movedTotal = 0;
       for (const cat of removed) {
-        const { moved } = await reassignCategory(cat.id, finalTargets[cat.id], tasks, okrs);
+        const { moved } = await reassignCategory(cat.id, finalTargets[cat.id], okrs);
         movedTotal += moved;
       }
 

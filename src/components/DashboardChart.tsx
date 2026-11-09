@@ -10,7 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { useTasks } from '@/modules/tasks';
+import { useChartCompletedTasks } from './useChartCompletedTasks';
 import { useHabits } from '@/modules/habits';
 import { useEvents } from '@/modules/events';
 import { useOkrs } from '@/modules/okrs';
@@ -113,7 +113,8 @@ const CustomTooltip = ({ active, payload, label, seriesLabel }: {
 
 const DashboardChart: React.FC<DashboardChartProps> = ({ viewMode }) => {
   const { t } = useT('dashboard');
-  const { data: tasks = [] } = useTasks();
+  // V14.1 : six mois de terminées, requête dédiée (jeu de travail = 35 j).
+  const tasks = useChartCompletedTasks();
   const { data: events = [] } = useEvents();
   const { data: okrs = [] } = useOkrs();
   const { data: habits = [] } = useHabits();
