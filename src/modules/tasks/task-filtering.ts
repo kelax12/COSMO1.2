@@ -4,6 +4,8 @@
 // (god component refactor #6, étape 1). Aucune dépendance React/DOM.
 // ═══════════════════════════════════════════════════════════════════
 import { Task } from './types';
+import { isOverdue } from '@/lib/deadline';
+import { compareOptionalDeadlines, compareOptionalPriorities } from '@/lib/task-ordering';
 
 export type TaskQuickFilter = 'none' | 'bookmarked' | 'completed' | 'overdue' | 'collaboration';
 export type SortDirection = 'asc' | 'desc';
@@ -21,7 +23,9 @@ export function applyQuickFilter(
     case 'completed':
       return tasks.filter((task) => task.completed);
     case 'overdue':
-      return tasks.filter((task) => !task.completed && new Date(task.deadline) < now);
+      // Jour révolu, pas instant passé (R-01) ; une tâche sans échéance n'est
+      // jamais en retard (`isOverdue` rend `false` sur `''`).
+      return tasks.filter((task) => isOverdue(task.deadline, task.completed, undefined, now));
     case 'collaboration':
       return tasks.filter((task) => task.isCollaborative && !task.completed);
     default:
@@ -55,14 +59,11 @@ export function compareTasks(
     } else if (sortField === 'priority') {
       // Une tâche sans priorité (0) est la MOINS prioritaire, quel que soit le
       // sens de tri choisi — jamais mise en avant faute de valeur renseignée.
-      const aNone = a.priority === 0;
-      const bNone = b.priority === 0;
-      if (aNone && bNone) return 0;
-      if (aNone) return 1;
-      if (bNone) return -1;
-      comparison = a.priority - b.priority;
+      return compareOptionalPriorities(a.priority, b.priority, sortDirection);
     } else if (sortField === 'deadline') {
-      comparison = new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+      // Même règle pour l'échéance (mig. 248) : sans échéance,
+      // en fin de liste dans les deux sens. `new Date('')` rendait `NaN`.
+      return compareOptionalDeadlines(a.deadline, b.deadline, sortDirection);
     } else if (sortField === 'estimatedTime') {
       comparison = a.estimatedTime - b.estimatedTime;
     } else if (sortField === 'createdAt') {

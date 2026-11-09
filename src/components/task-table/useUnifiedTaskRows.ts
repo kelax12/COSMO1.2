@@ -19,6 +19,7 @@ import { useMemo } from 'react';
 import type { Task } from '@/modules/tasks';
 import type { TeamTask, TeamProject } from '@/modules/team-projects';
 import { filterAndSortTasks } from '@/modules/tasks/task-filtering';
+import { compareOptionalDeadlines, compareOptionalPriorities } from '@/lib/task-ordering';
 import { myAssignedTasks } from '../organization/team-projects.helpers';
 import type { UnifiedTaskRow } from './list';
 
@@ -123,7 +124,6 @@ export function useUnifiedTaskRows({
       switch (sortField) {
         case 'name': return t.name;
         case 'priority': return t.priority;
-        case 'deadline': return t.deadline ? new Date(t.deadline).getTime() : Number.POSITIVE_INFINITY;
         case 'estimatedTime': return t.estimatedTime ?? 0;
         case 'completedAt': return showCompleted && t.completedAt ? new Date(t.completedAt).getTime() : 0;
         default: return 0;
@@ -131,15 +131,14 @@ export function useUnifiedTaskRows({
     };
 
     return [...rows].sort((a, b) => {
-      if (sortField === 'priority') {
-        // Une tâche sans priorité (0) est la MOINS prioritaire, quel que soit
-        // le sens de tri — même règle que compareTasks (task-filtering.ts).
-        const aNone = a.task.priority === 0;
-        const bNone = b.task.priority === 0;
-        if (aNone && bNone) return 0;
-        if (aNone) return 1;
-        if (bNone) return -1;
-      }
+      // Priorité et échéance facultatives : une tâche sans valeur passe en fin
+      // de liste dans les deux sens, même règle que compareTasks
+      // (task-filtering.ts). L'échéance se compare par JOUR, ce qui range une
+      // échéance perso (instant) et une d'équipe (date) sur le même calendrier ;
+      // l'ancien `+Infinity` remontait les tâches sans échéance en tri
+      // décroissant, et `Infinity - Infinity` rendait `NaN`.
+      if (sortField === 'priority') return compareOptionalPriorities(a.task.priority, b.task.priority, sortDirection);
+      if (sortField === 'deadline') return compareOptionalDeadlines(a.task.deadline, b.task.deadline, sortDirection);
       const va = sortValue(a);
       const vb = sortValue(b);
       const comparison = typeof va === 'string' && typeof vb === 'string'

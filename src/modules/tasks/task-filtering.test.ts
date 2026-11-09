@@ -27,6 +27,10 @@ describe('applyQuickFilter', () => {
   it('retard: not completed & deadline in past', () => {
     expect(applyQuickFilter(tasks, 'overdue', false, NOW).map(x => x.id)).toEqual(['c']);
   });
+  it('retard: une tâche sans échéance n’est jamais en retard (décision du 2026-11-09)', () => {
+    const none = t({ id: 'sans', completed: false, deadline: '' });
+    expect(applyQuickFilter([none], 'overdue', false, NOW)).toEqual([]);
+  });
   it('collaboration: collaborative & not completed', () => {
     expect(applyQuickFilter(tasks, 'collaboration', false, NOW).map(x => x.id)).toEqual(['d']);
   });
@@ -68,6 +72,18 @@ describe('compareTasks', () => {
     expect(compareTasks(none, high, 'priority', 'desc', false)).toBeGreaterThan(0);
     expect(compareTasks(low, none, 'priority', 'desc', false)).toBeLessThan(0);
     expect(compareTasks(none, t({ priority: 0 }), 'priority', 'asc', false)).toBe(0);
+  });
+  it('sorts by deadline day, and always puts a task without deadline last, both directions', () => {
+    const none = t({ id: 'none', deadline: '' });
+    const early = t({ id: 'early', deadline: '2026-06-01T00:00:00.000Z' });
+    const late = t({ id: 'late', deadline: '2026-06-20T00:00:00.000Z' });
+    const sortBy = (dir: 'asc' | 'desc') =>
+      [none, late, early].sort((a, b) => compareTasks(a, b, 'deadline', dir, false)).map((x) => x.id);
+    expect(sortBy('asc')).toEqual(['early', 'late', 'none']);
+    expect(sortBy('desc')).toEqual(['late', 'early', 'none']);
+    // Le comparateur ne rend jamais NaN (ordre indéterminé de `Array.sort`).
+    expect(compareTasks(none, t({ deadline: '' }), 'deadline', 'asc', false)).toBe(0);
+    expect(Number.isNaN(compareTasks(none, early, 'deadline', 'asc', false))).toBe(false);
   });
   it('ignores completedAt unless showCompleted', () => {
     const a = t({ completedAt: '2026-01-01T00:00:00Z' });
