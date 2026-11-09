@@ -2,7 +2,7 @@
 --
 -- Forme de `208-210.proof.sql` : un SEUL bloc `DO` qui se termine TOUJOURS
 -- par `RAISE EXCEPTION`. La migration est EMBARQUÉE (texte identique au
--- fichier, vérifié par `e2e/rls/preuves-cron.test.ts`). À jouer APRÈS
+-- fichier, vérifié par `e2e/rls/cron-journal.test.ts`). À jouer APRÈS
 -- l'application de la `245`, AVANT celle de la `246` :
 --   supabase db query --linked -f supabase/proofs/246.proof.sql
 --   → « PREUVE-ANNULEE 0 ECHEC | info … | ok … »
