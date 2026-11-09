@@ -7,6 +7,7 @@
 // filtre rien d'autre que la fenêtre de « Terminée ».
 import { effectiveStatus, type Task, type TaskHealth, type TaskStatus } from '@/modules/tasks';
 import { isOverdue } from '@/lib/deadline';
+import { priorityRank } from '@/lib/task-ordering';
 
 /** Ordre des colonnes, vides comprises : une colonne qui n'apparaîtrait qu'une
  *  fois remplie empêcherait d'y déposer la première carte. */
@@ -19,8 +20,8 @@ export const DONE_WINDOW_DAYS = 7;
 const DAY_MS = 86_400_000;
 const instant = (iso?: string): number => (iso ? Date.parse(iso) : Number.NaN);
 
-/** Priorité 0 = « non définie » : rangée après P5. */
-const priorityRank = (p: number): number => (p >= 1 && p <= 5 ? p : 6);
+// Priorité 0 = « non définie » : rangée après P5 (`priorityRank`, partagé
+// avec la liste et « Aujourd'hui »).
 
 function compareOpen(a: Task, b: Task, now: Date): number {
   const lateA = isOverdue(a.deadline, false, undefined, now);

@@ -10,6 +10,7 @@
 import type { Task } from '@/modules/tasks';
 import type { TeamTask, TeamProject } from '@/modules/team-projects';
 import type { TodayItem } from './types';
+import { priorityRank } from '@/lib/task-ordering';
 
 /**
  * Date LOCALE au format `YYYY-MM-DD` (convention en-CA du projet).
@@ -131,10 +132,12 @@ export function mergeTodayItems({
   // modèles — vérifié), puis le nom pour que l'ordre soit stable d'un rendu à
   // l'autre. Aucune source n'est avantagée : ce serait dire à l'utilisateur
   // laquelle de ses deux vies compte le plus.
+  // Priorité facultative (0 = aucune, perso seulement) : rangée APRÈS P5 par
+  // `priorityRank`. `a.priority - b.priority` la faisait passer devant P1.
   return items.sort(
     (a, b) =>
       (a.deadline ?? '').localeCompare(b.deadline ?? '') ||
-      a.priority - b.priority ||
+      priorityRank(a.priority) - priorityRank(b.priority) ||
       a.name.localeCompare(b.name),
   );
 }

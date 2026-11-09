@@ -14,6 +14,7 @@ import { useTasks, useToggleTaskComplete, useToggleTaskBookmark, useDeleteTask, 
 import { useCreateEvent, CreateEventInput } from '@/modules/events';
 import { useT } from '@/i18n/useT';
 import { isDueToday } from '@/lib/deadline';
+import { priorityRank } from '@/lib/task-ordering';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 const TodayTasks = ({ compact = false }: { compact?: boolean }) => {
@@ -48,7 +49,9 @@ const TodayTasks = ({ compact = false }: { compact?: boolean }) => {
       .sort((a, b) => {
         if (a.bookmarked && !b.bookmarked) return -1;
         if (!a.bookmarked && b.bookmarked) return 1;
-        return a.priority - b.priority;
+        // Une tâche due aujourd'hui SANS priorité (0) passe après P5, jamais
+        // devant P1 comme le faisait `a.priority - b.priority`.
+        return priorityRank(a.priority) - priorityRank(b.priority);
       })
       .slice(0, 5);
     // `isDueToday()` lit l'heure courante à chaque render : la granularité est

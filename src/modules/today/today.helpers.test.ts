@@ -160,6 +160,18 @@ describe('mergeTodayItems — tri', () => {
     expect(items.map((i) => i.id)).toEqual(['vieux', 'aujourdhui-p1', 'aujourdhui-p5']);
   });
 
+  it('range une tâche sans priorité (0) APRÈS P5 le même jour, jamais devant P1', () => {
+    const items = merge(
+      [
+        task({ id: 'sans-priorite', deadline: '2026-07-15', priority: 0 }),
+        task({ id: 'p5', deadline: '2026-07-15', priority: 5 }),
+        task({ id: 'p1', deadline: '2026-07-15', priority: 1 }),
+      ],
+      [],
+    );
+    expect(items.map((i) => i.id)).toEqual(['p1', 'p5', 'sans-priorite']);
+  });
+
   it("n'avantage aucune des deux sources à égalité — le tri porte sur la date", () => {
     const items = merge(
       [task({ id: 'perso-tard', deadline: '2026-07-15' })],
