@@ -43,7 +43,8 @@ describe('LocalStorageHabitsRepository', () => {
     const on = await repo.toggleCompletion('h001', date);
     expect(on.completions[date]).toBe(true);
     const off = await repo.toggleCompletion('h001', date);
-    expect(off.completions[date]).toBe(false);
+    // Contrat de `habit_completions` (mig. 248) : décocher RETIRE le jour.
+    expect(off.completions).not.toHaveProperty(date);
     await expect(repo.toggleCompletion('absent', date)).rejects.toThrow();
   });
 
