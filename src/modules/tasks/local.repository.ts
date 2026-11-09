@@ -271,7 +271,7 @@ export class LocalStorageTasksRepository implements ITasksRepository {
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // LECTURES PAR SOUS-ENSEMBLE (V14.1, PER-01) — même contrat que Supabase
+  // LECTURES PAR SOUS-ENSEMBLE (V14.1, PER-01) : même contrat que Supabase
   // ═══════════════════════════════════════════════════════════════════
   //
   // Même filtre (`matchesTaskQuery`), même ordre (`created_at` puis `id`

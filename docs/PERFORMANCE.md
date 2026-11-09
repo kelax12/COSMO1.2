@@ -399,11 +399,83 @@ version existe. C'est le chantier qui transformerait tout correctif client en ga
 > était appelé en tête de presque chaque lecture (45 sites), doublant la latence
 > perçue et faisant de GoTrue un SPOF pour la lecture de données.
 
-Les `getAll()` à fort volume (**tasks, events, habits, okrs**) utilisent l'auto-pagination `fetchAllPages()` (`src/lib/fetch-all-pages.ts`) : pagination via `.range(from, to)` par pages de `PAGE_SIZE` (1000) jusqu'à épuisement, plafonné à `MAX_ROWS` (5000). Pour ≤ 1000 items → **une seule requête**. Ordre stable garanti par un tiebreak `.order('id')`.
+### Tâches et agenda : pagination serveur (V14.1 et V14.2, constat PER-01, 2026-11-09)
+
+L'audit externe du 2026-11-06 relevait : « listes chargées en entier côté client, tronquées à
+5 000 lignes ». `useTasks()` lisait tout le compte par `fetchAllPages` ; au-delà de `MAX_ROWS`,
+des tâches manquaient à l'écran, signalées par un toast et rien d'autre.
+
+**Ce qui a changé, et pourquoi pas « paginer `useTasks()` ».** Une quarantaine d'écrans
+calculaient sur `useTasks()` (compteurs par chip, smart lists, tri, « Aujourd'hui »,
+statistiques). Les couper en pages aurait rendu des compteurs faux. Ce qui grossit sans limite,
+ce sont les tâches **terminées** ; le travail en cours reste borné. D'où trois lectures :
+
+| Lecture | Hook | Ce qu'elle rend | Plafond |
+|---|---|---|---|
+| Jeu de travail | `useTasks()` | toutes les non terminées + terminées depuis 35 j (`working-set.ts`) | aucun |
+| Archive « Terminées » | `useTaskArchive(q)` | pages serveur, curseur de clé `created_at` puis `id` décroissants, filtres en SQL | aucun (pages) |
+| Sous-ensemble borné | `useTaskSubset(q)` | fenêtre de `completed_at`, catégorie(s), ids | aucun |
+| Compte | `useTaskCount(q)` | `HEAD` compté par PostgREST, aucune ligne transférée | sans objet |
+
+Contrat commun aux deux repositories : `TaskQuery` et `matchesTaskQuery`
+(`src/modules/tasks/task-query.ts`), joué en démo et sur la base locale par
+`src/test/contracts/__test__/tasks.contract.ts` (pages stables, tâche créée entre deux pages,
+compte, fenêtre de complétion). Témoin : `src/modules/tasks/pagination-6000.test.ts`
+(6 000 tâches, toutes accessibles ; la même source lue par `fetchAllPages` s'arrête à 5 000).
+
+Dépendances au « tout en mémoire » et leur traitement :
+
+| Écran | Avant | Après |
+|---|---|---|
+| Vue « Terminées » de la page Tâches | filtre mémoire | `useTaskArchive` + compte serveur, chargement continu |
+| « Voir les N terminées » (fin de liste) | longueur du tableau | `useTaskCount` sur les mêmes filtres |
+| Statistiques, période glissante (≤ 365 j) | `useTasks()` | `useTaskSubset({ completedSince, completedBefore })` |
+| Graphiques du tableau de bord (6 mois) | `useTasks()` | `useChartCompletedTasks` (190 j de `completed_at`) |
+| Impact et réaffectation avant suppression de catégorie | `useTasks()` | toutes les tâches de la branche, relues |
+| Export CSV (art. 20) | `useTasks()` | `getAll()` sans plafond, au clic ; compte serveur |
+| Accueil « compte vide » | longueur du tableau | `useTaskCount({})` |
+| Palette ⌘K | `useTasks()` | jeu de travail + recherche serveur dans l'archive |
+| Fiche ouverte depuis l'archive ou un lien | `tasks.find` | `useKnownTask` (caches, puis `getById`) |
+| Dépendances d'une tâche | `tasks.find` | tâches manquantes relues par id |
+| Coche verte des créneaux de l'agenda | `useTasks()` | tâches liées manquantes relues par id |
+| `usePendingTasks` | `getFiltered` sans `range` (plafond PostgREST 1 000) | dérivé du jeu de travail |
+
+Restent sur le jeu de travail, et c'est suffisant : tout ce qui ne lit que les non terminées
+(barre d'onglets, rappel d'échéances, Aujourd'hui, listes, barre de tâches de l'agenda, OKR,
+ajout à une liste) et ce qui regarde moins de 35 jours en arrière (insights des statistiques,
+bilan de la semaine, colonne « Terminé » du Tableau, 7 jours).
+
+**Agenda (V14.2).** Les événements se lisent déjà par fenêtre (`getWindow`, plage visible plus un
+mois de marge, tous les récurrents). Depuis la V14.2 : fenêtre **sans plafond**, bornes comparées
+en **instants** côté démo comme en SQL (`window.ts`), et la barre de tâches lit les seuls
+événements liés à une tâche (`getLinkedToTasks`) au lieu de `useEvents()` complet.
+
+Mutations : toute mise à jour optimiste passe par `patchTaskCaches`
+(`src/modules/tasks/cache-patch.ts`), qui l'applique à TOUS les caches de tâches et retire d'un
+cache filtré ce qui ne répond plus à sa requête. Aucune migration : tout passe par
+`get_my_tasks()` existante, filtrée par PostgREST.
+
+### Lectures complètes restantes
+
+`fetchAllPages` (plafond `MAX_ROWS` = 5 000) ne sert plus qu'à ces lectures, chacune pour une
+raison écrite :
+
+- `habits` `getAll` : par compte, une ligne par habitude (dizaines) ; l'historique non borné vit
+  dans `completions`, déjà fenêtré par `get_my_habits(p_days)` (mig. 119).
+- `okrs` `getAll`, `team-okrs` : quelques dizaines d'objectifs par compte ou par organisation.
+- `kr-completions` `getAll` : journal qui grossit ; ses lecteurs (statistiques, export) le
+  veulent entier. Candidat à une fenêtre, comme les tâches terminées : suite à donner.
+- `events` `getAll` (`useEvents()`) : tableau de bord, statistiques, palette, export. Hors agenda,
+  hors périmètre de la V14.2 : suite à donner sur le modèle des tâches (fenêtre de dates).
+- `events` `getWindow`, `getWindowForUser`, `getLinkedToTasks` : `fetchAllPages` **sans plafond**
+  (`UNCAPPED`), pages par décalage parce que le filtre de fenêtre occupe déjà le `.or()`.
 
 - Les `getAll()` à faible volume (categories, lists, friends) gardent `.limit(200)`.
-- ❌ Ne pas réintroduire un `.limit(500)` sec sur tasks/events/habits/okrs.
-- ✅ Tout nouveau `getAll()` volumineux doit passer par `fetchAllPages()`.
+- ❌ Ne pas réintroduire un `.limit(500)` sec, ni un plafond, sur une lecture de tâches.
+- ❌ Ne jamais compter, chercher ou calculer une statistique sur `useTasks()` en la prenant pour
+  l'historique complet : c'est le jeu de travail.
+- ✅ Une nouvelle lecture volumineuse passe par une page (`getPage`), un sous-ensemble borné
+  (`fetchAllByCursor`) ou un compte serveur, jamais par `fetchAllPages`.
 
 ## Ne jamais faire — Performance
 
