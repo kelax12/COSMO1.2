@@ -18,6 +18,7 @@ import OverdueBanner from './task-table/OverdueBanner';
 import SwipeHintBanner from './task-table/SwipeHintBanner';
 import TaskBulkActionsBar from './task-table/TaskBulkActionsBar';
 import { ArchiveLoadMore } from './task-table/ArchiveLoadMore';
+import { SeeCompletedButton } from './task-table/SeeCompletedButton';
 import TeamTaskModal from './organization/TeamTaskModal';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 
@@ -35,7 +36,8 @@ import {
   useToggleTaskBookmark,
   useKnownTask,
   taskKeys,
-  Task
+  Task,
+  type TaskQuery,
 } from '@/modules/tasks';
 
 import { usePriorityRange } from '@/modules/ui-states';
@@ -76,8 +78,12 @@ type TaskTableProps = {
    * ou pastille) : le jeu de travail ne garde que 35 jours de terminées.
    */
   archive?: ArchiveFeed;
-  /** Terminées masquées par la vue courante, comptées par le serveur. */
-  completedCount?: number;
+  /**
+   * Requête serveur des terminées masquées par la vue courante (« Voir les N
+   * terminées ») ; `null` : aucune ne peut répondre. Absente : décompte en
+   * mémoire (le jeu de travail ne garde que 35 jours de terminées).
+   */
+  completedQuery?: TaskQuery | null;
 };
 
 export interface ArchiveFeed {
@@ -86,8 +92,8 @@ export interface ArchiveFeed {
   hasMore: boolean;
   isFetchingMore: boolean;
   loadMore: () => void;
-  /** Total serveur de l'archive filtrée. */
-  total?: number;
+  /** Requête serveur de l'archive filtrée, pour en afficher le total. */
+  totalQuery?: TaskQuery;
 }
 
 /** Tri par colonne neutralisé en vue archive (ordre serveur). */
@@ -111,7 +117,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
   hasActiveFilter = false,
   quickFiltersTrailing,
   archive,
-  completedCount,
+  completedQuery,
 }) => {
   const { t, tp } = useT('tasks');
 
@@ -277,9 +283,6 @@ const TaskTable: React.FC<TaskTableProps> = ({
     listFilterActive,
     serverOrdered: archiveMode,
   });
-  // Hors archive, le jeu de travail ne connaît que 35 jours de terminées :
-  // le compte vient du serveur quand la page le fournit.
-  const hiddenCompleted = completedCount ?? hiddenCompletedCount;
 
   // Une tâche ouverte par lien (`openTaskId`) peut n'être ni dans la vue ni
   // dans le jeu de travail (terminée il y a longtemps) : relue par son id.
@@ -470,7 +473,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
             isFetchingMore={archive.isFetchingMore}
             loadMore={archive.loadMore}
             shown={archive.tasks.length}
-            total={archive.total}
+            totalQuery={archive.totalQuery}
           />
         </div>
       )}
@@ -505,7 +508,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
             isFetchingMore={archive.isFetchingMore}
             loadMore={archive.loadMore}
             shown={archive.tasks.length}
-            total={archive.total}
+            totalQuery={archive.totalQuery}
           />
         )}
 
@@ -522,14 +525,12 @@ const TaskTable: React.FC<TaskTableProps> = ({
                 ? tp('table.endOfListCompleted', unifiedRows.length)
                 : tp('table.endOfList', unifiedRows.length)}
             </p>
-            {hasActiveFilter && hiddenCompleted > 0 && onShowCompletedChange && (
-              <button
-                type="button"
-                onClick={() => onShowCompletedChange(true)}
-                className="mt-1 min-h-touch px-3 text-label font-semibold text-[rgb(var(--color-accent))]"
-              >
-                {tp('table.seeCompleted', hiddenCompleted)}
-              </button>
+            {hasActiveFilter && onShowCompletedChange && (
+              <SeeCompletedButton
+                query={completedQuery}
+                fallbackCount={hiddenCompletedCount}
+                onShow={() => onShowCompletedChange(true)}
+              />
             )}
           </div>
         )}

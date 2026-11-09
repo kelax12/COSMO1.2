@@ -11,7 +11,7 @@ import { useLocation } from 'react-router';
 import { useLazyMount } from '@/hooks/use-lazy-mount';
 
 // Module tasks - Hooks indépendants
-import { useTasks, useUpdateTask, useTaskArchive, useTaskCount } from '@/modules/tasks';
+import { useTasks, useUpdateTask, useTaskArchive } from '@/modules/tasks';
 import { useQuickFilter } from '@/components/task-table/quick-filter.store';
 import { useCategories } from '@/modules/categories';
 
@@ -240,7 +240,8 @@ const TasksPage: React.FC = () => {
   // Le jeu de travail (`useTasks`) ne garde que 35 jours de terminées. La vue
   // terminées lit donc l'archive en pages, filtrée en SQL, et le nombre de
   // terminées masquées vient d'un COMPTE serveur, jamais d'une longueur de
-  // tableau partiel.
+  // tableau partiel. Ce compte vit dans les composants qui l'affichent
+  // (`SeeCompletedButton`, `ArchiveLoadMore`) : sa réponse ne redessine qu'eux.
   const { activeQuickFilter } = useQuickFilter();
   const archiveMode = showCompleted || activeQuickFilter === 'completed';
   const hasActiveFilter = !!selectedListId || selectedCategories.length > 0 || searchTerm.trim() !== '';
@@ -252,9 +253,6 @@ const TasksPage: React.FC = () => {
     [searchTerm, selectedCategories, priorityRange, selectedListId, selectingTasksForListId, lists, categories]
   );
   const archivePages = useTaskArchive(archiveQuery ?? { ids: [] }, { enabled: archiveMode && archiveQuery !== null });
-  const archiveTotal = useTaskCount(archiveQuery ?? { ids: [] }, {
-    enabled: archiveQuery !== null && (archiveMode || hasActiveFilter),
-  });
   const archiveTasks = useMemo(
     () => archivePages.data?.pages.flatMap((page) => page.data) ?? [],
     [archivePages.data]
@@ -270,9 +268,9 @@ const TasksPage: React.FC = () => {
       hasMore: archiveQuery !== null && !!hasNextPage,
       isFetchingMore: isFetchingNextPage,
       loadMore: loadMoreArchive,
-      total: archiveQuery === null ? 0 : archiveTotal.data,
+      totalQuery: archiveQuery ?? undefined,
     }),
-    [archiveQuery, archiveTasks, archivePages.isLoading, hasNextPage, isFetchingNextPage, loadMoreArchive, archiveTotal.data]
+    [archiveQuery, archiveTasks, archivePages.isLoading, hasNextPage, isFetchingNextPage, loadMoreArchive]
   );
 
   // Résumé de l'en-tête mobile (maquette 04). Il porte sur la vue COURANTE
@@ -498,7 +496,7 @@ const TasksPage: React.FC = () => {
                   listFilterActive={!!selectedListId}
                   hasActiveFilter={hasActiveFilter}
                   archive={archiveFeed}
-                  completedCount={archiveQuery === null ? 0 : archiveTotal.data ?? 0}
+                  completedQuery={archiveQuery}
                   quickFiltersTrailing={<ActiveFiltersRow {...activeFiltersProps} className="!mb-0" />}
                 />
                 )}

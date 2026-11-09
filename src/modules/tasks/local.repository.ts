@@ -1,5 +1,5 @@
 import { ITasksRepository, ToggleCompleteResult, type TaskPageParams } from './repository';
-import { type TaskQuery, matchesTaskQuery, compareTaskKeyset, isAfterCursor, isEmptyTaskQuery, assertSupportedTaskQuery } from './task-query';
+import { type TaskQuery, matchesTaskQuery, sortByTaskKeyset, isAfterCursor, isEmptyTaskQuery, assertSupportedTaskQuery } from './task-query';
 import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskDependency } from './types';
 import { PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
 import { reachableSets } from '@/lib/dependency-graph';
@@ -283,9 +283,7 @@ export class LocalStorageTasksRepository implements ITasksRepository {
   private selectSorted(query: TaskQuery): Task[] {
     assertSupportedTaskQuery(query);
     if (isEmptyTaskQuery(query)) return [];
-    return this.getTasks()
-      .filter((t) => matchesTaskQuery(t, query))
-      .sort(compareTaskKeyset);
+    return sortByTaskKeyset(this.getTasks().filter((t) => matchesTaskQuery(t, query)));
   }
 
   async listAll(query: TaskQuery = {}): Promise<Task[]> {

@@ -26,7 +26,7 @@
 // (7 j), dynamique (14 j), revue des créneaux de l'agenda (14 j).
 import type { Task } from './types';
 import type { ITasksRepository } from './repository';
-import { compareTaskKeyset } from './task-query';
+import { sortByTaskKeyset } from './task-query';
 
 export const RECENT_COMPLETED_DAYS = 35;
 
@@ -45,5 +45,5 @@ export async function loadWorkingSet(repo: ITasksRepository, now: Date = new Dat
     repo.listAll({ status: 'active' }),
     repo.listAll({ completedSince: workingSetSince(now) }),
   ]);
-  return [...active, ...recent].sort(compareTaskKeyset);
+  return sortByTaskKeyset([...active, ...recent]);
 }

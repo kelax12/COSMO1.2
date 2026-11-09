@@ -127,7 +127,10 @@ describe('TaskTable · affichage et tri', () => {
     await waitFor(() => expect(rowNames()).toEqual(['Charlie', 'Foxtrot', 'Alpha', 'Bravo', 'Delta']));
 
     fireEvent.click(within(table()).getByRole('columnheader', { name: /Durée/ }));
-    await waitFor(() => expect(rowNames()).toEqual(['Delta', 'Charlie', 'Alpha', 'Foxtrot', 'Bravo']));
+    // Alpha et Foxtrot durent 30 min : à égalité, l'ordre de lecture tranche. Depuis
+    // la V14.1 la démo lit comme la production (`created_at` puis `id` décroissants),
+    // et toutes ces tâches partagent le même `created_at` : Foxtrot (f) avant Alpha (a).
+    await waitFor(() => expect(rowNames()).toEqual(['Delta', 'Charlie', 'Foxtrot', 'Alpha', 'Bravo']));
   });
 
   it('montre les tâches terminées quand la vue « terminées » est demandée', async () => {
@@ -483,8 +486,10 @@ describe('TaskTable · LONGUE LISTE (vague 14)', () => {
   it('LONGUE LISTE · « Voir les terminées » est proposé avec filtre actif et le décompte caché', async () => {
     resetDemoWorld([
       ...many(3),
-      makeTask({ id: 'z1', name: 'Fait 1', completed: true }),
-      makeTask({ id: 'z2', name: 'Fait 2', completed: true }),
+      // Terminées RÉCEMMENT (V14.1) : sans `completedAt`, une terminée est NULL en
+      // base et n'appartient qu'à l'archive, pas au jeu de travail.
+      makeTask({ id: 'z1', name: 'Fait 1', completed: true, completedAt: new Date().toISOString() }),
+      makeTask({ id: 'z2', name: 'Fait 2', completed: true, completedAt: new Date().toISOString() }),
     ]);
     renderApp(<ControlledTable hasActiveFilter />);
     const button = await screen.findByRole('button', { name: tasksT.tp('table.seeCompleted', 2) });

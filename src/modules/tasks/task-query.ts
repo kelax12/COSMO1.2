@@ -15,7 +15,7 @@
 // curseur, elle tombe donc AVANT lui et ne décale rien. Ni doublon, ni trou.
 // Un `offset` aurait fait glisser toute la suite d'un cran.
 //
-// 🔴 Aucun filtre ici ne s'exprime en `.or()` côté Supabase : le curseur en
+// Aucun filtre ici ne s'exprime en `.or()` côté Supabase : le curseur en
 // est déjà un, et deux paramètres `or` sur la même requête ne sont pas un
 // terrain sur lequel s'appuyer. Les priorités passent par `in.(…)`, pas par
 // une plage avec exception pour 0.
@@ -103,6 +103,19 @@ export function compareTaskKeyset(a: Pick<Task, 'id' | 'createdAt'>, b: Pick<Tas
   const d = ms(b.createdAt) - ms(a.createdAt);
   if (d !== 0 && !Number.isNaN(d)) return d;
   return a.id < b.id ? 1 : a.id > b.id ? -1 : 0;
+}
+
+/**
+ * Trie dans l'ordre de pagination en ne lisant chaque date QU'UNE fois (copie,
+ * l'entrée n'est pas mutée). `compareTaskKeyset` dans un `.sort()` reparse deux
+ * dates par comparaison : sur quelques milliers de tâches, c'est ce tri qui
+ * coûtait, pas le filtre.
+ */
+export function sortByTaskKeyset<T extends Pick<Task, 'id' | 'createdAt'>>(tasks: readonly T[]): T[] {
+  return tasks
+    .map((t) => ({ t, at: ms(t.createdAt) }))
+    .sort((a, b) => (b.at !== a.at ? (b.at > a.at ? 1 : -1) : a.t.id < b.t.id ? 1 : a.t.id > b.t.id ? -1 : 0))
+    .map((x) => x.t);
 }
 
 /** Vrai si `task` vient strictement APRÈS le curseur dans l'ordre de pagination. */
