@@ -72,7 +72,7 @@ Une ligne par document. L'état de santé est dans [`INDICATEURS.md`](./INDICATE
 | [`INDICATEURS.md`](./INDICATEURS.md) · [`propositions/GABARIT.md`](./propositions/GABARIT.md) | Six indicateurs mesurés, datés et sourcés, générés chaque lundi à la place des notes (ADR 0012) ; gabarit de proposition d'une fonctionnalité de plus d'une semaine (ADR 0013) |
 | [`../CLAUDE.md`](../CLAUDE.md) | Point d'entrée : produit, carte de la doc, conventions, garde-fous |
 | `faille.md` (hors dépôt) | Sécurité : **source de vérité**, findings ouverts, ordre de priorité avant prod |
-| [`../a-faire-code.md`](../a-faire-code.md) · `a-faire-manuel.md` (hors dépôt) | Ce qui reste à faire, en code et à la main (consoles, guichets, décisions) |
+| [`../a-faire-code.md`](../a-faire-code.md) · `a-faire-manuel.md` (hors dépôt) | Le backlog de code vit dans les issues GitHub étiquetées `backlog` (ADR 0020) : ce fichier est un renvoi. Le reste à la main (consoles, guichets, décisions) est hors dépôt |
 | [`CONTINUITE.md`](./CONTINUITE.md) | Continuité : arrivée et départ d'un second administrateur, **inventaire des gestes de production** (automatisé, converti, manuel et pourquoi). Le coffre et le registre des secrets sont dans [`SECURITY.md`](./SECURITY.md) |
 | [`MODULES.md`](./MODULES.md) | **Carte** : module → fichiers, tables, RPC, écran |
 | [`FAITS.md`](./FAITS.md) | **Chiffres du dépôt** (Edge Functions, migrations, workflows, modules, tables), générés par `npm run faits:generer` et vérifiés dans le noyau : les autres docs y renvoient |

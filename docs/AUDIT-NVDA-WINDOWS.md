@@ -119,8 +119,8 @@ déjà lancée, sur les écrans de la partie A.
 ## Registre des séances
 
 Une ligne par séance **réellement jouée**, jamais avant. `✅ joué` exige les parties A et B en entier ;
-`⚠️ partiel` est à refaire et n'éteint **pas** l'échéance. Les findings vont dans `a-faire-code.md`,
-verbatim conservé.
+`⚠️ partiel` est à refaire et n'éteint **pas** l'échéance. Les findings vont dans des issues
+(étiquette `zone:accessibilite`), verbatim conservé.
 
 | Date | Appareil (Windows · NVDA · navigateur) | Statut | Findings |
 |---|---|---|---|
@@ -130,7 +130,7 @@ verbatim conservé.
 
 ## Après la séance
 
-1. Reporter chaque finding dans `a-faire-code.md`, avec le verbatim.
+1. Ouvrir une issue par finding (étiquette `zone:accessibilite`), avec le verbatim.
 2. Renoter l'accessibilité dans [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) (AM-1 et AM-3) en disant ce qui
    a été mesuré, sur quelle version de NVDA.
 3. Ne pas refermer `M-40`, `M-51` ni `M-52` sur une séance partielle.
