@@ -41,5 +41,17 @@ démo et les mises à jour optimistes. `review` n'existe pas en perso, exprès.
   l'État choisi disparaissait après 2 s (`8b253a1b`, 2026-10-18). Reporter la même liste dans
   `scripts/cosmo/api.mjs` : `scripts/cosmo/api.test.mjs` refuse toute dérive.
 
+## 📄 Lectures : jeu de travail, archive, sous-ensemble, compte (V14.1, PER-01)
+
+`useTasks()` n'est PLUS « toutes les tâches » : c'est le jeu de travail (non terminées + 35 jours
+de terminées). Tableau des lectures et des écrans convertis : [`docs/PERFORMANCE.md`](../../../docs/PERFORMANCE.md)
+§ « Tâches et agenda : pagination serveur ».
+
+- ❌ **Ne jamais compter, chercher ou calculer sur `useTasks()` comme sur l'historique** :
+  `useTaskCount`, `useTaskArchive`, `useTaskSubset`.
+- ❌ **Une mise à jour optimiste ne passe plus par `setQueryData(taskKeys.lists())` seul** :
+  `patchTaskCaches` (`cache-patch.ts`), sinon l'archive affiche l'état d'avant.
+- ❌ **Aucun filtre de `TaskQuery` en `.or()`** : le curseur de clé l'occupe (`task-query.ts`).
+
 > Les ÉCHÉANCES (`tasks.deadline`, un jour et non un instant) sont documentées dans
 > [`src/lib/CLAUDE.md`](../../lib/CLAUDE.md) : le module qui fait foi est `src/lib/deadline.ts`.
