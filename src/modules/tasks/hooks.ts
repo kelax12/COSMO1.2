@@ -50,7 +50,7 @@ const useTasksRepository = (): ITasksRepository => getTasksRepository();
  * Le JEU DE TRAVAIL : toutes les tâches non terminées, plus celles terminées
  * depuis `RECENT_COMPLETED_DAYS` jours (cf. `working-set.ts`).
  *
- * 🔴 Ce n'est PAS « toutes les tâches » depuis la V14.1 (PER-01). Un écran qui
+ * Ce n'est PAS « toutes les tâches » depuis la V14.1 (PER-01). Un écran qui
  * compte, cherche ou calcule sur l'historique complet passe par sa propre
  * requête : `useTaskArchive`, `useTaskSubset`, `useTaskCount`.
  */

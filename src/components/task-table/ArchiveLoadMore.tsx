@@ -9,6 +9,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { useEffect, useRef } from 'react';
 import { useT } from '@/i18n/useT';
+import { useTaskCount, type TaskQuery } from '@/modules/tasks';
 
 export interface ArchiveFeedState {
   hasMore: boolean;
@@ -16,12 +17,14 @@ export interface ArchiveFeedState {
   loadMore: () => void;
   /** Nombre de lignes perso affichées. */
   shown: number;
-  /** Total serveur de l'archive filtrée, s'il est connu. */
-  total?: number;
+  /** Requête de l'archive filtrée : son total est compté ICI, côté serveur. */
+  totalQuery?: TaskQuery;
 }
 
-export function ArchiveLoadMore({ hasMore, isFetchingMore, loadMore, shown, total }: ArchiveFeedState) {
+export function ArchiveLoadMore({ hasMore, isFetchingMore, loadMore, shown, totalQuery }: ArchiveFeedState) {
   const { t, tp } = useT('tasks');
+  // Compté ici et non dans la page : sa réponse ne redessine que ce bloc.
+  const { data: total } = useTaskCount(totalQuery ?? { ids: [] }, { enabled: hasMore && !!totalQuery });
   const sentinel = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
