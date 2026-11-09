@@ -16,9 +16,9 @@ Les chiffres de production (tables vivantes, ledger, taille de base) ne sont pas
 | Namespaces i18n | **34** | fichiers de `src/locales/fr/` |
 | Gardes `check:` / `i18n:` / `validate:` | **45** | scripts de `package.json` |
 | ADR | **20** | fichiers `NNNN-*.md` de `docs/adr/` |
-| Tables du schéma `public` | **91** | `CREATE TABLE public.` dans `supabase/schema.sql` |
-| dont sous RLS | **91** | `ENABLE ROW LEVEL SECURITY` dans `supabase/schema.sql` |
-| Policies RLS | **205** | `CREATE POLICY` dans `supabase/schema.sql` |
-| Fonctions SQL de `public` | **243** | `CREATE FUNCTION public.` dans `supabase/schema.sql` |
+| Tables du schéma `public` | **92** | `CREATE TABLE public.` dans `supabase/schema.sql` |
+| dont sous RLS | **92** | `ENABLE ROW LEVEL SECURITY` dans `supabase/schema.sql` |
+| Policies RLS | **208** | `CREATE POLICY` dans `supabase/schema.sql` |
+| Fonctions SQL de `public` | **245** | `CREATE FUNCTION public.` dans `supabase/schema.sql` |
 
 Vérifié dans le noyau CI : `npm run check:faits` échoue si ce fichier diffère de la génération.
