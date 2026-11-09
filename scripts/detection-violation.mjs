@@ -291,12 +291,41 @@ export async function debutEntree(e, lire) {
   throw new Error(`zip : méthode de compression ${e.methode} non lue pour ${e.nom}`);
 }
 
+/** Un dump SQL en clair porte-t-il des DONNÉES ? `COPY … FROM stdin;` suivi
+ *  d'au moins une ligne de données, ou un `INSERT … VALUES` en début de ligne
+ *  (`pg_dump --inserts`). Un schéma seul (`schema.sql` du contrat de données,
+ *  régénéré depuis une base vierge) n'en porte aucune. */
+export function porteDesDonnees(texte) {
+  return /^COPY\s+[\w."]+\s*\([^)]*\)\s+FROM\s+stdin;\n(?!\\\.\n)[^\n]/m.test(texte)
+    || /^INSERT INTO\s+"?(?:public|auth)"?\.[^\n]*VALUES/m.test(texte);
+}
+
+/** Au-delà, un dump SQL en clair n'est pas lu en entier : il reste suspect. */
+const LIMITE_SQL_COMPLET = 64 * 1024 * 1024;
+
+/** Une entrée lue EN ENTIER (décompressée). */
+async function entreeComplete(e, lire) {
+  const tete = await lire(e.local, 30);
+  const donnees = e.local + 30 + u16(tete, 26) + u16(tete, 28);
+  const brut = await lire(donnees, e.comp);
+  if (e.methode === 0) return brut;
+  if (e.methode === 8) return inflateRawSync(brut);
+  throw new Error(`zip : méthode de compression ${e.methode} non lue`);
+}
+
 /** Inspecte un zip déjà accessible par `lire`. Rend les fichiers suspects. */
 export async function inspecterZip(taille, lire) {
   const suspects = [];
   for (const e of await entreesZip(taille, lire)) {
     if (e.nom.endsWith('/')) continue;
-    const pourquoi = classer(e.nom, await debutEntree(e, lire));
+    let pourquoi = classer(e.nom, await debutEntree(e, lire));
+    // Un en-tête de `pg_dump` ne dit pas s'il y a des lignes : le fichier est
+    // relu en entier. Trop gros pour être relu = suspect (échec fermé).
+    if (pourquoi === 'dump PostgreSQL (SQL en clair)' && e.brut <= LIMITE_SQL_COMPLET) {
+      pourquoi = porteDesDonnees((await entreeComplete(e, lire)).toString('latin1'))
+        ? 'dump PostgreSQL (SQL en clair, avec des lignes de table)'
+        : null;
+    }
     if (pourquoi) suspects.push({ fichier: e.nom, pourquoi });
   }
   return suspects;
