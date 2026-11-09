@@ -17,6 +17,7 @@ import { useQuickFilter } from './task-table/quick-filter.store';
 import OverdueBanner from './task-table/OverdueBanner';
 import SwipeHintBanner from './task-table/SwipeHintBanner';
 import TaskBulkActionsBar from './task-table/TaskBulkActionsBar';
+import { ArchiveLoadMore } from './task-table/ArchiveLoadMore';
 import TeamTaskModal from './organization/TeamTaskModal';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 
@@ -32,6 +33,7 @@ import {
   useUpdateTask,
   useToggleTaskComplete,
   useToggleTaskBookmark,
+  useKnownTask,
   taskKeys,
   Task
 } from '@/modules/tasks';
@@ -68,7 +70,28 @@ type TaskTableProps = {
   hasActiveFilter?: boolean;
   /** Filtres actifs de la page, rendus au bout de la rangée des pastilles. */
   quickFiltersTrailing?: React.ReactNode;
+  /**
+   * V14.1 (PER-01) : l'archive « Terminées », en pages serveur. Fournie, elle
+   * REMPLACE les tâches perso dès que la vue terminées est active (bascule
+   * ou pastille) : le jeu de travail ne garde que 35 jours de terminées.
+   */
+  archive?: ArchiveFeed;
+  /** Terminées masquées par la vue courante, comptées par le serveur. */
+  completedCount?: number;
 };
+
+export interface ArchiveFeed {
+  tasks: Task[];
+  isLoading: boolean;
+  hasMore: boolean;
+  isFetchingMore: boolean;
+  loadMore: () => void;
+  /** Total serveur de l'archive filtrée. */
+  total?: number;
+}
+
+/** Tri par colonne neutralisé en vue archive (ordre serveur). */
+const noopSort = () => {};
 
 const TaskTable: React.FC<TaskTableProps> = ({
   tasks: propTasks,
@@ -87,6 +110,8 @@ const TaskTable: React.FC<TaskTableProps> = ({
   listFilterActive = false,
   hasActiveFilter = false,
   quickFiltersTrailing,
+  archive,
+  completedCount,
 }) => {
   const { t, tp } = useT('tasks');
 
@@ -117,8 +142,12 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const { orgId, teamProjects, allTeamTasks, orgMembers, teamProjectsById, editingTeamTask, setEditingTeamTask } = team;
   const [scopeFilter, setScopeFilter] = useState<'all' | 'perso' | 'entreprise'>('all');
 
-  // Utiliser propTasks si fourni, sinon les tasks du module
-  const tasks = propTasks || moduleTasks;
+  const { activeQuickFilter, toggleQuickFilter } = useQuickFilter();
+  const archiveMode = !!archive && (showCompleted || activeQuickFilter === 'completed');
+
+  // Utiliser propTasks si fourni, sinon les tasks du module. En vue terminées,
+  // l'archive paginée (V14.1).
+  const tasks = archiveMode ? archive.tasks : propTasks || moduleTasks;
 
   const [localSortField, setLocalSortField] = useState<string | undefined>(propSortField);
 
@@ -185,8 +214,6 @@ const TaskTable: React.FC<TaskTableProps> = ({
   // Filtre rapide : store externe, et non `useState` local. La barre de
   // recherche mobile (`MobileTaskSearch`, ancree hors de cet arbre) le pilote
   // ET le lit pour marquer la suggestion active. Cf. `quick-filter.store.ts`.
-  const { activeQuickFilter, toggleQuickFilter } = useQuickFilter();
-
   useEffect(() => {
     if (externalSelectedTaskId) {
       setSelectedTask(externalSelectedTaskId);
@@ -248,9 +275,16 @@ const TaskTable: React.FC<TaskTableProps> = ({
     sortDirection,
     searchTerm,
     listFilterActive,
+    serverOrdered: archiveMode,
   });
+  // Hors archive, le jeu de travail ne connaît que 35 jours de terminées :
+  // le compte vient du serveur quand la page le fournit.
+  const hiddenCompleted = completedCount ?? hiddenCompletedCount;
 
-  const selectedTaskData = tasks.find(task => task.id === selectedTask);
+  // Une tâche ouverte par lien (`openTaskId`) peut n'être ni dans la vue ni
+  // dans le jeu de travail (terminée il y a longtemps) : relue par son id.
+  const knownSelectedTask = useKnownTask(selectedTask);
+  const selectedTaskData = tasks.find(task => task.id === selectedTask) ?? knownSelectedTask;
   const selectedTaskForCollaboratorsData = tasks.find(task => task.id === selectedTaskForCollaborators);
 
   const handleOpenCollaborator = useCallback((taskId: string) => {
@@ -394,12 +428,17 @@ const TaskTable: React.FC<TaskTableProps> = ({
         </div>
       )}
 
+      {archiveMode && (
+        <p className="text-caption text-[rgb(var(--color-text-muted))] mb-2">{t('table.archiveOrder')}</p>
+      )}
+
       {/* Desktop View (Table) */}
       <TaskTableDesktop
         rows={unifiedRows}
-        sortField={localSortField}
+        // Archive : ordre serveur, le tri par colonne ne trierait que les pages chargées.
+        sortField={archiveMode ? undefined : localSortField}
         sortDirection={sortDirection}
-        onSort={handleSort}
+        onSort={archiveMode ? noopSort : handleSort}
         addToListMode={effectiveAddToListMode}
         selectionKind={selectionKind}
         selectedForListIds={effectiveSelectedForListIds}
@@ -423,6 +462,18 @@ const TaskTable: React.FC<TaskTableProps> = ({
         onSetTeamHealth={team.setHealth}
         teamEditReason={team.editReason}
       />
+
+      {archiveMode && (
+        <div className="hidden md:block">
+          <ArchiveLoadMore
+            hasMore={archive.hasMore}
+            isFetchingMore={archive.isFetchingMore}
+            loadMore={archive.loadMore}
+            shown={archive.tasks.length}
+            total={archive.total}
+          />
+        </div>
+      )}
 
       {/* Mobile View (Cards) — virtualisé au-delà de 50 items */}
       <div className="md:hidden">
@@ -448,26 +499,36 @@ const TaskTable: React.FC<TaskTableProps> = ({
           onEditTeamTask={setEditingTeamTask}
         />
 
+        {archiveMode && (
+          <ArchiveLoadMore
+            hasMore={archive.hasMore}
+            isFetchingMore={archive.isFetchingMore}
+            loadMore={archive.loadMore}
+            shown={archive.tasks.length}
+            total={archive.total}
+          />
+        )}
+
         {/* ── Maquette 50 : « La fin de la liste se dit » ──
             Sans marqueur, on ne sait jamais si l'on a tout vu ou si le
             chargement continue — la liste est virtualisée au-delà de 50 items,
             donc le doute est fondé. Une ligne suffit, et elle porte le seul
             ailleurs qui existe : les tâches terminées, qu'aucun écran ne
             proposait d'ouvrir depuis la liste elle-même. */}
-        {unifiedRows.length > 0 && !addToListMode && (
+        {unifiedRows.length > 0 && !addToListMode && !(archiveMode && archive.hasMore) && (
           <div className="pt-4 pb-2 text-center">
             <p className="text-caption text-[rgb(var(--color-text-muted))]">
               {showCompleted
                 ? tp('table.endOfListCompleted', unifiedRows.length)
                 : tp('table.endOfList', unifiedRows.length)}
             </p>
-            {hasActiveFilter && hiddenCompletedCount > 0 && onShowCompletedChange && (
+            {hasActiveFilter && hiddenCompleted > 0 && onShowCompletedChange && (
               <button
                 type="button"
                 onClick={() => onShowCompletedChange(true)}
                 className="mt-1 min-h-touch px-3 text-label font-semibold text-[rgb(var(--color-accent))]"
               >
-                {tp('table.seeCompleted', hiddenCompletedCount)}
+                {tp('table.seeCompleted', hiddenCompleted)}
               </button>
             )}
           </div>
@@ -476,7 +537,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
       <TaskListPlaceholders
         rowCount={unifiedRows.length}
-        isLoading={isLoadingTasks}
+        isLoading={archiveMode ? archive.isLoading : isLoadingTasks}
         showCompleted={showCompleted}
         addToListMode={addToListMode}
         onCreateTask={() => setShowCreateFromEmpty(true)}

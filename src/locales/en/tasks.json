@@ -154,7 +154,12 @@
     "seeCompleted_one": "See the completed task",
     "seeCompleted_other": "See the {{count}} completed tasks",
     "selectTaskAria": "Select “{{name}}”",
-    "deselectTaskAria": "Deselect “{{name}}”"
+    "deselectTaskAria": "Deselect “{{name}}”",
+    "archiveOrder": "Completed tasks, most recently created first",
+    "archiveLoadMore": "Load more",
+    "archiveLoading": "Loading more…",
+    "archiveShown_one": "{{count}} completed task shown out of {{total}}",
+    "archiveShown_other": "{{count}} completed tasks shown out of {{total}}"
   },
   "toast": {
     "leftShared": "You left the shared task",
