@@ -75,3 +75,40 @@ describe('buildWindowOrFilter', () => {
     expect(WIN_END.includes(',')).toBe(false);
   });
 });
+
+// ── Bords de la fenêtre (V14.2, PER-01) ────────────────────────────────
+// Postgres compare des `timestamptz` ; la démo doit rendre les MÊMES lignes.
+describe('eventInWindow · bords, comparaison d’instants', () => {
+  it('bornes INCLUSES : fin pile au début, début pile à la fin', () => {
+    expect(eventInWindow(ev({ start: '2026-05-31T23:00:00.000Z', end: WIN_START }), WIN_START, WIN_END)).toBe(true);
+    expect(eventInWindow(ev({ start: WIN_END, end: '2026-07-01T01:00:00.000Z' }), WIN_START, WIN_END)).toBe(true);
+  });
+
+  it('une milliseconde dehors, c’est dehors', () => {
+    expect(eventInWindow(ev({ start: '2026-05-31T23:00:00.000Z', end: '2026-05-31T23:59:59.999Z' }), WIN_START, WIN_END)).toBe(false);
+    expect(eventInWindow(ev({ start: '2026-07-01T00:00:00.000Z', end: '2026-07-01T01:00:00.000Z' }), WIN_START, WIN_END)).toBe(false);
+  });
+
+  it('TÉMOIN : un événement rendu au format de la base (+00:00) qui finit pile au début reste dedans', () => {
+    // Même instant que WIN_START, au format PostgREST (sans millisecondes).
+    const pgEnd = '2026-06-01T00:00:00+00:00';
+    // L'ancienne comparaison de chaînes l'excluait : '+' se classe avant '.'.
+    expect(pgEnd >= WIN_START).toBe(false);
+    expect(eventInWindow(ev({ start: '2026-05-31T23:00:00+00:00', end: pgEnd }), WIN_START, WIN_END)).toBe(true);
+  });
+
+  it('TÉMOIN : un début sans millisecondes pile sur la borne de fin reste dedans', () => {
+    const end = '2026-06-30T23:59:59.000Z';
+    const start = '2026-06-30T23:59:59Z';
+    // 'Z' se classe après '.' : l'ancienne comparaison l'excluait aussi.
+    expect(start <= end).toBe(false);
+    expect(eventInWindow(ev({ start, end: '2026-07-01T00:30:00Z' }), WIN_START, end)).toBe(true);
+  });
+
+  it('un décalage horaire explicite est un instant comme un autre', () => {
+    // 01:30 à Paris (+02:00) le 1er juin = 23:30 UTC le 31 mai : hors fenêtre UTC.
+    expect(eventInWindow(ev({ start: '2026-06-01T01:00:00+02:00', end: '2026-06-01T01:30:00+02:00' }), WIN_START, WIN_END)).toBe(false);
+    // 02:30 à Paris = 00:30 UTC le 1er juin : dedans.
+    expect(eventInWindow(ev({ start: '2026-06-01T02:00:00+02:00', end: '2026-06-01T02:30:00+02:00' }), WIN_START, WIN_END)).toBe(true);
+  });
+});

@@ -8,7 +8,7 @@ import { formatDate, formatTime } from '@/i18n/format';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 import { useIsDemo } from '@/lib/app-mode.store';
 import { useAuth } from '@/modules/auth/AuthContext';
-import { useTasks, useCreateTask } from '@/modules/tasks';
+import { useTaskCount, useCreateTask } from '@/modules/tasks';
 import { useCreateHabit } from '@/modules/habits';
 import { useCreateOkr } from '@/modules/okrs';
 import { useCreateEvent } from '@/modules/events';
@@ -66,7 +66,10 @@ const FirstRunSetup: React.FC = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { isAuthenticated, user } = useAuth();
-  const { data: tasks, isSuccess } = useTasks({ enabled: isAuthenticated && !isDemo });
+  // « Compte VIDE » = aucune tâche du tout, comptée par le serveur (V14.1).
+  // Le jeu de travail ne garde que 35 jours de terminées : un compte qui n'a
+  // plus que d'anciennes tâches terminées y paraissait vide.
+  const { data: taskTotal, isSuccess } = useTaskCount({}, { enabled: isAuthenticated && !isDemo });
   const createTask = useCreateTask();
   const createHabit = useCreateHabit();
   const createOkr = useCreateOkr();
@@ -109,13 +112,13 @@ const FirstRunSetup: React.FC = () => {
       isDemo,
       isAuthenticated,
       tasksLoaded: isSuccess,
-      taskCount: tasks?.length ?? 0,
+      taskCount: taskTotal ?? 0,
       alreadyDone,
     });
 
   // LA CONDITION D'OUVERTURE EST UN VERROU, PAS UNE CONDITION D'AFFICHAGE.
   // `useCreateTask` écrit la tâche créée dans le cache : dès la PREMIÈRE
-  // réponse, `tasks.length` passe à 1 et la garde se referme.
+  // réponse, le compte (relu après la création) passe à 1 et la garde se referme.
   // **Une garde d'entrée se fige à l'entrée.**
   const [latched, setLatched] = useState(false);
   if (eligible && !latched) setLatched(true);

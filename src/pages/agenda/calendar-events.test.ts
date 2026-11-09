@@ -125,3 +125,29 @@ describe('bufferedWindow', () => {
     expect(w.end).toBe(new Date('2026-08-17T00:00:00.000Z').toISOString());
   });
 });
+
+// ── V14.2 : la fenêtre chargée couvre la plage visible, fuseaux compris ──
+// FullCalendar rend des instants DÉCALÉS dans le fuseau d'affichage choisi
+// (`toDisplayISO`, jusqu'à ±14 h). Un événement visible au bord de la vue
+// jour, semaine ou mois doit donc tomber dans la fenêtre chargée, même après
+// ce décalage : la marge d'un mois le garantit, ceci le vérifie.
+describe('bufferedWindow · bords des vues jour, semaine, mois', () => {
+  const H = 60 * 60 * 1000;
+  const views: Array<[string, Date, Date]> = [
+    ['jour', new Date('2026-03-29T00:00:00.000Z'), new Date('2026-03-30T00:00:00.000Z')], // passage à l'heure d'été
+    ['semaine', new Date('2026-10-19T00:00:00.000Z'), new Date('2026-10-26T00:00:00.000Z')], // retour à l'heure d'hiver
+    ['mois', new Date('2026-01-26T00:00:00.000Z'), new Date('2026-03-09T00:00:00.000Z')], // grille de 6 semaines
+  ];
+  for (const [name, start, end] of views) {
+    it(`vue ${name} : premier et dernier instant visibles, décalés de ±14 h, sont dans la fenêtre`, () => {
+      const w = bufferedWindow(start, end);
+      for (const shift of [-14 * H, 0, 14 * H]) {
+        for (const edge of [start.getTime(), end.getTime() - 1]) {
+          const at = edge + shift;
+          expect(at).toBeGreaterThanOrEqual(Date.parse(w.start));
+          expect(at).toBeLessThanOrEqual(Date.parse(w.end));
+        }
+      }
+    });
+  }
+});

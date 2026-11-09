@@ -10,7 +10,10 @@ import { CalendarEvent, CreateEventInput, UpdateEventInput, EventFilters } from 
 import { mapEventFromDb, mapEventToDb } from './mappers';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE, assertValidCursor } from '@/lib/pagination.types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
-import { fetchAllPages, MAX_ROWS } from '@/lib/fetch-all-pages';
+import { fetchAllPages, MAX_ROWS, PAGE_SIZE } from '@/lib/fetch-all-pages';
+
+/** Lecture de fenêtre : sans plafond (V14.2), cf. getWindow. */
+const UNCAPPED = Number.POSITIVE_INFINITY;
 import { buildWindowOrFilter } from './window';
 import type { CreateOptions } from '@/lib/restore-id';
 
@@ -92,8 +95,11 @@ export class SupabaseEventsRepository implements IEventsRepository {
     const db = supabase;
     const uid = await this.currentUserId();
     const orFilter = buildWindowOrFilter(startISO, endISO);
-    // Récurrents (toujours) + non-récurrents chevauchant la fenêtre. Auto-paginé
-    // (une fenêtre chargée reste petite, mais on garde la garantie anti-troncature).
+    // Récurrents (toujours) + non-récurrents chevauchant la fenêtre. V14.2 :
+    // SANS plafond. Une fenêtre est bornée par nature (la plage visible plus un
+    // mois de marge) : la plafonner referait la troncature silencieuse.
+    // Pages par décalage et non par clé : le filtre de fenêtre occupe déjà
+    // le `.or()` qu'un curseur de clé demanderait.
     const rows = await fetchAllPages(async (from, to) => {
       const { data, error } = await db
         .from('events')
@@ -105,8 +111,29 @@ export class SupabaseEventsRepository implements IEventsRepository {
         .range(from, to);
       if (error) throw normalizeApiError(error);
       return data || [];
-    });
-    return warnIfTruncated(rows, MAX_ROWS, 'events:window').map(mapEventFromDb);
+    }, PAGE_SIZE, UNCAPPED);
+    return rows.map(mapEventFromDb);
+  }
+
+  async getLinkedToTasks(): Promise<CalendarEvent[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const db = supabase;
+    const uid = await this.currentUserId();
+    // `user_id = self` explicite : la RLS rend aussi l'agenda des membres gérés
+    // (mig. 077). Sans plafond : sous-ensemble borné par les tâches planifiées.
+    const rows = await fetchAllPages(async (from, to) => {
+      const { data, error } = await db
+        .from('events')
+        .select('*')
+        .eq('user_id', uid)
+        .not('task_id', 'is', null)
+        .order('start_time', { ascending: true })
+        .order('id', { ascending: true })
+        .range(from, to);
+      if (error) throw normalizeApiError(error);
+      return data || [];
+    }, PAGE_SIZE, UNCAPPED);
+    return rows.map(mapEventFromDb);
   }
 
   async getWindowForUser(userId: string, startISO: string, endISO: string): Promise<CalendarEvent[]> {
@@ -126,8 +153,8 @@ export class SupabaseEventsRepository implements IEventsRepository {
         .range(from, to);
       if (error) throw normalizeApiError(error);
       return data || [];
-    });
-    return warnIfTruncated(rows, MAX_ROWS, 'events:window:member').map(mapEventFromDb);
+    }, PAGE_SIZE, UNCAPPED);
+    return rows.map(mapEventFromDb);
   }
 
   async getByTaskId(taskId: string): Promise<CalendarEvent[]> {

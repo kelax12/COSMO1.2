@@ -83,6 +83,10 @@ export class LocalStorageEventsRepository implements IEventsRepository {
     return events.filter(e => e.taskId === taskId);
   }
 
+  async getLinkedToTasks(): Promise<CalendarEvent[]> {
+    return this.getEvents().filter((e) => !!e.taskId);
+  }
+
   async getWindow(startISO: string, endISO: string): Promise<CalendarEvent[]> {
     return selectEventsInWindow(this.getEvents(), startISO, endISO).sort(byStartAsc);
   }
