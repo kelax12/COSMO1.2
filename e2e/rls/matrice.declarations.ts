@@ -94,6 +94,8 @@ export const DECLARATIONS: Record<string, Declaration> = {
   ),
   events: partagee('agenda : un événement peut être lié à une équipe', 'propriétaire ; membres de son équipe pour un événement d’équipe'),
   habits: proprietaire(),
+  // Mig. 248 (DAT-02) : jours cochés, clé composée vers `habits (id, user_id)`.
+  habit_completions: proprietaire(),
   key_results: proprietaire(),
   kr_completions: proprietaire(),
   lists: partagee('listes partagées entre amis', 'propriétaire et destinataires de shared_lists'),

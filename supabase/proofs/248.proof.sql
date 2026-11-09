@@ -797,21 +797,21 @@ $mig$;
      AND (SELECT count(*) FROM jsonb_object_keys(v -> h_a1::text -> 5)) = 401
      AND (v -> h_a2::text) - 5 = jsonb_build_array(1, 2, 3, t0 - 3, 400)
      AND v -> h_a2::text -> 5 = jsonb_build_object(to_char(t0, 'YYYY-MM-DD'), true, k2, true, to_char(t0 - 3, 'YYYY-MM-DD'), true) THEN
-    r := r || 'ok A attendu : serie 500 au-dela de la fenetre, record 500, total 510, premier jour J-609, 401 jours de fenetre ; A2 1/2/3';
+    r := r || 'ok A attendu : serie 500 au-dela de la fenetre, record 500, total 510, premier jour J-609, 401 jours de fenetre ; A2 1/2/3'::text;
   ELSE
     ko := ko + 1;
     r := r || format('ECHEC A attendu 500/500/510/J-609 et 1/2/3/J-3 : obtenu %s / %s', (v -> h_a1::text) - 5, v -> h_a2::text);
   END IF;
   v := snap -> '2|1|0' -> 'ws';
   IF (v -> 0 ->> 'habitsTime')::int = 390 AND (v -> 1 ->> 'habitsTime')::int = 5200 AND (v -> 2 ->> 'habitsTime')::int = 30 THEN
-    r := r || 'ok A temps investi : 390 min sur 30 jours, 5200 sur 806 jours, 30 aujourd''hui';
+    r := r || 'ok A temps investi : 390 min sur 30 jours, 5200 sur 806 jours, 30 aujourd''hui'::text;
   ELSE
     ko := ko + 1;
     r := r || format('ECHEC A temps investi attendu 390 / 5200 / 30 : %s', v);
   END IF;
   IF snap -> '2|2|0' -> 'rpc' = jsonb_build_object(h_b1, jsonb_build_array(0, 0, 0, NULL, 400, '{}'::jsonb))
      AND snap -> '2|3|0' -> 'rpc' = jsonb_build_object(h_c1, jsonb_build_array(0, 0, 0, NULL, 400, '{}'::jsonb)) THEN
-    r := r || 'ok B (aucun jour) et C (jours decoches seulement) : zeros, fenetre vide';
+    r := r || 'ok B (aucun jour) et C (jours decoches seulement) : zeros, fenetre vide'::text;
   ELSE
     ko := ko + 1;
     r := r || format('ECHEC B / C attendus a zero : %s / %s', snap -> '2|2|0' -> 'rpc', snap -> '2|3|0' -> 'rpc');
@@ -855,7 +855,7 @@ $mig$;
   IF n = 4 AND v ? k1
      AND EXISTS (SELECT 1 FROM public.habit_completions c WHERE c.habit_id = h_a2 AND c.day = t0 - 1)
      AND (SELECT h.completions ->> k1 FROM public.habits h WHERE h.id = h_a2) = 'true' THEN
-    r := r || 'ok A coche hier : serie 4, ligne en table, colonne recopiee a true';
+    r := r || 'ok A coche hier : serie 4, ligne en table, colonne recopiee a true'::text;
   ELSE
     ko := ko + 1;
     r := r || format('ECHEC A coche hier : serie %s, fenetre %s', n, v);
@@ -866,7 +866,7 @@ $mig$;
   IF n = 1 AND NOT v ? k1
      AND NOT EXISTS (SELECT 1 FROM public.habit_completions c WHERE c.habit_id = h_a2 AND c.day = t0 - 1)
      AND (SELECT h.completions ->> k1 FROM public.habits h WHERE h.id = h_a2) = 'false' THEN
-    r := r || 'ok A decoche hier : serie 1, ligne retiree, jour absent de la fenetre, colonne a false';
+    r := r || 'ok A decoche hier : serie 1, ligne retiree, jour absent de la fenetre, colonne a false'::text;
   ELSE
     ko := ko + 1;
     r := r || format('ECHEC A decoche hier : serie %s, fenetre %s', n, v);
@@ -877,29 +877,29 @@ $mig$;
     e := 'acceptee';
   EXCEPTION WHEN OTHERS THEN e := SQLERRM;
   END;
-  IF e LIKE 'Invalid date format%' THEN r := r || 'ok 30 fevrier refuse (Invalid date format)';
+  IF e LIKE 'Invalid date format%' THEN r := r || 'ok 30 fevrier refuse (Invalid date format)'::text;
   ELSE ko := ko + 1; r := r || format('ECHEC 30 fevrier : %s', e); END IF;
 
   PERFORM public.toggle_habit_completion(h_a2, to_char(t0 - 5, 'YYYY-MM-DD'));
   IF EXISTS (SELECT 1 FROM public.habit_completions c WHERE c.habit_id = h_a2 AND c.day = t0 - 5) THEN
-    r := r || 'ok v1 du CLI : le jour ecrit dans la colonne est recopie en table par le trigger';
-  ELSE ko := ko + 1; r := r || 'ECHEC v1 du CLI : jour absent de la table'; END IF;
+    r := r || 'ok v1 du CLI : le jour ecrit dans la colonne est recopie en table par le trigger'::text;
+  ELSE ko := ko + 1; r := r || 'ECHEC v1 du CLI : jour absent de la table'::text; END IF;
 
   INSERT INTO public.habits(id, user_id, name, completions)
     VALUES (h_r, u_a, 'R preuve 248', jsonb_build_object(k1, true, k2, true));
   SELECT g.streak_current INTO n FROM public.get_my_habits(400, t0) g WHERE g.id = h_r;
   SELECT count(*) INTO m FROM public.habit_completions c WHERE c.habit_id = h_r;
-  IF n = 2 AND m = 2 THEN r := r || 'ok Annuler (habitude recreee avec ses jours) : 2 lignes, serie 2';
+  IF n = 2 AND m = 2 THEN r := r || 'ok Annuler (habitude recreee avec ses jours) : 2 lignes, serie 2'::text;
   ELSE ko := ko + 1; r := r || format('ECHEC Annuler : %s ligne(s), serie %s', m, n); END IF;
 
   UPDATE public.habits h SET completions = h.completions - k1 WHERE h.id = h_r;
   SELECT count(*) INTO m FROM public.habit_completions c WHERE c.habit_id = h_r;
-  IF m = 1 THEN r := r || 'ok cle retiree de la colonne : ligne retiree de la table';
+  IF m = 1 THEN r := r || 'ok cle retiree de la colonne : ligne retiree de la table'::text;
   ELSE ko := ko + 1; r := r || format('ECHEC cle retiree : %s ligne(s)', m); END IF;
 
   DELETE FROM public.habits h WHERE h.id = h_r;
   SELECT count(*) INTO m FROM public.habit_completions c WHERE c.habit_id = h_r;
-  IF m = 0 THEN r := r || 'ok suppression de l habitude : ses jours partent avec elle';
+  IF m = 0 THEN r := r || 'ok suppression de l habitude : ses jours partent avec elle'::text;
   ELSE ko := ko + 1; r := r || format('ECHEC suppression : %s ligne(s) orpheline(s)', m); END IF;
 
   -- ── Isolement, en B ───────────────────────────────────────────────
@@ -907,7 +907,7 @@ $mig$;
   PERFORM set_config('request.jwt.claims', json_build_object('sub', u_b, 'role', 'authenticated')::text, true);
 
   SELECT count(*) INTO n FROM public.habit_completions;
-  IF n = 0 THEN r := r || 'ok B ne lit aucun jour (A en a 511)';
+  IF n = 0 THEN r := r || 'ok B ne lit aucun jour (A en a 511)'::text;
   ELSE ko := ko + 1; r := r || format('ECHEC B lit %s jour(s)', n); END IF;
 
   BEGIN
@@ -915,7 +915,7 @@ $mig$;
     e := 'acceptee';
   EXCEPTION WHEN OTHERS THEN e := SQLERRM;
   END;
-  IF e = 'Habit not found' THEN r := r || 'ok B ne bascule pas l habitude de A (Habit not found)';
+  IF e = 'Habit not found' THEN r := r || 'ok B ne bascule pas l habitude de A (Habit not found)'::text;
   ELSE ko := ko + 1; r := r || format('ECHEC B bascule A : %s', e); END IF;
 
   BEGIN
@@ -923,7 +923,7 @@ $mig$;
     e := 'acceptee';
   EXCEPTION WHEN OTHERS THEN e := SQLSTATE;
   END;
-  IF e = '42501' THEN r := r || 'ok B n insere pas au nom de A (42501, RLS)';
+  IF e = '42501' THEN r := r || 'ok B n insere pas au nom de A (42501, RLS)'::text;
   ELSE ko := ko + 1; r := r || format('ECHEC B insere au nom de A : %s', e); END IF;
 
   BEGIN
@@ -931,7 +931,7 @@ $mig$;
     e := 'acceptee';
   EXCEPTION WHEN OTHERS THEN e := SQLSTATE;
   END;
-  IF e = '23503' THEN r := r || 'ok B n insere pas sur l habitude de A (23503, cle composee)';
+  IF e = '23503' THEN r := r || 'ok B n insere pas sur l habitude de A (23503, cle composee)'::text;
   ELSE ko := ko + 1; r := r || format('ECHEC B insere sur l habitude de A : %s', e); END IF;
 
   DELETE FROM public.habit_completions c WHERE c.habit_id = h_a1;
@@ -941,7 +941,7 @@ $mig$;
     e := 'acceptee';
   EXCEPTION WHEN OTHERS THEN e := SQLSTATE;
   END;
-  IF n = 0 AND e = '42501' THEN r := r || 'ok B ne supprime aucun jour de A, et n a pas d UPDATE (42501)';
+  IF n = 0 AND e = '42501' THEN r := r || 'ok B ne supprime aucun jour de A, et n a pas d UPDATE (42501)'::text;
   ELSE ko := ko + 1; r := r || format('ECHEC B supprime %s jour(s) de A, UPDATE : %s', n, e); END IF;
 
   -- ── anon ──────────────────────────────────────────────────────────
@@ -954,12 +954,12 @@ $mig$;
     e := 'lisible';
   EXCEPTION WHEN OTHERS THEN e := SQLSTATE;
   END;
-  IF e = '42501' THEN r := r || 'ok anon : aucun droit sur habit_completions (42501)';
+  IF e = '42501' THEN r := r || 'ok anon : aucun droit sur habit_completions (42501)'::text;
   ELSE ko := ko + 1; r := r || format('ECHEC anon : %s', e); END IF;
   EXECUTE 'RESET ROLE';
 
   SELECT count(*) INTO n FROM public.habit_completions c WHERE c.habit_id = h_a1;
-  IF n = 511 THEN r := r || 'ok A garde ses 511 jours apres les tentatives de B';
+  IF n = 511 THEN r := r || 'ok A garde ses 511 jours apres les tentatives de B'::text;
   ELSE ko := ko + 1; r := r || format('ECHEC A n a plus que %s jours', n); END IF;
 
   -- ── TÉMOIN ROUGE : un jour perdu doit se voir ─────────────────────
@@ -974,7 +974,7 @@ $mig$;
   IF e = format('TEMOIN %s', jsonb_build_array(249, 250, 509))
      AND jsonb_build_array(249, 250, 509) <> ((snap -> '2|1|0' -> 'rpc' -> h_a1::text) - 5 - 4 - 3)
      AND n = 511 THEN
-    r := r || 'ok temoin : un jour retire de la table fait tomber la serie a 249 et le total a 509 (la comparaison le voit), puis l annulation rend les 511 jours';
+    r := r || 'ok temoin : un jour retire de la table fait tomber la serie a 249 et le total a 509 (la comparaison le voit), puis l annulation rend les 511 jours'::text;
   ELSE
     ko := ko + 1;
     r := r || format('ECHEC temoin aveugle : %s, %s jour(s) apres annulation', e, n);
