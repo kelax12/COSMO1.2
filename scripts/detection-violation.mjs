@@ -216,7 +216,9 @@ export function classer(nom, debut) {
   if (/^COPY\s+[\w."]+\s*\([^)]*\)\s+FROM\s+stdin;/m.test(t)) return 'données de table (COPY … FROM stdin)';
   if (/INSERT INTO\s+"?(?:public|auth)"?\./i.test(t)) return 'données de table (INSERT INTO public/auth)';
   if (EXT_BASE.test(nom)) return 'nom de dump ou de base, contenu non chiffré';
-  const emails = new Set((t.match(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g) ?? []).filter((e) => !DOMAINES_FICTIFS.test(e)));
+  // Quantificateurs BORNÉS : un fichier forgé (longue suite sans `@`) ne fait
+  // pas exploser le retour arrière sur les 64 Ko lus.
+  const emails = new Set((t.match(/[\w.+-]{1,64}@[\w-]{1,63}(?:\.[\w-]{1,63}){1,8}/g) ?? []).filter((e) => !DOMAINES_FICTIFS.test(e)));
   if (emails.size >= 20) return `${emails.size} adresses e-mail distinctes`;
   return null;
 }
@@ -326,6 +328,7 @@ export async function lecteurArtefact(a, token, fetchImpl, seuilComplet = TELECH
 export async function lireArtefacts({ depot, token, maintenant, fetchImpl = fetch }) {
   const limite = maintenant.getTime() - FENETRE_ARTEFACTS_H * 3600_000;
   const recents = [];
+  let fourches = 0;
   // Les artefacts arrivent du plus récent au plus ancien : arrêt à la fenêtre.
   let url = `${GH}/repos/${depot}/actions/artifacts?per_page=100`;
   for (let page = 0; url; page++) {
@@ -334,7 +337,14 @@ export async function lireArtefacts({ depot, token, maintenant, fetchImpl = fetc
     url = suivante;
     for (const a of json.artifacts ?? []) {
       if (Date.parse(a.created_at) < limite) { url = null; break; }
-      if (!a.expired) recents.push({ id: a.id, nom: a.name, taille: a.size_in_bytes, depot, run: a.workflow_run?.id });
+      if (a.expired) continue;
+      // Un run de FOURCHE (pull_request d'un tiers) ne reçoit aucun secret de
+      // production : il ne peut pas porter nos données, et son contenu est
+      // choisi par un tiers, qui pourrait sinon occuper le plafond d'alertes.
+      // Compté, jamais inspecté. Origine illisible = inspecté (échec fermé).
+      const wr = a.workflow_run;
+      if (wr?.head_repository_id != null && wr?.repository_id != null && wr.head_repository_id !== wr.repository_id) { fourches += 1; continue; }
+      recents.push({ id: a.id, nom: a.name, taille: a.size_in_bytes, depot, run: wr?.id });
     }
   }
   const suspects = [];
@@ -342,7 +352,7 @@ export async function lireArtefacts({ depot, token, maintenant, fetchImpl = fetc
     const { taille, lire } = await lecteurArtefact(a, token, fetchImpl);
     for (const s of await inspecterZip(taille, lire)) suspects.push({ artefact: a.nom, run: a.run, ...s });
   }
-  return { lus: recents.length, suspects };
+  return { lus: recents.length, fourches, suspects };
 }
 
 // ─── 5 · Décision (pure : le témoin la rejoue sans réseau) ──────────
@@ -390,7 +400,8 @@ async function source(nom, f) {
   try {
     return [nom, { ok: true, valeur: await f() }];
   } catch (e) {
-    return [nom, { ok: false, erreur: String(e?.message ?? e).slice(0, 200) }];
+    // Le message peut citer un nom venu d'un zip : neutralisé comme lui.
+    return [nom, { ok: false, erreur: propre(e?.message ?? e, 200) }];
   }
 }
 
@@ -425,7 +436,7 @@ export async function executer(env, { fetchImpl = fetch, maintenant = new Date()
   const lignes = [];
   lignes.push(`Fenêtre des journaux : ${debut} → ${fin} ; artefacts : ${FENETRE_ARTEFACTS_H} h.`);
   for (const [k, x] of Object.entries(sources)) lignes.push(`  ${k} : ${x.ok ? 'lue' : 'NON LUE'}`);
-  if (sources.artefacts.ok) lignes.push(`  artefacts inspectés : ${sources.artefacts.valeur.lus}`);
+  if (sources.artefacts.ok) lignes.push(`  artefacts inspectés : ${sources.artefacts.valeur.lus} (de fourche, ignorés : ${sources.artefacts.valeur.fourches})`);
   if (sources.secretScanning.ok) lignes.push(`  alertes de secret scanning ouvertes : ${sources.secretScanning.valeur.length}`);
   for (const [k, def] of Object.entries(MESURES)) {
     if (sources.journaux.ok) lignes.push(`  ${k} = ${d.mesures[k]} (plancher ${def.plancher})`);
@@ -455,7 +466,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     const fin = iso(new Date());
     r = {
       exit: 1,
-      lignes: [`::error title=detection::détecteur en panne (${String(e?.message ?? e).slice(0, 200)}) : échec fermé`],
+      lignes: [`::error title=detection::détecteur en panne (${propre(e?.message ?? e, 200)}) : échec fermé`],
       resume: '### ✖ Détection de violation : détecteur en panne\n',
       sorties: { statut: 'source-non-lue', categories: 'source-non-lue', detecte_le: fin },
     };
