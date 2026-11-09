@@ -38,8 +38,8 @@ export const useKRCompletions = (options?: { enabled?: boolean }) => {
 };
 
 /**
- * Le journal ENTIER, pour l'export de portabilité (RGPD art. 20) : paginé,
- * jamais borné aux 500 lignes du tableau de bord.
+ * Le journal ENTIER, pour l'export de portabilité (RGPD art. 20) : paginé et
+ * filtré explicitement sur la personne connectée.
  */
 export const useKRCompletionsExport = () => {
   const repository = useKRCompletionsRepository();
