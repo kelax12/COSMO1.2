@@ -486,28 +486,106 @@ Secrets Vault (noms fixés, jamais de valeur dans le dépôt) : `cosmo_project_u
 Functions et des secrets Actions). Rattrapage d'un passage manqué : `select public.cron_invoke('<job>');`
 en `postgres`, ou le `workflow_dispatch` du workflow d'origine : sûrs tous les deux (bail + rejeu idempotent).
 
-**Bascule, dans l'ordre (gestes d'Axel).** Les deux ordonnanceurs tournent ensemble entre 3 et 5 :
-c'est voulu, il n'y a ni trou ni doublon (bail).
+**État relu le 2026-11-09, production `ykeugqfgklejcdbrmawy`, lecture seule** : `pg_cron` 1.6.4 installé
+(`cron.timezone = GMT`, onze jobs `cosmo-*`), `pg_net` disponible en 0.19.5 mais **non installé** (la `245`
+le crée), `supabase_vault` installé avec **zéro secret**, ni `cron_runs` ni `cron_leases`, ledger jusqu'à
+`247`, aucune trace de `245` ni `246`. Les cinq Edge Functions sont `ACTIVE` avec `verify_jwt = false`
+(pg_net n'envoie pas de JWT, les workflows non plus : même porte, `x-cron-secret`).
 
-1. **Edge Functions avec bail déployées** : `Edge deploy` le fait au push sur `main`. Sans la `245`,
-   elles travaillent sans bail, comme avant (RPC absente reconnue).
-2. **Secrets Vault**, SQL editor :
+**Preuves.** Rejouées à chaque commit par `e2e/rls/cron-journal.test.ts` sur une pile Supabase réelle
+(`pg_cron` et `pg_net` vrais) : `245` avec et sans secrets Vault, `246`, chacune `PREUVE-ANNULEE 0 ECHEC`,
+et un job pg_cron de test qui écrit dans `cron_runs` puis se ferme sur la réponse de pg_net (job
+`rls-integration` du run `42664142079`, sur `edf90d80`). **Pas encore jouées en production** : c'est l'étape 3
+ci-dessous, et ce qu'elle seule peut dire (droits de `postgres` sur `net._http_response` et sur
+`vault.decrypted_secrets` dans le projet hébergé).
+
+**Chaque traitement a son équivalent** (aucun ne disparaît, aucun n'est ajouté) :
+
+| Workflow GitHub (heure UTC) | Job pg_cron (`246`) | Appel `cron_invoke` | Fenêtre de la sonde |
+|---|---|---|---|
+| `org-webhook-dispatch` (`7-59/10 * * * *`) | `cosmo-org-webhook-dispatch`, même heure | `org-webhook-dispatch` | 35 min |
+| `org-digest` mode `hourly` (`23 * * * *`) | `cosmo-org-digest-hourly`, même heure | `org-digest?mode=hourly` | 2 h 15 |
+| `org-digest` mode `daily` (`41 7 * * *`) | `cosmo-org-digest-daily`, même heure | `org-digest?mode=daily` | 26 h |
+| `renewal-notice`, job `renewal-notice` (`12 7 * * *`) | `cosmo-renewal-notice`, même heure | `renewal-notice` | 26 h |
+| `renewal-notice`, job `seat-alert` (même déclencheur) | `cosmo-seat-alert`, **07:14** (deux minutes plus tard) | `seat-alert` | 26 h |
+| `inactive-accounts` (`37 6 * * *`) | `cosmo-inactive-accounts`, même heure | `inactive-accounts` | 26 h |
+| (nouveau) | `cosmo-cron-runs-close` (`*/5 * * * *`) | relevé des réponses pg_net | sans objet |
+
+Les autres workflows planifiés lisent, comparent ou sondent : ils restent sur GitHub, `daily-digest` et
+`weekly-digest` aussi (lecture seule, hors périmètre). Les onze jobs pg_cron d'avant ne sont pas touchés.
+
+**Bascule, dans l'ordre (gestes d'Axel).** Les deux ordonnanceurs tournent ensemble entre les étapes 4 et 8 :
+c'est voulu, il n'y a ni trou ni doublon (bail). ❌ **Ne jamais retirer les `schedule:` avant l'étape 7.**
+Une garde le refuse (`src/edge-cron-lease.guard.test.ts`, constante `BASCULE_FAITE`).
+
+1. **Edge Functions avec bail déployées** : `Edge deploy` le fait au push sur `main` (`success` sur
+   `edf90d80`). Contrôle : `Edge deploy drift` vert, ou `npm run check:edge`. Sans la `245`, elles travaillent
+   sans bail comme avant (RPC absente reconnue).
+2. **Secrets Vault**, SQL editor, **avant** la preuve de la `246` :
    `select vault.create_secret('https://ykeugqfgklejcdbrmawy.supabase.co', 'cosmo_project_url', 'lue par cron_invoke (mig. 245)');`
    puis `select vault.create_secret('<valeur de CRON_SECRET>', 'cosmo_cron_secret', 'x-cron-secret des fonctions planifiees (mig. 245)');`.
-   ⚠️ Une valeur de Supabase ne se relit pas : sans copie, faire tourner `CRON_SECRET` aux trois
-   endroits (`supabase secrets set`, `gh secret set`, Vault) et dater `.github/secrets-registry.json`.
-3. **`245`** : `supabase db query --linked -f supabase/proofs/245.proof.sql` (0 ECHEC), appliquer,
-   relire au catalogue (`pg_net` présent, RLS des deux tables, `has_function_privilege` des six
-   fonctions : `anon` non, `service_role` sur le bail seul).
-4. **`246`** : preuve `246.proof.sql` (0 ECHEC, Vault présent), appliquer, relire
-   `select jobname, schedule, command, active from cron.job order by jobname;` (onze d'avant + sept).
-   Après 15 min : `select * from public.cron_runs order by id desc limit 10;` montre
-   `org-webhook-dispatch` en `ok`.
-5. **Après 24 h** (tous les jobs passés une fois) : `select * from public.cron_runs_verdict();` rend
-   six `ok`, et `gh workflow run cron-journal.yml` sort vert.
-6. **Retirer les `schedule:` GitHub** : commit prêt sur `noyau/cron-bascule` (garde les
-   `workflow_dispatch`, planifie `Journal des crons` à l'heure). Le rebaser sur `main`, le pousser
-   sur `noyau/cron-bascule`, attendre `CI noyau` vert sur ce SHA, puis `git push origin HEAD:main`.
+   ⚠️ Une valeur de Supabase ne se relit pas : sans copie, faire tourner `CRON_SECRET` aux trois endroits
+   (`supabase secrets set`, `gh secret set`, Vault) et dater `.github/secrets-registry.json`.
+   Contrôle : `select name from vault.secrets where name like 'cosmo\_%' order by 1;` rend deux lignes.
+3. **Preuve de la `245` en production** (elle s'annule d'elle-même, extension et tables comprises) :
+   `supabase db query --linked -f supabase/proofs/245.proof.sql`. **L'erreur est le succès** : le message doit
+   commencer par `PREUVE-ANNULEE 0 ECHEC |`. Puis constater l'annulation :
+   `select (select count(*) from pg_extension where extname = 'pg_net') as pg_net, to_regclass('public.cron_runs') as journal;`
+   doit rendre `0` et `NULL`. Un seul `ECHEC` : on s'arrête, on n'applique pas.
+4. **Appliquer la `245`** (SQL editor ou `apply_migration`, **jamais** `supabase db push`), sous le nom
+   `245_cron_journal`. Relire au catalogue : `pg_net` installée, RLS active et zéro policy sur `cron_runs` et
+   `cron_leases`, `has_function_privilege` des six fonctions (`anon` non, `authenticated` non, `service_role` oui
+   sur le bail seul).
+5. **Preuve de la `246`** : `supabase db query --linked -f supabase/proofs/246.proof.sql`, même lecture
+   (`PREUVE-ANNULEE 0 ECHEC |`, Vault présent). **Appliquer la `246`** sous le nom `246_cron_planification`,
+   puis `select jobname, schedule, command, active from cron.job order by jobname;` : **dix-huit lignes**
+   (onze d'avant, sept nouvelles), toutes actives.
+6. **Après 15 minutes** : `select job, status, http_code, started_at from public.cron_runs order by id desc limit 10;`
+   montre `org-webhook-dispatch` en `ok` / `200`. `config_missing` : un secret Vault manque. `error` / `401` : la
+   valeur de `cosmo_cron_secret` n'est pas celle de `CRON_SECRET`. Dans les deux cas **on s'arrête**, GitHub
+   tient encore tout, rien n'est perdu.
+7. **Un tour de chaque job** (heures UTC : `inactive-accounts` 06:37, `renewal-notice` 07:12, `seat-alert` 07:14,
+   `org-digest-daily` 07:41, `org-digest-hourly` à la minute 23, webhooks toutes les dix minutes). Appliquer
+   `245` et `246` en fin de journée : le lendemain à 07:45 UTC, les six ont tourné. Condition de passage,
+   **toutes** vraies :
+   - `select * from public.cron_runs_verdict();` rend six lignes, verdict `ok` partout ;
+   - `select job, count(*) filter (where status = 'ok') as ok, max(started_at) from public.cron_runs group by job order by job;`
+     montre au moins un `ok` pour chacun des six jobs ;
+   - `gh workflow run cron-journal.yml` puis le run sort vert.
+
+   ⚠️ Un `ok` veut dire « l'Edge Function a répondu 2xx », y compris `skipped: already_running` pendant la
+   double planification. Il prouve que la chaîne pg_cron, Vault, pg_net, fonction marche, pas qu'un envoi réel a
+   eu lieu : le contrôle d'envoi reste celui des fonctions (`renewal_notices`, `org_webhook_deliveries`).
+8. **Retirer les `schedule:` GitHub** : le commit existe sur `noyau/cron-bascule-2` (garde les
+   `workflow_dispatch`, planifie `Journal des crons` à la minute 51, retourne `BASCULE_FAITE`, régénère
+   `FAITS.md`, corrige la table des classes de `TESTING.md`). Après les étapes 1 à 7 seulement :
+
+   ```bash
+   git fetch origin
+   git switch -c bascule origin/noyau/cron-bascule-2
+   git rebase origin/main
+   git push origin HEAD:noyau/cron-bascule-final
+   ```
+
+   Attendre `CI noyau` vert **sur ce SHA**, puis `git push origin HEAD:main`. Le lendemain :
+   `gh run list --workflow renewal-notice.yml --event schedule --limit 3` ne montre plus de run planifié,
+   et `Journal des crons` est vert deux heures de suite.
+
+**Retour arrière, écrit avant d'en avoir besoin.** Deux ordonnanceurs en même temps sont sûrs (bail) ; un trou ne
+l'est pas. Donc **toujours rendre la main à GitHub d'abord, retirer pg_cron ensuite**.
+
+- *Avant l'étape 8* (`245` et `246` appliquées, GitHub encore planifié) : rien n'est cassé. Pour arrêter pg_cron :
+  `select cron.unschedule(jobname) from cron.job where jobname in ('cosmo-org-webhook-dispatch', 'cosmo-org-digest-hourly', 'cosmo-org-digest-daily', 'cosmo-renewal-notice', 'cosmo-seat-alert', 'cosmo-inactive-accounts', 'cosmo-cron-runs-close');`
+  Tables, fonctions et extension peuvent rester, inertes. Un arrêt durable se versionne sous son propre
+  numéro (`248` ou suivant), jamais par édition de la `246`. Le `Journal des crons` n'est pas encore planifié :
+  rien ne rougit.
+- *Après l'étape 8* (GitHub ne planifie plus) : **d'abord** `git revert <SHA de la bascule>` puis
+  `git push origin HEAD:main` (les `schedule:` reviennent, la garde revient avec ; environ 40 s jusqu'en
+  production, voir § 3). **Ensuite seulement**, si pg_cron doit s'arrêter, la commande `cron.unschedule` ci-dessus.
+  Entre les deux, le bail évite le doublon. Passage manqué entre-temps : `workflow_dispatch` du workflow concerné
+  ou `select public.cron_invoke('<job>');` en `postgres`, sûrs tous les deux.
+- *`CRON_SECRET` tourné* : les trois endroits (Supabase, GitHub, Vault) ensemble. Le Vault oublié donne des
+  `error` / `401` dans `cron_runs`, un verdict `echec`, et `Journal des crons` rouge en moins de deux heures.
 
 ---
 
