@@ -216,7 +216,7 @@ const SECRET_EN_CLAIR = 'sb_secret_NE_DOIT_JAMAIS_SORTIR';
 const IP = '203.0.113.77';
 const COMPTE = '00000000-0000-4000-8000-00000000c0de';
 
-function reseau({ artefact, secrets = [], totaux = { echecs_auth: 0, reinitialisations: 0, lignes_anon: 0, requetes_lues: 3000 } }) {
+function reseau({ artefact, secrets = [], totaux = { echecs_auth: 0, reinitialisations: 0, lignes_anon: 0, requetes_lues: 3000 }, fourche = false }) {
   const appels = [];
   const json = (b) => new Response(JSON.stringify(b), { status: 200, headers: { 'content-type': 'application/json' } });
   const fetchImpl = async (url, o = {}) => {
@@ -224,7 +224,8 @@ function reseau({ artefact, secrets = [], totaux = { echecs_auth: 0, reinitialis
     appels.push({ u, methode: o.method ?? 'GET' });
     if (u.includes('/secret-scanning/alerts')) return json(secrets);
     if (u.includes('/actions/artifacts?per_page')) {
-      return json({ artifacts: [{ id: 9, name: 'db-dump', size_in_bytes: artefact.length, created_at: '2026-11-02T01:00:00Z', expired: false, workflow_run: { id: 1 } }] });
+      const wr = fourche ? { id: 1, repository_id: 100, head_repository_id: 666 } : { id: 1, repository_id: 100, head_repository_id: 100 };
+      return json({ artifacts: [{ id: 9, name: 'db-dump', size_in_bytes: artefact.length, created_at: '2026-11-02T01:00:00Z', expired: false, workflow_run: wr }] });
     }
     if (u.endsWith('/actions/artifacts/9/zip')) return new Response(null, { status: 302, headers: { location: 'https://blob.invalid/9' } });
     if (u === 'https://blob.invalid/9') return new Response(artefact, { status: 200 });
@@ -280,6 +281,30 @@ describe('executer · bout en bout', () => {
     const tout = [...r.lignes, r.resume, JSON.stringify(r.sorties)].join('\n');
     for (const interdit of [SECRET_EN_CLAIR, IP, COMPTE]) expect(tout).not.toContain(interdit);
     expect(tout).toMatch(/n° 1 ouverte \(supabase_service_key/);
+  });
+
+  it('un artefact de FOURCHE n est pas inspecté (aucun secret de prod, contenu choisi par un tiers) : compté seulement', async () => {
+    const { fetchImpl, appels } = reseau({ artefact: zip([{ nom: 'cosmo.dump', contenu: PG_DUMP }]), fourche: true });
+    const r = await executer(ENV, { fetchImpl, maintenant: MAINTENANT });
+    expect(r.sorties.statut).toBe('rien');
+    expect(r.resume).toMatch(/de fourche, ignorés : 1/);
+    expect(appels.some((a) => a.u.endsWith('/zip'))).toBe(false);
+  });
+
+  it('TÉMOIN INJECTION : un nom de zip cité par un message d ERREUR ne porte ni commande ni retour à la ligne', async () => {
+    const z = zip([{ nom: 'x\n::error::injecte%0A`', contenu: Buffer.from('abc'), deflate: false }]);
+    z.writeUInt32LE(0xdeadbeef, 0); // en-tête local corrompu : `debutEntree` lève en citant le nom
+    const { fetchImpl } = reseau({ artefact: z });
+    const r = await executer(ENV, { fetchImpl, maintenant: MAINTENANT });
+    expect(r.sorties.statut).toBe('source-non-lue');
+    for (const l of [...r.lignes, ...r.resume.split('\n')]) expect(l).not.toMatch(/^::error::injecte|[`%]0A/);
+    expect(r.lignes.join('\n')).not.toMatch(/\n::error::injecte/);
+  });
+
+  it('un fichier forgé de 64 Ko sans `@` ne fait pas exploser la recherche d adresses', () => {
+    const t0 = Date.now();
+    expect(classer('a.txt', Buffer.alloc(64 * 1024, 0x61))).toBeNull();
+    expect(Date.now() - t0).toBeLessThan(1000);
   });
 
   it('les journaux ne sont lus que par GET, sur le seul point de lecture', async () => {
