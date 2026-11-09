@@ -5,7 +5,7 @@ import { withTimeout } from '@/lib/withTimeout';
 import { IHabitsRepository } from './repository';
 import { Habit, CreateHabitInput, UpdateHabitInput } from './types';
 import { habitKeys } from './constants';
-import { calculateStreak } from './streak';
+import { calculateStreak, toggleCompletionDay } from './streak';
 import { translator } from '@/i18n/useT';
 import { recordDemoCreationIfDemo } from '@/lib/demo-engagement';
 
@@ -146,7 +146,7 @@ export const useToggleHabitCompletion = () => {
         queryClient.setQueryData<Habit[]>(habitKeys.lists(), (old) =>
           old?.map((habit) => {
             if (habit.id !== id) return habit;
-            const completions = { ...habit.completions, [date]: !habit.completions[date] };
+            const completions = toggleCompletionDay(habit.completions, date);
             return {
               ...habit,
               completions,

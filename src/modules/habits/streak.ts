@@ -6,6 +6,20 @@
 
 const dayKey = (d: Date): string => d.toLocaleDateString('en-CA');
 
+/**
+ * Bascule d'un jour, au contrat de `habit_completions` (mig. 248) : la carte
+ * ne porte que les jours COCHÉS. Décocher RETIRE la clé, jamais `false`, comme
+ * la RPC qui rend la fenêtre depuis la table. Démo et cache optimiste passent
+ * par ici pour que la même carte sorte des deux côtés.
+ */
+export function toggleCompletionDay(
+  completions: Record<string, boolean>,
+  date: string,
+): Record<string, boolean> {
+  const { [date]: wasDone, ...rest } = completions;
+  return wasDone ? rest : { ...rest, [date]: true };
+}
+
 export function calculateStreak(
   completions: Record<string, boolean>,
   now: Date = new Date()

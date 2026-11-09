@@ -1,5 +1,27 @@
 import { describe, it, expect } from 'vitest';
-import { calculateStreak, habitStreak } from './streak';
+import { calculateStreak, habitStreak, toggleCompletionDay } from './streak';
+
+describe('toggleCompletionDay (contrat de habit_completions, mig. 248)', () => {
+  it('cocher ajoute le jour à true sans toucher aux autres', () => {
+    expect(toggleCompletionDay({ '2026-07-01': true }, '2026-07-02')).toEqual({ '2026-07-01': true, '2026-07-02': true });
+  });
+
+  it('décocher RETIRE la clé (jamais false), comme la fenêtre lue dans la table', () => {
+    const after = toggleCompletionDay({ '2026-07-01': true, '2026-07-02': true }, '2026-07-02');
+    expect(after).toEqual({ '2026-07-01': true });
+    expect(Object.prototype.hasOwnProperty.call(after, '2026-07-02')).toBe(false);
+  });
+
+  it('une clé héritée à false se coche comme une absente', () => {
+    expect(toggleCompletionDay({ '2026-07-02': false }, '2026-07-02')).toEqual({ '2026-07-02': true });
+  });
+
+  it('ne mute pas la carte reçue', () => {
+    const before = { '2026-07-01': true };
+    toggleCompletionDay(before, '2026-07-01');
+    expect(before).toEqual({ '2026-07-01': true });
+  });
+});
 
 const NOW = new Date(2026, 6, 10, 12, 0, 0); // 10 juillet 2026
 
