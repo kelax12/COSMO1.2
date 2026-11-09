@@ -7,8 +7,10 @@
 //
 // La tâche est relue dans le cache de liste, pas prise dans les props : la
 // fiche garde l'objet de son ouverture, ce composant doit montrer l'état
-// courant (un déplacement fait depuis le Tableau, par exemple).
-import { effectiveStatus, useTasks, useUpdateTask, type TaskHealth } from '@/modules/tasks';
+// courant (un déplacement fait depuis le Tableau, par exemple). V14.1 : dans
+// TOUS les caches (`useKnownTask`), une fiche ouverte depuis l'archive porte
+// une tâche absente du jeu de travail.
+import { effectiveStatus, useKnownTask, useUpdateTask, type TaskHealth } from '@/modules/tasks';
 import { HEALTH_DOT, HEALTHS } from '@/components/organization/health-state.helpers';
 import { BOARD_COLUMNS } from '@/components/task-board/board.helpers';
 import { STATUS_DOT } from '@/components/task-board/status-style';
@@ -24,10 +26,9 @@ const chip = (active: boolean) =>
 
 const TaskStateFields = ({ taskId }: { taskId: string }) => {
   const { t } = useT('tasks');
-  const { data: tasks = [] } = useTasks();
+  const task = useKnownTask(taskId);
   const move = useMoveTask();
   const { mutate: update } = useUpdateTask();
-  const task = tasks.find((x) => x.id === taskId);
   if (!task) return null;
 
   const status = effectiveStatus(task);

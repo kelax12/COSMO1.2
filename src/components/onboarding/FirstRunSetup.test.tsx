@@ -27,7 +27,8 @@ vi.mock('@/modules/auth/AuthContext', () => ({
   useAuth: () => ({ isAuthenticated: true, user: { id: 'u-1', name: 'Axel Martin', email: 'a@x.fr' } }),
 }));
 vi.mock('@/modules/tasks', () => ({
-  useTasks: () => ({ data: tasks, isSuccess: true }),
+  // Le composant lit le COMPTE serveur (V14.1) ; le lot simulé en donne la longueur.
+  useTaskCount: () => ({ data: tasks.length, isSuccess: true }),
   useCreateTask: () => ({ mutate: createTask }),
 }));
 vi.mock('@/modules/habits', () => ({ useCreateHabit: () => ({ mutate: createHabit }) }));

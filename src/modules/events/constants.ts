@@ -25,6 +25,8 @@ export const eventsKeys = {
   // toucher detail()/byTask().
   window: (startISO: string, endISO: string) =>
     [...eventsKeys.lists(), 'window', startISO, endISO] as const,
+  /** Événements liés à une tâche (V14.2) : sous lists(), patché comme les fenêtres. */
+  linkedToTasks: () => [...eventsKeys.lists(), 'linked-to-tasks'] as const,
   details: () => [...eventsKeys.all, 'detail'] as const,
   detail: (id: string) => [...eventsKeys.details(), id] as const,
   byTask: (taskId: string) => [...eventsKeys.all, 'task', taskId] as const,

@@ -18,7 +18,7 @@ import { buildCalendarEvents, defaultEventsWindow, bufferedWindow } from './agen
 import { useExternalTaskDrag } from './agenda/use-external-task-drag';
 import { useTimezonePref, fromDisplayISO } from '@/lib/timezone';
 import { useOverdueSlotReview } from './agenda/useOverdueSlotReview';
-import { useTasks, useToggleTaskComplete, useDeleteTask, useRestoreTask } from '@/modules/tasks';
+import { useTasks, useTaskSubset, useToggleTaskComplete, useDeleteTask, useRestoreTask } from '@/modules/tasks';
 import { MobileAgendaHeader } from './agenda/MobileAgenda';
 import AgendaDesktopHeader from './agenda/AgendaDesktopHeader';
 import { useAgendaEventDrag } from './agenda/useAgendaEventDrag';
@@ -53,7 +53,19 @@ const AgendaPage: React.FC = () => {
   const deleteEventMutation = useDeleteEvent();
   const restoreEventMutation = useRestoreEvent();
   // Feature « revue de créneau » : tâches + mutations pour valider/supprimer.
-  const { data: tasks = [] } = useTasks();
+  const { data: workingTasks = [] } = useTasks();
+  // V14.1 (PER-01) : un créneau de la fenêtre peut porter une tâche terminée
+  // HORS du jeu de travail (35 j). Sans elle, son bloc perdait la coche verte
+  // (`findDoneTaskEvents`). On relit ces tâches-là, et elles seules, par id.
+  const missingLinkedIds = useMemo(() => {
+    const known = new Set(workingTasks.map((t) => t.id));
+    return [...new Set(events.map((e) => e.taskId).filter((id): id is string => !!id && !known.has(id)))];
+  }, [events, workingTasks]);
+  const { data: linkedTasks = [] } = useTaskSubset({ ids: missingLinkedIds });
+  const tasks = useMemo(
+    () => (linkedTasks.length === 0 ? workingTasks : [...workingTasks, ...linkedTasks.filter((t) => !workingTasks.some((w) => w.id === t.id))]),
+    [workingTasks, linkedTasks],
+  );
   const toggleTaskComplete = useToggleTaskComplete();
   const deleteTaskMutation = useDeleteTask();
   // Sert UNIQUEMENT a l'annulation de l'abandon d'un creneau (R-07).

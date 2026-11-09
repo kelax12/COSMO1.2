@@ -12,7 +12,7 @@
 import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  taskKeys, useCreateTask, useDeleteTask, useTasks, useUpdateTask,
+  taskKeys, useCreateTask, useDeleteTask, useKnownTask, useUpdateTask,
   type Subtask, type Task,
 } from '@/modules/tasks';
 import { showUndoToast } from '@/lib/undo-toast';
@@ -27,13 +27,13 @@ import { buildPromotion, restoreSubtask } from './promote-subtask';
 export function usePromoteSubtask(taskId: string | undefined) {
   const { t } = useT('tasks');
   const queryClient = useQueryClient();
-  const { data: tasks = [] } = useTasks();
+  // V14.1 : la parente peut venir de l'archive (hors jeu de travail).
+  const parent = useKnownTask(taskId);
   const { mutateAsync: createTask } = useCreateTask();
   const { mutate: updateTask } = useUpdateTask();
   const { mutate: deleteTask } = useDeleteTask();
 
   return useCallback(async (subtaskId: string, items: Subtask[], apply: (next: Subtask[]) => void) => {
-    const parent = tasks.find((x) => x.id === taskId);
     if (!parent || !taskId) return;
     const promotion = buildPromotion({ ...parent, subtasks: items }, subtaskId);
     if (!promotion) return;
@@ -56,5 +56,5 @@ export function usePromoteSubtask(taskId: string | undefined) {
       updateTask({ id: taskId, updates: { subtasks: restored } });
       apply(restored);
     });
-  }, [tasks, taskId, createTask, updateTask, deleteTask, queryClient, t]);
+  }, [parent, taskId, createTask, updateTask, deleteTask, queryClient, t]);
 }
