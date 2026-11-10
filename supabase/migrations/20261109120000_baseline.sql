@@ -9805,7 +9805,7 @@ CREATE TABLE public.org_settings (
     CONSTRAINT org_settings_member_default_perms_check CHECK (((member_default_perms IS NULL) OR (member_default_perms <@ ARRAY['task.create'::text, 'task.editAny'::text, 'task.deleteAny'::text, 'project.create'::text, 'project.edit'::text, 'project.delete'::text, 'okr.create'::text, 'okr.delete'::text, 'category.manage'::text, 'team.create'::text, 'member.invite'::text, 'report.org'::text, 'report.allTeams'::text, 'role.manage'::text]))),
     CONSTRAINT org_settings_priority CHECK (((default_task_priority >= 1) AND (default_task_priority <= 5))),
     CONSTRAINT org_settings_week_start CHECK (((week_start >= 0) AND (week_start <= 6))),
-    CONSTRAINT org_settings_work_days CHECK ((((cardinality(work_days) >= 1) AND (cardinality(work_days) <= 7)) AND (work_days <@ '{0,1,2,3,4,5,6}'::smallint[])))
+    CONSTRAINT org_settings_work_days CHECK ((cardinality(work_days) BETWEEN 1 AND 7) AND (work_days <@ '{0,1,2,3,4,5,6}'::smallint[])) -- BETWEEN : arbre de la prod (mig. 195)
 );
 
 
@@ -9927,7 +9927,7 @@ CREATE TABLE public.org_webhooks (
     failure_count integer DEFAULT 0 NOT NULL,
     created_by uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT org_webhooks_events CHECK ((((cardinality(events) >= 1) AND (cardinality(events) <= 3)) AND (events <@ '{task.created,task.status_changed,task.completed}'::text[]))),
+    CONSTRAINT org_webhooks_events CHECK ((cardinality(events) BETWEEN 1 AND 3) AND (events <@ '{task.created,task.status_changed,task.completed}'::text[])), -- BETWEEN : arbre de la prod (mig. 199)
     CONSTRAINT org_webhooks_format CHECK ((format = ANY (ARRAY['json'::text, 'slack'::text]))),
     CONSTRAINT org_webhooks_name CHECK (((char_length(btrim(name)) >= 1) AND (char_length(btrim(name)) <= 60)))
 );
