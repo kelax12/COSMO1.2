@@ -17,7 +17,8 @@ import { useQuickFilter } from './task-table/quick-filter.store';
 import OverdueBanner from './task-table/OverdueBanner';
 import SwipeHintBanner from './task-table/SwipeHintBanner';
 import TaskBulkActionsBar from './task-table/TaskBulkActionsBar';
-import { ArchiveLoadMore } from './task-table/ArchiveLoadMore';
+import { ArchiveFeedMore, ArchiveCaption } from './task-table/ArchiveLoadMore';
+import { useArchiveView, endOfListVisible, type ArchiveFeed } from './task-table/useArchiveView';
 import { SeeCompletedButton } from './task-table/SeeCompletedButton';
 import TeamTaskModal from './organization/TeamTaskModal';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
@@ -86,18 +87,7 @@ type TaskTableProps = {
   completedQuery?: TaskQuery | null;
 };
 
-export interface ArchiveFeed {
-  tasks: Task[];
-  isLoading: boolean;
-  hasMore: boolean;
-  isFetchingMore: boolean;
-  loadMore: () => void;
-  /** Requête serveur de l'archive filtrée, pour en afficher le total. */
-  totalQuery?: TaskQuery;
-}
-
-/** Tri par colonne neutralisé en vue archive (ordre serveur). */
-const noopSort = () => {};
+export type { ArchiveFeed };
 
 const TaskTable: React.FC<TaskTableProps> = ({
   tasks: propTasks,
@@ -116,8 +106,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
   listFilterActive = false,
   hasActiveFilter = false,
   quickFiltersTrailing,
-  archive,
-  completedQuery,
+  archive, completedQuery,
 }) => {
   const { t, tp } = useT('tasks');
 
@@ -149,11 +138,10 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const [scopeFilter, setScopeFilter] = useState<'all' | 'perso' | 'entreprise'>('all');
 
   const { activeQuickFilter, toggleQuickFilter } = useQuickFilter();
-  const archiveMode = !!archive && (showCompleted || activeQuickFilter === 'completed');
-
   // Utiliser propTasks si fourni, sinon les tasks du module. En vue terminées,
-  // l'archive paginée (V14.1).
-  const tasks = archiveMode ? archive.tasks : propTasks || moduleTasks;
+  // l'archive paginée (V14.1, `useArchiveView`).
+  const archiveView = useArchiveView({ archive, showCompleted, quickFilter: activeQuickFilter, fallbackTasks: propTasks || moduleTasks, fallbackLoading: isLoadingTasks });
+  const tasks = archiveView.tasks;
 
   const [localSortField, setLocalSortField] = useState<string | undefined>(propSortField);
 
@@ -281,13 +269,12 @@ const TaskTable: React.FC<TaskTableProps> = ({
     sortDirection,
     searchTerm,
     listFilterActive,
-    serverOrdered: archiveMode,
+    serverOrdered: archiveView.active,
   });
 
   // Une tâche ouverte par lien (`openTaskId`) peut n'être ni dans la vue ni
   // dans le jeu de travail (terminée il y a longtemps) : relue par son id.
-  const knownSelectedTask = useKnownTask(selectedTask);
-  const selectedTaskData = tasks.find(task => task.id === selectedTask) ?? knownSelectedTask;
+  const selectedTaskData = useKnownTask(selectedTask);
   const selectedTaskForCollaboratorsData = tasks.find(task => task.id === selectedTaskForCollaborators);
 
   const handleOpenCollaborator = useCallback((taskId: string) => {
@@ -431,17 +418,15 @@ const TaskTable: React.FC<TaskTableProps> = ({
         </div>
       )}
 
-      {archiveMode && (
-        <p className="text-caption text-[rgb(var(--color-text-muted))] mb-2">{t('table.archiveOrder')}</p>
-      )}
+      <ArchiveCaption feed={archiveView.feed} />
 
       {/* Desktop View (Table) */}
       <TaskTableDesktop
         rows={unifiedRows}
-        // Archive : ordre serveur, le tri par colonne ne trierait que les pages chargées.
-        sortField={archiveMode ? undefined : localSortField}
+        sortField={localSortField}
         sortDirection={sortDirection}
-        onSort={archiveMode ? noopSort : handleSort}
+        onSort={handleSort}
+        sortDisabled={archiveView.active}
         addToListMode={effectiveAddToListMode}
         selectionKind={selectionKind}
         selectedForListIds={effectiveSelectedForListIds}
@@ -466,17 +451,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
         teamEditReason={team.editReason}
       />
 
-      {archiveMode && (
-        <div className="hidden md:block">
-          <ArchiveLoadMore
-            hasMore={archive.hasMore}
-            isFetchingMore={archive.isFetchingMore}
-            loadMore={archive.loadMore}
-            shown={archive.tasks.length}
-            totalQuery={archive.totalQuery}
-          />
-        </div>
-      )}
+      <div className="hidden md:block"><ArchiveFeedMore feed={archiveView.feed} /></div>
 
       {/* Mobile View (Cards) — virtualisé au-delà de 50 items */}
       <div className="md:hidden">
@@ -502,15 +477,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
           onEditTeamTask={setEditingTeamTask}
         />
 
-        {archiveMode && (
-          <ArchiveLoadMore
-            hasMore={archive.hasMore}
-            isFetchingMore={archive.isFetchingMore}
-            loadMore={archive.loadMore}
-            shown={archive.tasks.length}
-            totalQuery={archive.totalQuery}
-          />
-        )}
+        <ArchiveFeedMore feed={archiveView.feed} />
 
         {/* ── Maquette 50 : « La fin de la liste se dit » ──
             Sans marqueur, on ne sait jamais si l'on a tout vu ou si le
@@ -518,27 +485,21 @@ const TaskTable: React.FC<TaskTableProps> = ({
             donc le doute est fondé. Une ligne suffit, et elle porte le seul
             ailleurs qui existe : les tâches terminées, qu'aucun écran ne
             proposait d'ouvrir depuis la liste elle-même. */}
-        {unifiedRows.length > 0 && !addToListMode && !(archiveMode && archive.hasMore) && (
+        {endOfListVisible(unifiedRows.length, addToListMode, archiveView) && (
           <div className="pt-4 pb-2 text-center">
             <p className="text-caption text-[rgb(var(--color-text-muted))]">
               {showCompleted
                 ? tp('table.endOfListCompleted', unifiedRows.length)
                 : tp('table.endOfList', unifiedRows.length)}
             </p>
-            {hasActiveFilter && onShowCompletedChange && (
-              <SeeCompletedButton
-                query={completedQuery}
-                fallbackCount={hiddenCompletedCount}
-                onShow={() => onShowCompletedChange(true)}
-              />
-            )}
+            {hasActiveFilter && onShowCompletedChange && <SeeCompletedButton query={completedQuery} fallbackCount={hiddenCompletedCount} onShow={() => onShowCompletedChange(true)} />}
           </div>
         )}
       </div>
 
       <TaskListPlaceholders
         rowCount={unifiedRows.length}
-        isLoading={archiveMode ? archive.isLoading : isLoadingTasks}
+        isLoading={archiveView.isLoading}
         showCompleted={showCompleted}
         addToListMode={addToListMode}
         onCreateTask={() => setShowCreateFromEmpty(true)}

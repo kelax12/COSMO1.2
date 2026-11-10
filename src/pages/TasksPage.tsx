@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import TaskTable from '@/components/TaskTable';
 import TaskFilter from '@/components/TaskFilter';
 import TaskModal from '@/components/TaskModal';
@@ -11,8 +11,8 @@ import { useLocation } from 'react-router';
 import { useLazyMount } from '@/hooks/use-lazy-mount';
 
 // Module tasks - Hooks indépendants
-import { useTasks, useUpdateTask, useTaskArchive } from '@/modules/tasks';
-import { useQuickFilter } from '@/components/task-table/quick-filter.store';
+import { useTasks, useUpdateTask } from '@/modules/tasks';
+import { useTasksPageArchive } from './tasks/useTasksPageArchive';
 import { useCategories } from '@/modules/categories';
 
 // Module lists
@@ -31,7 +31,7 @@ import { tasksTutorialStepsDesktop } from '@/tutorials/tasks.desktop';
 import { tasksTutorialStepsMobile } from '@/tutorials/tasks.mobile';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { TaskListSkeleton } from '@/components/skeletons';
-import { filterTasksForPage, archiveQueryForPage, VIRTUAL_TODAY_ID } from './tasks/task-page-filter';
+import { filterTasksForPage, VIRTUAL_TODAY_ID } from './tasks/task-page-filter';
 import TaskListsBar from './tasks/TaskListsBar';
 import { colorOptions, resolveListColor } from './tasks/list-colors';
 import TasksHeader from './tasks/TasksHeader';
@@ -214,9 +214,7 @@ const TasksPage: React.FC = () => {
     setSortPref(sortPrefKey, { field: filter, direction });
   };
 
-  const handleShowCompletedChange = (show: boolean) => {
-    setShowCompleted(show);
-  };
+  const handleShowCompletedChange = (show: boolean) => setShowCompleted(show);
 
   // ═══════════════════════════════════════════════════════════════════
   // Filtrage mémoïsé des tâches (performance)
@@ -234,44 +232,8 @@ const TasksPage: React.FC = () => {
     [tasks, searchTerm, selectedCategories, priorityRange, selectedListId, selectingTasksForListId, lists, categories]
   );
 
-  // ═══════════════════════════════════════════════════════════════════
-  // Archive « Terminées » (V14.1, PER-01) : pages serveur, mêmes filtres
-  // ═══════════════════════════════════════════════════════════════════
-  // Le jeu de travail (`useTasks`) ne garde que 35 jours de terminées. La vue
-  // terminées lit donc l'archive en pages, filtrée en SQL, et le nombre de
-  // terminées masquées vient d'un COMPTE serveur, jamais d'une longueur de
-  // tableau partiel. Ce compte vit dans les composants qui l'affichent
-  // (`SeeCompletedButton`, `ArchiveLoadMore`) : sa réponse ne redessine qu'eux.
-  const { activeQuickFilter } = useQuickFilter();
-  const archiveMode = showCompleted || activeQuickFilter === 'completed';
-  const hasActiveFilter = !!selectedListId || selectedCategories.length > 0 || searchTerm.trim() !== '';
-  const archiveQuery = useMemo(
-    () => archiveQueryForPage({
-      searchTerm, selectedCategories, priorityRange, selectedListId,
-      selectingTasksForListId, lists, categories,
-    }),
-    [searchTerm, selectedCategories, priorityRange, selectedListId, selectingTasksForListId, lists, categories]
-  );
-  const archivePages = useTaskArchive(archiveQuery ?? { ids: [] }, { enabled: archiveMode && archiveQuery !== null });
-  const archiveTasks = useMemo(
-    () => archivePages.data?.pages.flatMap((page) => page.data) ?? [],
-    [archivePages.data]
-  );
-  const { fetchNextPage, hasNextPage, isFetchingNextPage } = archivePages;
-  const loadMoreArchive = useCallback(() => {
-    if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
-  const archiveFeed = useMemo(
-    () => ({
-      tasks: archiveQuery === null ? [] : archiveTasks,
-      isLoading: archiveQuery !== null && archivePages.isLoading,
-      hasMore: archiveQuery !== null && !!hasNextPage,
-      isFetchingMore: isFetchingNextPage,
-      loadMore: loadMoreArchive,
-      totalQuery: archiveQuery ?? undefined,
-    }),
-    [archiveQuery, archiveTasks, archivePages.isLoading, hasNextPage, isFetchingNextPage, loadMoreArchive]
-  );
+  // Archive « Terminées » en pages serveur, mêmes filtres (V14.1, PER-01).
+  const archiveProps = useTasksPageArchive({ searchTerm, selectedCategories, priorityRange, selectedListId, selectingTasksForListId, lists, categories, showCompleted });
 
   // Résumé de l'en-tête mobile (maquette 04). Il porte sur la vue COURANTE
   // (`filteredTasks`), pas sur la base entière : un compteur qui ignore le
@@ -494,9 +456,7 @@ const TasksPage: React.FC = () => {
                   showQuickFilters={false}
                   searchTerm={searchTerm}
                   listFilterActive={!!selectedListId}
-                  hasActiveFilter={hasActiveFilter}
-                  archive={archiveFeed}
-                  completedQuery={archiveQuery}
+                  {...archiveProps}
                   quickFiltersTrailing={<ActiveFiltersRow {...activeFiltersProps} className="!mb-0" />}
                 />
                 )}

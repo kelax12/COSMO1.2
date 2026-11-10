@@ -24,9 +24,10 @@ export function chartCompletedSince(now: Date = new Date()): string {
 }
 
 export function useChartCompletedTasks(): Task[] {
+  // `toDateString()` : la clé change à minuit, et `new Date(todayKey)` rend ce
+  // minuit local, d'où une borne stable toute la journée.
   const todayKey = new Date().toDateString();
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- recalculé au changement de JOUR seulement (cf. en-tête)
-  const since = useMemo(() => chartCompletedSince(), [todayKey]);
+  const since = useMemo(() => chartCompletedSince(new Date(todayKey)), [todayKey]);
   const { data = [] } = useTaskSubset({ completedSince: since });
   return data;
 }
