@@ -25,14 +25,14 @@ Node 22.22 ou plus est requis (`engines` de `package.json`). L'application répo
 
 ## Lancer contre un Supabase local
 
-Il faut Docker et la [CLI Supabase](https://supabase.com/docs/guides/cli). Le dossier
-`supabase/migration/` n'est pas au format de la CLI (voir [`supabase/migration/CLAUDE.md`](./supabase/migration/CLAUDE.md)) :
-ne lancez pas `supabase db push`, rejouez les migrations avec le script du dépôt.
+Il faut Docker et la [CLI Supabase](https://supabase.com/docs/guides/cli). `supabase start` construit la
+base depuis `supabase/migrations/` (une baseline égale à la production, puis les migrations postérieures ;
+voir [`supabase/migration/CLAUDE.md`](./supabase/migration/CLAUDE.md)). Ne lancez pas `supabase db push`.
 
 ```bash
 supabase start
 supabase status -o env            # API_URL, ANON_KEY, DB_URL
-DATABASE_URL=<DB_URL> node scripts/apply-migrations.mjs
+node scripts/verifier-migrations.mjs   # le ledger local porte chaque fichier de supabase/migrations/
 cp .env.example .env              # puis renseigner VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY
 npm run dev
 ```

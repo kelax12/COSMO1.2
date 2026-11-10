@@ -21,6 +21,7 @@
 | `check:rls` | N | invariants RLS (la règle 3 n'a aucun équivalent dans les advisors) | | `docs/SECURITY.md` |
 | `check:contrat` | N | `schema.sql`, `rpc-inventory.md` et types générés vs les migrations (base vierge) | `ARC-07` | `supabase/migration/CLAUDE.md` |
 | `check:migration-coverage` | P | fichiers de migration ↔ ledger ET catalogue de PROD, quotidien | | `docs/SECURITY.md` |
+| `schema-prod.mjs comparer` | P | base fraîche construite par la CLI (`supabase/migrations/`) = schéma de PROD, objet par objet, quotidien (`schema-prod.yml`) | `ROB-02` | `docs/DEPLOYMENT.md` |
 | `check:edge` | P | code **déployé** des Edge Functions vs dépôt, horaire | `C-35` | `supabase/functions/CLAUDE.md` |
 | `check:edge-smoke` | P | le **comportement** en ligne : une sonde par fonction, les cron **sans jeton** | `C-91` | `supabase/functions/CLAUDE.md` |
 | `check:edge-coverage` | N | un témoin par Edge Function | `C-82` | `docs/TESTING.md` |

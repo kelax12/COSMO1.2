@@ -61,6 +61,9 @@ on:
       # ne partira pas en production, et rien d'autre ne le dirait.
       - CI vert
       - Migration coverage
+      # ROB-02 (2026-11-09) : la base fraiche construite par la CLI n'egale
+      # plus la prod. Une derive nait d'une application, sans commit : quotidien.
+      - Schema prod
       - Deploy SHA drift
       - CodeQL
       - Posture

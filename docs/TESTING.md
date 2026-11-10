@@ -260,7 +260,7 @@ hors de portée, `C-77` (`okrTime` à 0 en production 17 jours, juste en démo) 
 l'exemple.
 
 - **Workflow** `.github/workflows/e2e-supabase.yml` (push sur `main`, `workflow_dispatch`) : monte
-  la pile comme `rls-integration` (`supabase start`, `node scripts/apply-migrations.mjs`), sert les
+  la pile comme `rls-integration` (`supabase start`, `node scripts/verifier-migrations.mjs`), sert les
   Edge Functions (`supabase functions serve`, `APP_URL` = l'origine de l'app), construit l'app avec
   `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` de la pile, la sert (`vite preview`, port 3220) et joue
   `npx playwright test -c playwright.real.config.ts`. ⚠️ Il n'est pas dans la liste de `ci-alert.yml`.
@@ -379,8 +379,9 @@ bloquerait d'un côté et pas de l'autre.
   `i18n:check` (parité), `i18n:scan` (chaînes en dur), `i18n:identical`, `i18n:pages` (pluriels),
   `i18n:quality`, build, budget de bundle.
 - `fichiers-sensibles` (venu de `ci.yml`) : voir plus bas.
-- `rls-integration` (venu de `ci.yml`) : stack Supabase locale (`supabase start`), rejoue
-  **toutes** les migrations sur base vierge (`scripts/apply-migrations.mjs`), puis `npm run test:rls`.
+- `rls-integration` (venu de `ci.yml`) : stack Supabase locale construite par `supabase start` depuis
+  `supabase/migrations/` (ROB-02, ledger relu par `scripts/verifier-migrations.mjs`), puis `npm run test:rls`.
+  Qu'une base ainsi construite égale la PROD : `schema-prod.yml` › `base-egale-prod`, quotidien (ADR 0021).
 - `contrat-donnees` (ARC-07) : même base vierge, `check:contrat` compare `schema.sql`, l'inventaire
   des RPC et les types générés aux fichiers commités.
 

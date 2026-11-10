@@ -1,6 +1,6 @@
 # ADR 0006 · Migrations SQL numérotées, appliquées à la main, avec preuve
 
-- **Statut** : acceptée
+- **Statut** : acceptée, points 1 et 5 remplacés le 2026-11-09 par l'[ADR 0021](./0021-migrations-au-format-de-la-cli-depuis-une-baseline-de-production.md)
 - **Date** : pratique en vigueur depuis les premières migrations, formalisée le 2026-11-07
 
 ## Contexte

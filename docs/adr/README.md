@@ -15,7 +15,7 @@ Format MADR léger : **Statut**, **Date**, **Contexte**, **Décision**, **Consé
   plus ce qui était vrai à sa date.
 - Statuts : `proposée`, `acceptée`, `remplacée par 00NN`, `abandonnée`.
 - Numérotation à quatre chiffres, nom de fichier `NNNN-sujet-en-minuscules.md`. Le suivant est le
-  **0021**, après avoir relu ce dossier.
+  **0022**, après avoir relu ce dossier.
 - ❌ Aucune liste de faiblesses ni de findings de sécurité ouverts : le dépôt est public (voir l'ADR 0008).
 
 ## Index
@@ -27,7 +27,7 @@ Format MADR léger : **Statut**, **Date**, **Contexte**, **Décision**, **Consé
 | [0003](./0003-i18n-maison-catalogues-json.md) | i18n maison, en catalogues JSON | acceptée | 2026-07-30 |
 | [0004](./0004-stripe-redirection-serveur-facturation-entreprise-seule.md) | Stripe par redirection serveur, facturation entreprise seule, Premium perso coupé | acceptée | 2026-10-20 |
 | [0005](./0005-modules-entreprise-separes-des-modules-perso.md) | Les modules entreprise sont séparés des modules perso | acceptée | 2026-11-07 (décision d'origine) |
-| [0006](./0006-migrations-sql-numerotees-appliquees-a-la-main.md) | Migrations SQL numérotées, appliquées à la main, avec preuve | acceptée | 2026-11-07 (pratique d'origine) |
+| [0006](./0006-migrations-sql-numerotees-appliquees-a-la-main.md) | Migrations SQL numérotées, appliquées à la main, avec preuve | acceptée, points 1 et 5 remplacés par 0021 | 2026-11-07 (pratique d'origine) |
 | [0007](./0007-audience-mesuree-maison-sans-script-tiers.md) | Audience mesurée par un collecteur maison, sans script tiers | acceptée | 2026-10-18 |
 | [0008](./0008-depot-public-dossier-prive-local.md) | Dépôt public, dossier privé local | acceptée | 2026-11-06 |
 | [0009](./0009-supabase-free-puis-pro-au-premier-client-payant.md) | Supabase Free, puis Pro au premier client payant | acceptée | 2026-11-07 |
@@ -42,6 +42,7 @@ Format MADR léger : **Statut**, **Date**, **Contexte**, **Décision**, **Consé
 | [0018](./0018-framer-motion-12-tant-que-la-14-alourdit-le-chemin-critique.md) | Framer Motion 12, tant que la 14 alourdit le chemin critique | acceptée | 2026-11-09 |
 | [0019](./0019-tailwind-3-tant-que-le-css-maison-n-est-pas-repris.md) | Tailwind 3, tant que le CSS maison n'est pas repris | acceptée | 2026-11-09 |
 | [0020](./0020-definition-of-done-et-gel-fonctionnel.md) | Definition of Done en cinq critères, backlog en issues, gel fonctionnel | acceptée | 2026-11-09 |
+| [0021](./0021-migrations-au-format-de-la-cli-depuis-une-baseline-de-production.md) | Migrations au format de la CLI, depuis une baseline égale à la production | acceptée | 2026-11-09 |
 
 Le double backend de démonstration (`localStorage`) et sa parité avec Supabase n'ont pas encore leur
 ADR : il est en cours d'écriture dans un chantier à part.
