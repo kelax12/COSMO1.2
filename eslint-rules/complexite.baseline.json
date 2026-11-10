@@ -377,9 +377,6 @@
     "src/modules/tasks/mappers.ts": {
       "complexity": [22]
     },
-    "src/modules/tasks/task-filtering.ts": {
-      "complexity": [23]
-    },
     "src/modules/team-okrs/local.repository.ts": {
       "complexity": [22]
     },
