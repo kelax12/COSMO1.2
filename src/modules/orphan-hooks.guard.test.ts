@@ -108,8 +108,8 @@ function consumerCount(name: string): number {
 const GOV_PENDING = 'couche données gouvernance sans écran (2026-09-25), UI en cours dans le worktree entreprise-gov';
 
 const ALLOWED_ORPHANS = new Map<string, string>([
-  // `useFilteredTasks` n'y figure pas : il EST consommé, par `usePendingTasks`,
-  // dans son propre fichier — la garde le voit.
+  // `useFilteredTasks` n'y figure pas : supprimé à la V14.1, quand son seul
+  // appelant (`usePendingTasks`) est passé sur le jeu de travail.
   ['useNotificationSettings', GOV_PENDING],
   ['useSaveNotificationSettings', GOV_PENDING],
   ['useSaveWeeklyReview', GOV_PENDING],

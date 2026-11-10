@@ -17,7 +17,7 @@
       "complexity": [45]
     },
     "src/components/ColorSettingsModal.tsx": {
-      "max-lines-per-function": [326]
+      "max-lines-per-function": [325]
     },
     "src/components/CommandPalette.tsx": {
       "max-lines-per-function": [221]
@@ -64,8 +64,8 @@
       "max-lines-per-function": [405]
     },
     "src/components/TaskTable.tsx": {
-      "complexity": [39],
-      "max-lines-per-function": [407]
+      "complexity": [37],
+      "max-lines-per-function": [406]
     },
     "src/components/TextType.tsx": {
       "complexity": [23]
@@ -100,7 +100,7 @@
       "complexity": [25]
     },
     "src/components/onboarding/FirstRunSetup.tsx": {
-      "complexity": [48],
+      "complexity": [47],
       "max-lines-per-function": [358]
     },
     "src/components/onboarding/perso/PersoPreview.tsx": {
@@ -320,7 +320,7 @@
       "max-lines-per-function": [431]
     },
     "src/components/task-modal/TaskDependenciesSection.tsx": {
-      "complexity": [22]
+      "complexity": [21]
     },
     "src/components/task-modal/TaskDependencyPicker.tsx": {
       "max-lines-per-function": [414]
@@ -397,7 +397,7 @@
       "max-lines-per-function": [337]
     },
     "src/pages/AgendaPage.tsx": {
-      "complexity": [22],
+      "complexity": [21],
       "max-lines-per-function": [393]
     },
     "src/pages/DashboardPage.tsx": {
@@ -415,8 +415,8 @@
       "max-lines-per-function": [408]
     },
     "src/pages/OKRPage.tsx": {
-      "complexity": [30],
-      "max-lines-per-function": [414]
+      "complexity": [29],
+      "max-lines-per-function": [412]
     },
     "src/pages/OrganizationPage.tsx": {
       "complexity": [107],
@@ -431,11 +431,11 @@
     },
     "src/pages/StatisticsPage.tsx": {
       "complexity": [22],
-      "max-lines-per-function": [407]
+      "max-lines-per-function": [403]
     },
     "src/pages/TasksPage.tsx": {
-      "complexity": [27],
-      "max-lines-per-function": [414]
+      "complexity": [25],
+      "max-lines-per-function": [413]
     },
     "src/pages/agenda/AgendaCalendarSection.tsx": {
       "max-lines-per-function": [323]

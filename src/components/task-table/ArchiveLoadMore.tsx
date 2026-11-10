@@ -10,6 +10,7 @@
 import { useEffect, useRef } from 'react';
 import { useT } from '@/i18n/useT';
 import { useTaskCount, type TaskQuery } from '@/modules/tasks';
+import type { ArchiveFeed } from './useArchiveView';
 
 export interface ArchiveFeedState {
   hasMore: boolean;
@@ -59,4 +60,25 @@ export function ArchiveLoadMore({ hasMore, isFetchingMore, loadMore, shown, tota
       </button>
     </div>
   );
+}
+
+/** La suite de l'archive affichée, ou rien hors de la vue archive. */
+export function ArchiveFeedMore({ feed }: { feed: ArchiveFeed | null }) {
+  if (!feed) return null;
+  return (
+    <ArchiveLoadMore
+      hasMore={feed.hasMore}
+      isFetchingMore={feed.isFetchingMore}
+      loadMore={feed.loadMore}
+      shown={feed.tasks.length}
+      totalQuery={feed.totalQuery}
+    />
+  );
+}
+
+/** L'ordre de l'archive, dit au-dessus de la liste : il ne suit pas le tri choisi. */
+export function ArchiveCaption({ feed }: { feed: ArchiveFeed | null }) {
+  const { t } = useT('tasks');
+  if (!feed) return null;
+  return <p className="text-caption text-[rgb(var(--color-text-muted))] mb-2">{t('table.archiveOrder')}</p>;
 }

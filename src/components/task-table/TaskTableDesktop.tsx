@@ -24,6 +24,11 @@ interface TaskTableDesktopProps extends Omit<TaskRowProps, 'task'> {
   sortField?: string;
   sortDirection: 'asc' | 'desc';
   onSort: (field: string) => void;
+  /**
+   * V14.1 : l'archive « Terminées » arrive triée par le serveur. Un tri par
+   * colonne n'y trierait que les pages chargées : en-têtes neutralisés.
+   */
+  sortDisabled?: boolean;
   onToggleTeamComplete: (task: TeamTask) => void;
   onEditTeamTask: (task: TeamTask) => void;
   onSetTeamHealth: (task: TeamTask, health: TeamProjectHealth | null) => void;
@@ -35,6 +40,7 @@ const TaskTableDesktop = ({
   sortField,
   sortDirection,
   onSort,
+  sortDisabled = false,
   onToggleTeamComplete,
   onEditTeamTask,
   onSetTeamHealth,
@@ -42,8 +48,10 @@ const TaskTableDesktop = ({
   ...rowProps
 }: TaskTableDesktopProps) => {
   const { t } = useT('tasks');
+  const activeSort = sortDisabled ? undefined : sortField;
+  const sortBy = sortDisabled ? () => {} : onSort;
   const arrow = (field: string) =>
-    sortField === field ? <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span> : null;
+    activeSort === field ? <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span> : null;
 
   return (
     <div className="hidden md:block table-container shadow-sm overflow-x-auto">
@@ -53,7 +61,7 @@ const TaskTableDesktop = ({
             {/* A11y: empty <th> need a label for screen readers. */}
             <th className="px-2 py-3" style={{ width: '40px' }}><span className="sr-only">{t('table.colComplete')}</span></th>
             <th className="px-2 py-3" style={{ width: '48px' }}><span className="sr-only">{t('table.colCategoryColor')}</span></th>
-            <th className="cursor-pointer px-2 py-3" onClick={() => onSort('name')}>
+            <th className="cursor-pointer px-2 py-3" onClick={() => sortBy('name')}>
               {t('table.colName')}
               {arrow('name')}
             </th>
@@ -61,7 +69,7 @@ const TaskTableDesktop = ({
             <th className="px-2 py-3" style={{ width: '150px' }}>{t('table.colCategory')}</th>
             <th
               className="cursor-pointer text-center px-1 py-3"
-              onClick={() => onSort('priority')}
+              onClick={() => sortBy('priority')}
               style={{ width: '70px' }}
             >
               {t('table.colPriority')}
@@ -69,7 +77,7 @@ const TaskTableDesktop = ({
             </th>
             <th
               className="cursor-pointer px-2 py-3"
-              onClick={() => onSort('deadline')}
+              onClick={() => sortBy('deadline')}
               style={{ width: '100px' }}
             >
               {rowProps.activeQuickFilter === 'completed' ? t('table.colValidationDate') : t('table.colDeadline')}
@@ -77,7 +85,7 @@ const TaskTableDesktop = ({
             </th>
             <th
               className="cursor-pointer text-center px-1 py-3"
-              onClick={() => onSort('estimatedTime')}
+              onClick={() => sortBy('estimatedTime')}
               style={{ width: '70px' }}
             >
               {t('table.colDuration')}

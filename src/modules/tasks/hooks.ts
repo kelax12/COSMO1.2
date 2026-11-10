@@ -6,7 +6,7 @@ import { getTasksRepository } from '@/lib/repository.factory';
 import { useIsDemo } from '@/lib/app-mode.store';
 import { withTimeout } from '@/lib/withTimeout';
 import { ITasksRepository } from './repository';
-import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskDependency } from './types';
+import { Task, CreateTaskInput, UpdateTaskInput, TaskDependency } from './types';
 import { nextOccurrenceDeadline } from './recurrence';
 import { applyStatusSync } from './status-sync';
 import { taskKeys } from './constants';
@@ -14,7 +14,7 @@ import { dependencyErrorCode } from './dependency-errors';
 import { validateAsync } from '@/lib/validation/lazy';
 import { translator } from '@/i18n/useT';
 import { recordDemoCreationIfDemo } from '@/lib/demo-engagement';
-import { loadWorkingSet } from './working-set';
+import { loadWorkingSet, mergeTasksById } from './working-set';
 import { normalizeTaskQuery, isEmptyTaskQuery, type TaskQuery } from './task-query';
 import {
   patchTaskCaches, snapshotTaskCaches, restoreTaskCaches, findTaskInCaches,
@@ -144,30 +144,10 @@ export const useTask = (id: string, options?: { enabled?: boolean }) => {
   });
 };
 
-/**
- * Fetch tasks with filters
- */
-export const useFilteredTasks = (filters: TaskFilters, options?: { enabled?: boolean }) => {
-  const repository = useTasksRepository();
-  return useQuery({
-    queryKey: taskKeys.list(filters),
-    queryFn: () => repository.getFiltered(filters),
-    enabled: options?.enabled ?? true,
-  });
-};
-
-// ═══════════════════════════════════════════════════════════════════
-// Computed Hooks (derived data)
-// ═══════════════════════════════════════════════════════════════════
-
 // 🗑️ Supprimés le 2026-09-05 (C-49), aucun consommateur : `useTasksByDate`,
-// `useTodaysTasks`, `useBookmarkedTasks`, `useCompletedTasks`.
-//
-// 🔴 `useFilteredTasks` RESTE, et c'est le piège de cet item : le balayage le
-// comptait orphelin parce qu'aucun ÉCRAN ne l'importe. Mais `usePendingTasks`
-// l'appelle, dans ce fichier, et `usePendingTasks` sert `DeadlineCalendar` et
-// `TasksSummary`. Une liste de « noms sans consommateur direct » n'est pas une
-// liste de suppressions sûres.
+// `useTodaysTasks`, `useBookmarkedTasks`, `useCompletedTasks`. `useFilteredTasks`
+// a suivi à la V14.1 : son seul appelant, `usePendingTasks`, lit désormais le
+// jeu de travail. `getFiltered` reste une capacité du repository.
 
 /**
  * Tâches non terminées.
@@ -253,6 +233,25 @@ export const useTaskCount = (query: TaskQuery, options?: { enabled?: boolean }) 
 export const useLoadAllTasks = () => {
   const repository = useTasksRepository();
   return useCallback(() => repository.getAll(), [repository]);
+};
+
+/**
+ * Le jeu de travail, COMPLÉTÉ des tâches `ids` qu'il ne contient pas (terminées
+ * depuis plus de `RECENT_COMPLETED_DAYS` jours), relues par identifiant.
+ *
+ * Pour un écran qui part d'identifiants venus d'ailleurs : créneaux de
+ * l'agenda (coche verte d'une tâche terminée), arêtes de dépendance. Sans ce
+ * complément, une tâche ancienne disparaissait de l'écran sans que rien ne le
+ * dise. `ids` doit être mémoïsé par l'appelant.
+ */
+export const useTasksIncluding = (ids: readonly string[]): Task[] => {
+  const { data: working = [] } = useTasks();
+  const missing = useMemo(() => {
+    const known = new Set(working.map((t) => t.id));
+    return [...new Set(ids)].filter((id) => !!id && !known.has(id));
+  }, [working, ids]);
+  const { data: extra } = useTaskSubset({ ids: missing });
+  return useMemo(() => mergeTasksById(working, extra ?? []), [working, extra]);
 };
 
 /**

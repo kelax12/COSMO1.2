@@ -3,8 +3,7 @@ import { AlertTriangle, Link2, Plus, X } from 'lucide-react';
 import {
   useRemoveTaskDependency,
   useTaskDependencies,
-  useTasks,
-  useTaskSubset,
+  useTasksIncluding,
   type Task,
 } from '@/modules/tasks';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
@@ -58,30 +57,17 @@ const TaskDependenciesSection = ({ taskId, readOnly = false, alwaysOpen = false 
   const open = alwaysOpen || openState;
   const [pickerOpen, setPickerOpen] = useState(false);
 
-  const { data: workingTasks = [] } = useTasks();
   const { data: dependencies = [] } = useTaskDependencies();
   const removeDependency = useRemoveTaskDependency();
 
   // V14.1 (PER-01) : une arête peut viser une tâche terminée HORS du jeu de
-  // travail (35 j). Elle disparaissait alors de la liste « bloquée par » sans
-  // que rien ne le dise. On relit par id ces tâches-là, et la tâche ouverte
-  // elle-même si elle vient de l'archive.
-  const missingIds = useMemo(() => {
-    const known = new Set(workingTasks.map((x) => x.id));
-    const ids = new Set<string>();
-    if (!known.has(taskId)) ids.add(taskId);
-    for (const d of dependencies) {
-      if (d.taskId === taskId && !known.has(d.dependsOnId)) ids.add(d.dependsOnId);
-      if (d.dependsOnId === taskId && !known.has(d.taskId)) ids.add(d.taskId);
-    }
-    return [...ids];
-  }, [workingTasks, dependencies, taskId]);
-  const { data: extraTasks = [] } = useTaskSubset({ ids: missingIds });
-  const allTasks = useMemo(() => {
-    if (extraTasks.length === 0) return workingTasks;
-    const known = new Set(workingTasks.map((x) => x.id));
-    return [...workingTasks, ...extraTasks.filter((x) => !known.has(x.id))];
-  }, [workingTasks, extraTasks]);
+  // travail (35 j) ; elle disparaissait alors de la liste sans que rien ne le
+  // dise. La tâche ouverte elle-même peut venir de l'archive.
+  const relatedIds = useMemo(
+    () => [taskId, ...dependencies.flatMap((d) => (d.taskId === taskId ? [d.dependsOnId] : d.dependsOnId === taskId ? [d.taskId] : []))],
+    [dependencies, taskId],
+  );
+  const allTasks = useTasksIncluding(relatedIds);
 
   const byId = useMemo(() => new Map(allTasks.map((x) => [x.id, x])), [allTasks]);
   const task = byId.get(taskId);

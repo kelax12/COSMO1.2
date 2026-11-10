@@ -12,7 +12,8 @@ import {
 } from '@/components/ui/chart';
 import { useColorSettings } from '@/modules/ui-states';
 import { useCategories } from '@/modules/categories';
-import { useTasks, useTaskSubset } from '@/modules/tasks';
+import { useTasks } from '@/modules/tasks';
+import { usePeriodCompletedTasks } from './statistics/usePeriodCompletedTasks';
 import { useHabits } from '@/modules/habits';
 import { useEvents } from '@/modules/events';
 import { useOkrs } from '@/modules/okrs';
@@ -180,20 +181,8 @@ export default function StatisticsPage() {
     return { start, end };
   }, [selectedPeriod, now]);
 
-  // V14.1 (PER-01) : les terminées de la période viennent d'une requête sur
-  // `completed_at`, pas du jeu de travail (35 j) ni d'une liste plafonnée.
-  // Bornes élargies d'un jour de chaque côté : le serveur compare des
-  // instants, la page des jours locaux ; le filtre exact reste celui d'avant.
-  const DAY_MS = 24 * 60 * 60 * 1000;
-  const { data: periodCompleted = [] } = useTaskSubset({
-    completedSince: new Date(rollingRange.start.getTime() - DAY_MS).toISOString(),
-    completedBefore: new Date(rollingRange.end.getTime() + DAY_MS).toISOString(),
-  });
-  const rollingTasks = useMemo(() => periodCompleted.filter(task => {
-    if (!task.completed || !task.completedAt) return false;
-    const d = parseLocalDate(task.completedAt);
-    return d >= rollingRange.start && d <= rollingRange.end;
-  }), [periodCompleted, rollingRange]);
+  // V14.1 (PER-01) : requête sur `completed_at` (la période peut couvrir un an).
+  const rollingTasks = usePeriodCompletedTasks(rollingRange);
 
   const rollingEvents = useMemo(() => events.filter(event => {
     const d = parseLocalDate(event.start);
