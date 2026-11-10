@@ -114,8 +114,8 @@ avec sa raison.
 | priorité 6 ou négative acceptée | démo | démo corrigée (0 à 5, comme `createTaskSchema`) |
 | catégorie d'entreprise : doublon de fratrie rendu au lieu d'être refusé | démo | démo corrigée (index partiels de la mig. 148) |
 | catégorie d'entreprise : boucle, cycle et profondeur non gardés | démo | démo corrigée (trigger `enforce_team_category_tree`) |
-| tâche sans priorité (0), défaut de la fiche, refusée par la base | production | `PAR-01`, `it.fails` côté Supabase, CHECK `tasks_priority_check` (mig. 001) |
-| tâche sans échéance (`''` → NULL), refusée par la base | production | `PAR-02`, `it.fails` côté Supabase, `tasks.deadline NOT NULL` (mig. 001) |
+| tâche sans priorité (0), défaut de la fiche, refusée par la base | dépôt (mig. 001) | `PAR-01`, **corrigée** par la mig. `249` (CHECK 0 à 5), cas verts des deux côtés. ⚠️ La production l'acceptait déjà : relue au catalogue le 2026-11-09, elle n'avait AUCUN CHECK de priorité (dérive hors dépôt), donc aussi 6 ou -4 |
+| tâche sans échéance (`''` → NULL), refusée par la base | dépôt (mig. 001) | `PAR-02`, **corrigée** par la mig. `249` (`deadline` nullable). La production était déjà nullable (même dérive) ; décision d'Axel du 2026-11-09 : l'échéance reste facultative, comme la priorité |
 | KR d'équipe créés en un lot relus dans un ordre aléatoire (même `created_at`, départage par UUID) | production | `PAR-03`, **corrigée** : `SupabaseTeamOKRsRepository.create` pose un `created_at` par KR du lot (le cas pose six KR : un ordre juste par hasard une fois sur 720) |
 | habitude : fréquence hors `daily` / `weekly` / `monthly` acceptée | démo | démo corrigée (CHECK `habits_frequency_check`, mig. 002) |
 | habitude : jour de cochage non réel (`demain`, `2026-02-30`) accepté | démo | démo corrigée (format et existence du jour, `toggle_habit_completion_v2`) |

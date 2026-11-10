@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════
 //
 // Décision d'Axel : l'échéance d'une tâche reste facultative, comme sa
-// priorité (mig. 248). Une tâche sans l'une ou l'autre n'est jamais
+// priorité (mig. 249). Une tâche sans l'une ou l'autre n'est jamais
 // mise en avant faute de valeur : elle passe APRÈS les tâches renseignées,
 // quel que soit le sens de tri choisi.
 //

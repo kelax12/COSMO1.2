@@ -93,18 +93,9 @@ afterAll(async () => {
   await deleteTestUsers(user);
 });
 
-// Divergences de PRODUCTION (la base contredit l'écran), signalées sans être
-// corrigées ici : aucune migration dans cette vague.
-//   PAR-01 : CHECK `tasks_priority_check` (1 à 5, mig. 001) refuse la priorité 0
-//            que la fiche envoie par défaut et que `createTaskSchema` admet.
-//   PAR-02 : `tasks.deadline` est NOT NULL (mig. 001) alors que `mapTaskToDb`
-//            traduit l'échéance facultative `''` en NULL.
-tasksContract(SIDE, async () => ({ repo: new SupabaseTasksRepository() }), {
-  divergences: {
-    'une tâche sans priorité (0), comme la fiche la crée par défaut, est acceptée': 'PAR-01',
-    'une tâche sans échéance, comme la fiche la crée par défaut, est acceptée': 'PAR-02',
-  },
-});
+// PAR-01 et PAR-02 (priorité 0 et échéance NULL refusées par la mig. 001)
+// sont corrigées par la mig. 249 : plus aucune divergence déclarée ici.
+tasksContract(SIDE, async () => ({ repo: new SupabaseTasksRepository() }));
 categoriesContract(SIDE, async () => ({ repo: new SupabaseCategoriesRepository() }));
 listsContract(SIDE, async () => ({ repo: new SupabaseListsRepository() }));
 habitsContract(SIDE, async () => ({ repo: new SupabaseHabitsRepository(), stats: new SupabaseStatsRepository() }));

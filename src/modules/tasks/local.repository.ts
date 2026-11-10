@@ -15,8 +15,8 @@ const STORAGE_KEY = 'cosmo_demo_tasks';
 /**
  * Priorité de 0 (« sans priorité », la valeur par défaut de la fiche) à 5,
  * comme `createTaskSchema`. Trouvé par la suite de contrat (V12.2) : la démo
- * acceptait 6 ou -1. La base, elle, refuse aussi 0 (CHECK 1 à 5) : c'est la
- * divergence PAR-01, signalée côté production, pas recopiée ici.
+ * acceptait 6 ou -1. 0 = « aucune priorité », admis des deux côtés : c'est le
+ * CHECK 0 à 5 de la mig. 249 (ancienne divergence PAR-01).
  */
 function assertPriorityInRange(priority: number | undefined): void {
   // Absente, la base prend son défaut : rien à refuser.
