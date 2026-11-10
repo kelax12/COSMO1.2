@@ -596,12 +596,13 @@ doivent être poussées séparément, idéalement **avant** le déploiement fron
 en dépend (additive-first : ajouter colonnes/fonctions avant de livrer le code
 qui les lit).
 
-```bash
-# Option A — CLI (préférée)
-supabase db push
+Une migration s'écrit dans `supabase/migrations/<AAAAMMJJHHMMSS>_nom.sql` (§ 6), plus jamais dans
+`supabase/migration/`. Tant que la V8.3 n'a pas aligné le ledger de prod (§ 6), elle s'applique comme
+avant, en passant au MCP le nom du fichier SANS horodatage (`base-egale-prod` la reconnaît par ce nom) :
 
-# Option B — MCP / dashboard, pour une migration isolée idempotente
-#   apply_migration(project_id, name, query)  puis vérifier le schéma.
+```bash
+# apply_migration(project_id, name: '<nom>', query: <texte du fichier>), puis relire au catalogue.
+# ❌ Pas de `supabase db push` avant la V8.3 : le ledger de prod ne connaît pas encore la baseline.
 ```
 
 Règles (cf. [`SECURITY.md → Avant tout commit qui touche supabase/migration`](./SECURITY.md#avant-tout-commit-qui-touche-supabasemigrationsql)) :
@@ -699,34 +700,66 @@ Les mêmes secrets `VITE_*` doivent exister en **GitHub Actions secrets** (job
 
 ## 6. Schéma & ledger de migration (DR / ISO 27001)
 
-Le dépôt est **reproductible** : toutes les fonctions et triggers de production sont versionnés, la base se
-rejoue depuis `supabase/migration/*.sql` sur une instance vierge (job `rls-integration`).
+**Depuis le 2026-11-09 (ROB-02, V8.1-8.2), le dépôt suit le format de la CLI Supabase.**
 
-**Vérité opérationnelle.** Le repo stocke ses migrations dans `supabase/migration/` (singulier) avec des
-préfixes `NNN_` : un layout que la CLI Supabase **ne reconnaît pas** (`db push` / `migration repair`
-n'opèrent que sur `supabase/migrations/<timestamp14>_*.sql`). Le ledger
-(`supabase_migrations.schema_migrations`) n'a donc **jamais été** la source de vérité de ce projet et ne peut
-pas être « réparé » tel quel : ses entrées viennent du dashboard et de l'outil MCP `apply_migration` (qui
-enregistre une entrée à chaque application : c'est le workflow courant et recommandé ici). *(Mesures du
-2026-06-07 et de l'audit du 2026-06-10 : archive.)*
+| Dossier | Rôle |
+|---|---|
+| `supabase/migrations/` | **Le seul où l'on écrit.** `<AAAAMMJJHHMMSS>_snake_case.sql`. Premier fichier : `20261109120000_baseline.sql`, schéma de PRODUCTION du 2026-11-09 (schéma seul, aucune donnée). Puis les migrations postérieures (`206`, `245`, `246`, jamais appliquées en prod, y ont été déplacées). |
+| `supabase/migration/` | Historique figé `000` à `247` et ses preuves (`supabase/proofs/`, `proofs/`). Lu par les gardes statiques, plus jamais appliqué. |
 
-**Source de vérité réelle** : le dossier `supabase/migration/*.sql` (gardé par
-`npm run validate:migrations` en CI) + l'introspection live. Pas le ledger.
+**Construire une base** : `supabase start` (ou `supabase db reset`) applique `supabase/migrations/` et
+inscrit chaque version au ledger LOCAL ; `node scripts/verifier-migrations.mjs` relit ce ledger. C'est ce que
+font `contrat-donnees` et `rls-integration` (`CI noyau`), `e2e-supabase.yml` et `scalability-volume.yml`.
 
-**Garde anti-dérive** (findings 017/N15, 2026-06-10) : `Migration coverage`,
-quotidien, cf. « Vérifier la dérive repo ↔ prod » plus haut.
+**La preuve que la base fraîche EST la prod** : `schema-prod.yml` › `base-egale-prod` (quotidien, et à
+chaque push qui touche `supabase/migrations/`). Il retire de l'arbre du runner les migrations que le ledger de
+prod ne connaît ni par version ni par nom (listées au résumé), construit la base par la CLI, puis compare
+objet par objet (schéma `public`, triggers sur `auth.users`, policies et bucket de storage, `pg_cron`,
+publication Realtime) à la prod, lue en lecture seule (`scripts/schema-prod.mjs`). Diff vide attendu.
 
-**Si un jour on veut basculer sur le workflow CLI** (à faire une seule fois) :
-```bash
-supabase link --project-ref ykeugqfgklejcdbrmawy
-# 1. Convertir le layout : copier chaque NNN_<nom>.sql vers
-#    supabase/migrations/2026MMDDHHMMSS_<nom>.sql (timestamps croissants).
-# 2. Marquer comme appliquées celles dont les objets existent déjà en prod :
-supabase migration repair --status applied <version>   # pour chaque fichier
-supabase migration list   # vérifier l'alignement local ↔ remote
-```
-Tant que cette conversion n'est pas faite, **ne pas utiliser `db push`** —
-passer par `apply_migration` (MCP) ou le SQL editor avec le fichier versionné.
+### Écarts trouvés le 2026-11-09 (rejeu de `supabase/migration/` contre la prod)
+
+Premier passage, run `42718089378` : **6** objets en prod seulement, **23** dans le dépôt seulement,
+**73** définitions différentes. La baseline suit la PROD sur chacun ; les corriger est un autre chantier,
+par migration postérieure.
+
+- **Tables cœur** (`tasks`, `habits`, `events`, `lists`, `okrs`, `friends`, `categories`, `shared_tasks`,
+  `friend_requests`) : créées au Dashboard avant le dépôt. En prod, `user_id` est **nullable**, plusieurs
+  `NOT NULL`, défauts et `CHECK` (`end_after_start`, `okrs_progress_check`, `tasks_priority_check`) manquent,
+  `okrs.start_date` est un `timestamptz`, l'ordre des colonnes diffère. `affiliate_settings` et
+  `affiliate_commissions` portent la déduction de `238_affiliation_deduction`, **en prod sans fichier**.
+- **Triggers absents de la prod** : `update_*_updated_at` (`tasks`, `events`, `habits`, `lists`, `okrs`),
+  `subscriptions.trg_prevent_user_id_change`, et `on_auth_user_created_seed_categories` sur `auth.users`.
+- **Index** : 9 du dépôt absents de la prod, 3 de la prod absents du dépôt (`idx_friend_requests_receiver`,
+  `_sender`, `idx_shared_tasks_friend`) ; `friend_requests` sans `user_id` ni sa contrainte unique.
+- **50 fonctions** : le plus souvent le même corps sans ses commentaires (appliqué par `apply_migration`
+  après nettoyage), parfois un corps différent (`get_my_habits`, `toggle_habit_completion_v2`,
+  `affiliate_process`, `affiliate_compute` à 6 arguments en prod contre 5 au dépôt). 8 commentaires d'objets.
+- `164` (en prod hors ledger) : son effet est dans la baseline, comme le reste ; il n'y a plus rien à rejouer.
+
+### Ce qui reste pour la V8.3 (application par la CI) · décrit, NON exécuté
+
+❌ Aucune de ces commandes n'a été lancée : chacune écrit dans le ledger de production.
+
+1. Axel pose un secret d'APPLICATION distinct de `SUPABASE_DB_URL` (lecture) : `SUPABASE_ACCESS_TOKEN` +
+   mot de passe de base, ou une URL dédiée. Déclaré dans `scripts/artefacts-donnees-prod.guard.test.mjs`.
+2. Aligner le ledger de prod sur le dossier, une seule fois :
+   ```bash
+   supabase link --project-ref ykeugqfgklejcdbrmawy
+   supabase migration list                                   # attendu : les ~200 versions distantes sans fichier
+   supabase migration repair --status reverted <v1> <v2> …   # chaque version distante antérieure à la baseline
+   supabase migration repair --status applied 20261109120000 # la baseline EST la prod
+   supabase migration list                                   # local = distant, puis 206/245/246 « en attente »
+   ```
+   `repair` n'exécute aucun SQL : il écrit des lignes de ledger. Les anciennes versions restent lisibles à
+   l'historique git et dans `supabase/migration/`.
+3. Le job d'application (`supabase db push`, après le noyau vert) ne pousse que ce que le ledger ne
+   connaît pas. `206` attend le front qui ne lit plus les jalons ; `245`-`246`, la procédure § 2sexies.
+4. Après chaque application : `base-egale-prod` doit rester vert. Un rouge = une migration posée à côté du
+   dossier (Dashboard, SQL editor) : la versionner, jamais éditer la baseline.
+
+**Garde complémentaire** : `Migration coverage` (quotidien) range encore chaque fichier de l'historique
+contre le ledger et le catalogue ; `base-egale-prod` juge l'état entier.
 
 ## 7. Backup & Disaster Recovery (runbook)
 

@@ -5,13 +5,24 @@
 > [`docs/SECURITY.md`](../../docs/SECURITY.md) § « Base de données ».
 > Findings de sécurité ouverts : `faille.md` (hors dépôt), qui **fait foi**.
 
-## Ce dossier n'est PAS géré par la CLI Supabase
+## 🔴 Depuis le 2026-11-09, ce dossier est un HISTORIQUE FIGÉ (ROB-02, V8.2)
 
-- La CLI lit `supabase/**migrations**/` (pluriel). Ici c'est `supabase/**migration**/`
-  (singulier) : un changelog SQL **manuel**, appliqué via le SQL editor ou `apply_migration`.
-- Fichiers numérotés `NNN_feature.sql`, pas des versions horodatées.
-- 🔴 **Ne PAS lancer `supabase db push`** contre ce dossier : la CLI ré-appliquerait les
-  premières migrations et échouerait sur `relation already exists`.
+- **Une migration nouvelle s'écrit dans `supabase/migrations/`** (pluriel), au format de la CLI :
+  `<AAAAMMJJHHMMSS>_snake_case.sql`. ❌ Plus aucun fichier n'entre ici, aucun ne s'y modifie.
+- `supabase/migrations/20261109120000_baseline.sql` est le **schéma de production** du 2026-11-09
+  (schéma seul, aucune donnée) ; les fichiers suivants sont les migrations postérieures
+  (`206`, `245`, `246` y ont été déplacées, jamais appliquées en prod).
+- **Preuve** : `schema-prod.yml` › `base-egale-prod`, quotidien et à chaque push qui touche
+  `supabase/migrations/`, construit une base fraîche par `supabase start` et la compare objet par
+  objet à la prod, en lecture seule. Diff vide = le dépôt reconstruit la prod.
+- Les gardes statiques (`validate:migrations`, `check:rls`, effacement, portabilité) lisent ce
+  dossier PUIS les migrations postérieures, jamais la baseline (`scripts/migrations-fichiers.mjs`).
+- Premier passage (rejeu de ce dossier contre la prod, 2026-11-09) : **6** objets en prod
+  seulement, **23** dans le dépôt seulement, **73** définitions différentes (tables cœur à
+  `user_id` nullable, triggers `updated_at` et `on_auth_user_created_seed_categories` absents de
+  la prod, `238_affiliation_deduction` en prod sans fichier). Liste : `docs/DEPLOYMENT.md` § 6.
+- 🔴 **Ne PAS lancer `supabase db push`** tant que la V8.3 n'a pas aligné le ledger de prod
+  (procédure décrite, non exécutée : `docs/DEPLOYMENT.md` § 6).
 
 ## Les trois vérités à ne pas confondre
 
@@ -52,17 +63,17 @@ compilait, la suite passait.
   `245`-`246` (ARC-06, pg_cron) commitées, **non appliquées** : `DEPLOYMENT.md` § 2sexies.
   ✅ `247` (index des 3 FK nées par 230, 233, 237 ; V9.4) en prod le 2026-11-08 (`20261108001203`),
   relue au catalogue : trois index valides, définition = fichier ; `unindexed_foreign_keys` disparu.
-  `248` (`habit_completions`, DAT-02) commitée, **non appliquée** : preuve `proofs/248.proof.sql`
-  à rejouer en prod avant. `249` (échéance et priorité facultatives sur `tasks`, PAR-01 et PAR-02)
-  commitée, **non appliquée** : procédure en tête de `proofs/249.proof.sql`, indépendante de la `248`.
-  Prochain numéro libre : **`250`**. Journal daté de chaque application (preuves, relectures au catalogue) :
+  `248` (`habit_completions`, DAT-02) et `249` (échéance et priorité facultatives sur `tasks`, PAR-01 et
+  PAR-02) commitées, **non appliquées**, déplacées dans `supabase/migrations/` : preuves
+  `supabase/proofs/248.proof.sql` et `249.proof.sql` à rejouer en prod avant (indépendantes). Plus de
+  numéro libre ici : une migration nouvelle prend un horodatage dans `supabase/migrations/`. Journal daté de chaque application (preuves, relectures au catalogue) :
   [`docs/archive/SECURITY-journal-migrations-150-223.md`](../../docs/archive/SECURITY-journal-migrations-150-223.md).
 - ✅ **Forme de preuve à reprendre** : un seul bloc `DO` terminé par `RAISE EXCEPTION`
   (`proofs/208-210.proof.sql`). L'annulation n'est pas une instruction qu'on peut oublier, c'est la
   seule issue, et le verdict est le texte de l'exception. ⚠️ En PL/pgSQL `N` et `n`, `OK` et `ok`
   sont le MÊME identifiant : « duplicate declaration ».
 - ⚠️ **Plusieurs sessions écrivent des migrations en parallèle** : **relire le ledger ET
-  `ls supabase/migration` avant de choisir un numéro**, jamais la fin de ce fichier.
+  `ls supabase/migrations` avant de choisir un horodatage** (postérieur au dernier fichier).
 - ✅ **La preuve AVANT a servi à quelque chose, et c'est l'argument de cette section** : la `150` a
   été jouée dans une transaction annulée, acteur par acteur, avant d'être appliquée — insertion,
   catégorie hors énumération refusée (`23514`), non-admin refusé (`42501`), droits effectifs
@@ -107,13 +118,14 @@ compilait, la suite passait.
 
 ## Le schéma vivant se lit dans le dépôt (MAI-01, API-01, ARC-07)
 
-Trois fichiers **générés** depuis une base vierge où toutes les migrations sont rejouées, et le job
+Trois fichiers **générés** depuis une base vierge que `supabase start` construit depuis
+`supabase/migrations/` (ledger local relu par `scripts/verifier-migrations.mjs`), et le job
 `contrat-donnees` de `CI noyau` **échoue** s'ils divergent : `supabase/schema.sql` (`pg_dump`),
 `supabase/rpc-inventory.md` (droits `EXECUTE`, DEFINER, `search_path`, appelants du front),
 `src/generated/database.types.ts` (accroché aux mappers par `src/lib/db-contract.ts`).
 
 - ✅ **Toute migration** (colonne, fonction, GRANT, policy) **se commit avec les trois régénérés** :
-  `supabase start`, `node scripts/apply-migrations.mjs`, puis `npm run contrat:generer` (Docker requis).
+  `supabase start` (qui applique `supabase/migrations/`), puis `npm run contrat:generer` (Docker requis).
 - ✅ **Sans Docker** : pousser sur `noyau/<nom>`, télécharger l'artefact `contrat-donnees` du run
   (`gh run download <id> -n contrat-donnees`), copier les trois fichiers, commiter.
 - ❌ Ne jamais éditer ces fichiers à la main, ni monter la CLI épinglée du job sans les régénérer.
