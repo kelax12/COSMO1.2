@@ -22,14 +22,14 @@ import { describe, it, expect, afterAll } from 'vitest';
 import { connecter } from './catalogue';
 
 const PREUVES: { preuve: string; migration: string }[] = [
-  { preuve: '242.proof.sql', migration: '242_ferme_par_defaut_anon.sql' },
-  { preuve: '243.proof.sql', migration: '243_regle_unique_projet_equipe.sql' },
-  { preuve: '244.proof.sql', migration: '244_select_permissive_unique.sql' },
+  { preuve: '242.proof.sql', migration: 'supabase/migration/242_ferme_par_defaut_anon.sql' },
+  { preuve: '243.proof.sql', migration: 'supabase/migration/243_regle_unique_projet_equipe.sql' },
+  { preuve: '244.proof.sql', migration: 'supabase/migration/244_select_permissive_unique.sql' },
   // DAT-02 (V13.3, V13.4) : séries, totaux et temps investi inchangés par le
   // passage de `habits.completions` à `habit_completions`.
-  { preuve: '248.proof.sql', migration: '248_habit_completions.sql' },
+  { preuve: '248.proof.sql', migration: 'supabase/migrations/20261109120400_248_habit_completions.sql' },
   // Échéance et priorité facultatives (PAR-01, PAR-02), décision du 2026-11-09.
-  { preuve: '249.proof.sql', migration: '249_taches_echeance_priorite_facultatives.sql' },
+  { preuve: '249.proof.sql', migration: 'supabase/migrations/20261109120500_249_taches_echeance_priorite_facultatives.sql' },
 ];
 
 const lire = (chemin: string) => readFileSync(join(process.cwd(), chemin), 'utf8').replace(/\r\n/g, '\n');
@@ -46,7 +46,7 @@ describe('supabase/proofs : preuves 242 à 244, 248 et 249 rejouées sur la base
       const m = texte.match(/EXECUTE \$mig\$\n([\s\S]*?)\n\$mig\$;/);
       expect(m, `${preuve} : aucun bloc EXECUTE $mig$ … $mig$`).not.toBeNull();
       expect(m![1], `${preuve} : le texte embarqué a dérivé de ${migration}`).toBe(
-        lire(`supabase/migration/${migration}`).replace(/\n+$/, ''),
+        lire(migration).replace(/\n+$/, ''),
       );
     });
 

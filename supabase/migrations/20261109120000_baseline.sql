@@ -31,6 +31,14 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA extensions;
 CREATE EXTENSION IF NOT EXISTS pg_stat_statements WITH SCHEMA extensions;
 
+-- pg_dump pose les privileges par defaut A LA FIN (blocs DEFAULT ACL ci-dessous, valeurs de prod).
+-- Une stack Supabase neuve en porte deja pour `postgres` dans `public` (anon, authenticated) :
+-- sans ce retrait, chaque objet cree ici les recevrait et les ACL ne seraient plus celles de la prod
+-- (274 ecarts mesures par base-egale-prod le 2026-11-10).
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON TABLES FROM postgres, anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON SEQUENCES FROM postgres, anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON FUNCTIONS FROM postgres, anon, authenticated, service_role;
+
 --
 -- Name: friends; Type: TABLE; Schema: public; Owner: -
 --
