@@ -212,19 +212,26 @@ CREATE TRIGGER trg_habit_completions_mirror
 
 -- ── Rétro-remplissage ──────────────────────────────────────────────
 --
--- Le verrou bloque toute écriture de `habits` jusqu'au COMMIT : une coche
--- concurrente attend, puis passe par le trigger ci-dessus. Rien ne manque.
+-- Le verrou bloque toute écriture de `habits` pendant le rétro-remplissage : une
+-- coche concurrente attend, puis passe par le trigger ci-dessus. Rien ne manque.
 -- `ON CONFLICT DO NOTHING` : rejouer ne duplique rien et n'efface rien.
-LOCK TABLE public.habits IN SHARE ROW EXCLUSIVE MODE;
+-- Dans un bloc DO (ROB-02, 2026-11-10) : la CLI Supabase n'ouvre pas de
+-- transaction autour d'un fichier, et `LOCK TABLE` nu y est refusé (25P01).
+-- Le bloc est UNE instruction : le verrou tient jusqu'à la fin de l'insertion.
+DO $retro$
+BEGIN
+  LOCK TABLE public.habits IN SHARE ROW EXCLUSIVE MODE;
 
-INSERT INTO public.habit_completions (habit_id, user_id, day)
-SELECT h.id, h.user_id, v.day
-  FROM public.habits h
- CROSS JOIN LATERAL jsonb_each(COALESCE(h.completions, '{}'::jsonb)) kv
- CROSS JOIN LATERAL (SELECT public.habit_day_from_key(kv.key) AS day) v
- WHERE kv.value = 'true'::jsonb
-   AND v.day IS NOT NULL
-ON CONFLICT (habit_id, user_id, day) DO NOTHING;
+  INSERT INTO public.habit_completions (habit_id, user_id, day)
+  SELECT h.id, h.user_id, v.day
+    FROM public.habits h
+   CROSS JOIN LATERAL jsonb_each(COALESCE(h.completions, '{}'::jsonb)) kv
+   CROSS JOIN LATERAL (SELECT public.habit_day_from_key(kv.key) AS day) v
+   WHERE kv.value = 'true'::jsonb
+     AND v.day IS NOT NULL
+  ON CONFLICT (habit_id, user_id, day) DO NOTHING;
+END
+$retro$;
 
 -- ═══════════════════════════════════════════════════════════════════
 -- get_my_habits : lecture de liste, depuis la table
