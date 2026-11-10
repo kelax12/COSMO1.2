@@ -3981,7 +3981,7 @@ CREATE TABLE public.tasks (
     description text,
     priority integer DEFAULT 3 NOT NULL,
     category uuid,
-    deadline timestamp with time zone NOT NULL,
+    deadline timestamp with time zone,
     estimated_time integer DEFAULT 0 NOT NULL,
     bookmarked boolean DEFAULT false NOT NULL,
     completed boolean DEFAULT false NOT NULL,
@@ -3998,10 +3998,17 @@ CREATE TABLE public.tasks (
     status text DEFAULT 'todo'::text NOT NULL,
     health text,
     CONSTRAINT tasks_health_check CHECK (((health IS NULL) OR (health = ANY (ARRAY['on_track'::text, 'at_risk'::text, 'off_track'::text])))),
-    CONSTRAINT tasks_priority_check CHECK (((priority >= 1) AND (priority <= 5))),
+    CONSTRAINT tasks_priority_check CHECK (((priority >= 0) AND (priority <= 5))),
     CONSTRAINT tasks_recurrence_check CHECK ((recurrence = ANY (ARRAY['none'::text, 'daily'::text, 'weekly'::text, 'monthly'::text]))),
     CONSTRAINT tasks_status_check CHECK ((status = ANY (ARRAY['todo'::text, 'in_progress'::text, 'blocked'::text, 'done'::text])))
 );
+
+
+--
+-- Name: COLUMN tasks.priority; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.tasks.priority IS 'Priorité FACULTATIVE (mig. 249) : 1 (P1, la plus urgente) à 5, 0 = aucune. Rangée après P5 dans tous les tris (src/lib/task-ordering.ts).';
 
 
 --
@@ -4009,6 +4016,13 @@ CREATE TABLE public.tasks (
 --
 
 COMMENT ON COLUMN public.tasks.category IS 'Catégorie de la tâche. NULL = aucune. FK vers categories(id), ON DELETE SET NULL : supprimer une catégorie détache, ne supprime jamais la tâche.';
+
+
+--
+-- Name: COLUMN tasks.deadline; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.tasks.deadline IS 'Échéance FACULTATIVE (mig. 249) : instant de minuit du jour choisi, dans le fuseau de la personne (src/lib/deadline.ts). NULL = aucune échéance.';
 
 
 --
