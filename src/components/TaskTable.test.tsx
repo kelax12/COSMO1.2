@@ -170,7 +170,7 @@ describe('TaskTable · filtres rapides', () => {
     await waitFor(() => expect(rowNames()).toEqual(['Charlie']));
   });
 
-  // Corrigé avec la mig. 248 : `applyQuickFilter('overdue')` comparait des
+  // Corrigé avec la mig. 249 : `applyQuickFilter('overdue')` comparait des
   // INSTANTS (`new Date(task.deadline) < now`) ; il passe par `isOverdue`
   // (jours révolus), comme la ligne, le bandeau et l'en-tête de la page.
   it('ÉCHÉANCE · le filtre « Retard » ne montre pas une tâche due aujourd\'hui', async () => {

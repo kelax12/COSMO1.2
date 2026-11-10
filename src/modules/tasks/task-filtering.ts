@@ -61,7 +61,7 @@ export function compareTasks(
       // sens de tri choisi — jamais mise en avant faute de valeur renseignée.
       return compareOptionalPriorities(a.priority, b.priority, sortDirection);
     } else if (sortField === 'deadline') {
-      // Même règle pour l'échéance (mig. 248) : sans échéance,
+      // Même règle pour l'échéance (mig. 249) : sans échéance,
       // en fin de liste dans les deux sens. `new Date('')` rendait `NaN`.
       return compareOptionalDeadlines(a.deadline, b.deadline, sortDirection);
     } else if (sortField === 'estimatedTime') {

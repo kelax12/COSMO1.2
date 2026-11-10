@@ -108,6 +108,8 @@ export function tasksContract(side: string, make: () => Promise<TasksContractCon
       expect(await rejects(repo.create(input({ priority: -1 })))).toBe(true);
     });
 
+    // Décision d'Axel du 2026-11-09 : échéance et priorité FACULTATIVES
+    // (mig. 249, anciennes divergences PAR-01 et PAR-02).
     // La fiche (`useTaskModal`) crée par défaut avec la priorité 0, « sans
     // priorité », et `createTaskSchema` l'admet : c'est le contrat de l'écran.
     contractCase(opts, 'une tâche sans priorité (0), comme la fiche la crée par défaut, est acceptée', async () => {
@@ -119,6 +121,43 @@ export function tasksContract(side: string, make: () => Promise<TasksContractCon
     contractCase(opts, 'une tâche sans échéance, comme la fiche la crée par défaut, est acceptée', async () => {
       const created = await repo.create(input({ deadline: '' }));
       expect((await repo.getById(created.id))?.deadline ?? '').toBe('');
+    });
+
+    contractCase(opts, 'on retire la priorité et l’échéance d’une tâche existante', async () => {
+      const created = await repo.create(input({ priority: 3 }));
+      const updated = await repo.update(created.id, { priority: 0, deadline: '' });
+      expect([updated.priority, updated.deadline ?? '']).toEqual([0, '']);
+      const read = await repo.getById(created.id);
+      expect([read!.priority, read!.deadline ?? '']).toEqual([0, '']);
+    });
+
+    contractCase(opts, 'une tâche sans échéance n’entre ni dans un jour ni dans un filtre d’échéance', async () => {
+      const none = await repo.create(input({ deadline: '' }));
+      const dated = await repo.create(input());
+      const byDay = (await repo.getByDate(dayKey(3))).map((t) => t.id);
+      expect(byDay).toContain(dated.id);
+      expect(byDay).not.toContain(none.id);
+      const before = (await repo.getFiltered({ deadlineBefore: dayKey(30) })).map((t) => t.id);
+      const after = (await repo.getFiltered({ deadlineAfter: dayKey(-30) })).map((t) => t.id);
+      expect([before.includes(dated.id), after.includes(dated.id)]).toEqual([true, true]);
+      expect([before.includes(none.id), after.includes(none.id)]).toEqual([false, false]);
+    });
+
+    // `toggle_task_complete_v2` recopie la priorité dans l'occurrence suivante :
+    // sous le CHECK 1 à 5 de la mig. 001, cocher la tâche levait 23514.
+    contractCase(opts, 'cocher une tâche récurrente sans priorité engendre la suivante, sans priorité', async () => {
+      const created = await repo.create(input({ priority: 0, recurrence: 'daily' }));
+      const res = await repo.toggleComplete(created.id, deadlineFromDayKey(dayKey(4)));
+      expect(res.task.completed).toBe(true);
+      expect(res.spawned).not.toBeNull();
+      expect([res.spawned!.priority, deadlineDayKey(res.spawned!.deadline)]).toEqual([0, dayKey(4)]);
+    });
+
+    contractCase(opts, 'cocher une tâche récurrente sans échéance la coche sans rien engendrer', async () => {
+      const created = await repo.create(input({ deadline: '', recurrence: 'weekly' }));
+      const res = await repo.toggleComplete(created.id, null);
+      expect([res.task.completed, res.spawned]).toEqual([true, null]);
+      expect((await repo.getById(created.id))!.completed).toBe(true);
     });
 
     contractCase(opts, 'dépendances : ajout, lecture, cycle et boucle refusés, retrait idempotent', async () => {

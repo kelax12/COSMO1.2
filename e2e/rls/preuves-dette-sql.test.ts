@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// Preuves des mig. 242, 243 et 244, rejouées sur la base fraîche du job
+// Preuves des mig. 242, 243, 244, 248 et 249, rejouées sur la base fraîche du job
 // `rls-integration`.
 //
 // Une preuve de `supabase/proofs/` est un bloc `DO` qui se termine TOUJOURS
@@ -28,6 +28,8 @@ const PREUVES: { preuve: string; migration: string }[] = [
   // DAT-02 (V13.3, V13.4) : séries, totaux et temps investi inchangés par le
   // passage de `habits.completions` à `habit_completions`.
   { preuve: '248.proof.sql', migration: '248_habit_completions.sql' },
+  // Échéance et priorité facultatives (PAR-01, PAR-02), décision du 2026-11-09.
+  { preuve: '249.proof.sql', migration: '249_taches_echeance_priorite_facultatives.sql' },
 ];
 
 const lire = (chemin: string) => readFileSync(join(process.cwd(), chemin), 'utf8').replace(/\r\n/g, '\n');
@@ -37,7 +39,7 @@ afterAll(async () => {
   await db.end();
 });
 
-describe('supabase/proofs : preuves 242 à 244 et 248 rejouées sur la base fraîche', () => {
+describe('supabase/proofs : preuves 242 à 244, 248 et 249 rejouées sur la base fraîche', () => {
   for (const { preuve, migration } of PREUVES) {
     it(`${preuve} embarque le texte exact de ${migration}`, () => {
       const texte = lire(`supabase/proofs/${preuve}`);
