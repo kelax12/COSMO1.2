@@ -20475,6 +20475,12 @@ CREATE POLICY "avatars_owner_insert" ON "storage"."objects" AS PERMISSIVE FOR IN
 CREATE POLICY "avatars_owner_update" ON "storage"."objects" AS PERMISSIVE FOR UPDATE TO authenticated USING (((bucket_id = 'avatars'::text) AND ((storage.foldername(name))[1] = (( SELECT auth.uid() AS uid))::text))) WITH CHECK (((bucket_id = 'avatars'::text) AND ((storage.foldername(name))[1] = (( SELECT auth.uid() AS uid))::text)));
 CREATE POLICY "avatars_public_read" ON "storage"."objects" AS PERMISSIVE FOR SELECT TO public USING ((bucket_id = 'avatars'::text));
 
+-- Lignes de CONFIGURATION que le schema suppose (posees par les mig. 124, 224 et 236), pas des donnees
+-- utilisateur. `affiliate_settings` prend ses DEFAUTS de colonne : ses secrets de prod (code_hash,
+-- token_secret) ne quittent jamais la base. Le drapeau de sieges vaut sa valeur de prod.
+INSERT INTO public.billing_flags (key, enabled) VALUES ('enterprise_seat_limit', true) ON CONFLICT (key) DO NOTHING;
+INSERT INTO public.affiliate_settings (id) VALUES (true) ON CONFLICT (id) DO NOTHING;
+
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES ('avatars', 'avatars', true, 524288, ARRAY['image/jpeg', 'image/png', 'image/webp'])
 ON CONFLICT (id) DO NOTHING;
