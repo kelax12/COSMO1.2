@@ -20,7 +20,7 @@ import { screen, within, waitFor, cleanup, fireEvent, act, renderHook } from '@t
 import TaskTable from './TaskTable';
 import {
   renderApp, resetDemoWorld, setViewport, makeTask, storedTasks, fakeAuth, fakeBilling,
-  dayKeyFromToday, TODAY_KEY, lazyT, findFiche, warmDemoCaches, itBug } from '@/test/tasks-ui-harness';
+  dayKeyFromToday, TODAY_KEY, lazyT, findFiche, warmDemoCaches } from '@/test/tasks-ui-harness';
 import { deadlineFromDayKey, deadlineDayKey } from '@/lib/deadline';
 import { useTimezonePref, todayKeyInTz, addDaysToKey } from '@/lib/timezone';
 import type { Task } from '@/modules/tasks';
@@ -170,12 +170,10 @@ describe('TaskTable · filtres rapides', () => {
     await waitFor(() => expect(rowNames()).toEqual(['Charlie']));
   });
 
-  // 🔴 BUG DÉCRIT : `applyQuickFilter('overdue')` compare des INSTANTS
-  // (`new Date(task.deadline) < now`), ce que `src/lib/CLAUDE.md` interdit. Une
-  // tâche due AUJOURD'HUI est stockée à son minuit local, déjà passé à 10 h : le
-  // filtre « Retard » la montre, alors que la ligne, le bandeau et l'en-tête de
-  // la page disent qu'elle n'est pas en retard (`isOverdue`, comparaison de jours).
-  itBug('ÉCHÉANCE · le filtre « Retard » ne montre pas une tâche due aujourd\'hui (BUG : comparaison d\'instants)', async () => {
+  // Corrigé avec la mig. 248 : `applyQuickFilter('overdue')` comparait des
+  // INSTANTS (`new Date(task.deadline) < now`) ; il passe par `isOverdue`
+  // (jours révolus), comme la ligne, le bandeau et l'en-tête de la page.
+  it('ÉCHÉANCE · le filtre « Retard » ne montre pas une tâche due aujourd\'hui', async () => {
     resetDemoWorld([
       makeTask({ id: 'today', name: 'Due ce jour', dueDay: TODAY_KEY }),
       makeTask({ id: 'past', name: 'Due avant-hier', dueDay: dayKeyFromToday(-2) }),
