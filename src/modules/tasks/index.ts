@@ -30,7 +30,6 @@ export {
   useTasks,
   useTask,
   usePendingSharedTasks,
-  useFilteredTasks,
   usePendingTasks,
   useTaskDependencies,
   // V14.1 (PER-01) : lectures au-delà du jeu de travail.
@@ -39,6 +38,7 @@ export {
   useTaskCount,
   useLoadAllTasks,
   useKnownTask,
+  useTasksIncluding,
   ARCHIVE_PAGE_SIZE,
 } from './hooks';
 export type { TaskQuery } from './task-query';

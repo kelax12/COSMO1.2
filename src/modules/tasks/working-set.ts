@@ -35,6 +35,13 @@ export function workingSetSince(now: Date = new Date()): string {
   return new Date(now.getTime() - RECENT_COMPLETED_DAYS * 24 * 60 * 60 * 1000).toISOString();
 }
 
+/** `base` suivi des tâches de `extra` qu'il ne contient pas (même référence si rien à ajouter). */
+export function mergeTasksById(base: Task[], extra: readonly Task[]): Task[] {
+  const known = new Set(base.map((t) => t.id));
+  const added = extra.filter((t) => !known.has(t.id));
+  return added.length > 0 ? [...base, ...added] : base;
+}
+
 /**
  * Deux lectures sans plafond, réunies dans l'ordre de pagination. Deux
  * requêtes et non une seule « non terminée OU terminée récemment » : ce OU

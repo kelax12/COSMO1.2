@@ -16,6 +16,8 @@
 // `fetchPage(from, to)` doit renvoyer les lignes de l'intervalle inclusif
 // [from, to] et **lever** en cas d'erreur (cohérent avec normalizeApiError).
 
+import { makeApiError } from '@/lib/normalizeApiError';
+
 export type PageFetcher<T> = (from: number, to: number) => Promise<T[]>;
 
 export const PAGE_SIZE = 1000;
@@ -52,7 +54,8 @@ export async function fetchAllByCursor<T, C>(
     all.push(...page.rows);
     if (page.next === null) return all;
     if (cursor !== null && sameCursor(cursor, page.next)) {
-      throw new Error('fetchAllByCursor: cursor did not advance');
+      // Code du catalogue, jamais une phrase brute : le message remonte à l'écran.
+      throw makeApiError('unknown', 'fetchAllByCursor: cursor did not advance');
     }
     cursor = page.next;
   }

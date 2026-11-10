@@ -21,6 +21,7 @@
 // une plage avec exception pour 0.
 import type { Task } from './types';
 import { deadlineDayKey } from '@/lib/deadline';
+import { makeApiError } from '@/lib/normalizeApiError';
 
 export interface TaskQuery {
   /** `active` : non terminées. `completed` : terminées. Absent : toutes. */
@@ -61,7 +62,7 @@ export function isEmptyTaskQuery(q: TaskQuery): boolean {
  */
 export function assertSupportedTaskQuery(q: TaskQuery): void {
   if (q.categories?.includes('') && q.categories.some((c) => c !== '')) {
-    throw new Error('TaskQuery: "" cannot be combined with named categories');
+    throw makeApiError('invalid_input');
   }
 }
 
@@ -76,26 +77,38 @@ const ms = (iso: string | undefined | null): number => {
   return Number.isNaN(t) ? Number.NEGATIVE_INFINITY : t;
 };
 
+function matchesStatus(task: Task, q: TaskQuery): boolean {
+  if (q.status === 'active') return !task.completed;
+  return !wantsCompleted(q) || task.completed;
+}
+
+/** `completed_at` absent : la base rend NULL, que ni `>=` ni `<` ne retient. */
+function matchesCompletedWindow(task: Task, q: TaskQuery): boolean {
+  if (!q.completedSince && !q.completedBefore) return true;
+  if (!task.completedAt) return false;
+  const at = ms(task.completedAt);
+  if (q.completedSince && at < ms(q.completedSince)) return false;
+  return !q.completedBefore || at < ms(q.completedBefore);
+}
+
+/** Listes d'acceptation : absente, tout passe ; présente, il faut y être. */
+function matchesSets(task: Task, q: TaskQuery): boolean {
+  const inList = <T,>(list: readonly T[] | undefined, value: T) => !list || list.includes(value);
+  return inList(q.categories, task.category ?? '') && inList(q.priorities, task.priority) && inList(q.ids, task.id);
+}
+
+/** Sans échéance : NULL en base, hors de toute borne. */
+function matchesDeadline(task: Task, q: TaskQuery): boolean {
+  if (!q.deadlineFrom && !q.deadlineTo) return true;
+  const day = task.deadline ? deadlineDayKey(task.deadline) : '';
+  if (!day) return false;
+  return (!q.deadlineFrom || day >= q.deadlineFrom) && (!q.deadlineTo || day <= q.deadlineTo);
+}
+
 /** Miroir mémoire des filtres que `SupabaseTasksRepository` pousse en SQL. */
 export function matchesTaskQuery(task: Task, q: TaskQuery): boolean {
-  if (q.status === 'active' && task.completed) return false;
-  if (wantsCompleted(q) && !task.completed) return false;
-  // `completed_at` absent : la base rend NULL, que ni `>=` ni `<` ne retient.
-  if (q.completedSince && !(task.completedAt && ms(task.completedAt) >= ms(q.completedSince))) return false;
-  if (q.completedBefore && !(task.completedAt && ms(task.completedAt) < ms(q.completedBefore))) return false;
-  if (q.search && !task.name.toLowerCase().includes(q.search.toLowerCase())) return false;
-  if (q.categories && !q.categories.includes(task.category ?? '')) return false;
-  if (q.priorities && !q.priorities.includes(task.priority)) return false;
-  if (q.ids && !q.ids.includes(task.id)) return false;
-  if (q.deadlineFrom || q.deadlineTo) {
-    // Sans échéance : NULL en base, hors de toute borne.
-    if (!task.deadline) return false;
-    const day = deadlineDayKey(task.deadline);
-    if (!day) return false;
-    if (q.deadlineFrom && day < q.deadlineFrom) return false;
-    if (q.deadlineTo && day > q.deadlineTo) return false;
-  }
-  return true;
+  const searchOk = !q.search || task.name.toLowerCase().includes(q.search.toLowerCase());
+  return matchesStatus(task, q) && matchesCompletedWindow(task, q) && searchOk && matchesSets(task, q) && matchesDeadline(task, q);
 }
 
 /** Ordre de pagination : `created_at` décroissant, puis `id` décroissant. */
