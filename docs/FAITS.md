@@ -10,8 +10,8 @@ Les chiffres de production (tables vivantes, ledger, taille de base) ne sont pas
 | Edge Functions déployables | **16** | dossiers de `supabase/functions/` portant un `index.ts` (hors `_shared`) |
 | Migrations SQL | **219** | fichiers `NNN_*.sql` de `supabase/migration/` (historique figé le 2026-11-09) |
 | Dernière migration | **247** | plus grand préfixe numérique de `supabase/migration/` |
-| Migrations de la CLI | **5** | fichiers `<horodatage>_*.sql` de `supabase/migrations/`, baseline comprise |
-| Dernière migration de la CLI | **20261109120400_248_habit_completions** | dernier fichier de `supabase/migrations/`, dans l ordre de la CLI |
+| Migrations de la CLI | **6** | fichiers `<horodatage>_*.sql` de `supabase/migrations/`, baseline comprise |
+| Dernière migration de la CLI | **20261109120500_249_taches_echeance_priorite_facultatives** | dernier fichier de `supabase/migrations/`, dans l ordre de la CLI |
 | Workflows GitHub | **36** | fichiers de `.github/workflows/` |
 | dont planifiés | **27** | workflows portant un `schedule:` |
 | Modules applicatifs | **23** | dossiers de `src/modules/` |
