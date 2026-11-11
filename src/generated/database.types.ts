@@ -1,8 +1,8 @@
 // @generated par scripts/contrat-donnees.mjs (supabase gen types typescript). NE PAS EDITER A LA MAIN.
-// Source : une base vierge sur laquelle toutes les migrations de supabase/migration/ ont ete rejouees.
+// Source : une base vierge sur laquelle toutes les migrations de supabase/migrations/ ont ete appliquees.
 // La CI echoue si ce fichier diverge. Les mappers s'y accrochent par src/lib/db-contract.ts :
 // un renommage de colonne casse `tsc`.
-// Regenerer : npm run contrat:generer (Docker, supabase start, node scripts/apply-migrations.mjs) ou copier les fichiers de l'artefact `contrat-donnees` du job CI.
+// Regenerer : npm run contrat:generer (Docker, supabase start qui applique supabase/migrations/) ou copier les fichiers de l'artefact `contrat-donnees` du job CI.
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
@@ -60,14 +60,14 @@ isOneToOne: false
                   ]
                 },"affiliate_commissions": {
                   Row: {
-                    "affiliate_id": string,"base_cents": number,"commission_cents": number,"created_at": string,"customer_id": string | null,"fee_cents": number,"gross_cents": number,"id": number,"occurred_at": string,"org_id": string | null,"payment_record_id": number,"rate_bp": number,"vat_cents": number
+                    "affiliate_id": string,"base_cents": number,"commission_cents": number,"created_at": string,"customer_id": string | null,"deduction_bp": number,"deduction_cents": number,"fee_cents": number,"gross_cents": number,"id": number,"occurred_at": string,"org_id": string | null,"payment_record_id": number,"rate_bp": number,"vat_cents": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "affiliate_id": string,"base_cents": number,"commission_cents": number,"created_at"?: string,"customer_id"?: string | null,"fee_cents": number,"gross_cents": number,"id"?: number,"occurred_at": string,"org_id"?: string | null,"payment_record_id": number,"rate_bp": number,"vat_cents": number
+                    "affiliate_id": string,"base_cents": number,"commission_cents": number,"created_at"?: string,"customer_id"?: string | null,"deduction_bp"?: number,"deduction_cents"?: number,"fee_cents": number,"gross_cents": number,"id"?: number,"occurred_at": string,"org_id"?: string | null,"payment_record_id": number,"rate_bp": number,"vat_cents": number
                   }
                   Update: {
-                    "affiliate_id"?: string,"base_cents"?: number,"commission_cents"?: number,"created_at"?: string,"customer_id"?: string | null,"fee_cents"?: number,"gross_cents"?: number,"id"?: number,"occurred_at"?: string,"org_id"?: string | null,"payment_record_id"?: number,"rate_bp"?: number,"vat_cents"?: number
+                    "affiliate_id"?: string,"base_cents"?: number,"commission_cents"?: number,"created_at"?: string,"customer_id"?: string | null,"deduction_bp"?: number,"deduction_cents"?: number,"fee_cents"?: number,"gross_cents"?: number,"id"?: number,"occurred_at"?: string,"org_id"?: string | null,"payment_record_id"?: number,"rate_bp"?: number,"vat_cents"?: number
                   }
                   Relationships: [
                     {
@@ -140,14 +140,14 @@ isOneToOne: false
                   ]
                 },"affiliate_settings": {
                   Row: {
-                    "code_changed_at": string | null,"code_hash": string | null,"commission_bp": number,"fee_bp": number,"fee_fixed_cents": number,"id": boolean,"token_secret": string,"vat_bp": number
+                    "code_changed_at": string | null,"code_hash": string | null,"commission_bp": number,"deduction_bp": number,"fee_bp": number,"fee_fixed_cents": number,"id": boolean,"token_secret": string,"vat_bp": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "code_changed_at"?: string | null,"code_hash"?: string | null,"commission_bp"?: number,"fee_bp"?: number,"fee_fixed_cents"?: number,"id"?: boolean,"token_secret"?: string,"vat_bp"?: number
+                    "code_changed_at"?: string | null,"code_hash"?: string | null,"commission_bp"?: number,"deduction_bp"?: number,"fee_bp"?: number,"fee_fixed_cents"?: number,"id"?: boolean,"token_secret"?: string,"vat_bp"?: number
                   }
                   Update: {
-                    "code_changed_at"?: string | null,"code_hash"?: string | null,"commission_bp"?: number,"fee_bp"?: number,"fee_fixed_cents"?: number,"id"?: boolean,"token_secret"?: string,"vat_bp"?: number
+                    "code_changed_at"?: string | null,"code_hash"?: string | null,"commission_bp"?: number,"deduction_bp"?: number,"fee_bp"?: number,"fee_fixed_cents"?: number,"id"?: boolean,"token_secret"?: string,"vat_bp"?: number
                   }
                   Relationships: [
 
@@ -202,14 +202,14 @@ isOneToOne: false
                   ]
                 },"categories": {
                   Row: {
-                    "color": string,"created_at": string | null,"id": string,"name": string,"parent_id": string | null,"position": number,"user_id": string
+                    "color": string,"created_at": string | null,"id": string,"name": string,"parent_id": string | null,"position": number,"user_id": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "color"?: string,"created_at"?: string | null,"id"?: string,"name": string,"parent_id"?: string | null,"position"?: number,"user_id": string
+                    "color"?: string,"created_at"?: string | null,"id"?: string,"name": string,"parent_id"?: string | null,"position"?: number,"user_id"?: string | null
                   }
                   Update: {
-                    "color"?: string,"created_at"?: string | null,"id"?: string,"name"?: string,"parent_id"?: string | null,"position"?: number,"user_id"?: string
+                    "color"?: string,"created_at"?: string | null,"id"?: string,"name"?: string,"parent_id"?: string | null,"position"?: number,"user_id"?: string | null
                   }
                   Relationships: [
                     {
@@ -292,14 +292,14 @@ isOneToOne: false
                   ]
                 },"events": {
                   Row: {
-                    "color": string | null,"created_at": string | null,"created_by": string | null,"description": string | null,"end_time": string,"exceptions": (string)[],"id": string,"is_private": boolean,"notes": string | null,"recurrence": string,"recurrence_days": (number)[],"review_dismissed_at": string | null,"start_time": string,"task_id": string | null,"title": string,"updated_at": string | null,"user_id": string
+                    "color": string | null,"created_at": string | null,"created_by": string | null,"description": string | null,"end_time": string,"exceptions": (string)[],"id": string,"is_private": boolean,"notes": string | null,"recurrence": string,"recurrence_days": (number)[],"review_dismissed_at": string | null,"start_time": string,"task_id": string | null,"title": string,"user_id": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "color"?: string | null,"created_at"?: string | null,"created_by"?: string | null,"description"?: string | null,"end_time": string,"exceptions"?: (string)[],"id"?: string,"is_private"?: boolean,"notes"?: string | null,"recurrence"?: string,"recurrence_days"?: (number)[],"review_dismissed_at"?: string | null,"start_time": string,"task_id"?: string | null,"title": string,"updated_at"?: string | null,"user_id": string
+                    "color"?: string | null,"created_at"?: string | null,"created_by"?: string | null,"description"?: string | null,"end_time": string,"exceptions"?: (string)[],"id"?: string,"is_private"?: boolean,"notes"?: string | null,"recurrence"?: string,"recurrence_days"?: (number)[],"review_dismissed_at"?: string | null,"start_time": string,"task_id"?: string | null,"title": string,"user_id"?: string | null
                   }
                   Update: {
-                    "color"?: string | null,"created_at"?: string | null,"created_by"?: string | null,"description"?: string | null,"end_time"?: string,"exceptions"?: (string)[],"id"?: string,"is_private"?: boolean,"notes"?: string | null,"recurrence"?: string,"recurrence_days"?: (number)[],"review_dismissed_at"?: string | null,"start_time"?: string,"task_id"?: string | null,"title"?: string,"updated_at"?: string | null,"user_id"?: string
+                    "color"?: string | null,"created_at"?: string | null,"created_by"?: string | null,"description"?: string | null,"end_time"?: string,"exceptions"?: (string)[],"id"?: string,"is_private"?: boolean,"notes"?: string | null,"recurrence"?: string,"recurrence_days"?: (number)[],"review_dismissed_at"?: string | null,"start_time"?: string,"task_id"?: string | null,"title"?: string,"user_id"?: string | null
                   }
                   Relationships: [
                     {
@@ -318,28 +318,28 @@ isOneToOne: false
                   ]
                 },"friend_requests": {
                   Row: {
-                    "created_at": string | null,"email": string,"id": string,"receiver_id": string | null,"sender_email": string | null,"sender_id": string,"sent_at": string | null,"status": string,"user_id": string
+                    "created_at": string | null,"email": string,"id": string,"receiver_id": string | null,"sender_email": string | null,"sender_id": string | null,"sent_at": string | null,"status": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string | null,"email": string,"id"?: string,"receiver_id"?: string | null,"sender_email"?: string | null,"sender_id": string,"sent_at"?: string | null,"status"?: string,"user_id": string
+                    "created_at"?: string | null,"email": string,"id"?: string,"receiver_id"?: string | null,"sender_email"?: string | null,"sender_id"?: string | null,"sent_at"?: string | null,"status"?: string
                   }
                   Update: {
-                    "created_at"?: string | null,"email"?: string,"id"?: string,"receiver_id"?: string | null,"sender_email"?: string | null,"sender_id"?: string,"sent_at"?: string | null,"status"?: string,"user_id"?: string
+                    "created_at"?: string | null,"email"?: string,"id"?: string,"receiver_id"?: string | null,"sender_email"?: string | null,"sender_id"?: string | null,"sent_at"?: string | null,"status"?: string
                   }
                   Relationships: [
 
                   ]
                 },"friends": {
                   Row: {
-                    "avatar": string | null,"created_at": string | null,"email": string,"friend_user_id": string | null,"id": string,"name": string,"user_id": string
+                    "avatar": string | null,"created_at": string | null,"email": string,"friend_user_id": string | null,"id": string,"name": string,"user_id": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "avatar"?: string | null,"created_at"?: string | null,"email": string,"friend_user_id"?: string | null,"id"?: string,"name": string,"user_id": string
+                    "avatar"?: string | null,"created_at"?: string | null,"email": string,"friend_user_id"?: string | null,"id"?: string,"name": string,"user_id"?: string | null
                   }
                   Update: {
-                    "avatar"?: string | null,"created_at"?: string | null,"email"?: string,"friend_user_id"?: string | null,"id"?: string,"name"?: string,"user_id"?: string
+                    "avatar"?: string | null,"created_at"?: string | null,"email"?: string,"friend_user_id"?: string | null,"id"?: string,"name"?: string,"user_id"?: string | null
                   }
                   Relationships: [
 
@@ -366,14 +366,14 @@ isOneToOne: false
                   ]
                 },"habits": {
                   Row: {
-                    "color": string,"completions": NonNullable<Json>,"created_at": string | null,"description": string | null,"estimated_time": number,"frequency": string,"icon": string,"id": string,"name": string,"updated_at": string | null,"user_id": string
+                    "color": string | null,"completions": Json | null,"created_at": string | null,"description": string | null,"estimated_time": number | null,"frequency": string,"icon": string | null,"id": string,"name": string,"user_id": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "color"?: string,"completions"?: NonNullable<Json>,"created_at"?: string | null,"description"?: string | null,"estimated_time"?: number,"frequency"?: string,"icon"?: string,"id"?: string,"name": string,"updated_at"?: string | null,"user_id": string
+                    "color"?: string | null,"completions"?: Json | null,"created_at"?: string | null,"description"?: string | null,"estimated_time"?: number | null,"frequency"?: string,"icon"?: string | null,"id"?: string,"name": string,"user_id"?: string | null
                   }
                   Update: {
-                    "color"?: string,"completions"?: NonNullable<Json>,"created_at"?: string | null,"description"?: string | null,"estimated_time"?: number,"frequency"?: string,"icon"?: string,"id"?: string,"name"?: string,"updated_at"?: string | null,"user_id"?: string
+                    "color"?: string | null,"completions"?: Json | null,"created_at"?: string | null,"description"?: string | null,"estimated_time"?: number | null,"frequency"?: string,"icon"?: string | null,"id"?: string,"name"?: string,"user_id"?: string | null
                   }
                   Relationships: [
 
@@ -426,28 +426,28 @@ isOneToOne: false
                   ]
                 },"lists": {
                   Row: {
-                    "color": string,"created_at": string | null,"id": string,"is_default": boolean,"name": string,"position": number | null,"smart_rule": string | null,"task_ids": (string)[],"type": string,"updated_at": string | null,"user_id": string
+                    "color": string | null,"created_at": string | null,"id": string,"is_default": boolean,"name": string,"position": number | null,"smart_rule": string | null,"task_ids": (string)[] | null,"type": string,"user_id": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "color"?: string,"created_at"?: string | null,"id"?: string,"is_default"?: boolean,"name": string,"position"?: number | null,"smart_rule"?: string | null,"task_ids"?: (string)[],"type"?: string,"updated_at"?: string | null,"user_id": string
+                    "color"?: string | null,"created_at"?: string | null,"id"?: string,"is_default"?: boolean,"name": string,"position"?: number | null,"smart_rule"?: string | null,"task_ids"?: (string)[] | null,"type"?: string,"user_id"?: string | null
                   }
                   Update: {
-                    "color"?: string,"created_at"?: string | null,"id"?: string,"is_default"?: boolean,"name"?: string,"position"?: number | null,"smart_rule"?: string | null,"task_ids"?: (string)[],"type"?: string,"updated_at"?: string | null,"user_id"?: string
+                    "color"?: string | null,"created_at"?: string | null,"id"?: string,"is_default"?: boolean,"name"?: string,"position"?: number | null,"smart_rule"?: string | null,"task_ids"?: (string)[] | null,"type"?: string,"user_id"?: string | null
                   }
                   Relationships: [
 
                   ]
                 },"okrs": {
                   Row: {
-                    "category": string | null,"completed": boolean,"created_at": string | null,"description": string,"end_date": string,"id": string,"key_results": NonNullable<Json>,"progress": number,"start_date": string,"title": string,"updated_at": string | null,"user_id": string
+                    "category": string | null,"completed": boolean | null,"created_at": string | null,"description": string | null,"end_date": string | null,"id": string,"key_results": Json | null,"progress": number | null,"start_date": string | null,"title": string,"user_id": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "category"?: string | null,"completed"?: boolean,"created_at"?: string | null,"description"?: string,"end_date": string,"id"?: string,"key_results"?: NonNullable<Json>,"progress"?: number,"start_date": string,"title": string,"updated_at"?: string | null,"user_id": string
+                    "category"?: string | null,"completed"?: boolean | null,"created_at"?: string | null,"description"?: string | null,"end_date"?: string | null,"id"?: string,"key_results"?: Json | null,"progress"?: number | null,"start_date"?: string | null,"title": string,"user_id"?: string | null
                   }
                   Update: {
-                    "category"?: string | null,"completed"?: boolean,"created_at"?: string | null,"description"?: string,"end_date"?: string,"id"?: string,"key_results"?: NonNullable<Json>,"progress"?: number,"start_date"?: string,"title"?: string,"updated_at"?: string | null,"user_id"?: string
+                    "category"?: string | null,"completed"?: boolean | null,"created_at"?: string | null,"description"?: string | null,"end_date"?: string | null,"id"?: string,"key_results"?: Json | null,"progress"?: number | null,"start_date"?: string | null,"title"?: string,"user_id"?: string | null
                   }
                   Relationships: [
                     {
@@ -1130,14 +1130,14 @@ isOneToOne: false
                   ]
                 },"shared_tasks": {
                   Row: {
-                    "accepted_at": string | null,"created_at": string | null,"friend_id": string,"id": string,"role": string,"shared_at": string | null,"shared_by": string | null,"task_id": string
+                    "accepted_at": string | null,"friend_id": string | null,"id": string,"role": string | null,"shared_at": string | null,"shared_by": string | null,"task_id": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "accepted_at"?: string | null,"created_at"?: string | null,"friend_id": string,"id"?: string,"role"?: string,"shared_at"?: string | null,"shared_by"?: string | null,"task_id": string
+                    "accepted_at"?: string | null,"friend_id"?: string | null,"id"?: string,"role"?: string | null,"shared_at"?: string | null,"shared_by"?: string | null,"task_id"?: string | null
                   }
                   Update: {
-                    "accepted_at"?: string | null,"created_at"?: string | null,"friend_id"?: string,"id"?: string,"role"?: string,"shared_at"?: string | null,"shared_by"?: string | null,"task_id"?: string
+                    "accepted_at"?: string | null,"friend_id"?: string | null,"id"?: string,"role"?: string | null,"shared_at"?: string | null,"shared_by"?: string | null,"task_id"?: string | null
                   }
                   Relationships: [
                     {
@@ -1222,14 +1222,14 @@ isOneToOne: false
                   ]
                 },"tasks": {
                   Row: {
-                    "bookmarked": boolean,"category": string | null,"collaborator_validations": Json | null,"completed": boolean,"completed_at": string | null,"created_at": string | null,"deadline": string | null,"description": string | null,"estimated_time": number,"health": string | null,"id": string,"is_collaborative": boolean,"kr_id": string | null,"name": string,"pending_invites": (string)[] | null,"priority": number,"recurrence": string,"recurrence_parent_id": string | null,"status": string,"subtasks": NonNullable<Json>,"updated_at": string | null,"user_id": string
+                    "bookmarked": boolean | null,"category": string | null,"collaborator_validations": Json | null,"completed": boolean | null,"completed_at": string | null,"created_at": string | null,"deadline": string | null,"description": string | null,"estimated_time": number | null,"health": string | null,"id": string,"is_collaborative": boolean | null,"kr_id": string | null,"name": string,"pending_invites": (string)[] | null,"priority": number,"recurrence": string,"recurrence_parent_id": string | null,"status": string,"subtasks": NonNullable<Json>,"updated_at": string,"user_id": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "bookmarked"?: boolean,"category"?: string | null,"collaborator_validations"?: Json | null,"completed"?: boolean,"completed_at"?: string | null,"created_at"?: string | null,"deadline"?: string | null,"description"?: string | null,"estimated_time"?: number,"health"?: string | null,"id"?: string,"is_collaborative"?: boolean,"kr_id"?: string | null,"name": string,"pending_invites"?: (string)[] | null,"priority"?: number,"recurrence"?: string,"recurrence_parent_id"?: string | null,"status"?: string,"subtasks"?: NonNullable<Json>,"updated_at"?: string | null,"user_id": string
+                    "bookmarked"?: boolean | null,"category"?: string | null,"collaborator_validations"?: Json | null,"completed"?: boolean | null,"completed_at"?: string | null,"created_at"?: string | null,"deadline"?: string | null,"description"?: string | null,"estimated_time"?: number | null,"health"?: string | null,"id"?: string,"is_collaborative"?: boolean | null,"kr_id"?: string | null,"name": string,"pending_invites"?: (string)[] | null,"priority"?: number,"recurrence"?: string,"recurrence_parent_id"?: string | null,"status"?: string,"subtasks"?: NonNullable<Json>,"updated_at"?: string,"user_id"?: string | null
                   }
                   Update: {
-                    "bookmarked"?: boolean,"category"?: string | null,"collaborator_validations"?: Json | null,"completed"?: boolean,"completed_at"?: string | null,"created_at"?: string | null,"deadline"?: string | null,"description"?: string | null,"estimated_time"?: number,"health"?: string | null,"id"?: string,"is_collaborative"?: boolean,"kr_id"?: string | null,"name"?: string,"pending_invites"?: (string)[] | null,"priority"?: number,"recurrence"?: string,"recurrence_parent_id"?: string | null,"status"?: string,"subtasks"?: NonNullable<Json>,"updated_at"?: string | null,"user_id"?: string
+                    "bookmarked"?: boolean | null,"category"?: string | null,"collaborator_validations"?: Json | null,"completed"?: boolean | null,"completed_at"?: string | null,"created_at"?: string | null,"deadline"?: string | null,"description"?: string | null,"estimated_time"?: number | null,"health"?: string | null,"id"?: string,"is_collaborative"?: boolean | null,"kr_id"?: string | null,"name"?: string,"pending_invites"?: (string)[] | null,"priority"?: number,"recurrence"?: string,"recurrence_parent_id"?: string | null,"status"?: string,"subtasks"?: NonNullable<Json>,"updated_at"?: string,"user_id"?: string | null
                   }
                   Relationships: [
                     {
@@ -2007,7 +2007,7 @@ isOneToOne: false
                   ]
                 },"tasks_pending_invites": {
                   Row: {
-                    "id": string,"pending_invites": (string)[] | null,"user_id": string
+                    "id": string,"pending_invites": (string)[] | null,"user_id": string | null
                   }
                   ComputedFields: never
                   Insert: {
@@ -2030,7 +2030,7 @@ isOneToOne: false
 "friend_user_id": string | null,
 "id": string,
 "name": string,
-"user_id": string
+"user_id": string | null
             }
                           SetofOptions: {
         from: "*"
@@ -2064,17 +2064,16 @@ isOneToOne: false
                            },
 "add_task_to_list":
 { Args: { "p_list_id": string,"p_task_id": string }; Returns: {
-              "color": string,
+              "color": string | null,
 "created_at": string | null,
 "id": string,
 "is_default": boolean,
 "name": string,
 "position": number | null,
 "smart_rule": string | null,
-"task_ids": (string)[],
+"task_ids": (string)[] | null,
 "type": string,
-"updated_at": string | null,
-"user_id": string
+"user_id": string | null
             }
                           SetofOptions: {
         from: "*"
@@ -2095,7 +2094,7 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: number
                            },
 "affiliate_compute":
-{ Args: { "p_fee_bp": number,"p_fee_fixed": number,"p_gross": number,"p_rate_bp": number,"p_vat_bp": number }; Returns: Record<string, unknown>
+{ Args: { "p_deduction_bp": number,"p_fee_bp": number,"p_fee_fixed": number,"p_gross": number,"p_rate_bp": number,"p_vat_bp": number }; Returns: Record<string, unknown>
                            },
 "affiliate_process":
 { Args: { "p_rec": Omit<Database["public"]['Tables']["payment_records"]['Row'], Database["public"]['Tables']["payment_records"]['ComputedFields']> }; Returns: boolean
@@ -2253,18 +2252,18 @@ isOneToOne: false
                            },
 "get_my_tasks":
 { Args: Record<PropertyKey, never>; Returns: {
-              "bookmarked": boolean,
+              "bookmarked": boolean | null,
 "category": string | null,
 "collaborator_validations": Json | null,
-"completed": boolean,
+"completed": boolean | null,
 "completed_at": string | null,
 "created_at": string | null,
 "deadline": string | null,
 "description": string | null,
-"estimated_time": number,
+"estimated_time": number | null,
 "health": string | null,
 "id": string,
-"is_collaborative": boolean,
+"is_collaborative": boolean | null,
 "kr_id": string | null,
 "name": string,
 "pending_invites": (string)[] | null,
@@ -2273,8 +2272,8 @@ isOneToOne: false
 "recurrence_parent_id": string | null,
 "status": string,
 "subtasks": NonNullable<Json>,
-"updated_at": string | null,
-"user_id": string
+"updated_at": string,
+"user_id": string | null
             }[]
                           SetofOptions: {
         from: "*"
@@ -2412,18 +2411,18 @@ isOneToOne: false
                            },
 "get_pending_shared_tasks":
 { Args: Record<PropertyKey, never>; Returns: {
-              "bookmarked": boolean,
+              "bookmarked": boolean | null,
 "category": string | null,
 "collaborator_validations": Json | null,
-"completed": boolean,
+"completed": boolean | null,
 "completed_at": string | null,
 "created_at": string | null,
 "deadline": string | null,
 "description": string | null,
-"estimated_time": number,
+"estimated_time": number | null,
 "health": string | null,
 "id": string,
-"is_collaborative": boolean,
+"is_collaborative": boolean | null,
 "kr_id": string | null,
 "name": string,
 "pending_invites": (string)[] | null,
@@ -2432,8 +2431,8 @@ isOneToOne: false
 "recurrence_parent_id": string | null,
 "status": string,
 "subtasks": NonNullable<Json>,
-"updated_at": string | null,
-"user_id": string
+"updated_at": string,
+"user_id": string | null
             }[]
                           SetofOptions: {
         from: "*"
@@ -2660,17 +2659,16 @@ isOneToOne: false
                            },
 "remove_task_from_list":
 { Args: { "p_list_id": string,"p_task_id": string }; Returns: {
-              "color": string,
+              "color": string | null,
 "created_at": string | null,
 "id": string,
 "is_default": boolean,
 "name": string,
 "position": number | null,
 "smart_rule": string | null,
-"task_ids": (string)[],
+"task_ids": (string)[] | null,
 "type": string,
-"updated_at": string | null,
-"user_id": string
+"user_id": string | null
             }
                           SetofOptions: {
         from: "*"
@@ -2758,17 +2756,16 @@ isOneToOne: false
                            },
 "toggle_habit_completion":
 { Args: { "p_date": string,"p_habit_id": string }; Returns: {
-              "color": string,
-"completions": NonNullable<Json>,
+              "color": string | null,
+"completions": Json | null,
 "created_at": string | null,
 "description": string | null,
-"estimated_time": number,
+"estimated_time": number | null,
 "frequency": string,
-"icon": string,
+"icon": string | null,
 "id": string,
 "name": string,
-"updated_at": string | null,
-"user_id": string
+"user_id": string | null
             }
                           SetofOptions: {
         from: "*"
@@ -2783,18 +2780,18 @@ isOneToOne: false
                            },
 "toggle_task_bookmark":
 { Args: { "p_task_id": string }; Returns: {
-              "bookmarked": boolean,
+              "bookmarked": boolean | null,
 "category": string | null,
 "collaborator_validations": Json | null,
-"completed": boolean,
+"completed": boolean | null,
 "completed_at": string | null,
 "created_at": string | null,
 "deadline": string | null,
 "description": string | null,
-"estimated_time": number,
+"estimated_time": number | null,
 "health": string | null,
 "id": string,
-"is_collaborative": boolean,
+"is_collaborative": boolean | null,
 "kr_id": string | null,
 "name": string,
 "pending_invites": (string)[] | null,
@@ -2803,8 +2800,8 @@ isOneToOne: false
 "recurrence_parent_id": string | null,
 "status": string,
 "subtasks": NonNullable<Json>,
-"updated_at": string | null,
-"user_id": string
+"updated_at": string,
+"user_id": string | null
             }
                           SetofOptions: {
         from: "*"
@@ -2814,18 +2811,18 @@ isOneToOne: false
       } },
 "toggle_task_complete":
 { Args: { "p_task_id": string }; Returns: {
-              "bookmarked": boolean,
+              "bookmarked": boolean | null,
 "category": string | null,
 "collaborator_validations": Json | null,
-"completed": boolean,
+"completed": boolean | null,
 "completed_at": string | null,
 "created_at": string | null,
 "deadline": string | null,
 "description": string | null,
-"estimated_time": number,
+"estimated_time": number | null,
 "health": string | null,
 "id": string,
-"is_collaborative": boolean,
+"is_collaborative": boolean | null,
 "kr_id": string | null,
 "name": string,
 "pending_invites": (string)[] | null,
@@ -2834,8 +2831,8 @@ isOneToOne: false
 "recurrence_parent_id": string | null,
 "status": string,
 "subtasks": NonNullable<Json>,
-"updated_at": string | null,
-"user_id": string
+"updated_at": string,
+"user_id": string | null
             }
                           SetofOptions: {
         from: "*"

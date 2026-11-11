@@ -1,8 +1,8 @@
 -- GENERE par scripts/contrat-donnees.mjs. NE PAS EDITER A LA MAIN.
 -- Instantane du schema `public` d'une base vierge sur laquelle toutes les migrations de
--- supabase/migration/ ont ete rejouees (pg_dump --schema-only, normalise), suivi des objets
+-- supabase/migrations/ ont ete appliquees par la CLI (pg_dump --schema-only, normalise), suivi des objets
 -- poses hors `public` par ces migrations. La CI echoue si ce fichier diverge.
--- Regenerer : npm run contrat:generer (Docker, supabase start, node scripts/apply-migrations.mjs) ou copier les fichiers de l'artefact `contrat-donnees` du job CI.
+-- Regenerer : npm run contrat:generer (Docker, supabase start qui applique supabase/migrations/) ou copier les fichiers de l'artefact `contrat-donnees` du job CI.
 
 --
 -- PostgreSQL database dump
@@ -43,12 +43,12 @@ SET default_table_access_method = heap;
 
 CREATE TABLE public.friends (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    user_id uuid NOT NULL,
     name text NOT NULL,
     email text NOT NULL,
-    avatar text,
-    created_at timestamp with time zone DEFAULT now(),
-    friend_user_id uuid
+    avatar text DEFAULT '👤'::text,
+    user_id uuid,
+    friend_user_id uuid,
+    created_at timestamp with time zone DEFAULT now()
 );
 
 
@@ -95,8 +95,6 @@ BEGIN
   SELECT id, email, raw_user_meta_data INTO sender_user FROM auth.users WHERE id = req.sender_id;
   SELECT id, email, raw_user_meta_data INTO receiver_user FROM auth.users WHERE id = req.receiver_id;
 
-  -- M-2 (026, restauré) — sanitize avant persistance ; fallback sur la
-  -- partie locale de l'email si le nom est vide après nettoyage.
   sender_display := COALESCE(
     public.sanitize_display_name(sender_user.raw_user_meta_data->>'name'),
     split_part(sender_user.email, '@', 1)
@@ -106,7 +104,6 @@ BEGIN
     split_part(receiver_user.email, '@', 1)
   );
 
-  -- Côté destinataire : ami = expéditeur (friend_user_id = sender.id) — 034
   INSERT INTO friends (user_id, name, email, friend_user_id)
   VALUES (receiver_user.id, sender_display, sender_user.email, sender_user.id)
   ON CONFLICT (user_id, email) DO UPDATE
@@ -114,7 +111,6 @@ BEGIN
         friend_user_id = EXCLUDED.friend_user_id
   RETURNING * INTO v_friend;
 
-  -- Côté expéditeur : ami = destinataire (friend_user_id = receiver.id) — 034
   INSERT INTO friends (user_id, name, email, friend_user_id)
   VALUES (sender_user.id, receiver_display, receiver_user.email, receiver_user.id)
   ON CONFLICT (user_id, email) DO UPDATE
@@ -187,9 +183,6 @@ CREATE FUNCTION public.account_has_live_billing(p_user uuid) RETURNS boolean
              FROM public.organizations o
              JOIN public.org_subscriptions os ON os.org_id = o.id
             WHERE o.owner_id = p_user
-              -- ⚠️ Une organisation GRATUITE a aussi une ligne `active`
-              -- (défaut de la colonne) : sans ce filtre, tout propriétaire
-              -- d'organisation serait tenu pour client.
               AND os.tier_key <> 'free'
               AND os.status IN ('active', 'past_due')
          );
@@ -261,12 +254,11 @@ $$;
 
 CREATE TABLE public.lists (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    user_id uuid NOT NULL,
     name text NOT NULL,
-    color text DEFAULT 'blue'::text NOT NULL,
-    task_ids uuid[] DEFAULT '{}'::uuid[] NOT NULL,
+    color text DEFAULT '#8B5CF6'::text,
+    task_ids uuid[] DEFAULT '{}'::uuid[],
+    user_id uuid,
     created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
     type text DEFAULT 'manual'::text NOT NULL,
     smart_rule text,
     is_default boolean DEFAULT false NOT NULL,
@@ -291,8 +283,6 @@ BEGIN
     RAISE EXCEPTION 'Not authenticated';
   END IF;
 
-  -- Atomic upsert into array. `task_ids || x` followed by uniq dedup
-  -- via array_agg(DISTINCT) avoids the read-modify-write window.
   UPDATE public.lists
   SET task_ids = (
     SELECT ARRAY(SELECT DISTINCT unnest(COALESCE(task_ids, ARRAY[]::UUID[]) || p_task_id))
@@ -424,17 +414,18 @@ $$;
 
 
 --
--- Name: affiliate_compute(bigint, integer, integer, integer, integer); Type: FUNCTION; Schema: public; Owner: -
+-- Name: affiliate_compute(bigint, integer, integer, integer, integer, integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.affiliate_compute(p_gross bigint, p_vat_bp integer, p_fee_bp integer, p_fee_fixed integer, p_rate_bp integer, OUT vat_cents bigint, OUT fee_cents bigint, OUT base_cents bigint, OUT commission_cents bigint) RETURNS record
+CREATE FUNCTION public.affiliate_compute(p_gross bigint, p_vat_bp integer, p_deduction_bp integer, p_fee_bp integer, p_fee_fixed integer, p_rate_bp integer, OUT vat_cents bigint, OUT deduction_cents bigint, OUT fee_cents bigint, OUT base_cents bigint, OUT commission_cents bigint) RETURNS record
     LANGUAGE plpgsql IMMUTABLE
     SET search_path TO ''
     AS $$
 BEGIN
   vat_cents := p_gross - round(p_gross::numeric / (1 + p_vat_bp::numeric / 10000));
+  deduction_cents := round(p_gross::numeric * p_deduction_bp / 10000);
   fee_cents := round(p_gross::numeric * p_fee_bp / 10000) + p_fee_fixed;
-  base_cents := greatest(p_gross - vat_cents - fee_cents, 0);
+  base_cents := greatest(p_gross - vat_cents - deduction_cents - fee_cents, 0);
   commission_cents := round(base_cents::numeric * p_rate_bp / 10000);
 END;
 $$;
@@ -503,13 +494,15 @@ BEGIN
 
     SELECT * INTO STRICT v_set FROM public.affiliate_settings WHERE id;
     SELECT * INTO v_c FROM public.affiliate_compute(
-      p_rec.amount_cents, v_set.vat_bp, v_set.fee_bp, v_set.fee_fixed_cents, v_set.commission_bp);
+      p_rec.amount_cents, v_set.vat_bp, v_set.deduction_bp, v_set.fee_bp, v_set.fee_fixed_cents,
+      v_set.commission_bp);
 
     INSERT INTO public.affiliate_commissions (
       payment_record_id, affiliate_id, customer_id, org_id, gross_cents, vat_cents,
-      fee_cents, base_cents, rate_bp, commission_cents, occurred_at)
+      deduction_bp, deduction_cents, fee_cents, base_cents, rate_bp, commission_cents, occurred_at)
     VALUES (p_rec.id, v_aff, v_uid, p_rec.org_id, p_rec.amount_cents, v_c.vat_cents,
-      v_c.fee_cents, v_c.base_cents, v_set.commission_bp, v_c.commission_cents, p_rec.occurred_at)
+      v_set.deduction_bp, v_c.deduction_cents, v_c.fee_cents, v_c.base_cents, v_set.commission_bp,
+      v_c.commission_cents, p_rec.occurred_at)
     ON CONFLICT (payment_record_id) DO NOTHING;
     GET DIAGNOSTICS v_count = ROW_COUNT;
     RETURN v_count > 0;
@@ -532,9 +525,10 @@ BEGIN
 
     INSERT INTO public.affiliate_commissions (
       payment_record_id, affiliate_id, customer_id, org_id, gross_cents, vat_cents,
-      fee_cents, base_cents, rate_bp, commission_cents, occurred_at)
+      deduction_bp, deduction_cents, fee_cents, base_cents, rate_bp, commission_cents, occurred_at)
     VALUES (p_rec.id, v_origin.affiliate_id, v_origin.customer_id, v_origin.org_id,
-      p_rec.amount_cents, 0, 0, 0, v_origin.rate_bp, v_comm, p_rec.occurred_at)
+      p_rec.amount_cents, 0, v_origin.deduction_bp, 0, 0, 0, v_origin.rate_bp, v_comm,
+      p_rec.occurred_at)
     ON CONFLICT (payment_record_id) DO NOTHING;
     GET DIAGNOSTICS v_count = ROW_COUNT;
     RETURN v_count > 0;
@@ -601,7 +595,6 @@ CREATE FUNCTION public.assign_default_org_role() RETURNS trigger
 DECLARE
   v_role uuid;
 BEGIN
-  -- Un admin détient tout : jamais de rôle sur lui (enforce_org_member_role_write).
   IF NEW.role = 'admin' THEN
     RETURN NEW;
   END IF;
@@ -859,7 +852,6 @@ BEGIN
   IF TG_OP = 'DELETE' THEN
     RAISE EXCEPTION 'billing_acceptances is append-only';
   END IF;
-  -- Seule évolution admise : la FK remise à NULL par la suppression de l'org.
   IF NEW.id IS DISTINCT FROM OLD.id
      OR NEW.user_id IS DISTINCT FROM OLD.user_id
      OR NEW.cgv_version IS DISTINCT FROM OLD.cgv_version
@@ -1291,7 +1283,6 @@ CREATE FUNCTION public.can_manage_team_okr_audience(p_okr uuid) RETURNS boolean
        AND (
          public.is_org_admin(o.org_id)
          OR (
-           -- my_org_perm exige déjà un membre actif (is_org_member).
            public.my_org_perm(o.org_id, 'okr.create')
            AND (o.created_by = (SELECT auth.uid()) OR public.can_access_team_okr(o.id))
          )
@@ -1431,49 +1422,37 @@ BEGIN
   IF auth.uid() IS NULL THEN
     RAISE EXCEPTION 'Not authenticated';
   END IF;
-
   SELECT * INTO v_link FROM public.org_invite_links WHERE id = p_token FOR UPDATE;
-
   IF NOT FOUND OR v_link.claimed_at IS NOT NULL OR v_link.expires_at < NOW() THEN
     RAISE EXCEPTION 'invalid_link';
   END IF;
-
   IF v_link.created_by = auth.uid() THEN
     RAISE EXCEPTION 'invalid_link';
   END IF;
-
-  -- Mig. 161 : un lien nominatif ne sert qu'à son destinataire.
   IF v_link.email IS NOT NULL AND lower(COALESCE(auth.email(), '')) <> lower(v_link.email) THEN
     RAISE EXCEPTION 'invalid_link';
   END IF;
-
-  -- Mig. 210 : un lien ouvert ne se réclame plus si « domaine vérifié seulement ».
   IF v_link.email IS NULL AND EXISTS (
     SELECT 1 FROM public.org_settings s WHERE s.org_id = v_link.org_id AND s.invite_domain_only
   ) THEN
     RAISE EXCEPTION 'open_link_not_allowed';
   END IF;
-
   SELECT * INTO v_org FROM public.organizations WHERE id = v_link.org_id;
   IF NOT FOUND THEN
     RAISE EXCEPTION 'invalid_link';
   END IF;
-
   IF EXISTS (
     SELECT 1 FROM public.organization_members
     WHERE public.organization_members.org_id = v_link.org_id AND user_id = auth.uid()
   ) THEN
     RAISE EXCEPTION 'Already a member of this organization';
   END IF;
-
   IF NOT public.org_member_can_invite(v_link.org_id, v_link.created_by) THEN
     RAISE EXCEPTION 'invalid_link';
   END IF;
-
   IF NOT public.org_seats_allowed(v_link.org_id) THEN
     RAISE EXCEPTION 'seat_limit_reached';
   END IF;
-
   INSERT INTO public.organization_members (org_id, user_id, role, manager_id, access_expires_at)
   VALUES (
     v_link.org_id,
@@ -1486,19 +1465,15 @@ BEGIN
     CASE WHEN v_link.access_days IS NULL THEN NULL
          ELSE now() + make_interval(days => v_link.access_days) END
   );
-
   INSERT INTO public.org_team_members (team_id, org_id, user_id)
     SELECT t.id, v_link.org_id, auth.uid()
       FROM public.org_teams t
      WHERE t.org_id = v_link.org_id AND t.id = ANY (v_link.team_ids)
   ON CONFLICT DO NOTHING;
-
   UPDATE public.org_invite_links
   SET claimed_at = NOW(), claimed_by = auth.uid()
   WHERE id = p_token;
-
   UPDATE public.profiles SET account_type = 'business' WHERE id = auth.uid();
-
   RETURN QUERY SELECT v_org.id, v_org.name;
 END;
 $$;
@@ -1558,7 +1533,6 @@ BEGIN
     split_part(v_claimer_user.email, '@', 1)
   );
 
-  -- Avatar du propriétaire (source publique = profiles ; fallback metadata).
   SELECT avatar_url INTO v_owner_avatar FROM public.profiles WHERE id = v_link.owner_id;
   IF v_owner_avatar IS NULL THEN
     v_owner_avatar := v_owner_user.raw_user_meta_data->>'avatar_url';
@@ -1617,8 +1591,8 @@ CREATE FUNCTION public.consume_email_lookup_quota(p_cost integer) RETURNS void
     SET search_path TO ''
     AS $$
 DECLARE
-  c_cap        CONSTANT INTEGER := 200;   -- par compte / 24 h
-  c_global_cap CONSTANT INTEGER := 2000;  -- tous comptes confondus / 1 h
+  c_cap        CONSTANT INTEGER := 200;
+  c_global_cap CONSTANT INTEGER := 2000;
   v_start TIMESTAMPTZ;
   v_count INTEGER;
   v_hour  TIMESTAMPTZ;
@@ -1626,7 +1600,6 @@ DECLARE
 BEGIN
   IF p_cost <= 0 THEN RETURN; END IF;
 
-  -- ── Plafond global horaire (AUD-08) ──
   v_hour := date_trunc('hour', NOW());
   INSERT INTO public.email_lookup_global (window_start, lookups_in_window)
   VALUES (v_hour, 0)
@@ -1645,10 +1618,8 @@ BEGIN
   SET lookups_in_window = v_total + p_cost
   WHERE window_start = v_hour;
 
-  -- Rétention : on ne garde que 48 h de fenêtres.
   DELETE FROM public.email_lookup_global WHERE window_start < NOW() - INTERVAL '48 hours';
 
-  -- ── Plafond par compte (mig. 083, inchangé) ──
   INSERT INTO public.email_lookup_quota (user_id, window_start, lookups_in_window)
   VALUES (auth.uid(), NOW(), 0)
   ON CONFLICT (user_id) DO NOTHING;
@@ -1686,8 +1657,6 @@ DECLARE
   v_hits INTEGER;
 BEGIN
   IF p_key IS NULL OR length(p_key) = 0 OR p_limit < 1 THEN
-    -- Refuser plutôt que laisser passer : une clé absente veut dire qu'on n'a
-    -- pas su identifier l'appelant, pas qu'il a droit à tout.
     RETURN FALSE;
   END IF;
 
@@ -1695,23 +1664,14 @@ BEGIN
   VALUES (p_key, now(), 1, now())
   ON CONFLICT (bucket_key) DO UPDATE
     SET
-      -- Fenêtre expirée → elle glisse et le compteur repart à 1.
       window_start = CASE
         WHEN rl.window_start < now() - p_window THEN now()
         ELSE rl.window_start
       END,
       hits = CASE
         WHEN rl.window_start < now() - p_window THEN 1
-        -- 🔴 LA BORNE EST `> p_limit`, PAS `>= p_limit`, et la première
-        -- écriture de cette migration avait l'erreur. Avec `>=` et un plafond
-        -- de 3 : le 3ᵉ appel écrit 3 (accepté, correct), puis le 4ᵉ trouve
-        -- `hits >= 3`, laisse 3, et `3 <= 3` le déclare ACCEPTÉ — le plafond
-        -- ne refusait jamais rien. Avec `>`, le 4ᵉ écrit 4, `4 <= 3` le
-        -- refuse, et le 5ᵉ trouve `4 > 3` et laisse 4.
-        --
-        -- Le compteur se stabilise donc à `p_limit + 1` : il refuse, et il
-        -- cesse de croître. C'est voulu — une valeur qui monterait sans fin
-        -- n'apporte rien et déborderait un `INTEGER` sur un abus long.
+        -- La borne est `>`, pas `>=` : avec `>=` le compteur gele sur le
+        -- plafond, `hits <= limit` reste vrai, et le plafond ne refuse JAMAIS.
         WHEN rl.hits > p_limit THEN rl.hits
         ELSE rl.hits + 1
       END,
@@ -1738,7 +1698,6 @@ BEGIN
   IF auth.uid() IS NULL THEN
     RAISE EXCEPTION 'Not authenticated';
   END IF;
-  -- Un admin place où il veut ; un membre avec member.invite, nulle part.
   IF NOT (
     public.is_org_admin(p_org)
     OR (p_manager IS NULL AND public.my_org_perm(p_org, 'member.invite'))
@@ -1752,8 +1711,6 @@ BEGIN
               WHERE NOT EXISTS (SELECT 1 FROM public.org_teams WHERE id = t AND org_id = p_org)) THEN
     RAISE EXCEPTION 'team_not_in_org' USING ERRCODE = 'P0001';
   END IF;
-  -- Une équipe donne de la visibilité : un non-admin n'y fait entrer
-  -- l'invité que s'il gère lui-même cette équipe (admin, créateur, responsable).
   IF NOT public.is_org_admin(p_org)
      AND EXISTS (SELECT 1 FROM unnest(COALESCE(p_team_ids, '{}')) t WHERE NOT public.can_manage_team(t)) THEN
     RAISE EXCEPTION 'not_allowed' USING ERRCODE = '42501';
@@ -1819,39 +1776,26 @@ CREATE FUNCTION public.create_organization(p_name text) RETURNS public.organizat
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
-DECLARE
-  v_name TEXT;
-  v_code TEXT;
-  v_org public.organizations;
+DECLARE v_name TEXT; v_code TEXT; v_org public.organizations;
 BEGIN
-  IF auth.uid() IS NULL THEN
-    RAISE EXCEPTION 'Not authenticated';
-  END IF;
-
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Not authenticated'; END IF;
   v_name := public.sanitize_display_name(p_name);
   IF v_name IS NULL OR char_length(v_name) < 2 THEN
     RAISE EXCEPTION 'Invalid organization name';
   END IF;
-
   FOR attempt IN 1..5 LOOP
     v_code := public.generate_join_code();
     BEGIN
       INSERT INTO public.organizations (name, join_code, owner_id)
-      VALUES (v_name, v_code, auth.uid())
-      RETURNING * INTO v_org;
+      VALUES (v_name, v_code, auth.uid()) RETURNING * INTO v_org;
       EXIT;
     EXCEPTION WHEN unique_violation THEN
-      IF attempt = 5 THEN
-        RAISE EXCEPTION 'Could not generate a unique join code';
-      END IF;
+      IF attempt = 5 THEN RAISE EXCEPTION 'Could not generate a unique join code'; END IF;
     END;
   END LOOP;
-
   INSERT INTO public.organization_members (org_id, user_id, role)
   VALUES (v_org.id, auth.uid(), 'admin');
-
   UPDATE public.profiles SET account_type = 'business' WHERE id = auth.uid();
-
   RETURN v_org;
 END;
 $$;
@@ -2204,36 +2148,10 @@ BEGIN
   SELECT owner_id INTO v_owner
     FROM public.organizations WHERE id = p_org;
 
-  -- Organisation inexistante et organisation d'autrui rendent le MÊME refus :
-  -- les distinguer serait un oracle d'existence sur `organizations`.
   IF v_owner IS NULL OR v_owner <> auth.uid() THEN
     RAISE EXCEPTION 'not_org_owner';
   END IF;
 
-  -- 🔴 CE REFUS EST LE FILET SERVEUR, PAS LE PARCOURS.
-  --
-  -- L'arbitrage du 2026-09-03 décide : « la suppression résilie ET REMBOURSE »
-  -- — on résilie, on rembourse la période en cours, puis on supprime, EN UN
-  -- SEUL GESTE, « aucun débit orphelin ». C'est ce que fait l'écran :
-  -- `OrganizationPage` appelle `stripe-org-refund` (C-65) et n'enchaîne sur
-  -- `delete_organization` QUE si le remboursement a réussi.
-  --
-  -- Cette garde-ci ne double pas ce parcours, elle le rend obligatoire. La RPC
-  -- est la seule porte vers un DELETE sur `organizations` (aucune policy
-  -- DELETE) : sans elle, un appel direct — devtools, script, futur écran
-  -- distrait — supprimerait l'organisation en laissant l'abonnement courir.
-  -- Un contrôle qui vit dans l'écran seul n'est pas un contrôle.
-  --
-  -- ⚠️ Elle ne se déclenche donc JAMAIS sur le parcours nominal : au moment où
-  --    `delete_organization` est appelée, `stripe-org-refund` a déjà résilié,
-  --    et le webhook a passé la ligne en `cancelled`. Une garde qui ne se
-  --    déclenche jamais sur le chemin normal est exactement ce qu'on veut sur
-  --    un chemin qui déplace de l'argent.
-  --
-  -- Sans elle : on supprimerait la ligne que le webhook Stripe vient mettre à
-  -- jour, le prochain event tenterait un upsert sur une clé étrangère morte,
-  -- et le client continuerait d'être débité pour une organisation qui n'existe
-  -- plus.
   IF EXISTS (
     SELECT 1 FROM public.org_subscriptions
      WHERE org_id = p_org
@@ -2289,9 +2207,6 @@ BEGIN
     ON CONFLICT (okr_id, team_id) DO NOTHING;
   END IF;
 
-  -- Sans cible, seuls les OKR PARTAGÉS avec une autre équipe perdent ce lien :
-  -- ils gardent une audience fermée. Un OKR dont c'est le seul lien reste
-  -- rattaché, et la clé étrangère refuse la suppression plus bas.
   DELETE FROM public.team_okr_teams l
    WHERE l.team_id = p_team
      AND EXISTS (SELECT 1 FROM public.team_okr_teams o
@@ -2358,8 +2273,6 @@ BEGIN
     RAISE EXCEPTION 'A category must stay within a single account';
   END IF;
 
-  -- Remontée des ancêtres : cycle et profondeur d'un seul parcours.
-  -- `hops` borne le parcours même si un cycle existait déjà en données.
   ancestor := NEW.parent_id;
   WHILE ancestor IS NOT NULL AND hops <= 64 LOOP
     IF ancestor = NEW.id THEN
@@ -2373,20 +2286,6 @@ BEGIN
     hops := hops + 1;
   END LOOP;
 
-  -- 🔴 LA PROFONDEUR DU NŒUD ÉCRIT NE SUFFIT PAS.
-  -- La boucle ci-dessus ne mesure que `NEW`. Déplacer une branche haute de 4
-  -- crans sous un nœud au niveau 8 met ses FEUILLES au niveau 12, alors que
-  -- `NEW` lui-même n'atteint que 9 : les lignes descendantes ne sont pas
-  -- écrites, donc le trigger ne part jamais pour elles. Il faut ajouter la
-  -- HAUTEUR de la branche déplacée. (`wouldExceedMaxDepth` en est le miroir
-  -- client, dans `src/modules/categories/tree.ts`.)
-  --
-  -- ⚠️ `node_depth`, et surtout PAS `depth` : c'est la collision avec la
-  -- variable PL/pgSQL du même nom qui a fait échouer la 143 (et qui a
-  -- survécu en prod jusqu'à cette migration malgré la 144).
-  --
-  -- ⚠️ `node_depth < 64` borne la descente : le trigger interdit les cycles,
-  -- mais une base restaurée ne doit pas pouvoir faire boucler la récursion.
   WITH RECURSIVE branch(node_id, node_depth) AS (
     SELECT NEW.id, 1
     UNION ALL
@@ -2617,7 +2516,6 @@ BEGIN
 
   NEW.display_name := public.sanitize_display_name(NEW.display_name);
 
-  -- AUD-03 : hôte non autorisé ou valeur démesurée → pas d'avatar.
   IF NEW.avatar_url IS NOT NULL
      AND (length(NEW.avatar_url) > 60000 OR NOT public.is_allowed_avatar_url(NEW.avatar_url)) THEN
     NEW.avatar_url := NULL;
@@ -2672,9 +2570,6 @@ BEGIN
     hops := hops + 1;
   END LOOP;
 
-  -- Hauteur de la branche déplacée, pas seulement la profondeur du nœud écrit
-  -- (même correctif que la mig. 147, avec le même `node_id`/`node_depth`
-  -- pour ne jamais rejouer la collision de nom qui l'a fait échouer deux fois).
   WITH RECURSIVE branch(node_id, node_depth) AS (
     SELECT NEW.id, 1
     UNION ALL
@@ -2874,7 +2769,6 @@ BEGIN
       NEW.created_by := auth.uid();
     END IF;
   ELSIF TG_OP = 'UPDATE' THEN
-    -- created_by immuable côté client (transfert service_role toléré : NULL).
     IF NEW.created_by IS DISTINCT FROM OLD.created_by AND auth.uid() IS NOT NULL THEN
       NEW.created_by := OLD.created_by;
     END IF;
@@ -2942,9 +2836,6 @@ BEGIN
   IF TG_OP = 'UPDATE'
      AND OLD.org_id IS NOT NULL
      AND NEW.org_id IS NULL
-     -- Le reste de la ligne doit être STRICTEMENT identique. On compare les
-     -- colonnes une à une plutôt que `NEW IS DISTINCT FROM OLD` : une colonne
-     -- ajoutée plus tard doit faire ÉCHOUER la comparaison, pas passer.
      AND NEW.id                  IS NOT DISTINCT FROM OLD.id
      AND NEW.user_id             IS NOT DISTINCT FROM OLD.user_id
      AND NEW.tier_key            IS NOT DISTINCT FROM OLD.tier_key
@@ -2953,8 +2844,6 @@ BEGIN
      AND NEW.waives_withdrawal   IS NOT DISTINCT FROM OLD.waives_withdrawal
      AND NEW.consented_at        IS NOT DISTINCT FROM OLD.consented_at
   THEN
-    -- Détachement par `ON DELETE SET NULL` : l'organisation disparaît, la
-    -- preuve reste.
     RETURN NEW;
   END IF;
 
@@ -3061,15 +2950,13 @@ CREATE FUNCTION public.generate_join_code() RETURNS text
     SET search_path TO ''
     AS $$
 DECLARE
-  v_alphabet CONSTANT TEXT := 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';  -- 31 chars
-  v_code TEXT := 'COSMO-';
-  v_byte INT;
-  i INT;
+  v_alphabet CONSTANT TEXT := 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  v_code TEXT := 'COSMO-'; v_byte INT; i INT;
 BEGIN
   FOR i IN 1..10 LOOP
     LOOP
       v_byte := get_byte(extensions.gen_random_bytes(1), 0);
-      EXIT WHEN v_byte < 248;   -- rejet → tirage uniforme sur 31 symboles
+      EXIT WHEN v_byte < 248;
     END LOOP;
     v_code := v_code || substr(v_alphabet, (v_byte % 31) + 1, 1);
   END LOOP;
@@ -3976,39 +3863,31 @@ COMMENT ON FUNCTION public.get_my_org_removal_notices() IS 'Retraits d''entrepri
 
 CREATE TABLE public.tasks (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    user_id uuid NOT NULL,
     name text NOT NULL,
     description text,
     priority integer DEFAULT 3 NOT NULL,
     category uuid,
     deadline timestamp with time zone,
-    estimated_time integer DEFAULT 0 NOT NULL,
-    bookmarked boolean DEFAULT false NOT NULL,
-    completed boolean DEFAULT false NOT NULL,
+    estimated_time integer DEFAULT 30,
+    bookmarked boolean DEFAULT false,
+    completed boolean DEFAULT false,
     completed_at timestamp with time zone,
-    is_collaborative boolean DEFAULT false NOT NULL,
+    is_collaborative boolean DEFAULT false,
     pending_invites text[] DEFAULT '{}'::text[],
     collaborator_validations jsonb DEFAULT '{}'::jsonb,
+    user_id uuid,
     created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
     subtasks jsonb DEFAULT '[]'::jsonb NOT NULL,
     kr_id text,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
     recurrence text DEFAULT 'none'::text NOT NULL,
     recurrence_parent_id uuid,
     status text DEFAULT 'todo'::text NOT NULL,
     health text,
     CONSTRAINT tasks_health_check CHECK (((health IS NULL) OR (health = ANY (ARRAY['on_track'::text, 'at_risk'::text, 'off_track'::text])))),
-    CONSTRAINT tasks_priority_check CHECK (((priority >= 0) AND (priority <= 5))),
     CONSTRAINT tasks_recurrence_check CHECK ((recurrence = ANY (ARRAY['none'::text, 'daily'::text, 'weekly'::text, 'monthly'::text]))),
     CONSTRAINT tasks_status_check CHECK ((status = ANY (ARRAY['todo'::text, 'in_progress'::text, 'blocked'::text, 'done'::text])))
 );
-
-
---
--- Name: COLUMN tasks.priority; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.tasks.priority IS 'Priorité FACULTATIVE (mig. 249) : 1 (P1, la plus urgente) à 5, 0 = aucune. Rangée après P5 dans tous les tris (src/lib/task-ordering.ts).';
 
 
 --
@@ -4016,20 +3895,6 @@ COMMENT ON COLUMN public.tasks.priority IS 'Priorité FACULTATIVE (mig. 249) : 1
 --
 
 COMMENT ON COLUMN public.tasks.category IS 'Catégorie de la tâche. NULL = aucune. FK vers categories(id), ON DELETE SET NULL : supprimer une catégorie détache, ne supprime jamais la tâche.';
-
-
---
--- Name: COLUMN tasks.deadline; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.tasks.deadline IS 'Échéance FACULTATIVE (mig. 249) : instant de minuit du jour choisi, dans le fuseau de la personne (src/lib/deadline.ts). NULL = aucune échéance.';
-
-
---
--- Name: COLUMN tasks.updated_at; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.tasks.updated_at IS 'Dernière modification (trigger serveur — lecture seule client, #40).';
 
 
 --
@@ -4047,6 +3912,13 @@ COMMENT ON COLUMN public.tasks.kr_id IS 'Id du Key Result (okrs.key_results JSON
 
 
 --
+-- Name: COLUMN tasks.updated_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.tasks.updated_at IS 'Dernière modification (trigger serveur — lecture seule client, #40).';
+
+
+--
 -- Name: COLUMN tasks.recurrence; Type: COMMENT; Schema: public; Owner: -
 --
 
@@ -4057,7 +3929,7 @@ COMMENT ON COLUMN public.tasks.recurrence IS 'Récurrence de la tâche (#26) : n
 -- Name: COLUMN tasks.recurrence_parent_id; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.tasks.recurrence_parent_id IS 'Occurrence dont cette tâche est issue (récurrence). Clé d''idempotence : l''index unique ux_tasks_recurrence_parent garantit AU PLUS UN enfant par parent, donc recocher deux fois ne duplique jamais.';
+COMMENT ON COLUMN public.tasks.recurrence_parent_id IS 'Occurrence dont cette tache est issue (recurrence). Cle d''idempotence : l''index unique ux_tasks_recurrence_parent garantit AU PLUS UN enfant par parent, donc recocher deux fois ne duplique jamais.';
 
 
 --
@@ -4320,9 +4192,9 @@ CREATE TABLE public.team_tasks (
     assignee_ids uuid[] DEFAULT '{}'::uuid[] NOT NULL,
     status text DEFAULT 'todo'::text NOT NULL,
     category_id uuid,
+    start_date date,
     deleted_at timestamp with time zone,
     deleted_by uuid,
-    start_date date,
     custom_status_id uuid,
     health text,
     validator_id uuid,
@@ -4338,7 +4210,7 @@ CREATE TABLE public.team_tasks (
 -- Name: COLUMN team_tasks.status; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.team_tasks.status IS 'Statut de flux : todo | in_progress | review | blocked | done. Synchronisé avec `completed` par trigger dans les deux sens (mig. 091) — `completed` reste la colonne lue par le front existant.';
+COMMENT ON COLUMN public.team_tasks.status IS 'Statut de flux : todo | in_progress | review | blocked | done. Synchronisé avec `completed` par trigger dans les deux sens (mig. 091).';
 
 
 --
@@ -4554,10 +4426,6 @@ CREATE FUNCTION public.get_support_stats() RETURNS jsonb
 DECLARE
   v_out JSONB;
 BEGIN
-  -- 🔴 `is_admin()` et jamais `admin_allowlisted()` : la première répond à
-  -- « cette requête est-elle autorisée » (allowlist ET session `aal2`), la
-  -- seconde à « ce compte est-il admin » et sert à l'AFFICHAGE. Les
-  -- intervertir annule la mig. 131.
   IF NOT public.is_admin() THEN
     RAISE EXCEPTION 'forbidden' USING ERRCODE = '42501';
   END IF;
@@ -4572,9 +4440,6 @@ BEGIN
                             WHERE first_response_at IS NOT NULL),
       'resolved',        (SELECT COUNT(*) FROM public.support_reports
                             WHERE resolved_at IS NOT NULL),
-      -- 🔴 LE CHIFFRE QUI COMPTE LE PLUS : combien attendent encore, et
-      -- depuis quand. Un compteur de volume sans âge dirait « on en reçoit
-      -- cinq par semaine » sans dire qu'aucun n'a jamais reçu de réponse.
       'awaiting',        (SELECT COUNT(*) FROM public.support_reports
                             WHERE first_response_at IS NULL),
       'oldest_awaiting_days', (
@@ -5001,37 +4866,27 @@ BEGIN
   IF auth.uid() IS NULL THEN
     RAISE EXCEPTION 'Not authenticated';
   END IF;
-
   IF p_invitee = auth.uid() THEN
     RAISE EXCEPTION 'cannot_invite_self';
   END IF;
-
   IF NOT public.is_org_member(p_org) THEN
     RAISE EXCEPTION 'not_a_member';
   END IF;
-
-  -- Autorité pour faire grossir l'organisation (B-2) : admin, ou droit
-  -- member.invite (mig. 229, la hiérarchie ne compte plus).
   IF NOT (public.is_org_admin(p_org) OR public.my_org_perm(p_org, 'member.invite')) THEN
     RAISE EXCEPTION 'not_allowed_to_invite';
   END IF;
-
-  -- Même modèle de confiance que le partage de tâches (mig. 027/045) :
-  -- amitié CONFIRMÉE uniquement.
   IF NOT EXISTS (
     SELECT 1 FROM public.friends f
     WHERE f.user_id = auth.uid() AND f.friend_user_id = p_invitee
   ) THEN
     RAISE EXCEPTION 'not_a_friend';
   END IF;
-
   IF EXISTS (
     SELECT 1 FROM public.organization_members
     WHERE org_id = p_org AND user_id = p_invitee
   ) THEN
     RAISE EXCEPTION 'already_a_member';
   END IF;
-
   INSERT INTO public.org_invitations (org_id, inviter_id, invitee_id)
   VALUES (p_org, auth.uid(), p_invitee)
   ON CONFLICT (org_id, invitee_id) DO UPDATE
@@ -5040,7 +4895,6 @@ BEGIN
         accepted_at = NULL,
         declined_at = NULL
   RETURNING id INTO v_id;
-
   RETURN v_id;
 END;
 $$;
@@ -5228,9 +5082,9 @@ BEGIN
     VALUES (NEW.id, NEW.org_id, v_actor, 'project', OLD.project_id::text, NEW.project_id::text);
   END IF;
 
-  -- `name` est journalisé sans les valeurs : savoir QUE le titre a changé
-  -- suffit, et stocker les anciens libellés ferait du journal une copie
-  -- intégrale du contenu, avec la charge RGPD correspondante.
+  -- `name` sans valeurs : savoir QUE le titre a changé suffit ; stocker les
+  -- anciens libellés ferait du journal une copie du contenu, avec la charge
+  -- RGPD correspondante.
   IF NEW.name IS DISTINCT FROM OLD.name THEN
     INSERT INTO public.team_task_activity (task_id, org_id, actor_id, field, old_value, new_value)
     VALUES (NEW.id, NEW.org_id, v_actor, 'name', NULL, NULL);
@@ -5660,7 +5514,6 @@ BEGIN
 
   FOREACH v_mentioned IN ARRAY NEW.mentions
   LOOP
-    -- Se mentionner soi-même ne notifie pas.
     CONTINUE WHEN v_mentioned = NEW.author_id;
     INSERT INTO public.org_notifications (org_id, user_id, actor_id, kind, task_id)
     VALUES (v_org, v_mentioned, NEW.author_id, 'mention', NEW.task_id);
@@ -5837,11 +5690,8 @@ DECLARE
   v_new_assignee UUID;
   v_added UUID[];
 BEGIN
-  -- Seuls les assignés AJOUTÉS sont notifiés : re-notifier tout le monde à
-  -- chaque édition de la tâche transformerait la boîte en bruit.
-  --
-  -- Le tableau est calculé dans une variable AVANT la boucle : `FOREACH ... IN
-  -- ARRAY (SELECT ...)` n'est pas une expression de tableau valide en plpgsql.
+  -- Seuls les assignes AJOUTES sont notifies : re-notifier tout le monde a
+  -- chaque edition transformerait la boite en bruit.
   SELECT COALESCE(array_agg(x), ARRAY[]::uuid[])
     INTO v_added
     FROM unnest(COALESCE(NEW.assignee_ids, ARRAY[]::uuid[])) AS x
@@ -5853,7 +5703,6 @@ BEGIN
 
   FOREACH v_new_assignee IN ARRAY v_added
   LOOP
-    -- S'auto-assigner ne notifie pas : on sait ce qu'on vient d'écrire.
     CONTINUE WHEN v_new_assignee = v_actor;
     INSERT INTO public.org_notifications (org_id, user_id, actor_id, kind, task_id)
     VALUES (NEW.org_id, v_new_assignee, v_actor, 'task_assigned', NEW.id);
@@ -6329,19 +6178,16 @@ BEGIN
   SELECT enabled INTO v_enforced FROM public.billing_flags
   WHERE key = 'enterprise_seat_limit';
   IF v_enforced IS DISTINCT FROM true THEN
-    RETURN true; -- gate dormant : aucune limite tant que non activé
+    RETURN true;
   END IF;
 
   SELECT max_members, status INTO v_quota, v_status
   FROM public.org_subscriptions WHERE org_id = p_org;
 
-  -- Pas d'abonnement, ou abonnement non actif (impayé, résilié) → palier
-  -- gratuit. On ne retire JAMAIS de membre : seule la croissance est bloquée.
   IF v_status IS DISTINCT FROM 'active' THEN
     v_quota := 5;
   END IF;
 
-  -- Palier sans plafond.
   IF v_quota IS NULL THEN
     RETURN true;
   END IF;
@@ -6837,7 +6683,7 @@ $$;
 -- Name: FUNCTION prune_processed_stripe_events(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.prune_processed_stripe_events() IS 'Purge les marqueurs d''idempotence Stripe de plus de 90 jours. Stripe cesse de re-livrer après ~3 j : au-delà, la ligne ne protège plus de rien.';
+COMMENT ON FUNCTION public.prune_processed_stripe_events() IS 'Purge les marqueurs d''idempotence Stripe de plus de 90 jours. Stripe cesse de re-livrer apres ~3 j : au-dela, la ligne ne protege plus de rien.';
 
 
 --
@@ -7092,13 +6938,9 @@ DECLARE
 BEGIN
   IF p_device_id IS NULL THEN RETURN; END IF;
 
-  -- Rétention 90 j pour les visites non converties (mig. 084, inchangé)…
   DELETE FROM public.demo_devices
   WHERE first_seen_at < NOW() - INTERVAL '90 days' AND converted_at IS NULL;
 
-  -- …et 400 j pour les visites converties, qui n'avaient AUCUNE borne
-  -- (mig. 114). Même seuil que user_activity_days, pour n'avoir qu'une seule
-  -- durée à publier dans la politique de confidentialité.
   DELETE FROM public.demo_devices
   WHERE first_seen_at < NOW() - INTERVAL '400 days';
 
@@ -7106,9 +6948,6 @@ BEGIN
   FROM public.demo_devices
   WHERE first_seen_at > NOW() - INTERVAL '1 minute';
 
-  -- Au-delà du plafond on absorbe silencieusement : télémétrie best-effort,
-  -- elle ne doit ni échouer bruyamment ni servir de primitive d'écriture
-  -- anonyme illimitée.
   IF v_recent >= c_per_minute_cap THEN RETURN; END IF;
 
   INSERT INTO public.demo_devices (device_id) VALUES (p_device_id)
@@ -7151,27 +6990,20 @@ CREATE FUNCTION public.regenerate_join_code(p_org uuid) RETURNS text
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
-DECLARE
-  v_code TEXT;
+DECLARE v_code TEXT;
 BEGIN
-  IF auth.uid() IS NULL THEN
-    RAISE EXCEPTION 'Not authenticated';
-  END IF;
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Not authenticated'; END IF;
   IF NOT public.is_org_admin(p_org) THEN
     RAISE EXCEPTION 'Only an admin can regenerate the join code';
   END IF;
-
   PERFORM set_config('cosmo.allow_code_regen', 'on', true);
-
   FOR attempt IN 1..5 LOOP
     v_code := public.generate_join_code();
     BEGIN
       UPDATE public.organizations SET join_code = v_code WHERE id = p_org;
       RETURN v_code;
     EXCEPTION WHEN unique_violation THEN
-      IF attempt = 5 THEN
-        RAISE EXCEPTION 'Could not generate a unique join code';
-      END IF;
+      IF attempt = 5 THEN RAISE EXCEPTION 'Could not generate a unique join code'; END IF;
     END;
   END LOOP;
   RETURN v_code;
@@ -7219,17 +7051,12 @@ BEGIN
     RAISE EXCEPTION 'Not authenticated';
   END IF;
 
-  -- Récupère l'email du caller (pour identifier la ligne réciproque) +
-  -- l'email du friend ciblé. Le SELECT est scopé `user_id = v_caller`
-  -- donc le caller ne peut cibler qu'une de ses propres lignes.
   SELECT f.email INTO v_friend_email
   FROM public.friends f
   WHERE f.id = p_friend_row_id
     AND f.user_id = v_caller;
 
   IF v_friend_email IS NULL THEN
-    -- Ligne inexistante ou pas owned par le caller — no-op silencieux
-    -- (idempotent, ne leak pas d'info sur l'existence d'autres lignes).
     RETURN;
   END IF;
 
@@ -7237,7 +7064,6 @@ BEGIN
   FROM auth.users
   WHERE id = v_caller;
 
-  -- Suppression atomique des deux côtés
   DELETE FROM public.friends
   WHERE id = p_friend_row_id
     AND user_id = v_caller;
@@ -7246,10 +7072,6 @@ BEGIN
     DELETE FROM public.friends
     WHERE lower(email) = lower(v_caller_email)
       AND user_id <> v_caller
-      AND lower(email) = lower(v_caller_email)
-      -- Restreint au "vrai" ami réciproque : celui dont l'email caller
-      -- pointe ET dont la ligne est owned par l'user dont l'email matche
-      -- v_friend_email.
       AND user_id IN (
         SELECT id FROM auth.users WHERE lower(email) = lower(v_friend_email)
       );
@@ -7395,7 +7217,6 @@ DECLARE
   v_demoted BIGINT := 0;
 BEGIN
   IF p_apply THEN
-    -- ── Particuliers : les deux colonnes, rien d'autre ──────────────
     UPDATE public.subscriptions
        SET stripe_customer_id     = NULL,
            stripe_subscription_id = NULL,
@@ -7403,28 +7224,17 @@ BEGIN
      WHERE stripe_customer_id IS NOT NULL
         OR stripe_subscription_id IS NOT NULL;
     GET DIAGNOSTICS v_perso = ROW_COUNT;
-
-    -- ── Organisations : le palier d'abord, tant que le lien existe ──
-    --
-    -- ⚠️ L'ORDRE COMPTE. La condition de rétrogradation est « la ligne portait
-    -- un lien Stripe » : si on effaçait les identifiants en premier, plus
-    -- aucune ligne ne satisfairait cette condition et les paliers payants
-    -- resteraient tels quels, sans rien derrière pour les payer.
     UPDATE public.org_subscriptions
        SET tier_key           = 'free',
            max_members        = 5,
            status             = 'cancelled',
            current_period_end = NULL,
            discount_code      = NULL,
-           -- Colonne DESCRIPTIVE (mig. 123) : elle dit ce qui est facturé.
-           -- Laisser 'yearly' sur une org qu'on vient de rendre gratuite
-           -- décrirait une facturation annuelle que plus rien n'émet.
            billing_interval   = 'monthly',
            updated_at         = now()
      WHERE (stripe_customer_id IS NOT NULL OR stripe_subscription_id IS NOT NULL)
        AND tier_key <> 'free';
     GET DIAGNOSTICS v_demoted = ROW_COUNT;
-
     UPDATE public.org_subscriptions
        SET stripe_customer_id     = NULL,
            stripe_subscription_id = NULL,
@@ -7433,18 +7243,14 @@ BEGIN
         OR stripe_subscription_id IS NOT NULL;
     GET DIAGNOSTICS v_org = ROW_COUNT;
   ELSE
-    -- À blanc : exactement les mêmes prédicats, aucune écriture.
     SELECT count(*) INTO v_perso FROM public.subscriptions
      WHERE stripe_customer_id IS NOT NULL OR stripe_subscription_id IS NOT NULL;
-
     SELECT count(*) INTO v_demoted FROM public.org_subscriptions
      WHERE (stripe_customer_id IS NOT NULL OR stripe_subscription_id IS NOT NULL)
        AND tier_key <> 'free';
-
     SELECT count(*) INTO v_org FROM public.org_subscriptions
      WHERE stripe_customer_id IS NOT NULL OR stripe_subscription_id IS NOT NULL;
   END IF;
-
   RETURN QUERY
   SELECT 'public.subscriptions'::TEXT,
          CASE WHEN p_apply THEN 'identifiants Stripe effaces'
@@ -7460,9 +7266,6 @@ BEGIN
          CASE WHEN p_apply THEN 'paliers payants redescendus au gratuit'
               ELSE 'paliers payants A REDESCENDRE (essai a blanc)' END::TEXT,
          v_demoted
-  -- Les trois suivantes ne sont pas des actions : ce sont les tables qu'on
-  -- laisse INTACTES, affichées pour que l'operateur voie qu'elles n'ont pas
-  -- ete oubliees par distraction.
   UNION ALL
   SELECT 'public.payment_records'::TEXT,
          'INTACT · journal fiscal scelle (mig. 125)'::TEXT,
@@ -7494,35 +7297,17 @@ CREATE FUNCTION public.resolve_profile_by_email(p_email text) RETURNS uuid
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
-DECLARE
-  v_id UUID;
-  v_is_contact BOOLEAN;
+DECLARE v_id UUID; v_is_contact BOOLEAN;
 BEGIN
-  IF auth.uid() IS NULL THEN
-    RAISE EXCEPTION 'Not authenticated';
-  END IF;
-
-  IF p_email IS NULL OR length(p_email) = 0 OR length(p_email) > 320 THEN
-    RETURN NULL;
-  END IF;
-
-  -- Un email déjà présent dans les contacts de l'appelant ne coûte rien :
-  -- c'est le cas d'usage légitime (rehydratation de la liste d'amis).
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Not authenticated'; END IF;
+  IF p_email IS NULL OR length(p_email) = 0 OR length(p_email) > 320 THEN RETURN NULL; END IF;
   SELECT EXISTS (
     SELECT 1 FROM public.friends f
     WHERE f.user_id = auth.uid() AND lower(f.email) = lower(p_email)
   ) INTO v_is_contact;
-
-  IF NOT v_is_contact THEN
-    PERFORM public.consume_email_lookup_quota(1);
-  END IF;
-
-  SELECT id INTO v_id
-  FROM public.profiles
-  WHERE lower(email) = lower(p_email)
-  ORDER BY id            -- M-1 : résolution déterministe
-  LIMIT 1;
-
+  IF NOT v_is_contact THEN PERFORM public.consume_email_lookup_quota(1); END IF;
+  SELECT id INTO v_id FROM public.profiles
+  WHERE lower(email) = lower(p_email) ORDER BY id LIMIT 1;
   RETURN v_id;
 END;
 $$;
@@ -7536,17 +7321,10 @@ CREATE FUNCTION public.resolve_profiles_by_emails(p_emails text[]) RETURNS TABLE
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
-DECLARE
-  v_cost INTEGER;
+DECLARE v_cost INTEGER;
 BEGIN
-  IF auth.uid() IS NULL THEN
-    RAISE EXCEPTION 'Not authenticated';
-  END IF;
-
-  IF p_emails IS NULL OR array_length(p_emails, 1) IS NULL THEN
-    RETURN;
-  END IF;
-
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Not authenticated'; END IF;
+  IF p_emails IS NULL OR array_length(p_emails, 1) IS NULL THEN RETURN; END IF;
   SELECT count(*) INTO v_cost
   FROM unnest(p_emails[1:50]) AS e
   WHERE e IS NOT NULL AND length(e) > 0 AND length(e) <= 320
@@ -7554,9 +7332,7 @@ BEGIN
       SELECT 1 FROM public.friends f
       WHERE f.user_id = auth.uid() AND lower(f.email) = lower(e)
     );
-
   PERFORM public.consume_email_lookup_quota(v_cost::integer);
-
   RETURN QUERY
   SELECT lower(e) AS email, pr.id
   FROM unnest(p_emails[1:50]) AS e
@@ -7639,8 +7415,6 @@ BEGIN
     RAISE EXCEPTION 'invitation_not_found';
   END IF;
 
-  -- SEUL le destinataire répond. Un membre de l'org peut LIRE la ligne
-  -- (policy SELECT) mais pas décider à sa place.
   IF v_inv.invitee_id <> auth.uid() THEN
     RAISE EXCEPTION 'invitation_not_found';
   END IF;
@@ -7654,8 +7428,6 @@ BEGIN
     RETURN;
   END IF;
 
-  -- Re-validation à l'acceptation : l'inviteur a pu être retiré de l'org
-  -- entre-temps. Une invitation ne survit pas à celui qui l'a émise.
   IF NOT EXISTS (
     SELECT 1 FROM public.organization_members
     WHERE org_id = v_inv.org_id AND user_id = v_inv.inviter_id
@@ -7663,13 +7435,10 @@ BEGIN
     RAISE EXCEPTION 'inviter_no_longer_member';
   END IF;
 
-  -- Freemium (dormant tant que le flag n'est pas activé) — même garde que
-  -- claim_org_invite et respond_join_request.
   IF NOT public.org_seats_allowed(v_inv.org_id) THEN
     RAISE EXCEPTION 'seat_limit_reached';
   END IF;
 
-  -- Entrée NON PLACÉE : un admin range ensuite dans la pyramide.
   INSERT INTO public.organization_members (org_id, user_id, role, manager_id)
   VALUES (v_inv.org_id, auth.uid(), 'member', NULL)
   ON CONFLICT (org_id, user_id) DO NOTHING;
@@ -7766,7 +7535,7 @@ $$;
 -- Name: FUNCTION run_overdue_reminders(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.run_overdue_reminders() IS 'Automatisation (mig. 096) : cree un rappel par tache en retard et par assigne, au plus une fois par jour (index unique partiel). Appelee par pg_cron, jamais par le client.';
+COMMENT ON FUNCTION public.run_overdue_reminders() IS 'Automatisation (mig. 096) : un rappel par tache en retard et par assigne, au plus une fois par jour. Appelee par pg_cron, jamais par le client.';
 
 
 --
@@ -7823,22 +7592,15 @@ CREATE FUNCTION public.sanitize_display_name(raw text) RETURNS text
     LANGUAGE plpgsql IMMUTABLE
     SET search_path TO ''
     AS $$
-DECLARE
-  cleaned TEXT;
+DECLARE cleaned TEXT;
 BEGIN
-  IF raw IS NULL THEN
-    RETURN NULL;
-  END IF;
+  IF raw IS NULL THEN RETURN NULL; END IF;
   cleaned := regexp_replace(raw, '[<>"''`\\]', '', 'g');
-  -- L'espace et le tiret sont legitimes dans un nom : on ne retire QUE les
-  -- metacaracteres HTML/injection (ligne precedente).
   cleaned := regexp_replace(cleaned, '[[:cntrl:]]', '', 'g');
   cleaned := regexp_replace(cleaned, '\s+', ' ', 'g');
   cleaned := btrim(cleaned);
   cleaned := left(cleaned, 80);
-  IF cleaned = '' THEN
-    RETURN NULL;
-  END IF;
+  IF cleaned = '' THEN RETURN NULL; END IF;
   RETURN cleaned;
 END;
 $$;
@@ -7938,9 +7700,6 @@ CREATE FUNCTION public.seal_payment_record() RETURNS trigger
 DECLARE
   v_prev TEXT;
 BEGIN
-  -- Hash de la dernière ligne insérée. `ORDER BY id DESC` et non par date :
-  -- la date Stripe peut être antérieure sur un rejeu, l'ordre du journal est
-  -- l'ordre d'écriture.
   SELECT row_hash INTO v_prev
     FROM public.payment_records
    ORDER BY id DESC
@@ -7948,9 +7707,6 @@ BEGIN
 
   NEW.prev_hash := v_prev;
 
-  -- Représentation canonique : les champs qui engagent, séparés par un
-  -- caractère qui ne peut pas apparaître dedans. `coalesce` partout, sinon un
-  -- NULL rendrait la concaténation entière NULL et le hash inexploitable.
   NEW.row_hash := encode(
     extensions.digest(
       coalesce(v_prev, '')                        || '|' ||
@@ -8051,7 +7807,6 @@ CREATE FUNCTION public.seed_default_categories() RETURNS trigger
     SET search_path TO 'public', 'pg_temp'
     AS $$
 BEGIN
-  -- Table qualifiee : ceinture ET bretelles avec le search_path fige.
   INSERT INTO public.categories (user_id, name, color) VALUES
     (NEW.id, 'Personnel',  '#3B82F6'),
     (NEW.id, 'Travail',    '#EF4444'),
@@ -8176,14 +7931,11 @@ BEGIN
   END IF;
 
   IF public.is_org_admin(p_org) THEN
-    NULL; -- admin : tout est permis (le trigger garde cohérence + cycles)
+    NULL;
   ELSE
-    -- Manager : la CIBLE doit être dans mon sous-arbre (ou non placée n'est
-    -- pas suffisant — seuls les admins placent les non-placés)…
     IF NOT public.is_above(p_org, p_user) THEN
       RAISE EXCEPTION 'You can only move members below you';
     END IF;
-    -- …et la DESTINATION doit être moi ou quelqu'un de mon sous-arbre.
     IF p_manager IS NULL THEN
       RAISE EXCEPTION 'Only an admin can detach a member';
     END IF;
@@ -8318,8 +8070,7 @@ CREATE FUNCTION public.sync_profile_email() RETURNS trigger
     AS $$
 BEGIN
   IF NEW.email IS DISTINCT FROM OLD.email THEN
-    UPDATE public.profiles SET email = NEW.email, updated_at = NOW()
-    WHERE id = NEW.id;
+    UPDATE public.profiles SET email = NEW.email, updated_at = NOW() WHERE id = NEW.id;
   END IF;
   RETURN NEW;
 END;
@@ -8382,31 +8133,23 @@ CREATE FUNCTION public.sync_team_task_status() RETURNS trigger
     SET search_path TO ''
     AS $$
 BEGIN
-  -- Cas 1 : le client écrit `status` (nouveau front).
   IF NEW.status IS DISTINCT FROM OLD.status THEN
     IF NEW.status = 'done' THEN
       NEW.completed := true;
-      -- Ne pas écraser un completed_at déjà posé : la date de complétion
-      -- d'origine est ce qui alimente vélocité et « terminées cette semaine ».
       NEW.completed_at := COALESCE(OLD.completed_at, now());
     ELSE
       NEW.completed := false;
       NEW.completed_at := NULL;
     END IF;
-
-  -- Cas 2 : le client écrit `completed` (front actuel, inchangé).
   ELSIF NEW.completed IS DISTINCT FROM OLD.completed THEN
     IF NEW.completed THEN
       NEW.status := 'done';
       NEW.completed_at := COALESCE(NEW.completed_at, now());
     ELSE
-      -- Décocher renvoie à 'todo' et non à l'état antérieur : on ne le
-      -- connaît pas, et prétendre le restaurer serait une invention.
       NEW.status := 'todo';
       NEW.completed_at := NULL;
     END IF;
   END IF;
-
   RETURN NEW;
 END;
 $$;
@@ -8484,8 +8227,6 @@ DECLARE
 BEGIN
   SELECT org_id INTO v_org FROM public.team_projects WHERE id = NEW.project_id;
   SELECT org_id INTO v_depends_org FROM public.team_projects WHERE id = NEW.depends_on_id;
-  -- Identifiants de la mig. 137, pas des phrases : le client les traduit
-  -- (`dependencyErrorCode`), et la démo lève les mêmes.
   IF v_org IS NULL OR v_depends_org IS NULL THEN
     RAISE EXCEPTION 'dependency_task_missing';
   END IF;
@@ -8696,7 +8437,6 @@ BEGIN
     RAISE EXCEPTION 'validator_change_forbidden' USING ERRCODE = '42501';
   END IF;
 
-  -- La porte : terminée par un autre que le validateur → à valider.
   IF NEW.validator_id IS NOT NULL
      AND NEW.completed AND NOT OLD.completed
      AND v_uid <> NEW.validator_id THEN
@@ -8739,16 +8479,15 @@ $$;
 
 CREATE TABLE public.habits (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    user_id uuid NOT NULL,
     name text NOT NULL,
     description text,
     frequency text DEFAULT 'daily'::text NOT NULL,
-    estimated_time integer DEFAULT 0 NOT NULL,
-    color text DEFAULT '#3B82F6'::text NOT NULL,
-    icon text DEFAULT '⭐'::text NOT NULL,
-    completions jsonb DEFAULT '{}'::jsonb NOT NULL,
+    estimated_time integer DEFAULT 15,
+    color text DEFAULT '#10B981'::text,
+    icon text DEFAULT '⭐'::text,
+    completions jsonb DEFAULT '{}'::jsonb,
+    user_id uuid,
     created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
     CONSTRAINT habits_frequency_check CHECK ((frequency = ANY (ARRAY['daily'::text, 'weekly'::text, 'monthly'::text])))
 );
 
@@ -8763,20 +8502,15 @@ CREATE FUNCTION public.toggle_habit_completion(p_habit_id uuid, p_date text) RET
     AS $_$
 DECLARE
   v_row public.habits;
-  v_current BOOLEAN;
 BEGIN
   IF auth.uid() IS NULL THEN
     RAISE EXCEPTION 'Not authenticated';
   END IF;
 
-  -- Validate date format (YYYY-MM-DD) to avoid jsonb_set key abuse
   IF p_date !~ '^\d{4}-\d{2}-\d{2}$' THEN
     RAISE EXCEPTION 'Invalid date format (expected YYYY-MM-DD)';
   END IF;
 
-  -- Atomic flip via jsonb_set. The READ + WRITE happen in a single
-  -- statement under row-level locking on tasks.id, so a concurrent
-  -- toggle on another tab will serialize behind it.
   UPDATE public.habits
   SET completions = jsonb_set(
     COALESCE(completions, '{}'::jsonb),
@@ -8785,7 +8519,7 @@ BEGIN
     true
   )
   WHERE id = p_habit_id
-    AND user_id = auth.uid()  -- defense-in-depth (RLS already filters)
+    AND user_id = auth.uid()
   RETURNING * INTO v_row;
 
   IF v_row.id IS NULL THEN
@@ -8970,6 +8704,13 @@ $$;
 
 
 --
+-- Name: FUNCTION toggle_task_complete(p_task_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.toggle_task_complete(p_task_id uuid) IS 'DEPRECIEE (2026-08-07) — remplacee par toggle_task_complete_v2, qui genere aussi l''occurrence recurrente dans la meme transaction. Conservee uniquement pour la fenetre de deploiement / un rollback front. A SUPPRIMER une fois le front stabilise : la laisser en place garde un chemin d''ecriture qui ne genere PAS la recurrence (faille H1).';
+
+
+--
 -- Name: toggle_task_complete_v2(uuid, timestamp with time zone); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -9076,7 +8817,6 @@ CREATE FUNCTION public.touch_last_seen() RETURNS void
   WHERE auth.uid() IS NOT NULL
   ON CONFLICT (user_id, day) DO NOTHING;
 
-  -- Rétention 400 j, bornée à l'appelant (Index Scan sur le pkey).
   DELETE FROM public.user_activity_days
   WHERE user_id = auth.uid()
     AND day < CURRENT_DATE - 400;
@@ -9321,7 +9061,6 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  -- Le manager doit être membre de la même organisation.
   IF NOT EXISTS (
     SELECT 1 FROM public.organization_members
     WHERE org_id = NEW.org_id AND user_id = NEW.manager_id
@@ -9329,7 +9068,6 @@ BEGIN
     RAISE EXCEPTION 'Manager must be a member of the organization';
   END IF;
 
-  -- Anti-cycle : le nouveau manager ne peut pas être un descendant du membre.
   IF NEW.manager_id IN (SELECT public.get_subtree(NEW.org_id, NEW.user_id)) THEN
     RAISE EXCEPTION 'Hierarchy cycle detected';
   END IF;
@@ -9563,7 +9301,6 @@ BEGIN
     RAISE EXCEPTION 'A task cannot have more than 20 assignees';
   END IF;
 
-  -- Chaque assigné doit appartenir à l'organisation.
   IF NEW.assignee_ids <> '{}' AND EXISTS (
     SELECT 1 FROM unnest(NEW.assignee_ids) AS a(uid)
     WHERE NOT EXISTS (
@@ -9651,7 +9388,7 @@ BEGIN
     IF v_calc IS DISTINCT FROM r.row_hash THEN
       broken_id := r.id; expected_hash := v_calc; stored_hash := r.row_hash;
       RETURN NEXT;
-      RETURN; -- la première rupture suffit : tout ce qui suit en dépend
+      RETURN;
     END IF;
 
     v_prev := r.row_hash;
@@ -9749,7 +9486,9 @@ CREATE TABLE public.affiliate_commissions (
     rate_bp integer NOT NULL,
     commission_cents bigint NOT NULL,
     occurred_at timestamp with time zone NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    deduction_bp integer DEFAULT 0 NOT NULL,
+    deduction_cents bigint DEFAULT 0 NOT NULL
 );
 
 
@@ -9821,14 +9560,16 @@ CREATE TABLE public.affiliate_payouts (
 
 CREATE TABLE public.affiliate_settings (
     id boolean DEFAULT true NOT NULL,
-    commission_bp integer DEFAULT 3950 NOT NULL,
+    commission_bp integer DEFAULT 5000 NOT NULL,
     fee_bp integer DEFAULT 150 NOT NULL,
     fee_fixed_cents integer DEFAULT 25 NOT NULL,
     vat_bp integer DEFAULT 0 NOT NULL,
     code_hash text,
     token_secret text DEFAULT encode(extensions.gen_random_bytes(32), 'hex'::text) NOT NULL,
     code_changed_at timestamp with time zone,
+    deduction_bp integer DEFAULT 2560 NOT NULL,
     CONSTRAINT affiliate_settings_commission_bp_check CHECK (((commission_bp >= 0) AND (commission_bp <= 10000))),
+    CONSTRAINT affiliate_settings_deduction_bp_check CHECK (((deduction_bp >= 0) AND (deduction_bp <= 10000))),
     CONSTRAINT affiliate_settings_fee_bp_check CHECK (((fee_bp >= 0) AND (fee_bp <= 10000))),
     CONSTRAINT affiliate_settings_fee_fixed_cents_check CHECK ((fee_fixed_cents >= 0)),
     CONSTRAINT affiliate_settings_id_check CHECK (id),
@@ -9884,9 +9625,9 @@ CREATE TABLE public.billing_flags (
 
 CREATE TABLE public.categories (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    user_id uuid NOT NULL,
     name text NOT NULL,
-    color text DEFAULT '#6B7280'::text NOT NULL,
+    color text DEFAULT '#3B82F6'::text NOT NULL,
+    user_id uuid,
     created_at timestamp with time zone DEFAULT now(),
     parent_id uuid,
     "position" integer DEFAULT 0 NOT NULL
@@ -10010,23 +9751,21 @@ CREATE TABLE public.email_lookup_quota (
 
 CREATE TABLE public.events (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    user_id uuid NOT NULL,
     title text NOT NULL,
     start_time timestamp with time zone NOT NULL,
     end_time timestamp with time zone NOT NULL,
-    color text,
+    color text DEFAULT '#3B82F6'::text,
     description text,
     notes text,
     task_id uuid,
+    user_id uuid,
     created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
     recurrence text DEFAULT 'none'::text NOT NULL,
     exceptions text[] DEFAULT '{}'::text[] NOT NULL,
     recurrence_days integer[] DEFAULT '{}'::integer[] NOT NULL,
     created_by uuid DEFAULT auth.uid(),
     is_private boolean DEFAULT false NOT NULL,
     review_dismissed_at timestamp with time zone,
-    CONSTRAINT end_after_start CHECK ((end_time >= start_time)),
     CONSTRAINT events_recurrence_check CHECK ((recurrence = ANY (ARRAY['none'::text, 'daily'::text, 'weekly'::text, 'custom'::text])))
 );
 
@@ -10044,13 +9783,12 @@ COMMENT ON COLUMN public.events.review_dismissed_at IS 'Instant où la personne 
 
 CREATE TABLE public.friend_requests (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    user_id uuid NOT NULL,
     email text NOT NULL,
     status text DEFAULT 'pending'::text NOT NULL,
     sent_at timestamp with time zone DEFAULT now(),
-    created_at timestamp with time zone DEFAULT now(),
-    sender_id uuid NOT NULL,
+    sender_id uuid,
     receiver_id uuid,
+    created_at timestamp with time zone DEFAULT now(),
     sender_email text,
     CONSTRAINT friend_requests_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'accepted'::text, 'rejected'::text])))
 );
@@ -10121,18 +9859,16 @@ CREATE TABLE public.kr_completions (
 
 CREATE TABLE public.okrs (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    user_id uuid NOT NULL,
     title text NOT NULL,
-    description text DEFAULT ''::text NOT NULL,
+    description text,
     category uuid,
-    progress integer DEFAULT 0 NOT NULL,
-    completed boolean DEFAULT false NOT NULL,
-    key_results jsonb DEFAULT '[]'::jsonb NOT NULL,
-    start_date date NOT NULL,
-    end_date date NOT NULL,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    CONSTRAINT okrs_progress_check CHECK (((progress >= 0) AND (progress <= 100)))
+    progress integer DEFAULT 0,
+    completed boolean DEFAULT false,
+    key_results jsonb DEFAULT '[]'::jsonb,
+    start_date timestamp with time zone,
+    end_date timestamp with time zone,
+    user_id uuid,
+    created_at timestamp with time zone DEFAULT now()
 );
 
 
@@ -10329,7 +10065,7 @@ ALTER TABLE ONLY public.org_notifications REPLICA IDENTITY FULL;
 -- Name: TABLE org_notifications; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.org_notifications IS 'Notifications d''entreprise (mig. 095). Écrites UNIQUEMENT par trigger — aucune policy INSERT. Le destinataire peut lire, marquer lue et supprimer les siennes.';
+COMMENT ON TABLE public.org_notifications IS 'Notifications d''entreprise (mig. 095). Ecrites UNIQUEMENT par trigger — aucune policy INSERT.';
 
 
 --
@@ -10804,10 +10540,9 @@ ALTER TABLE ONLY public.shared_lists REPLICA IDENTITY FULL;
 
 CREATE TABLE public.shared_tasks (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    task_id uuid NOT NULL,
-    friend_id uuid NOT NULL,
-    role text DEFAULT 'viewer'::text NOT NULL,
-    created_at timestamp with time zone DEFAULT now(),
+    task_id uuid,
+    friend_id uuid,
+    role text DEFAULT 'viewer'::text,
     shared_by uuid DEFAULT auth.uid(),
     shared_at timestamp with time zone DEFAULT now(),
     accepted_at timestamp with time zone,
@@ -10815,13 +10550,6 @@ CREATE TABLE public.shared_tasks (
 );
 
 ALTER TABLE ONLY public.shared_tasks REPLICA IDENTITY FULL;
-
-
---
--- Name: COLUMN shared_tasks.shared_by; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.shared_tasks.shared_by IS 'auth.users.id du partageur. Moitie proprietaire des policies de partage depuis la mig. 019. Colonne creee hors migration, formalisee ici.';
 
 
 --
@@ -11220,7 +10948,7 @@ CREATE TABLE public.team_task_activity (
 -- Name: TABLE team_task_activity; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.team_task_activity IS 'Journal append-only des modifications de tâches d''équipe (mig. 094). Écrit UNIQUEMENT par trigger — aucune policy INSERT/UPDATE/DELETE, volontairement.';
+COMMENT ON TABLE public.team_task_activity IS 'Journal append-only des modifications de tâches d''équipe (mig. 094). Écrit UNIQUEMENT par trigger.';
 
 
 --
@@ -11265,7 +10993,7 @@ CREATE TABLE public.team_task_labels (
 -- Name: TABLE team_task_labels; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.team_task_labels IS 'Jonction tâche ↔ label (mig. 093). Poser un label est un acte d''édition de la tâche.';
+COMMENT ON TABLE public.team_task_labels IS 'Jonction tâche ↔ label (mig. 093).';
 
 
 --
@@ -11288,7 +11016,7 @@ CREATE TABLE public.team_task_subtasks (
 -- Name: TABLE team_task_subtasks; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.team_task_subtasks IS 'Sous-tâches d''une tâche d''équipe (mig. 092). Un seul niveau, pas de récursion. Accès délégué à can_access_team_task.';
+COMMENT ON TABLE public.team_task_subtasks IS 'Sous-tâches d''une tâche d''équipe (mig. 092). Un seul niveau, pas de récursion.';
 
 
 --
@@ -11620,14 +11348,6 @@ ALTER TABLE ONLY public.events
 
 ALTER TABLE ONLY public.friend_requests
     ADD CONSTRAINT friend_requests_pkey PRIMARY KEY (id);
-
-
---
--- Name: friend_requests friend_requests_user_id_email_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.friend_requests
-    ADD CONSTRAINT friend_requests_user_id_email_key UNIQUE (user_id, email);
 
 
 --
@@ -12477,24 +12197,17 @@ CREATE INDEX idx_events_user_id ON public.events USING btree (user_id);
 
 
 --
--- Name: idx_events_user_start; Type: INDEX; Schema: public; Owner: -
+-- Name: idx_friend_requests_receiver; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_events_user_start ON public.events USING btree (user_id, start_time);
-
-
---
--- Name: idx_friend_requests_receiver_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_friend_requests_receiver_id ON public.friend_requests USING btree (receiver_id);
+CREATE INDEX idx_friend_requests_receiver ON public.friend_requests USING btree (receiver_id);
 
 
 --
--- Name: idx_friend_requests_sender_id; Type: INDEX; Schema: public; Owner: -
+-- Name: idx_friend_requests_sender; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_friend_requests_sender_id ON public.friend_requests USING btree (sender_id);
+CREATE INDEX idx_friend_requests_sender ON public.friend_requests USING btree (sender_id);
 
 
 --
@@ -12502,13 +12215,6 @@ CREATE INDEX idx_friend_requests_sender_id ON public.friend_requests USING btree
 --
 
 CREATE INDEX idx_friend_requests_status ON public.friend_requests USING btree (status);
-
-
---
--- Name: idx_friend_requests_user_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_friend_requests_user_id ON public.friend_requests USING btree (user_id);
 
 
 --
@@ -12537,13 +12243,6 @@ CREATE INDEX idx_friends_user_id ON public.friends USING btree (user_id);
 --
 
 CREATE INDEX idx_friends_user_lower_email ON public.friends USING btree (user_id, lower(email));
-
-
---
--- Name: idx_habits_created_at; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_habits_created_at ON public.habits USING btree (created_at DESC);
 
 
 --
@@ -12617,13 +12316,6 @@ CREATE UNIQUE INDEX idx_lists_one_default_per_user ON public.lists USING btree (
 
 
 --
--- Name: idx_lists_task_ids; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_lists_task_ids ON public.lists USING gin (task_ids);
-
-
---
 -- Name: idx_lists_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -12635,13 +12327,6 @@ CREATE INDEX idx_lists_user_id ON public.lists USING btree (user_id);
 --
 
 CREATE INDEX idx_okrs_category ON public.okrs USING btree (category);
-
-
---
--- Name: idx_okrs_created_at; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_okrs_created_at ON public.okrs USING btree (created_at DESC);
 
 
 --
@@ -13086,6 +12771,13 @@ CREATE INDEX idx_shared_lists_shared_by ON public.shared_lists USING btree (shar
 
 
 --
+-- Name: idx_shared_tasks_friend; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_shared_tasks_friend ON public.shared_tasks USING btree (friend_id);
+
+
+--
 -- Name: idx_shared_tasks_friend_task; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -13156,24 +12848,10 @@ CREATE INDEX idx_tasks_completed ON public.tasks USING btree (completed);
 
 
 --
--- Name: idx_tasks_created_at; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_tasks_created_at ON public.tasks USING btree (created_at DESC);
-
-
---
 -- Name: idx_tasks_deadline; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_tasks_deadline ON public.tasks USING btree (deadline);
-
-
---
--- Name: idx_tasks_user_created; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_tasks_user_created ON public.tasks USING btree (user_id, created_at DESC);
 
 
 --
@@ -14402,13 +14080,6 @@ CREATE TRIGGER trg_prevent_user_id_change BEFORE UPDATE ON public.okrs FOR EACH 
 
 
 --
--- Name: subscriptions trg_prevent_user_id_change; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER trg_prevent_user_id_change BEFORE UPDATE ON public.subscriptions FOR EACH ROW EXECUTE FUNCTION public.prevent_user_id_change();
-
-
---
 -- Name: tasks trg_prevent_user_id_change; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -14440,14 +14111,14 @@ CREATE TRIGGER trg_seal_payment_record BEFORE INSERT ON public.payment_records F
 -- Name: friend_requests trg_set_receiver_id; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER trg_set_receiver_id BEFORE INSERT OR UPDATE OF email ON public.friend_requests FOR EACH ROW EXECUTE FUNCTION public.set_friend_request_receiver_id();
+CREATE TRIGGER trg_set_receiver_id BEFORE INSERT ON public.friend_requests FOR EACH ROW EXECUTE FUNCTION public.set_friend_request_receiver_id();
 
 
 --
 -- Name: friend_requests trg_set_sender_email; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER trg_set_sender_email BEFORE INSERT OR UPDATE OF sender_id ON public.friend_requests FOR EACH ROW EXECUTE FUNCTION public.set_friend_request_sender_email();
+CREATE TRIGGER trg_set_sender_email BEFORE INSERT ON public.friend_requests FOR EACH ROW EXECUTE FUNCTION public.set_friend_request_sender_email();
 
 
 --
@@ -14612,45 +14283,10 @@ CREATE TRIGGER trg_validate_team_task_dependency BEFORE INSERT OR UPDATE ON publ
 
 
 --
--- Name: events update_events_updated_at; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER update_events_updated_at BEFORE UPDATE ON public.events FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
-
-
---
--- Name: habits update_habits_updated_at; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER update_habits_updated_at BEFORE UPDATE ON public.habits FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
-
-
---
 -- Name: key_results update_key_results_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER update_key_results_updated_at BEFORE UPDATE ON public.key_results FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
-
-
---
--- Name: lists update_lists_updated_at; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER update_lists_updated_at BEFORE UPDATE ON public.lists FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
-
-
---
--- Name: okrs update_okrs_updated_at; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER update_okrs_updated_at BEFORE UPDATE ON public.okrs FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
-
-
---
--- Name: tasks update_tasks_updated_at; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER update_tasks_updated_at BEFORE UPDATE ON public.tasks FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 
 --
@@ -14794,7 +14430,7 @@ ALTER TABLE ONLY public.events
 --
 
 ALTER TABLE ONLY public.friend_requests
-    ADD CONSTRAINT friend_requests_receiver_id_fkey FOREIGN KEY (receiver_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+    ADD CONSTRAINT friend_requests_receiver_id_fkey FOREIGN KEY (receiver_id) REFERENCES auth.users(id) ON DELETE SET NULL;
 
 
 --
@@ -14803,14 +14439,6 @@ ALTER TABLE ONLY public.friend_requests
 
 ALTER TABLE ONLY public.friend_requests
     ADD CONSTRAINT friend_requests_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES auth.users(id) ON DELETE CASCADE;
-
-
---
--- Name: friend_requests friend_requests_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.friend_requests
-    ADD CONSTRAINT friend_requests_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 
 
 --
@@ -18436,11 +18064,11 @@ GRANT ALL ON FUNCTION public.affiliate_backfill() TO service_role;
 
 
 --
--- Name: FUNCTION affiliate_compute(p_gross bigint, p_vat_bp integer, p_fee_bp integer, p_fee_fixed integer, p_rate_bp integer, OUT vat_cents bigint, OUT fee_cents bigint, OUT base_cents bigint, OUT commission_cents bigint); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION affiliate_compute(p_gross bigint, p_vat_bp integer, p_deduction_bp integer, p_fee_bp integer, p_fee_fixed integer, p_rate_bp integer, OUT vat_cents bigint, OUT deduction_cents bigint, OUT fee_cents bigint, OUT base_cents bigint, OUT commission_cents bigint); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.affiliate_compute(p_gross bigint, p_vat_bp integer, p_fee_bp integer, p_fee_fixed integer, p_rate_bp integer, OUT vat_cents bigint, OUT fee_cents bigint, OUT base_cents bigint, OUT commission_cents bigint) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.affiliate_compute(p_gross bigint, p_vat_bp integer, p_fee_bp integer, p_fee_fixed integer, p_rate_bp integer, OUT vat_cents bigint, OUT fee_cents bigint, OUT base_cents bigint, OUT commission_cents bigint) TO service_role;
+REVOKE ALL ON FUNCTION public.affiliate_compute(p_gross bigint, p_vat_bp integer, p_deduction_bp integer, p_fee_bp integer, p_fee_fixed integer, p_rate_bp integer, OUT vat_cents bigint, OUT deduction_cents bigint, OUT fee_cents bigint, OUT base_cents bigint, OUT commission_cents bigint) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.affiliate_compute(p_gross bigint, p_vat_bp integer, p_deduction_bp integer, p_fee_bp integer, p_fee_fixed integer, p_rate_bp integer, OUT vat_cents bigint, OUT deduction_cents bigint, OUT fee_cents bigint, OUT base_cents bigint, OUT commission_cents bigint) TO service_role;
 
 
 --
@@ -21315,7 +20943,6 @@ ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON T
 
 -- Triggers hors `public` qui appellent une fonction de `public`
 
-CREATE TRIGGER on_auth_user_created_seed_categories AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION seed_default_categories();
 CREATE TRIGGER trg_create_profile_on_signup AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION handle_new_user_profile();
 CREATE TRIGGER trg_sync_profile_email AFTER UPDATE OF email ON auth.users FOR EACH ROW EXECUTE FUNCTION sync_profile_email();
 CREATE TRIGGER trg_sync_profile_on_update AFTER UPDATE ON auth.users FOR EACH ROW WHEN ((old.raw_user_meta_data IS DISTINCT FROM new.raw_user_meta_data)) EXECUTE FUNCTION handle_new_user_profile();
@@ -21351,3 +20978,12 @@ SELECT cron.schedule('cosmo-purge-traffic', '17 0 * * *', 'SELECT public.purge_t
 SELECT cron.schedule('cosmo-purge-webhook-deliveries', '35 4 * * *', 'DELETE FROM public.org_webhook_deliveries WHERE created_at < now() - interval ''7 days'';');
 SELECT cron.schedule('cosmo-renewal-notice', '12 7 * * *', 'SELECT public.cron_invoke(''renewal-notice'');');
 SELECT cron.schedule('cosmo-seat-alert', '14 7 * * *', 'SELECT public.cron_invoke(''seat-alert'');');
+
+-- Publications (tables diffusees par Realtime)
+
+ALTER PUBLICATION "supabase_realtime" ADD TABLE "public"."friend_requests";
+ALTER PUBLICATION "supabase_realtime" ADD TABLE "public"."org_invitations";
+ALTER PUBLICATION "supabase_realtime" ADD TABLE "public"."org_notifications";
+ALTER PUBLICATION "supabase_realtime" ADD TABLE "public"."organization_join_requests";
+ALTER PUBLICATION "supabase_realtime" ADD TABLE "public"."shared_lists";
+ALTER PUBLICATION "supabase_realtime" ADD TABLE "public"."shared_tasks";

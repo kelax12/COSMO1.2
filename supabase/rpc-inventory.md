@@ -1,11 +1,11 @@
 <!-- GENERE par scripts/contrat-donnees.mjs. NE PAS EDITER A LA MAIN. -->
 # Inventaire des fonctions SQL du schema `public`
 
-Genere depuis une base vierge sur laquelle toutes les migrations de `supabase/migration/` ont ete
-rejouees. La CI echoue si ce fichier diverge de ce que les migrations produisent : chaque ajout
+Genere depuis une base vierge sur laquelle toutes les migrations de `supabase/migrations/` ont ete
+appliquees par la CLI. La CI echoue si ce fichier diverge de ce que les migrations produisent : chaque ajout
 ou changement de droit d'une fonction est donc relu dans le diff.
 
-Regenerer : npm run contrat:generer (Docker, supabase start, node scripts/apply-migrations.mjs) ou copier les fichiers de l'artefact `contrat-donnees` du job CI.
+Regenerer : npm run contrat:generer (Docker, supabase start qui applique supabase/migrations/) ou copier les fichiers de l'artefact `contrat-donnees` du job CI.
 
 - Les droits sont les droits EFFECTIFS (`has_function_privilege`), le droit accorde a `PUBLIC` compris.
 - Les appelants sont cherches par texte (`rpc('nom'`) dans `src/`, `supabase/functions/` et `api/`,
@@ -53,7 +53,7 @@ Aucune.
 | `admin_stats_excluded_uids()` | INVOKER | `""` | - | oui | oui | - |
 | `affiliate_attach(p_affiliate_id uuid, p_email text)` | DEFINER | `""` | - | oui | oui | `supabase/functions/affiliation-api/index.ts` |
 | `affiliate_backfill()` | DEFINER | `""` | - | oui | oui | - |
-| `affiliate_compute(p_gross bigint, p_vat_bp integer, p_fee_bp integer, p_fee_fixed integer, p_rate_bp integer, OUT vat_cents bigint, OUT fee_cents bigint, OUT base_cents bigint, OUT commission_cents bigint)` | INVOKER | `""` | - | - | oui | - |
+| `affiliate_compute(p_gross bigint, p_vat_bp integer, p_deduction_bp integer, p_fee_bp integer, p_fee_fixed integer, p_rate_bp integer, OUT vat_cents bigint, OUT deduction_cents bigint, OUT fee_cents bigint, OUT base_cents bigint, OUT commission_cents bigint)` | INVOKER | `""` | - | - | oui | - |
 | `affiliate_process(p_rec payment_records)` | DEFINER | `""` | - | - | oui | - |
 | `apply_team_task_custom_status()` (trigger) | INVOKER | `""` | - | - | oui | - |
 | `assign_default_org_role()` (trigger) | INVOKER | `""` | - | - | oui | ~`src/modules/organizations/roles.local.repository.ts` |
