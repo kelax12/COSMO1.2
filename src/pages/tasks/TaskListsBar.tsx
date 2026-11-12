@@ -216,7 +216,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                             whileDrag={{ scale: 1.05, zIndex: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.18)' }}
                             className={`relative shrink-0 ${isMobile ? '' : 'cursor-grab active:cursor-grabbing'}`}
                             // ❌ Pas de `pan-y` sur mobile : il bloquait le glissé horizontal
-                            // de la rangée (0 px depuis une liste, mesuré ).
+                            // de la rangée (0 px depuis une liste, mesuré).
                             style={isMobile ? undefined : { touchAction: 'pan-y' }}
                             onMouseEnter={() => setHoveredListId(list.id)}
                             onMouseLeave={() => setHoveredListId(null)}

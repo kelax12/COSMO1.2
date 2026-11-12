@@ -242,8 +242,8 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                           >
                             <span className="min-w-0">
                               <span className="block text-body font-medium line-clamp-2" style={{ color: 'rgb(var(--color-text-primary))' }}>{keyResult.title}</span>
-                              {/* Ligne « x temps par unité » retirée sur mobile le
-, à la demande d'Axel. */}
+                              {/* Ligne « x temps par unité » retirée sur mobile
+                                  à la demande d'Axel. */}
                               {(tasksByKr.get(keyResult.id) ?? 0) > 0 && (
                                 <span className="block text-label" style={{ color: 'rgb(var(--color-text-muted))' }}>
                                   {tp('card.tasksCount', tasksByKr.get(keyResult.id) ?? 0)}

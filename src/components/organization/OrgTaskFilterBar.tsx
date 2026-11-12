@@ -193,7 +193,7 @@ const OrgTaskFilterBar = ({
     <div className="space-y-2" role="group" aria-label={t('filters.barAria')}>
       <div className="flex items-center gap-2 flex-wrap">
         {/* Recherche, avec les filtres actifs en pastilles DANS le champ
- : la ligne « Filtres actifs » en dessous coûtait une
+            : la ligne « Filtres actifs » en dessous coûtait une
             rangée entière pour une ou deux étiquettes. Retour arrière dans un
             champ vide retire la dernière pastille, comme un champ d'étiquettes. */}
         <div

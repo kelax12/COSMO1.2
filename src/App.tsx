@@ -217,7 +217,7 @@ const isResumablePage = (path: string) => RESUMABLE_PAGES.includes(path) || isOr
 /**
  * Squelette de la landing — le fallback qu'elle mérite.
  *
- * MESURÉ LE, à 4x de bridage CPU : pendant ~2 s, `/` affichait un
+ * MESURÉ, à 4x de bridage CPU : pendant ~2 s, `/` affichait un
  * écran BLANC avec un spinner, puis la landing sombre apparaissait d'un coup,
  * son animation d'entrée déjà terminée. Le fallback par défaut (`PageLoader`)
  * est un spinner sur le fond de l'APPLICATION, qui suit le thème et se trouve
@@ -242,7 +242,7 @@ const LandingSkeleton = () => (
     </div>
     {/* 🔴 CE SQUELETTE DOIT DÉCALQUER LE HERO, pas seulement en occuper la
         place. Il a décrit une mise en page à DEUX COLONNES — texte à gauche,
-        fenêtre produit à droite — jusqu'au, c'est-à-dire pendant
+        fenêtre produit à droite, c'est-à-dire pendant
         que le hero, lui, était déjà centré. Un squelette qui annonce autre
         chose que ce qui arrive produit un saut de mise en page à l'endroit
         exact où il est censé l'éviter : la promesse glisse de la gauche vers

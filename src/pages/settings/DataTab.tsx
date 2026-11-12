@@ -53,7 +53,7 @@ export function DataTab() {
   const { data: categories = [] } = useCategories();
   const { data: lists = [] } = useLists();
   // Le journal des KR (QUAND chaque résultat clé a été atteint) et les rôles
-  // reçus dans une organisation : déclarés non exportés jusqu'au .
+  // reçus dans une organisation : déclarés non exportés.
   const { data: krCompletions = [] } = useKRCompletionsExport();
   const { data: orgRoles = [] } = useMyOrgRoleAssignments();
   const { user } = useAuth();

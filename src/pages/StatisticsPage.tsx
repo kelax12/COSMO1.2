@@ -347,7 +347,7 @@ export default function StatisticsPage() {
           cinq familles, chacune avec son en-tête. Il ne reste que la période.
 
           ⚠️ J'avais écrit ici que les empiler « monterait cinq graphiques
-          recharts d'un coup ». C'était FAUX, vérifié :
+          recharts d'un coup ». C'était FAUX :
           `statistics/sections.tsx` n'importe pas recharts du tout. Le seul
           graphique lourd est celui de cette page, et il reste unique.
 

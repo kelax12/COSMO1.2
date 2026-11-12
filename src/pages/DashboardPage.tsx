@@ -469,7 +469,7 @@ const DashboardPage: React.FC = () => {
         {/* Carte check-in hebdo (#31) — invitation inline, jamais imposée.
             `flex-wrap` + plancher du texte (WCAG 1.4.4) : la carte ne paraît que
             le lundi et le mardi, et à 200 % de police le ✕ sortait de 13 px de
-            l'écran (C-97, mesuré). À 100 % la ligne est inchangée. */}
+            l'écran (C-97). À 100 % la ligne est inchangée. */}
         {weeklyCheckin.shouldShow && !checkinOpen && (
           <motion.div variants={itemVariants}>
             <div className="flex flex-wrap items-center gap-3 p-4 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl">

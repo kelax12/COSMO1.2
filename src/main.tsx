@@ -260,7 +260,7 @@ try { installFocusHistory(); } catch { /* un historique absent degrade la restit
 
 // Les comportements v7 (startTransition, relativeSplatPath) sont les defauts
 // depuis la 7.0 — le prop `future` n'a plus lieu d'etre. Ils ont ete adoptes
-// par etapes sur la 6.30 avant ce bump (cf. plan de migration ).
+// par etapes sur la 6.30 avant ce bump (cf. plan de migration).
 function mount(): void {
   const root = createRoot(document.getElementById('root')!);
   // 🔴 Page prérendue : premier rendu en TRANSITION (TBT mobile de

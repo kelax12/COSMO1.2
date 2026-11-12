@@ -57,7 +57,7 @@ interface CategoryTreeSelectProps {
    * Fourni = trigger rendu en ligne « cellule » (label à gauche, valeur +
    * chevron à droite, pleine largeur, sans bordure) au lieu du champ encadré
    * par défaut — pattern des `Cell` de `task-modal/primitives` (redesign
-   * OKR mobile ). Absent = comportement d'origine, inchangé pour
+   * OKR mobile). Absent = comportement d'origine, inchangé pour
    * tous les autres appelants.
    */
   cellLabel?: React.ReactNode;

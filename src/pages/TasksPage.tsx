@@ -515,7 +515,7 @@ const TasksPage: React.FC = () => {
 
       {/* Création mobile (#22) : point d'entrée unique = le « + » de la barre
           du bas (`MobileTaskSearch`, data-tutorial-id="tasks-create", maquette
-          150 ; c'était le FAB global de Layout jusqu'au ). Les deux FABs
+          150 ; c'était le FAB global de Layout). Les deux FABs
           locaux (éclair + plus) ont été retirés : deux affordances pour une
           même intention créaient une hésitation à chaque création. Le modal
           complet reste accessible en tapant une tâche existante (enrichir

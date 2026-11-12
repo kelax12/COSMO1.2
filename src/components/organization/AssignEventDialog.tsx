@@ -103,7 +103,7 @@ const AssignEventDialog = ({ task, members, currentUserId, onClose }: AssignEven
 
         {/* Planifier dans l'agenda d'autrui : la personne est PRÉVENUE et peut
             refuser (mig. 162, `notify_event_scheduled`). Audit des popups du
- rien ne le disait à celui qui planifie. */}
+            rien ne le disait à celui qui planifie. */}
         {selectedMember && selectedMember.userId !== currentUserId && (
           <p className="flex items-center gap-2 px-4 sm:px-6 py-2 text-xs border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))] shrink-0" role="status">
             <BellRing size={14} className="shrink-0 text-[rgb(var(--color-accent))]" aria-hidden="true" />

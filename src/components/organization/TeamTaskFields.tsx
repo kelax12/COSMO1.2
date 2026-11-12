@@ -76,7 +76,7 @@ interface TeamTaskFieldsProps {
   onDeadlineChange: (value: string) => void;
   /** Début planifié (mig. 153) — '' = aucun. La frise en fait une barre. */
   /**
-   * Aucun projet présélectionné (création depuis le kanban, audit ) :
+   * Aucun projet présélectionné (création depuis le kanban) :
    * le sélecteur ouvre sur « Choisir un projet… » au lieu du premier venu.
    */
   requireProjectChoice?: boolean;

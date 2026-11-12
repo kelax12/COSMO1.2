@@ -252,7 +252,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
       onPointerCancel={cancelLongPress}
       // ═══ C-111 · LE SEUL CHEMIN CLAVIER VERS LES ACTIONS ═══
       //
-      // 🔴 CE QUI ÉTAIT FAUX, mesuré dans le navigateur
+      // 🔴 PIÈGE mesuré dans le navigateur
       // (viewport 375, mode démo) : les trois chemins vers `TaskActionsSheet`
       // que la maquette 86 a laissés — appui long, glissement à gauche, menu
       // de la ligne DESKTOP — sont tous des gestes de POINTEUR, et le

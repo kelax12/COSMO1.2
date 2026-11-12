@@ -209,7 +209,7 @@ export const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: 
         ))}
       </div>
       {/* Scrollable weeks (rows)
- depuis que ce conteneur défile pour de bon (`c2affeeb`),
+          depuis que ce conteneur défile pour de bon (`c2affeeb`),
           axe relève `scrollable-region-focusable` sous WebKit : aucune case
           n'est focalisable, donc sous Safari la zone ne défile ni au clavier
           ni pour un lecteur d'écran piloté au clavier. Le conteneur devient

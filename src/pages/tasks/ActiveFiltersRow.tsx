@@ -78,8 +78,8 @@ const ActiveFiltersRow: React.FC<Props> = ({
         </button>
       )}
 
-      {/* Pas de compte « n / N tâches affichées » : retiré à la demande d'Axel
-. « Tout retirer » n'apparaît qu'à partir de DEUX
+      {/* Pas de compte « n / N tâches affichées » : retiré à la demande d'Axel.
+          « Tout retirer » n'apparaît qu'à partir de DEUX
           filtres : avec un seul, la croix de la pilule fait déjà exactement ça. */}
       {activeCount > 1 && (
         <button

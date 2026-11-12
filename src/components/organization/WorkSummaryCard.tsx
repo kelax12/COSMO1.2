@@ -98,7 +98,7 @@ const WorkSummaryCard = ({
             {/* ── Maquette 106 : une barre d'avancement montre l'avancement ──
                 La barre était SEGMENTÉE (terminées / en cours / en retard) et
                 remplissait donc toute sa largeur en permanence. Mesuré le
- sur l'onglet Aperçu : « Mes 3 tâches assignées ·
+                sur l'onglet Aperçu : « Mes 3 tâches assignées ·
                 0 % terminées » s'illustrait d'une barre PLEINE, grise puis
                 rouge. Une barre pleine se lit comme un avancement ; celle-ci
                 était pleine alors que rien n'était fait, et sa légende disait

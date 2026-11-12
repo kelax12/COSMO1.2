@@ -351,7 +351,7 @@ const LandingPage: React.FC = () => {
                 /* `min-h-touch` (44 px) et pas `py-3` : la hauteur de la CIBLE
                    monte au plancher WCAG 2.5.5 sans que le dessin bouge, le
                    texte restant centré par `inline-flex items-center`. Mesuré
- contre la production, WebKit / iPhone 12 :
+                   contre la production, WebKit / iPhone 12 :
                    115 x 36 px, soit 8 px sous le plancher, pour le CTA le plus
                    visible du produit, JUSTE A COTE d'un bouton de menu déjà en
                    `w-11 h-11`. La cible tactile avait été traitée pour le menu
