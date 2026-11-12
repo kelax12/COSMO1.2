@@ -60,14 +60,14 @@ isOneToOne: false
                   ]
                 },"affiliate_commissions": {
                   Row: {
-                    "affiliate_id": string,"base_cents": number,"commission_cents": number,"created_at": string,"customer_id": string | null,"fee_cents": number,"gross_cents": number,"id": number,"occurred_at": string,"org_id": string | null,"payment_record_id": number,"rate_bp": number,"vat_cents": number
+                    "affiliate_id": string,"base_cents": number,"commission_cents": number,"created_at": string,"customer_id": string | null,"deduction_bp": number,"deduction_cents": number,"fee_cents": number,"gross_cents": number,"id": number,"occurred_at": string,"org_id": string | null,"payment_record_id": number,"rate_bp": number,"vat_cents": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "affiliate_id": string,"base_cents": number,"commission_cents": number,"created_at"?: string,"customer_id"?: string | null,"fee_cents": number,"gross_cents": number,"id"?: number,"occurred_at": string,"org_id"?: string | null,"payment_record_id": number,"rate_bp": number,"vat_cents": number
+                    "affiliate_id": string,"base_cents": number,"commission_cents": number,"created_at"?: string,"customer_id"?: string | null,"deduction_bp"?: number,"deduction_cents"?: number,"fee_cents": number,"gross_cents": number,"id"?: number,"occurred_at": string,"org_id"?: string | null,"payment_record_id": number,"rate_bp": number,"vat_cents": number
                   }
                   Update: {
-                    "affiliate_id"?: string,"base_cents"?: number,"commission_cents"?: number,"created_at"?: string,"customer_id"?: string | null,"fee_cents"?: number,"gross_cents"?: number,"id"?: number,"occurred_at"?: string,"org_id"?: string | null,"payment_record_id"?: number,"rate_bp"?: number,"vat_cents"?: number
+                    "affiliate_id"?: string,"base_cents"?: number,"commission_cents"?: number,"created_at"?: string,"customer_id"?: string | null,"deduction_bp"?: number,"deduction_cents"?: number,"fee_cents"?: number,"gross_cents"?: number,"id"?: number,"occurred_at"?: string,"org_id"?: string | null,"payment_record_id"?: number,"rate_bp"?: number,"vat_cents"?: number
                   }
                   Relationships: [
                     {
@@ -140,14 +140,14 @@ isOneToOne: false
                   ]
                 },"affiliate_settings": {
                   Row: {
-                    "code_changed_at": string | null,"code_hash": string | null,"commission_bp": number,"fee_bp": number,"fee_fixed_cents": number,"id": boolean,"token_secret": string,"vat_bp": number
+                    "code_changed_at": string | null,"code_hash": string | null,"commission_bp": number,"deduction_bp": number,"fee_bp": number,"fee_fixed_cents": number,"id": boolean,"token_secret": string,"vat_bp": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "code_changed_at"?: string | null,"code_hash"?: string | null,"commission_bp"?: number,"fee_bp"?: number,"fee_fixed_cents"?: number,"id"?: boolean,"token_secret"?: string,"vat_bp"?: number
+                    "code_changed_at"?: string | null,"code_hash"?: string | null,"commission_bp"?: number,"deduction_bp"?: number,"fee_bp"?: number,"fee_fixed_cents"?: number,"id"?: boolean,"token_secret"?: string,"vat_bp"?: number
                   }
                   Update: {
-                    "code_changed_at"?: string | null,"code_hash"?: string | null,"commission_bp"?: number,"fee_bp"?: number,"fee_fixed_cents"?: number,"id"?: boolean,"token_secret"?: string,"vat_bp"?: number
+                    "code_changed_at"?: string | null,"code_hash"?: string | null,"commission_bp"?: number,"deduction_bp"?: number,"fee_bp"?: number,"fee_fixed_cents"?: number,"id"?: boolean,"token_secret"?: string,"vat_bp"?: number
                   }
                   Relationships: [
 
@@ -2095,7 +2095,7 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: number
                            },
 "affiliate_compute":
-{ Args: { "p_fee_bp": number,"p_fee_fixed": number,"p_gross": number,"p_rate_bp": number,"p_vat_bp": number }; Returns: Record<string, unknown>
+{ Args: { "p_deduction_bp": number,"p_fee_bp": number,"p_fee_fixed": number,"p_gross": number,"p_rate_bp": number,"p_vat_bp": number }; Returns: Record<string, unknown>
                            },
 "affiliate_process":
 { Args: { "p_rec": Omit<Database["public"]['Tables']["payment_records"]['Row'], Database["public"]['Tables']["payment_records"]['ComputedFields']> }; Returns: boolean

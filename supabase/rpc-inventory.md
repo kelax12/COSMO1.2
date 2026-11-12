@@ -53,7 +53,7 @@ Aucune.
 | `admin_stats_excluded_uids()` | INVOKER | `""` | - | oui | oui | - |
 | `affiliate_attach(p_affiliate_id uuid, p_email text)` | DEFINER | `""` | - | oui | oui | `supabase/functions/affiliation-api/index.ts` |
 | `affiliate_backfill()` | DEFINER | `""` | - | oui | oui | - |
-| `affiliate_compute(p_gross bigint, p_vat_bp integer, p_fee_bp integer, p_fee_fixed integer, p_rate_bp integer, OUT vat_cents bigint, OUT fee_cents bigint, OUT base_cents bigint, OUT commission_cents bigint)` | INVOKER | `""` | - | - | oui | - |
+| `affiliate_compute(p_gross bigint, p_vat_bp integer, p_deduction_bp integer, p_fee_bp integer, p_fee_fixed integer, p_rate_bp integer, OUT vat_cents bigint, OUT deduction_cents bigint, OUT fee_cents bigint, OUT base_cents bigint, OUT commission_cents bigint)` | INVOKER | `""` | - | - | oui | - |
 | `affiliate_process(p_rec payment_records)` | DEFINER | `""` | - | - | oui | - |
 | `apply_team_task_custom_status()` (trigger) | INVOKER | `""` | - | - | oui | - |
 | `assign_default_org_role()` (trigger) | INVOKER | `""` | - | - | oui | ~`src/modules/organizations/roles.local.repository.ts` |

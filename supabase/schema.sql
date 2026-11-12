@@ -424,17 +424,18 @@ $$;
 
 
 --
--- Name: affiliate_compute(bigint, integer, integer, integer, integer); Type: FUNCTION; Schema: public; Owner: -
+-- Name: affiliate_compute(bigint, integer, integer, integer, integer, integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.affiliate_compute(p_gross bigint, p_vat_bp integer, p_fee_bp integer, p_fee_fixed integer, p_rate_bp integer, OUT vat_cents bigint, OUT fee_cents bigint, OUT base_cents bigint, OUT commission_cents bigint) RETURNS record
+CREATE FUNCTION public.affiliate_compute(p_gross bigint, p_vat_bp integer, p_deduction_bp integer, p_fee_bp integer, p_fee_fixed integer, p_rate_bp integer, OUT vat_cents bigint, OUT deduction_cents bigint, OUT fee_cents bigint, OUT base_cents bigint, OUT commission_cents bigint) RETURNS record
     LANGUAGE plpgsql IMMUTABLE
     SET search_path TO ''
     AS $$
 BEGIN
   vat_cents := p_gross - round(p_gross::numeric / (1 + p_vat_bp::numeric / 10000));
+  deduction_cents := round(p_gross::numeric * p_deduction_bp / 10000);
   fee_cents := round(p_gross::numeric * p_fee_bp / 10000) + p_fee_fixed;
-  base_cents := greatest(p_gross - vat_cents - fee_cents, 0);
+  base_cents := greatest(p_gross - vat_cents - deduction_cents - fee_cents, 0);
   commission_cents := round(base_cents::numeric * p_rate_bp / 10000);
 END;
 $$;
@@ -503,13 +504,15 @@ BEGIN
 
     SELECT * INTO STRICT v_set FROM public.affiliate_settings WHERE id;
     SELECT * INTO v_c FROM public.affiliate_compute(
-      p_rec.amount_cents, v_set.vat_bp, v_set.fee_bp, v_set.fee_fixed_cents, v_set.commission_bp);
+      p_rec.amount_cents, v_set.vat_bp, v_set.deduction_bp, v_set.fee_bp, v_set.fee_fixed_cents,
+      v_set.commission_bp);
 
     INSERT INTO public.affiliate_commissions (
       payment_record_id, affiliate_id, customer_id, org_id, gross_cents, vat_cents,
-      fee_cents, base_cents, rate_bp, commission_cents, occurred_at)
+      deduction_bp, deduction_cents, fee_cents, base_cents, rate_bp, commission_cents, occurred_at)
     VALUES (p_rec.id, v_aff, v_uid, p_rec.org_id, p_rec.amount_cents, v_c.vat_cents,
-      v_c.fee_cents, v_c.base_cents, v_set.commission_bp, v_c.commission_cents, p_rec.occurred_at)
+      v_set.deduction_bp, v_c.deduction_cents, v_c.fee_cents, v_c.base_cents, v_set.commission_bp,
+      v_c.commission_cents, p_rec.occurred_at)
     ON CONFLICT (payment_record_id) DO NOTHING;
     GET DIAGNOSTICS v_count = ROW_COUNT;
     RETURN v_count > 0;
@@ -532,9 +535,10 @@ BEGIN
 
     INSERT INTO public.affiliate_commissions (
       payment_record_id, affiliate_id, customer_id, org_id, gross_cents, vat_cents,
-      fee_cents, base_cents, rate_bp, commission_cents, occurred_at)
+      deduction_bp, deduction_cents, fee_cents, base_cents, rate_bp, commission_cents, occurred_at)
     VALUES (p_rec.id, v_origin.affiliate_id, v_origin.customer_id, v_origin.org_id,
-      p_rec.amount_cents, 0, 0, 0, v_origin.rate_bp, v_comm, p_rec.occurred_at)
+      p_rec.amount_cents, 0, v_origin.deduction_bp, 0, 0, 0, v_origin.rate_bp, v_comm,
+      p_rec.occurred_at)
     ON CONFLICT (payment_record_id) DO NOTHING;
     GET DIAGNOSTICS v_count = ROW_COUNT;
     RETURN v_count > 0;
@@ -9749,7 +9753,9 @@ CREATE TABLE public.affiliate_commissions (
     rate_bp integer NOT NULL,
     commission_cents bigint NOT NULL,
     occurred_at timestamp with time zone NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    deduction_bp integer DEFAULT 0 NOT NULL,
+    deduction_cents bigint DEFAULT 0 NOT NULL
 );
 
 
@@ -9821,14 +9827,16 @@ CREATE TABLE public.affiliate_payouts (
 
 CREATE TABLE public.affiliate_settings (
     id boolean DEFAULT true NOT NULL,
-    commission_bp integer DEFAULT 3950 NOT NULL,
+    commission_bp integer DEFAULT 5000 NOT NULL,
     fee_bp integer DEFAULT 150 NOT NULL,
     fee_fixed_cents integer DEFAULT 25 NOT NULL,
     vat_bp integer DEFAULT 0 NOT NULL,
     code_hash text,
     token_secret text DEFAULT encode(extensions.gen_random_bytes(32), 'hex'::text) NOT NULL,
     code_changed_at timestamp with time zone,
+    deduction_bp integer DEFAULT 2560 NOT NULL,
     CONSTRAINT affiliate_settings_commission_bp_check CHECK (((commission_bp >= 0) AND (commission_bp <= 10000))),
+    CONSTRAINT affiliate_settings_deduction_bp_check CHECK (((deduction_bp >= 0) AND (deduction_bp <= 10000))),
     CONSTRAINT affiliate_settings_fee_bp_check CHECK (((fee_bp >= 0) AND (fee_bp <= 10000))),
     CONSTRAINT affiliate_settings_fee_fixed_cents_check CHECK ((fee_fixed_cents >= 0)),
     CONSTRAINT affiliate_settings_id_check CHECK (id),
@@ -18436,11 +18444,11 @@ GRANT ALL ON FUNCTION public.affiliate_backfill() TO service_role;
 
 
 --
--- Name: FUNCTION affiliate_compute(p_gross bigint, p_vat_bp integer, p_fee_bp integer, p_fee_fixed integer, p_rate_bp integer, OUT vat_cents bigint, OUT fee_cents bigint, OUT base_cents bigint, OUT commission_cents bigint); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION affiliate_compute(p_gross bigint, p_vat_bp integer, p_deduction_bp integer, p_fee_bp integer, p_fee_fixed integer, p_rate_bp integer, OUT vat_cents bigint, OUT deduction_cents bigint, OUT fee_cents bigint, OUT base_cents bigint, OUT commission_cents bigint); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.affiliate_compute(p_gross bigint, p_vat_bp integer, p_fee_bp integer, p_fee_fixed integer, p_rate_bp integer, OUT vat_cents bigint, OUT fee_cents bigint, OUT base_cents bigint, OUT commission_cents bigint) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.affiliate_compute(p_gross bigint, p_vat_bp integer, p_fee_bp integer, p_fee_fixed integer, p_rate_bp integer, OUT vat_cents bigint, OUT fee_cents bigint, OUT base_cents bigint, OUT commission_cents bigint) TO service_role;
+REVOKE ALL ON FUNCTION public.affiliate_compute(p_gross bigint, p_vat_bp integer, p_deduction_bp integer, p_fee_bp integer, p_fee_fixed integer, p_rate_bp integer, OUT vat_cents bigint, OUT deduction_cents bigint, OUT fee_cents bigint, OUT base_cents bigint, OUT commission_cents bigint) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.affiliate_compute(p_gross bigint, p_vat_bp integer, p_deduction_bp integer, p_fee_bp integer, p_fee_fixed integer, p_rate_bp integer, OUT vat_cents bigint, OUT deduction_cents bigint, OUT fee_cents bigint, OUT base_cents bigint, OUT commission_cents bigint) TO service_role;
 
 
 --
