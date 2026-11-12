@@ -16,6 +16,8 @@ import { LocalStorageTeamProjectsRepository } from '@/modules/team-projects/loca
 import { LocalStorageTeamOKRsRepository } from '@/modules/team-okrs/local.repository';
 import { LocalStorageTeamCategoriesRepository } from '@/modules/team-categories/local.repository';
 import { LocalStorageTeamListsRepository } from '@/modules/team-lists/local.repository';
+import { LocalStorageFriendsRepository } from '@/modules/friends/local.repository';
+import { LocalStorageOrganizationsRepository } from '@/modules/organizations/local.repository';
 import { DEMO_ORG_ID, DEMO_USER_ID } from '@/modules/team-projects/local.seed';
 import { tasksContract } from './__test__/tasks.contract';
 import { categoriesContract } from './__test__/categories.contract';
@@ -27,6 +29,9 @@ import { teamTasksContract } from './__test__/team-tasks.contract';
 import { teamOkrsContract } from './__test__/team-okrs.contract';
 import { teamCategoriesContract } from './__test__/team-categories.contract';
 import { teamListsContract } from './__test__/team-lists.contract';
+import { friendsContract } from './__test__/friends.contract';
+import { organizationsContract } from './__test__/organizations.contract';
+import { teamProjectsContract } from './__test__/team-projects.contract';
 
 const SIDE = 'démo (localStorage)';
 
@@ -89,3 +94,7 @@ teamListsContract(SIDE, async () => {
     newTaskId: async () => (await projects.createTask(DEMO_ORG_ID, { projectId, name: 'Tâche rangée' })).id,
   };
 });
+
+friendsContract(SIDE, async () => ({ repo: new LocalStorageFriendsRepository() }));
+organizationsContract(SIDE, async () => ({ repo: new LocalStorageOrganizationsRepository(), userId: DEMO_USER_ID }));
+teamProjectsContract(SIDE, async () => ({ repo: new LocalStorageTeamProjectsRepository(), orgId: DEMO_ORG_ID }));

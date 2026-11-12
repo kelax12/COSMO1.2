@@ -45,6 +45,8 @@ import { SupabaseTeamProjectsRepository } from '@/modules/team-projects/supabase
 import { SupabaseTeamOKRsRepository } from '@/modules/team-okrs/supabase.repository';
 import { SupabaseTeamCategoriesRepository } from '@/modules/team-categories/supabase.repository';
 import { SupabaseTeamListsRepository } from '@/modules/team-lists/supabase.repository';
+import { SupabaseFriendsRepository } from '@/modules/friends/supabase.repository';
+import { SupabaseOrganizationsRepository } from '@/modules/organizations/supabase.repository';
 import { tasksContract } from '@/test/contracts/__test__/tasks.contract';
 import { categoriesContract } from '@/test/contracts/__test__/categories.contract';
 import { listsContract } from '@/test/contracts/__test__/lists.contract';
@@ -55,6 +57,9 @@ import { teamTasksContract } from '@/test/contracts/__test__/team-tasks.contract
 import { teamOkrsContract } from '@/test/contracts/__test__/team-okrs.contract';
 import { teamCategoriesContract } from '@/test/contracts/__test__/team-categories.contract';
 import { teamListsContract } from '@/test/contracts/__test__/team-lists.contract';
+import { friendsContract } from '@/test/contracts/__test__/friends.contract';
+import { organizationsContract } from '@/test/contracts/__test__/organizations.contract';
+import { teamProjectsContract } from '@/test/contracts/__test__/team-projects.contract';
 
 const SIDE = 'Supabase (base locale, RLS)';
 
@@ -129,3 +134,7 @@ teamListsContract(SIDE, async () => {
     newTaskId: async () => (await projects.createTask(orgId, { projectId, name: 'Tâche rangée' })).id,
   };
 });
+
+friendsContract(SIDE, async () => ({ repo: new SupabaseFriendsRepository() }));
+organizationsContract(SIDE, async () => ({ repo: new SupabaseOrganizationsRepository(), userId: user.id }));
+teamProjectsContract(SIDE, async () => ({ repo: new SupabaseTeamProjectsRepository(), orgId }));

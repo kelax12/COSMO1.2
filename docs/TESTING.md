@@ -92,6 +92,9 @@ vraie base.
 Interfaces couvertes : `tasks` et tâches d'équipe (`team-projects`), `okrs` et `team-okrs`,
 `categories` et `team-categories`, `lists` et `team-lists`, `habits` et `events` (agenda personnel),
 plus le temps OKR des statistiques (rejeu de l'incident C-77 dans `okrs.contract.ts`).
+Depuis le 2026-11-12 : `friends` (demandes envoyées), `organizations` (organisation, membre, code d'invitation)
+et les projets d'équipe hors tâches (`team-projects.contract.ts`). Hors contrat : l'acceptation d'une demande
+d'ami reçue et les invitations (deux comptes), la facturation (Stripe, pas de démo comparable).
 Hors contrat, volontairement : `getWindowForUser` et `createForUser` de `events` (agenda d'un
 subordonné), qui exigent une hiérarchie à deux comptes ; leur frontière est la RLS `events_manager_*`
 (mig. 077), jouée par `e2e/rls/`.

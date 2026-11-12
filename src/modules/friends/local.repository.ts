@@ -98,7 +98,7 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
   }
 
   async getPendingRequests(): Promise<PendingFriendRequest[]> {
-    return this.getRequests().filter(r => r.status === 'pending');
+    return this.getRequests().filter(r => r.status === 'pending' && Boolean(r.senderEmail));
   }
 
   async getSentRequests(): Promise<PendingFriendRequest[]> {
@@ -121,7 +121,7 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
 
     const newRequest: PendingFriendRequest = {
       id: crypto.randomUUID(),
-      email: input.email,
+      email: input.email.toLowerCase(),
       status: 'pending',
       sentAt: new Date().toISOString(),
     };
