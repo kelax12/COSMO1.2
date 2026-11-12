@@ -7,7 +7,7 @@
 //
 // Deux axes de colonnes, mémorisés par appareil (`view-mode.store.ts`) :
 //   · Statut : À faire, En cours, Bloquée, Terminée (7 jours) ;
-//   · État (2026-10-09) : Dans les temps, À risque, En difficulté, Sans état,
+// · État : Dans les temps, À risque, En difficulté, Sans état,
 //     tâches ouvertes seulement. Déplacer une carte y change son État.
 //
 // Desktop : colonnes côte à côte, glisser-déposer natif.
@@ -88,7 +88,7 @@ const TaskBoard = ({ tasks }: TaskBoardProps) => {
 
   // Après un « Déplacer vers… », la carte change de colonne : le bouton qui a
   // ouvert la feuille n'existe plus, et la feuille n'a donc rien à qui rendre
-  // le focus (mesuré le 2026-10-09 : `document.activeElement` = body). On le
+  // le focus (mesuré : `document.activeElement` = body). On le
   // pose sur la carte déplacée, dans sa nouvelle colonne.
   const moveFromSheet = useCallback((task: Task, columnId: string) => {
     moveTo(task, columnId);

@@ -40,7 +40,7 @@ const DeleteObjectiveConfirm: React.FC<DeleteObjectiveConfirmProps> = ({ deletin
               <motion.div
                 {...sheetMotion}
                 // La poignee ci-dessous promettait un geste qui n existait pas
-                // (audit mobile 2026-08-14 : cinq feuilles dans ce cas). Une
+                // (audit mobile cinq feuilles dans ce cas). Une
                 // affordance qui ment est pire que pas d affordance.
                 {...sheetDrag}
                 className="bg-[rgb(var(--color-surface))] rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border border-[rgb(var(--color-border))]"

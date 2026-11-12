@@ -14,7 +14,7 @@ interface TeamTaskDependencyColumnsProps {
 }
 
 /**
- * Dépendances en deux colonnes (maquette 1 du 2026-10-30) : à gauche ce qui
+ * Dépendances en deux colonnes (maquette 1) : à gauche ce qui
  * bloque la tâche (« puis-je commencer ? »), à droite ce qu'elle bloque
  * (« qui je retarde si je glisse ? »). Chaque colonne a son propre « + »,
  * qui ouvre le sélecteur déjà orienté dans le bon sens.

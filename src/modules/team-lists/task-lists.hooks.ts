@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // TEAM-LISTS MODULE - ce que la fiche d'une tâche lit et écrit
 //
-// Séparé du reste des hooks (`hooks.ts`) le 2026-10-15 : `TeamTaskModal` ne
+// Séparé du reste des hooks (`hooks.ts`) : `TeamTaskModal` ne
 // lit que les listes et ne fait que ranger SA tâche. Importer `hooks.ts`
 // faisait voyager la création, le renommage et la suppression avec
 // « Annuler » dans son chunk (budget de `TeamTaskModal`).

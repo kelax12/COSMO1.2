@@ -33,7 +33,7 @@ interface TeamTaskDependencyPickerProps {
   /** Toutes les tâches de l'organisation (filtrées ici au projet). */
   tasks: TeamTask[];
   dependencies: TeamTaskDependency[];
-  /** Sens présélectionné : la colonne d'où l'on a cliqué « + » (2026-10-30). */
+  /** Sens présélectionné : la colonne d'où l'on a cliqué « + ». */
   initialDirection?: DependencyDirection;
 }
 

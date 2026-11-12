@@ -94,7 +94,7 @@ const HINT = 'text-xs text-[rgb(var(--color-text-muted))] mt-0.5';
 
 /**
  * Paramètres de l'organisation, `/entreprise/settings`. Réunit deux audits du
- * 2026-09-24 menés en parallèle : M13 (profil, organisations, forfait et zone
+ * menés en parallèle : M13 (profil, organisations, forfait et zone
  * de danger au même endroit) et l'audit Membres (« quatre pages en une » :
  * les invitations quittent le haut de l'annuaire).
  *

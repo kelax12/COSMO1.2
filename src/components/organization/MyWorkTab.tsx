@@ -100,7 +100,7 @@ const MyWorkTab = ({ orgId, members, currentUserId, canEditDependencies }: MyWor
     };
   }, []);
 
-  // ── Lectures CIBLÉES (audit du 2026-09-24) ─────────────────────────
+  // ── Lectures CIBLÉES (audit) ─────────────────────────
   // L'Aperçu lisait tout l'ensemble de travail de l'organisation (plafond
   // 1 000) pour n'en garder que MES tâches : dans une grande organisation, une
   // tâche à moi pouvait tomber sous le plafond. Chaque bloc demande désormais

@@ -14,7 +14,7 @@ import { ItemAction, WidgetEmpty, WidgetShell } from './WidgetShell';
 import { TONE_BADGE, usePager, type WidgetTone } from './widget-shell.helpers';
 
 /**
- * « Activité de l'équipe » (refait le 2026-10-20, maquette validée) :
+ * « Activité de l'équipe » (refait, maquette validée) :
  * - petit : le nombre d'actions sur 24 h et LE fait marquant, ce qui touche
  *   mes tâches d'abord, à parcourir 1/N ;
  * - moyen : de quoi est faite l'activité (barres par type) et une ligne

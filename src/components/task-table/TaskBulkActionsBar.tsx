@@ -28,7 +28,7 @@ interface Props {
 /**
  * Barre d'actions groupées du mode sélection de la page Tâches.
  *
- * Extraite de `TaskTable` le 2026-08-29 (T-45). La frontière est réelle et pas
+ * Extraite de `TaskTable` (T-45). La frontière est réelle et pas
  * un compte de lignes : ce composant ne connaît **aucune** tâche. Il reçoit un
  * nombre et des libellés de catégories, il rend des boutons, il rappelle. Toute
  * la logique métier (quelles tâches, quelles mutations, quel toast d'annulation)

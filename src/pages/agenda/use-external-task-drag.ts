@@ -5,7 +5,7 @@ import { resolveDraggedTaskEventData, type DraggedTaskData } from './calendar-ev
 /**
  * Glisser une tâche de la barre latérale vers le calendrier : le `Draggable`
  * de FullCalendar, sa destruction, et la barre qui se replie sur mobile dès
- * que le doigt la quitte. Sorti d'`AgendaPage` (2026-10-11) : c'est un geste
+ * que le doigt la quitte. Sorti d'`AgendaPage` : c'est un geste
  * entier, et la page dépassait le budget de 600 lignes.
  */
 export function useExternalTaskDrag({ showTaskSidebar, setShowTaskSidebar, isDraggingTask, setIsDraggingTask, sidebarRef, categories, events, t }: {

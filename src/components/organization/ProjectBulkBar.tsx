@@ -34,7 +34,7 @@ const actionClass =
   'inline-flex items-center gap-1.5 h-9 px-3 rounded-xl text-sm font-medium text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors whitespace-nowrap disabled:opacity-50';
 
 /**
- * Actions groupées sur les PROJETS (audit du 2026-09-24, « changement de
+ * Actions groupées sur les PROJETS (audit, « changement de
  * configuration en masse »). Chaque geste n'apparaît qu'avec son droit : on ne
  * propose pas ce que le serveur refuserait (même règle que les menus « … »).
  *

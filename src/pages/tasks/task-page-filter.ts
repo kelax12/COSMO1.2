@@ -43,7 +43,7 @@ export function filterTasksForPage(tasks: Task[], params: TaskPageFilterParams):
   // chaque catégorie cochée : filtrer « Travail » retrouve les tâches
   // classées sous « Travail › SEO ».
   //
-  // 🔴 CHANGEMENT DE SÉMANTIQUE ASSUMÉ (2026-09-09, tâche 12 sous-catégories).
+  // 🔴 CHANGEMENT DE SÉMANTIQUE ASSUMÉ (tâche 12 sous-catégories).
   // C'est l'attente naturelle d'un arbre ; un compte dont les catégories
   // restent plates ne voit AUCUNE différence, `descendantIdSet` rendant alors
   // un ensemble vide pour chaque sélection. Règle exprimée UNE SEULE FOIS,

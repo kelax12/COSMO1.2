@@ -9,7 +9,7 @@
 //   · Google : `signInWithOAuth` ne porte rien, on rattache à l'ouverture de
 //     session (`acquisition-claim.ts`, `affiliate-claim.ts`, mig. 217).
 //
-// Extrait d'`AuthContext.tsx` le 2026-11-07 (ARC-03). Le code est DÉPLACÉ :
+// Extrait d'`AuthContext.tsx` (ARC-03). Le code est DÉPLACÉ :
 // ni le moment ni la condition d'activation n'ont changé. Le consentement
 // est hors de ce fichier (décision V11.3, voir `@/lib/affiliation`).
 

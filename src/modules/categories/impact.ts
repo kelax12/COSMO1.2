@@ -2,7 +2,7 @@
 // IMPACT D'UNE SUPPRESSION DE CATÉGORIE — logique pure
 // ═══════════════════════════════════════════════════════════════════
 //
-// 🔴 POURQUOI (revue du 2026-09-02, risque R-02).
+// 🔴 POURQUOI (revue, risque R-02).
 //
 // Aucune clé étrangère ne pointe vers `categories` (vérifié en production :
 // zéro contrainte enfant). `delete(id)` retirait donc la ligne, et tout ce qui

@@ -11,7 +11,7 @@ import { useT } from '@/i18n/useT';
 // Une sous-tâche et une dépendance référencent l'id de leur tâche : elles ne
 // s'écrivent qu'une fois la tâche créée. Ces deux éditeurs tiennent donc un
 // BROUILLON local, appliqué par `useApplyTeamTaskDraft` juste après la
-// création. Audit des popups du 2026-09-25 : ces deux onglets n'existaient
+// création. Audit des popups : ces deux onglets n'existaient
 // qu'en édition, il fallait créer, fermer puis rouvrir la fiche.
 // ═══════════════════════════════════════════════════════════════════
 
@@ -79,7 +79,7 @@ interface DraftDependenciesEditorProps {
   projectId: string;
   value: string[];
   onChange: (next: string[]) => void;
-  /** Tâches que la nouvelle bloque (colonne de droite, 2026-10-30). */
+  /** Tâches que la nouvelle bloque (colonne de droite). */
   blocks: string[];
   onBlocksChange: (next: string[]) => void;
   /** Le graphe ne se modifie que par un gestionnaire, comme en édition. */
@@ -90,7 +90,7 @@ interface DraftDependenciesEditorProps {
  * Une tâche neuve n'a aucune arête : elle peut être bloquée par des tâches
  * existantes ET en bloquer d'autres sans jamais former de cycle, tant qu'une
  * même tâche n'est pas des deux côtés (exclue de l'autre colonne). Même vue en
- * deux colonnes qu'en édition (`TeamTaskDependencyColumns`, 2026-10-30).
+ * deux colonnes qu'en édition (`TeamTaskDependencyColumns`).
  */
 export const DraftDependenciesEditor = ({ orgId, projectId, value, onChange, blocks, onBlocksChange, canEdit }: DraftDependenciesEditorProps) => {
   const { t } = useT('org');

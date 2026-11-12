@@ -24,7 +24,7 @@ interface Props {
 }
 
 /**
- * Récapitulatif avant paiement (spec 2026-11-02 § 3.3). La carte de la grille
+ * Récapitulatif avant paiement (spec § 3.3). La carte de la grille
  * s'y déploie : même `layoutId` (`org-tier-<palier>`).
  * Sous mouvement réduit, PAS de `layoutId` : Framer rendrait l'animation de
  * layout instantanée puis replacerait l'élément à l'ancienne position pour une

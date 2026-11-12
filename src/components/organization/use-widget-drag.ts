@@ -22,7 +22,7 @@ type DragEvent = MouseEvent | TouchEvent | PointerEvent;
  *
  * Sous mouvement réduit, la grille n'a pas de `layout` Framer (cf. le
  * composant) : les blocs se téléportaient à chaque échange (vidéo du
- * 2026-10-26, Windows « Effets d'animation » coupés). Décision d'Axel du
+ *, Windows « Effets d'animation » coupés). Décision d'Axel du
  * PENDANT un glisser, le déplacement s'anime quand même, le
  * geste de la personne le déclenche. Les flèches du clavier restent
  * instantanées, et aucune position finale ne dépend d'une animation.

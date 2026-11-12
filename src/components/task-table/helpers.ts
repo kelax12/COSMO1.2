@@ -83,7 +83,7 @@ export const isTaskOverdue = (deadline: string | undefined, completed: boolean):
   isOverdue(deadline, completed);
 
 /**
- * Classes de la pilule `P{n}` sur MOBILE (maquette 145, 2026-10-10).
+ * Classes de la pilule `P{n}` sur MOBILE (maquette 145).
  * P1 et P2 gardent la teinte d'urgence (`task-priority-*`, partagée avec le
  * tableau desktop) ; P3 à P5 passent en gris. La pilule reste partout
  * (arbitrage 85) : seule sa couleur se réserve à ce qui presse.

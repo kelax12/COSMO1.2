@@ -46,7 +46,7 @@ interface MemberSheetProps {
   onAddUnder: (m: OrgMember) => void;
 }
 
-// Libellés venus de deux catalogues (2026-10-01 : `member.*` est passé dans `orgAdmin`).
+// Libellés venus de deux catalogues ( `member.*` est passé dans `orgAdmin`).
 type TabLabel = { ns: 'org'; key: KeyOf<'org'> } | { ns: 'orgAdmin'; key: KeyOf<'orgAdmin'> };
 const TAB_META: Record<MemberTab, { label: TabLabel; Icon: typeof UserRound }> = {
   profile: { label: { ns: 'orgAdmin', key: 'member.tabProfile' }, Icon: UserRound },

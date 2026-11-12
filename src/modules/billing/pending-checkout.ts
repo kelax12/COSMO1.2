@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// BILLING ORG · trace du paiement en cours (spec 2026-11-02 § 5.1)
+// BILLING ORG · trace du paiement en cours (spec § 5.1)
 //
 // Écrite juste avant la redirection vers Stripe, relue au retour
 // (`?checkout=success`) pour savoir QUEL palier attendre pendant que le

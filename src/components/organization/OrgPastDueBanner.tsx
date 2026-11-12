@@ -11,7 +11,7 @@ interface Props {
 }
 
 /**
- * Impayé (spec 2026-11-02 § 5.2), en tête de TOUT l'espace entreprise, pour
+ * Impayé (spec § 5.2), en tête de TOUT l'espace entreprise, pour
  * le propriétaire seul. Monté en `lazy` par `OrganizationPage` et seulement
  * quand l'abonnement est `past_due` : son code ne pèse pas dans le chunk de la
  * page. Aucune date de nouvelle tentative : elle n'est pas lue (v1).

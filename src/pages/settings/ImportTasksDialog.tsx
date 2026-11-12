@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════
 // Fenêtre d'import : Todoist, TickTick, Notion ou tout CSV (point 44 de la
-// liste du 2026-10-08, promis à l'écran par « bientôt disponible » depuis
+// liste, promis à l'écran par « bientôt disponible » depuis
 // des semaines).
 //
 // Étapes : fichiers → colonnes (CSV quelconque seulement) → aperçu → import
@@ -25,7 +25,7 @@ const muted = 'text-xs text-[rgb(var(--color-text-muted))]';
 interface ImportTasksDialogProps {
   open: boolean;
   onClose: () => void;
-  /** Mode entreprise : les tâches vont dans un projet choisi ici (2026-10-31). */
+  /** Mode entreprise : les tâches vont dans un projet choisi ici. */
   org?: { orgId: string; projects: { id: string; name: string }[] };
 }
 

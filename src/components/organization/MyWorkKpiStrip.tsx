@@ -19,12 +19,12 @@ interface KpiStripProps {
   children?: ReactNode;
 }
 
-// Maquette 227 (2026-10-10) : sur mobile, plus de pastilles colorées, du
+// Maquette 227 : sur mobile, plus de pastilles colorées, du
 // texte ; seul le retard reste en rouge. Desktop garde ses pastilles.
 const PILL = 'tabular-nums md:inline-flex md:items-center md:px-2 md:py-0.5 md:rounded-md md:text-xs md:font-semibold';
 
 /**
- * En-tête de l'Aperçu (maquette 1 B, 2026-10-02) : une phrase plutôt que
+ * En-tête de l'Aperçu (maquette 1 B) : une phrase plutôt que
  * quatre tuiles. Elle porte les mêmes réponses (ce qui m'attend, ce qui est
  * ouvert, ce qui est en retard, la prochaine échéance) et absorbe la barre de
  * l'ancienne carte de synthèse (maquette 4 C), qui redisait ces chiffres.
@@ -50,7 +50,7 @@ export const KpiStrip = ({ firstName, waiting, open, overdue, done, nextDeadline
       {children && <div className="mt-3">{children}</div>}
       {/* `data-testid` : masquée par la garde visuelle, la date et le nom de la
           prochaine échéance avancent avec le jour. */}
-      {/* Masquée sur mobile (retour 2026-10-11) : les mêmes chiffres sont
+      {/* Masquée sur mobile : les mêmes chiffres sont
           repris par les sections juste en dessous, la phrase surchargeait. */}
       <p data-testid="apercu-greeting-summary" className="max-md:hidden mt-1.5 text-sm leading-relaxed text-[rgb(var(--color-text-secondary))]">
         {waiting === 0 && overdue === 0 && open === 0 ? (

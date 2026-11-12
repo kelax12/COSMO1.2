@@ -268,7 +268,7 @@ const OrganizationPage = () => {
   };
   // Effectif au-dessus du quota (baisse de palier, abonnement tombé) : l'espace
   // se verrouille, seules restent les sections qui permettent d'en sortir
-  // (décision d'Axel du 2026-11-05). Jamais avant d'avoir lu l'abonnement ET
+  // (décision d'Axel). Jamais avant d'avoir lu l'abonnement ET
   // les membres : pendant le chargement le quota retombe à 5 par défaut, et une
   // organisation payante verrait le verrou clignoter.
   // ⚠️ Verrou d'interface : la base sert toujours les données (pas une frontière).
@@ -337,7 +337,7 @@ const OrganizationPage = () => {
       <MobileHeader
         title={myOrg.name}
         subtitle={`${tpOrgAdmin('page.memberCount', members.length)}${myOrg.industry ? ` · ${myOrg.industry}` : ''}`}
-        // Maquette 236 (2026-10-10) : une seule icône, la cloche. Le crayon
+        // Maquette 236 : une seule icône, la cloche. Le crayon
         // menait à Paramètres, qui est une section ; le glossaire passe dans
         // la feuille des sections (`OrgSectionSwitcher`).
         actions={<OrgNotificationsBell orgId={myOrg.id} members={members} />}

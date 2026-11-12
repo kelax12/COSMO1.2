@@ -10,7 +10,7 @@ import ManageCookiesButton from '@/components/ManageCookiesButton';
  * Coquille commune aux trois documents contractuels (CGU, confidentialité,
  * mentions légales).
  *
- * 🔴 POURQUOI (revue du 2026-09-02, risque R-13). Les trois pages étaient
+ * 🔴 POURQUOI (revue, risque R-13). Les trois pages étaient
  * écrites en JSX français en dur : 153 chaînes, soit l'essentiel de la dette
  * i18n du dépôt. La locale `en` étant réellement servie (`SUPPORTED_LOCALES`),
  * un anglophone se voyait présenter des conditions générales dans une langue
@@ -32,7 +32,7 @@ import ManageCookiesButton from '@/components/ManageCookiesButton';
  */
 
 /**
- * Clés d'un document : chaque document a son catalogue depuis le 2026-10-01
+ * Clés d'un document : chaque document a son catalogue
  * (`legalTerms`, `legalPrivacy`, et `legal` pour les mentions), et sa page
  * passe le traducteur qui va avec (`text`).
  */

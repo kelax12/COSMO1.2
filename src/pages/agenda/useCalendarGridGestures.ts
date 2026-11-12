@@ -15,7 +15,7 @@
 // ni le panneau des tâches. Il reçoit les événements chargés et deux
 // écritures.
 //
-// Extrait le 2026-09-05 (C-09).
+// Extrait (C-09).
 // ═══════════════════════════════════════════════════════════════════
 import type { EventDropArg } from '@fullcalendar/core';
 import type { EventReceiveArg, EventResizeDoneArg } from '@fullcalendar/interaction';

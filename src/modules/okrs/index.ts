@@ -61,7 +61,7 @@ export {
 // DERIVED HOOKS (Performance Optimized)
 // ═══════════════════════════════════════════════════════════════════
 
-// 🗑️ `hooks.derived.ts` a été SUPPRIMÉ le 2026-09-05 (C-49) : ses sept
+// 🗑️ `hooks.derived.ts` a été SUPPRIMÉ (C-49) : ses sept
 // sélecteurs et le type `EnrichedKeyResult` n'avaient aucun consommateur. Le
 // fichier était orphelin EN ENTIER. Cf. la note du baril `tasks`.
 

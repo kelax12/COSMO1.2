@@ -3,7 +3,7 @@
 //
 // Séparé de `local.repository.ts` pour le garder sous le plafond de 600
 // lignes. Les étiquettes (mig. 093) ont été retirées du mode entreprise le
-// 2026-09-28 : leurs tables restent en base, plus aucun écran ne les lit.
+// leurs tables restent en base, plus aucun écran ne les lit.
 // ═══════════════════════════════════════════════════════════════════
 
 import { safeGetItem, safeSetItem } from '@/lib/safe-json';

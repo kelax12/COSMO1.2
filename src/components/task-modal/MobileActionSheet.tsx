@@ -15,7 +15,7 @@
 // `prefers-reduced-motion` (CLAUDE.md § Animations, garde
 // `design-system.guard.test.ts`).
 //
-// Extrait le 2026-09-05 (C-09).
+// Extrait (C-09).
 // ═══════════════════════════════════════════════════════════════════
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';

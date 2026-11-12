@@ -54,7 +54,7 @@ const TodayHabits: React.FC = () => {
   const doneHabits = todayHabits.filter((h) => h.completedToday);
 
   // Une ligne d'habitude sur mobile (filet, pas de carte : arbitrage du
-  // 2026-09-05), partagée entre la liste « à faire » et le repli « faites ».
+  // partagée entre la liste « à faire » et le repli « faites ».
   const renderMobileRow = (habit: (typeof todayHabits)[number]) => (
     <li
       key={habit.id}

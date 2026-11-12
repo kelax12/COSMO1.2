@@ -14,7 +14,7 @@ import { translator } from '@/i18n/useT';
 // Contrat : seuls des codes explicitement whitelistés produisent un message
 // spécifique ; tout le reste retombe sur un texte générique identique.
 //
-// ⚠️ Extrait de `AuthContext.tsx` le 2026-08-28, et c'est le cliquet de taille
+// ⚠️ Extrait de `AuthContext.tsx`, et c'est le cliquet de taille
 // qui l'a imposé : le fichier était à 626 lignes pour un budget qui n'avait
 // plus qu'UNE ligne de marge, et le cas captcha en demandait quatre. La garde
 // ne demande jamais de refactor, elle rend le refactor moins cher que le

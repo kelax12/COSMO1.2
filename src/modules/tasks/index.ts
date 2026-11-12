@@ -18,7 +18,7 @@ export { taskKeys, TASKS_STORAGE_KEY, TASK_DEPENDENCIES_STORAGE_KEY } from './co
 export type { ITasksRepository } from './repository';
 
 // Repository implementations
-// Dépôt de démo NON réexporté (2026-10-01) : le baril est importé par le shell,
+// Dépôt de démo NON réexporté : le baril est importé par le shell,
 // la réexportation ramenait le dépôt dans le chunk d'ENTRÉE alors que la fabrique
 // le charge à la demande (`src/lib/demo-repositories.ts`).
 export { SupabaseTasksRepository } from './supabase.repository';
@@ -57,7 +57,7 @@ export {
   useRemoveTaskDependency,
 } from './hooks';
 
-// 🗑️ `hooks.derived.ts` a été SUPPRIMÉ le 2026-09-05 (C-49). Ses huit
+// 🗑️ `hooks.derived.ts` a été SUPPRIMÉ (C-49). Ses huit
 // sélecteurs — `useTasksByStatus`, `useTasksByCategory`, `useTasksByPriority`,
 // `useTaskStats`, `useSearchTasks`, `useTasksInPriorityRange`,
 // `useTasksDueWithinDays`, `useTaskLookup` — étaient exportés sans qu'aucun

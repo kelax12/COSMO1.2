@@ -181,7 +181,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
       <div className="flex-1 overflow-y-auto" data-scroll-area>
         <div className="px-4 py-4 flex flex-col gap-0">
 
-          {/* ── Nom ── Maquette 152 (2026-10-10) : le nom est le titre de la
+          {/* ── Nom ── Maquette 152 : le nom est le titre de la
               fiche, sans cadre (c'était un champ encadré de 48 px). Le cadre
               rouge d'erreur reste porté par le conteneur. */}
           <div
@@ -457,7 +457,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
             )}
           </SectionCard>
 
-          {/* ── Supprimer (édition uniquement) — remis le 2026-09-17 à la
+          {/* ── Supprimer (édition uniquement) — remis à la
               demande utilisateur, après Collaboration, même gabarit que la
               cellule Collaborateurs ci-dessus (min-h-11, pleine largeur). */}
           {!isCreating && (

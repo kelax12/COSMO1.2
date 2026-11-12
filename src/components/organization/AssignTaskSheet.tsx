@@ -32,7 +32,7 @@ interface AssignTaskSheetProps {
  * (liste des ouvertes où il ne figure pas encore, filtrable) ou en créer
  * une nouvelle via le modal complet.
  *
- * Le projet se CHOISIT ici (audit des popups, 2026-09-25) : la création
+ * Le projet se CHOISIT ici (audit des popups) : la création
  * tombait dans le premier projet de la liste quand on n'en disait rien. Il
  * filtre aussi les tâches existantes. Un seul projet ouvert : il est pris.
  */
@@ -82,7 +82,7 @@ const AssignTaskSheet = ({ member, projects, tasks, onAssign, onCreateNew, onClo
     </button>
   );
 
-  // Grand format (maquette B, 2026-09-28) : filtres dans l'en-tête, tableau à
+  // Grand format (maquette B) : filtres dans l'en-tête, tableau à
   // colonnes, création en bas de liste. Une colonne sur téléphone.
   const ROW = 'grid grid-cols-[minmax(0,1fr)_auto] sm:grid-cols-[minmax(0,1fr)_150px_80px_80px_80px] items-center gap-x-3';
 

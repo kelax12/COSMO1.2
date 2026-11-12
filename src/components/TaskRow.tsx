@@ -28,7 +28,7 @@ interface TaskRowProps {
 }
 
 /**
- * Rangée de tâche des widgets du tableau de bord (2026-10-21), forme de la
+ * Rangée de tâche des widgets du tableau de bord, forme de la
  * maquette 376 : rond à cocher, nom sur une ligne, séparateur entre rangées
  * (porté par le `ul divide-y` parent), actions à plat au survol.
  *

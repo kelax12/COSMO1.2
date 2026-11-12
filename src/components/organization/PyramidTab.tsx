@@ -40,7 +40,7 @@ interface PyramidTabProps {
   loading?: boolean;
 }
 
-// Logique pure extraite dans `pyramid.helpers.ts` (audit archi 2026-08-07, M1) :
+// Logique pure extraite dans `pyramid.helpers.ts` (audit archi, M1) :
 // ce sont les seules fonctions de ce fichier qui DÉCIDENT quelque chose
 // (autorisation de déplacement, interdiction des cycles, recherche), donc les
 // seules qui méritaient des tests. Elles y sont couvertes.
@@ -85,7 +85,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
     onBackgroundPointerDown,
   } = usePyramidDnd({ orgId, members, currentUserId, isAdmin });
   // « Placer dans la pyramide », une feuille pour les deux sens (audit des
-  // popups, 2026-09-25) : ex-MemberPlacementSheet (au-dessus) et
+  // popups) : ex-MemberPlacementSheet (au-dessus) et
   // ex-AddUnderSheet (en dessous).
   const [placement, setPlacement] = useState<{ member: OrgMember; direction: PlacementDirection } | null>(null);
   const setPlacing = (member: OrgMember) => setPlacement({ member, direction: 'up' });

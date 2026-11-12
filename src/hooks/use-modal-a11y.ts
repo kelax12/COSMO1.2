@@ -13,7 +13,7 @@ import {
 // de `document.activeElement` : 58 fichiers montent une surface modale hors
 // `ui/dialog` (Radix), et aucun ne restituait le focus à son déclencheur.
 //
-// Mesuré au clavier le 2026-09-03 sur `/agenda` : Tab jusqu'à « Nouveau »,
+// Mesuré au clavier sur `/agenda` : Tab jusqu'à « Nouveau »,
 // Entrée. `EventModal` s'ouvre et le focus RESTE sur le bouton derrière elle ;
 // le premier Tab atteint un événement du calendrier masqué par l'overlay ;
 // Échap ne fait rien. On remplit un formulaire qu'on ne peut pas atteindre, en

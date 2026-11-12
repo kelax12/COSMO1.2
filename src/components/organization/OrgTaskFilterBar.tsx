@@ -44,16 +44,16 @@ interface OrgTaskFilterBarProps {
   /** « + Créer une équipe » au bas du menu d'équipe, si le droit existe. */
   onCreateTeam?: () => void;
   /** Ce que la barre trie. `projects` : onglet Projets, sans pastilles d'état
-   *  (répartition Projets / Tâches du 2026-09-27). */
+   * (répartition Projets / Tâches). */
   entity?: 'tasks' | 'projects';
-  /** Place le périmètre ailleurs (onglet Tâches : à côté du tri, 2026-09-30).
+  /** Place le périmètre ailleurs (onglet Tâches : à côté du tri).
    *  Reçoit le sélecteur, rend la ligne qui l'accueille sous la recherche. */
   scopeSlot?: (scope: ReactNode) => ReactNode;
   /** Actions poussées à droite de la ligne de recherche (onglet Projets :
-   *  corbeille et « Nouveau projet », 2026-10-01). */
+   * corbeille et « Nouveau projet »). */
   trailing?: ReactNode;
   /** Rendu sur la ligne de recherche, juste après le champ (onglet Tâches
-   *  desktop : tri + périmètre, 2026-10-30). */
+   * desktop : tri + périmètre). */
   afterSearch?: (scope: ReactNode) => ReactNode;
 }
 
@@ -193,7 +193,7 @@ const OrgTaskFilterBar = ({
     <div className="space-y-2" role="group" aria-label={t('filters.barAria')}>
       <div className="flex items-center gap-2 flex-wrap">
         {/* Recherche, avec les filtres actifs en pastilles DANS le champ
-            (2026-09-28) : la ligne « Filtres actifs » en dessous coûtait une
+ : la ligne « Filtres actifs » en dessous coûtait une
             rangée entière pour une ou deux étiquettes. Retour arrière dans un
             champ vide retire la dernière pastille, comme un champ d'étiquettes. */}
         <div
@@ -241,7 +241,7 @@ const OrgTaskFilterBar = ({
         {!scopeSlot && scope}
         {afterSearch && <div className="flex-1 min-w-0">{afterSearch(scope)}</div>}
 
-        {/* Plus de pastilles d'état ici (2026-09-28) : « Terminées cette
+        {/* Plus de pastilles d'état ici : « Terminées cette
             semaine » est un préréglage (`FilterPresets`), « Tout » est retiré. */}
         {trailing && <div className="ml-auto flex items-center gap-2">{trailing}</div>}
       </div>

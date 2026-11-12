@@ -95,7 +95,7 @@ export function LabeledInput({
 }
 
 /* ─── reusable: PrimaryButton ──────────────────────────────────── */
-// Maquette 208 (2026-10-10) : l'accent, comme toute action principale de
+// Maquette 208 : l'accent, comme toute action principale de
 // l'app. Il était blanc (« Sauvegarder », « Mettre à jour ») à côté d'un
 // « Accéder » bleu et d'un « Enregistrer » violet.
 export function PrimaryButton({ onClick, type = 'button', loading = false, children }: {

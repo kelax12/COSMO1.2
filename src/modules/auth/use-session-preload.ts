@@ -11,7 +11,7 @@
 // 🔴 S'abonne APRÈS le cache hors ligne (ordre des hooks dans
 // `AuthProvider`) : précharger avant d'avoir pré-rempli écraserait le gain.
 //
-// Extrait d'`AuthContext.tsx` le 2026-11-07 (ARC-03).
+// Extrait d'`AuthContext.tsx` (ARC-03).
 
 import { useEffect } from 'react';
 import type { QueryClient } from '@tanstack/react-query';

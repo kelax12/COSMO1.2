@@ -23,7 +23,7 @@ const useRepo = () => getTeamProjectsRepository();
 /**
  * Projet + tâches initiales + jalons, en UNE transaction serveur. Remplace la
  * boucle de `mutateAsync` qui laissait un projet à moitié créé au premier
- * échec (audit Projets, 2026-09-24). Sert aussi la duplication et les modèles.
+ * échec (audit Projets). Sert aussi la duplication et les modèles.
  */
 export const useCreateTeamProjectWithTasks = (orgId: string) => {
   const queryClient = useQueryClient();

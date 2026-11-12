@@ -23,7 +23,7 @@ export const TEAM_TASK_TRASH_DAYS = 30;
 export const TEAM_TASKS_READ_LIMIT = 1000;
 
 /**
- * Projets : lecture paginée par pages de 500 (audit du 2026-09-24). Un
+ * Projets : lecture paginée par pages de 500 (audit). Un
  * plafond unique de 200 masquait le reste d'un portefeuille de 500 projets.
  */
 export const TEAM_PROJECTS_PAGE = 500;

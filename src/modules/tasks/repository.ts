@@ -16,7 +16,7 @@ export interface TaskPageParams extends PaginationParams {
  * Résultat d'un basculement de complétion.
  *
  * `spawned` porte l'occurrence récurrente éventuellement générée par la MÊME
- * opération (audit archi 2026-08-07, H1). Avant, cette création était un
+ * opération (audit archi, H1). Avant, cette création était un
  * `create()` fire-and-forget dans le `onSuccess` du hook : elle se perdait
  * silencieusement si l'onglet se fermait, et se dupliquait si l'utilisateur
  * décochait puis recochait. La génération est désormais atomique et idempotente

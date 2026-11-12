@@ -11,7 +11,7 @@
 // téléchargés par quelqu'un qui arrive sur la landing et ne se connectera
 // jamais.
 //
-// C'est exactement la coupe faite le 2026-09-03 pour les quatre dépôts du mode
+// C'est exactement la coupe faite pour les quatre dépôts du mode
 // entreprise (`src/lib/demo-repositories.ts`), et que son en-tête annonçait ne
 // pas pouvoir étendre à `categories` « sans séparer d'abord l'interface de
 // l'implémentation ». C'est cette séparation-là.

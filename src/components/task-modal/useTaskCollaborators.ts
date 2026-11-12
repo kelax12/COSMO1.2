@@ -26,7 +26,7 @@
 // tout de suite parce qu'elle ne répond à aucune saisie en cours — c'est un
 // rattrapage, pas une édition.
 //
-// Extrait le 2026-09-05 (C-09).
+// Extrait (C-09).
 // ═══════════════════════════════════════════════════════════════════
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from '@/lib/toast';

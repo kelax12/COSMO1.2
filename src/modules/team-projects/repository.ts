@@ -41,7 +41,7 @@ export interface ITeamProjectsRepository {
   // Archiver = updateProject({ archived }) : un seul chemin, celui que l'UI
   // emprunte (menu de la carte projet, droit `project.delete`, trigger
   // `enforce_team_project_archive_scope`). Une méthode `archiveProject`
-  // dédiée a coexisté sans consommateur jusqu'au 2026-09-04 (C-66).
+  // dédiée a coexisté sans consommateur jusqu'au (C-66).
   updateProject(projectId: string, input: UpdateTeamProjectInput): Promise<TeamProject>;
   /**
    * Projet + tâches en UNE transaction (mig. 153). Rend l'id du
@@ -136,7 +136,7 @@ export interface ITeamProjectsRepository {
    * critique se calcule sur un projet entier, en charger une par tâche
    * multiplierait les allers-retours par le nombre de cartes affichées.
    *
-   * (Ce contrat était partagé avec `getTaskLabels`, retiré le 2026-09-05.)
+   * (Ce contrat était partagé avec `getTaskLabels`, retiré.)
    */
   getTaskDependencies(orgId: string): Promise<TeamTaskDependency[]>;
   /** `taskId` devient bloquée par `dependsOnId`. */

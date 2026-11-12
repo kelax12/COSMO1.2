@@ -28,7 +28,7 @@ interface Props {
  * Le panneau de droite (`OrgSideNav`) n'a pas sa place sur 375 px : il
  * mangerait le contenu. Ici, la section courante est un bouton pleine largeur
  * (« Projets ▾ ») qui ouvre une feuille du bas en grille (maquette M1 du
- * 2026-09-23). Il remplace la rangée de pilules défilante, où quatre
+ * Il remplace la rangée de pilules défilante, où quatre
  * destinations sur sept étaient hors champ.
  *
  * La feuille (`OrgSectionSheet`) arrive en lazy au premier toucher.

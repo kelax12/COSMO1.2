@@ -4,7 +4,7 @@
 //
 // La feuille « Planifier une tâche » (maquette 170), la carte de création
 // rapide et la gestion des récurrences avaient fait passer AgendaPage à
-// 19,5 ko pour un plafond de 18,5 (2026-10-10). Aucune ne s'affiche à
+// 19,5 ko pour un plafond de 18,5. Aucune ne s'affiche à
 // l'ouverture de la page : elles sortent du chunk et arrivent au premier
 // geste qui les demande.
 //
@@ -15,7 +15,7 @@
 // Module à part pour une seconde raison : AgendaPage tutoie la limite de
 // 600 lignes de `architecture.guard`, et l'a franchie avec ce code inline.
 //
-// 2026-10-22 : AgendaPage de nouveau à 18,2 ko pour 18,5. Trois surfaces de
+// AgendaPage de nouveau à 18,2 ko pour 18,5. Trois surfaces de
 // plus sortent du chunk : le tutoriel (et ses étapes desktop et mobile), qui
 // ne s'ouvre qu'à la première visite, et le panneau de revue d'un créneau
 // passé, qui ne vit que dans la modale d'édition d'un événement. Puis la

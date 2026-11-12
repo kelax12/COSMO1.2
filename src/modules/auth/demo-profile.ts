@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // Profil de la session DÉMO — lecture, filtrage, construction
 //
-// FAILLE B7, DEUXIÈME OCCURRENCE (trouvée le 2026-08-24)
+// FAILLE B7, DEUXIÈME OCCURRENCE (trouvée)
 // En démo, la page Réglages écrivait le nom / l'email / l'avatar dans
 // `cosmo_user` via `useUpdateUserSettings` — une clé que RIEN ne relisait
 // depuis que `useAuth` est devenu la source de vérité unique du type `User`.

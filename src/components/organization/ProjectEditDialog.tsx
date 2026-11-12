@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // Formulaire de projet — LE SEUL, en création comme en modification
 //
-// 2026-10-30 (décision d'Axel) : la modale de création (`NewTeamProjectModal`)
+// (décision d'Axel) : la modale de création (`NewTeamProjectModal`)
 // est supprimée. Elle proposait des options que la modification n'avait pas
 // (modèles, tâches initiales, couleur) ; il n'en reste qu'une, celle-ci.
 //

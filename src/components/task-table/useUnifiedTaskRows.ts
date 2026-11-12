@@ -13,7 +13,7 @@
 // tâches d'équipe, plutôt que d'afficher une liste qu'aucun de ces filtres
 // ne décrit. Séparer les deux calculs ferait diverger cette règle.
 //
-// Extrait le 2026-09-05 (C-09).
+// Extrait (C-09).
 // ═══════════════════════════════════════════════════════════════════
 import { useMemo } from 'react';
 import type { Task } from '@/modules/tasks';

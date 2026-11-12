@@ -49,7 +49,7 @@ export const useTeamOKRs = (
  *
  * UNE requête, pas `useQueries` : ce dernier tire `QueriesObserver` dans le
  * lot `vendor-query`, sur le CHEMIN CRITIQUE de tout visiteur (+3 ko bruts
- * mesurés le 2026-09-29), pour une seule section qui s'en sert. Même
+ * mesurés), pour une seule section qui s'en sert. Même
  * arbitrage que `useGroupEventsWindow` (module events).
  */
 export const useTeamOKRsAcrossOrgs = (orgIds: string[]) => {

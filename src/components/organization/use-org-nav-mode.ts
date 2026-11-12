@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
  * État de la navigation entreprise (desktop). Trois états, pas deux :
  *
  * - `open`     : ouverte À L'ARRIVÉE sur la page, toujours (demande d'Axel du
- *                2026-09-23). La page lui réserve sa place.
+ * La page lui réserve sa place.
  * - `collapsed`: repliée, 10 px au bord.
  * - `peek`     : ressortie parce que le curseur a touché le bord. Elle passe
  *                PAR-DESSUS le contenu, sans réserver de place : réserver à

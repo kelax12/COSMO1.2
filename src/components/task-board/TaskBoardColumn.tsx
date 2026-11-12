@@ -1,6 +1,6 @@
 // Une colonne du Tableau perso : en-tête, zone de dépôt, cartes, saisie rapide.
 //
-// Indépendante de l'axe (Statut ou État, 2026-10-09) : le Tableau lui donne
+// Indépendante de l'axe (Statut ou État) : le Tableau lui donne
 // son identifiant, son libellé, sa pastille et ce qu'une tâche née ici porte
 // (`newTask`). La saisie rapide parle la même syntaxe que la barre d'ajout
 // global (`parseQuickAdd` : « Dentiste jeudi #santé !! ~30m »). Pas de saisie

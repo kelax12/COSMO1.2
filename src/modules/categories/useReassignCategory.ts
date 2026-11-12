@@ -34,7 +34,7 @@ export interface ReassignResult {
    * 🔴 Sans ces identifiants, « Annuler » ne peut pas défaire la réaffectation :
    * il restitue la catégorie et laisse les éléments là où on vient de les
    * mettre. L'annulation réparait alors en apparence seulement, exactement le
-   * défaut que R-08 dit fermer (constaté sur `OKRPage` le 2026-09-02).
+   * défaut que R-08 dit fermer (constaté sur `OKRPage`).
    */
   taskIds: string[];
   okrIds: string[];

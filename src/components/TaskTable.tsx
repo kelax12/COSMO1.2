@@ -201,7 +201,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const bulkListModalMounted = useLazyMount(showBulkListModal);
 
   // Les deux feuilles de confirmation ci-dessous affichaient une poignee de
-  // glissement qui ne declenchait rien (audit mobile 2026-08-14). Un helper
+  // glissement qui ne declenchait rien. Un helper
   // par feuille : `useBottomSheet` ne sait fermer qu'une seule surface.
   const deleteSheet = useBottomSheet(useCallback(() => setTaskToDelete(null), []));
   const bulkDeleteSheet = useBottomSheet(useCallback(() => setShowBulkDeleteConfirm(false), [setShowBulkDeleteConfirm]));
@@ -405,7 +405,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
       {/* Bandeau « En retard » (#9) : visible dès qu'une tâche a dépassé sa
           deadline — replanification groupée en un clic.
-          Desktop uniquement (redesign mobile 2026-09-07) : sur mobile, chaque
+          Desktop uniquement : sur mobile, chaque
           tâche en retard porte déjà sa propre solution de report
           (`OverdueQuickActions` sur la carte), le bandeau global disparaît. */}
       {!addToListMode && !showCompleted && activeQuickFilter === 'none' && overdueTasks.length > 0 && (

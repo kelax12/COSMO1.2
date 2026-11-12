@@ -36,7 +36,7 @@ export interface IOKRsRepository {
    *
    * La premiere version de C-01 appelait
    * `getKRCompletionsRepository().create()` depuis le hook. C'est exactement
-   * ce que l'arbitrage du 2026-09-03 fait SUPPRIMER avec
+   * ce que l'arbitrage fait SUPPRIMER avec
    * `useCreateKRCompletion` : « un INSERT client libre dans un journal
    * append-only que ce fichier interdit par ailleurs ». Le contourner en
    * appelant le repository plutot que le hook aurait garde le defaut en

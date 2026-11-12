@@ -12,7 +12,7 @@ export { habitKeys, HABITS_STORAGE_KEY } from './constants';
 export type { IHabitsRepository } from './repository';
 
 // Repository implementations
-// Dépôt de démo NON réexporté (2026-10-01) : le baril est importé par le shell,
+// Dépôt de démo NON réexporté : le baril est importé par le shell,
 // la réexportation ramenait le dépôt dans le chunk d'ENTRÉE alors que la fabrique
 // le charge à la demande (`src/lib/demo-repositories.ts`).
 export { SupabaseHabitsRepository } from './supabase.repository';
@@ -33,6 +33,6 @@ export { useRestoreHabit } from './restore.hooks';
 // DERIVED HOOKS (Performance Optimized)
 // ═══════════════════════════════════════════════════════════════════
 
-// 🗑️ `hooks.derived.ts` a été SUPPRIMÉ le 2026-09-05 (C-49) : ses cinq
+// 🗑️ `hooks.derived.ts` a été SUPPRIMÉ (C-49) : ses cinq
 // sélecteurs n'avaient aucun consommateur. Le fichier était orphelin EN
 // ENTIER. Cf. la note du baril `tasks`.

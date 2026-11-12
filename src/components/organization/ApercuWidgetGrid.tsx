@@ -68,7 +68,7 @@ const INSTANT_DRAG_SNAP = { type: false } as unknown as InertiaOptions;
  *
  * Mouvement réduit (WCAG 2.3.3) : ce composant suit le `MotionConfig
  * reducedMotion="user"` d'`App.tsx`. Il a porté un `reducedMotion="never"`
- * (2026-10-19 à 2026-10-22, « mode ouvert par la personne ») qui faisait
+ * (« mode ouvert par la personne ») qui faisait
  * vibrer les blocs EN BOUCLE chez qui demande moins d'animation. ❌ Ne pas le
  * remettre : `e2e/reduced-motion-widgets.spec.ts` échoue s'il revient.
  * Sous mouvement réduit, ce que le `MotionConfig` ne couvre pas est coupé à la
@@ -260,7 +260,7 @@ const ApercuWidgetGrid = <Id extends string>({ layout: saved, onChange: save, re
                 onClick={startEditing}
                 data-testid="apercu-edit"
                 // Bouton discret, dashboard perso ET Aperçu entreprise (maquette 3,
-                // 2026-10-29 ; même fonctionnalité, même bouton).
+                // ; même fonctionnalité, même bouton).
                 className={`${toolbarButton} px-3 font-medium text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))]`}
                 aria-label={t('apercu.widgets.edit')}
               >

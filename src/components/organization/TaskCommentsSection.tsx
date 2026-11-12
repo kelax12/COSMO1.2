@@ -43,7 +43,7 @@ const TaskCommentsSection = ({ taskId, members, currentUserId, autoSubmitDraft, 
   // annulation, et le commentaire disparaissait pour toute l'equipe. C'etait la
   // seule suppression du mode entreprise sans aucun filet.
   //
-  // ⚠️ L'arbitrage du 2026-09-03 a tranche pour le toast « Annuler », avec les
+  // ⚠️ L'arbitrage a tranche pour le toast « Annuler », avec les
   // jumeaux C-41 et C-43, plutot que pour une confirmation. `useRestoreComment`
   // rend le commentaire sous SON identifiant ET a SA place dans le fil : sans
   // l'horodatage, il reviendrait apres des reponses qu'il precedait.

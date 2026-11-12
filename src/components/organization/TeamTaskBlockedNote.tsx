@@ -15,7 +15,7 @@ interface Props {
  *
  * 🔴 Elle vivait dans l'en-tête de la section Dépendances, « visible section
  * repliée : c'est l'information qui change la décision de démarrer, elle ne
- * doit pas se mériter ». L'audit des popups du 2026-09-25 (f3a49583) a rangé
+ * doit pas se mériter ». L'audit des popups (f3a49583) a rangé
  * la section dans son propre onglet : l'alerte n'apparaissait plus qu'une fois
  * l'onglet ouvert, c'est-à-dire exactement quand on n'en a plus besoin.
  * Le parcours `demo-entreprise-dependencies` l'a vu ; aucun test unitaire ne

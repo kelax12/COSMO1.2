@@ -19,7 +19,7 @@ interface ProjectAddTaskPickerProps {
 }
 
 /**
- * « Ajouter une tâche… » d'un projet en vue liste (2026-10-30) : un sélecteur
+ * « Ajouter une tâche… » d'un projet en vue liste : un sélecteur
  * filtré par nom parmi les tâches ouvertes des autres projets, et en tête
  * « Créer une tâche », qui mène à la modale de création.
  */

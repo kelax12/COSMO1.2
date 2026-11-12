@@ -344,7 +344,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
 
                     <div data-guide-id="perso-habit-form-color">
                       {/* Menu déroulant commun (cascade au survol) à la place des
-                          pastilles et de la légende, 2026-10-29. L'habitude ne
+                          pastilles et de la légende. L'habitude ne
                           stocke qu'une COULEUR : on traduit dans les deux sens. */}
                       <div className="flex justify-between items-center mb-2">
                         <span className="block text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-secondary))' }}>

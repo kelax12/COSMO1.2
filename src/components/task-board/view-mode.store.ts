@@ -36,7 +36,7 @@ export function useTasksView(): TasksView {
   return useSyncExternalStore(subscribe, () => current, () => 'list');
 }
 
-// ─── Axe des colonnes du Tableau : Statut ou État (2026-10-09) ─────
+// ─── Axe des colonnes du Tableau : Statut ou État ─────
 // Même mécanique : préférence par appareil, lue par le Tableau seul.
 
 export type BoardAxis = 'status' | 'health';

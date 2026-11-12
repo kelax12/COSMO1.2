@@ -6,7 +6,7 @@
 // contextuel et par Maj+F10. Feuille du bas sur mobile, dialogue sur desktop
 // (`BottomSheet`), focus piégé et rendu au déclencheur (`useModalA11y`).
 //
-// Indépendante de l'axe (2026-10-09) : le Tableau lui passe ses colonnes,
+// Indépendante de l'axe : le Tableau lui passe ses colonnes,
 // de Statut ou d'État, et la colonne courante de la tâche.
 import { Check } from 'lucide-react';
 import { BottomSheet } from '@/components/mobile';

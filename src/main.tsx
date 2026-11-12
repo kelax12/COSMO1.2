@@ -27,11 +27,11 @@ import './index.css';
 //
 // 49,3 ko gzip payés par TOUT visiteur, sur le chemin critique, pour un
 // paquet dont on n'a besoin qu'au premier incident. La décision du
-// 2026-09-03 le sort de là.
+// le sort de là.
 //
 // 🔴 L'ANGLE MORT QUE LA DÉCISION NOMME, ET SA RÉPONSE. « Les erreurs des
 // premières millisecondes ne seraient plus capturées, et c'est exactement la
-// fenêtre du bug de `Layout` du 2026-09-03. » Deux mesures, posées AVANT
+// fenêtre du bug de `Layout`. » Deux mesures, posées AVANT
 // tout le reste :
 //
 //   1. `installEarlyHandlers()` — un `window.onerror` et un
@@ -110,7 +110,7 @@ function initSentry(Sentry: typeof import('./lib/sentry-client')): void {
     // PostgREST/RPC lent à la transaction front qui l'a déclenché).
     // 🔴 JAMAIS `/functions/v1/` : les Edge Functions n'autorisent pas
     // `baggage`/`sentry-trace` en pré-requête, l'appel meurt avant le POST
-    // (M-32, 2026-10-16). PostgREST et Auth les acceptent. Garde :
+    // (M-32). PostgREST et Auth les acceptent. Garde :
     // `src/sentry-propagation.guard.test.ts`.
     tracePropagationTargets: [/^\//, /supabase\.co\/(?!functions\/v1\/)/],
     // Sentry 11 : `dataCollection` ABSENT vaut TOUT collecter. Chaque clé est
@@ -260,10 +260,10 @@ try { installFocusHistory(); } catch { /* un historique absent degrade la restit
 
 // Les comportements v7 (startTransition, relativeSplatPath) sont les defauts
 // depuis la 7.0 — le prop `future` n'a plus lieu d'etre. Ils ont ete adoptes
-// par etapes sur la 6.30 avant ce bump (cf. plan de migration 2026-07-29).
+// par etapes sur la 6.30 avant ce bump (cf. plan de migration ).
 function mount(): void {
   const root = createRoot(document.getElementById('root')!);
-  // 🔴 Page prérendue : premier rendu en TRANSITION (2026-10-22, TBT mobile de
+  // 🔴 Page prérendue : premier rendu en TRANSITION (TBT mobile de
   // `/`). Rendu à la priorité par défaut, React le faisait d'un bloc (114 ms en
   // simulation mobile) ; en transition il rend par tranches et rend la main
   // entre elles. Le visiteur n'attend rien de ce rendu : la page prérendue est

@@ -14,7 +14,7 @@ interface Props {
 }
 
 /**
- * En tête de l'onglet Abonnement (spec 2026-11-02 § 3.1) : tout l'état en un
+ * En tête de l'onglet Abonnement (spec § 3.1) : tout l'état en un
  * coup d'œil. Le nom du forfait est celui de la pastille de l'en-tête : les
  * deux doivent dire le même mot.
  *

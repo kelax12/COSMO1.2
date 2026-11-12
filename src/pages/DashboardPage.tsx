@@ -16,7 +16,7 @@ import { useEvents } from '@/modules/events';
 // dès que SHOW_REPARTITION_CHART repasserait à true. Lazy = recharts payé
 // uniquement si le graphique est réellement rendu (audit perf P-2 / TOP-9).
 const DashboardBarChart = React.lazy(() => import('@/components/DashboardBarChart'));
-// Lazy depuis le 2026-10-29 : la page Tâches ne l'importe plus, il pesait
+// Lazy : la page Tâches ne l'importe plus, il pesait
 // alors tout entier dans le chunk `DashboardPage` (23,2 ko pour 20,5 ko).
 const InboxMenu = React.lazy(() => import('@/components/InboxMenu'));
 const InboxMenuSlot = () => (
@@ -129,7 +129,7 @@ const DashboardPage: React.FC = () => {
   // Les quatre tuiles de statistiques — derivation pure, extraite.
   const statCards = useStatCards({ tasks, events, habits, krCompletions, viewMode, today, t });
 
-  // Section « Tâches collaboratives » masquée quand elle est vide (2026-09-27) :
+  // Section « Tâches collaboratives » masquée quand elle est vide :
   // gagner de la place plutôt que montrer une carte vide en permanence.
   // Tant que les tâches chargent, on ne rend rien pour éviter un flash de la
   // carte vide avant que `tasks` n'arrive.
@@ -139,7 +139,7 @@ const DashboardPage: React.FC = () => {
   // Animation variants
   // ⚠️ Variantes derivees de `useRevealVariants` et NON ecrites en dur : sous
   // `prefers-reduced-motion`, les enfants d une cascade restent sur leur
-  // variante `hidden`. Mesure ici meme le 2026-08-24 : DIX blocs du tableau de
+  // variante `hidden`. Mesure ici meme : DIX blocs du tableau de
   // bord etaient figes a `matrix(1, 0, 0, 1, 0, 20)` — 20 px trop bas, pour
   // toujours. Cf. `src/components/mobile/mobile-motion.ts`.
   const { container: containerVariants, item: itemVariants } = useRevealVariants(20);
@@ -207,7 +207,7 @@ const DashboardPage: React.FC = () => {
                   key={index}
                   className="relative overflow-hidden"
                   // Sous mouvement reduit, AUCUNE cle de transform — sinon les
-                  // cartes restent figees a `y: 20` (mesure le 2026-08-24).
+                  // cartes restent figees a `y: 20` (mesure).
                   initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
                   animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
                   transition={reduceMotion ? { duration: 0.18 } : { delay: index * 0.05, type: 'spring', stiffness: 100 }}
@@ -408,7 +408,7 @@ const DashboardPage: React.FC = () => {
                   // aujourd'hui. Avec l'égalité stricte, l'accueil affichait
                   // « aucune tâche restante aujourd'hui » directement au-dessus
                   // de trois tâches en retard listées par la section du dessous
-                  // (vu en 375 px le 2026-09-05). C'est aussi la règle de
+                  // (vu en 375 px). C'est aussi la règle de
                   // périmètre déjà tranchée pour le fil unifié :
                   // « échéance ≤ aujourd'hui, ou en retard, et non terminée ».
                   const remainingTasks = tasks.filter(t => !t.completed && t.deadline && deadlineDayKey(t.deadline) <= today).length;
@@ -469,7 +469,7 @@ const DashboardPage: React.FC = () => {
         {/* Carte check-in hebdo (#31) — invitation inline, jamais imposée.
             `flex-wrap` + plancher du texte (WCAG 1.4.4) : la carte ne paraît que
             le lundi et le mardi, et à 200 % de police le ✕ sortait de 13 px de
-            l'écran (C-97, mesuré le 2026-10-20). À 100 % la ligne est inchangée. */}
+            l'écran (C-97, mesuré). À 100 % la ligne est inchangée. */}
         {weeklyCheckin.shouldShow && !checkinOpen && (
           <motion.div variants={itemVariants}>
             <div className="flex flex-wrap items-center gap-3 p-4 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl">
@@ -510,7 +510,7 @@ const DashboardPage: React.FC = () => {
           </motion.div>
         )}
 
-        {/* ── Desktop : widgets (2026-10-21), même système que l'Aperçu
+        {/* ── Desktop : widgets, même système que l'Aperçu
             entreprise : « Modifier », formats S/M/L, déplacement, fenêtre
             « Ajouter un widget ». La disposition vit dans le navigateur. */}
         {!isMobile && (

@@ -9,7 +9,7 @@ export const adminKeys = {
 };
 
 /**
- * Objectifs du plan d'acquisition 30 jours (2026-08-13). Servent de cadre de
+ * Objectifs du plan d'acquisition 30 jours. Servent de cadre de
  * lecture aux courbes cumulées : sans eux, un axe auto-scalé donne l'illusion
  * d'être arrivé. `orgs` se compte en organisations de ≥ 3 membres.
  */

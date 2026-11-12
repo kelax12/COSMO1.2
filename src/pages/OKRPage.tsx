@@ -38,7 +38,7 @@ import { formatDurationMinutes } from '@/lib/duration';
 // OKR d'entreprise dont je porte un KR : section chargée à la demande (cf. ProOKRBlock).
 const ProOKRBlock = lazyWithRetry(() => import('./okr/ProOKRBlock'), ['okr', 'org']);
 // Deux modales qui ne s'ouvrent que sur un geste ou une échéance atteinte :
-// hors du chunk de la page (cliquet `check:bundle`, 2026-10-03).
+// hors du chunk de la page (cliquet `check:bundle`).
 const OKRDeadlineReviewModal = lazyWithRetry(() => import('@/components/OKRDeadlineReviewModal'));
 const CompletedOKRsModal = lazyWithRetry(() => import('@/components/CompletedOKRsModal'));
 
@@ -69,7 +69,7 @@ const OKRPage: React.FC = () => {
   // sinon les taches et objectifs qui la portaient restent orphelins (R-08).
   const [showCreateCategory, setShowCreateCategory] = useState(false);
   // Popup de gestion des catégories — seul chemin mobile pour ajouter,
-  // modifier ou supprimer une catégorie (redesign 2026-09-19). Desktop garde
+  // modifier ou supprimer une catégorie. Desktop garde
   // le formulaire inline + la barre flottante crayon/corbeille.
   const [showCategoryManage, setShowCategoryManage] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -228,7 +228,7 @@ const OKRPage: React.FC = () => {
 
   // La revue d'échéance est un geste complet (repérer, proposer, clore) : elle
   // vit dans son propre module. La page garde la MUTATION, le hook n'écrit
-  // rien lui-même (`src/pages/okr/useDeadlineReview.ts`, extrait le 2026-09-12).
+  // rien lui-même (`src/pages/okr/useDeadlineReview.ts`, extrait).
   const deadlineReview = useDeadlineReview(objectives, (updated) => {
     updateOkrMutation.mutate({
       id: updated.id,
@@ -270,10 +270,10 @@ const OKRPage: React.FC = () => {
           bordure/pilule au profit d'un `TouchTarget` icône seule, même
           traitement que la boîte de réception du Dashboard et de
           `TasksInboxMenu`. */}
-      {/* Titre raccourci au repos (redesign 2026-09-19) : le titre complet
+      {/* Titre raccourci au repos : le titre complet
           (`page.title`) ne tient pas dans le `text-display` du grand titre
           et tronquait en « OKR - Objectifs & R... ». `page.titleShort` reste
-          seul, au repos ET compacté : maquette 182 (2026-10-10), la page
+          seul, au repos ET compacté : maquette 182, la page
           changeait de nom au premier défilement (« OKR - Objectifs &
           Résultats Clés »). */}
       {/* Maquette 110 : « OKR - Objectifs » disait deux fois la même chose,
@@ -351,7 +351,7 @@ const OKRPage: React.FC = () => {
         </motion.button>
       </div>
 
-      {/* Mobile (2026-10-10, demande d'Axel) : un sélecteur unique au lieu
+      {/* Mobile (demande d'Axel) : un sélecteur unique au lieu
           du libellé « Catégorie : » et de la rangée de pastilles. */}
       <OKRCategorySelect
         categories={categories}

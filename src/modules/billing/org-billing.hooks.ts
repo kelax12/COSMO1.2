@@ -7,7 +7,7 @@
 // `local.repository` ni d'entrée dans `repository.factory` : il n'y a aucune
 // sémantique démo à simuler pour un abonnement Stripe.
 //
-// 🔴 LECTURE SEULE depuis le 2026-10-01. Les mutations (paiement, portail,
+// 🔴 LECTURE SEULE. Les mutations (paiement, portail,
 // remboursement) vivent dans `org-billing.mutations.ts` : ce fichier est importé
 // par `OrganizationPage`, et ses mutations pesaient dans le chunk de la page
 // alors que seuls l'onglet Facturation et la section Paramètres s'en servent.
@@ -25,7 +25,7 @@ export const orgBillingKeys = {
   subscription: (orgId: string) => [...orgBillingKeys.all, 'subscription', orgId] as const,
 };
 
-/** Attente d'activation au retour de Stripe (spec 2026-11-02 § 5.1). */
+/** Attente d'activation au retour de Stripe (spec § 5.1). */
 export interface AwaitActivation {
   tierKey: OrgTierKey | null;
   deadline: number;

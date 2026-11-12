@@ -8,7 +8,7 @@ import { useT } from '@/i18n/useT';
 import { taskDisplayStatus } from './team-projects.helpers';
 import { buildTasksCsv } from './team-tasks-table.helpers';
 
-// Import CSV (Todoist, TickTick, Notion) vers un projet de l'entreprise (2026-10-31) :
+// Import CSV (Todoist, TickTick, Notion) vers un projet de l'entreprise :
 // la même fenêtre que le perso, chargée au clic avec son catalogue.
 const ImportTasksDialog = lazyWithRetry(() => import('@/pages/settings/ImportTasksDialog'), ['settings']);
 
@@ -18,7 +18,7 @@ interface OrgTasksExportSectionProps {
 }
 
 /**
- * Export CSV des tâches de l'organisation, dans Paramètres (2026-09-28) : le
+ * Export CSV des tâches de l'organisation, dans Paramètres : le
  * bouton quitte la barre de l'onglet Tâches. Il exporte TOUTES les tâches
  * lisibles (lecture complète, plafonnée par page), sans filtre d'écran.
  */

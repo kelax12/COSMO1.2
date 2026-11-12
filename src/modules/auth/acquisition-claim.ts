@@ -4,7 +4,7 @@
 //
 // `register()` transmet la source en metadata de `signUp`, que le trigger
 // recopie (mig. 097). `signInWithOAuth` n'a pas d'équivalent : mesuré le
-// 2026-10-10, 6 inscriptions sur 7 passaient par Google et AUCUN compte ne
+//, 6 inscriptions sur 7 passaient par Google et AUCUN compte ne
 // portait de source. Ce module comble ce trou à l'ouverture de session, via
 // la RPC `claim_acquisition_source` (mig. 217).
 //

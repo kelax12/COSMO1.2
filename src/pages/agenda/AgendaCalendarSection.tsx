@@ -20,7 +20,7 @@
 // porté que par l'un des deux (deux `id` identiques rendraient le lien
 // d'évitement indéterminé).
 //
-// Extrait le 2026-09-05 (C-09).
+// Extrait (C-09).
 // ═══════════════════════════════════════════════════════════════════
 import React from 'react';
 import FullCalendar from '@fullcalendar/react';
@@ -115,8 +115,8 @@ interface AgendaCalendarSectionProps {
 
 /**
  * Couleur du titre d'un événement mobile, posé sur l'aplat de sa couleur.
- * Bug rapporté le 2026-10-11 : un bloc blanc sans titre (titre TOUJOURS blanc).
- * AM-5 (2026-10-22) : le seuil « luminance > 0,6 » laissait encore le blanc à
+ * Bug rapporté : un bloc blanc sans titre (titre TOUJOURS blanc).
+ * AM-5 : le seuil « luminance > 0,6 » laissait encore le blanc à
  * 2,15:1 sur l'orange ; le choix vit dans `textOnColor` (4,5:1).
  */
 const eventTextColor = textOnColor;
@@ -221,7 +221,7 @@ const AgendaCalendarSection = ({
     taskDone: boolean,
     /**
      * Mobile : couleur de l'événement en APLAT, texte blanc. La maquette 161
-     * (teinte à 18 %) a été retirée à la demande d'Axel le 2026-10-11. Le bloc
+     * (teinte à 18 %) a été retirée à la demande d'Axel. Le bloc
      * FullCalendar reste transparent (`cosmo-event-tinted`) : c'est ce contenu
      * qui porte la couleur, sans avatar (maquette 169).
      */

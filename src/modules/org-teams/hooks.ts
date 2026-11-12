@@ -40,11 +40,11 @@ export interface CreateTeamFullInput {
 /**
  * Crée une équipe PUIS y ajoute les membres choisis, puis nomme son
  * responsable : LE résultat de tout formulaire « Nouvelle équipe », d'où
- * qu'on l'ouvre (cohérence globale, 2026-09-25). Le mini-formulaire du modal
+ * qu'on l'ouvre (cohérence globale). Le mini-formulaire du modal
  * d'OKR créait une équipe sans aucun membre ; celui de Membres, de Pyramide
  * et de Projets, avec.
  *
- * Audit des popups du 2026-09-25 : le responsable se nomme à la création. Il
+ * Audit des popups : le responsable se nomme à la création. Il
  * est ajouté aux membres s'il n'y figurait pas, un responsable hors de son
  * équipe n'aurait aucun sens pour la RLS (mig. 107).
  */
@@ -69,7 +69,7 @@ export interface EditTeamFullInput extends CreateTeamFullInput {
 }
 
 /**
- * Modification d'une équipe par le formulaire de création (2026-10-30) : fiche,
+ * Modification d'une équipe par le formulaire de création : fiche,
  * puis écart de membres, puis responsable. Les ajouts et la nouvelle couronne
  * passent AVANT les retraits : un responsable qui se retire la couronne en
  * premier perdrait le droit d'appliquer le reste (`can_manage_team`, mig. 107).

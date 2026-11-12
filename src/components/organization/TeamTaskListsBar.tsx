@@ -18,7 +18,7 @@ interface TeamTaskListsBarProps {
 /**
  * Accès rapide aux LISTES de l'onglet Tâches du mode entreprise (mig. 203).
  *
- * Remplace l'accès rapide aux projets (2026-09-28, demande d'Axel) : c'est
+ * Remplace l'accès rapide aux projets (demande d'Axel) : c'est
  * la barre de la page Tâches personnelle, à l'identique, pilotée par les
  * listes de l'organisation. Les projets restent filtrables par la barre de
  * filtres, qui garde sa pastille « Projet ».

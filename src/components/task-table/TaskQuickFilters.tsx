@@ -48,7 +48,7 @@ const SCOPE_LABEL_KEY: Record<ScopeFilter, KeyOf<'tasks'>> = {
  * Filtres rapides de la page Tâches : signets, terminées, en retard,
  * collaboration, mode sélection, et la portée perso / entreprise.
  *
- * Extrait de `TaskTable` le 2026-08-29 (T-45). Purement présentationnel :
+ * Extrait de `TaskTable` (T-45). Purement présentationnel :
  * aucun état de filtre ne vit ici. Il reste dans `TaskTable`, qui est le seul
  * à savoir ce qu'il filtre — même règle que `TeamTasksToolbar` côté entreprise,
  * dont la barre d'outils a été extraite sans emporter l'état.

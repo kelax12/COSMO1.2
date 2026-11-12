@@ -188,7 +188,7 @@ const TextType = ({
   const shouldHideCursor =
     hideCursorWhileTyping && (currentCharIndex < currentTextForCursor.length || isDeleting);
 
-  // Audit perf 2026-05-29 — cursor blink moved from GSAP tween to a pure CSS
+  // Audit perf — cursor blink moved from GSAP tween to a pure CSS
   // keyframe (TextType.css). Removed the gsap dependency entirely; saves a
   // ~137 kB chunk from the bundle. Blink duration is wired through a CSS
   // custom property so the prop still drives the cadence.

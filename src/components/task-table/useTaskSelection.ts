@@ -10,7 +10,7 @@
 // refuse le DELETE, et ce départ-là n'est PAS réversible — c'est pourquoi le
 // toast « Annuler » ne couvre que les tâches possédées.
 //
-// Extrait le 2026-09-05 (C-09).
+// Extrait (C-09).
 // ═══════════════════════════════════════════════════════════════════
 import { useCallback, useState } from 'react';
 import { toast } from '@/lib/toast';

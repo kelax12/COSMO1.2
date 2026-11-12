@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // BILLING ORG — mutations (paiement, portail, rétractation, résiliation).
 //
-// Séparées de `org-billing.hooks.ts` le 2026-10-01 : la page /entreprise
+// Séparées de `org-billing.hooks.ts` : la page /entreprise
 // n'a besoin que de la lecture d'abonnement, et ce code ne sert qu'à l'onglet
 // Facturation et à la section Paramètres, tous deux chargés à la demande.
 // ❌ AUCUN REJEU AUTOMATIQUE sur une mutation qui déplace de l'argent : voir
@@ -180,7 +180,7 @@ export const useWithdrawalPreview = (orgId: string, enabled: boolean) =>
 
 /**
  * Rétractation, résiliation, annulation de résiliation (décision du
- * 2026-11-01). ❌ AUCUNE ne rembourse : le remboursement d'une rétractation est
+ * ❌ AUCUNE ne rembourse : le remboursement d'une rétractation est
  * fait à la main par l'admin (`stripe-org-refund`).
  */
 export const useOrgSubscriptionAction = (onDone?: (action: OrgSubscriptionAction) => void) =>

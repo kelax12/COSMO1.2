@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════
 //
 // Ce fichier LIT et ÉCRIT. Les données de démonstration elles-mêmes vivent
-// dans `local.seed.ts` depuis le 2026-09-05 : elles y occupaient 278 lignes
+// dans `local.seed.ts` : elles y occupaient 278 lignes
 // sur 712, et un jeu de données n'est pas un repository.
 
 import type { RestoreCommentOptions } from './repository';

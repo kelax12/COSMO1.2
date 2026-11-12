@@ -2,7 +2,7 @@
 // LA DEMANDE DE DÉCISION SUR UN CRÉNEAU DE TÂCHE TERMINÉ
 // ═══════════════════════════════════════════════════════════════════
 //
-// Remplace `AgendaSlotReviewModal`, supprimée le 2026-09-13. Cette modale
+// Remplace `AgendaSlotReviewModal`, supprimée. Cette modale
 // s'ouvrait SEULE à l'arrivée sur l'agenda, par-dessus ce que la personne était
 // en train de faire, et exigeait une réponse avant de rendre la page. Elle
 // coupait un geste pour poser une question qui pouvait attendre.

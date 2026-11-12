@@ -68,7 +68,7 @@ interface TaskListsBarProps {
   cancelChipLongPress: () => void;
   /** Chemin clavier du menu d'actions d'une liste (mobile), sans appui long : `chipMenuKeyProps`. */
   openListActions?: (listId: string) => void;
-  /** Entreprise (2026-10-30) : moitié moins d'espace entre « Listes » et les pastilles. */
+  /** Entreprise : moitié moins d'espace entre « Listes » et les pastilles. */
   compactTop?: boolean;
   /**
    * Ouvre le partage de la liste (bottom-sheet ShareListSheet). Absent = pas
@@ -116,8 +116,8 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                 >
                   <div className="mb-1 sm:mb-2">
                     {/* Libellé court « Listes » partout, sans marge sous le titre : le
-                        `pt-*` des chips suffit (2026-10-01). */}
-                    {/* Maquette 142 (2026-10-10) : sur mobile, le titre « Listes »
+                        `pt-*` des chips suffit. */}
+                    {/* Maquette 142 : sur mobile, le titre « Listes »
                         et son « + » coûtaient une rangée de 60 px au-dessus des
                         pastilles. Le titre reste pour les lecteurs d'écran, le
                         « + » devient la dernière pastille de la rangée. */}
@@ -141,8 +141,8 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                         (l'ancien réglage) les rognerait à nouveau, invisibles
                         plutôt que juste discrets — c'est le bug qui a motivé
                         `pt-8` avant que le couple ne soit réduit de moitié
-                        (2026-09-16, gap « Liste » → chips jugé trop grand). */}
-                    {/* 🔴 `overflow-y-hidden` + `pb-1` (2026-10-11) : la zone tactile de 44 px
+                        (gap « Liste » → chips jugé trop grand). */}
+                    {/* 🔴 `overflow-y-hidden` + `pb-1` : la zone tactile de 44 px
                         débordait de 4 px, la rangée défilait en Y et volait le geste à la page. */}
                     <div className={`flex sm:flex-wrap gap-3 pt-2 pb-1 ${compactTop ? 'sm:pt-3' : 'sm:pt-8'} sm:pb-0 overflow-x-auto overflow-y-hidden sm:overflow-visible -mx-3 px-3 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,black_calc(100%-16px),transparent)] sm:[mask-image:none]`}>
                       <motion.button
@@ -153,7 +153,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                         }}
                         // Chip Spotify (docs/MOBILE.md § Chips de filtre) — MOBILE
                         // UNIQUEMENT : pilule pleine, sans bordure. `h-9` réduit
-                        // (2026-09-06) : 44px de haut faisait une pilule
+                        // : 44px de haut faisait une pilule
                         // disproportionnée une fois pleine au lieu de bordée —
                         // Spotify tourne autour de 36-40px.
                         // Desktop (sm+) : forme d'origine inchangée (rounded-lg,
@@ -216,7 +216,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                             whileDrag={{ scale: 1.05, zIndex: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.18)' }}
                             className={`relative shrink-0 ${isMobile ? '' : 'cursor-grab active:cursor-grabbing'}`}
                             // ❌ Pas de `pan-y` sur mobile : il bloquait le glissé horizontal
-                            // de la rangée (0 px depuis une liste, mesuré 2026-10-11).
+                            // de la rangée (0 px depuis une liste, mesuré ).
                             style={isMobile ? undefined : { touchAction: 'pan-y' }}
                             onMouseEnter={() => setHoveredListId(list.id)}
                             onMouseLeave={() => setHoveredListId(null)}
@@ -396,7 +396,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                     className={`hidden sm:block ${isSelected ? 'opacity-80' : 'text-amber-500'}`}
                                   />
                                 )}
-                                {/* Compte masqué sur mobile (souci d'espace, 2026-09-06). */}
+                                {/* Compte masqué sur mobile (souci d'espace). */}
                                 <span className="hidden sm:inline text-xs opacity-60 ml-1">
                                   {tasksCountByListId.get(list.id) ?? 0}
                                 </span>
@@ -441,7 +441,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                           onClick={() => setShowCreateList(true)}
                           aria-label={t('lists.newList')}
                           // `w-11` : 44 px de LARGE réels (36 × 44 mesurés en CI le
-                          // 2026-10-10). Pas `TAP_AREA_44` : dernière pastille d'une
+                          // Pas `TAP_AREA_44` : dernière pastille d'une
                           // rangée défilante, son débord horizontal chevaucherait la
                           // voisine et serait rogné par le conteneur (tap-area.ts).
                           className={`sm:hidden shrink-0 inline-flex items-center justify-center h-9 w-11 ${TAP_AREA_44_Y} rounded-full bg-[rgb(var(--color-chip-bg))] text-[rgb(var(--color-text-secondary))] active:bg-[rgb(var(--color-hover))]`}
@@ -464,7 +464,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                               data-guide-id="task-lists-new"
                               // Nom explicite : la bascule de vue Liste / Tableau
                               // porte AUSSI un bouton « Liste » depuis le
-                              // 2026-10-09. Deux commandes au même nom, l'une qui
+                              // . Deux commandes au même nom, l'une qui
                               // crée et l'autre qui change de vue, se confondent
                               // au lecteur d'écran. « Liste » reste dans le nom
                               // (WCAG 2.5.3, l'étiquette visible dans le nom).

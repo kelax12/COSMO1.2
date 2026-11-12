@@ -32,7 +32,7 @@ export const resolveCategoryColor = (color: string) => (color.startsWith('#') ? 
 /**
  * Barre des catégories d'entreprise (mig. 148), sortie de l'onglet OKR le
  * elles classent aussi projets et tâches, leur gestion n'avait
- * rien à faire sous « Objectifs » (audit 2026-09-23, M13).
+ * rien à faire sous « Objectifs » (audit, M13).
  */
 const TeamCategoryFilterBar = ({ orgId, activeCategoryIds, setActiveCategoryIds, canManage }: TeamCategoryFilterBarProps) => {
   const { t } = useT('org');

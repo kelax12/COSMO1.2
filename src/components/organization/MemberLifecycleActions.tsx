@@ -33,7 +33,7 @@ interface MemberLifecycle {
  *
  * Livré comme un hook plutôt que dans l'annuaire lui-même : l'annuaire et la
  * fiche membre appartiennent à une autre session de travail (répartition du
- * 2026-09-24). Ils n'ont qu'à appeler `menuItems(member)` dans leur menu et
+ * Ils n'ont qu'à appeler `menuItems(member)` dans leur menu et
  * monter `dialogs` une fois.
  *
  * ⚠️ « Organiser le départ » REMPLACE l'ancien « Retirer de l'entreprise » :

@@ -57,7 +57,7 @@ export const BillingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   });
 
   // Logique extraite dans subscription.logic.ts (pure, testée) — ne pas
-  // ré-inliner ici (audit 2026-06-10, couverture des chemins critiques).
+  // ré-inliner ici (audit, couverture des chemins critiques).
   // Premium désactivé (PREMIUM_ENFORCED=false) → true pour tous : débloque
   // automatiquement TOUT gate `isPremium()` (stats, TaskTable…) présent ou
   // futur, sans en oublier un. Code premium conservé, simplement dormant.

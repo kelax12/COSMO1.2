@@ -9,7 +9,7 @@ import { WEEK_CAPACITY_MINUTES, type ActivityDigest, type WaitingOnEntry, type W
 import { CARD, MemberInitials, TaskLink, TITLE } from './MyWorkCards';
 import { TAP_AREA_44_Y } from '@/components/mobile/tap-area';
 
-// Cartes ajoutées à l'Aperçu le 2026-10-02 (N1, N2, maquette 8 C), à part de
+// Cartes ajoutées à l'Aperçu (N1, N2, maquette 8 C), à part de
 // `MyWorkCards.tsx` pour qu'il reste sous le plafond de 600 lignes.
 
 // ─── Ma charge de la semaine (N1) ───────────────────────────────────

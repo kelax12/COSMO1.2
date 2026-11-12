@@ -16,7 +16,7 @@ interface LeaveTeamConfirmProps {
 
 /**
  * Retrait d'une équipe qui fait PERDRE la vue sur des projets (audit du
- * 2026-09-24). Le retrait lui-même se rattrape (« Annuler » ensuite) ; ce qui
+ * Le retrait lui-même se rattrape (« Annuler » ensuite) ; ce qui
  * ne se voyait pas, c'est ce qu'il coupe. On nomme les projets, et on compte
  * les tâches OUVERTES de la personne dedans : elle ne les verra plus non plus.
  */

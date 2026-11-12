@@ -2,7 +2,7 @@
 // REVUE DES CRÉNEAUX DE TÂCHE PASSÉS
 // ═══════════════════════════════════════════════════════════════════
 //
-// Extrait d'`AgendaPage` le 2026-09-02. Motif : le cliquet d'architecture
+// Extrait d'`AgendaPage`. Motif : le cliquet d'architecture
 // (`src/architecture.guard.test.ts`) est un budget de lignes qui ne remonte
 // jamais. Les correctifs R-16 et R-18 ont fait grossir quatre fichiers déjà
 // hors budget de 36 lignes au total ; la réponse du dépôt à ce cas est
@@ -10,7 +10,7 @@
 // découpage. Ce bloc était le meilleur candidat : quatre gestionnaires, un
 // état et un dérivé, qui ne parlent qu'entre eux.
 //
-// ⚠️ Le 2026-09-13, la POPUP que ce hook alimentait a disparu. Elle s'ouvrait
+// ⚠️ Le, la POPUP que ce hook alimentait a disparu. Elle s'ouvrait
 // seule, par-dessus ce que la personne était en train de faire, et coupait son
 // geste pour poser une question qui pouvait attendre. La demande est désormais
 // portée par une pastille peinte sur le bloc d'événement, plus un panneau dans

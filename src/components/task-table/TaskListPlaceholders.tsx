@@ -9,7 +9,7 @@
 // ensemble : un état vide affiché pendant un chargement est indistinguable
 // d'une liste réellement vide, et c'est le défaut que la distinction évite.
 //
-// Extrait le 2026-09-05 (C-09).
+// Extrait (C-09).
 // ═══════════════════════════════════════════════════════════════════
 import { useT } from '@/i18n/useT';
 

@@ -85,7 +85,7 @@ const AgendaPage: React.FC = () => {
   const [quickSlot, setQuickSlot] = useState<{ start: string; end: string; x: number; y: number } | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   // ⚠️ `eventPendingDecision` / `AgendaEventToTaskConfirm` ont disparu le
-  // 2026-09-13 : déposer un événement SANS tâche sur la sidebar ouvrait une
+  // déposer un événement SANS tâche sur la sidebar ouvrait une
   // popup « Que faire de cet événement ? ». C'était la seule surface de
   // validation qui visait des événements non liés à une tâche, et elle se
   // déclenchait sur un geste qui ne demandait rien. Le drop est désormais
@@ -324,7 +324,7 @@ const AgendaPage: React.FC = () => {
         />
       )}
 
-      {/* Maquette 170 (2026-10-10) : sur mobile, les tâches à planifier
+      {/* Maquette 170 : sur mobile, les tâches à planifier
           s'ouvrent dans une feuille du bas (`MobileScheduleSheet`), plus dans
           le tiroir latéral, qui reste le panneau desktop. */}
       {isMobile && (

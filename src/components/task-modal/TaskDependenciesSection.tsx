@@ -11,7 +11,7 @@ import { useT } from '@/i18n/useT';
 
 // Le sélecteur (~20 ko de source) ne s'ouvre qu'au clic sur « Ajouter une
 // dépendance » : chargé à la demande, il sort du chunk `TaskModal`, qui avait
-// franchi son plafond (29,3 ko > 29,0 ko, 2026-10-09). Même découpe que
+// franchi son plafond (29,3 ko > 29,0 ko). Même découpe que
 // `TeamTaskTabPanels` côté entreprise. Catalogue `tasks` déjà chargé par la
 // modale.
 const TaskDependencyPicker = lazyWithRetry(() => import('./TaskDependencyPicker'));

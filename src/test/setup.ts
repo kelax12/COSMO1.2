@@ -20,7 +20,7 @@ import { afterEach, beforeAll } from 'vitest';
 // ──────────────────────────────────────────────────────────────────
 // Tous les catalogues, chargés d'avance
 //
-// 🔴 POURQUOI (2026-09-04). Deux namespaces seulement sont EAGER dans le
+// 🔴 POURQUOI. Deux namespaces seulement sont EAGER dans le
 // bundle (`common`, `errors`) ; les autres arrivent par `import()` quand la
 // route qui les déclare se charge. Un test, lui, ne charge aucune route : il
 // ne voyait donc que ces deux-là, et tout code lisant un namespace paresseux

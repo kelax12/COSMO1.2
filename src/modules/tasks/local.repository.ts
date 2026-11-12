@@ -96,8 +96,8 @@ export class LocalStorageTasksRepository implements ITasksRepository {
     }
 
     // Comparaison de JOURS, jamais de chaînes hétérogènes : `t.deadline` est un
-    // instant ISO, `deadlineBefore` une clé de jour. `'2026-09-02T22:00:00.000Z'
-    // <= '2026-09-03'` est vrai par hasard lexicographique, et faux dès que
+    // instant ISO, `deadlineBefore` une clé de jour. `' T22:00:00.000Z'
+    // <= ' '` est vrai par hasard lexicographique, et faux dès que
     // l'instant du 3 est stocké en heure locale négative.
     if (filters.deadlineBefore) {
       tasks = tasks.filter(t => !!t.deadline && deadlineDayKey(t.deadline) <= filters.deadlineBefore!);

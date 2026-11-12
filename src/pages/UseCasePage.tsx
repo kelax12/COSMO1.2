@@ -15,7 +15,7 @@ const UseCasePage: React.FC = () => {
   // React Router fait bien correspondre `/pour-freelances/` à la route
   // `/pour-freelances` : la page se monte. C'est ICI que la page se perdait,
   // en cherchant la fiche du slug « pour-freelances/ », qui n'existe pas, puis
-  // en renvoyant vers l'accueil. Mesuré en production le 2026-08-29 :
+  // en renvoyant vers l'accueil. Mesuré en production :
   // `thecosmo.app/pour-freelances/` affichait la page d'accueil.
   //
   // Le cas n'est pas théorique : les annuaires normalisent presque tous les URL

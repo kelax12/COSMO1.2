@@ -53,7 +53,7 @@ export const projectColorHex = (color: string): string =>
   PROJECT_COLOR_HEX[color] ?? PROJECT_COLOR_HEX.blue;
 
 /**
- * Couleur d'un projet tirée de sa catégorie (décision d'Axel, 2026-10-30 :
+ * Couleur d'un projet tirée de sa catégorie (décision d'Axel :
  * on ne choisit plus la couleur d'un projet). Elle annule celle,
  * qui laissait la couleur au choix de l'équipe.
  *

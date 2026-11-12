@@ -55,7 +55,7 @@ import { useT } from '@/i18n/useT';
 export default function StatisticsPage() {
   const { t } = useT('statistics');
   // La mise en mots vit dans `statistics/insights.ts` : `stats-insights` ne
-  // rend plus que des faits (revue du 2026-09-02, point 6).
+  // rend plus que des faits (revue, point 6).
   const insightText = useInsightText();
   const isMobile = useIsMobile();
   // Jeu de travail (35 j de terminées) : suffit aux insights, qui regardent
@@ -277,7 +277,7 @@ export default function StatisticsPage() {
       </div>
 
       {/* Insights en langage naturel (#34) — la conclusion avant les graphes */}
-      {/* ── Insights (#34) : retirés du MOBILE, arbitrage d'Axel le 2026-09-21 ──
+      {/* ── Insights (#34) : retirés du MOBILE, arbitrage d'Axel ──
           « Habitude la plus fragile : Méditation, 7 oublis cette semaine »
           occupait une carte pleine largeur au-dessus des chiffres, sur un
           écran qu'on ouvre pour lire un total. C'est un commentaire, pas une
@@ -337,7 +337,7 @@ export default function StatisticsPage() {
         </div>
       ) : (
       <>
-      {/* ── Une seule commande de page (arbitrage d'Axel, 2026-09-21) ─────
+      {/* ── Une seule commande de page (arbitrage d'Axel) ─────
           La page portait DEUX sélecteurs empilés qui ne règlent pas la même
           chose : la période (un réglage, il vaut pour tout) et la section
           (une navigation entre cinq jeux de données). Empilés, ils avaient le
@@ -347,7 +347,7 @@ export default function StatisticsPage() {
           cinq familles, chacune avec son en-tête. Il ne reste que la période.
 
           ⚠️ J'avais écrit ici que les empiler « monterait cinq graphiques
-          recharts d'un coup ». C'était FAUX, vérifié le 2026-09-21 :
+          recharts d'un coup ». C'était FAUX, vérifié :
           `statistics/sections.tsx` n'importe pas recharts du tout. Le seul
           graphique lourd est celui de cette page, et il reste unique.
 
@@ -385,7 +385,7 @@ export default function StatisticsPage() {
           Il y avait ici DEUX blocs pour presque rien : une rangée de 44 px ne
           portant qu'un lien, puis un titre « 7 DERNIERS JOURS » en capitales
           noires centrées de 20 px, le texte le plus fort de la page pour son
-          étiquette la moins actionnable. Mesuré le 2026-09-21 en 390 px :
+          étiquette la moins actionnable. Mesuré en 390 px :
           73 px de hauteur et 44 px de gouttières, avant le premier graphique.
 
           Sur mobile les deux fusionnaient : la période à gauche en `caption`

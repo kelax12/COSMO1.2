@@ -1,4 +1,4 @@
-// Durée d'une tâche dans la fiche MOBILE (maquette 153, 2026-10-10).
+// Durée d'une tâche dans la fiche MOBILE (maquette 153).
 //
 // « 01:00 » avec une horloge et sans chevron se lisait comme une HEURE de la
 // journée. La ligne affiche désormais « 1 h » et un chevron, comme ses

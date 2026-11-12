@@ -87,7 +87,7 @@ const toAudience = (raw: string | null | undefined, hasTeams: boolean): TeamOKRA
 export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
   async getAll(orgId: string): Promise<TeamOKR[]> {
     if (!supabase) throw new Error('Supabase not configured');
-    // M1 (audit 2026-09-23) : plus de plafond silencieux à 200 objectifs.
+    // M1 : plus de plafond silencieux à 200 objectifs.
     const db = supabase;
     const okrRows = await fetchAllPages<OkrRow>(async (from, to) => {
       const { data, error } = await db

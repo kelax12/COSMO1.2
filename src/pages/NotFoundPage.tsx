@@ -31,7 +31,7 @@ const NotFoundPage: React.FC = () => {
 
   return (
     <div className="min-h-[100dvh] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 max-md:bg-none max-md:bg-[rgb(var(--color-background))] text-white max-md:text-[rgb(var(--color-text-primary))] flex items-center justify-center px-4">
-      {/* Maquettes 365 à 368 (2026-10-11) : sur mobile, le fond uni du thème, une
+      {/* Maquettes 365 à 368 : sur mobile, le fond uni du thème, une
         icône discrète, le bouton à l'accent et le guide en dessous. */}
       <div className="text-center max-w-md">
         <p className="max-md:hidden text-7xl font-bold text-slate-700 mb-4">404</p>

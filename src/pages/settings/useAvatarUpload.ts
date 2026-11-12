@@ -2,7 +2,7 @@
 // DÉPÔT ET RETRAIT DE LA PHOTO DE PROFIL
 // ═══════════════════════════════════════════════════════════════════
 //
-// Extrait de `SettingsPage` le 2026-09-02. Motif : le cliquet d'architecture
+// Extrait de `SettingsPage`. Motif : le cliquet d'architecture
 // (`src/architecture.guard.test.ts`) est un budget de lignes qui ne remonte
 // jamais, et les correctifs R-02, R-07 et R-08 l'ont dépassé de 13 lignes. La
 // réponse documentée du dépôt n'est pas de relever le plafond, c'est de

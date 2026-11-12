@@ -38,13 +38,13 @@ const CookieBanner: React.FC = () => {
 
   // ⚡ Le bandeau attend le PREMIER GESTE, plus un délai de 1,2 s après le montage.
   // Monté sans geste, il était l'élément LCP de `/en/` (5,9 à 6,0 s en CI le
-  // 2026-10-22) : son premier paragraphe dépasse le titre anglais de la copie
+  // son premier paragraphe dépasse le titre anglais de la copie
   // `#lp-hero`, et le couper ne tenait qu'à certaines largeurs. Chrome cesse de
   // mesurer le LCP au premier geste : affiché après lui, le bandeau ne peut plus
   // l'être, à aucune largeur. Sans geste, rien n'est déposé (`null` n'est pas une
   // acceptation). Pas de `scroll` : un défilement programmatique le déclencherait
   // sans geste (docs/PERFORMANCE.md, section).
-  // 2026-10-25 · Un geste RÉSOLU, jamais son début : `click`, `keydown`,
+  // Un geste RÉSOLU, jamais son début : `click`, `keydown`,
   // `wheel`, `touchmove`. Monté au `pointerdown` ou au `touchstart`, le bandeau
   // glissait sous le doigt AVANT le `click`, qui tombait alors sur lui : le
   // premier tap sur le CTA de la landing ne menait nulle part (e2e C-97, CPU ×4,

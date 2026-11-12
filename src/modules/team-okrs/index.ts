@@ -22,7 +22,7 @@ export { teamOkrKeys, TEAM_OKRS_STORAGE_KEY } from './constants';
 // se chargent à la demande via `@/lib/validation/lazy` (cf. son en-tête).
 
 export type { ITeamOKRsRepository } from './repository';
-// Dépôt de démo NON réexporté (2026-10-01) : le baril est importé par le shell,
+// Dépôt de démo NON réexporté : le baril est importé par le shell,
 // la réexportation ramenait le dépôt dans le chunk d'ENTRÉE alors que la fabrique
 // le charge à la demande (`src/lib/demo-repositories.ts`).
 export { SupabaseTeamOKRsRepository } from './supabase.repository';

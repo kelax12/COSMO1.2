@@ -67,7 +67,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                   transition={{ delay: index * 0.05 }}
                   data-tutorial-id={index === 0 ? 'okr-first-card' : undefined}
                   data-guide-id={index === 0 ? 'perso-okr-first-card' : undefined}
-                  // Séparation visuelle entre cartes sur mobile (2026-09-17) :
+                  // Séparation visuelle entre cartes sur mobile :
                   // `.card-plain-mobile` rend fond ET bordure transparents
                   // sous 768px (par design, pour d'autres écrans) — ici on la
                   // contredit explicitement, chaque OKR doit rester une boîte
@@ -106,15 +106,15 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                       <span>{category?.name ?? t('card.uncategorized')}</span>
                     </span>
 
-                    {/* Année masquée sur mobile (redesign 2026-09-16) — affichage
+                    {/* Année masquée sur mobile — affichage
                         seulement, `objective.startDate`/`endDate` inchangées.
-                        Date de fin remplacée sur mobile (redesign 2026-09-19) par
+                        Date de fin remplacée sur mobile par
                         « X jours restants » — les deux pastilles qui portaient
                         cette info (et le % de temps écoulé) sont retirées sous
                         `sm` (cf. plus bas). Desktop inchangé (plage complète +
                         pastilles). */}
                     <div className="flex-1 min-w-0 flex items-center justify-center gap-2 text-caption" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                      {/* Police agrandie (2026-09-19) par rapport au
+                      {/* Police agrandie par rapport au
                           `text-caption` hérité du conteneur — desktop inchangé. */}
                       <span className="sm:hidden text-sm font-medium whitespace-nowrap">
                         {remainingDays > 0
@@ -129,7 +129,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                       <span className="hidden sm:inline">
                         {formatDate(new Date(objective.endDate), { day: 'numeric', month: 'long' })}
                         <span className="hidden sm:inline"> {formatDate(new Date(objective.endDate), { year: 'numeric' })}</span>
-                        {/* Ex-pastille « x% du temps écoulé » (2026-10-29). */}
+                        {/* Ex-pastille « x% du temps écoulé ». */}
                         {totalTime > 0 && <span> ({Math.round(timeProgress)}%)</span>}
                       </span>
                     </div>
@@ -166,7 +166,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                   </div>
 
                   {/* Pastilles « X j restants » / « % du temps écoulé » retirées
-                      sur mobile (redesign 2026-09-19) — l'info « jours restants »
+                      sur mobile — l'info « jours restants »
                       vit désormais dans l'en-tête (cf. plus haut). Desktop
                       inchangé. */}
                   {remainingDays > 0 && (
@@ -190,7 +190,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                     <h2 className="hidden sm:block text-base sm:text-lg font-semibold mb-4 truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{objective.title}</h2>
                   </div>
 
-                {/* Cercle retiré partout (2026-10-29) : il doublait la barre
+                {/* Cercle retiré partout : il doublait la barre
                     globale, agrandie à la place. */}
                 <div className="mb-3 sm:mb-6 w-full">
                   <div className="hidden sm:flex justify-between items-baseline mb-2">
@@ -202,7 +202,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                   </div>
                 </div>
 
-                {/* Espaces réduits sur mobile (2026-09-17) : `space-y-3`/`p-3`
+                {/* Espaces réduits sur mobile : `space-y-3`/`p-3`
                     (12px) → `space-y-1.5`/`p-2` (6-8px), desktop inchangé. */}
                 <div className="sm:space-y-3">
                   <h3 className="text-label sm:text-sm font-medium mb-1 sm:mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('card.keyResults')}</h3>
@@ -216,11 +216,11 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                       // Maquette 187 : sur mobile, une ligne séparée par un filet,
                       // plus une carte grise dans la carte de l'objectif.
                       <div key={keyResult.id} className="okr-kr-row py-2.5 border-b last:border-b-0 border-[rgb(var(--color-border))] sm:border-b-0 sm:rounded-lg sm:p-3 transition-all">
-                        {/* Espace réduit sur mobile (2026-09-19, resserré) entre
+                        {/* Espace réduit sur mobile (resserré) entre
                             le nom du KR et la ligne de complétion — desktop
                             inchangé. */}
                         {/* ── Maquette 111 : le titre d'abord ───────────────
-                            Mesuré le 2026-09-20 en 390 px : deux résultats clés
+                            Mesuré en 390 px : deux résultats clés
                             sur trois étaient coupés (« Terminer 8 semaines
                             san… », « Pratiquer la méthode Po… »), pour la même
                             raison que les tâches l'étaient avant la maquette 85
@@ -243,7 +243,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                             <span className="min-w-0">
                               <span className="block text-body font-medium line-clamp-2" style={{ color: 'rgb(var(--color-text-primary))' }}>{keyResult.title}</span>
                               {/* Ligne « x temps par unité » retirée sur mobile le
-                                  2026-10-11, à la demande d'Axel. */}
+, à la demande d'Axel. */}
                               {(tasksByKr.get(keyResult.id) ?? 0) > 0 && (
                                 <span className="block text-label" style={{ color: 'rgb(var(--color-text-muted))' }}>
                                   {tp('card.tasksCount', tasksByKr.get(keyResult.id) ?? 0)}
@@ -349,11 +349,11 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                           </div>
                         </div>
 
-                        {/* Mobile (redesign 2026-09-16) : plus de -/+ (le clavier
+                        {/* Mobile : plus de -/+ (le clavier
                             numérique du champ suffit), input réduit, sur la MÊME
                             ligne que la barre plutôt que sur deux rangées.
                             🔴 Le nombre de KR réalisés s'édite désormais via un
-                            `<select>` natif (redesign 2026-09-19) : au tap, un
+                            `<select>` natif : au tap, un
                             `<select>` ouvre la roue de sélection du système
                             (iOS)/le menu natif (Android) au lieu du clavier
                             numérique — même logique que les champs de durée

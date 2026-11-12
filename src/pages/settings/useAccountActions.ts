@@ -17,7 +17,7 @@
 //     l'intrus garde son jeton jusqu'à expiration, ce qui vide la manœuvre
 //     de son seul usage.
 //
-// Extrait le 2026-09-05 (C-09).
+// Extrait (C-09).
 // ═══════════════════════════════════════════════════════════════════
 import { useState } from 'react';
 import { toast } from '@/lib/toast';

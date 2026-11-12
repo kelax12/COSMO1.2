@@ -192,7 +192,7 @@ const DeadlinePill = ({ deadline }: { deadline?: string }) => {
 };
 
 /**
- * Mes tâches (refait le 2026-10-20) : une pastille d'échéance par tâche.
+ * Mes tâches (refait) : une pastille d'échéance par tâche.
  * Moyen et grand partagent la même liste (le grand en montre plus), sans case
  * à cocher : la ligne ouvre la tâche. Le petit garde « Terminer » sur place.
  */
@@ -221,7 +221,7 @@ export const TasksCompact = ({ size, open, projectById, onToggle, onOpenTask, on
             const project = projectById.get(task.projectId);
             return (
               <li key={task.id} className={`flex items-center gap-2.5 min-w-0 ${size === 'small' ? '' : 'py-1 first:pt-0'}`}>
-                {/* Case à cocher devant chaque tâche, dans tous les formats (2026-10-20) :
+                {/* Case à cocher devant chaque tâche, dans tous les formats :
                     elle termine la tâche ; la ligne, elle, l'ouvre. */}
                 <button
                   type="button"

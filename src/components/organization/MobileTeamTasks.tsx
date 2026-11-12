@@ -23,7 +23,7 @@ interface ListProps {
 }
 
 /**
- * Tâches d'équipe sur MOBILE (maquette 238, 2026-10-10).
+ * Tâches d'équipe sur MOBILE (maquette 238).
  *
  * La section affichait le TABLEAU de bureau sur 375 px : la case et le point
  * prenaient 170 px, les noms étaient coupés par le bord droit, et aucune autre
@@ -87,7 +87,7 @@ interface FiltersProps {
 }
 
 /**
- * Maquettes 239, 242 et 250 (2026-10-10) : UNE rangée de commandes sur mobile.
+ * Maquettes 239, 242 et 250 : UNE rangée de commandes sur mobile.
  *
  * Avant la première tâche, on traversait Listes, recherche, tri, périmètre,
  * « Nouvelle tâche », « En retard », Liste / Tableau, Colonnes : environ 490 px
@@ -103,7 +103,7 @@ export const MobileFiltersButton: React.FC<Omit<FiltersProps, 'children' | 'open
       onClick={() => onOpenChange(true)}
       aria-haspopup="dialog"
       aria-label={t('filters.mobileButton')}
-      // C-57 (2026-10-22) : mesuré 42 x 40 px. `min-w-11` porte la largeur
+      // C-57 : mesuré 42 x 40 px. `min-w-11` porte la largeur
       // réelle à 44 ; la hauteur garde ses 40 px, alignée sur le champ de
       // recherche voisin, et le débord vertical vit dans `TAP_AREA_44_Y`.
       className={`${TAP_AREA_44_Y} md:hidden shrink-0 inline-flex items-center justify-center gap-1.5 h-10 min-w-11 px-3 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-label font-medium text-[rgb(var(--color-text-secondary))]`}

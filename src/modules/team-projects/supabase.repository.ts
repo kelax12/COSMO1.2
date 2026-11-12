@@ -75,7 +75,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     // lignes les PLUS ANCIENNES et fait disparaître les derniers projets créés
     // dès qu'on passe le plafond. L'affichage reste chronologique.
     //
-    // Lecture PAGINÉE (audit du 2026-09-24, « entreprise avec 500 projets ») :
+    // Lecture PAGINÉE (audit, « entreprise avec 500 projets ») :
     // un plafond unique de 200 masquait le reste du portefeuille. Des pages de
     // 500 jusqu'à la dernière, bornées à `TEAM_PROJECTS_READ_LIMIT` pour qu'une
     // base anormale ne fasse pas tourner la boucle sans fin.

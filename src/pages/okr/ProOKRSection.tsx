@@ -19,7 +19,7 @@ interface ProOKRSectionProps {
 /**
  * OKR d'entreprise sur lesquels je contribue, montrés dans le mode perso.
  * Lecture seule : ils se pilotent dans l'espace entreprise, où vivent leurs
- * droits. Maquette 185 (2026-10-10) : plus d'indigo, un seul accent dans l'app ;
+ * droits. Maquette 185 : plus d'indigo, un seul accent dans l'app ;
  * l'icône mallette et le nom de l'organisation les
  * distinguent des OKR perso au premier coup d'oeil.
  */

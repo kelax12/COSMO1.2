@@ -180,7 +180,7 @@ const OrgInviteSection = ({
             </form>
           )}
 
-          {/* Plus de place (spec 2026-11-02 § 5.4) : la solution sur place,
+          {/* Plus de place (spec § 5.4) : la solution sur place,
               palier suivant présélectionné dans l'onglet Abonnement. Le champ
               reste saisissable, seul l'envoi est retenu. Pas de `role="status"`
               sur la phrase du propriétaire : elle reprend l'adresse en cours

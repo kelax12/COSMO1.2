@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════
 // Tableau des tâches d'équipe : colonnes, regroupement, export
-// (audit 2026-09-24, onglet Tâches : « colonnes configurables, regroupement,
+// (audit, onglet Tâches : « colonnes configurables, regroupement,
 // export, colonne Assignés avec Vous »). Logique PURE, testée à part.
 // ═══════════════════════════════════════════════════════════════════
 

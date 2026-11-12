@@ -357,7 +357,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                // « + » seul (2026-10-29) ; avec une popup de gestion fournie
+                // « + » seul ; avec une popup de gestion fournie
                 // (page OKR perso), il l'ouvre au lieu du formulaire inline.
                 onClick={() => (onManageCategories ? onManageCategories() : setShowCreateCategory(true))}
                 className={addChipCls}

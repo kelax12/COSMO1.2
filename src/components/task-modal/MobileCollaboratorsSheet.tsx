@@ -11,7 +11,7 @@
 // fait que lire la liste des participants, propriétaire compris et lui-même
 // exclu. C'est `isTaskOwner` qui tranche, et il gouverne trois blocs.
 //
-// Extrait le 2026-09-05 (C-09).
+// Extrait (C-09).
 // ═══════════════════════════════════════════════════════════════════
 import React from 'react';
 import { Check, Plus, Search, UserPlus, X } from 'lucide-react';

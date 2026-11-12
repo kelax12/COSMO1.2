@@ -6,7 +6,7 @@
 // l'utilisateur démo est ADMIN (6 membres, 1 demande d'adhésion en attente
 // pour tester l'inbox).
 //
-// ⚠️ Une SEULE, volontairement (2026-08-27). Une seconde organisation
+// ⚠️ Une SEULE, volontairement. Une seconde organisation
 // (« Atelier Lune ») existait pour montrer la vue non-admin et le switcher.
 // Elle coûtait plus qu'elle ne montrait : au-delà d'une organisation,
 // `Layout` remplace le lien de navigation par un `<div role="button">` qui

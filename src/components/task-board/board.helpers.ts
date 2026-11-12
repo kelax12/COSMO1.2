@@ -61,7 +61,7 @@ export function groupTasksByStatus(tasks: readonly Task[], now: Date = new Date(
   return columns;
 }
 
-// ─── Colonnes par État (2026-10-09) ────────────────────────────────
+// ─── Colonnes par État ────────────────────────────────
 
 /** Colonne d'État : les trois états déclarés, puis « Sans état » (NULL en base). */
 export type HealthColumn = TaskHealth | 'none';

@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 // L'onglet « Partager » (~16 ko de source) ne s'affiche qu'à la demande :
 // chargé alors, il sort du chunk `TaskModal`, qui n'avait plus que 1,4 ko de
-// marge sous son plafond (2026-10-10). Catalogue `tasks` déjà chargé.
+// marge sous son plafond. Catalogue `tasks` déjà chargé.
 const DesktopCollaboratorsStep = lazyWithRetry(() => import('./DesktopCollaboratorsStep'));
 import DesktopDetailsStep from './DesktopDetailsStep';
 import { useCreateCategory, type Category } from '@/modules/categories';

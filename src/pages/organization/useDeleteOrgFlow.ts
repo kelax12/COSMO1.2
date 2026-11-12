@@ -4,7 +4,7 @@
 //
 // 🔴 POURQUOI CE FICHIER EXISTE, ET POURQUOI MAINTENANT.
 //
-// L'arbitrage du 2026-09-03 décide, pour C-39 : « la suppression résilie et
+// L'arbitrage décide, pour C-39 : « la suppression résilie et
 // rembourse. Le chemin de suppression appelle celui de C-65 : on résilie, on
 // rembourse la période en cours, puis on supprime. **Un seul geste, aucun
 // débit orphelin.** »
@@ -51,7 +51,7 @@ export interface DeleteOrgFlow {
  *   remboursement a échoué.
  */
 export function useDeleteOrgFlow(orgId: string | undefined, onDeleted: () => void): DeleteOrgFlow {
-  // Arrêt IMMÉDIAT sans remboursement (décision du 2026-11-01) : supprimer
+  // Arrêt IMMÉDIAT sans remboursement (décision) : supprimer
   // l'entreprise met fin au contrat. Pendant les 14 jours, la rétractation de
   // l'onglet Facturation reste le chemin qui rembourse.
   const stop = useOrgSubscriptionAction();

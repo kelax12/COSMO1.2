@@ -19,7 +19,7 @@
 // un échec transitoire faisait perdre la destination d'une invitation
 // d'entreprise, donc le jeton à usage unique qu'elle portait (garde R-04).
 //
-// Extrait de `AuthContext.tsx` le 2026-09-05 (C-09).
+// Extrait de `AuthContext.tsx` (C-09).
 // ═══════════════════════════════════════════════════════════════════
 import { toast } from '@/lib/toast';
 import * as monitoring from '@/lib/monitoring';

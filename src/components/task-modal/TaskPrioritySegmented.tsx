@@ -1,4 +1,4 @@
-// Priorité choisie SUR PLACE dans la fiche mobile (maquette 157, 2026-10-10).
+// Priorité choisie SUR PLACE dans la fiche mobile (maquette 157).
 //
 // La ligne ouvrait une sous-feuille pour un chiffre de 1 à 5. Cinq cases de
 // 44 px tiennent dans la ligne. La priorité reste facultative : retoucher le

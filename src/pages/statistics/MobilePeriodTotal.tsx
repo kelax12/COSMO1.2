@@ -12,7 +12,7 @@ interface Props {
 }
 
 /**
- * Maquette 194 (2026-10-10), MOBILE : un grand nombre pour la période choisie,
+ * Maquette 194, MOBILE : un grand nombre pour la période choisie,
  * et son écart à la période précédente.
  *
  * Avant : une grille 2 × 2 (aujourd'hui, 7 j, 30 j, 365 j) au-dessus d'un

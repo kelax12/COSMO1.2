@@ -107,7 +107,7 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
     // Capture locale : le narrowing de `supabase` ne survit pas au passage
     // dans la closure de `fetchInChunks`.
     const db = supabase;
-    // Lecture PAGINÉE (audit du 2026-09-24, « membres : 500 ») : au-delà, une
+    // Lecture PAGINÉE (audit, « membres : 500 ») : au-delà, une
     // personne n'existait pour aucun écran. Pages de 1 000 (plafond PostgREST),
     // dix au plus. Tri décroissant puis inversion : au plafond, ce sont les plus
     // ANCIENS qui manquent ; `user_id` départage deux arrivées à la même seconde.
@@ -131,7 +131,7 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
     const ids = members.map((m) => m.user_id);
     // Découpé en lots : `.in('id', ids)` passe par l'URL, et 500 UUID font
     // ~19 ko de query string, donc un 414 avant même que la troncature de la
-    // lecture précédente ne se voie (point 14 de la revue du 2026-09-02).
+    // lecture précédente ne se voie (point 14 de la revue).
     const profiles = await fetchInChunks(ids, async (chunkIds) => {
       const { data, error } = await db
         .from('profiles')
@@ -185,7 +185,7 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
     const ids = requests.map((r) => r.user_id);
     // Découpé en lots : `.in('id', ids)` passe par l'URL, et 500 UUID font
     // ~19 ko de query string, donc un 414 avant même que la troncature de la
-    // lecture précédente ne se voie (point 14 de la revue du 2026-09-02).
+    // lecture précédente ne se voie (point 14 de la revue).
     const profiles = await fetchInChunks(ids, async (chunkIds) => {
       const { data, error } = await db
         .from('profiles')

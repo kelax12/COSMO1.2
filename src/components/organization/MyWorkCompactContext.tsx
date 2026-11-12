@@ -164,7 +164,7 @@ export const ActivityCompact = ({ size, digest, onSeeAll }: { size: CompactSize;
 
 /* ─────────────────────────── Événements de l'entreprise ────────────── */
 
-/** Grand format inclus (2026-10-20) : le rail d'avant était trop discret. */
+/** Grand format inclus : le rail d'avant était trop discret. */
 export const OrgEventsCompact = ({ size, events, onOpen }: { size: WidgetSize; events: OrgEvent[]; onOpen: (event: OrgEvent) => void }) => {
   const { t } = useT('orgAdmin');
   const pager = usePager(events, size === 'large' ? 6 : perPage(size));

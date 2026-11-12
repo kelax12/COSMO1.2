@@ -8,7 +8,7 @@
 // Durée de vie 24 h — la donnée périmée s'affiche d'abord, puis est remplacée
 // silencieusement par la lecture réseau.
 //
-// ⚠️ Extrait d'`AuthContext.tsx` le 2026-09-03, et c'est le cliquet de taille
+// ⚠️ Extrait d'`AuthContext.tsx`, et c'est le cliquet de taille
 // qui l'a imposé : le fichier repassait au-dessus de 600 lignes. La coupe suit
 // une frontière réelle — d'un côté un cache de démarrage, quatre fonctions
 // pures de tout React ; de l'autre le provider qui tient la session.

@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════
 // Mock Supabase chaînable pour les tests de repositories (Phase 1 audit
-// 2026-06-10). Reproduit la surface utilisée par les repos :
+// Reproduit la surface utilisée par les repos :
 //   supabase.from(table).select(...).eq(...).order(...).range(...) → thenable
 //   supabase.from(table).insert(...).select().single() → thenable
 //   supabase.rpc(name, args) / supabase.auth.getUser() / getSession()

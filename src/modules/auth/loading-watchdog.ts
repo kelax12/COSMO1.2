@@ -12,7 +12,7 @@
 // L'utilisateur retombe sur la landing, d'où il peut se reconnecter. Un
 // `onAuthStateChange` tardif corrigera le tir tout seul.
 //
-// Extrait d'`AuthContext.tsx` le 2026-11-07 (ARC-03). Toujours armé au même
+// Extrait d'`AuthContext.tsx` (ARC-03). Toujours armé au même
 // endroit de l'effet de session, juste après le lancement d'`initializeAuth`.
 
 import * as monitoring from '@/lib/monitoring';

@@ -16,7 +16,7 @@ interface TeamTaskListsFieldProps {
 
 /**
  * Listes d'une tâche d'équipe (mig. 203), onglet « Avancé » de la fiche.
- * Refait le 2026-10-30 sur le modèle de la popup « Ajouter à une liste » du
+ * Refait sur le modèle de la popup « Ajouter à une liste » du
  * mode personnel (`DesktopAddToList`) : un bouton ouvre toutes les listes, on
  * coche, et les listes cochées s'affichent en pastilles sous le titre.
  *

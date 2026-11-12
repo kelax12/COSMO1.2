@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // FRIENDS MODULE — repository des liens de partage (`share_links`, mig. 046)
 //
-// Extrait de `share-link.hooks.ts` le 2026-08-24 : un hook n'a pas à parler à
+// Extrait de `share-link.hooks.ts` : un hook n'a pas à parler à
 // Supabase en direct (invariant docs/ARCHITECTURE.md §2, désormais tenu par
 // `src/architecture.guard.test.ts`). Le hook garde React Query ; le repository
 // garde la requête.

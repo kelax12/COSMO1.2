@@ -438,7 +438,7 @@ export const OKRStatistics: React.FC<{
           La barre montrait la PART du temps investi, normalisée au maximum :
           elle disait qui avait consommé le plus de minutes, jamais où en était
           l'objectif. Elle porte maintenant l'avancement de l'OKR sur 100, en
-          deux intensités d'accent (maquette 199, 2026-10-10 ; c'était vert et
+          deux intensités d'accent (maquette 199 ; c'était vert et
           violet) : pâle, déjà acquis au début de la période ; plein, gagné depuis.
           Le temps investi reste affiché, en chiffre. */}
       <div className="card p-6">

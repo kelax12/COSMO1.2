@@ -2,7 +2,7 @@
 // ACTIONS SUR UN ÉVÉNEMENT — créer, modifier, supprimer, dupliquer
 // ═══════════════════════════════════════════════════════════════════
 //
-// Extrait d'`AgendaPage` le 2026-09-02. Motif : le cliquet d'architecture
+// Extrait d'`AgendaPage`. Motif : le cliquet d'architecture
 // (`src/architecture.guard.test.ts`) est un budget de lignes qui ne remonte
 // jamais, et l'externalisation des chaînes (R-05) l'a de nouveau dépassé. La
 // réponse documentée du dépôt est de compenser par un découpage, pas de

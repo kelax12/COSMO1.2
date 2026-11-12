@@ -49,7 +49,7 @@ interface TeamAssignMenusProps {
 
 /**
  * « Assigner un projet » et « Assigner une tâche » d'une carte d'équipe :
- * chacun propose un élément EXISTANT ou d'en créer un (2026-09-28 ; le menu
+ * chacun propose un élément EXISTANT ou d'en créer un (le menu
  * ouvrait directement la création).
  *
  * Projet existant : l'équipe devient son équipe principale (`teamId`).

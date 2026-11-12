@@ -84,7 +84,7 @@ export function useAgendaEventDrag({
               // Événement non rattaché à une tâche : le drop est REFUSÉ, et
               // FullCalendar ramène le bloc à sa position d'origine.
               //
-              // ⚠️ Il ouvrait jusqu'au 2026-09-13 une popup « Que faire de cet
+              // ⚠️ Il ouvrait jusqu'au une popup « Que faire de cet
               // événement ? » proposant de le supprimer ou d'en faire une
               // tâche. C'était la seule surface de décision du produit qui
               // visait des événements SANS tâche, et elle surgissait sur un

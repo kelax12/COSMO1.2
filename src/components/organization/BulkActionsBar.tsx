@@ -31,7 +31,7 @@ interface BulkActionsBarProps {
   /** Quitte le mode sélection (et vide la sélection au passage). */
   onExit: () => void;
   /**
-   * Réassignation groupée (audit 2026-09-24) : membres À PORTÉE seulement
+   * Réassignation groupée : membres À PORTÉE seulement
    * (mig. 115) — proposer un membre hors portée finirait en erreur RLS.
    */
   assignableMembers?: OrgMember[];
@@ -47,13 +47,13 @@ interface BulkActionsBarProps {
    * alors au bas du contenu, et ses menus montent au-dessus de la modale.
    */
   placement?: 'floating' | 'inline';
-  /** Priorité 1..5 (audit du 2026-09-24). */
+  /** Priorité 1..5 (audit). */
   onSetPriority?: (priority: number) => void;
   /** Échéance 'YYYY-MM-DD', `''` = la retirer. */
   onSetDeadline?: (deadline: string) => void;
   /**
    * « Liste » : ouvre la popup d'ajout groupé (même UX que la page Tâches
-   * perso, 2026-10-30). Les deux sont requis pour afficher le bouton.
+   * perso). Les deux sont requis pour afficher le bouton.
    */
   listsOrgId?: string;
   selectedTaskIds?: string[];
@@ -68,7 +68,7 @@ const actionClass =
 /**
  * Barre d'actions groupées — flottante, apparaît dès qu'une tâche est
  * sélectionnée, dans TOUTES les vues de l'onglet Projets (liste, tableau,
- * planning) depuis le 2026-09-24.
+ * planning).
  *
  * Répartir vingt tâches demandait vingt aller-retours de modal ; c'est ce que
  * cette barre supprime. Elle ne proposait que terminer, rouvrir et supprimer :
@@ -96,7 +96,7 @@ const BulkActionsBar = ({
       role="toolbar"
       aria-label={count > 0 ? tp('projects.selected', count) : t('projects.selectHint')}
       // En ligne (fiche membre), la barre REVIENT À LA LIGNE : en défilement
-      // horizontal, « Supprimer » et la sortie tombaient hors de la fenêtre (2026-10-30).
+      // horizontal, « Supprimer » et la sortie tombaient hors de la fenêtre.
       className={`${inline ? 'sticky bottom-0 z-10 w-full flex-wrap' : 'fixed left-1/2 -translate-x-1/2 bottom-20 sm:bottom-6 z-40 max-w-[calc(100vw-2rem)] overflow-x-auto hide-scrollbar'} flex items-center gap-1 px-2 py-2 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] shadow-lg`}
     >
       <span

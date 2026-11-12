@@ -31,7 +31,7 @@ export interface OrgTaskFilters {
   status: TaskStatusFilter;
   /** Recherche libre. */
   q: string;
-  // ─── Attributs de la tâche (audit 2026-09-24, onglet Tâches) ───────
+  // ─── Attributs de la tâche (audit, onglet Tâches) ───────
   /** Priorités retenues (1..5), [] = toutes. */
   priorities: number[];
   /** Plage d'échéance, bornes incluses, 'YYYY-MM-DD' ou ''. */

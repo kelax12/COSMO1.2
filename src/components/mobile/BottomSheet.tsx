@@ -14,7 +14,7 @@ interface BottomSheetProps {
   /**
    * Feuille ouverte mais INVISIBLE et traversable : un geste parti d'elle
    * continue au-dessus de l'écran (appui long d'une tâche à glisser dans
-   * l'agenda, 2026-10-11). La démonter perdrait la cible du doigt, et avec
+   * l'agenda). La démonter perdrait la cible du doigt, et avec
    * elle la fin du geste.
    */
   concealed?: boolean;

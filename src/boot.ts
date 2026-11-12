@@ -1,7 +1,7 @@
 // Point d'entrée d'`index.html`. Il ne fait qu'une chose : décider QUAND
 // charger l'application (`main.tsx`).
 //
-// 🔴 POURQUOI UN POINT D'ENTRÉE SÉPARÉ (2026-10-15, LCP mobile).
+// 🔴 POURQUOI UN POINT D'ENTRÉE SÉPARÉ (LCP mobile).
 // Depuis C-116, l'élément LCP des pages prérendues est le texte du prérendu,
 // peint avant React. Mais Lighthouse mobile (simulation Lantern) le mesurait
 // toujours à 3,26-3,40 s sur les 8 URLs, avec 2,9 s de « Render Delay » pour un
@@ -26,7 +26,7 @@ import { afterFirstPaint } from './lib/after-first-paint';
 import { applyRouterBootstrap } from './i18n/apply-bootstrap';
 import { dropPrerenderHeroIfLocaleDiffers } from './lib/prerender-hero';
 // Filet du spinner de démarrage : sans lui, une app qui ne monte pas laisse
-// `#boot-screen` tourner pour toujours (incident du 2026-11-06, en-tête du module).
+// `#boot-screen` tourner pour toujours (incident, en-tête du module).
 import { clearAssetRepairFlag, installBootWatchdog } from './lib/boot-watchdog';
 
 const bootWatchdog = installBootWatchdog();
@@ -47,7 +47,7 @@ const charger = () => {
 };
 
 // 🔴 PAGE PRÉRENDUE : les bibliothèques d'abord, chacune dans sa tâche, puis
-// `main` (2026-10-22, TBT mobile de `/`). `import('./main')` seul évaluait tout
+// `main` (TBT mobile de `/`). `import('./main')` seul évaluait tout
 // le graphe de l'application en UN bloc, au premier arrivé de ses chunks : la
 // plus longue tâche du chargement (221 ms en simulation mobile, 171 ms des
 // 316 de TBT de `/` dans le Lighthouse CI de `183a88f3`). Un `import()` par

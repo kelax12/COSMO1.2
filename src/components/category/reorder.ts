@@ -1,5 +1,5 @@
 // Déplacer une catégorie d'un cran parmi ses sœurs (« Modifier l'ordre »,
-// modale de gestion, 2026-10-29). Pur : rend un nouveau tableau, la modale
+// modale de gestion). Pur : rend un nouveau tableau, la modale
 // ne l'écrit qu'à « Enregistrer ».
 //
 // Les positions de la fratrie sont RENUMÉROTÉES 0..n-1 après l'échange : des

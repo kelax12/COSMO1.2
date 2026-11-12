@@ -4,12 +4,12 @@ import type { CalendarEvent } from '@/modules/events';
 import { useT } from '@/i18n/useT';
 import { dayTimeline, groupEventsByDay } from './agenda-events.helpers';
 
-// Sorti de `MyWorkTab` le 2026-10-20 : rendu par le widget « Mon agenda »,
+// Sorti de `MyWorkTab` : rendu par le widget « Mon agenda »,
 // il vit dans le chunk paresseux `MyWorkSections` et plus dans
 // `OrganizationPage` (plafond C-85 dépassé de 1,1 ko).
 
 /**
- * Frise de la journée (maquette 5 B, 2026-10-02) : mes rendez-vous du jour
+ * Frise de la journée (maquette 5 B) : mes rendez-vous du jour
  * posés sur une règle horaire, « maintenant » en trait rouge. On voit d'un
  * coup d'œil où sont les trous pour travailler.
  */

@@ -2,11 +2,11 @@
 // TEAM-PROJECTS — hooks de la fiche de tâche : historique par
 // tâche (mig. 094) et brouillon appliqué après création
 //
-// Retirés le 2026-09-05 (C-49) : aucun écran ne les montait. Rebranchés le
-// 2026-09-25 par la fiche de tâche d'équipe (audit des popups entreprise :
+// Retirés (C-49) : aucun écran ne les montait. Rebranchés le
+// par la fiche de tâche d'équipe (audit des popups entreprise :
 // « ni étiquettes ni historique »). Seuls les hooks qu'un écran consomme
 // reviennent : `orphan-hooks.guard.test.ts` refuserait les autres.
-// Étiquettes (mig. 093) retirées du mode entreprise le 2026-09-28.
+// Étiquettes (mig. 093) retirées du mode entreprise.
 // ═══════════════════════════════════════════════════════════════════
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -33,13 +33,13 @@ export interface TeamTaskDraftExtras {
   subtasks: string[];
   /** Tâches qui bloquent la nouvelle (« bloquée par »). */
   blockedByIds: string[];
-  /** Tâches que la nouvelle bloque (« bloque », 2026-10-30). */
+  /** Tâches que la nouvelle bloque (« bloque »). */
   blocksIds?: string[];
 }
 
 /**
  * Applique le brouillon d'une fiche en création, une fois la tâche créée :
- * sous-tâches, dépendances. Audit des popups du 2026-09-25 : ces
+ * sous-tâches, dépendances. Audit des popups : ces
  * éléments n'existaient qu'en édition, il fallait créer, fermer,
  * rouvrir. Chaque écriture est indépendante : un échec n'annule pas les
  * autres, et il est dit (la tâche, elle, existe déjà).

@@ -13,7 +13,7 @@ import { ItemAction, WidgetEmpty, WidgetShell } from './WidgetShell';
 import { TONE_BADGE, lateDays, usePager } from './widget-shell.helpers';
 
 /**
- * Nouveaux widgets de l'Aperçu (2026-10-19) : « Mes échéances » (frise de
+ * Nouveaux widgets de l'Aperçu : « Mes échéances » (frise de
  * sept jours cliquable) et « Bloqué par moi » (ce que d'autres attendent de
  * moi). Même règle que les autres : la taille change la présentation, chaque
  * élément garde son action, le reste se parcourt avec ‹ 1/N ›.

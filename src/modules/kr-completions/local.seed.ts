@@ -46,7 +46,7 @@ export function createDemoCompletions(): KRCompletion[] {
  *
  * Ces onze titres s'affichaient en FRANÇAIS dans le graphique « KR réalisés »
  * du tableau de bord d'un visiteur anglophone : ce module était le seul seed de
- * démo à n'être branché sur aucun overlay. Trouvé le 2026-09-12 par le motif
+ * démo à n'être branché sur aucun overlay. Trouvé par le motif
  * (9) d'`i18n:scan`, qui regarde enfin les valeurs de propriété.
  *
  * Les titres ne sont pas réécrits ici : ils sont REPRIS de `DEMO_OKRS_EN` par

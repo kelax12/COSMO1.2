@@ -53,7 +53,7 @@ export function DataTab() {
   const { data: categories = [] } = useCategories();
   const { data: lists = [] } = useLists();
   // Le journal des KR (QUAND chaque résultat clé a été atteint) et les rôles
-  // reçus dans une organisation : déclarés non exportés jusqu'au 2026-10-22.
+  // reçus dans une organisation : déclarés non exportés jusqu'au .
   const { data: krCompletions = [] } = useKRCompletionsExport();
   const { data: orgRoles = [] } = useMyOrgRoleAssignments();
   const { user } = useAuth();
@@ -203,7 +203,7 @@ export function DataTab() {
       </div>
 
       {/* 🔴 LCEN : mentions légales, CGU et politique « directement et
-          facilement accessibles ». Avant le 2026-10-13, une fois connecté,
+          facilement accessibles ». Avant, une fois connecté,
           aucun écran de l'application n'y menait. Nouvel onglet : on ne quitte
           pas ses réglages pour lire un contrat. */}
       <nav aria-label={t('data.legalTitle')} className="p-4 rounded-xl border border-[rgb(var(--color-border))]">

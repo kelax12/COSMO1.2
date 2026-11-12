@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // useSharedTasksRealtime — remplace le sondage de la liste de tâches
 //
-// POURQUOI (audit architecture 2026-08-07, point C2)
+// POURQUOI (audit architecture, point C2)
 //
 // La collaboration n'a pas de canal de notification : sans rien, une tâche
 // qu'un ami vient de partager n'apparaît jamais (cache React Query,

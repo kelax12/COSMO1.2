@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// ORG-CONFIG : export public (mig. 195 à 199, audit entreprise 2026-09-24)
+// ORG-CONFIG : export public (mig. 195 à 199, audit entreprise )
 // ═══════════════════════════════════════════════════════════════════
 
 export type {

@@ -30,13 +30,13 @@ const KIND_META: Record<OrgNotificationKind, { Icon: typeof Bell; labelKey: KeyO
   mention: { Icon: AtSign, labelKey: 'notifications.kindMention' },
   task_overdue: { Icon: AlarmClock, labelKey: 'notifications.kindOverdue' },
   comment: { Icon: MessageSquare, labelKey: 'notifications.kindComment' },
-  // Mig. 162 (audit 2026-09-23, M14).
+  // Mig. 162 (audit, M14).
   status_changed: { Icon: ArrowRightLeft, labelKey: 'notifications.kindStatusChanged' },
   unblocked: { Icon: Unlock, labelKey: 'notifications.kindUnblocked' },
   project_at_risk: { Icon: TriangleAlert, labelKey: 'notifications.kindProjectAtRisk' },
   kr_due: { Icon: Target, labelKey: 'notifications.kindKrDue' },
   event_scheduled: { Icon: CalendarPlus, labelKey: 'notifications.kindEventScheduled' },
-  // Mig. 164 (audit 2026-09-24, étape 4).
+  // Mig. 164 (audit, étape 4).
   project_archived: { Icon: Archive, labelKey: 'notifications.kindProjectArchived' },
   role_changed: { Icon: Network, labelKey: 'notifications.kindRoleManagerChanged' },
   // Mig. 201.
@@ -53,7 +53,7 @@ const hasTarget = (n: OrgNotification): boolean =>
  * Sorti de `OrgNotificationsBell` et chargé à la PREMIÈRE
  * ouverture : la cloche est montée à chaque visite de /entreprise, son panneau
  * ne s'ouvre que parfois. Les filtres et les nouveaux types (audit du
- * 2026-09-24) faisaient passer `OrganizationPage` au-dessus de son plafond.
+ * faisaient passer `OrganizationPage` au-dessus de son plafond.
  */
 const OrgNotificationsPanel = ({ notifications, members, onClose, onOpenSettings }: OrgNotificationsPanelProps) => {
   const { t } = useT('org');

@@ -71,7 +71,7 @@ interface TeamTasksTableRowProps {
 const cellBtn = 'inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 transition-colors hover:bg-[rgb(var(--color-hover))] disabled:cursor-not-allowed disabled:hover:bg-transparent';
 
 /**
- * Colonne « Assignés » (audit 2026-09-24) : jusqu'ici les avatars vivaient dans
+ * Colonne « Assignés » : jusqu'ici les avatars vivaient dans
  * la cellule du nom et m'EXCLUAIENT, si bien qu'une tâche à moi seul paraissait
  * « à personne ». « Vous » passe en tête, en toutes lettres.
  */
@@ -325,7 +325,7 @@ const TeamTasksTableRow = forwardRef<HTMLTableRowElement, TeamTasksTableRowProps
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {/* Grisé plutôt que masqué (audit du 2026-09-24). */}
+            {/* Grisé plutôt que masqué (audit). */}
             <DropdownMenuItem disabled={!!editReason} title={editReason} onClick={() => handlers.open(task)}>
               <Pencil aria-hidden="true" /> {t('projects.tasksTabEdit')}
             </DropdownMenuItem>

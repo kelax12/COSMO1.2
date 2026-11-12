@@ -1,5 +1,5 @@
 // Onglets Sous-tâches, Dépendances et Historique de la fiche de tâche d'équipe
-// (audit des popups, 2026-09-25), chargés à la PREMIÈRE ouverture d'un de ces
+// (audit des popups), chargés à la PREMIÈRE ouverture d'un de ces
 // onglets : la fiche s'ouvre sur « Détails », et ces trois panneaux faisaient
 // passer le chunk `TeamTaskModal` de 14,4 à 20 ko (plafond 14,5).
 

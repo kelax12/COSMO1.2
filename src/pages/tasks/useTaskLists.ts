@@ -24,7 +24,7 @@
 //     verser une tâche pose son échéance au jour même, via l'unique chemin
 //     d'écriture des échéances (`@/lib/deadline`), jamais un `new Date()`.
 //
-// Extrait le 2026-09-05 (C-09).
+// Extrait (C-09).
 // ═══════════════════════════════════════════════════════════════════
 import { useEffect, useState } from 'react';
 import {

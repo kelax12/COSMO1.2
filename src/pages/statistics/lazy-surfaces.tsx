@@ -2,7 +2,7 @@
 // Statistiques · ce qui n'est pas peint à l'ouverture, chargé à part
 // ═══════════════════════════════════════════════════════════════════
 //
-// StatisticsPage pesait 13,0 ko gzip pour un plafond de 13,0 (2026-10-22) :
+// StatisticsPage pesait 13,0 ko gzip pour un plafond de 13,0 :
 // le prochain ajout l'aurait fait rougir. Deux surfaces ne servent pas au
 // premier rendu et sortent du chunk :
 //

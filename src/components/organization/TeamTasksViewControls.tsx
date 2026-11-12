@@ -18,7 +18,7 @@ interface TeamTasksViewControlsProps {
   kanbanGroupBy: 'assignee' | 'status';
   onKanbanGroupByChange: (groupBy: 'assignee' | 'status') => void;
   /** Moitié à rendre : la vue (après les préréglages) ou les colonnes (au
-   *  bout de la ligne), 2026-09-30. Absent : les deux. */
+   * bout de la ligne). Absent : les deux. */
   part?: 'view' | 'columns';
 }
 
@@ -29,9 +29,9 @@ const segGroup = 'inline-flex rounded-lg border border-[rgb(var(--color-border))
 
 const btn = 'inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-xs font-semibold text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60';
 
-/** Colonnes et export du tableau des tâches (audit 2026-09-24). Le
+/** Colonnes et export du tableau des tâches. Le
  *  regroupement a fusionné avec le tri, il vit dans `TeamTasksToolbar`
- *  (2026-09-27) — un seul menu répond aux deux questions. */
+ * — un seul menu répond aux deux questions. */
 const TeamTasksViewControls = ({
   columns, onColumnsChange, view, onViewChange, kanbanGroupBy, onKanbanGroupByChange, part,
 }: TeamTasksViewControlsProps) => {

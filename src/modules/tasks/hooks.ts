@@ -25,7 +25,7 @@ import {
  * Filet de sécurité si le canal Realtime tombe sans se reconnaître déconnecté.
  * Ce n'est PAS le mécanisme de synchronisation — voir `useSharedTasksRealtime`.
  * Cadence volontairement lente : c'est le levier direct du coût d'egress
- * Supabase (audit archi 2026-08-07, C2).
+ * Supabase (audit archi, C2).
  */
 const COLLAB_POLL_INTERVAL_MS = 5 * 60_000;
 
@@ -67,7 +67,7 @@ export const useTasks = (options?: { enabled?: boolean }) => {
     // globalement). On sonde donc périodiquement.
     //
     // ⚠️ Ce sondage est CHER : chaque tick est un `getAll()` complet. L'audit
-    // architecture 2026-08-07 (point C2) a mesuré la version précédente —
+    // architecture (point C2) a mesuré la version précédente —
     // 15 s, déclenchée dès que l'utilisateur avait ≥ 1 AMI — à ≈ 58 Mo/mois
     // d'egress Supabase PAR UTILISATEUR, pour un événement qui, en pratique,
     // ne survient que quelques fois par mois. Deux correctifs ici :
@@ -144,7 +144,7 @@ export const useTask = (id: string, options?: { enabled?: boolean }) => {
   });
 };
 
-// 🗑️ Supprimés le 2026-09-05 (C-49), aucun consommateur : `useTasksByDate`,
+// 🗑️ Supprimés (C-49), aucun consommateur : `useTasksByDate`,
 // `useTodaysTasks`, `useBookmarkedTasks`, `useCompletedTasks`. `useFilteredTasks`
 // a suivi à la V14.1 : son seul appelant, `usePendingTasks`, lit désormais le
 // jeu de travail. `getFiltered` reste une capacité du repository.
@@ -556,7 +556,7 @@ export const useToggleTaskBookmark = () => {
 };
 
 // ═══════════════════════════════════════════════════════════════════
-// PAGINATION DES TÂCHES (V14.1, constat PER-01 de l'audit du 2026-11-06)
+// PAGINATION DES TÂCHES (V14.1, constat PER-01 de l'audit)
 //
 // La note qui vivait ici disait : « paginer sans pousser filtres, tri et
 // comptage côté SQL donnerait des compteurs FAUX ». C'est la règle qu'a

@@ -10,7 +10,7 @@
 // Les droits viennent de `usePermissionHints`, comme dans `TeamTasksTab` :
 // un geste refusé se grise en disant pourquoi.
 //
-// Extrait de `TaskTable` le 2026-10-09 (budget 600 lignes).
+// Extrait de `TaskTable` (budget 600 lignes).
 // ═══════════════════════════════════════════════════════════════════
 import { useCallback, useMemo, useState } from 'react';
 import { useActiveOrganization, useOrgMembers } from '@/modules/organizations';

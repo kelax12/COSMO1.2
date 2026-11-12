@@ -104,7 +104,7 @@ export const useUpdateCategory = () => {
  *
  * 🔴 UNE SEULE mutation, et UN SEUL geste d'interface : le menu
  * « Déplacer vers… ». ❌ Ne jamais lui adjoindre un glisser-déposer : la
- * décision produit du 2026-09-09 est que cette fonctionnalité doit rester
+ * décision produit est que cette fonctionnalité doit rester
  * simple et intuitive, et un second chemin serait un second endroit où la
  * règle peut diverger.
  */

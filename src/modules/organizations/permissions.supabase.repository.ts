@@ -2,7 +2,7 @@
 // ORGANIZATIONS · Permissions par membre — Supabase (mig. 115)
 // ═══════════════════════════════════════════════════════════════════
 //
-// Sorti de `supabase.repository.ts` le 2026-10-15 (602 lignes pour un budget
+// Sorti de `supabase.repository.ts` (602 lignes pour un budget
 // de 600, `architecture.guard`). `SupabaseOrganizationsRepository` délègue ici,
 // son contrat ne change pas.
 //

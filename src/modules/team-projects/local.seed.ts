@@ -17,7 +17,7 @@
 //
 // Rechargées à chaque `loginDemo()` (sweep `cosmo_*` de `clearDemoStorage`).
 //
-// Extrait de `local.repository.ts` le 2026-09-05 (C-09).
+// Extrait de `local.repository.ts` (C-09).
 // ═══════════════════════════════════════════════════════════════════
 import type {
   TeamProject,
@@ -44,7 +44,7 @@ const iso = (offset: number): string => new Date(Date.now() + offset * DAY).toIS
 
 const MEMBERS = [
   'demo-user', 'friend-1', 'friend-2', 'friend-3', 'user-lucas', 'user-camille',
-  // 6..14 : élargissement à 15 personnes (2026-10-05).
+  // 6..14 : élargissement à 15 personnes.
   'user-manon', 'user-chloe', 'user-emma', 'user-ines', 'user-antoine',
   'user-paul', 'user-lea', 'user-karim', 'user-yanis',
 ];

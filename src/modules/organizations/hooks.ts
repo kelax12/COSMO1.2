@@ -260,7 +260,7 @@ export const useSetMemberRole = () => {
   });
 };
 
-// Plus de `useRemoveMember` (2026-09-25) : retirer quelqu'un passe par
+// Plus de `useRemoveMember` : retirer quelqu'un passe par
 // l'assistant de départ (`useOffboardMember`, `offboard_org_member`, mig. 161),
 // qui transmet tâches, subordonnés, rôles et KR avant le retrait. Un retrait
 // nu depuis l'écran les laissait orphelins (M10).

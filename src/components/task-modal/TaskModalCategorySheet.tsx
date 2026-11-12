@@ -2,7 +2,7 @@
 // TaskModalCategorySheet — feuille « Catégorie » du corps mobile
 // ═══════════════════════════════════════════════════════════════════
 //
-// Extrait de `TaskModalMobileBody.tsx` le 2026-09-14 (C-75) : le fichier avait
+// Extrait de `TaskModalMobileBody.tsx` (C-75) : le fichier avait
 // franchi les 600 lignes du cliquet `architecture.guard`, et la frontière la
 // plus nette était celle-ci — une SURFACE (la feuille) avec son propre état de
 // saisie, que le corps du modal n'a aucune raison de porter.

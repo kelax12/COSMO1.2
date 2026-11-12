@@ -10,7 +10,7 @@ import { myProOkrs } from './pro-okrs';
  * Les OKR d'entreprise dont je porte un KR, au-dessus des OKR perso (05ddf746),
  * avec le titre qui sépare les deux listes quand les deux existent.
  *
- * Chargé à la demande par `OKRPage` (2026-10-02) : la section lit TOUTES mes
+ * Chargé à la demande par `OKRPage` : la section lit TOUTES mes
  * organisations et tire les aides du mode entreprise (progression, liens
  * profonds). Dans la page, elle la poussait à 617 lignes (budget 600,
  * `architecture.guard`) et son chunk au-dessus de son cliquet (`check:bundle`).

@@ -407,7 +407,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose, onDelete }: T
               {keyResults.map((kr, idx) => {
                 // Les quatre valeurs (actuel, cible, unité, coef.) sont repliées et
                 // se déplient au SURVOL de la carte, même avec un seul KR (gain de
-                // place, 2026-10-01). Le focus ne garde ouvert que s'il est DANS
+                // place). Le focus ne garde ouvert que s'il est DANS
                 // ces valeurs (clavier, ou saisie en cours). Sans pointeur fin,
                 // toujours ouvert. Sous mouvement réduit, le dépliage (déclenché par la
                 // personne) reste animé ; seuls le glissement et l'échelle sont coupés. Projets

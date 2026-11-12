@@ -60,7 +60,7 @@ const normalize = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLo
 // Tri des colonnes TEXTE par collation française, pas par point de code :
 // l'apostrophe typographique (U+2019) se classait après toutes les lettres,
 // donc « Maquettes de l’app » tombait après « Maquettes de la page » (et
-// l'inverse avec une apostrophe droite). Vu en CI le 2026-10-08.
+// l'inverse avec une apostrophe droite). Vu en CI.
 const TEXT_COLLATOR = new Intl.Collator('fr', { sensitivity: 'base' });
 const TEXT_SORT_FIELDS = new Set(['name', 'project', 'assignee']);
 
@@ -69,14 +69,14 @@ const TEXT_SORT_FIELDS = new Set(['name', 'project', 'assignee']);
  *
  * Même langage visuel que la page Tâches personnelle (TasksPage + TaskTable) :
  * chips d'accès rapide, recherche + tri, filtres de statut, table triable.
- * L'accès rapide porte les LISTES de l'organisation (mig. 203, 2026-09-28),
+ * L'accès rapide porte les LISTES de l'organisation (mig. 203),
  * avec LA barre de la page personnelle (`TeamTaskListsBar`) ; il portait
  * auparavant les projets, qui restent filtrables par la barre de filtres.
  * Une différence structurelle, pas cosmétique :
  *   - la colonne « Catégorie » devient « Projet » — c'est la même position
  *     dans la ligne, mais la donnée qui la remplit n'est plus au même endroit
  *     du modèle (task.category → task.projectId).
- * Tri et regroupement du tableau ne font plus qu'un menu (2026-09-27) : le
+ * Tri et regroupement du tableau ne font plus qu'un menu : le
  * critère choisi (`filters.group`, dans l'URL) trie TOUJOURS la liste, et les
  * cinq critères groupables y ajoutent une ligne d'en-tête. Le tableau
  * (`TeamTasksTable`) est virtualisé, ses colonnes se choisissent et
@@ -115,7 +115,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, canEditDependencies, isAd
     [categories],
   );
 
-  // Lecture ciblée (audit du 2026-09-24) : hors filtre « Toutes », l'écran n'a
+  // Lecture ciblée (audit) : hors filtre « Toutes », l'écran n'a
   // besoin que des tâches OUVERTES et de celles terminées récemment (« terminées
   // cette semaine » lit 7 jours, on en prend 30 de marge). Le serveur trie donc
   // AVANT le plafond, et une vieille tâche encore ouverte ne sort plus de la
@@ -172,7 +172,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, canEditDependencies, isAd
     return self ? [self, ...others] : others;
   }, [members, user, isAdmin]);
 
-  // Tri ET regroupement (UN critère, fusion du 2026-09-27) : `filters.group`,
+  // Tri ET regroupement (UN critère, fusion) : `filters.group`,
   // dans l'URL. Seul le sens du tri reste un état local, comme avant.
   const sortField = filters.group;
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
@@ -181,7 +181,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, canEditDependencies, isAd
   const [taskModal, setTaskModal] = useState<{
     mode: 'create' | 'edit'; task?: TeamTask; assigneeIds?: string[]; status?: TeamTaskStatus; fromKanban?: boolean;
   } | null>(null);
-  // Vue Table / Tableau (kanban venu de l'onglet Projets le 2026-09-27).
+  // Vue Table / Tableau (kanban venu de l'onglet Projets).
   const { prefs: uiPrefs, updatePrefs: updateUiPrefs } = useProjectsUiPrefs(orgId);
   const { tasksView, kanbanGroupBy } = uiPrefs;
   // Actions dédiées du menu ⋯ (remplace « Marquer comme terminée », cf. photo1) :
@@ -331,7 +331,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, canEditDependencies, isAd
   const setAssignees = (task: TeamTask, assigneeIds: string[]) =>
     updateTask.mutate({ taskId: task.id, input: { assigneeIds } });
 
-  // Édition EN LIGNE (audit 2026-09-24) : priorité et échéance sans ouvrir la fiche.
+  // Édition EN LIGNE : priorité et échéance sans ouvrir la fiche.
   const setCustomStatus = (task: TeamTask, customStatusId: string) =>
     updateTask.mutate({ taskId: task.id, input: { customStatusId } });
   const setPriority = (task: TeamTask, priority: number) =>
@@ -398,7 +398,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, canEditDependencies, isAd
         searchPlaceholder={t('projects.tasksTabSearchPlaceholder')}
         searchAria={t('projects.tasksTabSearchAria')}
         // Mobile (239, 242, 250) : périmètre, tri, préréglages et vue dans une feuille.
-        // Desktop (2026-10-30) : même présentation que l'onglet Projets, le
+        // Desktop : même présentation que l'onglet Projets, le
         // périmètre suit la recherche et « Nouvelle tâche » ferme la ligne.
         trailing={isMobile ? <MobileFiltersButton activeCount={hasActiveFilter ? 1 : 0} onOpenChange={setFiltersOpen} /> : (
           <NewProjectButton
@@ -427,7 +427,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, canEditDependencies, isAd
         ) : undefined}
       />
 
-      {/* Vue, puis préréglages ; tri et colonnes au bout de la ligne, comme Projets (2026-10-30). */}
+      {/* Vue, puis préréglages ; tri et colonnes au bout de la ligne, comme Projets. */}
       <div className="-mt-2 hidden md:flex items-center gap-2">
         <div className="shrink-0"><TeamTasksViewControls {...viewControlsProps} part="view" /></div>
         <FilterPresets

@@ -5,7 +5,7 @@ import { TAP_AREA_44_Y } from '@/components/mobile/tap-area';
 /**
  * Bouton « + Ajouter » à côté d'un label « Catégorie » / « Couleur » dans les
  * modals (TaskModal, OKRModalSheet, EventModal). Pattern unique — audit UI
- * 2026-07-14 §5 : trois rendus différents coexistaient pour la même action.
+ * §5 : trois rendus différents coexistaient pour la même action.
  *
  * - vrai <button> (focus clavier + aria-label), jamais une icône nue cliquable
  * - hover dark : blue-300 (et non blue-700 qui BAISSE le contraste en dark)

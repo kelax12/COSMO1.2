@@ -2,7 +2,7 @@
 // ORG-TEAMS MODULE - LECTURES React Query
 // ═══════════════════════════════════════════════════════════════════
 //
-// Séparées des mutations (`hooks.ts`) le 2026-10-15 : la modale de tâche
+// Séparées des mutations (`hooks.ts`) : la modale de tâche
 // d'équipe ne fait que lire les équipes, et importer `hooks.ts` faisait
 // voyager toutes les mutations (toasts, traductions, clés de trois modules)
 // dans son chunk (budget de `TeamTaskModal`).

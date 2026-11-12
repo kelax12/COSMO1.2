@@ -306,7 +306,7 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
 
   const handleSave = async () => {
     // Catégorie créée puis jamais nommée : silencieuse, pas de blocage
-    // (2026-09-17, demande utilisateur — l'ancien comportement bloquait
+    // (demande utilisateur — l'ancien comportement bloquait
     // « Valider » avec un toast d'erreur tant qu'elle traînait sans nom).
     // Seule une catégorie EXISTANTE renommée trop court reste bloquante :
     // là, silencieux effacerait un nom qu'on avait déjà en base.

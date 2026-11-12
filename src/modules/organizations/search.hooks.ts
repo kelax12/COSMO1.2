@@ -4,7 +4,7 @@
 // 🔴 La palette (Ctrl+K) est montée par `Layout`, donc dans le chunk
 // d'ENTRÉE. Importer ce hook depuis `governance.hooks` y tirait tous les hooks
 // de gouvernance (départ, invitations, journal, vues…) pour une seule
-// requête : +1,6 ko gzip mesurés sur l'entrée le 2026-09-25, payés par
+// requête : +1,6 ko gzip mesurés sur l'entrée, payés par
 // chaque page. Ce fichier ne dépend que de la fabrique de dépôts.
 // ═══════════════════════════════════════════════════════════════════
 

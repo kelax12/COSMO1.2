@@ -14,7 +14,7 @@
 // Query avant de réinitialiser les dépôts laisserait une requête repartir
 // sur l'ancien backend.
 //
-// Extrait d'`AuthContext.tsx` le 2026-11-07 (ARC-03).
+// Extrait d'`AuthContext.tsx` (ARC-03).
 
 import type { QueryClient } from '@tanstack/react-query';
 import { resetRepositories, clearDemoStorage } from '@/lib/repository.factory';

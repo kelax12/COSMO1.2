@@ -26,10 +26,10 @@
 //
 // ── POURQUOI PLUS AUCUNE PHRASE ICI ─────────────────────────────────
 //
-// Une table de transition a existe entre le 2026-09-04 et le 2026-09-12 :
+// Une table de transition a existe entre et :
 // elle traduisait les anciennes phrases anglaises en identifiants, pour que
 // le correctif marche avant l application de la 137. La 137 est APPLIQUEE en
-// production depuis le 2026-09-12 (ledger : `137_dependency_error_identifiers`,
+// production (ledger : `137_dependency_error_identifiers`,
 // derniere entree), verifiee acteur par acteur sur 13 scenarios en transaction
 // annulee : les quatre refus rendent leur identifiant, plus aucune phrase.
 //

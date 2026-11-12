@@ -2,7 +2,7 @@
 // ORGANIZATIONS · Rôles personnalisés — LECTURES React Query (mig. 219)
 // ═══════════════════════════════════════════════════════════════════
 //
-// Séparées des mutations (`roles.hooks.ts`) le 2026-10-15 : `useMyOrgPermissions`
+// Séparées des mutations (`roles.hooks.ts`) : `useMyOrgPermissions`
 // ne lit que ces deux requêtes, et il est monté par tous les écrans entreprise.
 // Le laisser importer les mutations faisait voyager leurs toasts et leurs
 // traductions dans chaque chunk qui demande « ai-je le droit de… » (budget de

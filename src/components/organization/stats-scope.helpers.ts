@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// Statistiques d'entreprise · périmètre (audit 2026-09-23, M3)
+// Statistiques d'entreprise · périmètre (audit, M3)
 //
 // La pyramide dit QUI ENCADRE QUI ; l'équipe dit QUI TRAVAILLE ENSEMBLE.
 // Les statistiques ne suivaient que la première : un responsable d'équipe

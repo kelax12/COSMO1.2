@@ -51,7 +51,7 @@ export const useOrgInbox = () => {
  * `useOrgInbox`.
  *
  * ❌ Ne pas remonter `useTeamTasks` ici. C'est ce que faisait `useOrgBadges`
- * jusqu'au 2026-09-05 : `Layout` le monte, donc la lecture la plus chere du
+ * jusqu'au `Layout` le monte, donc la lecture la plus chere du
  * produit (`get_my_team_tasks` + `.limit(1000)`, SCALABILITY.md §2) partait sur
  * TOUTES les pages protegees pour peindre un nombre. Le rechargement avait ete
  * coupe en aout, la lecture pas (finding C-05).

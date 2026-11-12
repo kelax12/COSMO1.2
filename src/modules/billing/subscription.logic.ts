@@ -1,11 +1,11 @@
 // ═══════════════════════════════════════════════════════════════════
 // Billing — logique premium pure (extraite de billing.context.tsx pour
-// la testabilité, audit 2026-06-10 P0 couverture). C'est LA définition
+// la testabilité, audit P0 couverture). C'est LA définition
 // de « premium » côté client : ne pas la dupliquer ailleurs, ne pas la
 // réintroduire inline dans le contexte (cf. CLAUDE.md — un seul hook
 // fait foi : useBilling, qui délègue ici).
 //
-// 🗑️ C-04 (2026-09-04) — les jetons premium n'entrent plus dans cette
+// 🗑️ C-04 — les jetons premium n'entrent plus dans cette
 // définition : le système de jetons et le mur-pub des Habitudes ont été
 // supprimés, la monétisation ne repose plus que sur l'abonnement.
 // ═══════════════════════════════════════════════════════════════════
@@ -24,7 +24,7 @@ export interface SubscriptionLike {
  *
  * ⚠️ Une ligne `premium` + `active` SANS `current_period_end` reste premium.
  * Ce n'est pas un oubli : c'est la forme qu'ont laissée les jetons gagnés par
- * pub avant la suppression du système (mesuré en prod le 2026-09-04 : 8 lignes,
+ * pub avant la suppression du système (mesuré en prod : 8 lignes,
  * aucune adossée à un abonnement Stripe). Les traiter autrement aurait retiré
  * un premium que ces comptes avaient déjà, ce que personne n'a demandé. Aucune
  * écriture ne produit plus cette forme : Stripe pose toujours une période.

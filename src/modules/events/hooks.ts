@@ -339,7 +339,7 @@ export const useGroupEventsWindow = (
   const repository = useEventsRepository();
   // UNE requête pour tout le groupe, pas `useQueries` : ce dernier tire
   // `QueriesObserver` dans le lot `vendor-query` partagé par toute l'app
-  // (+3 ko bruts mesurés le 2026-09-29), pour un seul écran qui s'en sert.
+  // (+3 ko bruts mesurés), pour un seul écran qui s'en sert.
   const ids = [...userIds].sort();
   const query = useQuery({
     queryKey: [...eventsKeys.all, 'group', ids.join(','), startISO, endISO] as const,

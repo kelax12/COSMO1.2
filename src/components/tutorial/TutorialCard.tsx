@@ -94,7 +94,7 @@ const TutorialCard: React.FC<TutorialCardProps> = ({
 
           ⚠️ La maquette affirmait aussi que la carte était « semi-transparente,
           les lignes passent derrière le texte ». MESURÉ au navigateur le
-          2026-09-21 : `opacity: 1`, fond plein. C'était FAUX, comme la mesure
+ `opacity: 1`, fond plein. C'était FAUX, comme la mesure
           de la maquette 93 — une capture assombrie par le voile du tutoriel
           n'est pas une carte translucide. Rien n'a donc changé sur le fond.
 

@@ -54,7 +54,7 @@ export function slotAtPoint(x: number, y: number): DropSlot | null {
 
 /**
  * Appui long → la tâche suit le doigt → on la lâche sur un créneau
- * (demande d'Axel, 2026-10-11). Le TOUCHER simple reste le chemin principal
+ * (demande d'Axel). Le TOUCHER simple reste le chemin principal
  * (ouvre le formulaire de créneau) : un geste n'est jamais le seul chemin
  * vers une action (C-111).
  *

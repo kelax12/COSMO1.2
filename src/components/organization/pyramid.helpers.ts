@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // Logique pure de l'organigramme (PyramidTab) — extraite pour être testée.
 //
-// POURQUOI CETTE EXTRACTION (audit archi 2026-08-07, point M1)
+// POURQUOI CETTE EXTRACTION (audit archi, point M1)
 //
 // `PyramidTab.tsx` fait 1 389 lignes et ~20 `useState` : drag & drop,
 // auto-scroll, long-press, recherche, repli, six modales. C'est le fichier le

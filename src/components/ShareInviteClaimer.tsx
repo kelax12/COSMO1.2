@@ -94,7 +94,7 @@ const ShareInviteClaimer: React.FC = () => {
 
   const closeAfter = () => setInvite(null);
   const sheetMotion = useSheetMotion();
-  // Meme correction que les cinq feuilles de l'audit 2026-08-14 : la
+  // Meme correction que les cinq feuilles de l'audit la
   // poignee affichee plus bas ne declenchait aucun geste.
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(closeAfter);
 

@@ -2,7 +2,7 @@
 // LISTS — supprimer une liste, avec « Annuler », partout pareil
 // ═══════════════════════════════════════════════════════════════════
 //
-// 🔴 POURQUOI (C-41, revue du 2026-09-03).
+// 🔴 POURQUOI (C-41, revue).
 //
 // Le MEME geste avait DEUX garanties differentes selon l'ecran :
 //

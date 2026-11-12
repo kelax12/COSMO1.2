@@ -14,10 +14,10 @@ import { projectElapsed, type BlockingEntry, type Horizon, type MyKeyResult, typ
 import { useOrgPins } from './org-pins';
 import TaskSelectCheckbox from './TaskSelectCheckbox';
 
-// Cartes de l'Aperçu entreprise (audit du 2026-09-24). Les dérivations sont
+// Cartes de l'Aperçu entreprise (audit). Les dérivations sont
 // dans `my-work.helpers.ts` ; ce fichier ne fait que peindre.
 
-// Maquette 235 (2026-10-10) : sur mobile, des sections séparées par l'espace,
+// Maquette 235 : sur mobile, des sections séparées par l'espace,
 // plus neuf cartes empilées (comme l'accueil perso). Desktop inchangé.
 export const CARD = 'min-w-0 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4 max-md:rounded-none max-md:border-0 max-md:bg-transparent max-md:px-0 max-md:py-2';
 export const TITLE = 'text-sm font-bold text-[rgb(var(--color-text-primary))]';
@@ -68,7 +68,7 @@ interface WaitingProps {
  * dans l'ordre où elles débloquent le plus de monde : ce qu'on me demande de
  * valider, là où l'on m'a cité, et les tâches d'autres qui attendent la mienne.
  *
- * Maquette 2 B (2026-10-02) : une validation se tranche SUR PLACE. Ouvrir la
+ * Maquette 2 B : une validation se tranche SUR PLACE. Ouvrir la
  * tâche reste possible en cliquant son nom, pour qui veut relire avant.
  */
 export const WaitingForMeCard = ({ reviews, mentions, blocking, members, onOpenTask, onApprove, onSendBack }: WaitingProps) => {
@@ -247,7 +247,7 @@ export const MyTasksCard = ({ groups, openCount, hasAny, estimated, projectById,
           type="button"
           onClick={selection.onStart}
           aria-label={t('projects.selectMultiple')}
-          // `TAP_AREA_44_Y` (C-57, 2026-10-01) : mesure 106 x 32 px. Le dessin
+          // `TAP_AREA_44_Y` (C-57) : mesure 106 x 32 px. Le dessin
           // reste a `h-8` dans l en-tete de carte ; le debord de 6 px par cote
           // tient dans le `mb-3` dessous et le padding de carte dessus.
           className={`${TAP_AREA_44_Y} inline-flex items-center gap-1 h-8 px-2 rounded-lg text-xs font-medium text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] hover:text-[rgb(var(--color-text-secondary))] transition-colors shrink-0`}
@@ -344,7 +344,7 @@ interface MyProjectsProps {
 }
 
 /**
- * Mes projets (maquette 7 C, 2026-10-02) : qui d'autre y travaille, ma part,
+ * Mes projets (maquette 7 C) : qui d'autre y travaille, ma part,
  * la fin prévue du projet et le temps de calendrier déjà écoulé. La barre
  * n'est PAS un avancement (on ne lit pas toutes les tâches du projet ici) :
  * son libellé accessible le dit.

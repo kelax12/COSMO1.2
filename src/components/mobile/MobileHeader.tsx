@@ -6,7 +6,7 @@ interface MobileHeaderProps {
   title: React.ReactNode;
   /**
    * Titre affiché une fois compacté, à la place de `title` (redesign
-   * 2026-09-19, OKR). Absent = `title` reste affiché tel quel dans les deux
+   *, OKR). Absent = `title` reste affiché tel quel dans les deux
    * états (comportement d'origine, inchangé pour tous les autres appelants).
    * Utile quand `title` est trop long pour le `text-display` du grand
    * titre — un texte qui tient en `text-headline` (compact) ne tient pas

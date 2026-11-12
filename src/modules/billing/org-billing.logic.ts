@@ -67,7 +67,7 @@ export function isQuotaReached(memberCount: number, sub: OrgSubscription | null)
  * baissé de palier, ou dont l'abonnement est tombé, avec plus de membres que
  * le nouveau quota. Le serveur ne retire jamais de membre ; c'est l'espace
  * entreprise qui se verrouille tant que l'effectif n'est pas rentré dans le
- * quota (décision d'Axel du 2026-11-05). Pile au quota n'est PAS un dépassement.
+ * quota (décision d'Axel). Pile au quota n'est PAS un dépassement.
  */
 export function isOverQuota(memberCount: number, sub: OrgSubscription | null): boolean {
   const quota = effectiveQuota(sub);
@@ -99,7 +99,7 @@ export function sectionOpenWhileOverQuota(
 
 /**
  * Palier proposé à la CRÉATION d'une entreprise, d'après l'effectif annoncé
- * (onboarding, 2026-11-05). Jusqu'au plafond du gratuit, rien à payer ; au-delà,
+ * (onboarding). Jusqu'au plafond du gratuit, rien à payer ; au-delà,
  * `recommendedTier` : le plus petit palier payant qui laisse une place, pour ne
  * pas faire payer un palier déjà plein le jour même.
  */

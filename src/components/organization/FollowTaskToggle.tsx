@@ -17,7 +17,7 @@ const FollowTaskToggle = ({ orgId, taskId }: { orgId: string; taskId: string }) 
       type="button"
       aria-pressed={followed}
       onClick={() => toggle.mutate({ target: 'task', id: taskId, follow: !followed })}
-      // `TAP_AREA_44_Y` (C-57, 2026-10-01) : mesure 149 x 36 px en CI. Assez
+      // `TAP_AREA_44_Y` (C-57) : mesure 149 x 36 px en CI. Assez
       // large, trop bas de 8 px, et seul sur sa rangee (`space-y-4` au-dessus,
       // fin de section dessous) : le debord vertical ne couvre aucun voisin.
       className={`${TAP_AREA_44_Y} inline-flex items-center gap-1.5 min-h-9 px-3 rounded-lg text-xs font-medium border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors`}

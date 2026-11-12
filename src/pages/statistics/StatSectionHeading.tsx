@@ -3,10 +3,10 @@ import type { LucideIcon } from 'lucide-react';
 /**
  * En-tête d'une famille de statistiques.
  *
- * La page empile ses cinq familles depuis le 2026-09-21 : sans repère, elles
+ * La page empile ses cinq familles : sans repère, elles
  * se lisent comme une seule liste de cartes.
  *
- * Maquette 200 (2026-10-10) : sur mobile, l'icône colorée disparaît (violet,
+ * Maquette 200 : sur mobile, l'icône colorée disparaît (violet,
  * bleu, rouge, vert, jaune : une couleur par titre, aucune ne voulait rien
  * dire). Desktop garde l'icône et sa couleur.
  *

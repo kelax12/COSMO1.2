@@ -41,7 +41,7 @@ export const DEMO_ORGS: Organization[] = [
 //   │   └── Karim Haddad
 //   └── Yanis Chevalier
 //   Camille Richard = NON PLACÉE (montre le flux de placement).
-//   15 membres au total (2026-10-05) : une PME crédible, pas une équipe de six.
+// 15 membres au total : une PME crédible, pas une équipe de six.
 export const DEMO_MEMBERS: OrgMember[] = [
   // ── Nova Studio (demo-user admin) ──
   { orgId: DEMO_ORG_ID, userId: DEMO_USER_ID, role: 'admin', managerId: null, joinedAt: new Date(Date.now() - 90 * DAY).toISOString(), displayName: 'Vous', email: 'demo@cosmo.app' },

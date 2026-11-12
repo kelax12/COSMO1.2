@@ -2,7 +2,7 @@
 // TEAM COMMENTS — restauration d'un commentaire supprimé (« Annuler »)
 // ═══════════════════════════════════════════════════════════════════
 //
-// 🔴 POURQUOI (C-42, arbitrage du 2026-09-03).
+// 🔴 POURQUOI (C-42, arbitrage).
 //
 // `TaskCommentsSection` supprimait un commentaire sur UN SEUL CLIC, sans
 // confirmation ni annulation, et il disparaissait pour toute l'équipe. C'était

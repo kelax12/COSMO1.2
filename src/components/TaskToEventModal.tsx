@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// Planifier une tâche dans l'agenda (2026-10-29).
+// Planifier une tâche dans l'agenda.
 //
 // Remplace la popup « Planifier » (`ScheduleEventModal`) : un seul écran de
 // création d'événement dans tout le produit, `EventModal`, ouvert ici

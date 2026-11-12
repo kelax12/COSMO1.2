@@ -2,7 +2,7 @@
 // OKR · les dialogues ouverts à la demande, chargés à la demande
 // ═══════════════════════════════════════════════════════════════════
 //
-// La refonte mobile du 2026-10-11 a fait passer OKRPage à 15,3 ko pour un
+// La refonte mobile a fait passer OKRPage à 15,3 ko pour un
 // plafond de 15,0. La fiche de création/édition d'un objectif (OKRModalSheet,
 // ~28 ko de source, importée par cette seule page), le point hebdomadaire et
 // la confirmation de suppression ne s'affichent qu'après un geste : ils sortent

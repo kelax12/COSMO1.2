@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // TEAM-PROJECTS — lignes brutes Supabase et mappers vers le modèle métier
 //
-// Extrait de `supabase.repository.ts` le 2026-08-24. Ce n'est pas un
+// Extrait de `supabase.repository.ts`. Ce n'est pas un
 // rangement esthétique : le fichier d'origine était à 601 lignes, donc dans
 // la liste `KNOWN_OVERSIZED` du cliquet de `src/architecture.guard.test.ts`,
 // et le correctif de scalabilité (mig. 113) le faisait grossir encore. Le

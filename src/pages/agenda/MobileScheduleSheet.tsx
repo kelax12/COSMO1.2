@@ -43,7 +43,7 @@ interface Row {
 const DEFAULT_DROP_MINUTES = 60;
 
 /**
- * « Planifier une tâche » — agenda MOBILE (maquette 170, 2026-10-10).
+ * « Planifier une tâche » — agenda MOBILE (maquette 170).
  *
  * Remplace le tiroir latéral de 220 px qui tronquait tout (« Préparer pr… »,
  * sélecteurs « Toute: », dates « 13/10/2026 ») et ne s'utilisait qu'en
@@ -110,7 +110,7 @@ const MobileScheduleSheet: React.FC<Props> = ({ open, onClose }) => {
   }, [search, tasks, categories, teamTasks, teamCategories, user, priorityRange]);
 
   // Appui long → la feuille se ferme, la tâche suit le doigt → on la lâche sur
-  // un créneau (demande d'Axel, 2026-10-11). Le toucher simple garde le
+  // un créneau (demande d'Axel). Le toucher simple garde le
   // formulaire de créneau : jamais un geste comme seul chemin (C-111).
   const createEvent = useCreateEvent();
   // La feuille reste montée mais invisible pendant le glisser (cf. `concealed`).

@@ -16,7 +16,7 @@ interface TeamTasksToolbarProps {
   createDeniedReason?: string;
   onCreate: () => void;
   /**
-   * Vue, colonnes, export : à droite, avant « Nouvelle tâche » (2026-09-28).
+   * Vue, colonnes, export : à droite, avant « Nouvelle tâche ».
    * Ils partageaient la ligne des préréglages, qui passe désormais sur UNE
    * ligne pleine largeur, comme les filtres rapides de la page Tâches perso.
    */
@@ -29,13 +29,13 @@ interface TeamTasksToolbarProps {
 
 /**
  * Barre d'outils de l'onglet Tâches : tri + regroupement (UN seul critère,
- * fusion du 2026-09-27) et création. La recherche et les filtres vivent dans
+ * fusion) et création. La recherche et les filtres vivent dans
  * `OrgTaskFilterBar`, la barre partagée avec Projets (cohérence globale,
- * 2026-09-25). Sélection multiple et compteur : `TeamTasksSelectRow`
+ * Sélection multiple et compteur : `TeamTasksSelectRow`
  * ci-dessous, sur sa propre ligne au-dessus du tableau (même position que la
  * page Tâches personnelle).
  *
- * ⚠️ Extraite de `TeamTasksTab.tsx` le 2026-08-27, pas par goût du découpage :
+ * ⚠️ Extraite de `TeamTasksTab.tsx`, pas par goût du découpage :
  * ce fichier avait dépassé l'invariant de 600 lignes du projet et faisait
  * échouer `architecture.guard.test.ts`. Le budget ne se remonte pas, la mesure
  * descend — c'est la règle du dépôt.
@@ -85,7 +85,7 @@ const TeamTasksToolbar = ({
             {flat.map((c) => <option key={c} value={c}>{criterionLabel[c]}</option>)}
           </optgroup>
         </MenuSelect>
-        {/* Maquette 240 (2026-10-10) : `MenuSelect` dessine déjà son chevron ;
+        {/* Maquette 240 : `MenuSelect` dessine déjà son chevron ;
             celui qu'on posait ici par-dessus donnait « Par priorité ˅ ˅ ⇅ ». */}
         <button
           type="button"
@@ -126,7 +126,7 @@ export default TeamTasksToolbar;
 
 /**
  * Tri compact, au bout de la ligne des préréglages devant « Colonnes » : même
- * dessin que le tri de l'onglet Projets (`ProjectsSearchBar`, 2026-10-30).
+ * dessin que le tri de l'onglet Projets (`ProjectsSearchBar`).
  */
 export const TeamTasksSortControl = ({ sortField, onSortField, sortDirection, onToggleSortDirection }: Pick<
   TeamTasksToolbarProps, 'sortField' | 'onSortField' | 'sortDirection' | 'onToggleSortDirection'
@@ -187,7 +187,7 @@ interface TeamTasksSelectRowProps {
 /**
  * Sélection multiple + compteur, sur leur propre ligne au-dessus du tableau
  * (même position que `TaskQuickFilters`/`TaskTable` côté personnel).
- * Déplacé hors de `TeamTasksToolbar` le 2026-09-27 : ce n'était pas un geste
+ * Déplacé hors de `TeamTasksToolbar` : ce n'était pas un geste
  * de tri ni de création, ça n'avait pas sa place dans cette ligne.
  */
 export const TeamTasksSelectRow = ({ onStartSelect, shownLabel }: TeamTasksSelectRowProps) => {

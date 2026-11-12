@@ -21,7 +21,7 @@ interface Props {
 }
 
 /**
- * Filtre de catégorie de la page Objectifs, sur MOBILE (2026-10-10).
+ * Filtre de catégorie de la page Objectifs, sur MOBILE.
  *
  * Demande d'Axel sur la maquette 186 : « juste un sélecteur de catégorie à
  * la place des pastilles cliquables ». Le libellé « Catégorie : », son « + »

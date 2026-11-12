@@ -3,7 +3,7 @@ import { CircleCheck, ChevronRight, FolderKanban, Target, Users } from 'lucide-r
 import { useT } from '@/i18n/useT';
 import { buildOrgLink } from './deep-link.helpers';
 
-// Sorti de `MyWorkTab` le 2026-10-20 et chargé à la demande : ces deux blocs
+// Sorti de `MyWorkTab` et chargé à la demande : ces deux blocs
 // ne s'affichent qu'à un admin d'une organisation jeune ou à un membre sans
 // tâche. Les autres ne les téléchargent plus avec `OrganizationPage`.
 
@@ -21,7 +21,7 @@ export interface StartStep { id: string; label: string; done: boolean; tab: stri
 const NewcomerHints = () => {
   const { t: tOrgAdmin } = useT('orgAdmin');
   const navigate = useNavigate();
-  // Maquette 11 B (2026-10-02) : trois cartes à icône plutôt que trois liens,
+  // Maquette 11 B : trois cartes à icône plutôt que trois liens,
   // la porte d'entrée se repère avant de se lire.
   const hints: { id: string; label: string; tab: string; Icon: typeof FolderKanban }[] = [
     { id: 'projects', label: tOrgAdmin('myWork.hintProjects'), tab: 'projects', Icon: FolderKanban },

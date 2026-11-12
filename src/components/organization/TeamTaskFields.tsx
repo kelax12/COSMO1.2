@@ -15,11 +15,11 @@
 //     panneau latéral desktop et que « Attribuer à quelqu'un » : recherche,
 //     groupes d'équipe, pagination, aucune copie qui pourrait diverger.
 //
-// 2026-09-25 (audit des popups) : le statut arrive EN TÊTE, et la création de
+// (audit des popups) : le statut arrive EN TÊTE, et la création de
 // projet en ligne est retirée. C'était un troisième chemin de création de
 // projet, sans équipe : le projet naissait visible par toute l'entreprise.
 //
-// Extrait le 2026-09-05 (C-09).
+// Extrait (C-09).
 // ═══════════════════════════════════════════════════════════════════
 import React, { Suspense } from 'react';
 import { ChevronRight, Minus, Plus } from 'lucide-react';
@@ -29,7 +29,7 @@ import { DatePicker } from '@/components/ui/date-picker';
 import DescriptionField from '@/components/DescriptionField';
 import AddCategoryButton from '@/components/AddCategoryButton';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
-// Arbre de catégories (2026-10-01) : 21 ko bruts, chargés à la demande pour
+// Arbre de catégories : 21 ko bruts, chargés à la demande pour
 // ramener le chunk de la fiche de tâche sous son plafond. L'emplacement réservé
 // a les dimensions du bouton du sélecteur : rien ne saute à son arrivée.
 const TeamCategoryTreeSelect = lazyWithRetry(() => import('./TeamCategoryTreeSelect'));
@@ -76,7 +76,7 @@ interface TeamTaskFieldsProps {
   onDeadlineChange: (value: string) => void;
   /** Début planifié (mig. 153) — '' = aucun. La frise en fait une barre. */
   /**
-   * Aucun projet présélectionné (création depuis le kanban, audit 2026-09-24) :
+   * Aucun projet présélectionné (création depuis le kanban, audit ) :
    * le sélecteur ouvre sur « Choisir un projet… » au lieu du premier venu.
    */
   requireProjectChoice?: boolean;
@@ -148,7 +148,7 @@ const TeamTaskFields = ({
     <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="space-y-5">
       {section === 'advanced' ? (
         <>
-          {/* Onglet « Avancé » (2026-10-30) : durée, listes, statut. */}
+          {/* Onglet « Avancé » : durée, listes, statut. */}
         <div>
           <label htmlFor="team-task-time" className={labelClass} style={labelStyle}>{t('taskModal.estimatedTime')}</label>
           {/* Même design +/- que son homologue en mode personnel
@@ -312,7 +312,7 @@ const TeamTaskFields = ({
 
       </div>
 
-      {/* Catégorie (pré-remplie par le projet, modifiable) et échéance (2026-10-30). */}
+      {/* Catégorie (pré-remplie par le projet, modifiable) et échéance. */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <span className={labelClass} style={labelStyle}>{t('project.category')}</span>

@@ -31,7 +31,7 @@ const TeamTaskTabPanels = lazyWithRetry(() => import('./TeamTaskTabPanels'));
 const TeamTaskListsField = lazyWithRetry(() => import('./TeamTaskListsField'));
 // Suivre (mig. 162) : chargé à part, catalogue compris (`TAB_GATE_HOSTS` : cette fiche déclare sa liste).
 const TaskDetailsExtras = lazyWithRetry(() => import('./TaskDetailsExtras'), ['org', 'overlays']);
-// Commentaires (2026-10-01) : panneau latéral, sous le premier affichage. Sortis
+// Commentaires : panneau latéral, sous le premier affichage. Sortis
 // du chunk pour le ramener sous son plafond (16,0 ko pour 14,5). Le brouillon
 // « Créer et commenter » part toujours au MONTAGE de la section, qui attend
 // simplement son module.
@@ -57,7 +57,7 @@ interface TeamTaskModalProps {
   /**
    * N'ouvre PAS sur le premier projet : le « + » d'une colonne de kanban
    * n'a aucun projet en contexte, et y déposer la tâche en silence la
-   * rangeait au mauvais endroit (audit Projets, 2026-09-24).
+   * rangeait au mauvais endroit (audit Projets).
    */
   requireProjectChoice?: boolean;
   onCreate?: (input: CreateTeamTaskInput) => Promise<TeamTask>;
@@ -78,14 +78,14 @@ const sameSet = (a: string[], b: string[]) => a.length === b.length && a.every((
  * Fiche de tâche d'équipe : même langage visuel que le TaskModal personnel,
  * branchée sur le module team-projects.
  *
- * Audit des popups du 2026-09-25, tout traité ici :
+ * Audit des popups, tout traité ici :
  *   • le STATUT arrive en tête des champs ;
  *   • plus de création SILENCIEUSE au premier commentaire : le bouton dit
  *     « Créer et commenter », et une fois la tâche créée « Annuler » devient
  *     « Fermer » (plus rien à annuler) ;
  *   • onglets Détails · Sous-tâches · Dépendances · Historique, les deux
  *     premiers disponibles DÈS la création (brouillon appliqué après) ;
- *   • historique (mig. 094) rebranché (étiquettes retirées le 2026-09-28) ;
+ * • historique (mig. 094) rebranché (étiquettes retirées) ;
  *   • plus de création de projet intégrée (troisième chemin, sans équipe) ;
  *   • assignés via `MemberPickList` (recherche, équipes, pagination).
  */
@@ -112,7 +112,7 @@ const TeamTaskModal = ({
     task?.projectId ?? defaultProjectId ?? (requireProjectChoice ? '' : projects[0]?.id ?? ''),
   );
   // Catégorie (mig. 111) : pré-remplie par celle du projet quand on en choisit
-  // un (2026-10-30), toujours modifiable ensuite.
+  // un, toujours modifiable ensuite.
   const [categoryId, setCategoryId] = useState<string | null>(
     () => task?.categoryId ?? (task ? null : projects.find((p) => p.id === (defaultProjectId ?? (requireProjectChoice ? '' : projects[0]?.id)))?.categoryId ?? null),
   );

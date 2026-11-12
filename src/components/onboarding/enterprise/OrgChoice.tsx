@@ -20,7 +20,7 @@ import OrgSizeStep from './OrgSizeStep';
  * Une création mène droit à l'espace entreprise, où la vidéo d'accueil
  * (`OrgWelcomeVideo`) s'ouvre au premier passage. L'assistant de mise en
  * place qui demandait équipe, invitations, projet et cap a été retiré le
- * 2026-10-14.
+ * .
  *
  *, une création passe d'abord par « Combien serez-vous ? »
  * (`OrgSizeStep`) quand la facturation est active : un palier payant ouvre

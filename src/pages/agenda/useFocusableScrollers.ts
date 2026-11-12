@@ -1,4 +1,4 @@
-// C-119 · 2026-09-29 — la grille horaire de `/agenda` est atteignable au
+// C-119 · — la grille horaire de `/agenda` est atteignable au
 // clavier sous Safari.
 //
 // axe relevait `scrollable-region-focusable` (serious) sous WebKit sur
@@ -15,7 +15,7 @@
 // sur une zone qui ne défile pas n'est qu'un arrêt de plus pour rien (C-54 :
 // le bouton « Nouveau » reste le chemin clavier de création).
 //
-// 🔴 C-119, suite · 2026-10-01 — le rôle `region` de C-119 cassait la grille ARIA.
+// 🔴 C-119, suite · — le rôle `region` de C-119 cassait la grille ARIA.
 // FullCalendar range ses défileurs DANS sa table `role="grid"` :
 // `grid > tbody[rowgroup] > tr/td[presentation] > .fc-scroller > … > row`.
 // axe (critique, WCAG 1.3.1) relevait `aria-required-children` sur la grille

@@ -57,7 +57,7 @@ import { type MemberTab } from './member-sheet.helpers';
 import { useT } from '@/i18n/useT';
 import RoleTerm from './RoleTerm';
 
-// Logique pure extraite dans `pyramid.helpers.ts` (audit archi 2026-08-07, M1) :
+// Logique pure extraite dans `pyramid.helpers.ts` (audit archi, M1) :
 // ce sont les seules fonctions de ce fichier qui DÉCIDENT quelque chose
 // (autorisation de déplacement, interdiction des cycles, recherche), donc les
 // seules qui méritaient des tests. Elles y sont couvertes.

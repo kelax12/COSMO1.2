@@ -15,7 +15,7 @@ interface TodayListChipProps {
 }
 
 /*
- * Sortie de `TaskListsBar` le 2026-10-30 (budget de 600 lignes).
+ * Sortie de `TaskListsBar` (budget de 600 lignes).
  * Chip virtuelle "Aujourd'hui" — visible par défaut, masquable.
  * Quand masquée (todayHidden === true), elle disparaît de l'accès
  * rapide. On peut la réactiver depuis la popup SmartListMenu.
@@ -78,7 +78,7 @@ const TodayListChip = ({ revealed, selected, count, onHoverChange, onToggle, onA
         {/* Maquette 143 : l'étincelle n'est qu'un décor sur mobile. */}
         <Sparkles size={13} className="hidden sm:block" />
         <span>{t('filters.today')}</span>
-        {/* Compte masqué sur mobile (souci d'espace, 2026-09-06) : chaque
+        {/* Compte masqué sur mobile (souci d'espace) : chaque
             chip mobile n'a déjà que la place pour son nom. */}
         <span className="hidden sm:inline text-xs opacity-70 ml-0.5">{count}</span>
       </motion.button>

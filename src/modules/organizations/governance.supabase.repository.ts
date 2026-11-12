@@ -243,5 +243,5 @@ interface SearchRow {
 }
 
 // La RPC `search_org` (mig. 191) rend encore des lignes `milestone` : ce filtre
-// les écarte depuis le retrait des jalons (2026-09-30).
+// les écarte depuis le retrait des jalons.
 const SEARCH_KINDS: readonly OrgSearchKind[] = ['project', 'task', 'okr', 'kr', 'team', 'member'];

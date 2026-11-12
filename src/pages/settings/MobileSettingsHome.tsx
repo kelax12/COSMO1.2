@@ -52,7 +52,7 @@ const Group: React.FC<{ title?: string; children: React.ReactNode }> = ({ title,
 );
 
 /**
- * Accueil des Paramètres sur MOBILE (maquettes 205 à 214, 2026-10-10).
+ * Accueil des Paramètres sur MOBILE (maquettes 205 à 214).
  *
  * Les onglets défilaient en pastilles et le quatrième était coupé au bord
  * (« M… ») ; « Guide » et la déconnexion étaient hors champ. C'est désormais

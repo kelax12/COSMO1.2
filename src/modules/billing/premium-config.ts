@@ -4,19 +4,19 @@
 //  false → premium NON appliqué : toutes les features sont gratuites. Le code
 //          premium (Stripe, gates `isPremium()`, PremiumPage) reste intact et
 //          DORMANT — rien n'est supprimé.
-//          C-04 (2026-09-04) : le mur-pub Habitudes et le système de jetons,
+// C-04 : le mur-pub Habitudes et le système de jetons,
 //          eux, ne sont PAS dormants : ils ont été SUPPRIMÉS. Rebasculer ce
 //          drapeau ne les ramène pas, et ne doit pas les réécrire.
 //  true  → premium appliqué (monétisation). Re-basculer ICI pour réactiver.
 //
-// Décision 2026-06-21 : gratuit pour tous, monétisation reportée. Quand on
+// Décision gratuit pour tous, monétisation reportée. Quand on
 // voudra monétiser, passer à `true` (puis finaliser Stripe — cf.
 // docs/POST-AUDIT-GUIDE.md, point 3, option C).
 // ═══════════════════════════════════════════════════════════════════
 export const PREMIUM_ENFORCED = false;
 
 // ═══════════════════════════════════════════════════════════════════
-// Affichage des prix (décision d'Axel, 2026-10-16).
+// Affichage des prix (décision d'Axel).
 //
 //  false → AUCUN montant n'est montré : ni la section tarifs de la landing
 //          entreprise (et son ancre, et le lien « Voir les tarifs » du héros),
@@ -47,7 +47,7 @@ export const PRICES_VISIBLE = true;
 // La devise reste l'EUR dans toutes les langues : la facturation est en euros,
 // il n'y a aucune conversion. Seule la PRÉSENTATION change.
 export const PREMIUM_MONTHLY_EUR = 3.5;
-// Les anciens paliers (2026-07-10, 2 tranches) ont été retirés le 2026-08-17 :
+// Les anciens paliers (2 tranches) ont été retirés :
 // la bannière `org.freemiumInfo` était leur dernier point d'ancrage et ne cite
 // plus aucun montant — elle renvoie vers l'onglet Abonnement, désormais seule
 // surface qui affiche des prix. Deux grilles tarifaires visibles sur le même
@@ -55,9 +55,9 @@ export const PREMIUM_MONTHLY_EUR = 3.5;
 
 // ─── Facturation entreprise (v3 — dormante, Stripe branché) ──────────
 //
-// Pricing décidé 2026-08-14 (demande Axel) : FORFAIT PAR ENTREPRISE selon le
+// Pricing décidé (demande Axel) : FORFAIT PAR ENTREPRISE selon le
 // nombre de membres, palier gratuit inclus (le palier gratuit EST l'essai).
-// Remplace le pricing v2 (2 tranches, 2026-07-10) ci-dessus.
+// Remplace le pricing v2 (2 tranches) ci-dessus.
 //
 // Ces paliers sont affichés par `EnterpriseTierGrid`
 // (src/components/organization/EnterpriseTierGrid.tsx), monté dans l'onglet
@@ -89,7 +89,7 @@ export const ENTERPRISE_PRICING_TIERS = [
  */
 export type OrgTierKey = (typeof ENTERPRISE_PRICING_TIERS)[number]['key'];
 
-// ─── Périodicité de facturation (2026-08-25) ─────────────────────────
+// ─── Périodicité de facturation ─────────────────────────
 //
 // Chaque palier payant peut être réglé au mois ou à l'année. L'annuel N'A PAS
 // de grille propre : son montant est DÉRIVÉ du tarif mensuel par
@@ -141,8 +141,8 @@ export function displayedMonthlyEur(
 //          le VRAI blocage est côté serveur (billing_flags
 //          'enterprise_seat_limit', mig. 067 — 1 UPDATE pour activer).
 //
-// RÉACTIVÉ le 2026-08-25 (demande Axel), après la parenthèse gratuite du
-// 2026-08-24. Les CTA de paiement sont montés, la landing entreprise réaffiche
+// RÉACTIVÉ (demande Axel), après la parenthèse gratuite du
+// . Les CTA de paiement sont montés, la landing entreprise réaffiche
 // ses tarifs (`ENTERPRISE_FREE_OFFER` s'en dérive), et le quota de sièges est
 // réellement appliqué : `billing_flags.enterprise_seat_limit` est repassé à
 // `true` en base le même jour, comme l'exige la règle des deux drapeaux.
@@ -182,6 +182,6 @@ export function displayedMonthlyEur(
 // live est vide). Passer en live = recréer les 4 prix sur le compte live,
 // réenregistrer un endpoint webhook live, puis remplacer STRIPE_SECRET_KEY /
 // STRIPE_WEBHOOK_SECRET / les 4 STRIPE_ORG_PRICE_*.
-// ✅ 2026-10-20 : REARME (SIREN obtenu, Stripe en compte LIVE, mig. 224 en meme temps).
+// ✅ REARME (SIREN obtenu, Stripe en compte LIVE, mig. 224 en meme temps).
 export const ENTERPRISE_BILLING_ENFORCED = true;
 export const ORG_FREE_SEATS = 5;

@@ -2,7 +2,7 @@
 // RENOMMER / RECOLORER UNE CATÉGORIE EN LIGNE (barre de filtres OKR)
 // ═══════════════════════════════════════════════════════════════════
 //
-// Extrait de `OKRPage` le 2026-10-02, comme `useDeleteCategoryFlow` avant lui :
+// Extrait de `OKRPage`, comme `useDeleteCategoryFlow` avant lui :
 // la section « OKR pro » (05ddf746) avait repoussé la page à 617 lignes, au-dessus
 // du budget de 600 que surveille `architecture.guard`. Trois états et trois
 // gestes qui ne concernent que l'édition d'une pastille : ils n'ont rien à

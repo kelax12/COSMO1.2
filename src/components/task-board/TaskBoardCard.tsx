@@ -54,7 +54,7 @@ const TaskBoardCard = ({ task, draggable, showStatus = false, onOpen, onRequestM
     >
       {/* Le titre a TOUTE la largeur : une colonne de Tableau est étroite, et
           les boutons placés à côté de lui le réduisaient à une dizaine de
-          caractères par ligne (mesuré le 2026-10-08 à 1 280 px). */}
+          caractères par ligne (mesuré à 1 280 px). */}
       <p
         className={`text-sm font-medium leading-snug line-clamp-3 ${task.completed ? 'line-through opacity-60' : ''}`}
         style={{ color: 'rgb(var(--color-text-primary))' }}

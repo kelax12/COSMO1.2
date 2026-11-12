@@ -38,7 +38,7 @@ export interface LoadedFile {
 export type ImportStep = 'files' | 'mapping' | 'preview' | 'running' | 'done';
 
 /**
- * Cible ENTREPRISE (2026-10-31) : les tâches naissent dans `projectId`, les
+ * Cible ENTREPRISE : les tâches naissent dans `projectId`, les
  * catégories dans l'arbre de l'organisation (mig. 148). Sans cible : le perso.
  */
 export interface OrgImportTarget { orgId: string; projectId: string }

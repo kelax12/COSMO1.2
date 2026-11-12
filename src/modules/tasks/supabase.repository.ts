@@ -49,7 +49,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
   }
 
   // ⚠️ Toutes les lectures de liste passent par la RPC `get_my_tasks()` et NON
-  // `.from('tasks')` : c'est le correctif C1 de l'audit architecture 2026-08-07.
+  // `.from('tasks')` : c'est le correctif C1 de l'audit architecture .
   //
   // La policy `tasks_select_own_or_shared` (mig. 049) est un OR entre une
   // égalité et un EXISTS : Postgres ne peut alors PAS utiliser

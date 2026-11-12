@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// Tableau des tâches d'équipe, VIRTUALISÉ (audit 2026-09-24, M1 point 5)
+// Tableau des tâches d'équipe, VIRTUALISÉ (audit, M1 point 5)
 //
 // Jusqu'ici le tableau peignait cent lignes puis « Afficher la suite » : à
 // mille tâches, chaque tranche ajoutait neuf cellules et deux menus par ligne,
@@ -112,7 +112,7 @@ const TeamTasksTable = ({
               const { label, dot } = groupLabel(line.key);
               return (
                 <tr key={line.key} ref={virtualizer.measureElement} data-index={item.index} className="bg-[rgb(var(--color-hover)/0.5)]">
-                  {/* `!` : `.data-table td` impose 16 px 24 px et l'emportait (58 px, -40 % le 2026-10-30). */}
+                  {/* `!` : `.data-table td` impose 16 px 24 px et l'emportait (58 px, -40 %). */}
                   <td colSpan={colCount} className="!px-3 !py-[7px]">
                     <button
                       type="button"

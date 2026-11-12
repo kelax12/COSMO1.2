@@ -117,7 +117,7 @@ const SECTIONS: LegalSection<KeyOf<'legalTerms'>>[] = [
       { kind: 'p', key: 'terms.s9.p1' },
       { kind: 'p', key: 'terms.s9.p2' },
       // Les garanties légales du consommateur ne se limitent pas : les omettre
-      // rendait la clause abusive, donc réputée non écrite (2026-09-02).
+      // rendait la clause abusive, donc réputée non écrite.
       { kind: 'p', key: 'terms.s9.p3' },
       { kind: 'p', key: 'terms.s9.p4' },
     ],
@@ -136,14 +136,14 @@ const SECTIONS: LegalSection<KeyOf<'legalTerms'>>[] = [
       { kind: 'p', key: 'terms.s12.p1' },
       // Une clause attributive de juridiction ne vaut pas contre un
       // consommateur : la réserver explicitement évite qu'elle le dissuade
-      // d'agir, ce qui est le seul effet qu'elle avait (2026-09-02).
+      // d'agir, ce qui est le seul effet qu'elle avait.
       { kind: 'p', key: 'terms.s12.p2' },
       { kind: 'p', key: 'terms.s12.p3' },
     ],
   },
   {
     // Médiation de la consommation (C. conso L612-1, L616-1). Texte fourni par
-    // la Société Médiation Professionnelle le 2026-10-25 : ne pas reformuler.
+    // la Société Médiation Professionnelle : ne pas reformuler.
     title: 'terms.s12bis.title',
     blocks: [
       { kind: 'p', key: 'terms.s12bis.p1' },

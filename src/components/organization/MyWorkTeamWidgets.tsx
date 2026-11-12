@@ -14,7 +14,7 @@ import { WidgetEmpty, WidgetShell } from './WidgetShell';
 import { TONE_BADGE, TONE_TEXT, lateDays, usePager, type WidgetTone } from './widget-shell.helpers';
 
 /**
- * Widgets du modèle « chef d'équipe » (2026-10-19) : charge de l'équipe,
+ * Widgets du modèle « chef d'équipe » : charge de l'équipe,
  * retards de l'équipe, OKR (des équipes ou de l'entreprise). Même règle que
  * les autres : la taille change la présentation, jamais l'accès.
  */
@@ -125,7 +125,7 @@ export const TeamOverdueWidget = ({ size, groups, onOpenTask }: { size: WidgetSi
         <ul className="divide-y divide-[rgb(var(--color-border))]">
           {rowPager.slice.map(({ member, task }) => (
             <li key={task.id} className="py-2 first:pt-0 last:pb-0 min-w-0">
-              {/* Plus de bouton « Relancer » (2026-10-20) : la ligne ouvre la tâche. */}
+              {/* Plus de bouton « Relancer » : la ligne ouvre la tâche. */}
               <button type="button" onClick={() => onOpenTask(task)} className="w-full text-left rounded-lg hover:bg-[rgb(var(--color-hover))] px-1 -mx-1">
                 <span className="flex items-center gap-2 min-w-0">
                   <span className="flex-1 min-w-0 truncate text-sm font-semibold text-[rgb(var(--color-text-primary))]">{task.name}</span>
@@ -151,7 +151,7 @@ const krPercent = (kr: { completed: boolean; currentValue: number; targetValue: 
 );
 
 /**
- * OKR (2026-10-20) : un menu déroulant à côté du titre choisit ce qu'on voit,
+ * OKR : un menu déroulant à côté du titre choisit ce qu'on voit,
  * « Tous les OKR » ou UN objectif (ses résultats clés un par un). Le choix
  * devient la vue par défaut : il est retenu dans ce navigateur.
  */

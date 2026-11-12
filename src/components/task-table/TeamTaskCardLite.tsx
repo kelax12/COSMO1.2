@@ -36,7 +36,7 @@ const TeamTaskCardLiteInner = React.forwardRef<HTMLDivElement, TeamTaskCardLiteP
         // indigo, une barre de couleur de projet, et une pilule de projet. À
         // quoi s'ajoutaient un titre d'un cran plus gros que celui des tâches
         // personnelles et une pastille de statut. Résultat mesuré le
-        // 2026-09-19 en 390 px : dans une liste de onze lignes, la SEULE ligne
+        // en 390 px : dans une liste de onze lignes, la SEULE ligne
         // d'équipe était la plus voyante de l'écran, avec sa durée cassée sur
         // deux lignes — la variante rare criait plus fort que la règle.
         //

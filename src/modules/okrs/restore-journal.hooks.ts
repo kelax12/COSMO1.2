@@ -25,7 +25,7 @@
 //
 // ❌ JAMAIS UN INSERT CLIENT LIBRE, et la première version de ce hook s'y est
 //    trompée. Elle appelait `getKRCompletionsRepository().create()` — soit
-//    exactement ce que l'arbitrage du 2026-09-03 fait SUPPRIMER avec
+// exactement ce que l'arbitrage fait SUPPRIMER avec
 //    `useCreateKRCompletion` (« un INSERT client libre dans un journal
 //    append-only que ce fichier interdit par ailleurs »). Passer par le
 //    repository plutôt que par le hook gardait le défaut en changeant son nom.

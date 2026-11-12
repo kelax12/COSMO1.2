@@ -44,7 +44,7 @@ function DropdownMenuContent({
         sideOffset={sideOffset}
         // Une entrée de menu qui ouvre une surface modale lui laisse le focus : Radix
         // le rendait au déclencheur APRÈS que la modale l'avait pris, et il restait
-        // derrière le voile (AM-2, 2026-10-23 : OffboardMemberDialog, AssignEventDialog,
+        // derrière le voile (AM-2 : OffboardMemberDialog, AssignEventDialog,
         // DeleteTeamCategoryConfirm). La modale le rendra elle-même en se fermant (hook des
         // modales maison). Un menu ouvert DEPUIS une modale, lui, garde son retour : à ce
         // moment le focus n'est pas dans une modale.

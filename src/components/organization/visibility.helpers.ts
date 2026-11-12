@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// QUI VOIT un projet ou un objectif existant (audit 2026-09-24, M12).
+// QUI VOIT un projet ou un objectif existant (audit, M12).
 //
 // La création annonçait déjà son audience ; une fois l'objet créé, plus rien
 // ne la disait. Ce module la calcule, personne par personne et AVEC SA RAISON,

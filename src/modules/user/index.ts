@@ -2,7 +2,7 @@
 // USER MODULE - Public API
 // ═══════════════════════════════════════════════════════════════════
 //
-// Ce module a fondu le 2026-08-24. Il exposait `useUser`, `useMessages`,
+// Ce module a fondu. Il exposait `useUser`, `useMessages`,
 // `useWatchAd` et `useUpdateUserSettings` : les trois premiers n'avaient
 // AUCUN consommateur, et le quatrième écrivait dans `cosmo_user`, une clé que
 // plus rien ne relisait depuis que `useAuth` est devenu la source de vérité du

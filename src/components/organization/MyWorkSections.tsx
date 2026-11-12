@@ -88,7 +88,7 @@ export interface MyWorkSectionsProps {
  * part de `MyWorkTab` (qui garde les lectures, la synthèse et la checklist).
  *
  * ⚠️ Pourquoi ce découpage plutôt que rendre `MyWorkTab` paresseux : essayé le
- * 2026-09-24, et mesuré. `MyWorkTab` importe `TeamTaskModal`, donc `popover` ;
+ *, et mesuré. `MyWorkTab` importe `TeamTaskModal`, donc `popover` ;
  * en faire une entrée dynamique a déplacé Popper (radix + floating-ui) hors de
  * `dropdown-menu` vers un chunk commun, et le lot `index` a pris 12 ko pour en
  * rendre 3 au chunk de la page. Rien de ce qui est chargé ici ne tire de
@@ -177,7 +177,7 @@ const MyWorkSections = ({
   const seeTasks = () => navigate(buildOrgLink('tasks'));
   const myTaskIdSet = useMemo(() => new Set(mine.map((t) => t.id)), [mine]);
 
-  // Équipe et administration (modèles chef d'équipe / admin, 2026-10-19).
+  // Équipe et administration (modèles chef d'équipe / admin).
   const team = useMemo(() => myTeam(members, me), [members, me]);
   const teamLoads = useMemo(() => teamLoadOf(team, teamOpen), [team, teamOpen]);
   const teamLate = useMemo(() => teamOverdueOf(team, teamOpen), [team, teamOpen]);
@@ -190,7 +190,7 @@ const MyWorkSections = ({
 
 
   /**
-   * Formats petit et moyen (règle des maquettes du 2026-10-19) : la taille
+   * Formats petit et moyen (règle des maquettes) : la taille
    * change la présentation, jamais l'accès. Chaque élément garde son action,
    * le reste se parcourt avec ‹ 1/N ›. `undefined` = ce widget n'a pas de
    * rendu compact propre, on retombe sur la carte complète.
@@ -208,7 +208,7 @@ const MyWorkSections = ({
             onOpenTask={onOpenTask}
           />
         );
-      // « En attente de moi » : petit et moyen reprennent la carte complète (2026-10-20).
+      // « En attente de moi » : petit et moyen reprennent la carte complète.
       case 'waiting':
         return undefined;
       case 'tasks':
@@ -247,7 +247,7 @@ const MyWorkSections = ({
     }
   };
 
-  // Aperçu en widgets (2026-10-19) : chaque bloc d'avant est un widget que
+  // Aperçu en widgets : chaque bloc d'avant est un widget que
   // la personne retire, ajoute, redimensionne et déplace. `null` = rien à
   // montrer (la grille affiche alors un cadre vide en mode édition).
   // ⚠️ L'agenda reste rendu sans condition : un nouvel arrivant sans tâche

@@ -12,7 +12,7 @@ interface Props {
 }
 
 /**
- * « Affichage » de la page Tâches, sur MOBILE (maquette 140, 2026-10-10).
+ * « Affichage » de la page Tâches, sur MOBILE (maquette 140).
  *
  * L'en-tête portait quatre icônes : boîte de réception, vue tableau, réglages
  * des couleurs, mini-calendrier. Trois d'entre elles règlent la MÊME chose,

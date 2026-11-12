@@ -107,7 +107,7 @@ export function DateCalendarPanel({ value, onSelect, allowClear = true, minDate 
           labelNav: () => ov.t('datePicker.navLabel'),
           labelPrevious: () => ov.t('datePicker.prevMonth'),
           labelNext: () => ov.t('datePicker.nextMonth'),
-          // « Today, » et « , selected » sont concaténés en dur par
+          // « Today, » et «, selected » sont concaténés en dur par
           // labelDayButton : on refait le libellé entier plutôt que de le
           // rapiécer, sinon la traduction dépendrait de l'ordre des mots.
           labelDayButton: dayLabel,

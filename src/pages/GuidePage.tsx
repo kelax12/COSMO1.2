@@ -17,7 +17,7 @@ import HabitHeatmapShowcase from '@/components/showcase/HabitHeatmapShowcase';
 import ShowcaseTheme from '@/components/showcase/ShowcaseTheme';
 import { useDocumentTheme } from '@/hooks/useDocumentTheme';
 import { CONTACT_EMAIL } from '@/lib/contact.mjs';
-// Audit perf 2026-05-29 — lazy-load Recharts wrapper (same rationale as LandingPage).
+// Audit perf — lazy-load Recharts wrapper (same rationale as LandingPage).
 const StatsShowcase = lazy(() => import('@/components/showcase/StatsShowcase'));
 const StatsShowcaseFallback = () => (
   <div className="w-full rounded-2xl bg-[rgb(var(--color-surface))]/80 border border-[rgb(var(--color-border))] shadow-2xl p-5 h-[340px] animate-pulse" />
@@ -91,14 +91,14 @@ const GuidePage: React.FC = () => {
           <div className="flex items-center gap-3">
             {/* Maquette 369 : sur mobile, une ligne « ‹ Retour » puis le titre. */}
             {/* Thème Sombre seul : son accent (blue-500) rend 4,2:1 sur la barre. Même
-                variante sur le libellé « KR » plus bas (Lighthouse, 2026-10-22). */}
+                variante sur le libellé « KR » plus bas (Lighthouse). */}
             <Link to="/" className="md:hidden -ml-1 flex items-center gap-1 min-h-touch text-sm text-[rgb(var(--color-accent))] [.dark:not(.gris):not(.noir)_&]:text-blue-400">
               <ChevronLeft size={18} aria-hidden="true" />
               {t('chrome.backHome')}
             </Link>
             <Link to="/" className="max-md:hidden flex items-center gap-2 text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] transition-colors text-sm">
               {/* alt vide : le nom « Cosmo » suit en texte, un alt identique le faisait
-                  lire deux fois (Lighthouse `image-redundant-alt`, 2026-10-22). */}
+                  lire deux fois (Lighthouse `image-redundant-alt`). */}
               <img src="/logo-128.webp" alt="" className="w-7 h-7 rounded-lg object-contain" />
               <span className="font-semibold text-[rgb(var(--color-text-primary))]">Cosmo</span>
             </Link>
@@ -137,7 +137,7 @@ const GuidePage: React.FC = () => {
                       className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-all text-left"
                       // Le TEXTE actif reste à l'encre : la teinte de section (`#94a3b8`
                       // pour « Prise en main ») rendait 2,3:1 sur fond clair. Seuls le
-                      // fond et l'icône portent la couleur (Lighthouse, 2026-10-22).
+                      // fond et l'icône portent la couleur (Lighthouse).
                       style={{
                         backgroundColor: isActive ? color + '15' : 'transparent',
                         color: isActive ? 'rgb(var(--color-text-primary))' : 'rgb(var(--color-text-secondary))',
@@ -174,7 +174,7 @@ const GuidePage: React.FC = () => {
             {/* ══ PRISE EN MAIN ══════════════════════════════════════════ */}
             {/* `lg:!mt-0` : le sommaire mobile ci-dessus est masqué par CLASSE dès lg,
                 et `space-y-24` le compte quand même : la section recevait 96 px de vide
-                en tête sur desktop (capture Visual du 2026-10-11). */}
+                en tête sur desktop (capture Visual). */}
             <section className="lg:!mt-0">
               <SectionHeader
                 id="demarrage"

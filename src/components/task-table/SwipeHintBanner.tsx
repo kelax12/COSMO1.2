@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// Astuce de découvrabilité des gestes (mobile, redesign 2026-09-07).
+// Astuce de découvrabilité des gestes (mobile, redesign ).
 //
 // Extrait de `TaskTable` : c'est la seule surface du tableau qui porte sa
 // PROPRE mémoire. Elle se ferme une fois pour toutes et le retient dans

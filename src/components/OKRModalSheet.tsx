@@ -78,7 +78,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
   const [endDate, setEndDate] = useState('');
   const [keyResults, setKeyResults] = useState<KRDraft[]>([newKR()]);
   const [showColorSettings, setShowColorSettings] = useState(false);
-  // Repli mobile de la description (redesign 2026-09-19, cf. TaskModalMobileBody) :
+  // Repli mobile de la description (redesign, cf. TaskModalMobileBody) :
   // masquée tant qu'elle est vide, auto-affichée si l'objectif édité en a déjà
   // une. Desktop inchangé (toujours visible).
   const [showDescriptionMobile, setShowDescriptionMobile] = useState(false);
@@ -219,7 +219,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                 placeholder={t('modalSheet.titlePlaceholder')}
                 onChange={(e) => setTitle(e.target.value)}
                 // Fond éclairci et taille agrandie sur mobile (redesign
-                // 2026-09-19) : `bg-transparent` se confondait avec le fond du
+                // `bg-transparent` se confondait avec le fond du
                 // sheet, comme l'input « Choix catégorie »
                 // (`bg-[rgb(var(--color-surface))]`) juste en dessous. Desktop
                 // inchangé.
@@ -286,7 +286,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
               />
             </div>
 
-            {/* Mobile (redesign 2026-09-19, resserré) : même carte « cellule »
+            {/* Mobile (redesign, resserré) : même carte « cellule »
                 que Catégorie/Échéance ci-dessus — repliée derrière un lien
                 tant qu'elle est vide, comme TaskModalMobileBody. Label
                 propre (pas `SectionTitle`, dont le `pt-5` intégré double

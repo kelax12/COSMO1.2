@@ -410,7 +410,7 @@ const AdminDashboard: React.FC = () => {
 
         {/* ═══ C-110 · LE SUPPORT, ENFIN COMPTÉ ════════════════════
           *
-          * 🔴 `report-bug` est en ligne depuis le 2026-09-12 et AUCUN
+          * 🔴 `report-bug` est en ligne et AUCUN
           * compteur ne disait si un rapport avait été lu. Un canal de support
           * qu'on n'instrumente pas ne se distingue pas d'un canal que
           * personne n'utilise : les deux rendent le même silence, et ils
@@ -454,7 +454,7 @@ const AdminDashboard: React.FC = () => {
         </ChartCard>
 
         {/* ═══ ACCUEILS : qui va au bout, et qui revient ═════════════
-          * Les deux accueils ont été refaits le 2026-10-03 pour une raison
+          * Les deux accueils ont été refaits pour une raison
           * chiffrée (50 % des inscrits ne revenaient jamais). Cette carte dit
           * si ça change quelque chose. Mêmes trois états que le support.
           */}

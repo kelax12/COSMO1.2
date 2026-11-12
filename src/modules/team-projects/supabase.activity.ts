@@ -3,7 +3,7 @@
 //
 // Séparé de `supabase.repository.ts` pour le garder sous le plafond de 600
 // lignes : la classe délègue en une ligne. Les étiquettes (mig. 093) ont été
-// retirées du mode entreprise le 2026-09-28 ; `team_labels` et
+// retirées du mode entreprise ; `team_labels` et
 // `team_task_labels` restent en base (le code mort, oui ; les données, non).
 // ═══════════════════════════════════════════════════════════════════
 

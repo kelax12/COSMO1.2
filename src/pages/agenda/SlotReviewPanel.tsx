@@ -6,7 +6,7 @@
 // pose déjà : autant la poser là, à côté du formulaire, plutôt que de laisser
 // refermer la modale pour aller chercher la pastille du calendrier.
 //
-// ⚠️ Simplifié le 2026-09-13 (retour utilisateur, sur capture d'écran) : plus
+// ⚠️ Simplifié (retour utilisateur, sur capture d'écran) : plus
 // d'icône ni de sous-titre dans l'en-tête, plus d'aperçu de la tâche (le champ
 // « titre » de l'EventModal, juste à côté, le dit déjà — c'était une
 // redondance), plus de bouton qui ouvre un menu. Deux actions DIRECTES

@@ -56,7 +56,7 @@ const TasksSummary: React.FC<TasksSummaryProps> = ({
     <>
       <div 
         className="card p-6 relative"
-        // Carte non cliquable : aucun contour ni ombre au survol (2026-10-29).
+        // Carte non cliquable : aucun contour ni ombre au survol.
         style={{
           borderColor: 'rgb(var(--color-border))',
           boxShadow: '0 1px 2px rgba(0,0,0,0.05)',

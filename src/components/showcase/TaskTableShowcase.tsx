@@ -6,7 +6,7 @@
 // ressemblait plus au produit : colonne « Créé » disparue, cinq icônes d'action
 // remplacées par un menu « … » unique, et surtout une échelle de priorités
 // INVERSÉE (elle peignait la 5 en rouge ; dans l'app la 1 est la plus urgente).
-// Archive intégrale : `docs/archive/LANDING-TASKTABLE-SHOWCASE-2026-09-23.md`.
+// Archive intégrale : `docs/archive/LANDING-TASKTABLE-SHOWCASE- .md`.
 //
 // CE QU'ELLE REPRODUIT, et d'où : les colonnes et leurs libellés de
 // `task-table/TaskTableDesktop`, la ligne de `task-table/list` (`TaskRow`),

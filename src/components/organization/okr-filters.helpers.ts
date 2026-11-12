@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// Filtres de l'onglet OKR : équipe, porteur, état (audit 2026-09-24,
+// Filtres de l'onglet OKR : équipe, porteur, état (audit,
 // « Filtres : équipe, responsable, état »). Logique PURE.
 //
 // « Porteur » : le responsable d'un KR (`assigneeId`) OU l'un de ses

@@ -14,7 +14,7 @@ const SWAP_SETTLE_MS = 450;
 
 /**
  * Glisser pour réordonner les widgets de l'Aperçu (sorti d'`ApercuWidgetGrid`,
- * 2026-10-30) : permutation au survol du cœur d'un voisin, hauteur du bloc
+ * permutation au survol du cœur d'un voisin, hauteur du bloc
  * tenu figée, et FLIP natif des voisins sous mouvement réduit.
  */
 export function useWidgetDragReorder<Id extends string>(

@@ -233,7 +233,7 @@ export interface TaskOwnership {
  *
  * Sans lui, l'interface proposait de cocher, de changer le statut ou de
  * glisser n'importe quelle tâche, et le serveur refusait après coup
- * (cohérence globale, 2026-09-25 : « tantôt masqué, tantôt affiché puis refusé »).
+ * (cohérence globale : « tantôt masqué, tantôt affiché puis refusé »).
  */
 export const canEditTeamTask = (can: EffectiveOrgPermissions, userId: string | undefined, task: TaskOwnership): boolean =>
   can['task.editAny'] || (!!userId && (task.createdBy === userId || task.assigneeIds.includes(userId)));

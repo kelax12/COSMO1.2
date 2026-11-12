@@ -11,7 +11,7 @@
 //     QueryCache), pour le prochain démarrage à froid.
 //
 // Le stockage lui-même (clés, TTL, purge) est dans `session-cache.ts`.
-// Extrait d'`AuthContext.tsx` le 2026-11-07 (ARC-03), sans changement de
+// Extrait d'`AuthContext.tsx` (ARC-03), sans changement de
 // comportement : abonné à `dataScopeOpened`, `userLeaving` et `signedOut`.
 
 import { useEffect } from 'react';

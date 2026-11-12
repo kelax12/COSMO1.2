@@ -36,7 +36,7 @@ import ShareInviteClaimer from '@/components/ShareInviteClaimer';
 import { releasePrerenderHero } from '@/lib/prerender-hero';
 import BootScreen from '@/components/BootScreen';
 import { isOrgPath } from '@/components/organization/deep-link.helpers';
-// Audit perf 2026-05-29 — CommandPalette only renders on Ctrl/Cmd+K. Lazy-load
+// Audit perf — CommandPalette only renders on Ctrl/Cmd+K. Lazy-load
 // it so its imports (framer-motion subset, lucide icons, fuzzy search) don't
 // land in the entry chunk. Suspense fallback is null because the palette
 // itself is invisible until opened.
@@ -54,7 +54,7 @@ const Toaster = lazy(() => loadSonner().then((m) => ({ default: m.Toaster })));
 /**
  * L'accueil entreprise (`/entreprise/onboarding`) a une DA nuit FIXE : un toast
  * clair (« Équipe créée ») y tombait comme une carte blanche sur la nuit
- * (relevé le 2026-10-04). Ses toasts sont donc sombres ; partout ailleurs, le
+ * (relevé). Ses toasts sont donc sombres ; partout ailleurs, le
  * réglage d'origine (`system`).
  */
 const ThemedToaster = () => {
@@ -91,7 +91,7 @@ const StatisticsPage = lazyWithRetry(() => import('@/pages/StatisticsPage'), ['d
 // `@/modules/lists` pour `listKeys`, qui réexporte aussi `useDeleteListWithUndo`
 // (`delete-flow.hooks.ts`), dont le toast d'annulation passe par
 // `translator('tasks')`. Importer un seul nom d'un barrel charge tout son
-// graphe : trouvé par `npm run i18n:namespaces -- --pages` le 2026-09-03.
+// graphe : trouvé par `npm run i18n:namespaces -- --pages`.
 const SettingsPage = lazyWithRetry(() => import('@/pages/SettingsPage'), ['csv', 'org', 'overlays', 'settings', 'tasks']);
 const PremiumPage = lazyWithRetry(() => import('@/pages/PremiumPage'), ['overlays', 'premium']);
 const GuidePage = lazyWithRetry(() => import('@/pages/GuidePage'), ['guide', 'seo']);
@@ -173,7 +173,7 @@ const LayoutWithSuspense = () => (
   </AppErrorBoundary>
 );
 
-// 2026-10-23 · Relève de la COPIE d'une page de contenu, rendue par ses propres
+// Relève de la COPIE d'une page de contenu, rendue par ses propres
 // composants au build (src/prerender/content-copy.tsx) et peinte avant React
 // dans le calque `#lp-hero`. Frère de la page DANS la même frontière Suspense :
 // il ne se commite qu'avec elle, donc la copie part dans l'image où la page se
@@ -217,7 +217,7 @@ const isResumablePage = (path: string) => RESUMABLE_PAGES.includes(path) || isOr
 /**
  * Squelette de la landing — le fallback qu'elle mérite.
  *
- * MESURÉ LE 2026-08-30, à 4x de bridage CPU : pendant ~2 s, `/` affichait un
+ * MESURÉ LE, à 4x de bridage CPU : pendant ~2 s, `/` affichait un
  * écran BLANC avec un spinner, puis la landing sombre apparaissait d'un coup,
  * son animation d'entrée déjà terminée. Le fallback par défaut (`PageLoader`)
  * est un spinner sur le fond de l'APPLICATION, qui suit le thème et se trouve
@@ -242,7 +242,7 @@ const LandingSkeleton = () => (
     </div>
     {/* 🔴 CE SQUELETTE DOIT DÉCALQUER LE HERO, pas seulement en occuper la
         place. Il a décrit une mise en page à DEUX COLONNES — texte à gauche,
-        fenêtre produit à droite — jusqu'au 2026-09-22, c'est-à-dire pendant
+        fenêtre produit à droite — jusqu'au, c'est-à-dire pendant
         que le hero, lui, était déjà centré. Un squelette qui annonce autre
         chose que ce qui arrive produit un saut de mise en page à l'endroit
         exact où il est censé l'éviter : la promesse glisse de la gauche vers
@@ -318,7 +318,7 @@ const RootRoute = () => {
  * et se referme proprement au changement d'utilisateur.
  *
  * Composant vide (pas de rendu) : c'est uniquement un point d'ancrage de cycle
- * de vie. Cf. audit archi 2026-08-07, point C2.
+ * de vie. Cf. audit archi, point C2.
  */
 const SharedTasksRealtime: React.FC = () => {
   const { user, isDemo } = useAuth();
@@ -422,7 +422,7 @@ const AppRoutes = () => {
             `entreprise/onboarding`, plus haut, est un segment STATIQUE : le
             routeur le préfère toujours à ce segment dynamique. */}
         {/* Second segment optionnel : la page d'une équipe,
-            `/entreprise/teams/<id>` (audit Membres du 2026-09-24). Toujours la
+            `/entreprise/teams/<id>` (audit Membres). Toujours la
             MÊME route, pour qu'ouvrir une équipe ne remonte pas la page ;
             `OrganizationPage` renvoie tout autre `/<section>/<x>` à la section. */}
         <Route path="entreprise/:section?/:entityId?" element={<PageWithSuspense><OrganizationPage /></PageWithSuspense>} />
@@ -504,7 +504,7 @@ const App: React.FC = () => {
             <AppErrorBoundary fallback={null}>
               <CookieBanner />
               {/* Onglet resté ouvert sur un bundle périmé — 91,5 % du trafic
-                  Supabase du 2026-08-26 venait de deux onglets dans ce cas.
+                  Supabase venait de deux onglets dans ce cas.
                   Monté ici, une seule fois : c'est une propriété de
                   l'application, pas d'un écran. */}
               <NewVersionBanner />

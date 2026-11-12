@@ -11,7 +11,7 @@ import { ItemAction, WidgetEmpty, WidgetShell } from './WidgetShell';
 import { usePager } from './widget-shell.helpers';
 
 /**
- * Nouveaux widgets de l'Aperçu (2026-10-19) : « Mentions et commentaires »
+ * Nouveaux widgets de l'Aperçu : « Mentions et commentaires »
  * (répondre sans ouvrir la tâche, en grand format) et « Note épinglée »
  * (personnelle, gardée dans ce navigateur).
  */
@@ -208,7 +208,7 @@ export const NoteWidget = ({ size, orgId, userId }: { size: WidgetSize; orgId: s
                 </form>
               ) : (
                 <>
-                  {/* Une seule ligne : la note, puis « modifier » et la date (2026-10-20). */}
+                  {/* Une seule ligne : la note, puis « modifier » et la date. */}
                   <div className="flex items-start gap-2">
                     <p className={`flex-1 min-w-0 whitespace-pre-line text-sm text-amber-900 dark:text-amber-100 ${size === 'small' ? 'line-clamp-4' : 'line-clamp-6'}`}>{note.text}</p>
                     <button

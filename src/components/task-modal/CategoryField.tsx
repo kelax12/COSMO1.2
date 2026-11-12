@@ -23,7 +23,7 @@
 // clés qui existent toutes les deux avec des libellés anglais différents. Un
 // seul chemin (`submitNewCategory`) désormais, donc un seul message.
 //
-// Extrait le 2026-09-05 (C-09).
+// Extrait (C-09).
 // ═══════════════════════════════════════════════════════════════════
 import { useState } from 'react';
 import { X, AlertCircle } from 'lucide-react';

@@ -128,7 +128,7 @@ export const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: 
     }
   }, [weeksChrono]);
 
-  // Maquette 202 (2026-10-10) : une seule teinte, l'accent, en intensité.
+  // Maquette 202 : une seule teinte, l'accent, en intensité.
   // L'échelle rouge → orange → jaune → vert se lisait comme un jugement
   // (feu rouge) là où il n'y a qu'un taux. Le rouge reste au retard (121).
   const getCellColor = (rate: number) => {
@@ -209,7 +209,7 @@ export const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: 
         ))}
       </div>
       {/* Scrollable weeks (rows)
-          2026-09-23 · depuis que ce conteneur défile pour de bon (`c2affeeb`),
+ depuis que ce conteneur défile pour de bon (`c2affeeb`),
           axe relève `scrollable-region-focusable` sous WebKit : aucune case
           n'est focalisable, donc sous Safari la zone ne défile ni au clavier
           ni pour un lecteur d'écran piloté au clavier. Le conteneur devient

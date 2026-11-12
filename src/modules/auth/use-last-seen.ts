@@ -7,7 +7,7 @@
 // de page : Supabase refire SIGNED_IN à chaque refresh de token, on ne veut
 // écrire qu'à l'ouverture de session, pas toutes les heures.
 //
-// Extrait d'`AuthContext.tsx` le 2026-11-07 (ARC-03), sans changement de
+// Extrait d'`AuthContext.tsx` (ARC-03), sans changement de
 // condition ni de moment : abonné à `sessionOpened` et `signedOut`.
 
 import { useEffect } from 'react';

@@ -45,7 +45,7 @@ const SubtaskChecklist: React.FC<SubtaskChecklistProps> = ({ taskId, initialSubt
   // plus frais après une mutation — on privilégie le détail s'il existe.
   const { data: detail } = useTask(isControlled ? '' : taskId ?? '');
   const updateTaskMutation = useUpdateTask();
-  // Point 10 de la liste du 2026-10-08 : convertir une sous-tâche en tâche.
+  // Point 10 de la liste : convertir une sous-tâche en tâche.
   // Édition seulement : en création, la parente n'existe pas encore.
   const promote = usePromoteSubtask(isControlled ? undefined : taskId);
 

@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// TEAM-PROJECTS — chat d'un projet (mig. 220, 2026-10-13)
+// TEAM-PROJECTS — chat d'un projet (mig. 220)
 //
 // Quiconque voit le projet lit et écrit (RLS `can_access_team_project`) ;
 // seul l'auteur supprime. Le rôle affiché derrière le nom se lit dans les

@@ -22,7 +22,7 @@ interface TeamTasksSectionProps {
 }
 
 /**
- * Tâches ouvertes de l'équipe (2026-10-30), au-dessus des projets : une tâche
+ * Tâches ouvertes de l'équipe, au-dessus des projets : une tâche
  * n'a pas d'équipe propre, elle appartient à l'équipe par son projet. Les
  * plus urgentes d'abord, sans date en dernier. Un clic ouvre sa fiche sur
  * place (`?task=`, OrgDeepLinkHost).

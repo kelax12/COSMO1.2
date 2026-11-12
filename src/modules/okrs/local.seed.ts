@@ -132,7 +132,7 @@ const DEMO_OKRS_EN: Record<string, { title: string; description: string; keyResu
 };
 
 // Unités des résultats clés du seed, par id de KR. Sans elles, la démo anglaise
-// affichait « 55 / 90 jours » sous un titre traduit (revue M-50 du 2026-10-23).
+// affichait « 55 / 90 jours » sous un titre traduit (revue M-50).
 const DEMO_KR_UNITS_EN: Record<string, string> = {
   'kr-1': 'tasks', 'kr-2': 'weeks', 'kr-3': 'days',
   'kr-4': 'feedback sessions', 'kr-5': 'features', 'kr-6': 'users',

@@ -41,7 +41,7 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({
 }) => {
   const { t, tp } = useT('tasks');
   // Reglages de couleurs des categories. L'engrenage vivait dans le coin de la
-  // carte « Taches en cours », masquee sur mobile depuis le 2026-09-22 : sans
+  // carte « Taches en cours », masquee sur mobile : sans
   // ce report, la seule porte vers ces reglages disparaissait avec elle.
   const [showColorSettings, setShowColorSettings] = useState(false);
 
@@ -52,11 +52,11 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({
   //
   // ── Maquette 122 : un nombre nu ne mène nulle part ───────────────────
   //
-  // Relevé sur les captures du 2026-09-20 : la barre d'onglets affiche « 2 »
+  // Relevé sur les captures : la barre d'onglets affiche « 2 »
   // et « 1 », l'en-tête entreprise « 3 », la boîte de réception « 5 » ici et
   // « 8 » sur l'accueil, et ce sous-titre dit « 1 en retard ». Tous ces
   // compteurs portent déjà un libellé accessible complet — vérifié un par un
-  // le 2026-09-21 : `MobileTabBar`, `TasksInboxMenu` (`inbox.withCount`, badge
+  // : `MobileTabBar`, `TasksInboxMenu` (`inbox.withCount`, badge
   // `aria-hidden`) et `OrgNotificationsBell` (`notifications.bellUnread`).
   // La moitié accessibilité de la maquette était donc DÉJÀ faite.
   //

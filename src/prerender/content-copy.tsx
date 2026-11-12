@@ -1,11 +1,11 @@
 // Rendu SERVEUR des pages de contenu, lu par `prerender/` au build.
 //
-// 🔴 POURQUOI (2026-10-23, AM-2 de docs/PERFORMANCE.md). Les pages de contenu
+// 🔴 POURQUOI (AM-2 de docs/PERFORMANCE.md). Les pages de contenu
 // (blog, articles, `/pour-*`, à-propos, pages légales, guide) peignaient un
 // spinner jusqu'au premier rendu de React : toute l'application devait arriver
 // avant la première phrase, et Lighthouse mobile mesurait leur LCP entre 4,5 et
 // 5,6 s. Le texte SEO brut, peint à la place, était plus rapide mais ne
-// ressemblait pas à la page (arbitrage du 2026-10-21).
+// ressemblait pas à la page (arbitrage).
 //
 // Ici, la page est rendue par ses PROPRES composants, avec la même locale et les
 // mêmes catalogues que dans le navigateur. `prerender/` pose ce balisage dans

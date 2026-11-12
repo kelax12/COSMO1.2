@@ -19,7 +19,7 @@
 // navigateur de bureau, même en largeur mobile, tant que l'émulation tactile
 // n'était pas active. Les deux chemins convergent vers `enterDayView`.
 //
-// Extrait le 2026-09-05 (C-09). `dateClick` + animation de bascule : 2026-09-19.
+// Extrait (C-09). `dateClick` + animation de bascule : .
 // ═══════════════════════════════════════════════════════════════════
 import { useRef, useState } from 'react';
 import type FullCalendar from '@fullcalendar/react';
@@ -56,7 +56,7 @@ export function useAgendaMobileView({ onDateSelect, applyVisibleRange }: Params)
   const [mobileZoom, setMobileZoom] = useState<MobileZoomOrder | null>(null);
   // Compteur, et non `Date.now()` : deux bascules dans la même milliseconde
   // donnaient le même token, et l'animation ne rejouait pas (vu en CI le
-  // 2026-10-01, témoin dans le test).
+  //, témoin dans le test).
   const zoomSeq = useRef(0);
 
   // Miroir SYNCHRONE de `mobileViewMode`. À la souris, `select` ET `dateClick`

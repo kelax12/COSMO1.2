@@ -68,7 +68,7 @@ export type UpdateTaskInput = Partial<Omit<Task, 'id' | 'createdAt'>>;
 /**
  * Statut d'une tâche perso (mig. 214). Quatre valeurs et non cinq : `review`,
  * qui existe en entreprise (mig. 091), est retiré exprès (décision d'Axel,
- * 2026-10-08) : une relecture n'a pas de sens pour une personne seule.
+ * une relecture n'a pas de sens pour une personne seule.
  *
  * Remplace l'ancien type dérivé `'todo' | 'completed'` (B6), qui n'avait
  * aucun lecteur.

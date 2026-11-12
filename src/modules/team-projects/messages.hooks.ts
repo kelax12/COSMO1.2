@@ -16,7 +16,7 @@ export const useProjectMessages = (projectId: string | undefined) =>
     queryFn: () => getProjectMessages(projectId as string),
     enabled: !!projectId,
     staleTime: 1000 * 10,
-    // Pas de sondage (`polling.guard`, 2026-10-15) : la version d'origine
+    // Pas de sondage (`polling.guard`) : la version d'origine
     // relisait le fil toutes les 20 s, en permanence, tant que la page projet
     // restait ouverte. Le fil se relit à l'ouverture, au retour sur l'onglet et
     // après chaque envoi. Un fil en direct passera par Realtime (publication

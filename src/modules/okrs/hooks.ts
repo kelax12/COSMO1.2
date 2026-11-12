@@ -76,7 +76,7 @@ export const useOkrs = (options?: { enabled?: boolean }) => {
  * requêtes, pas une. `useWeeklyCheckin()` est monté par le tableau de bord à
  * CHAQUE ouverture, et ne s'en sert que pour tester `length > 0` un lundi ou
  * un mardi. Ces deux requêtes partaient donc tous les jours pour rien
- * (mesuré le 2026-08-26 : 32 requêtes à l'ouverture, dont celles-ci).
+ * (mesuré : 32 requêtes à l'ouverture, dont celles-ci).
  *
  * `completed` est une colonne déjà présente sur chaque OKR chargé : le filtre
  * se fait en mémoire, sur une liste qui tient en dizaines d'éléments.

@@ -16,7 +16,7 @@
 // en bleu sur mobile. Le sélecteur hex, lui, reste desktop : il s'ouvre par
 // Maj+clic, un geste qui n'existe pas au doigt.
 //
-// Extrait le 2026-09-05 (C-09).
+// Extrait (C-09).
 // ═══════════════════════════════════════════════════════════════════
 import React from 'react';
 import { motion } from 'framer-motion';

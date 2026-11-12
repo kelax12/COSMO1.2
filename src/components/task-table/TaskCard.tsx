@@ -172,7 +172,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
       // la <table> desktop reste dans le DOM en `hidden md:block`, donc un
       // sélecteur `table tbody tr` résout une ligne INVISIBLE sur mobile.
       data-testid="task-card"
-      // ── Fin des cartes (arbitrage d'Axel, 2026-09-05) ──
+      // ── Fin des cartes (arbitrage d'Axel) ──
       // La disposition de chaque tâche est INCHANGÉE ; ce qui disparaît, c'est
       // la carte qui l'entourait. Vingt cartes empilées, c'est vingt bords à
       // lire avant d'atteindre vingt titres. Un filet d'un pixel sépare aussi
@@ -252,7 +252,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
       onPointerCancel={cancelLongPress}
       // ═══ C-111 · LE SEUL CHEMIN CLAVIER VERS LES ACTIONS ═══
       //
-      // 🔴 CE QUI ÉTAIT FAUX, mesuré dans le navigateur le 2026-09-22
+      // 🔴 CE QUI ÉTAIT FAUX, mesuré dans le navigateur
       // (viewport 375, mode démo) : les trois chemins vers `TaskActionsSheet`
       // que la maquette 86 a laissés — appui long, glissement à gauche, menu
       // de la ligne DESKTOP — sont tous des gestes de POINTEUR, et le
@@ -281,7 +281,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
       }}
       // ═══ C-118 · SAFARI N'ÉMET PAS `contextmenu` AU CLAVIER ═══
       //
-      // 🔴 Mesuré le 2026-10-16 sous WebKit (Safari 26.5), carte focalisée à
+      // 🔴 Mesuré sous WebKit (Safari 26.5), carte focalisée à
       // 375 px : `Shift+F10` puis la touche « Menu » arrivent bien en `keydown`
       // (`F10` avec `shiftKey`, `ContextMenu`), et AUCUN évènement `contextmenu`
       // ne suit. La ligne `onContextMenu` ci-dessus ne s'exécute donc jamais :
@@ -375,7 +375,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
       {/* Title + meta */}
       <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
         {/* Titre */}
-        {/* `line-clamp-2` et non `truncate` (audit UI 2026-08-14, §2).
+        {/* `line-clamp-2` et non `truncate` (audit UI, §2).
             Mesuré sur /tasks en 375 px : 12 titres tronqués, le pire à 124 px
             pour 220 nécessaires, soit 44 % coupés. La carte n'accordait que
             ~40 % de la largeur d'écran au titre — sur l'écran principal du
@@ -386,7 +386,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
         {/* Maquette 16 — « Le retard porte sa solution » : la tâche en retard
             est la SEULE à s'agrandir. Un cran d'échelle suffit à la faire
             sortir de la liste sans la déguiser en bloc à part. */}
-        {/* ── Maquette 85 (mix arbitré par Axel le 2026-09-19) ─────────────
+        {/* ── Maquette 85 (mix arbitré par Axel) ─────────────
             Le titre reprend la LARGEUR ENTIÈRE de la ligne. Mesuré la veille
             en 390 px : la pilule de catégorie prenait ~80 px, celle de
             priorité ~48, le « ⋯ » ~56 — il restait 150 px sur 390 pour le
@@ -475,7 +475,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
           jaune→bleu→gris), distincte de la couleur de catégorie (la barre gauche).
           Réutilise les classes du tableau desktop pour une sémantique cohérente
           mobile/desktop + dark mode. Masqué si priorité facultative (0). */}
-      {/* Maquette 145 (2026-10-10) : la pilule reste (arbitrage 85), mais
+      {/* Maquette 145 : la pilule reste (arbitrage 85), mais
           seules P1 et P2 gardent leur teinte. P3 à P5 passent en gris : quatre
           couleurs pour quatre crans faisaient de chaque ligne un nuancier, et
           la chaleur ne signalait plus rien. */}

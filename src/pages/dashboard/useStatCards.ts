@@ -19,7 +19,7 @@
 // quatre zéros le matin sont du renforcement négatif, là où « 0/5 » crée une
 // tension de complétion (Zeigarnik) et guide la décision.
 //
-// Extrait de `DashboardPage.tsx` le 2026-09-05 (C-09).
+// Extrait de `DashboardPage.tsx` (C-09).
 // ═══════════════════════════════════════════════════════════════════
 import { useMemo } from 'react';
 import type { Task } from '@/modules/tasks';

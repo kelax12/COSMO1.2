@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // ORGANIZATIONS — repository des notifications (`org_notifications`, mig. 095)
 //
-// Extrait de `notifications.ts` le 2026-08-24 : les trois requêtes Supabase
+// Extrait de `notifications.ts` : les trois requêtes Supabase
 // vivaient dans les hooks (invariant docs/ARCHITECTURE.md §2, désormais tenu
 // par `src/architecture.guard.test.ts`).
 //

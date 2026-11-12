@@ -15,7 +15,7 @@ interface VisibilityPillProps extends VisibilityTarget {
 const SHOWN = 40;
 
 /**
- * « Visible : équipe Produit + hiérarchie · 14 personnes » (audit 2026-09-24,
+ * « Visible : équipe Produit + hiérarchie · 14 personnes » (audit,
  * M12), sur un projet ou un objectif EXISTANT. Un clic dit qui, et pourquoi.
  */
 const VisibilityPill = ({ orgId, teamIds: ownTeamIds, projectId, closed = false, namedIds = [], size = 'sm' }: VisibilityPillProps) => {

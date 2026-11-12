@@ -17,7 +17,7 @@ interface TeamBulkAddToListDialogProps {
 }
 
 /**
- * « Ajouter à une liste » de la sélection multiple d'entreprise (2026-10-30),
+ * « Ajouter à une liste » de la sélection multiple d'entreprise,
  * même UX que son homologue de la page Tâches perso (`BulkAddToListModal`) :
  * une liste qui contient déjà TOUTE la sélection est cochée, et la toucher
  * retire la sélection ; sinon elle l'y ajoute. Créer une liste ici l'ajoute à

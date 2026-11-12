@@ -112,7 +112,7 @@ export const useTeamTasks = (
  * Pourquoi un hook séparé : `useTeamTasks` lit les 1 000 dernières tâches
  * CRÉÉES, terminées comprises, et filtre ensuite côté client. Passé ce volume,
  * une vieille tâche encore ouverte sortait de « Mes tâches », et les
- * statistiques se calculaient sur un extrait (audit du 2026-09-24). Ici le tri
+ * statistiques se calculaient sur un extrait (audit). Ici le tri
  * se fait côté serveur, AVANT le plafond : ce qui reste est ce dont l'écran a
  * besoin, et le plafond ne coupe plus que du travail réellement en cours.
  *
@@ -177,7 +177,7 @@ export const useTeamTaskPages = (
 /**
  * Lecture CIBLÉE : le serveur filtre, trie et plafonne avant de répondre.
  *
- * C'est la lecture de l'Aperçu (audit du 2026-09-24). Il lisait tout
+ * C'est la lecture de l'Aperçu (audit). Il lisait tout
  * l'ensemble de travail de l'organisation, plafonné à 1 000 lignes, pour n'en
  * garder que MES tâches : dans une grande organisation, une tâche à moi
  * pouvait tomber sous le plafond et disparaître de mon propre écran d'accueil.
@@ -207,7 +207,7 @@ export const useTeamTaskSlice = (
 
 // ─── Mutations ───────────────────────────────────────────────────────
 
-// 🗑️ `useCreateTeamProject` retiré le 2026-09-25 : un projet ne se crée plus
+// 🗑️ `useCreateTeamProject` retiré : un projet ne se crée plus
 // que par LE formulaire (`OrgCreateForms`), qui passe par
 // `useCreateTeamProjectWithTasks` (une transaction). Les champs « nom seul »
 // qui l'appelaient créaient des projets gris, sans équipe ni responsable.
@@ -222,7 +222,7 @@ export const useUpdateTeamProject = (orgId: string) => {
     },
     onSuccess: (_project, { input }) => {
       // Archiver ne toaste PLUS ici : l'écran qui archive montre un toast
-      // « Annuler » (audit Projets, 2026-09-24), et deux toasts pour un geste
+      // « Annuler » (audit Projets), et deux toasts pour un geste
       // en feraient un de trop.
       if (input.archived === false) toast.success(translator('errors').t('success.projectRestored'));
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.projects(orgId) });
@@ -409,13 +409,13 @@ export const useDeleteTeamSubtask = (taskId: string) => {
 };
 
 // 🗑️ Les SIX hooks d'etiquettes d'equipe (mig. 093) ont ete supprimes le
-// 2026-09-05 (C-49) : `useTeamLabels`, `useTeamTaskLabels`, `useCreateTeamLabel`,
+// (C-49) : `useTeamLabels`, `useTeamTaskLabels`, `useCreateTeamLabel`,
 // `useUpdateTeamLabel`, `useDeleteTeamLabel`, `useToggleTaskLabel`. Une
 // fonctionnalite ENTIERE — hooks, cles de cache, methodes des deux
 // repositories — livree sans qu'aucun ecran ne la monte.
 //
-// Rebranches le 2026-09-25 (fiche de tache, filtre), puis retires DE NOUVEAU
-// du mode entreprise le 2026-09-28 a la demande d Axel. Meme regle : les tables
+// Rebranches (fiche de tache, filtre), puis retires DE NOUVEAU
+// du mode entreprise a la demande d Axel. Meme regle : les tables
 // restent, seul le front part.
 //
 // ⚠️ La TABLE `team_labels` et sa jonction RESTENT en base : supprimer des
@@ -442,7 +442,7 @@ export const useOrgActivity = (orgId: string | undefined, since: string) => {
   });
 };
 
-// 🗑️ `useTeamTaskActivity` supprime le 2026-09-05 (C-49) : le journal PAR
+// 🗑️ `useTeamTaskActivity` supprime (C-49) : le journal PAR
 // TACHE n'etait monte par aucun ecran. `useOkrActivity`/`useOrgActivity`
 
 // ci-dessus, lui, sert la revue hebdomadaire — le journal reste lisible.

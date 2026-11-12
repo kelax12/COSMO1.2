@@ -2,7 +2,7 @@ import { safeGetItem, safeParse, safeSetItem } from '@/lib/safe-json';
 import { sanitizeLayoutIn, type CatalogDef, type PlacedOf, type WidgetSize } from '@/components/organization/apercu-widgets';
 
 /**
- * Tableau de bord perso en widgets (2026-10-21) : même système que l'Aperçu
+ * Tableau de bord perso en widgets : même système que l'Aperçu
  * entreprise (`ApercuWidgetGrid`), avec le catalogue du mode perso.
  * Desktop seulement : le fil mobile reste celui de la maquette 28.
  *
@@ -12,7 +12,7 @@ import { sanitizeLayoutIn, type CatalogDef, type PlacedOf, type WidgetSize } fro
 
 export type BaseDashboardWidgetId =
   | 'stats' | 'today' | 'priorityTasks' | 'collaborativeTasks' | 'okrs' | 'habits'
-  // 2026-10-21 : agenda, liste au choix, et deux widgets d'entreprise.
+  // agenda, liste au choix, et deux widgets d'entreprise.
   | 'agenda' | 'taskList' | 'teamTasks' | 'review';
 
 export type DashboardWidgetId =
@@ -85,7 +85,7 @@ export function saveOkrChoices(userId: string, choices: Record<string, string>):
 
 /**
  * Vue du widget Habitudes (liste ou semaine), UNE pour tous les formats :
- * redimensionner garde la vue en cours (2026-10-21). Tant que la personne
+ * redimensionner garde la vue en cours. Tant que la personne
  * n'a rien choisi, le format décide (liste en petit, semaine sinon).
  */
 export type HabitsViewChoice = 'list' | 'week';

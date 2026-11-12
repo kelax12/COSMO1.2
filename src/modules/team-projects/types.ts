@@ -284,7 +284,7 @@ export interface TeamTaskFilters {
    */
   openOrCompletedSince?: string;
   /**
-   * Lectures ciblées de l'Aperçu (audit du 2026-09-24) : chaque bloc demande au
+   * Lectures ciblées de l'Aperçu (audit) : chaque bloc demande au
    * serveur SES lignes au lieu de lire toute l'organisation pour en garder
    * quelques-unes. Tous ces filtres s'appliquent AVANT le plafond.
    */

@@ -9,7 +9,7 @@
 // recopiées : une prop ajoutée à une ligne n'a pas à être redéclarée ici, et
 // surtout ne peut pas y être oubliée en silence.
 //
-// Extrait le 2026-09-05 (C-09).
+// Extrait (C-09).
 // ═══════════════════════════════════════════════════════════════════
 import React from 'react';
 import { TaskRow, type UnifiedTaskRow } from './list';

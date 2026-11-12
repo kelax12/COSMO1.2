@@ -7,7 +7,7 @@
 // PHRASES via le catalogue `statistics`, et c'est la seule frontière qui
 // compte : un module pur n'a pas de locale, un écran en a une.
 //
-// ⚠️ Extrait de `StatisticsPage.tsx` le 2026-09-03, imposé par le cliquet de
+// ⚠️ Extrait de `StatisticsPage.tsx`, imposé par le cliquet de
 // taille (le fichier repassait au-dessus de 600 lignes). La coupe suit une
 // frontière réelle plutôt qu'un découpage de convenance.
 

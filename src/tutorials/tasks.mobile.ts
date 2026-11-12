@@ -19,7 +19,7 @@ export const tasksTutorialStepsMobile: TutorialStep[] = [
   },
   {
     // 🔴 Visait `tasks-filter` (rangée du haut) et enseignait « + d'options »,
-    // retiré le 2026-09-20 avec la descente de la recherche en bas d'écran.
+    // retiré avec la descente de la recherche en bas d'écran.
     // Même erreur que l'étape 7 : un tutoriel qui apprend à chercher une
     // commande absente. Retirer une commande, c'est relire ce qui en parle.
     titleKey: 'tasksMobile.step3Title',
@@ -37,7 +37,7 @@ export const tasksTutorialStepsMobile: TutorialStep[] = [
     action: 'pulse',
   },
   {
-    // Maquette 150 (2026-10-10) : le « + » de /tasks a quitté le FAB global
+    // Maquette 150 : le « + » de /tasks a quitté le FAB global
     // pour la barre du bas. Viser l'ancien FAB aurait enseigné un bouton
     // absent, l'erreur déjà commise deux fois sur ce tutoriel.
     titleKey: 'tasksMobile.step5Title',
@@ -55,12 +55,12 @@ export const tasksTutorialStepsMobile: TutorialStep[] = [
     dimLevel: 'light',
   },
   // 🔴 L'étape 7 (« Plus simple : le bouton « … » ») a été RETIREE le
-  // 2026-09-20. Elle enseignait le bouton « ⋯ » de chaque ligne, que la
+  // . Elle enseignait le bouton « ⋯ » de chaque ligne, que la
   // maquette 86 avait supprimé la veille : le tutoriel apprenait à chercher
   // une commande absente, et c'était la première chose qu'un nouvel arrivant
   // lisait. Défaut introduit par mon propre correctif — retirer une commande,
   // c'est aussi relire ce qui en parle.
   // Les deux clés `tasksMobile.step7*` ont été retirées des catalogues le
-  // 2026-09-21 : une clé qu'aucun code ne lit finit par être retraduite,
+  // une clé qu'aucun code ne lit finit par être retraduite,
   // relue en revue, et par faire croire que l'étape existe encore.
 ];

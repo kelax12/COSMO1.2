@@ -11,7 +11,7 @@ import { ItemAction, WidgetEmpty, WidgetShell } from './WidgetShell';
 import { TONE_BADGE, TONE_TEXT, lateDays, usePager } from './widget-shell.helpers';
 
 /**
- * Widgets du modèle « administrateur » (2026-10-19) : santé de l'entreprise,
+ * Widgets du modèle « administrateur » : santé de l'entreprise,
  * projets à risque, tâches sans responsable, invitations en attente.
  */
 
@@ -32,7 +32,7 @@ interface OrgHealthProps {
 }
 
 /**
- * Santé de l'entreprise (revu le 2026-10-20) : quatre chiffres neutres, sans
+ * Santé de l'entreprise (revu) : quatre chiffres neutres, sans
  * fond rouge. « OKR en retard » et « sans responsable » ont été retirés : le
  * premier n'a pas de mesure fiable derrière, le second n'est pas un signal.
  */

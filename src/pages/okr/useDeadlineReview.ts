@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // useDeadlineReview — « cet objectif est arrivé à échéance, on en fait quoi ? »
 //
-// Extrait d'`OKRPage` le 2026-09-12 (C-09 / `architecture.guard`). La frontière
+// Extrait d'`OKRPage` (C-09 / `architecture.guard`). La frontière
 // est un GESTE complet, pas une coupe à la ligne près : repérer l'objectif
 // échu, le proposer, et clore la question — soit en le validant (il passe
 // `completed`), soit en le reportant pour cette session.

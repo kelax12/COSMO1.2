@@ -22,7 +22,7 @@ interface PeriodSummaryCardProps {
  * libellé en dessous, barre en pied. Au-delà, la rangée d'origine est rendue à
  * l'identique — la largeur y rend la comparaison lisible.
  *
- * Extrait de `StatisticsPage` le 2026-09-21 : la page était à 596 lignes pour
+ * Extrait de `StatisticsPage` : la page était à 596 lignes pour
  * un plafond de 600 (`architecture.guard`), et ce bloc est une dérivation
  * autonome, avec ses propres données et son propre rendu. Un budget se respecte
  * en déplaçant, jamais en relevant la borne.
@@ -62,7 +62,7 @@ const PeriodSummaryCard = ({ fixedStats, sectionColor }: PeriodSummaryCardProps)
             <span className="md:hidden block text-caption mt-0.5" style={{ color: 'rgb(var(--color-text-muted))' }}>
               {r.label}
             </span>
-            {/* ── Barres retirées du MOBILE, arbitrage d'Axel le 2026-09-21 ──
+            {/* ── Barres retirées du MOBILE, arbitrage d'Axel ──
                 Elles ne comparaient que ces quatre plages ENTRE ELLES, et
                 « 365 jours » écrase toujours tout : « Aujourd'hui » y rendait
                 un trait de deux pixels, quelle que soit la journée. Une barre

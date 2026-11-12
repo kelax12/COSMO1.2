@@ -4,7 +4,7 @@
 // FRONTIÈRE : ce composant ne connaît ni le profil, ni le compte, ni les
 // onglets des réglages. Il lit et écrit UNE préférence, via `useTimezonePref`.
 //
-// ⚠️ Ce réglage n'est pas cosmétique : depuis la révision du 2026-09-02, il
+// ⚠️ Ce réglage n'est pas cosmétique : depuis la révision, il
 // découpe aussi les JOURNÉES (`dayKeyInTz`), donc les échéances, les reports
 // et « Aujourd'hui » d'une personne en Guadeloupe, à La Réunion ou en
 // Nouvelle-Calédonie. Cf. CLAUDE.md § Fuseau horaire.
@@ -14,7 +14,7 @@
 // puis « -5 » et rend un état intermédiaire invalide. Les deux se
 // recombinent ici, et nulle part ailleurs.
 //
-// Extrait le 2026-09-05 (C-09).
+// Extrait (C-09).
 // ═══════════════════════════════════════════════════════════════════
 import { useTimezonePref, clampOffsetHours } from '@/lib/timezone';
 import { useT } from '@/i18n/useT';

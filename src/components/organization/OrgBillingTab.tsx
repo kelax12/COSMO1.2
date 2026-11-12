@@ -45,7 +45,7 @@ const PAID_TIER_KEYS = new Set<string>(
 );
 
 /**
- * Onglet Abonnement de l'espace entreprise (spec 2026-11-02, lot 1).
+ * Onglet Abonnement de l'espace entreprise (spec, lot 1).
  *
  * Tant que `ENTERPRISE_BILLING_ENFORCED` est `false`, la grille reste visible
  * (elle informe) mais AUCUN CTA de paiement n'est monté. Le flag est la seule

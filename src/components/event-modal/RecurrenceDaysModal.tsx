@@ -54,7 +54,7 @@ const RecurrenceDaysModal: React.FC<RecurrenceDaysModalProps> = ({
             <motion.div
               {...sheetMotion}
               // La poignee ci-dessous promettait un geste qui n existait pas
-              // (audit mobile 2026-08-14 : cinq feuilles dans ce cas). Une
+              // (audit mobile cinq feuilles dans ce cas). Une
               // affordance qui ment est pire que pas d affordance.
               {...sheetDrag}
               className="rounded-t-[28px] sm:rounded-2xl shadow-2xl w-full sm:max-w-md"

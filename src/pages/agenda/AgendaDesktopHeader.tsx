@@ -42,7 +42,7 @@ const AgendaDesktopHeader: React.FC<AgendaDesktopHeaderProps> = ({
             className="px-4 py-3 border-b"
             style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}
           >
-            {/* `flex-wrap` (C-97, 2026-10-22) : sous ~1 100 px de colonne (téléphone
+            {/* `flex-wrap` (C-97) : sous ~1 100 px de colonne (téléphone
                 en paysage, tablette, fenêtre étroite), la rangée passe à la ligne
                 au lieu de sortir de l'écran. Mesuré avant : « Nouveau » coupé de
                 447 px à 863 px de large, de 130 px encore à 1 280.
