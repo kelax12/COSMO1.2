@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// Commission d'affiliation (spec AFFILIATION.md, mig. 236)
+// Commission d'affiliation (spec AFFILIATION.md, mig. 236, formule mig. 238)
 // Module PUR, exécuté par vitest (`src/affiliation-math.guard.test.ts`).
 // ═══════════════════════════════════════════════════════════════════
 //
@@ -13,6 +13,8 @@
 export interface CommissionInput {
   grossCents: number;
   vatBp: number;
+  /** Part du montant payé retirée avant commission (mig. 238, 2560 = 25,6 %). */
+  deductionBp: number;
   feeBp: number;
   feeFixedCents: number;
   rateBp: number;
@@ -20,6 +22,7 @@ export interface CommissionInput {
 
 export interface CommissionResult {
   vatCents: number;
+  deductionCents: number;
   feeCents: number;
   baseCents: number;
   commissionCents: number;
@@ -28,16 +31,18 @@ export interface CommissionResult {
 export function computeCommission({
   grossCents,
   vatBp,
+  deductionBp,
   feeBp,
   feeFixedCents,
   rateBp,
 }: CommissionInput): CommissionResult {
   const vatCents = grossCents - Math.round(grossCents / (1 + vatBp / 10000));
+  const deductionCents = Math.round((grossCents * deductionBp) / 10000);
   // Stripe prélève sur le montant réellement débité, TVA comprise.
   const feeCents = Math.round((grossCents * feeBp) / 10000) + feeFixedCents;
-  const baseCents = Math.max(grossCents - vatCents - feeCents, 0);
+  const baseCents = Math.max(grossCents - vatCents - deductionCents - feeCents, 0);
   const commissionCents = Math.round((baseCents * rateBp) / 10000);
-  return { vatCents, feeCents, baseCents, commissionCents };
+  return { vatCents, deductionCents, feeCents, baseCents, commissionCents };
 }
 
 export interface RefundInput {

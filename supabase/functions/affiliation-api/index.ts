@@ -67,7 +67,7 @@ function must<T>(r: { data: T | null; error: unknown }): T {
 }
 
 interface Settings {
-  commission_bp: number; fee_bp: number; fee_fixed_cents: number; vat_bp: number
+  commission_bp: number; deduction_bp: number; fee_bp: number; fee_fixed_cents: number; vat_bp: number
   code_hash: string | null; token_secret: string; code_changed_at: string | null
 }
 
@@ -77,7 +77,7 @@ async function loadSettings(db: SupabaseClient): Promise<Settings> {
 
 function settingsResponse(s: Settings) {
   return {
-    commission_bp: s.commission_bp, fee_bp: s.fee_bp, fee_fixed_cents: s.fee_fixed_cents, vat_bp: s.vat_bp,
+    commission_bp: s.commission_bp, deduction_bp: s.deduction_bp, fee_bp: s.fee_bp, fee_fixed_cents: s.fee_fixed_cents, vat_bp: s.vat_bp,
     code_set: s.code_hash !== null, code_changed_at: s.code_changed_at,
   }
 }
@@ -214,7 +214,7 @@ async function handleOverview(req: Request, db: SupabaseClient, settings: Settin
     const slug = linksWithClicks((data?.links ?? []).filter((l) => l.affiliate_id === a.id), new Map())[0]?.slug ?? ''
     return {
       id: a.id, name: a.name, slug, active: t.active, total: t.total, stopped: t.stopped, ltv_cents: t.ltv_cents,
-      retention_months: t.retention_months, mrr_cents: t.mrr_cents, earned_cents: t.earned_cents, due_cents: t.due_cents,
+      retention_months: t.retention_months, mrr_cents: t.mrr_cents, earned_cents: t.earned_cents, due_cents: t.due_cents, pending_cents: t.pending_cents,
     }
   })
   const sum = (k: 'active' | 'total' | 'mrr_cents' | 'earned_cents' | 'due_cents') => rows.reduce((s, r) => s + r[k], 0)
@@ -241,7 +241,7 @@ async function handleProfile(req: Request, db: SupabaseClient, settings: Setting
   return json({
     affiliate: { ...affiliate, email: (affiliate as { email: string | null }).email ?? '' },
     kpis: {
-      earned_cents: t.earned_cents, paid_cents: t.paid_cents, due_cents: t.due_cents, mrr_cents: t.mrr_cents,
+      earned_cents: t.earned_cents, paid_cents: t.paid_cents, due_cents: t.due_cents, pending_cents: t.pending_cents, mrr_cents: t.mrr_cents,
       mrr_net_cents: t.mrr_net_cents, active: t.active, total: t.total, last_payout_on: payouts[0]?.paid_on ?? null,
     },
     links,

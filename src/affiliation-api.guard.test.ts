@@ -3,7 +3,7 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import {
-  affiliateTotals, authorize, customerFacts, monthlySeries, parseCreate, parsePatch, parsePayout,
+  COMMISSION_HOLD_DAYS, affiliateTotals, authorize, customerFacts, isCommissionSettled, monthlySeries, parseCreate, parsePatch, parsePayout,
   parseRoute, parseSettings, type CommissionRow, type ProfileRow,
 } from '../supabase/functions/_shared/affiliation-api'
 
@@ -67,7 +67,7 @@ describe('corps', () => {
     expect(parsePayout({ amount_cents: 1, paid_on: '31/10/2026', method: 'v', note: null })).toBeNull()
   })
   it('réglages : taux bornés, code optionnel et assez long', () => {
-    const base = { commission_bp: 3950, fee_bp: 150, fee_fixed_cents: 25, vat_bp: 0 }
+    const base = { commission_bp: 5000, deduction_bp: 2560, fee_bp: 150, fee_fixed_cents: 25, vat_bp: 0 }
     expect(parseSettings(base)).toEqual(base)
     expect(parseSettings({ ...base, commission_bp: 10001 })).toBeNull()
     expect(parseSettings({ ...base, code: 'court' })).toBeNull()
@@ -86,6 +86,29 @@ describe('agrégats', () => {
     expect(f.customer).toMatchObject({ status: 'active', premium: 'monthly', org_tier: null, ltv_cents: 2000, commission_cents: 758, retention_months: 8 })
     const t = affiliateTotals([f], commissions, [{ id: 'p', affiliate_id: 'A', amount_cents: 500, paid_on: '2026-10-01', method: 'v', note: null, created_by: 'admin', created_at: '' }], 3950)
     expect(t).toMatchObject({ active: 1, total: 1, stopped: 0, mrr_net_cents: 960, mrr_cents: 379, earned_cents: 758, paid_cents: 500, due_cents: 258 })
+  })
+
+  it('retenue de 14 jours : une commission récente est en attente, hors reste à payer ; un remboursement se déduit tout de suite', () => {
+    const today = new Date('2026-11-01T12:00:00Z')
+    const commissions = [
+      comm('2026-10-01T00:00:00Z', 1000, 960, 379), // versable
+      comm('2026-10-25T00:00:00Z', 1000, 960, 379), // en attente (7 jours)
+      comm('2026-10-28T00:00:00Z', -1000, -960, -379), // remboursement : déduit
+    ]
+    const t = affiliateTotals([], commissions, [], 3950, today)
+    expect(t.pending_cents).toBe(379)
+    expect(t.due_cents).toBe(0)
+    expect(t.earned_cents).toBe(379)
+  })
+
+  it('retenue de 14 jours : avant, à la limite, après', () => {
+    expect(COMMISSION_HOLD_DAYS).toBe(14)
+    const today = new Date('2026-11-15T12:00:00Z')
+    const at = (iso: string) => ({ commission_cents: 717, occurred_at: iso })
+    expect(isCommissionSettled(at('2026-11-01T12:00:01Z'), today)).toBe(false) // 13 j 23 h 59 min 59 s
+    expect(isCommissionSettled(at('2026-11-01T12:00:00Z'), today)).toBe(true) // 14 j pile
+    expect(isCommissionSettled(at('2026-10-31T12:00:00Z'), today)).toBe(true) // 15 j
+    expect(isCommissionSettled({ commission_cents: -359, occurred_at: '2026-11-15T11:00:00Z' }, today)).toBe(true)
   })
 
   it('jamais payé, jamais souscrit : compté dans total, absent des affiliés', () => {

@@ -105,13 +105,13 @@ export function parsePayout(v: unknown): PayoutBody | null {
   return { amount_cents: v.amount_cents as number, paid_on: v.paid_on, method: (v.method as string).trim(), note: (v.note as string | null) ?? null }
 }
 
-export interface SettingsBody { commission_bp: number; fee_bp: number; fee_fixed_cents: number; vat_bp: number; code?: string }
+export interface SettingsBody { commission_bp: number; deduction_bp: number; fee_bp: number; fee_fixed_cents: number; vat_bp: number; code?: string }
 export const MIN_CODE_LENGTH = 8
 export function parseSettings(v: unknown): SettingsBody | null {
-  if (!isObj(v) || !bp(v.commission_bp) || !bp(v.fee_bp) || !bp(v.vat_bp)) return null
+  if (!isObj(v) || !bp(v.commission_bp) || !bp(v.deduction_bp) || !bp(v.fee_bp) || !bp(v.vat_bp)) return null
   if (!Number.isInteger(v.fee_fixed_cents) || (v.fee_fixed_cents as number) < 0 || (v.fee_fixed_cents as number) > 10000) return null
   const out: SettingsBody = {
-    commission_bp: v.commission_bp as number, fee_bp: v.fee_bp as number,
+    commission_bp: v.commission_bp as number, deduction_bp: v.deduction_bp as number, fee_bp: v.fee_bp as number,
     fee_fixed_cents: v.fee_fixed_cents as number, vat_bp: v.vat_bp as number,
   }
   if (v.code !== undefined) {
@@ -195,14 +195,31 @@ export function customerFacts(
 export interface AffiliateTotals {
   active: number; total: number; stopped: number; ltv_cents: number; retention_months: number
   mrr_cents: number; mrr_net_cents: number; earned_cents: number; paid_cents: number; due_cents: number
+  /** Commissions positives de moins de 14 jours : « en attente », hors reste à payer. */
+  pending_cents: number
+}
+
+/**
+ * Retenue de 14 jours (REMBOURSEMENT-RESILIATION.md §9) : une commission ne
+ * devient versable que 14 jours après le paiement, le temps du délai de
+ * rétractation. Une commission NÉGATIVE (remboursement) se déduit tout de
+ * suite : la retenir gonflerait le reste à payer.
+ */
+export const COMMISSION_HOLD_DAYS = 14
+
+export function isCommissionSettled(c: Pick<CommissionRow, 'commission_cents' | 'occurred_at'>, today: Date): boolean {
+  if (c.commission_cents <= 0) return true
+  return Date.parse(c.occurred_at) <= today.getTime() - COMMISSION_HOLD_DAYS * 24 * 3600 * 1000
 }
 
 export function affiliateTotals(
-  facts: CustomerFacts[], commissions: CommissionRow[], payouts: PayoutRow[], rateBp: number,
+  facts: CustomerFacts[], commissions: CommissionRow[], payouts: PayoutRow[], rateBp: number, today = new Date(),
 ): AffiliateTotals {
   const customers = facts.map((f) => f.customer).filter((c): c is Customer => c !== null)
   const net = facts.reduce((s, f) => s + f.activeNetMonthlyCents, 0)
   const earned = commissions.map((c) => c.commission_cents)
+  const settled = commissions.filter((c) => isCommissionSettled(c, today)).map((c) => c.commission_cents)
+  const pending = commissions.filter((c) => !isCommissionSettled(c, today)).reduce((s, c) => s + c.commission_cents, 0)
   const paid = payouts.map((p) => p.amount_cents)
   const retention = customers.length ? customers.reduce((s, c) => s + c.retention_months, 0) / customers.length : 0
   return {
@@ -215,7 +232,8 @@ export function affiliateTotals(
     mrr_net_cents: Math.round(net),
     earned_cents: earned.reduce((a, b) => a + b, 0),
     paid_cents: paid.reduce((a, b) => a + b, 0),
-    due_cents: amountDueCents(earned, paid),
+    due_cents: amountDueCents(settled, paid),
+    pending_cents: pending,
   }
 }
 
