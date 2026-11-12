@@ -22,8 +22,8 @@
 ## Dérive du déployé
 
 `Edge deploy drift` (`edge-deploy-drift.yml`, `npm run check:edge`) dit l'état du jour : ce fichier ne
-le recopie pas. Nombre de fonctions : [`docs/FAITS.md`](../../docs/FAITS.md). Le déploiement reste un
-geste manuel d'Axel (`docs/DEPLOYMENT.md`, AM-6).
+le recopie pas. Nombre de fonctions : [`docs/FAITS.md`](../../docs/FAITS.md). La CI déploie les
+fonctions après un noyau vert (`.github/workflows/edge-deploy.yml`) ; `docs/DEPLOYMENT.md` en dit le détail.
 - 🔴 **Un module `_shared/` modifié fait dériver TOUTES les fonctions qui l'importent**, pas seulement
   celle qu'on visait : `verify-org-domain` embarquait l'ancienne `_shared/org-integrations.ts` après W-2.
   Avant de déployer : `grep -l "_shared/<module>" supabase/functions/*/index.ts`.

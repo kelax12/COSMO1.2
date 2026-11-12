@@ -176,13 +176,13 @@ export function drillRestauration(runs, { maintenant = new Date(), source, jours
 }
 
 /**
- * 3 · Couverture des parcours critiques. `declaration` : { parcours: [{ id,
+ * 3 · Présence de specs pour les parcours critiques. `declaration` : { parcours: [{ id,
  * libelle, specs }] }, `existe(chemin)` : booleen. C'est une couverture de
  * PRESENCE : une spec existe, pas qu'elle est verte. Le dernier run de
  * `CI etendue` (qui joue les e2e sans bloquer) est donne en contexte.
  */
 export function couvertureParcours(declaration, existe, { source, contexte = null, mesureLe } = {}) {
-  const base = { id: 'parcours-critiques', titre: 'Couverture des parcours critiques', source };
+  const base = { id: 'parcours-critiques', titre: 'Présence de specs pour les parcours critiques', source };
   const liste = declaration?.parcours;
   if (!Array.isArray(liste) || liste.length === 0) return nonMesure(base, 'liste des parcours critiques absente ou vide');
   const lignes = liste.map((p) => {
@@ -194,7 +194,7 @@ export function couvertureParcours(declaration, existe, { source, contexte = nul
   return {
     ...base,
     etat: 'mesure',
-    valeur: `${couverts} sur ${lignes.length} parcours (${fr(pct(couverts, lignes.length))} %)`,
+    valeur: `${couverts} sur ${lignes.length} parcours avec une spec présente (${fr(pct(couverts, lignes.length))} %, présence, pas verdict)`,
     mesureLe,
     couverts,
     total: lignes.length,
@@ -261,7 +261,7 @@ export function ageSecrets(registre, { maintenant = new Date(), source, contexte
   const alertes = [
     ...echus.map((l) => `secret ${l.id} au-delà de son échéance : ${l.age} j pour ${l.max} j`),
     ...(inconnus.length && !garantiParVert
-      ? [`${inconnus.length} secret(s) sans date de rotation connue, donc échus : ${inconnus.map((l) => l.id).join(', ')}`]
+      ? [`${inconnus.length} secret(s) sans date de rotation connue, donc échus`]
       : []),
   ];
   const plusVieux = [...connus].sort((a, b) => b.age - a.age)[0];
@@ -278,7 +278,7 @@ export function ageSecrets(registre, { maintenant = new Date(), source, contexte
     details: [
       `${secrets.length} secrets au registre, ${connus.length} avec un âge connu (${vives} lus à la date vivante, ${connus.length - vives} au registre), ${echus.length} au-delà de leur échéance.`,
       inconnus.length
-        ? `Âge inconnu${garantiParVert ? ' ici (le dernier run de `Secrets age` est vert : la garde a lu les dates vivantes)' : ' (échus selon la règle de `check-secrets-age`)'} : ${inconnus.map((l) => l.nom).join(', ')}.`
+        ? `Âge inconnu${garantiParVert ? ' ici (le dernier run de `Secrets age` est vert : la garde a lu les dates vivantes)' : ' (échus selon la règle de `check-secrets-age`)'} : ${inconnus.length} secret(s), noms au registre, jamais publiés ici.`
         : 'Aucun âge inconnu.',
       vives
         ? 'Les âges à la date vivante viennent du journal du dernier run de `Secrets age`, seul à détenir les jetons GitHub, Supabase et Vercel.'
@@ -379,7 +379,7 @@ export function toutesLesAlertes(indicateurs, audit) {
 
 // ═══════════════ RENDU MARKDOWN · aucun tiret cadratin ═══════════════
 
-const cellule = (t) => String(t ?? NON_MESURE).replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
+const cellule = (t) => String(t ?? NON_MESURE).replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
 
 /** Le document `docs/INDICATEURS.md`. `meta` : { genereLe: Date, sha, depot }. */
 export function rendre({ indicateurs, audit, alertes, meta }) {
@@ -589,7 +589,7 @@ export function calculer(src, maintenant = new Date()) {
         contexte: contexteRun('CI etendue', src.etendue),
         mesureLe: du,
       })
-    : nonMesure({ id: 'parcours-critiques', titre: 'Couverture des parcours critiques', source: 'scripts/indicateurs.config.json' }, src.config.erreur);
+    : nonMesure({ id: 'parcours-critiques', titre: 'Présence de specs pour les parcours critiques', source: 'scripts/indicateurs.config.json' }, src.config.erreur);
 
   const i4 = src.registre.ok
     ? ageSecrets(src.registre.valeur, {

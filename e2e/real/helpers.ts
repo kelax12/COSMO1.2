@@ -1,4 +1,5 @@
 import { test as base, expect, type Browser, type Page } from '@playwright/test';
+import { randomBytes } from 'node:crypto';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 /**
@@ -70,7 +71,7 @@ export async function signInClient(email: string, password: string): Promise<Sup
 }
 
 let counter = 0;
-const stamp = () => `${Date.now().toString(36)}${(counter += 1)}${Math.random().toString(36).slice(2, 5)}`;
+const stamp = () => `${Date.now().toString(36)}${(counter += 1)}${randomBytes(2).toString('hex')}`;
 
 /** Adresse et mot de passe jetables, conformes a la politique (12+ caracteres). */
 export function freshCredentials(label: string) {

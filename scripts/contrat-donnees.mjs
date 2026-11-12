@@ -255,7 +255,7 @@ export function chercherAppelants(noms, lireFichier, fichiers) {
 }
 
 const oui = (b) => (b ? 'oui' : '-');
-const cellule = (s) => String(s).replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
+const cellule = (s) => String(s).replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
 
 /** Une fonction est « a relire » si `anon` peut l'appeler. */
 const estAnon = (f) => f.anon === true;

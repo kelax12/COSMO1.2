@@ -149,7 +149,9 @@ describe('4 · âge maximal des secrets', () => {
   });
   it('date inconnue = échue, sauf si le dernier run de Secrets age est vert', () => {
     const sans = ageSecrets(registre, { maintenant: MAINTENANT });
-    expect(sans.alertes.join('\n')).toContain('vercel/B_KEY');
+    expect(sans.alertes.join('\n')).toContain('1 secret(s) sans date de rotation connue');
+    expect(sans.alertes.join('\n')).not.toContain('B_KEY');
+    expect(sans.details.join('\n')).not.toContain('B_KEY');
     expect(sans.valeur).toContain('1 sans date de rotation connue');
     const vert = ageSecrets(registre, { maintenant: MAINTENANT, runSecrets: { conclusion: 'success', created_at: '2026-11-07T06:00:00Z' } });
     expect(vert.alertes).toEqual([]);

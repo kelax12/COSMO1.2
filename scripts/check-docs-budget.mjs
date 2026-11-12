@@ -126,9 +126,12 @@ export function findLivingDocs(root) {
  * espaces en tirets. Les emoji sont de la ponctuation, ils tombent.
  */
 export function ancreDe(titre) {
-  return titre
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
-    .replace(/<[^>]*>/g, '')
+  let sansBalises = titre.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1');
+  for (let avant = ''; avant !== sansBalises; ) {
+    avant = sansBalises;
+    sansBalises = sansBalises.replace(/<[^>]*>/g, '');
+  }
+  return sansBalises
     .replace(/`/g, '')
     .replace(/[*~]/g, '')
     .trim()

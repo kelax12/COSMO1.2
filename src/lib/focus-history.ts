@@ -57,6 +57,12 @@ export function lastFocusedOutside(root: HTMLElement | null, allowDetached = fal
   return null;
 }
 
+/** Valeur d'attribut sure dans un sélecteur : `CSS.escape`, ou repli qui échappe `\` puis `"`. */
+export function escapeAttr(value: string): string {
+  if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') return CSS.escape(value);
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
 /**
  * Un element encore monte, ou, s'il a ete recree par un rendu, son EQUIVALENT : meme `id`, a defaut
  * meme `aria-label` ou `data-testid` sur la meme balise. Rien de plus vague : mieux vaut ne
@@ -66,7 +72,7 @@ export function reconnected(el: HTMLElement | null): HTMLElement | null {
   if (!el) return null;
   if (el.isConnected) return el;
   const q = (attr: string, value: string | null) =>
-    value ? document.querySelector<HTMLElement>(`${el.tagName.toLowerCase()}[${attr}="${value.replace(/"/g, '\\"')}"]`) : null;
+    value ? document.querySelector<HTMLElement>(`${el.tagName.toLowerCase()}[${attr}="${escapeAttr(value)}"]`) : null;
   const byId = el.id ? document.getElementById(el.id) : null;
   return byId ?? q('aria-label', el.getAttribute('aria-label')) ?? q('data-testid', el.getAttribute('data-testid'));
 }

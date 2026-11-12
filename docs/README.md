@@ -108,7 +108,7 @@ Une ligne par document. L'état de santé est dans [`INDICATEURS.md`](./INDICATE
 
 Rangées par nature. Aucune n'est maintenue.
 
-- **Sécurité** : [`faille-historique.md`](./archive/faille-historique.md), `faille-jusqua-2026-10-11.md`,
+- **Sécurité** : `faille-historique.md` et `faille-jusqua-2026-10-11.md` (retirés du dépôt public, SEC-02),
   [`SECURITY-journal-migrations-150-223.md`](./archive/SECURITY-journal-migrations-150-223.md)
   (journal daté des migrations `150` → `240`). Les récits d'incident, de mesure et de bascule retirés de
   `SECURITY.md` le 2026-11-08 (angles morts, base de données, gardes SQL, garde-fous transversaux, AM-5) :
