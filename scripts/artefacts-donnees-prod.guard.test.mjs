@@ -246,6 +246,15 @@ export const CONTACTS_PROD = {
   'edge-deploy-drift.yml › compare › Sondes de fumee · les fonctions repondent-elles vraiment ?': {
     affiche: 'codes HTTP et verdicts des sondes',
   },
+  'edge-deploy.yml › deploy › Porte · toutes les migrations du depot sont en production': {
+    affiche: "noms de fichiers de migration et verdicts du classeur, noms d'objets de catalogue ; l'introspection va dans un fichier du runner, jamais publie",
+  },
+  'schema-prod.yml › depot-egal-prod › Retirer du rejeu les migrations que la prod n a pas': {
+    affiche: "noms des fichiers de migration retires du rejeu ; l'introspection (noms d'objets) va dans un fichier du runner, jamais publie",
+  },
+  'schema-prod.yml › depot-egal-prod › Comparer la base rejouee a la production': {
+    affiche: 'définitions de schéma (pg_dump --schema-only et catalogue) des objets en écart, masquées par `masquer()` ; aucune ligne de table',
+  },
   'edge-deploy.yml › deploy › Deployer les fonctions selectionnees': {
     affiche: 'sortie de `supabase functions deploy` : nom, taille du bundle, version',
   },

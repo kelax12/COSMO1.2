@@ -76,6 +76,7 @@ compilait, la suite passait.
 
 - 🔴 **Ne jamais ajouter une colonne, un GRANT ou une policy depuis le dashboard Supabase.** C est
   ce qui a produit la dérive où le dépôt ne décrivait plus la base qu'il prétend reconstruire.
+- 🔴 **Une migration est appliquée avant le code qui l'appelle** : `edge-deploy.yml` refuse le lot tant qu'une migration du dépôt manque en prod (CI-05), et toute entrée récente du ledger exige son fichier (ROB-03).
 - ❌ **Un correctif appliqué en prod se versionne sous son propre numéro**, jamais par édition d'un
   fichier déjà appliqué.
 - ⚠️ **Lire le ledger AVANT d'appliquer, pas seulement après.** Ce dépôt a plusieurs sessions

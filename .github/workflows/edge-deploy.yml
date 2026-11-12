@@ -120,6 +120,40 @@ jobs:
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: node scripts/edge-deploy-select.mjs
 
+      # 🔴 CI-05 (2026-11-12) : une migration est appliquee AVANT le code qui
+      # l'appelle. Ce deploiement partait sur un noyau vert alors que le code
+      # appelait `cron_lease_acquire` (mig. 245, pas en prod). Meme lecture et
+      # meme classeur que `migration-coverage.yml`, sens depot seulement : une
+      # migration du depot absente de la prod refuse TOUT le lot.
+      # ⚠️ Pas de `if: secrets.X != ''` : sans secret, la porte rougit.
+      - name: Installer psql 17
+        if: ${{ steps.select.outputs.slugs != '' }}
+        run: |
+          set -euo pipefail
+          sudo sh -c 'echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/pgdg.gpg
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17
+          echo /usr/lib/postgresql/17/bin >> "$GITHUB_PATH"
+
+      - name: Porte · toutes les migrations du depot sont en production
+        if: ${{ steps.select.outputs.slugs != '' }}
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DB_URL:-}" ]; then
+            echo "::error title=edge-deploy::SUPABASE_DB_URL absent : migrations non verifiees, rien n'est deploye."
+            exit 1
+          fi
+          node scripts/check-migration-coverage.mjs --print-sql > "$RUNNER_TEMP/introspection.sql"
+          psql "$DB_URL" -A -t -f "$RUNNER_TEMP/introspection.sql" > "$RUNNER_TEMP/introspection.json"
+          test -s "$RUNNER_TEMP/introspection.json" || { echo "::error title=edge-deploy::introspection vide"; exit 1; }
+          if ! node scripts/check-migration-coverage.mjs "$RUNNER_TEMP/introspection.json" --sens=depot; then
+            echo "::error title=edge-deploy::une migration du depot n'est pas en production : appliquer la migration, puis relancer ce run."
+            exit 1
+          fi
+
       - name: Deployer les fonctions selectionnees
         if: ${{ steps.select.outputs.slugs != '' }}
         env:
