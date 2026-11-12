@@ -14,7 +14,6 @@ import { CalendarEvent, EventRecurrence } from '@/modules/events';
 // Module categories
 import { useCategories } from '@/modules/categories';
 
-import { useFavoriteColors } from '@/modules/ui-states';
 import { useTimezonePref, toDisplayISO, fromDisplayISO } from '@/lib/timezone';
 
 export type EventModalMode = 'add' | 'edit' | 'convert';
@@ -136,7 +135,6 @@ const EventModal: React.FC<EventModalProps> = ({
        perimer puisqu il n est lu qu a l instant ou `isOpen` passe a vrai. */
   }, [isOpen]);
   const { t } = useT('eventModal');
-  const { favoriteColors } = useFavoriteColors();
   const { pref: tzPref } = useTimezonePref();
   // Toujours appelé (les hooks ne peuvent pas être conditionnels) : son
   // résultat n'est utilisé que si l'appelant n'a pas fourni son propre jeu de
@@ -182,6 +180,8 @@ const EventModal: React.FC<EventModalProps> = ({
     if (isOpen && mode === 'add' && !task?.name && title.trim()) saveDraft({ title, notes });
   }, [isOpen, mode, task?.name, title, notes, saveDraft]);
 
+  // Par ref : un refetch des catégories ne doit pas réinitialiser la saisie.
+  const categoriesRef = React.useRef(categories); useEffect(() => { categoriesRef.current = categories; });
 
   useEffect(() => {
     if (!isOpen) return;
@@ -271,7 +271,7 @@ const EventModal: React.FC<EventModalProps> = ({
 
       // Tâche sans catégorie (ou catégorie disparue) → gris clair, jamais la
       // première catégorie venue : elle n'en a pas.
-      setColor(categories.find((cat) => cat.id === task.category)?.color || NO_CATEGORY_COLOR);
+      setColor(categoriesRef.current.find((cat) => cat.id === task.category)?.color || NO_CATEGORY_COLOR);
 
       // Brouillon (#47) : restaure titre/notes d'une saisie interrompue
       // (uniquement en création libre — pas quand le titre est pré-rempli).
@@ -302,13 +302,11 @@ const EventModal: React.FC<EventModalProps> = ({
       setEndTime(endTimeDate.toTimeString().slice(0, 5));
       setEndDate(endTimeDate.toLocaleDateString("en-CA"));
 
-      // Tâche sans catégorie (ou catégorie disparue) → gris clair, jamais la
-      // première catégorie venue : elle n'en a pas.
-      setColor(categories.find((cat) => cat.id === task.category)?.color || NO_CATEGORY_COLOR);
+      setColor(categoriesRef.current.find((cat) => cat.id === task.category)?.color || NO_CATEGORY_COLOR);
     }
 
     setPrefilledFields(prefilled);
-  }, [isOpen, mode, task, event, prefilledTimeSlot, categories, favoriteColors, readDraft, tzPref]);
+  }, [isOpen, mode, task, event, prefilledTimeSlot, readDraft, tzPref]);
 
   const SHAKE_KEY: Record<string, string> = {
     title: 'title',

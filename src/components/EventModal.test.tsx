@@ -297,6 +297,10 @@ describe('EventModal · saisie et rafraîchissement des catégories', () => {
     fireEvent.change(titleField(), { target: { value: 'Titre en cours de saisie' } });
     await act(async () => {
       view.queryClient.setQueryData(categoryKeys.lists(), [{ id: 'cat-x', name: 'Nouvelle', color: '#FF0000', parentId: null }]);
+      // React Query notifie ses observateurs dans un setTimeout(0) : sans cette
+      // attente, le rendu issu des nouvelles catégories tombe APRÈS l'assertion
+      // (cas passé à vide) ou, sous charge, avant elle (échec au hasard).
+      await new Promise((resolve) => setTimeout(resolve, 0));
     });
     expect(titleField().value).toBe('Titre en cours de saisie');
   });
