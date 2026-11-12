@@ -45,7 +45,7 @@ run-name: >-
 
 on:
   workflow_run:
-    workflows: [CI noyau]
+    workflows: [CI noyau, e2e-supabase]
     types: [completed]
     branches: [main, 'noyau/**']
 
@@ -69,6 +69,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: read
     steps:
       # Historique complet SANS les blobs : le menage trie les tags par date
       # de commit, qui exige les commits, jamais le contenu des fichiers.
@@ -87,8 +88,25 @@ jobs:
           SHA: ${{ github.event.workflow_run.head_sha }}
           CONCLUSION: ${{ github.event.workflow_run.conclusion }}
           RUN_URL: ${{ github.event.workflow_run.html_url }}
+          BRANCHE: ${{ github.event.workflow_run.head_branch }}
         run: |
           set -euo pipefail
+          # TST-03 : le vert exige `CI noyau` ET `e2e-supabase` sur ce SHA. Le
+          # premier a finir ne tranche pas un vert : il attend l'autre, dont
+          # la fin relancera ce workflow. Un echec de l'un ou l'autre = rouge.
+          if [ "$CONCLUSION" = success ]; then
+            for W in ci-noyau.yml e2e-supabase.yml; do
+              ETAT=$(gh run list -R "$REPO" --workflow "$W" --commit "$SHA" --json status,conclusion                 --jq '[.[] | select(.status == "completed") | .conclusion] | if index("success") then "success" elif length > 0 then "failure" else "pending" end')
+              echo "$W : ${ETAT:-pending}"
+              case "${ETAT:-pending}" in
+                pending) echo "Verdict en attente de $W : ce run ne pose rien."; exit 0 ;;
+                failure) CONCLUSION=failure ;;
+              esac
+            done
+            if [ "$CONCLUSION" = failure ] && [ "$BRANCHE" != main ]; then
+              echo "Rouge hors main : aucun tag (ci-rouge est reserve a main)."; exit 0
+            fi
+          fi
           if ! [[ "$SHA" =~ ^[0-9a-f]{40}$ ]]; then
             echo "::error title=CI vert::SHA illisible : '$SHA'"
             exit 1

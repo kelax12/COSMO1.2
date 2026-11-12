@@ -259,11 +259,11 @@ qui n'existent que contre Postgres (RLS, triggers, RPC, forme des réponses) y �
 hors de portée, `C-77` (`okrTime` à 0 en production 17 jours, juste en démo) en est
 l'exemple.
 
-- **Workflow** `.github/workflows/e2e-supabase.yml` (push sur `main`, `workflow_dispatch`) : monte
+- **Workflow** `.github/workflows/e2e-supabase.yml` (push sur `main` et `noyau/**`, `workflow_dispatch`) : **bloquant pour la production** depuis le 2026-11-12. `ci-vert.yml` ne pose `ci-vert/<sha>` que si `CI noyau` ET ce workflow sont verts sur le SHA (le premier à finir attend l'autre) ; un échec sur `main` pose `ci-rouge/<sha>`. Hors noyau exprès : `noyau-ci.guard` y interdit Playwright, et un E2E instable ne doit pas empêcher de pousser. ~4 min, en parallèle du noyau (~5 min), donc la mise en production n'attend pas plus que le plus lent des deux. Monte
   la pile comme `rls-integration` (`supabase start`, `node scripts/apply-migrations.mjs`), sert les
   Edge Functions (`supabase functions serve`, `APP_URL` = l'origine de l'app), construit l'app avec
   `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` de la pile, la sert (`vite preview`, port 3220) et joue
-  `npx playwright test -c playwright.real.config.ts`. ⚠️ Il n'est pas dans la liste de `ci-alert.yml`.
+  `npx playwright test -c playwright.real.config.ts`. Son échec sur `main` est signalé par `ci-vert.yml` (`ci-rouge`) ; il n'est pas dans la liste de `ci-alert.yml`.
 - **Config à part** (`playwright.real.config.ts`), parce que `playwright.config.ts` démarre deux
   `webServer` (démo et `e2e-stub`) qu'un `--project=` ne désactive pas. Les specs de `e2e/real/` sont
   exclues (`testIgnore: '**/real/**'`) de `chromium` et `mobile-safari` : elles ne peuvent pas être
@@ -586,7 +586,7 @@ Les règles elles-mêmes, l'inventaire classé et les retraits : [`scripts/CLAUD
 | Classe | Workflows |
 |---|---|
 | NOYAU | `ci-noyau.yml` (le verdict du commit), `ci-vert.yml` (tag `ci-vert/<sha>` lu par Vercel) |
-| PLANIFIÉE | `ci-alert.yml`, `ci.yml` (e2e, Lighthouse), `visual.yml`, `captures-regenerer.yml`, `sabotages.yml`, `mutation.yml`, `gardes-calendrier.yml`, `posture.yml`, `migration-coverage.yml`, `edge-deploy-drift.yml`, `deploy-sha-drift.yml`, `secrets-age.yml`, `restore-drill.yml`, `restore-drill-fraicheur.yml`, `db-backup.yml`, `indicateurs.yml`, `prod-errors.yml`, `stripe-prices.yml`, `seo-signals.yml`, `uptime.yml`, `smoke-prod.yml`, `scalability-volume.yml`, `e2e-supabase.yml` |
+| PLANIFIÉE | `ci-alert.yml`, `ci.yml` (e2e, Lighthouse), `visual.yml`, `captures-regenerer.yml`, `sabotages.yml`, `mutation.yml`, `gardes-calendrier.yml`, `posture.yml`, `migration-coverage.yml`, `edge-deploy-drift.yml`, `deploy-sha-drift.yml`, `secrets-age.yml`, `restore-drill.yml`, `restore-drill-fraicheur.yml`, `db-backup.yml`, `indicateurs.yml`, `prod-errors.yml`, `stripe-prices.yml`, `seo-signals.yml`, `uptime.yml`, `smoke-prod.yml`, `scalability-volume.yml` |
 | REMPLAÇANT standard | `codeql.yml` ; Dependabot (`.github/dependabot.yml`) et secret scanning, sans workflow |
 | DÉPLOIEMENT | `edge-deploy.yml` (après un noyau vert) |
 | PRODUIT | `daily-digest`, `weekly-digest`, `org-digest`, `org-webhook-dispatch`, `inactive-accounts`, `renewal-notice` : traitements de production, pas des gardes |

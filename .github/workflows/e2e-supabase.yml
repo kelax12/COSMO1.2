@@ -17,9 +17,15 @@ name: e2e-supabase
 # sur `127.0.0.1`; `e2e/real/helpers.ts` refuse de tourner contre un autre hote.
 # Aucun secret du depot n'entre ici, et ce job n'appelle jamais Stripe.
 
+# BLOQUANT POUR LA PRODUCTION depuis le 2026-11-12 : `ci-vert.yml` ne pose le tag
+# `ci-vert/<sha>` (la porte de `vercel.json`) que si `CI noyau` ET ce workflow
+# sont verts sur le meme SHA. Il ne fait PAS partie du noyau : `noyau-ci.guard`
+# interdit tout Playwright dans le noyau, qui decide de ce qu'on peut pousser, et
+# un E2E instable ne doit pas rendre `main` impossible a pousser. Il tourne en
+# parallele du noyau (~4 min pour ~5), sur les memes branches.
 on:
   push:
-    branches: [main]
+    branches: [main, 'noyau/**']
   workflow_dispatch:
 
 permissions:

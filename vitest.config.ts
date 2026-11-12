@@ -119,44 +119,15 @@ export default defineConfig({
       // anti-mass-assignment, lib utilitaire, garde billing) doit rester
       // hautement couvert. Une régression de couverture y casse la CI.
       thresholds: {
-        // ── Plancher GLOBAL (audit 9/10 phase 1) ──
-        // Posé sous le réel mesuré pour empêcher toute régression nette. À
-        // remonter au fil des phases (jamais au-dessus du mesuré courant).
-        //
-        // Re-calibré le 2026-08-18. `functions: 45` et `branches: 60` étaient
-        // au-dessus du mesuré (21,5 % / 21,8 %) et violaient donc la règle
-        // ci-dessus : ils ne protégeaient de rien, ils cassaient la CI à chaque
-        // run. Le job `lint-test-build` était rouge en continu, ce qui rendait
-        // muettes les gates utiles du même job (check:rls, i18n:check).
-        // Ce ne sont PAS deux seuils « abaissés » : ils n'ont jamais
-        // correspondu à un état atteint. Les vrais trous de couverture qu'ils
-        // prétendaient couvrir ont été comblés par des tests (repositories
-        // entreprise, uploads avatar, hooks dérivés) et sont gardés par les
-        // gates par fichier ci-dessous, qui, elles, mordent réellement.
-        //
-        // lines/statements remontent de 10 → 25 : le plancher datait du
-        // 2026-06-10 (12 % mesuré) et laissait passer 15 points de régression.
-        // Recale au reel mesure le 2026-08-18 (26,67 / 26,28 / 21,48 / 21,86),
-        // avec ~0,5 pt de marge. C'est un CLIQUET : la barre ne peut plus que
-        // monter. Toute baisse nette casse la CI, y compris une baisse lente
-        // due a du code neuf non teste, c'est exactement ce qui avait fait
-        // deriver le projet de 12 % a 26 % sans que le plancher (10) bouge.
-        //
-        // 🔴 Ne JAMAIS baisser un de ces chiffres pour faire passer la CI.
-        // Si une PR les fait tomber, c'est la PR qui manque de tests.
-        // Les remonter apres un gain de couverture est en revanche attendu.
-        lines: 26,
-        statements: 26,
-        functions: 21,
-        // 21 -> 22 le 2026-08-25 : mesure a 22,75 %, donc la marge conventionnelle
-        // de ~0,5 pt est respectee. Les trois autres NE sont PAS remontes, et
-        // c'est une decision : leurs marges sont de 0,96 / 0,65 / 0,32 point,
-        // soit ~20 fonctions pour la plus serree. Les recaler au mesure
-        // reamorcerait des cette semaine le piege qu'on vient de desamorcer.
-        // On banque la marge, on remontera quand elle sera confortable.
-        branches: 22,
+        // ── Plancher GLOBAL (TST-02) ──
+        // Pose sur le run `CI noyau` 43100870148 (2026-11-11, sha 2a64d971) : 49,00 S / 50,66 L / 40,32 F / 43,05 B,
+        // moins ~1 point, arrondi au demi-point inferieur. Ne jamais baisser ; remonter apres un gain.
+        lines: 49.5,
+        statements: 48,
+        functions: 39,
+        branches: 42,
         // ── Planchers PAR DOSSIER d'écrans (V15.3, constat TST-02) ──
-        // Le plancher global (26 / 26 / 21 / 22) laissait `components/` à 20,4 %
+        // Le plancher global d'alors (26 / 26 / 21 / 22) laissait `components/` à 20,4 %
         // et `pages/` à 7,9 % (2026-10-31) : les parcours vivent là, et la
         // moyenne de tout le dépôt les masquait. Posés sur l'artefact `coverage`
         // du run `CI noyau` 42630208868 (2026-11-09), jamais sur un run local :
