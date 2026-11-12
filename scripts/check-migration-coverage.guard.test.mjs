@@ -33,6 +33,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
   classer, VERDICT, objetsCrees, objetsSupprimes, NON_APPLIQUEES_DELIBEREMENT,
+  entreesSansFichier, enAttenteDeProduction, LEDGER_FICHIER_OBLIGATOIRE_DEPUIS,
 } from './check-migration-coverage.mjs';
 
 /** Un catalogue de prod minimal mais NON VIDE. */
@@ -279,7 +280,7 @@ describe('check-migration-coverage · le classeur', () => {
 
 const SCRIPT = resolve(import.meta.dirname, 'check-migration-coverage.mjs');
 
-function lancer(introspection, migrations) {
+function lancer(introspection, migrations, args = []) {
   const bac = mkdtempSync(join(tmpdir(), 'cosmo-cov-'));
   try {
     const dirMig = join(bac, 'migration');
@@ -287,7 +288,7 @@ function lancer(introspection, migrations) {
     for (const [nom, sql] of Object.entries(migrations)) writeFileSync(join(dirMig, nom), sql);
     const fIntro = join(bac, 'intro.json');
     writeFileSync(fIntro, JSON.stringify(introspection));
-    return spawnSync(process.execPath, [SCRIPT, fIntro], {
+    return spawnSync(process.execPath, [SCRIPT, fIntro, ...args], {
       encoding: 'utf8',
       env: { ...process.env, COSMO_MIGRATION_DIR: dirMig },
     });
@@ -340,5 +341,67 @@ describe('check-migration-coverage · le CLI', () => {
     expect(r.status).toBe(0);
     expect(r.stdout).toMatch(/supabase_migrations\.schema_migrations/);
     expect(r.stdout).toMatch(/pg_constraint/);
+  });
+});
+
+// ─── ROB-03 et CI-05 : les deux sens, et la porte du deploiement Edge ──
+describe('check-migration-coverage · registre de prod sans fichier (ROB-03)', () => {
+  const AVEC_238 = {
+    ...CATALOGUE_PLEIN,
+    ledger: [...CATALOGUE_PLEIN.ledger, '20261101143700_238_affiliation_deduction'],
+    ledger_names: [...CATALOGUE_PLEIN.ledger_names, '238_affiliation_deduction'],
+  };
+  const SOCLE = { '001_socle.sql': 'CREATE TABLE public.tasks (id uuid);' };
+
+  it('TEMOIN : une entree de ledger RECENTE sans fichier fait ECHOUER et la NOMME', () => {
+    const r = lancer(AVEC_238, SOCLE);
+    expect(r.status).toBe(1);
+    expect(r.stderr).toMatch(/SANS FICHIER/);
+    expect(r.stderr).toMatch(/20261101143700_238_affiliation_deduction/);
+  });
+
+  it('le fichier commite sous le meme nom la couvre, avec ou sans prefixe numerique', () => {
+    const fichiers = [{ name: '001_socle.sql' }, { name: '238_affiliation_deduction.sql' }];
+    expect(entreesSansFichier(fichiers, AVEC_238)).toEqual([]);
+    const sansPrefixe = { ledger: ['20261101143700_affiliation_deduction'] };
+    expect(entreesSansFichier(fichiers, sansPrefixe)).toEqual([]);
+  });
+
+  it('une entree ANTERIEURE a la mesure C-79 est listee, pas fatale', () => {
+    const out = entreesSansFichier([], { ledger: ['20260406180828_create_subscriptions_table'] });
+    expect(out).toEqual([{ entree: '20260406180828_create_subscriptions_table', version: '20260406180828', recente: false }]);
+    expect('20260406180828' < LEDGER_FICHIER_OBLIGATOIRE_DEPUIS).toBe(true);
+  });
+
+  it('--sens=depot ne juge pas le registre : la porte Edge ne bloque que sur le depot', () => {
+    expect(lancer(AVEC_238, SOCLE, ['--sens=depot']).status).toBe(0);
+  });
+});
+
+describe('check-migration-coverage · migrations en attente de prod (CI-05)', () => {
+  it('TEMOIN : un fichier hors ledger PARTIEL depuis la 200 est en attente (mig. 248)', () => {
+    const out = classer(
+      [{ name: '248_partiel.sql', sql: 'CREATE TABLE public.tasks (id uuid); CREATE TABLE public.nouvelle (id uuid);' }],
+      CATALOGUE_PLEIN,
+    );
+    expect(verdictDe(out, '248_partiel.sql')).toBe(VERDICT.OBJET);
+    expect(enAttenteDeProduction(out).map((r) => r.name)).toEqual(['248_partiel.sql']);
+  });
+
+  it('un partiel ANTERIEUR a la 200 et un fichier hors ledger COMPLET ne bloquent pas (206)', () => {
+    const out = classer([
+      { name: '012_ancien.sql', sql: 'CREATE TABLE public.tasks (id uuid); CREATE INDEX idx_perdu ON public.tasks (id);' },
+      { name: '206_complet.sql', sql: 'CREATE OR REPLACE FUNCTION public.get_my_tasks() RETURNS void AS $$ $$ LANGUAGE sql;' },
+    ], CATALOGUE_PLEIN);
+    expect(enAttenteDeProduction(out)).toEqual([]);
+  });
+
+  it('TEMOIN CLI : --sens=depot sort en 1 sur une migration absente des deux', () => {
+    const r = lancer(CATALOGUE_PLEIN, {
+      ...{ '001_socle.sql': 'CREATE TABLE public.tasks (id uuid);' },
+      '245_cron.sql': 'CREATE OR REPLACE FUNCTION public.cron_lease_acquire() RETURNS void AS $$ $$ LANGUAGE sql;',
+    }, ['--sens=depot']);
+    expect(r.status).toBe(1);
+    expect(r.stderr).toMatch(/245_cron\.sql/);
   });
 });

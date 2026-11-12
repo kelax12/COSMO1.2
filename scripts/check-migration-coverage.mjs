@@ -64,8 +64,11 @@
 //   1. node scripts/check-migration-coverage.mjs --print-sql
 //      -> affiche la requete d'introspection a executer sur la prod.
 //         Elle renvoie UNE ligne JSON.
-//   2. node scripts/check-migration-coverage.mjs <introspection.json>
-//      -> range les fichiers et sort en 1 si l'un d'eux est ABSENT DES DEUX.
+//   2. node scripts/check-migration-coverage.mjs <introspection.json> [--sens=depot]
+//      -> range les fichiers et sort en 1 si l'un d'eux n'est pas en prod
+//         (ABSENT DES DEUX, ou partiel hors ledger depuis la 200), ou si une
+//         entree recente du ledger n'a pas de fichier (ROB-03). `--sens=depot`
+//         ne juge que le premier sens : c'est la porte de `edge-deploy.yml`.
 // ═══════════════════════════════════════════════════════════════════
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -504,6 +507,60 @@ export function classer(fichiers, intro, dispenses = NON_APPLIQUEES_DELIBEREMENT
   return resultats;
 }
 
+// ─── Sens inverse : chaque entree du ledger a-t-elle son fichier ? (ROB-03) ──
+//
+// 🔴 La mig. `238_affiliation_deduction` est en production depuis le
+// 2026-11-01 (ledger `20261101143700`) et n'existe dans AUCUN commit. Le
+// classeur ci-dessus part des fichiers : une migration appliquee sans fichier
+// lui est invisible, et une base reconstruite depuis le depot ne l'a pas.
+//
+// ⚠️ La borne n'est pas une dispense : la mesure du 2026-09-14 (C-79, en tete
+// de ce fichier) comptait deja 17 entrees sans fichier, correctifs poses au
+// Dashboard d'avril a aout 2026. Elles restent LISTEES a chaque run ; ce qui
+// echoue, c'est une entree posterieure a la mise en place de la garde.
+
+/** Version de ledger (14 chiffres) a partir de laquelle une entree sans fichier fait echouer. */
+export const LEDGER_FICHIER_OBLIGATOIRE_DEPUIS = '20260914000000';
+
+/**
+ * Les entrees du ledger (`version_nom`) sans fichier dans `supabase/migration/`.
+ * Une entree se rapproche d'un fichier par son nom, avec ou sans prefixe
+ * numerique, comme `clesLedger` le fait dans l'autre sens.
+ *
+ * @returns {{entree: string, version: string, recente: boolean}[]}
+ */
+export function entreesSansFichier(fichiers, intro, depuis = LEDGER_FICHIER_OBLIGATOIRE_DEPUIS) {
+  const cles = new Set(fichiers.flatMap((f) => clesLedger(f.name)));
+  const out = [];
+  for (const brut of intro.ledger ?? []) {
+    const entree = String(brut).toLowerCase();
+    const m = entree.match(/^(\d+)_(.*)$/);
+    const version = m ? m[1] : '';
+    const nom = m ? m[2] : entree;
+    if (nom && (cles.has(nom) || cles.has(nom.replace(/^\d+[a-z]?_/, '')))) continue;
+    out.push({ entree, version, recente: version >= depuis });
+  }
+  return out;
+}
+
+// ─── Migrations du depot en attente de production (CI-05) ──────────
+//
+// Ce que `edge-deploy.yml` refuse de devancer : un fichier ABSENT DES DEUX, ou
+// un fichier hors ledger dont une partie des objets manque en base (mig. 248 :
+// 3 objets sur 13 trouves, parce qu'ils preexistaient). Le partiel ne compte
+// qu'a partir de la 200 : les partiels de 001 a 012 sont anterieurs au ledger.
+// Un fichier hors ledger entierement present en base (la 206, non appliquee
+// mais dont les fonctions existent deja) reste au verdict du classeur.
+
+/** Premier numero de fichier ou un « OBJET EN BASE » partiel compte comme non applique. */
+export const PARTIEL_EN_ATTENTE_DEPUIS = 200;
+
+export function enAttenteDeProduction(resultats) {
+  return resultats.filter((r) => r.verdict === VERDICT.ABSENT
+    || (r.verdict === VERDICT.OBJET && r.manquants.length > 0
+      && Number.parseInt(r.name, 10) >= PARTIEL_EN_ATTENTE_DEPUIS));
+}
+
 export function lireMigrations(dir = MIGRATION_DIR) {
   return readdirSync(dir)
     .filter((f) => f.endsWith('.sql'))
@@ -521,7 +578,7 @@ function main() {
     return 0;
   }
   if (!arg) {
-    console.error('Usage : check-migration-coverage.mjs --print-sql | <introspection.json>');
+    console.error('Usage : check-migration-coverage.mjs --print-sql | <introspection.json> [--sens=depot]');
     return 2;
   }
 
@@ -592,19 +649,45 @@ function main() {
     console.log(`ℹ️  ${r.name} : non appliquee, DECLAREE. ${r.raison}`);
   }
 
-  const absents = parVerdict[VERDICT.ABSENT] ?? [];
-  if (absents.length > 0) {
+  let echec = false;
+  const attente = enAttenteDeProduction(resultats);
+  if (attente.length > 0) {
+    echec = true;
     console.error('');
-    console.error(`❌ ${absents.length} fichier(s) ABSENT(S) DES DEUX :`);
-    for (const r of absents) console.error(`   ${r.name} : ${r.raison}`);
+    console.error(`❌ ${attente.length} migration(s) du depot PAS EN PRODUCTION :`);
+    for (const r of attente) {
+      console.error(`   ${r.name} : ${r.raison ?? `hors ledger, ${r.trouves.length}/${r.total} objets en base, manque ${r.manquants.join(', ')}`}`);
+    }
     console.error('');
     console.error('Soit la migration doit etre appliquee, soit son absence est');
     console.error('deliberee et se DECLARE dans NON_APPLIQUEES_DELIBEREMENT, avec');
     console.error('son motif et sa date. Jamais un silence.');
-    return 1;
   }
 
-  console.log('✅ Aucun fichier absent des deux.');
+  // `--sens=depot` : le seul sens que `edge-deploy.yml` juge (le code appelle-
+  // t-il une migration absente ?). Le quotidien juge les deux.
+  if (!process.argv.includes('--sens=depot')) {
+    const orphelines = entreesSansFichier(fichiers, intro);
+    const anciennes = orphelines.filter((o) => !o.recente);
+    const recentes = orphelines.filter((o) => o.recente);
+    if (anciennes.length > 0) {
+      console.log(`ℹ️  ${anciennes.length} entree(s) de ledger sans fichier, anterieures a ${LEDGER_FICHIER_OBLIGATOIRE_DEPUIS} (mesure C-79) :`);
+      for (const o of anciennes) console.log(`   ${o.entree}`);
+      console.log('');
+    }
+    if (recentes.length > 0) {
+      echec = true;
+      console.error('');
+      console.error(`❌ ${recentes.length} entree(s) du ledger de PRODUCTION SANS FICHIER dans supabase/migration/ :`);
+      for (const o of recentes) console.error(`   ${o.entree}`);
+      console.error('');
+      console.error('La production porte une migration que le depot ne sait pas reconstruire.');
+      console.error('Committer son fichier sous le meme nom, relu contre le catalogue de prod.');
+    }
+  }
+  if (echec) return 1;
+
+  console.log('✅ Aucun fichier absent des deux, aucune entree de ledger sans fichier.');
   console.log('');
   console.log('⚠️  CE QUE CE VERT NE DIT PAS : une ligne au ledger ne prouve pas');
   console.log('   qu un CREATE OR REPLACE a remplace le corps vivant (mig. 144,');

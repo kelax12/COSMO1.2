@@ -1,0 +1,97 @@
+# ──────────────────────────────────────────────────────────────────────
+# DEPOT REJOUE CONTRE PRODUCTION (TST-06, 2026-11-12)
+#
+# Question posee chaque jour : une base vierge sur laquelle on rejoue
+# `supabase/migration/` (moins les migrations que la prod n'a pas encore)
+# est-elle IDENTIQUE a la production ? Reponse objet par objet par
+# `scripts/schema-prod.mjs` : « en prod seulement », « dans le depot
+# seulement », « different ».
+#
+# L'audit du 2026-11-12 (TST-06) : ce job n'existait que sur la branche
+# `noyau/migrations-cli`, ou il rejoue une baseline CLI que `main` n'a pas.
+# Cette version rejoue `supabase/migration/` comme le job `contrat-donnees`
+# de `CI noyau`. Le premier passage sur la branche (2026-11-09) trouvait
+# ~100 ecarts : ce job est ROUGE tant que la prod et le depot divergent, et
+# c'est sa raison d'etre. ❌ Hors du noyau bloquant : il juge la prod, pas
+# le commit.
+#
+# 🔴 AUCUNE ecriture en production : introspection du catalogue (meme
+# requete que `migration-coverage.yml`), session `read only`,
+# `pg_dump --schema-only`. Aucun artefact : le journal (public) porte la
+# liste des objets en ecart et leur definition, masquee.
+# ⚠️ Pas de `if: secrets.X != ''` : sans secret, le job ROUGIT (scripts/CLAUDE.md).
+# ──────────────────────────────────────────────────────────────────────
+name: Schema prod
+
+on:
+  schedule:
+    - cron: '41 5 * * *' # tous les jours, 05:41 UTC (decale des autres crons)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: schema-prod-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  depot-egal-prod:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+      # Meme CLI que `contrat-donnees` : meme Postgres, meme pg_dump, des deux cotes.
+      - uses: supabase/setup-cli@d239d1052f6f024a8d746d7e5aeddead63b9cb53 # v3.1.0
+        with:
+          version: 2.122.1
+      - run: npm ci
+
+      - name: Installer psql 17
+        run: |
+          set -euo pipefail
+          sudo sh -c 'echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/pgdg.gpg
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17
+          echo /usr/lib/postgresql/17/bin >> "$GITHUB_PATH"
+
+      - name: Retirer du rejeu les migrations que la prod n a pas
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DB_URL:-}" ]; then
+            echo "::error::SUPABASE_DB_URL absent. Une garde ne rend pas de verdict sans avoir lu."
+            exit 1
+          fi
+          node scripts/check-migration-coverage.mjs --print-sql > "$RUNNER_TEMP/introspection.sql"
+          psql "$DB_URL" -A -t -f "$RUNNER_TEMP/introspection.sql" > "$RUNNER_TEMP/introspection.json"
+          test -s "$RUNNER_TEMP/introspection.json" || { echo "::error::introspection vide"; exit 1; }
+          node scripts/schema-prod.mjs en-attente "$RUNNER_TEMP/introspection.json" --retirer
+
+      - name: Start Supabase stack (local)
+        run: supabase start
+
+      - name: Rejouer supabase/migration/ sur la base vierge
+        run: |
+          set -euo pipefail
+          supabase status -o env > supabase.env
+          set -a; . ./supabase.env; set +a
+          DATABASE_URL="${DB_URL:-postgresql://postgres:postgres@127.0.0.1:54322/postgres}" node scripts/apply-migrations.mjs
+
+      - name: Comparer la base rejouee a la production
+        env:
+          PROD_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: node scripts/schema-prod.mjs comparer
+
+      - name: Temoin · le comparateur voit-il encore un ecart ?
+        if: ${{ always() }}
+        run: npx vitest run scripts/schema-prod.guard.test.mjs
+
+      - name: Stop Supabase stack
+        if: ${{ always() }}
+        run: supabase stop
