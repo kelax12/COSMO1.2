@@ -139,7 +139,15 @@ const recipients: TestUser[] = [];
 afterAll(async () => {
   await deleteTestUsers(...recipients);
 });
-friendsContract(SIDE, async () => ({
+// DIVERGENCE FRIENDS-USER-ID : sur la base rejouée depuis `supabase/migration/`, `friend_requests.user_id`
+// est NOT NULL sans valeur par défaut (schema.sql), alors que `sendFriendRequest` n'écrit que `sender_id`
+// (la mig. 012 dit que la production a évolué hors de ce schéma). Tout envoi de demande échoue donc ici
+// (23502), même vers un compte inscrit. À trancher côté migration (défaut ou colonne retirée), pas ici :
+// le jour où c'est fait, ces `it.fails` rougissent et la déclaration se retire.
+const FRIENDS_USER_ID = 'FRIENDS-USER-ID';
+friendsContract(
+  SIDE,
+  async () => ({
   repo: new SupabaseFriendsRepository(),
   // Un vrai compte par demande : la base refuse un destinataire non inscrit (user_id NOT NULL).
   recipient: async () => {
@@ -147,6 +155,16 @@ friendsContract(SIDE, async () => ({
     recipients.push(other);
     return other.email;
   },
-}));
+  }),
+  {
+    divergences: {
+      'une demande envoyée figure parmi les envoyées, pas parmi les reçues': FRIENDS_USER_ID,
+      'envoyer deux fois la même demande ne la duplique pas': FRIENDS_USER_ID,
+      'l’adresse est comparée et enregistrée en minuscules': FRIENDS_USER_ID,
+      'annuler retire la demande (suppression, pas un statut)': FRIENDS_USER_ID,
+      'accepter sa propre demande envoyée est refusé': FRIENDS_USER_ID,
+    },
+  },
+);
 organizationsContract(SIDE, async () => ({ repo: new SupabaseOrganizationsRepository(), userId: user.id }));
 teamProjectsContract(SIDE, async () => ({ repo: new SupabaseTeamProjectsRepository(), orgId }));
