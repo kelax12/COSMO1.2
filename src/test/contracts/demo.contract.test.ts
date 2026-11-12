@@ -95,6 +95,9 @@ teamListsContract(SIDE, async () => {
   };
 });
 
-friendsContract(SIDE, async () => ({ repo: new LocalStorageFriendsRepository() }));
+friendsContract(SIDE, async () => ({
+  repo: new LocalStorageFriendsRepository(),
+  recipient: async () => `ami-${crypto.randomUUID()}@example.com`,
+}));
 organizationsContract(SIDE, async () => ({ repo: new LocalStorageOrganizationsRepository(), userId: DEMO_USER_ID }));
 teamProjectsContract(SIDE, async () => ({ repo: new LocalStorageTeamProjectsRepository(), orgId: DEMO_ORG_ID }));

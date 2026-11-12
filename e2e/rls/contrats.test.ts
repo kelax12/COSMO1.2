@@ -135,6 +135,18 @@ teamListsContract(SIDE, async () => {
   };
 });
 
-friendsContract(SIDE, async () => ({ repo: new SupabaseFriendsRepository() }));
+const recipients: TestUser[] = [];
+afterAll(async () => {
+  await deleteTestUsers(...recipients);
+});
+friendsContract(SIDE, async () => ({
+  repo: new SupabaseFriendsRepository(),
+  // Un vrai compte par demande : la base refuse un destinataire non inscrit (user_id NOT NULL).
+  recipient: async () => {
+    const other = await createTestUser();
+    recipients.push(other);
+    return other.email;
+  },
+}));
 organizationsContract(SIDE, async () => ({ repo: new SupabaseOrganizationsRepository(), userId: user.id }));
 teamProjectsContract(SIDE, async () => ({ repo: new SupabaseTeamProjectsRepository(), orgId }));
