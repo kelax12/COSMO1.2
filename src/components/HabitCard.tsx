@@ -7,6 +7,7 @@ import { Habit, useDeleteHabit, useToggleHabitCompletion, useRestoreHabit } from
 import { useT } from '@/i18n/useT';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { habitStreak } from '@/modules/habits/streak';
+import { isHabitScheduledOn } from '@/modules/habits/schedule';
 import { showUndoToast } from '@/lib/undo-toast';
 import { Button } from '@/components/ui/button';
 import HabitModal from './HabitModal';
@@ -80,6 +81,9 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
     size?: 'normal' | 'small';
   }) => {
     const isCompleted = habit.completions[day.date];
+    // Jour non prévu (mig. 251) : grisé et non cochable. Une coche ancienne
+    // posée ce jour-là reste décochable.
+    const unscheduled = !isHabitScheduledOn(habit, day.date) && !isCompleted;
     // Sur mobile, la rangée compacte (7 cases) tient sur une grille pleine
     // largeur (pas de scroll) : la case s'étire à la colonne au lieu d'une
     // taille fixe. Le desktop garde exactement sa taille fixe d'avant.
@@ -119,9 +123,14 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
           type="button"
           role="checkbox"
           aria-checked={!!isCompleted}
-          onClick={() => handleDayClick(day.date)}
-          aria-label={t('table.dayCell', { name: habit.name, date: `${day.dayName} ${day.dayNumber}` })}
+          disabled={unscheduled}
+          onClick={() => { if (!unscheduled) handleDayClick(day.date); }}
+          aria-label={unscheduled
+            ? t('schedule.notScheduled', { name: habit.name, date: `${day.dayName} ${day.dayNumber}` })
+            : t('table.dayCell', { name: habit.name, date: `${day.dayName} ${day.dayNumber}` })}
           className={`${btnSize} rounded-lg border-2 transition-all flex items-center justify-center ${
+            unscheduled ? 'opacity-35 cursor-not-allowed bg-[rgb(var(--color-hover))] pointer-events-none' : ''
+          } ${
             day.isToday
               ? 'border-slate-900 dark:border-slate-100 bg-slate-50 dark:bg-slate-800 shadow-sm'
               : 'border-[rgb(var(--color-border))]'
@@ -262,6 +271,8 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
     // tableau (qui, lui, re-rendait) devenait invisible à déboguer.
     prev.habit.streakCurrent === next.habit.streakCurrent &&
     prev.habit.completionsTotal === next.habit.completionsTotal &&
+    JSON.stringify(prev.habit.scheduledDays) === JSON.stringify(next.habit.scheduledDays) &&
+    JSON.stringify(prev.habit.scheduleHistory) === JSON.stringify(next.habit.scheduleHistory) &&
     JSON.stringify(prev.habit.completions) === JSON.stringify(next.habit.completions)
   );
 });

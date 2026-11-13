@@ -16,6 +16,7 @@ import { completionColor } from './completion-color';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import { formatDurationMinutes } from '@/lib/duration';
+import { scheduledPeriodStats } from '@/lib/stats-insights';
 import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -28,18 +29,26 @@ interface HabitStatItemProps {
     periodCompletions: number;
     periodTime: number;
     relevantDaysCount: number;
+    /** Jours prévus dans la période (mig. 251). Absent = tous les jours. */
+    scheduledDaysCount?: number;
+    /** Coches tombées sur un jour prévu. */
+    scheduledCompletions?: number;
     frequency?: 'daily' | 'weekly' | 'monthly';
   };
   formatTime: (minutes: number) => string;
 }
 
 const HabitStatItem = React.memo<HabitStatItemProps>(({ habit, formatTime }) => {
+  const isDaily = habit.frequency !== 'weekly' && habit.frequency !== 'monthly';
   const expectedCompletions =
     habit.frequency === 'weekly'  ? Math.ceil(habit.relevantDaysCount / 7) :
     habit.frequency === 'monthly' ? Math.max(1, Math.round(habit.relevantDaysCount / 30)) :
-    habit.relevantDaysCount;
+    habit.scheduledDaysCount ?? habit.relevantDaysCount;
+  const doneCompletions = isDaily
+    ? habit.scheduledCompletions ?? habit.periodCompletions
+    : habit.periodCompletions;
   const rate = expectedCompletions > 0
-    ? Math.min(100, Math.round((habit.periodCompletions / expectedCompletions) * 100))
+    ? Math.min(100, Math.round((doneCompletions / expectedCompletions) * 100))
     : 0;
 
   return (
@@ -51,7 +60,7 @@ const HabitStatItem = React.memo<HabitStatItemProps>(({ habit, formatTime }) => 
           </span>
           {/* Maquette 204 : « 7/7 » en gris, plus une pastille verte « 7 fois ». */}
           <span className="text-xs tabular-nums" style={{ color: 'rgb(var(--color-text-muted))' }}>
-            {habit.periodCompletions}/{expectedCompletions}
+            {doneCompletions}/{expectedCompletions}
           </span>
         </div>
         <div className="flex items-center gap-3">
@@ -517,7 +526,21 @@ export const HabitsStatistics: React.FC<{
       ? Math.floor((effectiveEnd.getTime() - effectiveStart.getTime()) / (1000 * 60 * 60 * 24)) + 1
       : 0;
 
-    return { ...habit, periodCompletions: completionsCount, periodTime: completionsCount * habit.estimatedTime, relevantDaysCount, frequency: habit.frequency };
+    // Taux de réussite sur les seuls jours PRÉVUS (mig. 251). Le temps passé,
+    // lui, compte toutes les coches.
+    const scheduled = relevantDaysCount > 0
+      ? scheduledPeriodStats(habit, effectiveStart, effectiveEnd)
+      : { scheduledDays: 0, scheduledCompletions: 0 };
+
+    return {
+      ...habit,
+      periodCompletions: completionsCount,
+      periodTime: completionsCount * habit.estimatedTime,
+      relevantDaysCount,
+      scheduledDaysCount: scheduled.scheduledDays,
+      scheduledCompletions: scheduled.scheduledCompletions,
+      frequency: habit.frequency,
+    };
   }), [habits, rollingRange, now]);
 
   const sortedRelevantHabits = useMemo(

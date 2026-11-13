@@ -6,6 +6,7 @@ import { IHabitsRepository } from './repository';
 import { Habit, CreateHabitInput, UpdateHabitInput } from './types';
 import { habitKeys } from './constants';
 import { calculateStreak, toggleCompletionDay } from './streak';
+import { scheduleOf } from './schedule';
 import { translator } from '@/i18n/useT';
 import { recordDemoCreationIfDemo } from '@/lib/demo-engagement';
 
@@ -160,7 +161,7 @@ export const useToggleHabitCompletion = () => {
               // l'historique complet : exact pour toute série de moins de
               // 400 jours consécutifs, et de toute façon corrigé par le
               // refetch de `onSuccess` juste après.
-              streakCurrent: calculateStreak(completions),
+              streakCurrent: calculateStreak(completions, new Date(), scheduleOf(habit)),
               completionsTotal:
                 habit.completionsTotal === undefined
                   ? undefined

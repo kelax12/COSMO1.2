@@ -1,12 +1,9 @@
-// Feuille de sélection des jours de récurrence — extraite verbatim de EventModal.
+// Feuille de sélection des jours de récurrence d'un évènement. Le corps vit
+// dans `WeekDaysSheet` (partagé avec les jours prévus d'une habitude).
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import type { EventRecurrence } from '@/modules/events';
-import { DAY_ORDER } from './helpers';
 import { useT } from '@/i18n/useT';
-import { formatDate } from '@/i18n/format';
-import { useSheetDrag, useSheetMotion } from '@/components/mobile/mobile-motion';
-import { useModalA11y } from '@/hooks/use-modal-a11y';
+import WeekDaysSheet from '@/components/WeekDaysSheet';
 
 interface RecurrenceDaysModalProps {
   isOpen: boolean;
@@ -16,113 +13,28 @@ interface RecurrenceDaysModalProps {
   setRecurrence: React.Dispatch<React.SetStateAction<EventRecurrence>>;
 }
 
-/**
- * Nom complet du jour `d` (0 = dimanche, comme `Date.getDay()`), dans la langue
- * de l'app. Le 7 janvier 2024 est un dimanche : `+ d` donne le bon jour. Les
- * noms étaient écrits en français à la main (garde `date-format.guard`, AM-3).
- */
-const dayName = (d: number): string => {
-  const name = formatDate(new Date(2024, 0, 7 + d), { weekday: 'long' });
-  return name.charAt(0).toUpperCase() + name.slice(1);
-};
-
 const RecurrenceDaysModal: React.FC<RecurrenceDaysModalProps> = ({
   isOpen, onClose, recurrenceDays, setRecurrenceDays, setRecurrence,
 }) => {
   const { t } = useT('eventModal');
-  const { t: tCommon } = useT('common');
-  const sheetDrag = useSheetDrag(onClose);
-  const sheetMotion = useSheetMotion();
-  // C-53 — feuille montee par-dessus EventModal, en FRERE de son overlay.
-  const { ref: overlayRef, dialogProps } = useModalA11y<HTMLDivElement>({
-    open: isOpen,
-    onClose,
-    label: t('repeatDays'),
-  });
   return (
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            ref={overlayRef}
-            {...dialogProps}
-            className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-end sm:items-center justify-center z-[70] sm:p-4"
-            onClick={() => onClose()}
-          >
-            <motion.div
-              {...sheetMotion}
-              // La poignee ci-dessous promettait un geste qui n existait pas
-              // (audit mobile cinq feuilles dans ce cas). Une
-              // affordance qui ment est pire que pas d affordance.
-              {...sheetDrag}
-              className="rounded-t-[28px] sm:rounded-2xl shadow-2xl w-full sm:max-w-md"
-              style={{ backgroundColor: 'rgb(var(--color-surface))', paddingBottom: 'env(safe-area-inset-bottom)' }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="sm:hidden flex justify-center pt-3 pb-1">
-                <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
-              </div>
-              <div className="px-5 sm:px-6 py-4">
-                <h3 className="text-base font-bold mb-1" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                  {t('repeatDays')}
-                </h3>
-                <p className="text-sm mb-4" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                  {t('repeatDaysHint')}
-                </p>
-                <div className="space-y-1">
-                  {DAY_ORDER.map((d) => {
-                    const checked = recurrenceDays.includes(d);
-                    return (
-                      <button
-                        key={d}
-                        type="button"
-                        role="checkbox"
-                        aria-checked={checked}
-                        onClick={() =>
-                          setRecurrenceDays((prev) =>
-                            prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]
-                          )
-                        }
-                        className="w-full flex items-center justify-between px-3 min-h-11 rounded-lg transition-colors hover:bg-[rgb(var(--color-hover))]"
-                      >
-                        <span className="text-[15px]" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                          {dayName(d)}
-                        </span>
-                        <span
-                          className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
-                            checked ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))]' : 'border-slate-400 dark:border-slate-500'
-                          }`}
-                        >
-                          {checked && (
-                            <svg className="w-4 h-4 text-[rgb(var(--color-accent-solid-foreground))]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    // Si aucun jour coché en sortie, on revient à 'none' pour éviter
-                    // une récurrence custom vide silencieuse.
-                    if (recurrenceDays.length === 0) setRecurrence('none');
-                    onClose();
-                  }}
-                  className="mt-5 w-full min-h-11 rounded-lg text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] transition-colors"
-                >
-                  {tCommon('actions.confirm')}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-);
+    <WeekDaysSheet
+      isOpen={isOpen}
+      onClose={onClose}
+      title={t('repeatDays')}
+      hint={t('repeatDaysHint')}
+      days={recurrenceDays}
+      onToggle={(d) =>
+        setRecurrenceDays((prev) => (prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]))
+      }
+      onConfirm={() => {
+        // Si aucun jour coché en sortie, on revient à 'none' pour éviter
+        // une récurrence custom vide silencieuse.
+        if (recurrenceDays.length === 0) setRecurrence('none');
+        onClose();
+      }}
+    />
+  );
 };
 
 export default RecurrenceDaysModal;

@@ -50,7 +50,15 @@
     "nameLabel": "Nom de l'habitude",
     "legend": "Légende",
     "category": "Catégorie",
-    "customize": "Personnaliser"
+    "customize": "Personnaliser",
+    "days": "Jours",
+    "everyDay": "Tous les jours",
+    "daysTitle": "Jours prévus",
+    "daysHint": "Les jours où l'habitude compte. Les autres jours restent neutres pour la série.",
+    "daysAria": "Jours prévus : {{days}}"
+  },
+  "schedule": {
+    "notScheduled": "{{name}}, {{date}} (jour non prévu)"
   },
   "actions": {
     "more": "Plus d'actions",

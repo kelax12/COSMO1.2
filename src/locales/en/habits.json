@@ -50,7 +50,15 @@
     "nameLabel": "Habit name",
     "legend": "Legend",
     "category": "Category",
-    "customize": "Customize"
+    "customize": "Customize",
+    "days": "Days",
+    "everyDay": "Every day",
+    "daysTitle": "Scheduled days",
+    "daysHint": "The days this habit counts. Other days stay neutral for your streak.",
+    "daysAria": "Scheduled days: {{days}}"
+  },
+  "schedule": {
+    "notScheduled": "{{name}}, {{date}} (not scheduled)"
   },
   "actions": {
     "more": "More actions",

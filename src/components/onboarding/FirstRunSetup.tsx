@@ -91,6 +91,7 @@ const FirstRunSetup: React.FC = () => {
   const [taskNames, setTaskNames] = useState<string[]>([]);
   const [habitDraft, setHabitDraft] = useState('');
   const [habitMinutes, setHabitMinutes] = useState(30);
+  const [habitDays, setHabitDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
   const [okrDraft, setOkrDraft] = useState('');
   const [krDraft, setKrDraft] = useState('');
   const [targetDraft, setTargetDraft] = useState('');
@@ -206,7 +207,7 @@ const FirstRunSetup: React.FC = () => {
     } else if (step === 3) {
       const name = habitDraft.trim();
       if (name && !createdHabit) {
-        createHabit.mutate(buildHabitInput(name, habitMinutes));
+        createHabit.mutate(buildHabitInput(name, habitMinutes, habitDays));
         setCreatedHabit(name);
       }
       setHabitDraft('');
@@ -376,8 +377,7 @@ const FirstRunSetup: React.FC = () => {
                       slotDay,
                       slotHour,
                       createdSlot,
-                      habitDraft,
-                      habitMinutes,
+                      habitDraft, habitMinutes, habitDays,
                       createdHabit,
                       okrDraft,
                       krDraft,
@@ -391,8 +391,7 @@ const FirstRunSetup: React.FC = () => {
                       removeTask: (i) => setTaskNames((prev) => prev.filter((_, j) => j !== i)),
                       setSlotDay,
                       setSlotHour,
-                      setHabitDraft,
-                      setHabitMinutes,
+                      setHabitDraft, setHabitMinutes, setHabitDays,
                       setOkrDraft,
                       setKrDraft,
                       setTargetDraft,
