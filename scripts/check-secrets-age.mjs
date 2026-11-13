@@ -3,7 +3,7 @@
 //
 // 🔴 POURQUOI CE FICHIER EXISTE (AM-3, M-54)
 //
-// `docs/SECURITY.md` § « Rotation des secrets » disait COMMENT faire tourner
+// `docs/SECRETS-ET-COFFRE.md` § « Rotation des secrets » disait COMMENT faire tourner
 // un secret, jamais QUAND, et rien ne mesurait leur age. Un secret oublie ne
 // casse rien : il vieillit, et le jour d'une fuite on ne sait pas depuis
 // combien de temps il circule.

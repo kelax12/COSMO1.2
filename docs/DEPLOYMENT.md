@@ -3,9 +3,9 @@
 Procédures opérationnelles : déployer, appliquer une migration DB, rollback,
 réagir à un incident. À lire avant toute mise en prod.
 
-> Sécurité des secrets & rotation : voir [`SECURITY.md → Rotation des secrets`](./SECURITY.md#rotation-des-secrets).
+> Sécurité des secrets & rotation : voir [`SECRETS-ET-COFFRE.md → Rotation des secrets`](./SECRETS-ET-COFFRE.md#rotation-des-secrets).
 > Coffre, accès d'urgence, second administrateur, gestes qui restent manuels :
-> [`SECURITY.md` § Coffre](./SECURITY.md#coffre-et-accès-durgence-v42-sec-04) et [`CONTINUITE.md`](./CONTINUITE.md).
+> [`SECRETS-ET-COFFRE.md` § Coffre](./SECRETS-ET-COFFRE.md#coffre-et-accès-durgence-v42-sec-04) et [`CONTINUITE.md`](./CONTINUITE.md).
 > Failles connues / posture : `faille.md`.
 
 ---
@@ -325,7 +325,7 @@ Postgres n'a pas de « rollback » automatique. Les migrations doivent donc êtr
 3. **Erreurs DB / RLS** → logs Supabase (`get_logs`) + `get_advisors`.
 4. **Webhook Stripe** → table `processed_stripe_events` + logs de l'Edge
    Function `stripe-webhook`.
-5. **Fuite de secret suspectée** → [`SECURITY.md → Rotation des secrets`](./SECURITY.md#rotation-des-secrets) (rotation
+5. **Fuite de secret suspectée** → [`SECRETS-ET-COFFRE.md → Rotation des secrets`](./SECRETS-ET-COFFRE.md#rotation-des-secrets) (rotation
    immédiate + invalidation des sessions).
 
 ---

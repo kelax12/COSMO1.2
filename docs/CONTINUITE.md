@@ -8,7 +8,7 @@ l'indisponibilité d'une personne. Trois pièces, écrites le 2026-11-08 :
 3. [Inventaire des gestes de production](#inventaire-des-gestes-de-production) : ce qui est déjà
    automatisé, ce qui a été converti en job, ce qui reste manuel et pourquoi.
 
-Le coffre, l'accès d'urgence et le registre des secrets sont dans [`SECURITY.md`](./SECURITY.md)
+Le coffre, l'accès d'urgence et le registre des secrets sont dans [`SECRETS-ET-COFFRE.md`](./SECRETS-ET-COFFRE.md)
 (§ « Coffre et accès d'urgence » et § « Rotation des secrets »). Ce document ne les recopie pas.
 
 > 🔴 **Aucune valeur ici** : ni adresse de courriel, ni identifiant de compte, ni code. Les
@@ -28,7 +28,7 @@ l'invitation** et prendre le plus petit qui permet la ligne « pourquoi ».
 - [ ] La personne a un gestionnaire de mots de passe à elle et un second facteur sur chaque compte
       ci-dessous. Ses codes de récupération sont **dans son coffre**, jamais dans un message.
 - [ ] Le coffre de continuité existe et l'accès d'urgence est en place
-      ([`SECURITY.md`](./SECURITY.md) § « Coffre et accès d'urgence »).
+      ([`SECRETS-ET-COFFRE.md`](./SECRETS-ET-COFFRE.md) § « Coffre et accès d'urgence »).
 - [ ] Le propriétaire décide qui est **suppléant de qui** : la personne de confiance de l'accès
       d'urgence peut être, ou non, le second administrateur. Les deux rôles se distinguent : l'un agit
       au quotidien, l'autre n'ouvre le coffre qu'en urgence.

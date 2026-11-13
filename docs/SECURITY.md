@@ -7,26 +7,20 @@
 
 ## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
 
-> **Pourquoi cette section existe** : ce document affirme des règles que rien ne pèse. Chaque ligne
-> ci-dessous nomme une affirmation qui n'était vérifiée par rien, et la garde qui la vérifie depuis.
-> Une ligne se **referme** ou se **reconduit avec sa date**, jamais ne se recopie. 🔴 **Une garde
-> posée n'est pas un angle mort fermé** : la dernière colonne dit ce que le vert ne prouve pas.
-> L'énoncé du 2026-09-16, la colonne « État » réécrite le 2026-09-21 et les mesures datées de chaque
-> ligne sont archivés sans une coupe :
+> Chaque ligne nomme une affirmation que rien ne vérifiait, et la garde qui la vérifie depuis. Une ligne se
+> **referme** ou se **reconduit avec sa date**, jamais ne se recopie. 🔴 **Une garde posée n'est pas un angle
+> mort fermé** : la dernière colonne dit ce que le vert ne prouve pas. Énoncé d'origine et mesures :
 > [`archive/SECURITY-recits-base-gardes-angles-morts-2026-08-26-au-2026-11-08.md`](./archive/SECURITY-recits-base-gardes-angles-morts-2026-08-26-au-2026-11-08.md).
-
 | # | Angle mort (énoncé du 2026-09-16) | Garde qui le couvre | 🔴 Ce que cette garde ne prouve pas |
 |---|---|---|---|
-| AM-1 | Les **règles** de sécurité de ce document n'étaient notées nulle part (la note vivait dans `faille.md`, qui ne porte que les findings ouverts) | **Sans objet** depuis le 2026-11-08 : les notes /100 ont cessé (ADR 0012, ADR 0014), `npm run check:docs` refuse leur retour | Sans objet |
 | AM-2 | Les réglages du **Dashboard Supabase** (mots de passe compromis, expiration des OTP, MFA) se modifient hors du dépôt, sans trace | `npm run check:supabase-posture` (`C-88`), qui juge un **écart** à une référence commitée ; la référence porte huit réglages d'Auth depuis `M-58` (2026-10-08) | Un absolu : elle ne dit pas que la référence est bonne |
-| AM-3 | La **rotation des secrets** n'avait ni échéance ni rappel | `npm run check:secrets-age` (`M-54`) contre `.github/secrets-registry.json` (noms seulement), hebdomadaire. Échoue sur un secret échu, de date **inconnue (= échu)**, vivant sans entrée au registre, inscrit sans exister ; jeton absent = exit 1. Témoin `check-secrets-age.guard.test.mjs`. État courant : § « Rotation des secrets » | Les dates que ni GitHub ni Vercel ne datent (Edge, `SERVICE_ROLE_KEY`) tant que `lastRotated` n'est pas renseigné |
+| AM-3 | La **rotation des secrets** n'avait ni échéance ni rappel | `npm run check:secrets-age` (`M-54`) contre `.github/secrets-registry.json` (noms seulement), hebdomadaire. Échoue sur un secret échu, de date **inconnue (= échu)**, vivant sans entrée au registre, inscrit sans exister ; jeton absent = exit 1. Témoin `check-secrets-age.guard.test.mjs`. État courant : `SECRETS-ET-COFFRE.md` § « Rotation des secrets » | Les dates que ni GitHub ni Vercel ne datent (Edge, `SERVICE_ROLE_KEY`) tant que `lastRotated` n'est pas renseigné |
 | AM-4 | La checklist « avant tout commit qui touche `supabase/migration/*.sql` » était **manuelle** | Tableau ligne par ligne au § [« Avant tout commit qui touche `supabase/migration/*.sql` »](#avant-tout-commit-qui-touche-supabasemigrationsql) : `validate:migrations` (règles 2, 5, 6 à 16), `check:rls` (règles 1 à 3), `check:erasure` ; les lignes restantes sont **manuel** et le disent. Cliquet à partir de la mig. `227`, un témoin vu rouge par règle | L'historique `000` à `226` (non jugé, il diverge de la prod) ; qu'une migration fait ce qu'elle dit : la preuve en transaction annulée reste une discipline |
 | AM-5 | Les **advisors Supabase** n'étaient lus qu'à la main | `npm run check:supabase-posture` (`C-88`) lit les advisors par l'API Management ; écarts relus au § [AM-5](#am-5--écart-de-checksupabase-posture-constaté-le-2026-11-05) | Idem AM-2 |
 | AM-6 | **Aucune analyse statique** (SAST) : les gardes vérifient des invariants nommés, jamais des motifs inconnus | `codeql.yml`, `security-extended`, JS/TS **et** `actions` (`C-89`, `M-60`) | Un job vert : l'item n'est fini que si **chaque alerte ouverte porte une décision**. Le dépôt doit rester **public** (CodeQL rouge « Code scanning is not enabled » sur un dépôt privé) |
 | AM-7 | Le **recalage de `Posture`** ne pouvait être fait que par Axel (`--update` exige `SUPABASE_ACCESS_TOKEN`, absent du poste) | `posture.yml`, entrée `regenerer` (job `recaler-reference`, `main` seulement, rejoue la garde puis commite la référence) ; `--update` conserve les `_note` (`fusionnerReference`) | Que l'écart recalé soit légitime : relire chaque objet au catalogue AVANT |
 
 ---
-
 ## Règles de sécurité (non négociables)
 
 Ces règles découlent d'audits de sécurité et de failles déjà corrigées. Les
@@ -67,8 +61,6 @@ CREATE TRIGGER trg_prevent_user_id_change
 
 ### Helpers `SECURITY DEFINER` — exposition et appel depuis une policy
 
-> Ajouté le **2026-08-24**, après la mig. `100` (fuite inter-organisations refermée) et sa
-> régression immédiate par la mig. `107` (finding B-1 de `faille.md`).
 
 Un helper de RLS (`get_subtree`, `has_subordinates`, `org_admin_count`…) est un **prédicat
 interne**, pas une API. Étant `SECURITY DEFINER`, il s'exécute **sans RLS** : exposé en RPC
@@ -206,13 +198,9 @@ Pour tout `<input type="file">` :
 
 #### 🚫 Jamais de clé `"//"` (commentaire) dans `vercel.json`
 
-Le schéma Vercel est **strict** : une entrée de `headers[]` n'accepte que `source`,
-`headers`, `has`, `missing`. Toute propriété additionnelle — dont la convention
-`"//"` utilisée comme commentaire — fait **échouer le déploiement** à la validation,
-sur *toutes* les branches à la fois. `npm run build` ne valide PAS `vercel.json` :
-le build reste vert en local pendant que chaque déploiement Vercel est rouge
-(vécu du 2026-07-31 au 2026-08-01, ~13 déploiements perdus). Le JSON n'ayant pas
-de commentaires, toute justification se documente **ici**, jamais dans le fichier.
+Le schéma Vercel est **strict** : une entrée de `headers[]` n'accepte que `source`, `headers`, `has`, `missing`.
+Toute autre propriété, dont `"//"`, fait **échouer le déploiement** sur toutes les branches, et `npm run build`
+ne valide PAS `vercel.json`. Toute justification se documente **ici**, jamais dans le fichier.
 
 #### noindex — variantes préfixées par locale (i18n)
 
@@ -291,23 +279,13 @@ palier gratuit **sans jamais retirer de membre**.
 
 Test d'intégration : `e2e/rls/org-subscriptions.test.ts` (nécessite la stack Supabase locale).
 
-```bash
-supabase functions deploy stripe-create-checkout
-supabase functions deploy stripe-webhook
-supabase functions deploy delete-account
-supabase db push  # applique 017_processed_stripe_events.sql
-```
 
 ## Avant tout commit qui touche `supabase/migration/*.sql`
 
-> **Angle mort AM-4, outillé le 2026-10-24.** Chaque ligne de cette checklist (et des interdits de
-> [`supabase/migration/CLAUDE.md`](../supabase/migration/CLAUDE.md)) est rapportée à la garde qui la
-> juge, ou marquée **manuel**. Les règles 6 à 16 de `validate:migrations` sont un **cliquet à partir
-> de la mig. `227`** : l'historique (`000` à `226`) n'est pas jugé, parce que les fichiers divergent
-> de la prod (même raison que `check:rls`). Chaque règle a son témoin dans
-> `scripts/migration-guards.test.mjs`, vu rouge contre le script d'avant elle, et son sabotage de
-> détecteur dans `scripts/replay-sabotages.catalogue.mjs`.
-> ❌ Ne jamais relever le plancher `227` pour faire passer une migration : la corriger.
+> Chaque ligne est rapportée à la garde qui la juge, ou marquée **manuel**. Les règles 6 à 16 de
+> `validate:migrations` sont un **cliquet à partir de la mig. `227`** (l'historique `000` à `226` n'est pas jugé,
+> il diverge de la prod), chacune avec son témoin dans `scripts/migration-guards.test.mjs` et son sabotage dans
+> `scripts/replay-sabotages.catalogue.mjs`. ❌ Ne jamais relever le plancher `227` : corriger la migration.
 
 | # | Ligne de la checklist | Garde | Ce que la garde ne voit pas |
 |---|---|---|---|
@@ -349,216 +327,30 @@ select p.proname, has_function_privilege('authenticated', p.oid, 'EXECUTE')
 du texte. Les huit lignes **manuel** ci-dessus restent une discipline, et la mig. `143` a mis un
 défaut en production en passant cinq vérifications statiques.
 
-## Rotation des secrets
+## Rotation des secrets, coffre et accès d'urgence
 
-### Quand (échéances)
-
-Le registre `.github/secrets-registry.json` porte, pour chaque secret, son **propriétaire**, sa **criticité**, son **échéance** (`maxAgeDays`) et sa **dernière rotation** (`lastRotated`). **Noms seulement, jamais une valeur.** Échéances posées le 2026-10-24 :
-
-| Criticité | Échéance | Secrets |
-|---|---|---|
-| `critical` | 180 j (365 j pour `BACKUP_PASSPHRASE`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_SECRET_KEY`) | clés Stripe, `SUPABASE_DB_URL`, clés service |
-| `high` | 90 j (jetons d'accès) à 180 j | `SUPABASE_ACCESS_TOKEN`, `VERCEL_TOKEN`, `CRON_SECRET`, `RESEND_API_KEY`, `DRILL_DB_URL` |
-| `medium` | 180 à 365 j | webhook ops, sel de limitation de débit, jeton d'audit |
-
-Les identifiants et URLs (`kind: config`) ne tournent pas, mais leur existence est vérifiée.
-
-**La garde** : `npm run check:secrets-age` (workflow `Secrets age`, chaque lundi, relié à `ci-alert.yml`). Elle lit GitHub Actions (`updated_at`), les secrets Edge (API Management, noms) et Vercel (`updatedAt`, jamais `decrypt`), puis échoue sur :
-
-- un secret plus vieux que son échéance ;
-- un secret de **date inconnue**, réputé échu ;
-- un secret vivant **sans entrée** au registre, ou une entrée **sans secret** ;
-- un jeton de lecture absent (exit 1, jamais un saut).
-
-Quand elle est rouge : faire tourner le secret (procédure ci-dessous), puis, pour les stores que l'API ne date pas (Edge, `SUPABASE_SERVICE_ROLE_KEY`), écrire la date du jour dans `lastRotated`. ❌ Ne jamais écrire une date sans avoir tourné le secret, ni relever une échéance pour faire taire la garde.
-
-**Relu le 2026-11-07 (V9.4, TST-05) : rouge depuis sa pose, et AUCUN secret connu n'a dépassé son
-échéance.** Run `41474391054` (2026-11-02), 44 écarts : `SECRETS_AUDIT_TOKEN` jamais posé (la source
-GitHub n'est pas lue, d'où dix dates « inconnues » qui n'en sont pas), 30 noms vivants hors registre,
-`vercel/VITE_TURNSTILE_SITE_KEY` absente, `supabase-platform/SUPABASE_SERVICE_ROLE_KEY` sans date.
-- **Corrigé dans le dépôt** : les 30 noms sont inscrits avec leur échéance (intégrations
-  Vercel-Supabase et Vercel-Sentry, prix d'équipe Stripe, origines d'affiliation). Les clés posées
-  par l'intégration Supabase chez Vercel (`SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`,
-  `POSTGRES_PASSWORD`, `POSTGRES_URL*`) ne sont lues par **aucun** code (`api/` lit
-  `SUPABASE_SECRET_KEY` et `VITE_SUPABASE_URL`) : surface à retirer chez Vercel plutôt qu'à faire
-  tourner. `vercel/VITE_TURNSTILE_SITE_KEY` est **retirée** du registre par décision (absente,
-  Turnstile inerte, décision en attente imprimée par `check:env`) : la garde la réclamera le jour
-  où elle sera posée.
-- **La garde dit quoi faire** : bloc « QUE FAIRE » rangé par geste (jeton, rotation, date,
-  inventaire, entrée absente), en annotations lisibles sans compte. Le verdict ne change pas.
-- **Reste rouge, et c'est vrai** : deux gestes d'Axel, poser `SECRETS_AUDIT_TOKEN` et donner la
-  date de dernière rotation de la `service_role` de la plateforme (ou la faire tourner). Recalé
-  par décision jusqu'au **2026-11-21** dans `.github/gardes-rouges-decisions.json`.
-
-### Comment (secret compromis ou échu)
-Si une clé fuite (commit accidentel, compromission soupçonnée, etc.) :
-
-1. **Rotater immédiatement** :
-   - Supabase : `Dashboard → Project Settings → API → Reset anon/service_role`
-   - Stripe : `Dashboard → Developers → API keys → Roll`
-   - Webhook signing secret Stripe : recréer l'endpoint
-2. **Invalider les sessions actives** : `auth.admin.signOut()` côté Edge Function ou requête manuelle SQL `delete from auth.refresh_tokens`
-3. **Mettre à jour** : Vercel env vars + `.env` local + Edge Function secrets (`supabase secrets set ...`)
-4. **Re-deploy** Vercel + redéployer les Edge Functions
-5. **Audit** : vérifier les logs Supabase pour activité suspecte avant la rotation
-
-Variables sensibles **jamais côté client** : `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `OPENAI_API_KEY` (si utilisé).
-
-### Le registre est UNIQUE et COMPLET (V4.3, 2026-11-08)
-
-`.github/secrets-registry.json` est le seul registre : celui que lit `check:secrets-age`, il n'y en a
-pas de second. Chaque entrée porte son **nom**, son **store** (GitHub, Edge, Vercel, plateforme
-Supabase, `.env.example`), **qui le lit** (`readers`), son **âge maximal** (`maxAgeDays`), l'**effet
-d'une fuite** (`leak`) et sa **rotation pas à pas** (`rotation`, un id du bloc `procedures` du même
-fichier : générer, poser, vérifier, révoquer l'ancien, dater). **Les noms et les procédures seulement.**
-❌ Jamais une valeur, ni un indice de valeur : la garde refuse une chaîne de connexion, une clé PEM,
-un préfixe de clé connu ou une longue suite opaque, dans le registre comme dans ses procédures
-(témoin `check-secrets-age.guard.test.mjs`).
-
-- Une entrée incomplète est un écart : le registre est rouge, pas seulement l'âge.
-- Un secret que rien ne lit n'est admis qu'avec une procédure de retrait (`variable-orpheline`,
-  `secret-sans-lecteur`, admise par la garde, sans entrée depuis que `SECURITY_ALERTS_TOKEN` a son
-  lecteur, vague 6.1) : on le supprime, ou on écrit pourquoi il reste.
-- `coffre: true` marque ce qui **ne se régénère pas** et que le coffre doit donc porter
-  (aujourd'hui `BACKUP_PASSPHRASE`). Tout le reste se **fait tourner** : un jeton perdu se remplace,
-  il ne se garde pas.
-- Pour faire tourner un secret : ouvrir son entrée, lire `rotation`, suivre les étapes. Les écritures
-  (`gh secret set`, `supabase secrets set`, console Vercel) restent des gestes humains : la CI ne
-  porte que des jetons de lecture.
-
-## Coffre et accès d'urgence (V4.2, SEC-04)
-
-**Ce que le coffre répond** : « si la personne qui détient tout est injoignable, ou si un second
-facteur est perdu, par où rentre-t-on ? ». Sans lui, la phrase qui déchiffre les sauvegardes et les
-codes de récupération n'existent qu'à un seul endroit, et une sauvegarde sans sa phrase ne se
-restaure pas.
-
-### Ce qui doit y aller
-
-Des **identifiants d'éléments**, vérifiés un à un par `check:coffre` (`scripts/check-coffre.mjs`) :
-
-| Élément | Ce qu'il contient | Pourquoi ici |
-|---|---|---|
-| `BACKUP_PASSPHRASE` | la phrase de chiffrement des sauvegardes, et l'étiquette de chaque phrase précédente tant qu'un dump chiffré avec elle existe | un secret Actions ne se relit pas ; sans la phrase, aucune sauvegarde ne se restaure |
-| `mfa-github` | codes de récupération du second facteur du compte GitHub qui administre le dépôt | sans eux, plus de secrets Actions, plus de dépôt |
-| `mfa-supabase` | idem, compte Supabase | projet de production |
-| `mfa-vercel` | idem, compte Vercel | déploiement et variables |
-| `mfa-stripe` | idem, compte Stripe | facturation entreprise, clés |
-| `mfa-hebergeur-courrier` | idem, compte de l'hébergeur de la messagerie | la boîte de contact est le chemin de récupération de tous les autres comptes |
-| `admin-aal2` | le facteur TOTP de la console `/admin` (mig. `131`) : un second authentificateur enrôlé sur un autre appareil, ou la graine rangée au coffre | `is_admin()` exige `aal2` ; sans facteur, la console ne rend rien |
-| `admin-aal2-sortie` | la sortie de secours : qui peut ouvrir le SQL editor du projet et jouer la suppression du facteur (`docs/MISES-EN-SERVICE.md` § 2quinquies, « Téléphone perdu »), et la fiche pas à pas | la porte de sortie doit avoir un second gardien |
-| `acces-urgence` | la fiche de l'accès d'urgence : qui, comment on le déclenche, quel délai | voir ci-dessous |
-
-❌ **Jamais au coffre, ni nulle part ailleurs** : un jeton d'API, une clé Stripe ou Supabase (ils se
-font tourner, `rotation` du registre), un mot de passe de compte tiers partagé (un compte par
-personne). ❌ Jamais dans le dépôt, un message, un courriel, une capture ou une photo : le dépôt est
-PUBLIC et GitHub n'est pas un coffre.
-
-### Où, et qui
-
-- Un **gestionnaire de mots de passe** qui sait délivrer un **accès d'urgence avec délai** (la
-  personne de confiance demande l'accès ; le propriétaire peut refuser pendant le délai ; passé le
-  délai sans refus, l'accès s'ouvre). Hors du poste de travail, protégé par son propre second facteur,
-  dont le code de récupération est **sur papier**, rangé ailleurs que l'appareil habituel.
-- Une **personne de confiance** désignée, dont le nom figure dans la fiche `acces-urgence` du coffre
-  et **nulle part dans le dépôt**. Elle sait que le coffre existe, ce qu'il permet et la première
-  chose à lire (la fiche), jamais ce qu'il contient avant l'ouverture.
-- **Délai** : assez long pour qu'une demande abusive soit vue et refusée (sept jours est un point de
-  départ), assez court pour qu'une vraie urgence ne soit pas bloquée. À arbitrer par le propriétaire.
-- À terme, un **second administrateur** (`docs/CONTINUITE.md`) : le coffre est le filet, pas la voie
-  normale.
-
-### Mise en place, une fois
-
-1. Créer le coffre et la collection « continuité », partagée avec la seule personne de confiance, en
-   accès d'urgence avec délai.
-2. Pour chacun des cinq services : régénérer un jeu neuf de codes de récupération, le ranger au coffre,
-   puis seulement détruire l'ancien jeu. Une copie papier du jeu du gestionnaire lui-même, ailleurs.
-3. `BACKUP_PASSPHRASE` : si la phrase actuelle n'a jamais été rangée hors GitHub, appliquer la
-   procédure `phrase-sauvegardes` du registre (nouvelle phrase d'abord au coffre, puis posée) plutôt
-   que de tenter de relire un secret qui ne se relit pas.
-4. `admin-aal2` et `admin-aal2-sortie` : enrôler un second authentificateur, et **parcourir** la sortie
-   de secours une fois, à froid, sur un compte de test ou sur le compte du second administrateur
-   (la leçon de la mig. `131` : un chemin de récupération se parcourt, il ne se raisonne pas).
-5. Rédiger la fiche `acces-urgence`, la faire lire à la personne de confiance.
-6. Consigner la première vérification dans `.github/coffre-verifications.json` (voir ci-dessous).
-
-### Vérification trimestrielle
-
-À faire **avant l'échéance de 92 jours**, depuis un autre appareil que l'habituel :
-
-1. Ouvrir le coffre avec le seul accès normal. Chaque élément du tableau est présent et daté.
-2. Pour chaque service : le jeu de codes de récupération est lisible et non barré. Ne **consommer** un
-   code que pour de vrai ; en régénérer un jeu dès qu'il en reste moins de deux, ranger le neuf, puis
-   détruire l'ancien.
-3. `BACKUP_PASSPHRASE` : sur une machine de confiance, déchiffrer le dernier dump (artefact `db-backup`)
-   avec la phrase **du coffre** (`gpg --batch --passphrase-file <fichier> -d`), vérifier qu'il sort un
-   fichier non vide, puis effacer le clair. C'est la seule façon de prouver que la copie du coffre est
-   la bonne : `restore-drill` prouve la phrase de GitHub, pas celle du coffre.
-4. Joindre la personne de confiance : elle a toujours son accès, connaît le délai et sait où est la fiche.
-5. Consigner : ajouter une ligne à `verifications` de `.github/coffre-verifications.json` (date, prénom,
-   liste des éléments vérifiés), puis pousser. **Noms d'éléments et dates seulement.**
-
-**Le rappel est automatique, pas la vérification.** `check:coffre` joue chaque jour dans
-`gardes-calendrier.yml` et rougit (issue `calendrier-red`, `ci-alert.yml` ensuite) quand la dernière
-vérification a plus de 92 jours, quand elle oublie un élément, ou, tant qu'aucune n'est consignée,
-après la première échéance (**2026-12-08**). ❌ Ne jamais dater une vérification qui n'a pas eu lieu,
-ni relever la période : la garde prouve qu'on l'a dit, pas que le coffre est plein.
-
+Déplacés dans [`SECRETS-ET-COFFRE.md`](./SECRETS-ET-COFFRE.md) : § Rotation des secrets (échéances,
+`check:secrets-age`, procédure de fuite, registre unique) et § Coffre et accès d'urgence (`check:coffre`).
 ## Ne jamais faire — Sécurité (récap)
 
-### 🔐 Données & auth
-
-- ❌ Créer `supabaseAdmin` avec `SERVICE_ROLE_KEY` côté client
-- ❌ Committer le fichier `.env`
-- ❌ Réintroduire `user_id` dans `mapToDb()` d'un repository — mass-assignment (V1)
-- ❌ Créer une policy `UPDATE` sans `WITH CHECK` (N1, N2)
-- ❌ Spreader l'input client dans un `.update()` / `.insert()` Supabase — whitelist explicite obligatoire
-- ❌ Échapper les guillemets dans les `CREATE POLICY` SQL (`\"...\"` casse Postgres)
-- ❌ Lire `premiumTokens` ou identité depuis `localStorage` / `user_metadata` — source unique = `subscriptions` via `useBilling()` (N5, N6)
-- ❌ Écrire l'état premium dans `localStorage` (utiliser Supabase `subscriptions`)
-- ❌ Garder une surface admin par `admin_allowlisted()` au lieu de `is_admin()` — la première ignore le niveau d'assurance de la session, exprès (mig. 131)
-- ❌ Insérer dans `friends` / `shared_tasks` sans vérifier le lien d'amitié côté SQL (V12, V13)
-- ❌ Ne supprimer qu'un côté d'une amitié — `accept_friend_request` insère 2 lignes, `removeFriend` doit en supprimer 2 (B15)
-- ❌ Appeler `supabase.auth.updateUser({ password })` sans réauthentification via `signInWithPassword` (B8)
-- ❌ Accepter `image/svg+xml` dans un upload utilisateur — peut contenir du JS (V5)
-- ❌ Dériver `isDemo` de l'email (`user?.email === 'demo@cosmo.app'`) — utiliser `useIsDemo()` / `appModeStore.isDemo` (B0)
-- ❌ `window.parent.postMessage(*, '*')` — fuite vers iframe parente (V6)
-- ❌ Surfacer `error.message` brut de Supabase/Postgres dans l'UI ou un toast — `normalizeApiError().message` est générique, l'original va en `originalMessage` (log only, V7)
-- ❌ Ajouter un script tiers dans `index.html` sans CSP
-- ❌ `allowedHosts: true` dans `vite.config.ts` — toujours une allowlist explicite (N10)
+Les interdits de données, d'authentification et de surface client sont aux sections de règles ci-dessus ; ne restent
+ici que ceux qui n'y ont pas de section.
 
 ### 💳 Stripe & Edge Functions
-
 - ❌ Faire un read-then-write sur `subscriptions` dans une Edge Function — utiliser `upsert({...}, { onConflict: 'user_id' })` (U1, U2)
 - ❌ Reset `premium_tokens` ou `win_streak` sur tous les events Stripe — ces champs ne se touchent que sur `checkout.session.completed` et `invoice.payment_succeeded` (B10, W6)
 - ❌ Échouer la validation signature webhook avec `return new Response(err.message, ...)` — toujours renvoyer `'Invalid signature'` générique (N9)
 - ❌ Renvoyer `Access-Control-Allow-Origin: '*'` sur une Edge Function authentifiée — allowlist liée à `APP_URL` (N7)
-- ❌ Interpoler `params.cursor` / `params.cursorDate` directement dans un filtre PostgREST `.or()` — utiliser `assertValidCursor(...)` de `@/lib/pagination.types` (N6 / H-1)
-- ❌ Interpoler un id client-contrôlé dans un `.not('in', ...)` PostgREST sans valider l'UUID — cf. `syncKRsToTable` (M-1)
-- ❌ Appeler Stripe `customers.create` ou `checkout.sessions.create` sans `idempotencyKey` (`customer:${uid}`, `checkout:${uid}:${day}`) (M-3)
-- ❌ Marquer un event Stripe comme processed (`INSERT processed_stripe_events`) **avant** que le handler n'ait réussi. Ordre obligatoire : handler → INSERT marker → 500 si INSERT échoue avec code ≠ 23505 (M-4 / M-5)
-- ❌ Déployer une Edge Function sans sa section dans `supabase/config.toml` — `stripe-webhook` et les trois fonctions cron doivent avoir `verify_jwt = false` (M-10, W-1). `src/edge-config.guard.test.ts` le refuse
 - ❌ Un appel sortant vers une URL saisie par un client sans résoudre le nom et refuser toute adresse non publique (W-2, `_shared/org-integrations.ts`). Une liste noire textuelle ne suffit jamais : `https://2130706433/` est `127.0.0.1`
 - ❌ Une fonction `SECURITY DEFINER` exécutable par `authenticated` **parce qu'un trigger INVOKER l'appelle**, sans garde `pg_trigger_depth()` : elle devient une RPC (W-3, mig. `207`)
 - ❌ Une Edge Function qui envoie un e-mail sans plafond de débit (`_shared/rate-limit.ts`) : le domaine d'envoi est celui des e-mails d'authentification (C-31, W-4)
-- ❌ Rejeter une méthode HTTP avec un parsing préalable du body — `if (req.method !== 'POST') return 405` avant tout pour `stripe-webhook` (L-13)
 - ❌ Recopier `auth.users.raw_user_meta_data->>'name'` dans une table partagée sans `sanitize_display_name()` — second-order XSS (M-2)
-- ❌ `delete-account` qui `DELETE FROM shared_tasks WHERE user_id = ...` — la colonne s'appelle `friend_id` / `shared_by`. Utiliser `.or('friend_id.eq.{uid},shared_by.eq.{uid}')` (M-6)
-- ❌ `delete-account` qui supprime `auth.users` même si une table user-owned a échoué la purge — orphelins RGPD article 17 (M-6)
 - ❌ Envoyer `error.message` brut à Sentry sans `beforeSend` qui strip emails/UUIDs (M-9)
 - ❌ Laisser `cosmo:qcache:*` survivre à un `SIGNED_OUT` — purge prefix-sweep (L-11)
 - ❌ Passer une chaîne user-contrôlée dans `dangerouslySetInnerHTML` d'un `<style>` sans whitelist regex (`#[0-9a-f]{3,8}`, `var(--…)`, `hsl()`, `rgb()`) — cf. `chart.tsx` (M-11)
 
 ---
 
-## Base de données · état et récits repris de `CLAUDE.md` (déplacés le 2026-09-16)
-
-> Les récits datés qui vivaient ici (applications de migrations du 2026-08-27 au 2026-09-20, mesures
-> du ledger, enrôlement MFA de l'admin, correctifs de la `136`, `146`, `149`) sont archivés **sans
-> une coupe** : [`archive/SECURITY-recits-base-gardes-angles-morts-2026-08-26-au-2026-11-08.md`](./archive/SECURITY-recits-base-gardes-angles-morts-2026-08-26-au-2026-11-08.md).
-> Ne restent que les règles, chacune avec son « pourquoi » en une ligne. Les règles courtes vivent dans
-> [`supabase/migration/CLAUDE.md`](../supabase/migration/CLAUDE.md).
 
 ## Base de données Supabase
 
@@ -650,16 +442,7 @@ Fonctions SECURITY DEFINER clés : `accept_friend_request_v2`, `accept_shared_ta
 - En base **sans** ligne au ledger, par décision d'Axel : `164`, `181`, `190`-`195`, `197`-`199`.
   `196` est retirée par la `200`. ❌ **Ne jamais réappliquer la `164`** : elle retire la branche
   « membre du projet » de la `190`.
-- **2026-11-07** : `242` → `244` en prod, dernière entrée `244_select_permissive_unique`
-  (`20261107091936`). Pour `242` (`20261107091512`), `243` (`20261107091727`) et `244` : ledger
-  relu avant, preuve `supabase/proofs/24x.proof.sql` rejouée en prod (0 ECHEC, annulation
-  vérifiée), `apply_migration`, relecture au catalogue. `242` : `pg_default_acl` de `postgres`
-  sur `public` ne nomme plus `anon` (tables, séquences) ; les fonctions et `supabase_admin` hors
-  périmètre. `243` : `pg_get_functiondef(can_access_team_project)` = le corps du fichier, ACL
-  inchangée, deux `EXISTS` sur les policies de dépendances. `244` : une SELECT permissive par
-  table sur les sept ; la prod ne portait déjà plus les « read own » relevés sur base rejouée,
-  la 244 y a recréé des prédicats identiques (vérifié au caractère près). Advisors sans nouvelle
-  alerte ; aucun 42501 ni 500 dans les logs, sans trafic API dans la fenêtre.
+- Le détail de la mise en production de `242` à `244` (preuves, numéros de ledger) : archive.
 - Le journal daté des applications `150` → `223` (preuves, numéros de ledger, relectures au
   catalogue), dont les premières lignes étaient démenties par les suivantes, est archivé :
   [`archive/SECURITY-journal-migrations-150-223.md`](./archive/SECURITY-journal-migrations-150-223.md).
@@ -796,14 +579,8 @@ Rouge au 2026-11-05 (référence du 10-26, descendue de `scripts/CLAUDE.md`) : `
 relire au catalogue AVANT `--update`. `supabase/rpc-inventory.md` (généré, MAI-01/API-01) donne l'état
 des droits `EXECUTE` de chaque fonction depuis les migrations.
 
-**Relu et recalé le 2026-11-07 (V9.4, TST-05), soldé le 2026-11-08.** ⚠️ **Pas** « rouge pour une
-amélioration » : la baisse d'`unused_index` est imprimée sans rougir, et le workflow n'annote que le verdict.
-Chaque objet a été relu dans sa migration et par `get_advisors`, les noms sont écrits dans les `_note` de la
-référence : sept `affiliate_*` (`236`), `billing_acceptances` et `org_withdrawals` (`237`), `org_seat_alerts`
-(`240`) en RLS sans policy voulue ; trois DEFINER exposées légitimes (`affiliate_backfill`, `affiliate_attach`,
-`claim_affiliate`) ; trois clés étrangères sans index, **défaut** corrigé par la mig. **`247`**
-(`unindexed_foreign_keys` absent de `get_advisors` depuis). La mesure détaillée (runs, ledger, comptes) est
-dans l'archive ci-dessus.
+Soldé le 2026-11-08 : chaque objet relu dans sa migration et par `get_advisors`, noms écrits dans les `_note` de la
+référence ; mig. **`247`** pour les trois clés étrangères sans index. Mesure détaillée : archive.
 
 Comptes recalés par le job `regenerer` du workflow Posture sur `main` (jamais à la main). Témoin :
 « la référence COMMITÉE rougit encore sur un objet de plus » (`gardes-posture.guard.test.mjs`).

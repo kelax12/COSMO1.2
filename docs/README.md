@@ -81,6 +81,7 @@ Une ligne par document. L'état de santé est dans [`INDICATEURS.md`](./INDICATE
 | [`TESTING.md`](./TESTING.md) | Vitest, Playwright, a11y, i18n, CI, **checklist avant push prod** |
 | [`DEPLOYMENT.md`](./DEPLOYMENT.md) | Runbook deploy / rollback Vercel + Supabase, drill de restauration |
 | [`MISES-EN-SERVICE.md`](./MISES-EN-SERVICE.md) | Mises en service : emails Auth (Resend), Turnstile, second facteur `/admin`, crons pg_cron (ex-§ 2ter à 2sexies de DEPLOYMENT) |
+| [`SECRETS-ET-COFFRE.md`](./SECRETS-ET-COFFRE.md) | Rotation des secrets, registre unique, coffre et accès d'urgence (ex-sections de SECURITY) |
 | [`OBSERVABILITE.md`](./OBSERVABILITE.md) | Signaux de production : disponibilité, erreurs Sentry, alertes |
 | [`MOBILE.md`](./MOBILE.md) | Pages et composants mobiles, bottom-sheets, pièges iOS Safari |
 | [`UI-PATTERNS.md`](./UI-PATTERNS.md) | Listes, modales, tutoriels, onboarding, thèmes |
@@ -109,7 +110,7 @@ Une ligne par document. L'état de santé est dans [`INDICATEURS.md`](./INDICATE
 
 Rangées par nature. Aucune n'est maintenue.
 
-- **Sécurité** : `faille-historique.md` et `faille-jusqua-2026-10-11.md` (retirés du dépôt public, SEC-02),
+- **Sécurité** : [`SECURITY-journal-2026-11-13.md`](./archive/SECURITY-journal-2026-11-13.md) (extraits de `SECURITY.md` du 2026-11-13), `faille-historique.md` et `faille-jusqua-2026-10-11.md` (retirés du dépôt public, SEC-02),
   [`SECURITY-journal-migrations-150-223.md`](./archive/SECURITY-journal-migrations-150-223.md)
   (journal daté des migrations `150` → `240`). Les récits d'incident, de mesure et de bascule retirés de
   `SECURITY.md` le 2026-11-08 (angles morts, base de données, gardes SQL, garde-fous transversaux, AM-5) :

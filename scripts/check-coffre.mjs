@@ -3,7 +3,7 @@
 //
 // 🔴 POURQUOI CE FICHIER EXISTE
 //
-// Le coffre (docs/SECURITY.md, § Coffre) garde ce qu'aucune console ne rend
+// Le coffre (docs/SECRETS-ET-COFFRE.md, § Coffre) garde ce qu'aucune console ne rend
 // deux fois : la phrase qui déchiffre les sauvegardes, les codes de
 // récupération du second facteur de chaque compte, la sortie de secours de la
 // console admin. Un coffre se remplit une fois et se périme en silence : un
@@ -116,13 +116,13 @@ export function evaluerCoffre({ journal, registre, maintenant }) {
     const age = Math.floor((maintenant.getTime() - dateUtc(derniere.date)) / JOUR);
     resume.push(`dernière vérification ${derniere.date} (${age} j, borne ${bornePeriode} j)`);
     if (age > bornePeriode) {
-      erreurs.push(`dernière vérification du ${derniere.date} : ${age} j, borne ${bornePeriode} j. Vérifier le coffre (docs/SECURITY.md, § Coffre) et la consigner.`);
+      erreurs.push(`dernière vérification du ${derniere.date} : ${age} j, borne ${bornePeriode} j. Vérifier le coffre (docs/SECRETS-ET-COFFRE.md, § Coffre) et la consigner.`);
     }
   } else if (DATE.test(journal.premiereEcheance ?? '')) {
     const retard = Math.floor((maintenant.getTime() - dateUtc(journal.premiereEcheance)) / JOUR);
     resume.push(`aucune vérification consignée, première échéance ${journal.premiereEcheance}`);
     if (retard > 0) {
-      erreurs.push(`aucune vérification du coffre consignée, première échéance dépassée de ${retard} j (${journal.premiereEcheance}). Vérifier le coffre (docs/SECURITY.md, § Coffre) et la consigner.`);
+      erreurs.push(`aucune vérification du coffre consignée, première échéance dépassée de ${retard} j (${journal.premiereEcheance}). Vérifier le coffre (docs/SECRETS-ET-COFFRE.md, § Coffre) et la consigner.`);
     }
   }
   return { erreurs, resume };

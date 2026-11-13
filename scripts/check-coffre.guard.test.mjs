@@ -133,7 +133,7 @@ describe('check-coffre · branchement', () => {
     for (const f of ['ci-noyau.yml', 'ci.yml']) expect(lire(`.github/workflows/${f}`), f).not.toContain('check:coffre');
   });
 
-  it('la procédure existe dans docs/SECURITY.md sous le titre que la garde cite', () => {
-    expect(lire('docs/SECURITY.md')).toMatch(/^## Coffre /m);
+  it('la procédure existe dans docs/SECRETS-ET-COFFRE.md sous le titre que la garde cite', () => {
+    expect(lire('docs/SECRETS-ET-COFFRE.md')).toMatch(/^## Coffre /m);
   });
 });
