@@ -446,7 +446,7 @@ Des **identifiants d'éléments**, vérifiés un à un par `check:coffre` (`scri
 | `mfa-stripe` | idem, compte Stripe | facturation entreprise, clés |
 | `mfa-hebergeur-courrier` | idem, compte de l'hébergeur de la messagerie | la boîte de contact est le chemin de récupération de tous les autres comptes |
 | `admin-aal2` | le facteur TOTP de la console `/admin` (mig. `131`) : un second authentificateur enrôlé sur un autre appareil, ou la graine rangée au coffre | `is_admin()` exige `aal2` ; sans facteur, la console ne rend rien |
-| `admin-aal2-sortie` | la sortie de secours : qui peut ouvrir le SQL editor du projet et jouer la suppression du facteur (`docs/DEPLOYMENT.md` § 2quinquies, « Téléphone perdu »), et la fiche pas à pas | la porte de sortie doit avoir un second gardien |
+| `admin-aal2-sortie` | la sortie de secours : qui peut ouvrir le SQL editor du projet et jouer la suppression du facteur (`docs/MISES-EN-SERVICE.md` § 2quinquies, « Téléphone perdu »), et la fiche pas à pas | la porte de sortie doit avoir un second gardien |
 | `acces-urgence` | la fiche de l'accès d'urgence : qui, comment on le déclenche, quel délai | voir ci-dessous |
 
 ❌ **Jamais au coffre, ni nulle part ailleurs** : un jeton d'API, une clé Stripe ou Supabase (ils se

@@ -19,7 +19,7 @@
 // si la limite d'envoi horaire a été relevée. Ces deux réglages ne sont exposés
 // nulle part en lecture. Il dit seulement que le domaine d'envoi est en état de
 // signer du courrier — ce qui est la condition préalable, pas la preuve finale.
-// La preuve finale reste un email reçu, cf. docs/DEPLOYMENT.md §2ter.
+// La preuve finale reste un email reçu, cf. docs/MISES-EN-SERVICE.md §2ter.
 //
 // 🔴 CE SCRIPT N'EST PAS UNE GATE CI, et c'est délibéré. Il dépend d'un état
 // EXTERNE (une zone DNS, un fournisseur) : un job rouge pour une raison que le
@@ -197,11 +197,11 @@ console.log('');
 if (failures.length === 0) {
   console.log(`✅ Domaine d’envoi en état de signer${warnings.length ? ` (${warnings.length} avertissement(s))` : ''}.`);
   console.log('   ⚠️  Le DNS ne prouve pas qu’un email ARRIVE. La preuve reste un compte jetable,');
-  console.log('       vérifié sur Gmail ET sur Outlook. Cf. docs/DEPLOYMENT.md §2ter.');
+  console.log('       vérifié sur Gmail ET sur Outlook. Cf. docs/MISES-EN-SERVICE.md §2ter.');
   console.log('   ⚠️  Un 250 sur RCPT TO ne prouve pas qu’un humain LISE la boîte (SUPPORT.md AM-2).\n');
   process.exit(0);
 }
 
 console.log(`❌ ${failures.length} contrôle(s) en échec — les emails d’authentification ne sont pas fiables.`);
-console.log('   Procédure de mise en service : docs/DEPLOYMENT.md §2ter.\n');
+console.log('   Procédure de mise en service : docs/MISES-EN-SERVICE.md §2ter.\n');
 process.exit(1);

@@ -195,7 +195,7 @@ describe('fonctions planifiées · le bail est pris, au bon endroit', () => {
 // La sonde est planifiée dès qu'un job est basculé.
 //
 // ❌ Ne jamais ajouter un job à `JOBS_BASCULES` sans son premier `ok` dans
-//    `cron_runs` (`DEPLOYMENT.md` § 2sexies, étape 7), ni retirer un `schedule:`
+//    `cron_runs` (`MISES-EN-SERVICE.md` § 2sexies, étape 7), ni retirer un `schedule:`
 //    sans l'ajouter : le test refuse les deux.
 const aUnSchedule = (yml: string) => /^\s+schedule:/m.test(yml);
 const aLeCron = (yml: string, expr: string) =>

@@ -31,7 +31,7 @@ export const VERDICT_SQL = `SELECT job, fenetre::text AS fenetre, dernier_debut,
 export const JOBS_ATTENDUS = 6;
 
 /**
- * Jobs que GitHub ne planifie PLUS (`DEPLOYMENT.md` § 2sexies, étape 8), SOURCE
+ * Jobs que GitHub ne planifie PLUS (`MISES-EN-SERVICE.md` § 2sexies, étape 8), SOURCE
  * UNIQUE : `src/edge-cron-lease.guard.test.ts` en déduit quels `schedule:` doivent
  * avoir disparu. Bascule en deux temps : un job y entre le jour où son `schedule:`
  * sort, après un premier `ok` dans `cron_runs`.

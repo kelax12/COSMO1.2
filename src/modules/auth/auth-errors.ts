@@ -44,7 +44,7 @@ export const safeAuthError = (error: SupabaseAuthErrorLike, fallback: string): s
   // plafond de l'expéditeur — éventuellement consommé par quelqu'un d'autre —
   // qui est atteint. Il ne peut pas être précisé sans distinguer les deux
   // codes, et GoTrue ne les distingue pas toujours. La vraie sortie est le
-  // SMTP applicatif (docs/DEPLOYMENT.md §2ter), pas une meilleure phrase.
+  // SMTP applicatif (docs/MISES-EN-SERVICE.md §2ter), pas une meilleure phrase.
   if (code === 'over_email_send_rate_limit' || code === 'over_request_rate_limit' || error.status === 429) {
     return t('auth.tooManyAttempts');
   }

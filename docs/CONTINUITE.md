@@ -74,7 +74,7 @@ Ordre, qui évite la coupure de la mig. `131` :
 6. **Contrôle négatif** (c'est lui qui prouve la garde) : se déconnecter, se reconnecter par mot de passe
    seul, s'arrêter avant le code. `/admin` doit demander le code et **ne rien afficher**.
 7. **Compter** : `select count(*) from public.admin_users;` rend le nombre attendu.
-8. **Parcourir la sortie de secours une fois** ([`DEPLOYMENT.md`](./DEPLOYMENT.md) § 2quinquies,
+8. **Parcourir la sortie de secours une fois** ([`MISES-EN-SERVICE.md`](./MISES-EN-SERVICE.md) § 2quinquies,
    « Téléphone perdu ») : le propriétaire retire le facteur de la personne, elle se réenrôle. C'est
    l'épreuve qui prouve que la porte de sortie marche **avant** qu'on en ait besoin.
 9. Ranger le facteur `admin-aal2` de la personne dans **son** coffre (jamais dans le dépôt).
@@ -176,7 +176,7 @@ Constat de la passe : sur les gestes restants, **aucun** n'est convertible sans 
 | Séances VoiceOver (avant le 2026-12-15) et NVDA (avant le 2027-01-15) | appareils et lecteurs d'écran réels ; `check:lecteurs-ecran` mesure l'échéance, il ne joue pas la séance |
 | « Promote » Vercel, M-47 (`DEPLOYMENT.md` § 3) | console Vercel, à froid, une fois |
 | Redéployer sans verdict vert (urgence) | console Vercel, **voulu** : le contournement de la porte doit rester un geste conscient et laisse sa trace (`prod_en_avance`) |
-| Bascule pg_cron : secrets Vault, mig. `245` et `246`, retrait des `schedule:` GitHub | écritures en production et valeur de `CRON_SECRET` dans le Vault (`DEPLOYMENT.md` § 2sexies) |
+| Bascule pg_cron : secrets Vault, mig. `245` et `246`, retrait des `schedule:` GitHub | écritures en production et valeur de `CRON_SECRET` dans le Vault (`MISES-EN-SERVICE.md` § 2sexies) |
 | Drill **manuel** vers un projet Supabase jetable | seul à restaurer sur la plateforme réelle (pg_cron, Vault, rôles gérés) et à chronométrer le RTO d'un sinistre ; crée puis détruit un projet et un secret `DRILL_DB_URL` le jour même |
 | Mettre le coffre en place, désigner la personne de confiance, inviter le second administrateur, inscrire l'allowlist | droits sur des comptes et écriture en base ; pas de valeur dans le dépôt |
 | Rédiger le préavis de modification des CGU, rembourser (M-08) | message sortant et argent réel |

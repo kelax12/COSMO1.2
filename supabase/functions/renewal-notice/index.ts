@@ -51,7 +51,7 @@ const APP_URL = Deno.env.get('APP_URL') ?? 'https://thecosmo.app'
  * IMPOSSIBLE — et en silence, sur la fonction qui porte une obligation légale
  * dont l'oubli rend l'abonnement résiliable à tout moment.
  *
- * `docs/DEPLOYMENT.md` §2ter le disait déjà ; le code, lui, offrait la valeur
+ * `docs/MISES-EN-SERVICE.md` §2ter le disait déjà ; le code, lui, offrait la valeur
  * qui échoue. Sans le secret, la fonction refuse de tourner et le dit.
  */
 // Expéditeur de facturation (billing@, 2026-11-01), repli sur l'expéditeur

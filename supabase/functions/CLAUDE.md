@@ -43,7 +43,7 @@ fonctions après un noyau vert (`.github/workflows/edge-deploy.yml`) ; `docs/DEP
   pas. `callerIp` (`_shared/caller-ip.ts`) lit `cf-connecting-ip` (SV-3).
 - ❌ **Jamais une fonction planifiée sans `withCronLease`** (`_shared/cron-lease.ts`, mig. `245`, ARC-06) :
   idempotentes en rejeu, elles ne l'étaient pas en concurrence (deux passages, deux envois). Garde :
-  `src/edge-cron-lease.guard.test.ts`. Planification : pg_cron, `docs/DEPLOYMENT.md` § 2sexies.
+  `src/edge-cron-lease.guard.test.ts`. Planification : pg_cron, `docs/MISES-EN-SERVICE.md` § 2sexies.
 - 🔴 **`analytics-admin-login` : connexion admin de l app `analytics` par le SEUL code TOTP** (choix d Axel, 2026-11-13), `verify_jwt = false`, source ici. ❌ Jamais un plafond qui s ouvre quand le compteur est illisible (`failClosed`), jamais sans contrôle de l en-tête `Origin` (`analyticsOrigins`). Garde : `src/analytics-admin-login.guard.test.ts`.
 - ❌ **Jamais un e-mail sans plafond de débit** (`_shared/rate-limit.ts`, W-4 ; plafond par exécution pour un cron).
 - ⚠️ **`delete-account` a deux modes depuis le 2026-10-22 (C-121)** : JWT de la personne, ou

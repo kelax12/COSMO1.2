@@ -76,7 +76,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
   // pour que les activer ne casse rien : sans lui, `signUp` renvoie
   // `session: null`, l'écran navigue quand même vers `/dashboard`, et
   // `ProtectedRoute` renvoie l'inscrit sur `/login` sans un mot d'explication.
-  // Cf. docs/DEPLOYMENT.md §2ter.
+  // Cf. docs/MISES-EN-SERVICE.md §2ter.
   const [pendingConfirmation, setPendingConfirmation] = useState<string | null>(null);
   // Jeton anti-robot. Reste `undefined` tant que Turnstile n'est pas configuré :
   // Supabase ignore alors la clé, et rien ne change. Cf. `@/lib/turnstile`.

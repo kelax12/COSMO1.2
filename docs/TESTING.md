@@ -593,7 +593,7 @@ Les règles elles-mêmes, l'inventaire classé et les retraits : [`scripts/CLAUD
 | REMPLAÇANT standard | `codeql.yml` ; Dependabot (`.github/dependabot.yml`) et secret scanning, sans workflow |
 | DÉPLOIEMENT | `edge-deploy.yml` (après un noyau vert) |
 | PRODUIT | `daily-digest`, `weekly-digest`, `org-digest` (quotidien), `inactive-accounts`, `renewal-notice` : traitements de production, pas des gardes ; `org-webhook-dispatch` et le mode horaire d'`org-digest` sont dans pg_cron depuis le 2026-11-13 (`workflow_dispatch` seul ici) |
-| SONDE | `cron-journal.yml` : journal des crons pg_cron, horaire (`DEPLOYMENT.md` § 2sexies) |
+| SONDE | `cron-journal.yml` : journal des crons pg_cron, horaire (`MISES-EN-SERVICE.md` § 2sexies) |
 
 ## Checklist avant push prod
 

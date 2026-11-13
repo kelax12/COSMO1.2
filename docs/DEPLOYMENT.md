@@ -10,6 +10,9 @@ réagir à un incident. À lire avant toute mise en prod.
 
 ---
 
+> Mises en service (emails Auth, Turnstile, second facteur `/admin`, crons pg_cron) :
+> [`MISES-EN-SERVICE.md`](./MISES-EN-SERVICE.md). Récits et relevés datés de ce runbook :
+> [`archive/DEPLOYMENT-journal-2026-11-13.md`](./archive/DEPLOYMENT-journal-2026-11-13.md).
 
 ## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
 
@@ -64,36 +67,25 @@ npx playwright test --project=chromium
    range chaque fichier contre le ledger ET le catalogue de prod, et rougit sur
    un fichier dont aucun objet n'existe (= migration non appliquée).
 
-`check:drift` (deux étapes à la main, jamais lancé en CI) est retiré le
-2026-11-08 (V18.1) : son seul verdict d'échec, « objet attendu absent de la
-prod », est celui d'`ABSENT DES DEUX` dans `check:migration-coverage`.
+`check:drift` est retiré (V18.1) : son verdict est celui d'`ABSENT DES DEUX` de `check:migration-coverage`.
 
 ---
 
-### Hook `pre-push` : pas de poussée sur un noyau rouge (2026-10-21, sans contournement depuis le 2026-11-06)
+### Hook `pre-push` : pas de poussée sur un noyau rouge (sans contournement depuis le 2026-11-06)
 
 `.githooks/pre-push` lance `scripts/pre-push-main-red.mjs` : une poussée vers `main` est refusée si
-le dernier run `CI noyau` de `main` est rouge, ou si son état est illisible (`gh` absent ou non
-authentifié). Il s'installe une fois par clone : `git config core.hooksPath .githooks`.
-
-🔴 **Aucun contournement** (vague 2.3) : la variable qui forçait la poussée, banalisée (CI-01), est
-retirée, et le script ne lit aucune variable d'environnement. Le seul chemin pour réparer un noyau
-rouge passe par un verdict vert sur le correctif lui-même :
+le dernier run `CI noyau` de `main` est rouge, ou illisible (`gh` absent ou non authentifié).
+Installation, une fois par clone : `git config core.hooksPath .githooks`. 🔴 **Aucun contournement** ;
+le script ne lit aucune variable d'environnement. Réparer un noyau rouge :
 
 1. `git push origin HEAD:refs/heads/noyau/<nom>` : le noyau tourne sur la branche ;
-2. une fois ce run `CI noyau` vert, `git push origin HEAD:main` : le hook laisse passer ce SHA, et
-   lui seul, parce qu'il a déjà un verdict vert ;
+2. ce run `CI noyau` vert, `git push origin HEAD:main` : le hook laisse passer ce SHA seul ;
 3. `git push origin --delete noyau/<nom>`.
 
-⚠️ `--no-verify` saute tout hook local : ❌ interdit (`CLAUDE.md`). Seule une protection de branche
-côté GitHub (statut `CI noyau` requis) fermerait ce dernier chemin ; c'est un réglage du dépôt.
-Témoins : `scripts/pre-push-main-red.test.mjs` (noyau rouge + ancienne variable posée = refus ;
-gh illisible = refus ; la variable n'existe plus hors `docs/archive/`).
+❌ `--no-verify` interdit (`CLAUDE.md`). Seule une protection de branche GitHub (statut `CI noyau`
+requis) fermerait ce dernier chemin. Témoins : `scripts/pre-push-main-red.test.mjs`.
 
-### Porte de déploiement : la production n'attend plus que le noyau (CI-02, 2026-11-07)
-
-Jusqu'au 2026-11-07, Vercel construisait et publiait chaque poussée sur `main` en ~40 s, avant le
-verdict de `CI noyau` (~5 min) : un commit rouge partait en production. Désormais :
+### Porte de déploiement : la production n'attend que le noyau (CI-02)
 
 1. `CI noyau` rend son verdict sur la poussée (`main` ou `noyau/<nom>`).
 2. `.github/workflows/ci-vert.yml` (`workflow_run`) pose un tag léger : `ci-vert/<sha>` sur un
@@ -103,20 +95,14 @@ verdict de `CI noyau` (~5 min) : un commit rouge partait en production. Désorma
    `node scripts/vercel-ignore-build.mjs; test $? -ne 78`. Pour un build de **production**
    (`VERCEL_ENV=production` ou branche `main`), le script sonde
    `git ls-remote https://github.com/kelax12/COSMO1.2 refs/tags/ci-vert/<sha>` toutes les 20 s,
-   15 min au plus. Tag vert : il sort en 78, `test` rend 1, **Vercel construit**. Tout le reste
-   rend 0 et Vercel **ignore** le build (déploiement `CANCELED`) : tag `ci-rouge`, délai dépassé,
-   GitHub injoignable, SHA illisible, et même un Node qui plante (il sort en 1, pas en 78). La
-   raison est écrite dans le journal du build, lignes `[porte]`.
-4. Les builds d'**aperçu** (branches `noyau/*` et autres) construisent tout de suite, comme avant.
+   15 min au plus (`ls-remote` et non l'API REST : pas de plafond de 60 requêtes/h par IP partagée).
+   Tag vert : il sort en 78, `test` rend 1, **Vercel construit**. Tout le reste rend 0 et Vercel
+   **ignore** le build (`CANCELED`) : tag `ci-rouge`, délai dépassé, GitHub injoignable, SHA
+   illisible, Node qui plante (sortie 1, pas 78). La raison est dans le journal du build (`[porte]`).
+4. Les builds d'**aperçu** (branches `noyau/*` et autres) construisent tout de suite.
 
-Pourquoi `git ls-remote` et pas l'API REST : sans jeton, l'API est limitée à 60 requêtes par heure
-et par IP, et les IP de build de Vercel sont partagées. Le protocole git d'un dépôt public n'a pas
-ce plafond et ne demande aucun jeton.
-
-Délai normal : la poussée sur `main` d'un SHA déjà vert sur `noyau/<nom>` construit tout de suite
-(le tag existe) ; une poussée directe attend le noyau, soit ~5 min de plus qu'avant. Le build en
-attente occupe le slot de build Vercel : un aperçu poussé pendant ce temps patiente.
-
+Un SHA déjà vert sur `noyau/<nom>` construit tout de suite sur `main` ; une poussée directe attend
+le noyau (~5 min). Le build en attente occupe le slot de build : un aperçu poussé pendant ce temps patiente.
 **Si le noyau est rouge** : le build de production est ignoré dès le tag `ci-rouge` (au plus
 15 min sans verdict), la production reste sur le dernier déploiement vert, `CI noyau` sonne
 (`ci-alert.yml`) et le hook `pre-push` bloque `main` jusqu'au correctif (§ Hook ci-dessus). Le
@@ -171,10 +157,8 @@ supabase functions deploy stripe-webhook --use-api --project-ref ykeugqfgklejcdb
 La CLI est la voie recommandée : elle résout seule l'arborescence des imports
 relatifs (`../_shared/alert.ts`) et préserve le réglage `verify_jwt`.
 
-Un déploiement par l'API (MCP `deploy_edge_function`) est possible mais exige
-de reproduire l'arborescence **à la main** — il faut passer `_shared/alert.ts`
-dans `files` ET viser `entrypoint_path: '<fonction>/index.ts'`, sinon l'import
-relatif ne résout pas. Et il faut re-préciser `verify_jwt` à chaque fois.
+Un déploiement par l'API (MCP `deploy_edge_function`) exige de passer `_shared/alert.ts` dans
+`files`, de viser `entrypoint_path: '<fonction>/index.ts'` et de re-préciser `verify_jwt`.
 
 ### Smoke test après déploiement (sans effet de bord)
 
@@ -233,10 +217,8 @@ supabase secrets set BUG_REPORT_FROM="Cosmo <bug@thecosmo.app>"
 
 3. Déployer : `supabase functions deploy report-bug`
 
-> ✅ Déployée en production depuis le 2026-08-29 (`verify_jwt` actif). Fumée de référence : `POST` sans
-> corps → `503 mail_not_configured` quand les secrets manquent, `GET` → `405`, sans JWT → `401` du
-> gateway. L'étape 1 dépend du même domaine vérifié que § 2ter. *(Pourquoi cette ligne : la doc l'a dite
-> livrée six jours avant qu'elle le soit ; le récit est archivé.)*
+> ✅ Déployée en production (`verify_jwt` actif). Fumée de référence : `POST` sans corps → `503
+> mail_not_configured` quand les secrets manquent, `GET` → `405`, sans JWT → `401` du gateway.
 
 **Tant que `RESEND_API_KEY` est absente**, la fonction répond `503
 mail_not_configured` — et c'est un état prévu, pas une panne : le formulaire
@@ -249,358 +231,11 @@ L'auteur du rapport, lui, arrive en `Reply-To` — répondre au mail répond bie
 l'utilisateur, et son identité vient du JWT, jamais du corps de la requête.
 
 ---
-
-## 2ter. Emails d'authentification (Supabase Auth) · **SMTP EN SERVICE depuis le 2026-08-29 au soir ; les confirmations restent désactivées**
-
-> 🔴 **État à lire avant la procédure.** Le serveur d'envoi d'Auth est en service depuis le 2026-08-29 au soir
-> (domaine d'envoi `send.thecosmo.app`, `npm run check:mail` vert, seul avertissement : DMARC `p=none`,
-> correct pour démarrer). Les **confirmations d'inscription restent désactivées**, par décision d'Axel
-> (finding `G-2`) : aucune adresse inscrite par e-mail et mot de passe n'a jamais été prouvée, la colonne
-> `email_confirmed_at` dit « confirmé » parce que personne n'a demandé de confirmation. Activer les
-> confirmations ne dépend plus que d'une décision.
->
-> ⚠️ Le DNS ne prouve toujours pas qu'un e-mail ARRIVE : la preuve reste un compte jetable vérifié sur
-> Gmail ET Outlook (§ « Vérification » plus bas). *(Pourquoi cet encadré : le titre de cette section a dit
-> « non configurés » seize jours après la mise en service ; la mesure du 2026-09-14 est archivée.)*
-
-> 🔴 **Ce sont les emails que Supabase envoie AUX UTILISATEURS**, pas ceux qu'envoient les Edge
-> Functions. Les deux passent par Resend, mais ce sont deux chemins distincts, avec deux
-> configurations distinctes : `report-bug` et `renewal-notice` appellent l'API Resend depuis du
-> code que nous écrivons ; GoTrue, lui, envoie en **SMTP** depuis un serveur que nous ne
-> contrôlons pas. Poser `RESEND_API_KEY` ne configure QUE le premier.
-
-### État des emails Auth avant la mise en service (27 au 29 août 2026) : archivé
-
-Le constat d'avant la mise en service (comptes en base, DKIM absent, sous-domaine d'envoi inexistant, mode de défaillance corrélé sous trafic) est conservé à sa date dans [`archive/DEPLOYMENT-emails-auth-avant-mise-en-service-2026-08-27-au-2026-08-29.md`](./archive/DEPLOYMENT-emails-auth-avant-mise-en-service-2026-08-27-au-2026-08-29.md). Il fonde l'ordre des gestes ci-dessous : le serveur d'envoi dédié se règle **avant** toute campagne, parce que la défaillance ne se déclenche que sous trafic.
-
-### Mise en service — l'ordre compte
-
-**Le SMTP d'abord, les confirmations ensuite.** Inverser les deux, c'est ouvrir l'inscription sur
-un expéditeur plafonné.
-
-1. **Créer le sous-domaine d'envoi chez Resend** — `send.thecosmo.app`, **pas** `thecosmo.app`.
-   C'est le point technique de cette procédure : la racine porte déjà les MX et le SPF d'IONOS,
-   qui servent la boîte `contact@thecosmo.app`. Un sous-domaine d'envoi donne à Resend son propre
-   `MX` et son propre SPF de *Return-Path* **sans toucher** à ce qui reçoit.
-   ⚠️ Ne pas remplacer le SPF de la racine par celui de Resend : le courrier entrant continuerait
-   d'arriver, mais IONOS cesserait d'être autorisé à émettre.
-
-   **Les trois enregistrements à créer, tels que la console IONOS les demande** (Domaines & SSL →
-   `thecosmo.app` → DNS → Ajouter un enregistrement). Resend affiche les mêmes en écriture
-   absolue ; c'est la traduction qui fait perdre du temps, pas la décision :
-
-   | Type | Champ « Nom d'hôte » chez IONOS | Valeur | D'où vient la valeur |
-   |---|---|---|---|
-   | `MX` | **`send.send`** | `feedback-smtp.eu-west-1.amazonses.com`, priorité `10` | Recopier depuis Resend (région lue dans la console, pas devinée) |
-   | `TXT` | **`send.send`** | `v=spf1 include:amazonses.com ~all` | Dicté par Resend, identique pour tous les comptes |
-   | `TXT` | `resend._domainkey.send` | `p=MIGfMA0GCSq...` (clé publique longue) | **Propre à ce domaine, uniquement lisible dans Resend.** Aucun moyen de la reconstituer |
-
-   🔴 **`send.send`, ce n'est pas une faute de frappe.** Le Return-Path de Resend vit sur un
-   sous-domaine `send.` **du domaine d'envoi** : domaine `send.thecosmo.app` → rebonds sur
-   `send.send.thecosmo.app`. Seul le DKIM se pose sur le domaine d'envoi lui-même. La console
-   Resend affiche déjà les noms **relatifs à `thecosmo.app`**, donc ils se recopient tels quels
-   chez IONOS, sans rien retirer.
-   ⚠️ `npm run check:mail` cherchait le MX et le SPF sur le domaine d'envoi : il aurait affiché
-   deux échecs sur une configuration correcte. Corrigé le 2026-08-29, il interroge les deux
-   emplacements.
-
-   🔴 **IONOS ajoute le domaine tout seul.** Saisir `send`, jamais `send.thecosmo.app` : la
-   seconde forme crée `send.thecosmo.app.thecosmo.app`, qui ne résout nulle part et donne
-   exactement la même sortie `check:mail` qu'un enregistrement oublié. Même piège pour le DKIM :
-   `resend._domainkey.send`, sans le domaine.
-
-   ⚠️ Ces trois lignes se posent **ensemble**. Un domaine à moitié vérifié chez Resend n'envoie
-   rien du tout : ce n'est pas dégradé, c'est bloqué.
-2. **Attendre la validation** dans Resend (les trois enregistrements au vert). Vérifier depuis
-   ici : `npm run check:mail`.
-3. **Créer une clé SMTP** dans Resend (Settings → SMTP). Hôte `smtp.resend.com`, port `465`,
-   utilisateur `resend`, mot de passe = la clé.
-4. **Poser le SMTP dans Supabase** : Dashboard → Project Settings → Authentication → SMTP Settings.
-   Expéditeur **en service depuis le 2026-08-29** : `COSMO <thecosmo@send.thecosmo.app>`.
-   La partie locale est libre ; le domaine, lui, doit être celui vérifié chez Resend, sans quoi
-   l'envoi est refusé. ⚠️ Cette adresse ne reçoit rien : les réponses des utilisateurs vont sur
-   `contact@thecosmo.app`, qui vit chez IONOS. Les Edge Functions doivent porter le **même**
-   expéditeur (`BUG_REPORT_FROM`), leur valeur par défaut `bug@thecosmo.app` étant sur un
-   domaine que Resend ne signera jamais.
-5. **Relever la limite d'envoi** : Authentication → Rate Limits → *Emails per hour*. Le défaut est
-   celui de l'expéditeur intégré et **ne bouge pas tout seul** quand on branche un SMTP : sans ce
-   réglage, on paie un SMTP et on garde le plafond qu'on voulait fuir.
-6. **Coller les quatre gabarits** de [`supabase/templates/`](../supabase/templates/) dans
-   Authentication → Emails. Ils ne se déploient pas depuis le dépôt, cf. le README du dossier.
-7. **Seulement maintenant**, activer *Confirm email* (Authentication → Providers → Email).
-   Le front est déjà prêt : `register()` rapporte `needsEmailConfirmation` quand `signUp` ne
-   renvoie pas de session, et `AuthForm` affiche « Vérifiez votre boîte mail » au lieu de pousser
-   l'inscrit vers un écran protégé qui le rejetterait. Verrouillé par
-   `src/components/AuthForm.confirmation.test.tsx`, **avec son témoin**.
-
-### Vérification — quatre gestes, aucun n'est facultatif
-
-```bash
-npm run check:mail          # DNS : MX, SPF, DKIM Resend, DMARC
-```
-
-1. `npm run check:mail` sort **0**.
-2. Créer un compte jetable sur la prod : l'email arrive **en moins d'une minute**, depuis
-   `@send.thecosmo.app`, et **hors dossier indésirables sur Gmail ET sur Outlook** — deux
-   fournisseurs, parce qu'ils ne jugent pas de la même façon.
-3. Demander une réinitialisation de mot de passe sur ce compte : même vérification.
-4. Supprimer le compte jetable par le bouton de suppression de compte. Ça teste au passage
-   `delete-account`, donc le droit à l'effacement, en conditions réelles.
-
-> ⚠️ **Ne pas valider la délivrabilité sur une seule boîte, et surtout pas sur une adresse du
-> domaine.** Un email envoyé depuis `thecosmo.app` vers une boîte `thecosmo.app` ne traverse
-> aucun filtre anti-spam : il prouve que le SMTP répond, pas qu'un inconnu recevra quoi que ce
-> soit.
-
-### Passer DMARC en quarantaine, plus tard
-
-`_dmarc.thecosmo.app` est aujourd'hui un **CNAME vers IONOS** qui publie `p=none` : le domaine est
-surveillé, rien n'est rejeté. C'est le bon réglage pour démarrer. Le durcir (`p=quarantine`) exige
-de retirer ce CNAME pour poser un enregistrement propre, donc de reprendre à sa charge ce qu'IONOS
-gère — à faire **après** avoir constaté plusieurs semaines d'envois alignés, jamais en même temps
-que la mise en service.
-
----
-
-## 2quater. Protection anti-robot (Cloudflare Turnstile) — **inerte au 2026-08-28**
-
-Le code est livré et **ne fait rien** tant que deux réglages ne sont pas posés, dans cet ordre.
-Fournisseur arbitré par Axel le 2026-08-28 : **Turnstile**, moins intrusif que hCaptcha sur un
-entonnoir d'inscription déjà fragile.
-
-### Pourquoi, et pourquoi c'est lié aux emails
-
-Le risque n'est pas le faux compte, c'est le **quota d'envoi**. Une vague de robots vide le
-plafond d'emails du projet, et les inscriptions légitimes échouent alors avec « Trop de
-tentatives » sans que personne ne comprenne pourquoi. C'est le même mode de défaillance que §2ter,
-et les deux se corrigent ensemble ou pas du tout.
-
-### Mise en service — l'ordre est impératif
-
-1. **Créer un widget Turnstile** sur le compte Cloudflare (mode *Managed*). Il produit une clé
-   **publique** (site key) et une clé **secrète**.
-2. **Poser `VITE_TURNSTILE_SITE_KEY`** dans les variables Vercel, puis **redéployer**. À partir de
-   là le widget s'affiche et produit des jetons, que le serveur **ignore encore**. Rien ne casse.
-3. **Seulement ensuite**, activer côté Supabase : Authentication → Attack Protection → *Enable
-   CAPTCHA protection*, fournisseur Turnstile, avec la clé **secrète**.
-
-> 🔴 **Inverser 2 et 3 rend l'inscription ET la connexion impossibles pour tout le monde**, parce
-> que GoTrue exigerait un jeton que personne n'envoie encore. C'est une panne totale de
-> l'authentification, pas une dégradation.
-
-### 🔴 Activer le CAPTCHA cassera `npm run cosmo:login`
-
-La protection Supabase couvre aussi `signInWithOtp`, qu'utilise le **CLI agent**
-(`scripts/cosmo/login.mjs`). Un script Node ne peut pas résoudre un challenge : la connexion du
-CLI échouera, et avec elle tout accès agent aux données réelles.
-
-**À savoir avant de basculer le réglage, pas à découvrir le jour où le CLI s'arrête.** Il n'y a pas
-de contournement propre côté client ; les sorties sont de garder une session CLI valide (elle
-survit à l'activation, seule la *reconnexion* casse), ou d'accepter que le CLI se reconnecte
-depuis un navigateur.
-
-### Ce que le code fait déjà
-
-- `src/lib/turnstile.ts` — **aucun script tiers n'est chargé** tant que la clé publique est
-  absente. Vérifié par test : un visiteur ne paie aujourd'hui aucune requête vers Cloudflare.
-- Le jeton est joint à `signUp`, `signInWithPassword` **et** `resetPasswordForEmail` — les trois
-  points d'entrée que Supabase protège. En oublier un le rendrait inutilisable après activation.
-- Le jeton est **à usage unique** : il est réarmé après chaque tentative, sinon la deuxième
-  échouerait pour une raison sans rapport avec ce que l'utilisateur vient de corriger.
-- Un échec de chargement (extension, réseau filtrant, panne Cloudflare) **ne bloque pas** le
-  formulaire : on laisse soumettre, et c'est le serveur qui tranche. Un CAPTCHA injoignable ne doit
-  jamais devenir une porte fermée.
-- `captcha_failed` est traduit dans `src/modules/auth/auth-errors.ts`.
-- CSP : `challenges.cloudflare.com` est autorisé en `script-src`, `connect-src` et `frame-src`.
-
----
-
-## 2quinquies. Second facteur sur `/admin` · **EN VIGUEUR : mig. `131` appliquée le 2026-08-31, TOTP enrôlé le 2026-09-01**
-
-> 🔴 **Suivre l'ordre ci-dessous.** La mig. `131` est au ledger de production et un facteur `totp` est
-> vérifié sur le compte admin depuis le 2026-09-01. Appliquée avant l'enrôlement, à la demande d'Axel, elle a
-> rendu `/admin` inaccessible du 2026-08-31 au 2026-09-01 : l'écran d'enrôlement, censé rester atteignable,
-> levait en phase de rendu. Ne pas suivre la procédure a coûté une journée ; le récit est archivé.
-
-`/admin` rend toute la volumétrie business du produit. Depuis T-06 (b), la garde serveur
-`public.is_admin()` exige que la **session** ait présenté un second facteur (`aal2`), pas
-seulement que le compte figure dans `admin_users`.
-
-### Mise en service — l'ordre évite toute coupure
-
-1. **Déployer le front.** `/admin` affiche alors un écran d'enrôlement : bouton, QR code, et une
-   clé en clair si le QR ne passe pas.
-2. **Enrôler un authentificateur** (Google Authenticator, Aegis, 1Password, Bitwarden…) et saisir
-   le code à six chiffres. La session passe en `aal2` et les statistiques s'affichent.
-3. **Appliquer la migration `131`.** Rien ne change à l'écran : la session est déjà `aal2`.
-
-Fait dans l'autre sens, rien n'est cassé, mais `/admin` ne rend plus de statistiques entre
-l'application de la migration et le premier code vérifié. L'écran d'enrôlement, lui, reste
-atteignable : il ne dépend ni de la migration ni de `is_admin()`.
-
-### Vérification
-
-```sql
--- Depuis l'application, connecté en admin, APRÈS enrôlement :
-SELECT auth.jwt() ->> 'aal';   -- attendu : 'aal2'
-SELECT public.is_admin();      -- attendu : true
-```
-
-Et le contrôle qui prouve vraiment la garde : se déconnecter, se reconnecter par mot de passe
-seul, s'arrêter avant de saisir le code. `/admin` doit demander le code et **ne rien afficher**.
-
-### 🔑 Téléphone perdu
-
-Aucun verrouillage définitif, donc aucun code de récupération à conserver :
-
-```sql
--- SQL editor Supabase (rôle service_role, hors de portée de la garde)
-DELETE FROM auth.mfa_factors WHERE user_id = '<uid>';
-```
-
-La session retombe en `aal1` et l'écran d'enrôlement reparaît au prochain passage sur `/admin`.
-
----
-
-## 2sexies. Traitements planifiés : pg_cron, Vault, journal (ARC-06, 2026-11-07)
-
-**Inventaire du 2026-11-07** (le nombre de workflows planifiés est dans [`FAITS.md`](./FAITS.md)). Cinq écrivent en production, par une Edge
-Function à `x-cron-secret`, et quittent GitHub : `renewal-notice.yml` (deux jobs : `renewal-notice`,
-`seat-alert`), `inactive-accounts.yml`, `org-digest.yml` (deux modes), `org-webhook-dispatch.yml`.
-Les dix-sept autres **restent** : ils lisent, comparent ou sondent (`uptime`, `posture`,
-`migration-coverage`, `edge-deploy-drift`, `deploy-sha-drift`, `prod-errors`, `stripe-prices`,
-`secrets-age`, `seo-signals`, `daily-digest`, `weekly-digest`), testent le dépôt (`codeql`,
-`mutation`, `sabotages`, `gardes-calendrier`, `scalability-volume`, sur une stack jetable) ou
-exportent hors fournisseur (`db-backup`, `restore-drill` vers un projet jetable).
-
-| Pièce | Où | Rôle |
-|---|---|---|
-| `cron_invoke(job)` | mig. `245` | pg_net + `x-cron-secret` lu dans Vault, une ligne `cron_runs` par appel |
-| `cron_runs` | mig. `245` | job, début, fin, statut, code HTTP. RLS sans policy, rien pour `anon`/`authenticated` |
-| `cron_leases` | mig. `245` + `_shared/cron-lease.ts` | un bail par job : deux passages simultanés ne travaillent jamais ensemble |
-| 7 jobs `cosmo-*` | mig. `246` | six appels + `cosmo-cron-runs-close` (relevé des réponses pg_net, toutes les 5 min) |
-| `Journal des crons` | `cron-journal.yml` → `ci-alert.yml` | rougit sur un job `absent` ou en `echec` dans sa fenêtre |
-
-Secrets Vault (noms fixés, jamais de valeur dans le dépôt) : `cosmo_project_url`
-(`https://<ref>.supabase.co`) et `cosmo_cron_secret` (**même valeur** que `CRON_SECRET` des Edge
-Functions et des secrets Actions). Rattrapage d'un passage manqué : `select public.cron_invoke('<job>');`
-en `postgres`, ou le `workflow_dispatch` du workflow d'origine : sûrs tous les deux (bail + rejeu idempotent).
-
-**État relu le 2026-11-09, production `ykeugqfgklejcdbrmawy`, lecture seule** : `pg_cron` 1.6.4 installé
-(`cron.timezone = GMT`, onze jobs `cosmo-*`), `pg_net` disponible en 0.19.5 mais **non installé** (la `245`
-le crée), `supabase_vault` installé avec **zéro secret**, ni `cron_runs` ni `cron_leases`, ledger jusqu'à
-`247`, aucune trace de `245` ni `246`. Les cinq Edge Functions sont `ACTIVE` avec `verify_jwt = false`
-(pg_net n'envoie pas de JWT, les workflows non plus : même porte, `x-cron-secret`).
-
-**État des migrations au 2026-11-13**, chacune appliquée après sa preuve à 0 ECHEC, relue au catalogue,
-texte du ledger identique au fichier :
-
-- `245_cron_journal` : appliquée (`20261113070725`), `pg_net` installée.
-- `246_cron_planification` : appliquée (`20261113124319`) après pose des deux secrets Vault ; dix-huit jobs
-  pg_cron relus.
-- `248_habit_completions` : appliquée (`20261113070621`), 1 421 lignes rétro-remplies.
-- `249_taches_echeance_priorite_facultatives` : appliquée (`20261113070529`).
-- `250_friend_requests_forme_prod` : appliquée (`20261113083206`) ; plus aucune migration ne manque.
-
-**Preuves.** Rejouées à chaque commit par `e2e/rls/cron-journal.test.ts` sur une pile Supabase réelle
-(`pg_cron` et `pg_net` vrais) : `245` avec et sans secrets Vault, `246`, chacune `PREUVE-ANNULEE 0 ECHEC`,
-et un job pg_cron de test qui écrit dans `cron_runs` puis se ferme sur la réponse de pg_net (job
-`rls-integration` du run `42664142079`, sur `edf90d80`). **Pas encore jouées en production** : c'est l'étape 3
-ci-dessous, et ce qu'elle seule peut dire (droits de `postgres` sur `net._http_response` et sur
-`vault.decrypted_secrets` dans le projet hébergé).
-
-**Chaque traitement a son équivalent** (aucun ne disparaît, aucun n'est ajouté) :
-
-| Workflow GitHub (heure UTC) | Job pg_cron (`246`) | Appel `cron_invoke` | Fenêtre de la sonde |
-|---|---|---|---|
-| `org-webhook-dispatch` (`7-59/10 * * * *`) | `cosmo-org-webhook-dispatch`, même heure | `org-webhook-dispatch` | 35 min |
-| `org-digest` mode `hourly` (`23 * * * *`) | `cosmo-org-digest-hourly`, même heure | `org-digest?mode=hourly` | 2 h 15 |
-| `org-digest` mode `daily` (`41 7 * * *`) | `cosmo-org-digest-daily`, même heure | `org-digest?mode=daily` | 26 h |
-| `renewal-notice`, job `renewal-notice` (`12 7 * * *`) | `cosmo-renewal-notice`, même heure | `renewal-notice` | 26 h |
-| `renewal-notice`, job `seat-alert` (même déclencheur) | `cosmo-seat-alert`, **07:14** (deux minutes plus tard) | `seat-alert` | 26 h |
-| `inactive-accounts` (`37 6 * * *`) | `cosmo-inactive-accounts`, même heure | `inactive-accounts` | 26 h |
-| (nouveau) | `cosmo-cron-runs-close` (`*/5 * * * *`) | relevé des réponses pg_net | sans objet |
-
-Les autres workflows planifiés lisent, comparent ou sondent : ils restent sur GitHub, `daily-digest` et
-`weekly-digest` aussi (lecture seule, hors périmètre). Les onze jobs pg_cron d'avant ne sont pas touchés.
-
-**Bascule, dans l'ordre (gestes d'Axel).** Les deux ordonnanceurs tournent ensemble entre les étapes 4 et 8 :
-c'est voulu, il n'y a ni trou ni doublon (bail). ❌ **Ne jamais retirer les `schedule:` avant l'étape 7.**
-Une garde le refuse (`src/edge-cron-lease.guard.test.ts`, job par job d'après `JOBS_BASCULES`).
-
-1. **Edge Functions avec bail déployées** : `Edge deploy` le fait au push sur `main` (`success` sur
-   `edf90d80`). Contrôle : `Edge deploy drift` vert, ou `npm run check:edge`. Sans la `245`, elles travaillent
-   sans bail comme avant (RPC absente reconnue).
-2. **Secrets Vault**, SQL editor, **avant** la preuve de la `246` :
-   `select vault.create_secret('https://ykeugqfgklejcdbrmawy.supabase.co', 'cosmo_project_url', 'lue par cron_invoke (mig. 245)');`
-   puis `select vault.create_secret('<valeur de CRON_SECRET>', 'cosmo_cron_secret', 'x-cron-secret des fonctions planifiees (mig. 245)');`.
-   ⚠️ Une valeur de Supabase ne se relit pas : sans copie, faire tourner `CRON_SECRET` aux trois endroits
-   (`supabase secrets set`, `gh secret set`, Vault) et dater `.github/secrets-registry.json`.
-   Contrôle : `select name from vault.secrets where name like 'cosmo\_%' order by 1;` rend deux lignes.
-3. **Preuve de la `245` en production** (elle s'annule d'elle-même, extension et tables comprises) :
-   `supabase db query --linked -f supabase/proofs/245.proof.sql`. **L'erreur est le succès** : le message doit
-   commencer par `PREUVE-ANNULEE 0 ECHEC |`. Puis constater l'annulation :
-   `select (select count(*) from pg_extension where extname = 'pg_net') as pg_net, to_regclass('public.cron_runs') as journal;`
-   doit rendre `0` et `NULL`. Un seul `ECHEC` : on s'arrête, on n'applique pas.
-4. **Appliquer la `245`** (SQL editor ou `apply_migration`, **jamais** `supabase db push`), sous le nom
-   `245_cron_journal`. Relire au catalogue : `pg_net` installée, RLS active et zéro policy sur `cron_runs` et
-   `cron_leases`, `has_function_privilege` des six fonctions (`anon` non, `authenticated` non, `service_role` oui
-   sur le bail seul).
-5. **Preuve de la `246`** : `supabase db query --linked -f supabase/proofs/246.proof.sql`, même lecture
-   (`PREUVE-ANNULEE 0 ECHEC |`, Vault présent). **Appliquer la `246`** sous le nom `246_cron_planification`,
-   puis `select jobname, schedule, command, active from cron.job order by jobname;` : **dix-huit lignes**
-   (onze d'avant, sept nouvelles), toutes actives.
-6. **Après 15 minutes** : `select job, status, http_code, started_at from public.cron_runs order by id desc limit 10;`
-   montre `org-webhook-dispatch` en `ok` / `200`. `config_missing` : un secret Vault manque. `error` / `401` : la
-   valeur de `cosmo_cron_secret` n'est pas celle de `CRON_SECRET`. Dans les deux cas **on s'arrête**, GitHub
-   tient encore tout, rien n'est perdu.
-7. **Un tour de chaque job** (heures UTC : `inactive-accounts` 06:37, `renewal-notice` 07:12, `seat-alert` 07:14,
-   `org-digest-daily` 07:41, `org-digest-hourly` à la minute 23, webhooks toutes les dix minutes). Appliquer
-   `245` et `246` en fin de journée : le lendemain à 07:45 UTC, les six ont tourné. Condition de passage,
-   **toutes** vraies :
-   - `select * from public.cron_runs_verdict();` rend six lignes, verdict `ok` partout ;
-   - `select job, count(*) filter (where status = 'ok') as ok, max(started_at) from public.cron_runs group by job order by job;`
-     montre au moins un `ok` pour chacun des six jobs ;
-   - `gh workflow run cron-journal.yml` puis le run sort vert.
-
-   ⚠️ Un `ok` veut dire « l'Edge Function a répondu 2xx », y compris `skipped: already_running` pendant la
-   double planification. Il prouve que la chaîne pg_cron, Vault, pg_net, fonction marche, pas qu'un envoi réel a
-   eu lieu : le contrôle d'envoi reste celui des fonctions (`renewal_notices`, `org_webhook_deliveries`).
-   **Bascule en deux temps** (2026-11-13) : un job quitte GitHub le jour de son premier `ok`, en l'ajoutant à
-   `JOBS_BASCULES` (`scripts/check-cron-runs.mjs`, source unique de la garde et de la sonde). Faits le
-   2026-11-13 : `org-webhook-dispatch` et `org-digest-hourly`, `Journal des crons` planifié (minute 51).
-   **Reste** : `inactive-accounts`, `renewal-notice` + `seat-alert` (un seul déclencheur, ensemble),
-   `org-digest-daily`, à basculer après leur premier `ok`, lisible dès 07:45 UTC le 2026-11-14.
-8. **Retirer les `schedule:` GitHub** (lecture historique, remplacé par la bascule en deux temps ci-dessus) : le commit existe sur `noyau/cron-bascule-2` (garde les
-   `workflow_dispatch`, planifie `Journal des crons` à la minute 51, retourne `BASCULE_FAITE`, régénère
-   `FAITS.md`, corrige la table des classes de `TESTING.md`). Après les étapes 1 à 7 seulement :
-
-   ```bash
-   git fetch origin
-   git switch -c bascule origin/noyau/cron-bascule-2
-   git rebase origin/main
-   git push origin HEAD:noyau/cron-bascule-final
-   ```
-
-   Attendre `CI noyau` vert **sur ce SHA**, puis `git push origin HEAD:main`. Le lendemain :
-   `gh run list --workflow renewal-notice.yml --event schedule --limit 3` ne montre plus de run planifié,
-   et `Journal des crons` est vert deux heures de suite.
-
-**Retour arrière, écrit avant d'en avoir besoin.** Deux ordonnanceurs en même temps sont sûrs (bail) ; un trou ne
-l'est pas. Donc **toujours rendre la main à GitHub d'abord, retirer pg_cron ensuite**.
-
-- *Avant l'étape 8* (`245` et `246` appliquées, GitHub encore planifié) : rien n'est cassé. Pour arrêter pg_cron :
-  `select cron.unschedule(jobname) from cron.job where jobname in ('cosmo-org-webhook-dispatch', 'cosmo-org-digest-hourly', 'cosmo-org-digest-daily', 'cosmo-renewal-notice', 'cosmo-seat-alert', 'cosmo-inactive-accounts', 'cosmo-cron-runs-close');`
-  Tables, fonctions et extension peuvent rester, inertes. Un arrêt durable se versionne sous son propre
-  numéro (`248` ou suivant), jamais par édition de la `246`. Le `Journal des crons` n'est pas encore planifié :
-  rien ne rougit.
-- *Après l'étape 8* (GitHub ne planifie plus) : **d'abord** `git revert <SHA de la bascule>` puis
-  `git push origin HEAD:main` (les `schedule:` reviennent, la garde revient avec ; environ 40 s jusqu'en
-  production, voir § 3). **Ensuite seulement**, si pg_cron doit s'arrêter, la commande `cron.unschedule` ci-dessus.
-  Entre les deux, le bail évite le doublon. Passage manqué entre-temps : `workflow_dispatch` du workflow concerné
-  ou `select public.cron_invoke('<job>');` en `postgres`, sûrs tous les deux.
-- *`CRON_SECRET` tourné* : les trois endroits (Supabase, GitHub, Vault) ensemble. Le Vault oublié donne des
-  `error` / `401` dans `cron_runs`, un verdict `echec`, et `Journal des crons` rouge en moins de deux heures.
+## 2ter à 2sexies. Mises en service
+
+Déplacées dans [`MISES-EN-SERVICE.md`](./MISES-EN-SERVICE.md), mêmes numéros de section : § 2ter
+(emails d'authentification, envoi Resend), § 2quater (Turnstile), § 2quinquies (second facteur
+`/admin`), § 2sexies (traitements planifiés pg_cron).
 
 ---
 
@@ -638,18 +273,13 @@ déploiement précédent** :
 - Ou `vercel rollback <deployment-url>` (CLI).
 - Aucun rebuild : bascule instantanée de l'alias prod.
 
-### ✅ Répété le 2026-10-16 : le retour arrière par `git revert` (moitié de `M-47`)
+### ✅ Retour arrière par `git revert` répété le 2026-10-16 (moitié de `M-47`)
 
-Un commit sans effet puis son revert, sur `main`, par un agent : **40 s** puis **33 s** de la poussée à la
-production (heures lues dans les statuts de déploiement GitHub), vérifiés de l'extérieur par `version.json`.
-Commits, heures et tableau : archive.
+Constat : 40 s puis 33 s de la poussée à la production, vérifiés par `version.json`.
 
 **Ce que la répétition a appris :**
-- 🔴 **Vercel déploie sans attendre la CI.** Un revert est en ligne en ~35 s, mais un mauvais
-  commit l'est tout aussi vite : la CI (25 min) juge APRÈS la mise en production. Le retour
-  arrière est donc le vrai filet, pas la CI. ✅ **Fermé le 2026-11-07** par la porte de
-  déploiement (§ 1) : un revert part désormais après le vert du noyau (~5 min), pas en 35 s.
-  Le retour arrière immédiat reste le **Promote** ci-dessous, qui ne reconstruit rien.
+- 🔴 Le retour arrière immédiat est le **Promote** ci-dessous, qui ne reconstruit rien : un revert
+  passe désormais par la porte de déploiement (§ 1), donc après le vert du noyau (~5 min).
 - ⚠️ **Une URL inconnue répond 200** (repli SPA, limite assumée) : pour prouver qu'un fichier a
   disparu, lire son contenu, jamais son code HTTP.
 - ❌ **Ne pas enchaîner `git revert -q` et `git commit --amend`** : si le revert échoue en silence,
@@ -744,18 +374,9 @@ Tant que cette conversion n'est pas faite, **ne pas utiliser `db push`** —
 passer par `apply_migration` (MCP) ou le SQL editor avec le fichier versionné.
 
 ## 7. Backup & Disaster Recovery (runbook)
-
-> 🔎 **État au 2026-11-08 (ROB-01, vague 4.4).** Le dump quotidien est **restauré chaque mois, sans humain**,
-> par le job `drill-auto` de `restore-drill.yml` (le 9 à 05:43 UTC), et une garde d'**absence**
-> (`restore-drill-fraicheur.yml`, hebdomadaire) rougit si aucun drill n'est vert depuis 35 jours. Les deux
-> sonnent par `ci-alert.yml`. Le `dump-check` trimestriel (C-86), qui ne lisait qu'une table des matières,
-> est fondu dans ce drill. Détail : § « Drill automatique mensuel » ci-dessous.
->
-> **Preuve sur `main`** (2026-11-08, SHA `88699890`) : sauvegarde avec manifeste (`db-backup`, run
-> `42463066645`), puis drill vert (`restore-drill`, run `42463160221` : 91 tables comptées, comptages
-> identiques au manifeste), puis **témoin rouge** (run `42463289640` : `public.tasks` altérée d'une unité dans
-> le manifeste lu, le drill rougit). Le premier drill vert, du 2026-11-07, avait tourné sur la branche
-> `noyau/drill-auto` (run `42380272895`) ; ces trois runs sont les premiers sur `main`.
+> 🔎 Le dump quotidien est **restauré chaque mois, sans humain**, par `drill-auto` de
+> `restore-drill.yml` (le 9 à 05:43 UTC) ; `restore-drill-fraicheur.yml` (hebdomadaire) rougit si aucun
+> drill n'est vert depuis 35 jours. Les deux sonnent par `ci-alert.yml` (ROB-01).
 
 ### Drill automatique mensuel · `restore-drill.yml` › `drill-auto` (ROB-01, 2026-11-07)
 
@@ -795,11 +416,7 @@ sortent que des noms de tables et des comptes. Aucun `upload-artifact` dans `res
 le déchiffré est effacé en fin de job, et une erreur de `COPY` n'imprime que sa table, jamais son
 message (il peut citer une valeur).
 
-| Date | Run drill | Run db-backup | Restauration | Tables comptées | Erreurs tolérées | Verdict |
-|---|---|---|---|---|---|---|
-| 2026-11-07 | `42380272895` (branche `noyau/drill-auto`) | `42378846309` | 1 s (job 39 s) | 91 : 90 de `public` + `auth.users` | 27 : pg_cron et Vault | ✅ comptages identiques, 205 policies, 90 tables sous RLS, isolation 289 / 940 |
-| 2026-11-08 | `42463160221` (`main`, SHA `88699890`) | `42463066645` (avec manifeste) | 1 s (drill complet 2 s) | 91 : 90 de `public` + `auth.users` | 27 : extensions Supabase absentes de l'image officielle, 0 bloquante | ✅ comptages identiques, 205 policies, 90 tables sous RLS, isolation 289 / 941 |
-| 2026-11-08 | `42463289640` (`main`, **témoin**, case *temoin* cochée) | `42463066645` | n/a | n/a | n/a | ❌ **voulu** : `public.tasks`, manifeste 942 contre 941 restaurées : « la restauration ne rend pas la base du dump » |
+Runs de référence du drill automatique (2026-11-07 et 2026-11-08, témoin rouge compris) : archive.
 
 ### Au passage en Pro (décision d'Axel, au premier client payant)
 
@@ -864,13 +481,10 @@ juge sur ce qui compte vraiment.
 **Ce que le workflow ne prouve pas**, et qui reste un geste humain : pointer l'application sur le
 projet restauré, se connecter, créer une tâche. Un `select` réussi ne dit rien du parcours réel.
 
-> ⚠️ **Un contrôle qui ne peut pas échouer ne contrôle rien.** Le tout premier run (2026-09-01) a réussi avec
-> un chiffre faux : `VISIBLES=$(tail -1 iso.txt)` capturait le tag `ROLLBACK` de `psql`, jamais le compte,
-> donc `VISIBLES = TOTAL` était garanti faux. Corrigé par `grep -E '^[0-9]+$' iso.txt | tail -1`.
+> ⚠️ **Un contrôle qui ne peut pas échouer ne contrôle rien.** Pour compter les lignes visibles :
+> `grep -E '^[0-9]+$' iso.txt | tail -1`, jamais `tail -1` seul (il capturait le tag `ROLLBACK` de `psql`).
 
-**Dernier drill manuel** : 2026-09-01, RTO mesuré **163 s** (objectif < 2 h), 0 table sans RLS, 129 policies,
-289 tâches visibles sur 724. Le parcours applicatif (login, création d'une tâche) a été volontairement sauté
-(décision d'Axel). Détail et tableau : archive.
+**Dernier drill manuel** : 2026-09-01, RTO **163 s** (objectif < 2 h), parcours applicatif sauté (détail : archive).
 
 ### Export hors-fournisseur — automatisé le 2026-08-28
 
@@ -952,17 +566,8 @@ la fin du sujet.
 
 ---
 
-## Délivrabilité des emails Auth · repris de `CLAUDE.md` (déplacé le 2026-09-16)
+## Délivrabilité des emails Auth
 
-> Les commentaires datés de la commande (mesures du 2026-09-02) sont archivés sans une coupe. La racine
-> ne garde que la commande.
-
-```bash
-npm run check:mail          # Délivrabilité des emails Auth : MX, SPF, DKIM Resend, DMARC
-```
-
-- ⚠️ Le DNS ne prouve pas qu'un email ARRIVE : la preuve reste un compte jetable vérifié sur Gmail ET Outlook
-  (§ 2ter).
-- 🔴 Les confirmations d'inscription restent **désactivées**, décision d'Axel (finding `G-2` de `faille.md`).
-- Pas une gate CI : la commande dépend d'un état DNS externe. Dernier état mesuré (2026-09-02) : DKIM, SPF et
-  MX du Return-Path en place sur `send.thecosmo.app`, un seul avertissement, DMARC `p=none`.
+`npm run check:mail` (MX, SPF, DKIM Resend, DMARC) : pas une gate CI, il dépend d'un état DNS externe. Le DNS ne prouve
+pas qu'un email ARRIVE : voir [`MISES-EN-SERVICE.md`](./MISES-EN-SERVICE.md) § 2ter. Confirmations d'inscription
+désactivées (finding `G-2`).

@@ -80,6 +80,7 @@ Une ligne par document. L'état de santé est dans [`INDICATEURS.md`](./INDICATE
 | [`SECURITY.md`](./SECURITY.md) | RLS, migrations SQL, repositories, Edge Functions, Stripe, CSP, secrets |
 | [`TESTING.md`](./TESTING.md) | Vitest, Playwright, a11y, i18n, CI, **checklist avant push prod** |
 | [`DEPLOYMENT.md`](./DEPLOYMENT.md) | Runbook deploy / rollback Vercel + Supabase, drill de restauration |
+| [`MISES-EN-SERVICE.md`](./MISES-EN-SERVICE.md) | Mises en service : emails Auth (Resend), Turnstile, second facteur `/admin`, crons pg_cron (ex-§ 2ter à 2sexies de DEPLOYMENT) |
 | [`OBSERVABILITE.md`](./OBSERVABILITE.md) | Signaux de production : disponibilité, erreurs Sentry, alertes |
 | [`MOBILE.md`](./MOBILE.md) | Pages et composants mobiles, bottom-sheets, pièges iOS Safari |
 | [`UI-PATTERNS.md`](./UI-PATTERNS.md) | Listes, modales, tutoriels, onboarding, thèmes |
@@ -113,7 +114,7 @@ Rangées par nature. Aucune n'est maintenue.
   (journal daté des migrations `150` → `240`). Les récits d'incident, de mesure et de bascule retirés de
   `SECURITY.md` le 2026-11-08 (angles morts, base de données, gardes SQL, garde-fous transversaux, AM-5) :
   [`SECURITY-recits-base-gardes-angles-morts-2026-08-26-au-2026-11-08.md`](./archive/SECURITY-recits-base-gardes-angles-morts-2026-08-26-au-2026-11-08.md).
-- **Exploitation et migration** : [`DEPLOYMENT-recits-et-releves-2026-06-07-au-2026-11-08.md`](./archive/DEPLOYMENT-recits-et-releves-2026-06-07-au-2026-11-08.md)
+- **Exploitation et migration** : [`DEPLOYMENT-journal-2026-11-13.md`](./archive/DEPLOYMENT-journal-2026-11-13.md) (extraits du runbook et des mises en service, 2026-11-13), [`DEPLOYMENT-recits-et-releves-2026-06-07-au-2026-11-08.md`](./archive/DEPLOYMENT-recits-et-releves-2026-06-07-au-2026-11-08.md)
   (récits et relevés du runbook, dont les drills de restauration anciens),
   [`MIGRATION-REACT19-etude-2026-09-03-au-2026-09-13.md`](./archive/MIGRATION-REACT19-etude-2026-09-03-au-2026-09-13.md)
   (l'étude sous React 18, caduque depuis la migration du 2026-10-23),
