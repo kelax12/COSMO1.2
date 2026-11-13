@@ -302,7 +302,7 @@ le détecteur rendrait le fichier **vert**. Et elle a été vue échouer, en ret
 | `MobileMoreSheet` | « Plus d'options », viewport 375 × 812 | — |
 | `ConfirmDiscardDialog` | Échap sur un `EventModal` modifié | prend le piège au parent, le lui rend |
 | `ColorSettingsModal` | `EventModal` → « Créer une catégorie » | prend le piège au parent, le lui rend |
-| `RecurrenceDaysModal` | `EventModal` → récurrence « Personnaliser » | prend le piège au parent, le lui rend |
+| `RecurrenceDaysModal` (feuille `WeekDaysSheet`) | `EventModal` → récurrence « Personnaliser » | prend le piège au parent, le lui rend |
 | `TaskActionsSheet` | `/tasks` mobile, « Afficher les actions » | — |
 | `MobileAddToList` | `TaskActionsSheet` → « Ajouter à une liste » | relais de surface, pas empilement |
 | `ShareListSheet` | `/tasks` desktop, liste **manuelle** créée puis survolée | — |

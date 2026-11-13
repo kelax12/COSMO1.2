@@ -21,13 +21,22 @@ import { join } from 'node:path';
 import { describe, it, expect, afterAll } from 'vitest';
 import { connecter } from './catalogue';
 
-const PREUVES: { preuve: string; migration: string }[] = [
+/**
+ * `depassee` : la migration a été remplacée par une suivante qui change le
+ * TYPE DE RETOUR d'une fonction qu'elle crée. La rejouer par-dessus lève
+ * « cannot change return type » : son texte reste vérifié, son exécution non.
+ * La preuve a été jouée en production avant application (0 ECHEC), et la
+ * migration suivante reprend ses garanties dans SA preuve.
+ */
+const PREUVES: { preuve: string; migration: string; depassee?: string }[] = [
   { preuve: '242.proof.sql', migration: '242_ferme_par_defaut_anon.sql' },
   { preuve: '243.proof.sql', migration: '243_regle_unique_projet_equipe.sql' },
   { preuve: '244.proof.sql', migration: '244_select_permissive_unique.sql' },
   // DAT-02 (V13.3, V13.4) : séries, totaux et temps investi inchangés par le
   // passage de `habits.completions` à `habit_completions`.
-  { preuve: '248.proof.sql', migration: '248_habit_completions.sql' },
+  { preuve: '248.proof.sql', migration: '248_habit_completions.sql',
+    depassee: 'mig. 251 (2026-11-13) : get_my_habits et toggle_habit_completion_v2 rendent deux colonnes de plus ; '
+      + 'la preuve 251 compare chaque habitude sans jours prévus au calcul de la 248, avant et après.' },
   // Échéance et priorité facultatives (PAR-01, PAR-02), décision du 2026-11-09.
   { preuve: '249.proof.sql', migration: '249_taches_echeance_priorite_facultatives.sql' },
   // `friend_requests` à la forme de la production (divergence FRIENDS-USER-ID).
@@ -44,7 +53,7 @@ afterAll(async () => {
 });
 
 describe('supabase/proofs : preuves 242 à 244 et 248 à 251 rejouées sur la base fraîche', () => {
-  for (const { preuve, migration } of PREUVES) {
+  for (const { preuve, migration, depassee } of PREUVES) {
     it(`${preuve} embarque le texte exact de ${migration}`, () => {
       const texte = lire(`supabase/proofs/${preuve}`);
       const m = texte.match(/EXECUTE \$mig\$\n([\s\S]*?)\n\$mig\$;/);
@@ -54,7 +63,7 @@ describe('supabase/proofs : preuves 242 à 244 et 248 à 251 rejouées sur la ba
       );
     });
 
-    it(`${preuve} : PREUVE-ANNULEE 0 ECHEC`, async () => {
+    it.skipIf(!!depassee)(`${preuve} : PREUVE-ANNULEE 0 ECHEC${depassee ? ` (non rejouée, dépassée par la ${depassee})` : ''}`, async () => {
       let verdict: string;
       try {
         await db.query(lire(`supabase/proofs/${preuve}`));

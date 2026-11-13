@@ -59,7 +59,9 @@ const MESUREES: Record<string, string> = {
   'components/task-table/TaskActionsSheet.tsx': 'MESURE — TaskActionsSheet',
   'components/add-to-list/MobileAddToList.tsx': 'MESURE — MobileAddToList',
   'components/ShareListSheet.tsx': 'MESURE — ShareListSheet',
-  'components/event-modal/RecurrenceDaysModal.tsx': 'prend le piège, puis le rend',
+  // `RecurrenceDaysModal` délègue sa feuille à `WeekDaysSheet` (jours prévus,
+  // mig. 251) : c'est elle qui câble le hook, mesurée par le même cas.
+  'components/WeekDaysSheet.tsx': 'prend le piège, puis le rend',
   'pages/agenda/RecurringEventsManager.tsx': 'prend le piège, puis le rend',
   'components/ConfirmDiscardDialog.tsx': 'Échap passe par guardedClose',
   'components/task-modal/DeleteTaskConfirm.tsx': 'prend le piège, puis le rend',
