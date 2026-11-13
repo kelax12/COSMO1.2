@@ -108,34 +108,6 @@ export function fragileHabitInsight(habits: Habit[], now: Date = new Date()): In
   return { kind: 'fragileHabit', name: worst.name, missed: worst.missed };
 }
 
-/**
- * Jours PRÉVUS d'une habitude entre deux bornes incluses (jours calendaires
- * locaux), et coches tombées sur ces jours-là. Base du taux de réussite des
- * statistiques : il se calcule sur les seuls jours prévus (mig. 251), et une
- * coche sur un jour non prévu ne gonfle pas le taux.
- */
-export function scheduledPeriodStats(
-  habit: Pick<Habit, 'completions' | 'scheduledDays' | 'scheduleHistory'>,
-  start: Date,
-  end: Date,
-): { scheduledDays: number; scheduledCompletions: number } {
-  let scheduledDays = 0;
-  let scheduledCompletions = 0;
-  const cursor = new Date(start);
-  cursor.setHours(12, 0, 0, 0);
-  const last = new Date(end);
-  last.setHours(12, 0, 0, 0);
-  for (let guard = 0; cursor <= last && guard < 3700; guard++) {
-    const key = cursor.toLocaleDateString('en-CA');
-    if (isHabitScheduledOn(habit, key)) {
-      scheduledDays++;
-      if (habit.completions[key]) scheduledCompletions++;
-    }
-    cursor.setDate(cursor.getDate() + 1);
-  }
-  return { scheduledDays, scheduledCompletions };
-}
-
 /** Dynamique de complétion : cette semaine vs la précédente. */
 export function momentumInsight(tasks: Task[], now: Date = new Date()): Insight | null {
   const dayStr = (offset: number): string => {

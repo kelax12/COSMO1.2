@@ -366,14 +366,14 @@ isOneToOne: false
                   ]
                 },"habits": {
                   Row: {
-                    "color": string,"completions": NonNullable<Json>,"created_at": string | null,"description": string | null,"estimated_time": number,"frequency": string,"icon": string,"id": string,"name": string,"updated_at": string | null,"user_id": string
+                    "color": string,"completions": NonNullable<Json>,"created_at": string | null,"description": string | null,"estimated_time": number,"frequency": string,"icon": string,"id": string,"name": string,"schedule_history": NonNullable<Json>,"scheduled_days": (number)[] | null,"updated_at": string | null,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "color"?: string,"completions"?: NonNullable<Json>,"created_at"?: string | null,"description"?: string | null,"estimated_time"?: number,"frequency"?: string,"icon"?: string,"id"?: string,"name": string,"updated_at"?: string | null,"user_id": string
+                    "color"?: string,"completions"?: NonNullable<Json>,"created_at"?: string | null,"description"?: string | null,"estimated_time"?: number,"frequency"?: string,"icon"?: string,"id"?: string,"name": string,"schedule_history"?: NonNullable<Json>,"scheduled_days"?: (number)[] | null,"updated_at"?: string | null,"user_id": string
                   }
                   Update: {
-                    "color"?: string,"completions"?: NonNullable<Json>,"created_at"?: string | null,"description"?: string | null,"estimated_time"?: number,"frequency"?: string,"icon"?: string,"id"?: string,"name"?: string,"updated_at"?: string | null,"user_id"?: string
+                    "color"?: string,"completions"?: NonNullable<Json>,"created_at"?: string | null,"description"?: string | null,"estimated_time"?: number,"frequency"?: string,"icon"?: string,"id"?: string,"name"?: string,"schedule_history"?: NonNullable<Json>,"scheduled_days"?: (number)[] | null,"updated_at"?: string | null,"user_id"?: string
                   }
                   Relationships: [
 
@@ -2235,7 +2235,7 @@ isOneToOne: false
                            },
 "get_my_habits":
 { Args: { "p_days"?: number,"p_today"?: string }; Returns: {
-              "color": string,"completions": Json,"completions_total": number,"created_at": string,"description": string,"estimated_time": number,"first_completion_date": string,"frequency": string,"icon": string,"id": string,"name": string,"streak_best": number,"streak_current": number,"user_id": string,"window_days": number
+              "color": string,"completions": Json,"completions_total": number,"created_at": string,"description": string,"estimated_time": number,"first_completion_date": string,"frequency": string,"icon": string,"id": string,"name": string,"schedule_history": Json,"scheduled_days": (number)[],"streak_best": number,"streak_current": number,"user_id": string,"window_days": number
             }[]
                            },
 "get_my_org_inbox":
@@ -2477,6 +2477,12 @@ isOneToOne: false
                            },
 "habit_day_from_key":
 { Args: { "p_key": string }; Returns: string
+                           },
+"habit_day_scheduled":
+{ Args: { "p_d": string,"p_days": (number)[],"p_history": Json }; Returns: boolean
+                           },
+"habit_schedule_history_valid":
+{ Args: { "p_history": Json }; Returns: boolean
                            },
 "has_subordinates":
 { Args: { "p_org": string,"p_user": string }; Returns: boolean
@@ -2767,6 +2773,8 @@ isOneToOne: false
 "icon": string,
 "id": string,
 "name": string,
+"schedule_history": NonNullable<Json>,
+"scheduled_days": (number)[] | null,
 "updated_at": string | null,
 "user_id": string
             }
@@ -2778,7 +2786,7 @@ isOneToOne: false
       } },
 "toggle_habit_completion_v2":
 { Args: { "p_date": string,"p_days"?: number,"p_habit_id": string,"p_today"?: string }; Returns: {
-              "color": string,"completions": Json,"completions_total": number,"created_at": string,"description": string,"estimated_time": number,"first_completion_date": string,"frequency": string,"icon": string,"id": string,"name": string,"streak_best": number,"streak_current": number,"user_id": string,"window_days": number
+              "color": string,"completions": Json,"completions_total": number,"created_at": string,"description": string,"estimated_time": number,"first_completion_date": string,"frequency": string,"icon": string,"id": string,"name": string,"schedule_history": Json,"scheduled_days": (number)[],"streak_best": number,"streak_current": number,"user_id": string,"window_days": number
             }[]
                            },
 "toggle_task_bookmark":

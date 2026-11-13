@@ -3725,7 +3725,7 @@ $$;
 -- Name: get_my_habits(integer, date); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.get_my_habits(p_days integer DEFAULT 400, p_today date DEFAULT NULL::date) RETURNS TABLE(id uuid, name text, description text, frequency text, estimated_time integer, color text, icon text, completions jsonb, user_id uuid, created_at timestamp with time zone, streak_current integer, streak_best integer, completions_total integer, first_completion_date date, window_days integer)
+CREATE FUNCTION public.get_my_habits(p_days integer DEFAULT 400, p_today date DEFAULT NULL::date) RETURNS TABLE(id uuid, name text, description text, frequency text, estimated_time integer, color text, icon text, completions jsonb, user_id uuid, created_at timestamp with time zone, streak_current integer, streak_best integer, completions_total integer, first_completion_date date, window_days integer, scheduled_days smallint[], schedule_history jsonb)
     LANGUAGE sql STABLE
     SET search_path TO ''
     AS $$
@@ -3737,6 +3737,13 @@ CREATE FUNCTION public.get_my_habits(p_days integer DEFAULT 400, p_today date DE
       GREATEST(CURRENT_DATE - 1,
                LEAST(COALESCE(p_today, CURRENT_DATE), CURRENT_DATE + 1)) AS today
   ),
+  hab AS (
+    -- Une habitude « planifiée » a un réglage autre que tous les jours.
+    SELECT h.id, h.scheduled_days, h.schedule_history,
+           (h.scheduled_days IS NOT NULL
+            OR jsonb_array_length(h.schedule_history) > 0) AS planned
+    FROM public.habits h
+  ),
   days AS (
     SELECT c.habit_id, c.day AS d
     FROM public.habit_completions c
@@ -3744,17 +3751,23 @@ CREATE FUNCTION public.get_my_habits(p_days integer DEFAULT 400, p_today date DE
     -- Jours futurs exclus, relativement au client (mig. 122).
     WHERE c.day <= p.today
   ),
+  totals AS (
+    SELECT habit_id, COUNT(*)::int AS total, MIN(d) AS first_day
+    FROM days GROUP BY habit_id
+  ),
+  -- ── Sans jours prévus : calcul de la 248, à la lettre ──
   grouped AS (
-    SELECT habit_id, d,
-           d - (row_number() OVER (PARTITION BY habit_id ORDER BY d))::int AS island
-    FROM days
+    SELECT dy.habit_id, dy.d,
+           dy.d - (row_number() OVER (PARTITION BY dy.habit_id ORDER BY dy.d))::int AS island
+    FROM days dy
+    JOIN hab ON hab.id = dy.habit_id AND NOT hab.planned
   ),
   runs AS (
     SELECT habit_id, island, COUNT(*)::int AS len, MAX(d) AS last_day
     FROM grouped
     GROUP BY habit_id, island
   ),
-  agg AS (
+  agg_plain AS (
     SELECT
       r.habit_id,
       MAX(r.len) AS best,
@@ -3762,11 +3775,59 @@ CREATE FUNCTION public.get_my_habits(p_days integer DEFAULT 400, p_today date DE
       -- du client. Même règle que `streak.ts`, à la lettre.
       COALESCE(MAX(r.len) FILTER (
         WHERE r.last_day >= ((SELECT today FROM params) - 1)
-      ), 0) AS current,
-      SUM(r.len)::int AS total,
-      MIN(r.last_day - (r.len - 1)) AS first_day
+      ), 0) AS current
     FROM runs r
     GROUP BY r.habit_id
+  ),
+  -- ── Avec jours prévus : îlots sur la suite des seuls jours prévus ──
+  -- Les jours prévus du premier jour coché à aujourd'hui (3 650 au plus),
+  -- numérotés (rn). Deux jours prévus successifs cochés sont consécutifs même
+  -- si un jour non prévu les sépare ; une coche un jour non prévu est neutre.
+  sched AS (
+    SELECT hab.id AS habit_id, g.d::date AS d,
+           (dy.d IS NOT NULL) AS is_done,
+           row_number() OVER (PARTITION BY hab.id ORDER BY g.d) AS rn
+    FROM hab
+    JOIN totals t ON t.habit_id = hab.id
+    CROSS JOIN params p
+    CROSS JOIN LATERAL generate_series(
+      GREATEST(t.first_day, p.today - 3650), p.today, interval '1 day'
+    ) AS g(d)
+    LEFT JOIN days dy ON dy.habit_id = hab.id AND dy.d = g.d::date
+    WHERE hab.planned
+      AND public.habit_day_scheduled(hab.scheduled_days, hab.schedule_history, g.d::date)
+  ),
+  last_sched AS (
+    SELECT DISTINCT ON (habit_id) habit_id, rn AS last_rn, d AS last_d, is_done AS last_done
+    FROM sched ORDER BY habit_id, rn DESC
+  ),
+  islands AS (
+    SELECT habit_id, rn, rn - row_number() OVER (PARTITION BY habit_id ORDER BY rn) AS island
+    FROM sched WHERE is_done
+  ),
+  sruns AS (
+    SELECT habit_id, island, COUNT(*)::int AS len, MAX(rn) AS end_rn
+    FROM islands GROUP BY habit_id, island
+  ),
+  agg_planned AS (
+    -- Série EN COURS : l'îlot qui touche le dernier jour prévu <= today, ou
+    -- l'avant-dernier si ce dernier est AUJOURD'HUI et pas encore coché (la
+    -- journée n'est pas finie). Même règle que `streak.ts`.
+    SELECT r.habit_id,
+           MAX(r.len) AS best,
+           COALESCE(MAX(r.len) FILTER (
+             WHERE r.end_rn >= ls.last_rn
+                   - CASE WHEN ls.last_d = (SELECT today FROM params) AND NOT ls.last_done
+                          THEN 1 ELSE 0 END
+           ), 0) AS current
+    FROM sruns r
+    JOIN last_sched ls ON ls.habit_id = r.habit_id
+    GROUP BY r.habit_id
+  ),
+  agg AS (
+    SELECT habit_id, best, current FROM agg_plain
+    UNION ALL
+    SELECT habit_id, best, current FROM agg_planned
   )
   SELECT
     h.id, h.name, h.description, h.frequency, h.estimated_time, h.color, h.icon,
@@ -3782,11 +3843,14 @@ CREATE FUNCTION public.get_my_habits(p_days integer DEFAULT 400, p_today date DE
     h.user_id, h.created_at,
     COALESCE(a.current, 0)::int,
     COALESCE(a.best, 0)::int,
-    COALESCE(a.total, 0)::int,
-    a.first_day,
-    p.win
+    COALESCE(t.total, 0)::int,
+    t.first_day,
+    p.win,
+    h.scheduled_days,
+    h.schedule_history
   FROM public.habits h
   CROSS JOIN params p
+  LEFT JOIN totals t ON t.habit_id = h.id
   LEFT JOIN agg a ON a.habit_id = h.id
   ORDER BY h.created_at DESC, h.id DESC;
 $$;
@@ -3796,7 +3860,7 @@ $$;
 -- Name: FUNCTION get_my_habits(p_days integer, p_today date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_my_habits(p_days integer, p_today date) IS 'Lecture bornee des habitudes, depuis habit_completions (mig. 248). `completions` = jours coches des p_days derniers jours ; series et totaux calcules sur l historique ENTIER. `p_today` est la date LOCALE du client (bornee a CURRENT_DATE +/- 1, mig. 122).';
+COMMENT ON FUNCTION public.get_my_habits(p_days integer, p_today date) IS 'Lecture bornee des habitudes, depuis habit_completions (mig. 248). `completions` = jours coches des p_days derniers jours ; series sur les seuls jours PREVUS (mig. 251) et totaux sur l historique ENTIER. `p_today` est la date LOCALE du client (bornee a CURRENT_DATE +/- 1, mig. 122).';
 
 
 --
@@ -4896,6 +4960,65 @@ $_$;
 --
 
 COMMENT ON FUNCTION public.habit_day_from_key(p_key text) IS 'Cle YYYY-MM-DD de habits.completions vers une date, ou NULL si ce n est pas une date reelle. Ne leve jamais (mig. 248).';
+
+
+--
+-- Name: habit_day_scheduled(smallint[], jsonb, date); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.habit_day_scheduled(p_days smallint[], p_history jsonb, p_d date) RETURNS boolean
+    LANGUAGE sql IMMUTABLE PARALLEL SAFE
+    SET search_path TO ''
+    AS $$
+  SELECT CASE
+    WHEN COALESCE(jsonb_array_length(p_history), 0) > 0 THEN
+      COALESCE((
+        SELECT (e.value -> 'days') @> to_jsonb(EXTRACT(DOW FROM p_d)::int)
+          FROM jsonb_array_elements(p_history) WITH ORDINALITY AS e(value, pos)
+         WHERE (e.value ->> 'from')::date <= p_d
+         ORDER BY (e.value ->> 'from')::date DESC, e.pos DESC
+         LIMIT 1
+      ), true)
+    ELSE
+      p_days IS NULL
+      OR cardinality(p_days) = 0
+      OR EXTRACT(DOW FROM p_d)::smallint = ANY (p_days)
+  END;
+$$;
+
+
+--
+-- Name: FUNCTION habit_day_scheduled(p_days smallint[], p_history jsonb, p_d date); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.habit_day_scheduled(p_days smallint[], p_history jsonb, p_d date) IS 'Vrai si le jour est prevu pour l habitude (reglage en vigueur ce jour-la). Miroir de isHabitScheduledOn, src/modules/habits/schedule.ts (mig. 251).';
+
+
+--
+-- Name: habit_schedule_history_valid(jsonb); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.habit_schedule_history_valid(p_history jsonb) RETURNS boolean
+    LANGUAGE sql IMMUTABLE PARALLEL SAFE
+    SET search_path TO ''
+    AS $_$
+  SELECT p_history IS NULL
+    OR (jsonb_typeof(p_history) = 'array'
+        AND jsonb_array_length(p_history) <= 100
+        AND NOT EXISTS (
+          SELECT 1
+            FROM jsonb_array_elements(p_history) e
+           WHERE jsonb_typeof(e) <> 'object'
+              OR jsonb_typeof(e -> 'from') IS DISTINCT FROM 'string'
+              OR public.habit_day_from_key(e ->> 'from') IS NULL
+              OR jsonb_typeof(e -> 'days') IS DISTINCT FROM 'array'
+              OR jsonb_array_length(e -> 'days') NOT BETWEEN 1 AND 7
+              OR EXISTS (
+                   SELECT 1
+                     FROM jsonb_array_elements(e -> 'days') d
+                    WHERE jsonb_typeof(d) <> 'number'
+                       OR d::text !~ '^[0-6]$')));
+$_$;
 
 
 --
@@ -8753,8 +8876,26 @@ CREATE TABLE public.habits (
     completions jsonb DEFAULT '{}'::jsonb NOT NULL,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    CONSTRAINT habits_frequency_check CHECK ((frequency = ANY (ARRAY['daily'::text, 'weekly'::text, 'monthly'::text])))
+    scheduled_days smallint[],
+    schedule_history jsonb DEFAULT '[]'::jsonb NOT NULL,
+    CONSTRAINT habits_frequency_check CHECK ((frequency = ANY (ARRAY['daily'::text, 'weekly'::text, 'monthly'::text]))),
+    CONSTRAINT habits_schedule_history_check CHECK (public.habit_schedule_history_valid(schedule_history)),
+    CONSTRAINT habits_scheduled_days_check CHECK (((scheduled_days IS NULL) OR (((cardinality(scheduled_days) >= 1) AND (cardinality(scheduled_days) <= 7)) AND (scheduled_days <@ ARRAY[(0)::smallint, (1)::smallint, (2)::smallint, (3)::smallint, (4)::smallint, (5)::smallint, (6)::smallint]) AND (array_position(scheduled_days, NULL::smallint) IS NULL))))
 );
+
+
+--
+-- Name: COLUMN habits.scheduled_days; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.habits.scheduled_days IS 'Jours prevus en vigueur, 0 = dimanche (EXTRACT(DOW)). NULL = tous les jours (mig. 251).';
+
+
+--
+-- Name: COLUMN habits.schedule_history; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.habits.schedule_history IS 'Changements dates des jours prevus [{from, days}] : un jour se juge avec le reglage en vigueur ce jour-la, le passe n est jamais rejuge (mig. 251).';
 
 
 --
@@ -8805,34 +8946,35 @@ $_$;
 -- Name: toggle_habit_completion_v2(uuid, text, integer, date); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.toggle_habit_completion_v2(p_habit_id uuid, p_date text, p_days integer DEFAULT 400, p_today date DEFAULT NULL::date) RETURNS TABLE(id uuid, name text, description text, frequency text, estimated_time integer, color text, icon text, completions jsonb, user_id uuid, created_at timestamp with time zone, streak_current integer, streak_best integer, completions_total integer, first_completion_date date, window_days integer)
+CREATE FUNCTION public.toggle_habit_completion_v2(p_habit_id uuid, p_date text, p_days integer DEFAULT 400, p_today date DEFAULT NULL::date) RETURNS TABLE(id uuid, name text, description text, frequency text, estimated_time integer, color text, icon text, completions jsonb, user_id uuid, created_at timestamp with time zone, streak_current integer, streak_best integer, completions_total integer, first_completion_date date, window_days integer, scheduled_days smallint[], schedule_history jsonb)
     LANGUAGE plpgsql
     SET search_path TO ''
     AS $$
 DECLARE
-  v_uid   UUID := (SELECT auth.uid());
-  v_id    UUID;
-  v_day   DATE;
-  v_on    BOOLEAN;
-  v_win   INTEGER := GREATEST(1, LEAST(COALESCE(p_days, 400), 3650));
-  v_today DATE := GREATEST(CURRENT_DATE - 1,
-                           LEAST(COALESCE(p_today, CURRENT_DATE), CURRENT_DATE + 1));
+  v_uid     UUID := (SELECT auth.uid());
+  v_id      UUID;
+  v_day     DATE;
+  v_on      BOOLEAN;
+  v_planned BOOLEAN;
+  v_win     INTEGER := GREATEST(1, LEAST(COALESCE(p_days, 400), 3650));
+  v_today   DATE := GREATEST(CURRENT_DATE - 1,
+                             LEAST(COALESCE(p_today, CURRENT_DATE), CURRENT_DATE + 1));
 BEGIN
   IF v_uid IS NULL THEN
     RAISE EXCEPTION 'Not authenticated';
   END IF;
 
-  -- Forme ET calendrier : `2026-02-30` est refusé ici, et non plus par un
-  -- cast qui levait plus loin, dans la lecture.
+  -- Forme ET calendrier : `2026-02-30` est refusé ici (mig. 248).
   v_day := public.habit_day_from_key(p_date);
   IF v_day IS NULL THEN
     RAISE EXCEPTION 'Invalid date format (expected YYYY-MM-DD)';
   END IF;
 
   -- Verrou de la ligne d'habitude : deux bascules concurrentes du même jour
-  -- (deux onglets) se sérialisent, la seconde voit l'état laissé par la
-  -- première (correctif TOCTOU-1, mig. 023). Ne JAMAIS décider sans ce verrou.
-  SELECT h.id INTO v_id
+  -- se sérialisent (correctif TOCTOU-1, mig. 023). Ne JAMAIS décider sans.
+  SELECT h.id,
+         (h.scheduled_days IS NOT NULL OR jsonb_array_length(h.schedule_history) > 0)
+    INTO v_id, v_planned
     FROM public.habits h
    WHERE h.id = p_habit_id
      AND h.user_id = v_uid   -- défense en profondeur (la RLS filtre déjà)
@@ -8842,6 +8984,8 @@ BEGIN
     RAISE EXCEPTION 'Habit not found';
   END IF;
 
+  -- Un jour non prévu n'est PAS refusé : décocher une coche ancienne doit
+  -- rester possible, et la coche y est neutre pour la série.
   DELETE FROM public.habit_completions c
    WHERE c.habit_id = v_id AND c.user_id = v_uid AND c.day = v_day;
   v_on := NOT FOUND;
@@ -8850,8 +8994,8 @@ BEGIN
     VALUES (v_id, v_uid, v_day);
   END IF;
 
-  -- Miroir de transition : la colonne reste exacte pour ses lecteurs
-  -- (CLI, export, onglets anciens). Le trigger n'y trouve rien à refaire.
+  -- Miroir de transition (mig. 248) : la colonne reste exacte pour ses
+  -- lecteurs (CLI, export, onglets anciens). Le trigger n'y trouve rien à refaire.
   UPDATE public.habits h
      SET completions = jsonb_set(COALESCE(h.completions, '{}'::jsonb),
                                  ARRAY[p_date], to_jsonb(v_on), true)
@@ -8865,19 +9009,63 @@ BEGIN
       AND c.user_id = v_uid
       AND c.day <= v_today
   ),
+  totals AS (
+    SELECT COUNT(*)::int AS total, MIN(d) AS first_day FROM days
+  ),
+  -- ── Sans jours prévus : calcul de la 248, à la lettre ──
   grouped AS (
-    SELECT d, d - (row_number() OVER (ORDER BY d))::int AS island FROM days
+    SELECT d, d - (row_number() OVER (ORDER BY d))::int AS island
+    FROM days WHERE NOT v_planned
   ),
   runs AS (
     SELECT island, COUNT(*)::int AS len, MAX(d) AS last_day
     FROM grouped GROUP BY island
   ),
-  agg AS (
+  agg_plain AS (
     SELECT MAX(r.len) AS best,
-           COALESCE(MAX(r.len) FILTER (WHERE r.last_day >= (v_today - 1)), 0) AS current,
-           SUM(r.len)::int AS total,
-           MIN(r.last_day - (r.len - 1)) AS first_day
+           COALESCE(MAX(r.len) FILTER (WHERE r.last_day >= (v_today - 1)), 0) AS current
     FROM runs r
+  ),
+  -- ── Avec jours prévus : même méthode que get_my_habits ──
+  sched AS (
+    SELECT g.d::date AS d,
+           (dy.d IS NOT NULL) AS is_done,
+           row_number() OVER (ORDER BY g.d) AS rn
+    FROM public.habits h
+    CROSS JOIN totals t
+    CROSS JOIN LATERAL generate_series(
+      GREATEST(t.first_day, v_today - 3650), v_today, interval '1 day'
+    ) AS g(d)
+    LEFT JOIN days dy ON dy.d = g.d::date
+    WHERE v_planned
+      AND h.id = v_id
+      AND t.first_day IS NOT NULL
+      AND public.habit_day_scheduled(h.scheduled_days, h.schedule_history, g.d::date)
+  ),
+  last_sched AS (
+    SELECT rn AS last_rn, d AS last_d, is_done AS last_done
+    FROM sched ORDER BY rn DESC LIMIT 1
+  ),
+  islands AS (
+    SELECT rn, rn - row_number() OVER (ORDER BY rn) AS island
+    FROM sched WHERE is_done
+  ),
+  sruns AS (
+    SELECT island, COUNT(*)::int AS len, MAX(rn) AS end_rn
+    FROM islands GROUP BY island
+  ),
+  agg_planned AS (
+    SELECT MAX(r.len) AS best,
+           COALESCE(MAX(r.len) FILTER (
+             WHERE r.end_rn >= ls.last_rn
+                   - CASE WHEN ls.last_d = v_today AND NOT ls.last_done THEN 1 ELSE 0 END
+           ), 0) AS current
+    FROM sruns r CROSS JOIN last_sched ls
+  ),
+  agg AS (
+    SELECT best, current FROM agg_plain WHERE NOT v_planned
+    UNION ALL
+    SELECT best, current FROM agg_planned WHERE v_planned
   )
   SELECT
     h.id, h.name, h.description, h.frequency, h.estimated_time, h.color, h.icon,
@@ -8892,9 +9080,11 @@ BEGIN
     h.user_id, h.created_at,
     COALESCE((SELECT a.current FROM agg a), 0)::int,
     COALESCE((SELECT a.best    FROM agg a), 0)::int,
-    COALESCE((SELECT a.total   FROM agg a), 0)::int,
-    (SELECT a.first_day FROM agg a),
-    v_win
+    COALESCE((SELECT t.total   FROM totals t), 0)::int,
+    (SELECT t.first_day FROM totals t),
+    v_win,
+    h.scheduled_days,
+    h.schedule_history
   FROM public.habits h
   WHERE h.id = v_id;
 END;
@@ -8905,7 +9095,7 @@ $$;
 -- Name: FUNCTION toggle_habit_completion_v2(p_habit_id uuid, p_date text, p_days integer, p_today date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.toggle_habit_completion_v2(p_habit_id uuid, p_date text, p_days integer, p_today date) IS 'Bascule d un jour dans habit_completions, sous verrou de la ligne d habitude, recopiee dans habits.completions le temps de la transition (mig. 248). Retour borne, meme forme que get_my_habits. `p_today` : date LOCALE du client (mig. 122).';
+COMMENT ON FUNCTION public.toggle_habit_completion_v2(p_habit_id uuid, p_date text, p_days integer, p_today date) IS 'Bascule d un jour dans habit_completions, sous verrou de la ligne d habitude, recopiee dans habits.completions le temps de la transition (mig. 248). Series sur les seuls jours PREVUS (mig. 251). `p_today` : date LOCALE du client (mig. 122).';
 
 
 --
@@ -19257,6 +19447,24 @@ GRANT ALL ON FUNCTION public.habit_completions_mirror() TO service_role;
 REVOKE ALL ON FUNCTION public.habit_day_from_key(p_key text) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.habit_day_from_key(p_key text) TO authenticated;
 GRANT ALL ON FUNCTION public.habit_day_from_key(p_key text) TO service_role;
+
+
+--
+-- Name: FUNCTION habit_day_scheduled(p_days smallint[], p_history jsonb, p_d date); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.habit_day_scheduled(p_days smallint[], p_history jsonb, p_d date) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.habit_day_scheduled(p_days smallint[], p_history jsonb, p_d date) TO authenticated;
+GRANT ALL ON FUNCTION public.habit_day_scheduled(p_days smallint[], p_history jsonb, p_d date) TO service_role;
+
+
+--
+-- Name: FUNCTION habit_schedule_history_valid(p_history jsonb); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.habit_schedule_history_valid(p_history jsonb) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.habit_schedule_history_valid(p_history jsonb) TO authenticated;
+GRANT ALL ON FUNCTION public.habit_schedule_history_valid(p_history jsonb) TO service_role;
 
 
 --
