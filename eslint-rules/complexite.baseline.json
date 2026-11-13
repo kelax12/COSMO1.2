@@ -413,7 +413,7 @@
     },
     "src/pages/OKRPage.tsx": {
       "complexity": [29],
-      "max-lines-per-function": [412]
+      "max-lines-per-function": [411]
     },
     "src/pages/OrganizationPage.tsx": {
       "complexity": [107],
