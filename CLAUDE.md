@@ -195,6 +195,8 @@ Décision d'Axel du 2026-10-29. Les PR et les E2E locaux coûtaient trop de temp
 - Le hook `pre-push` refuse un noyau (`CI noyau`) rouge sur `main` : **aucun contournement**,
   ❌ `--no-verify`, ❌ PR d'office. Réparer : pousser le correctif sur `noyau/<nom>`, puis ce même
   SHA sur `main` une fois son noyau vert → `docs/DEPLOYMENT.md` § Hook.
+- 🔴 **Jamais rebaser une branche antérieure au 2026-11-13 sur `origin/main`** (historique purgé,
+  `.githooks/garde-historique.sh` refuse la poussée) : worktree neuf, puis `git cherry-pick`.
 
 ## Environnement et déploiement
 

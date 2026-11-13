@@ -433,6 +433,18 @@ jobs:
         # Pas de repli silencieux : une plage sans base (premier push d'une
         # branche) est refusée par le script, qui le dit.
         run: node scripts/check-fichiers-sensibles.mjs --arbre --plage "$PLAGE"
+      # Filet apres coup (purge d'historique du 2026-11-13) : aucun commit de
+      # l'historique complet ne doit toucher les chemins purges. La vraie garde
+      # est le hook pre-push (.githooks/garde-historique.sh).
+      - name: Historique purge (chemins absents de tout commit)
+        run: |
+          set -euo pipefail
+          VU=$(git log --all --oneline -- leads-50.csv docs/business-plan)
+          if [ -n "$VU" ]; then
+            echo "::error::Des commits touchent un chemin purge :"
+            echo "$VU"
+            exit 1
+          fi
       # V15.4 (FRO-02) · aucune référence visuelle ne change sur `main` sans
       # le trailer `Captures-relues: <URL du run>`, et ce run doit exister,
       # venir de `captures-regenerer.yml` et avoir réussi.

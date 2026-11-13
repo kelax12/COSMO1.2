@@ -1,3 +1,8 @@
 #!/bin/sh
-# Cf. scripts/pre-push-main-red.mjs : refuse de pousser sur un main rouge.
-exec node scripts/pre-push-main-red.mjs "$@"
+# 1. .githooks/garde-historique.sh : refuse l'ancien historique (purge du 2026-11-13).
+# 2. Cf. scripts/pre-push-main-red.mjs : refuse de pousser sur un main rouge.
+# L'entree standard est lue une fois puis rejouee aux deux controles.
+dir=$(dirname "$0")
+entree=$(cat)
+printf '%s\n' "$entree" | sh "$dir/garde-historique.sh" || exit 1
+printf '%s\n' "$entree" | exec node scripts/pre-push-main-red.mjs "$@"

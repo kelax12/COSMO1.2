@@ -1,0 +1,7 @@
+# Commits de l'ancien historique (purge du 2026-11-13). Un sha complet par ligne.
+# Toute poussee dont un de ces commits est ancetre est refusee.
+# Un sha absent du depot local est ignore.
+# ff91cf70 : ajout de leads-50.csv et docs/business-plan/ (2026-10-30)
+ff91cf707189230c9ca36736bbae358533efa90c
+# 58f1bf0c
+58f1bf0cae3c2813c50ddfc812ac8f29f526076c
