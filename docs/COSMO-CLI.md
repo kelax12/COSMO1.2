@@ -1,83 +1,67 @@
-# CLI COSMO — accès agent aux données personnelles
+# CLI COSMO
 
-Permet à Claude Code de lire tes tâches / habitudes / agenda / OKR et d'écrire
-un sous-ensemble limité, depuis ce dépôt, sur ce PC.
+Lire avant tout appel à `npm run cosmo` ou toute modification de `scripts/cosmo/`. Fait foi : `scripts/cosmo/cli.mjs` et `scripts/cosmo/api.mjs`. Mémo court pour ajouter une tâche : [`AGENT-AJOUTER-TACHE.md`](./AGENT-AJOUTER-TACHE.md).
 
-Conception (archive) : [`docs/archive/superpowers/specs/2026-07-27-cosmo-cli-agent-design.md`](./archive/superpowers/specs/2026-07-27-cosmo-cli-agent-design.md)
+Le CLI lit les tâches, habitudes, agenda et OKR du VRAI compte d'Axel (production), et écrit sur les tâches seulement. Session d'Axel, RLS comme dans le navigateur, jamais `service_role`.
 
-## Mise en route
+## Règles non négociables
 
-1. `.env.cosmo-cli` à la racine (gitignoré) :
+- 🔴 Quoter toute valeur contenant des espaces, ou passer par `--input '<json>'` (forme à préférer) : sans guillemets, le shell tronque la valeur au premier mot et colle le reste au nom de la tâche. Le CLI refuse ce cas.
+- 🔴 `tasks list` ne renvoie pas `description` (liste allégée, parité avec l'app, `TASK_COLUMNS`). Ce n'est pas un échec d'écriture : relire avec `tasks show <id>` ou `tasks list --full`.
+- 🔴 Ne JAMAIS lancer `npm run cosmo:login` : interactif, attend un code reçu par email. Session expirée (`CosmoAuthError : Session COSMO absente ou expiree.`) : demander à Axel de le lancer.
+- 🔴 Ne JAMAIS écrire via le MCP Supabase : `execute_sql` contourne la RLS. Le CLI est le seul chemin d'écriture.
+- 🔴 `tasks delete <id> --confirm` est la seule opération sans retour du CLI : confirmer avec Axel avant toute suppression qu'il n'a pas explicitement désignée. Vérifier la cible avec `--dry-run`.
+- ❌ Aucune écriture OKR : faire progresser un KR impose une insertion atomique dans le journal append-only `kr_completions`, et la dupliquer casserait le graphique « KR réalisés ».
+- ❌ Aucune suppression d'habitude ni d'événement ; aucun `service_role`.
+- ❌ Ne jamais écrire `user_id` : posé côté serveur depuis `auth.uid()`.
+
+## Mise en route (faite par Axel)
+
+1. `.env.cosmo-cli` à la racine (gitignoré), distinct de `.env` (dont `VITE_SUPABASE_URL` reste vide pour garder `npm run dev` en démo) :
 
    ```
    COSMO_SUPABASE_URL=https://ykeugqfgklejcdbrmawy.supabase.co
    COSMO_SUPABASE_ANON_KEY=<cle publishable>
    ```
 
-   Ce fichier est **volontairement distinct du `.env` racine** : celui-ci garde
-   `VITE_SUPABASE_URL` vide pour que `npm run dev` reste en mode démo.
+2. `npm run cosmo:login` : compte Google-only, vérification par email. Le script accepte un code OTP (le template Magic Link doit contenir `{{ .Token }}`) ou le lien « Log In » collé tel quel (template par défaut, `{{ .ConfirmationURL }}`).
+3. ⚠️ Un lien se copie sans le cliquer (appui long, « Copier l'adresse ») : l'ouvrir le consomme.
+4. ⚠️ Le provider Email doit être activé dans Supabase (`Authentication → Providers → Email`), sinon `signInWithOtp` échoue.
 
-2. Se connecter — **à faire toi-même**, Claude ne lance jamais cette commande :
-
-   ```bash
-   npm run cosmo:login
-   ```
-
-   Le compte étant Google-only, il n'y a pas de mot de passe : la vérification
-   passe par email. La session est stockée dans `~/.cosmo/session.json` (hors du
-   dépôt) et se rafraîchit toute seule ensuite.
-
-   Le script accepte **deux formes** de vérification, selon le template d'email
-   configuré côté Supabase :
-
-   - un **code à 6 chiffres** — nécessite que le template Magic Link contienne
-     `{{ .Token }}` ;
-   - le **lien « Log In » collé tel quel** — c'est le cas avec le template
-     Supabase par défaut, qui n'expose que `{{ .ConfirmationURL }}`.
-
-   > ⚠️ Si tu colles un lien, **copie-le sans le cliquer** (appui long → *Copier
-   > l'adresse du lien*). Ouvrir le lien dans un navigateur le consomme : il
-   > faudra en redemander un.
-
-   > Prérequis : le provider **Email** doit être activé dans Supabase
-   > (*Authentication → Providers → Email*). Sans lui, `signInWithOtp` échoue.
+Session : `~/.cosmo/session.json` (hors dépôt, jetons d'accès, jamais committée), rafraîchie toute seule. `requireSession` distingue une panne réseau (« Reseau indisponible, session conservee, reessaie ») d'une session morte. Relogin seulement si le refresh token est révoqué (changement de mot de passe, déconnexion globale, expiration réglée dans `Authentication → Sessions`).
 
 ## Commandes
 
-### Tâches — lecture et écriture complète
+Tâches (lecture et écriture) :
 
 | Commande | Effet |
 |---|---|
 | `npm run cosmo -- tasks list` | Tâches non terminées |
-| `npm run cosmo -- tasks list --all` | Toutes les tâches |
-| `npm run cosmo -- tasks list --full` | Idem, avec la `description` |
-| `npm run cosmo -- tasks show <id>` | Détail complet d'une tâche |
-| `npm run cosmo -- tasks add "<nom>" --category Perso` | Crée une tâche |
-| `npm run cosmo -- tasks update <id> --priority 5 --time 90` | Modifie une tâche |
-| `npm run cosmo -- tasks done <id>` | Coche une tâche |
-| `npm run cosmo -- tasks reopen <id>` | Ré-ouvre une tâche terminée |
-| `npm run cosmo -- tasks delete <id> --confirm` | **Supprime définitivement** |
+| `npm run cosmo -- tasks list --all` | Toutes |
+| `npm run cosmo -- tasks list --full` | Avec `description` |
+| `npm run cosmo -- tasks show <id>` | Détail complet |
+| `npm run cosmo -- tasks add "<nom>" --category Perso` | Crée |
+| `npm run cosmo -- tasks update <id> --priority 5 --time 90` | Modifie |
+| `npm run cosmo -- tasks done <id>` | Coche |
+| `npm run cosmo -- tasks reopen <id>` | Ré-ouvre |
+| `npm run cosmo -- tasks delete <id> --confirm` | Supprime définitivement |
 
-Champs modifiables via `update` : `--name`, `--priority`, `--category`,
-`--deadline` (`""` efface l'échéance), `--time`, `--bookmark` / `--no-bookmark`.
-Priorités : 1 = très basse … 5 = critique.
+Champs de `update` : `--name`, `--priority` (1 = très basse, 5 = critique), `--category`, `--deadline` (`""` efface), `--time`, `--bookmark` / `--no-bookmark`.
 
-### Autres domaines
+Autres domaines :
 
 | Commande | Effet |
 |---|---|
+| `npm run cosmo -- categories` | Catégories valides |
 | `npm run cosmo -- habits today` | Habitudes et état du jour |
-| `npm run cosmo -- habits done <id>` | Marque une habitude faite (idempotent) |
+| `npm run cosmo -- habits done <id>` | Marque faite (idempotent) |
 | `npm run cosmo -- agenda --days 7` | Événements à venir |
 | `npm run cosmo -- okr` | OKR (lecture seule) |
 | `npm run cosmo -- okr --kr <okrId>` | Key results d'un OKR |
 
 `--json` sur toute commande, `--dry-run` sur toute écriture.
 
-**`delete` exige `--confirm`.** C'est la seule opération sans retour du CLI ;
-tout le reste est réversible. `--dry-run` permet de vérifier la cible avant.
-
-### Entrée JSON — la forme robuste pour un agent
+Entrée JSON (forme robuste pour un agent) :
 
 ```bash
 npm run cosmo -- tasks add --input '{"name":"Ma tache","description":"Contexte multi-mots."}'
@@ -85,84 +69,23 @@ npm run cosmo -- tasks update <id> --input '{"description":"Nouveau contexte"}'
 npm run cosmo -- tasks add --input -    # lit le JSON sur stdin
 ```
 
-Pourquoi elle existe : une valeur en prose non quotée était découpée par le
-shell. `--description Contexte complet de la tache` ne transmettait que
-« Contexte » au drapeau, et « complet de la tache » se retrouvait **collé au nom
-de la tâche** — deux champs corrompus, sans le moindre message. Le CLI refuse
-maintenant ce cas, mais la forme JSON le rend structurellement impossible.
+## Contraintes d'implémentation
 
-### Lire une description
+Chacune est couverte par un test dans `scripts/cosmo/*.test.mjs`.
 
-`description` n'est **pas** dans `TASK_COLUMNS` : la liste est allégée, par
-parité avec celle de l'app. Une description écrite n'apparaît donc pas dans
-`tasks list` — ce n'est pas un échec d'écriture. Utiliser `tasks show <id>` ou
-`tasks list --full`.
+- 🔴 Habitudes : passer par la RPC `toggle_habit_completion`, jamais `SELECT completions` puis `UPDATE` (course entre appareils). La RPC bascule : `markHabitDone` lit l'état avant d'appeler, sinon un second appel décoche.
+- 🔴 Agenda : la policy RLS de `events` expose aussi l'agenda des membres d'équipe ; `listUpcomingEvents` filtre explicitement sur `user_id`.
+- 🔴 `TASK_COLUMNS` duplique `TASK_LIST_COLUMNS` du repository applicatif ; un test anti-dérive lit la source. Test rouge : corriger `TASK_COLUMNS`, pas le test.
+- ❌ Dates : `toLocaleDateString('en-CA')`, jamais `toISOString().slice(0, 10)` (décale d'un jour en soirée).
+- ✅ `api.mjs` reçoit un client en paramètre, ne lit ni `process.env` ni `process.argv`, n'écrit pas sur stdout : c'est la couche qu'un futur serveur MCP réutilisera.
 
-Si la session a expiré, toutes les commandes s'arrêtent sur
-`CosmoAuthError : Session COSMO absente ou expiree.` — relancer `npm run cosmo:login`.
+## Fichiers
 
-## Ce que le CLI ne fait pas, volontairement
+`scripts/cosmo/` : `errors.mjs` (erreurs typées), `client.mjs` (auth, transport), `login.mjs` (OTP, lancé par l'utilisateur seulement), `api.mjs` (domaine pur), `cli.mjs` (arguments, rendu, codes de sortie), `*.test.mjs` (Vitest, client mocké, aucun réseau).
 
-- **Aucune écriture OKR.** Faire progresser un KR impose une insertion atomique
-  dans le journal append-only `kr_completions` ; dupliquer cette logique ici
-  casserait silencieusement le graphique « KR réalisés » du dashboard.
-- **Aucune suppression d'habitude ni d'événement.** Seules les tâches ont un
-  chemin de suppression, et il exige `--confirm`.
-- **Aucun accès `service_role`.** Le CLI utilise la clé publishable et ta
-  session : la RLS fait le filtrage, exactement comme dans le navigateur.
-
-## Session permanente
-
-La session vit dans `~/.cosmo/session.json` et se rafraîchit toute seule : tu ne
-devrais pas avoir à te reconnecter. `requireSession` force un `refreshSession()`
-explicite si `getSession()` ne trouve rien, et **distingue une panne réseau d'une
-session morte** — une coupure wifi affiche « Reseau indisponible, session
-conservee, reessaie », pas une demande de relogin.
-
-Un vrai relogin n'est nécessaire que si le refresh token est révoqué (changement
-de mot de passe, déconnexion de toutes les sessions, ou expiration configurée
-dans Supabase → *Authentication → Sessions*).
-
-## Contraintes d'implémentation à respecter
-
-Trois pièges du domaine, encodés dans le code et couverts par des tests :
-
-1. **Habitudes** — la complétion passe par la RPC `toggle_habit_completion`
-   (mig. 023, faille TOCTOU-1). Jamais de `SELECT completions` → mutation JS →
-   `UPDATE` : un autre appareil peut écrire entre les deux. Et comme la RPC est
-   un *toggle*, `markHabitDone` lit l'état avant d'appeler, sinon une seconde
-   invocation décocherait l'habitude.
-2. **Agenda** — depuis la mig. 077, la policy RLS de `events` expose aussi
-   l'agenda des membres de l'équipe. `listUpcomingEvents` filtre donc
-   explicitement sur `user_id` ; s'en remettre à la seule RLS mélangerait
-   l'agenda perso et celui des collègues.
-3. **Colonnes `tasks`** — `TASK_COLUMNS` duplique `TASK_LIST_COLUMNS` du
-   repository applicatif. Un test anti-dérive lit le fichier source et casse si
-   les deux divergent. Si ce test échoue, corriger `TASK_COLUMNS`, pas le test.
-
-Les dates sont produites via `toLocaleDateString('en-CA')`, convention du
-projet — jamais `toISOString().slice(0, 10)`, qui décale d'un jour en soirée.
-
-## Architecture
-
-```
-scripts/cosmo/
-├── errors.mjs   # erreurs typées, aucune I/O
-├── client.mjs   # auth + transport, aucune notion métier
-├── login.mjs    # OTP interactif — lancé par l'utilisateur uniquement
-├── api.mjs      # domaine pur ← future surface de tools d'un serveur MCP
-├── cli.mjs      # arguments, rendu, codes de sortie
-└── *.test.mjs   # Vitest, client mocké, aucun appel réseau
-```
-
-`api.mjs` reçoit toujours un client en paramètre, ne lit ni `process.env` ni
-`process.argv`, et n'écrit rien sur stdout. C'est cette couche, et elle seule,
-qu'un futur serveur MCP réutilisera.
+Conception : [`archive/superpowers/specs/2026-07-27-cosmo-cli-agent-design.md`](./archive/superpowers/specs/2026-07-27-cosmo-cli-agent-design.md).
 
 ## Sécurité
 
-- `~/.cosmo/session.json` contient des jetons d'accès. Hors du dépôt, jamais committé.
-- `.env.cosmo-cli` est dans `.gitignore`. Vérifier `git status` avant tout commit.
-- Le CLI ne demande jamais de mot de passe et n'en stocke aucun.
-- Aucun insert n'émet `user_id` : la colonne est posée côté serveur depuis
-  `auth.uid()`, comme la whitelist `mapToDb` de l'app.
+- ❌ Le CLI ne demande ni ne stocke de mot de passe.
+- ✅ Vérifier `git status` avant tout commit : `.env.cosmo-cli` est gitignoré.

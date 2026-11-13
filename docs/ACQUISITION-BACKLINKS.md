@@ -1,70 +1,26 @@
-# Backlinks — kit de soumission annuaires et places de marché
+# Backlinks : kit de soumission
 
-**Créé le 2026-08-19**, après lecture des données Search Console sur 3 mois.
+Lire avant de soumettre une fiche annuaire ou de toucher `scripts/seo-signals.mjs` ou `scripts/check-acquisition.mjs`. Fait foi : le tableau des annuaires ci-dessous, lu par ces deux scripts. Aucune action ici n'est exécutable par un agent : chaque ligne demande un compte, un formulaire et une validation humaine d'Axel.
 
-> Ce document ne contient **aucune action que Claude puisse exécuter**. Tout ce qui suit
-> demande un compte, un formulaire et une validation humaine. Le kit existe pour qu'Axel
-> ne réécrive pas 14 fois la même description : elle est déjà écrite, il reste à coller.
+## Objectif
 
----
+- 🔴 Le blocage SEO est l'autorité de domaine, pas la technique ni l'éditorial : sans lien entrant, aucune page ne se classe. Cible : 20 domaines référents.
+- ❌ Ne pas écrire de nouvel article tant que la cible n'est pas approchée.
+- ✅ Mesure : `npm run check:acquisition` (état des lignes) et `scripts/seo-signals.mjs` (chaque lundi, `seo-signals.yml`, relié à `ci-alert.yml`) ; série datée `docs/seo-signals-series.json`.
+- ⚠️ `seo-signals` relit chaque ligne `fait` : la page source (première URL hors `thecosmo.app` de la colonne Note) doit répondre et contenir un lien vers `thecosmo.app`. Page disparue, lien retiré, `fait` sans page source ou lien `nofollow` = rouge. Elle ne voit pas une page rendue en JavaScript (à relire à la main) ni un backlink jamais déclaré ici.
+- ⚠️ Domaines référents et liens entrants : API Bing Webmaster (`BING_WEBMASTER_API_KEY`, geste d'Axel) ; rouge si un domaine disparaît d'un point au suivant. Bing ne compte que ce qu'il a exploré : ce n'est pas l'autorité vue par Google.
+- ⚠️ La garde exige une date sur `fait` et `refuse`, pas que l'état déclaré soit vrai.
 
+## Blocs de copie
 
-## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
-
-> Ce document affirme des choses que rien ne pèse : chaque ligne nomme une affirmation qui n'était vérifiée
-> par rien, et la garde qui la vérifie depuis. 🔴 **Une garde posée n'est pas un angle mort fermé** : la
-> dernière colonne dit ce que son vert ne prouve pas. L'énoncé du 2026-09-16, la colonne « État » du
-> 2026-09-21 et les mesures datées sont archivés sans une coupe :
-> [`archive/ANGLES-MORTS-2026-09-16-docs-vivantes.md`](./archive/ANGLES-MORTS-2026-09-16-docs-vivantes.md).
-
-| # | Angle mort (énoncé du 2026-09-16) | Garde qui le couvre | 🔴 Ce qu'elle ne prouve pas |
-|---|---|---|---|
-| AM-1 | **Aucun suivi des backlinks obtenus ni PERDUS** : un lien retiré est invisible, alors que c'est le seul levier que ce document déclare débloquant | `scripts/seo-signals.mjs`, chaque lundi (`seo-signals.yml`, relié à `ci-alert.yml`) : chaque ligne `fait` du tableau des annuaires est relue, sa page source (première URL hors thecosmo.app de la colonne Note) doit répondre et contenir un lien vers thecosmo.app, `rel` noté en série. Page disparue, lien retiré, `fait` sans page source ou lien devenu `nofollow` = **rouge** | Un lien d'une page rendue en JavaScript (rouge à relire à la main) ; un backlink jamais déclaré ici (voir AM-2) |
-| AM-2 | **L'autorité de domaine n'est mesurée par rien en continu**, alors que le document en fait le blocage principal | même script : domaines référents et liens entrants vus par l'**API Bing Webmaster** (`BING_WEBMASTER_API_KEY`), série datée `docs/seo-signals-series.json` ; un domaine présent au point précédent et absent du suivant = **rouge** (`M-55`). Rouge tant que la clé n'est pas posée (geste d'Axel) | Rien tant que la clé n'est pas posée ; ensuite, Bing ne compte que les liens qu'il a explorés, ce n'est pas l'autorité vue par Google |
-| AM-3 | **Les actions d'Axel n'ont ni date ni état** : « pas encore tenté » et « tenté sans effet » appellent des décisions opposées | colonne **État** (5 valeurs, date obligatoire) + `npm run check:acquisition` (`C-101`) | Que l'état déclaré soit vrai : la garde exige une date, pas une vérification |
-
----
-
-## 1. Pourquoi ce chantier passe avant tout le reste
-
-Mesuré dans Search Console, du 2026-05-18 au 2026-08-18 :
-
-| Périmètre | Clics | Impressions | Position moyenne |
-|---|---|---|---|
-| Toutes requêtes | 17 | 328 | 15,5 |
-| **Requêtes ne contenant pas « cosmo »** | **0** | **13** | **88,1** |
-
-96 % des impressions et 100 % des clics viennent du mot « cosmo », qui est générique
-(Cosmopolitan, cosmos) et ne nous appartient pas. Sur le contenu éditorial — 11 articles,
-techniquement irréprochables, prérendus, balisés — la position réelle est **88, soit la
-page 9**.
-
-Le diagnostic est mécanique : la technique est propre (vérifié en prod le 2026-08-19 :
-sitemap servi, `index, follow`, canonicals, JSON-LD complet), la profondeur éditoriale est
-correcte, il ne reste qu'une variable non satisfaite — **l'autorité de domaine**. Un domaine
-sans lien entrant ne se classe sur rien, quelle que soit la qualité de ses pages.
-
-**Objectif : 20 domaines référents.** En dessous de ce seuil, aucun contenu ne remontera.
-Au-dessus, les 11 articles déjà écrits remontent **sans qu'on y touche** : c'est le moment où
-le travail éditorial déjà payé se met à rendre.
-
-> ❌ **Ne pas écrire de nouvel article tant que ce seuil n'est pas approché.** Onze articles
-> ont produit 13 impressions non-marque en trois mois ; le douzième en produira autant.
-
----
-
-## 2. Blocs de copie prêts à coller
-
-Coller **tel quel**. Une description réécrite à chaque site produit des fiches incohérentes,
-et certains annuaires pénalisent le contenu dupliqué avec leur propre base — d'où les
-plusieurs longueurs ci-dessous plutôt qu'une seule tronquée à la main.
+Coller tel quel : une description réécrite à chaque site produit des fiches incohérentes, et certains annuaires pénalisent le contenu dupliqué.
 
 ### Identité
 
 | Champ | Valeur |
 |---|---|
 | Nom | Cosmo |
-| Nom long (si un mot seul est refusé) | Cosmo — Productivité |
+| Nom long (si un mot seul est refusé) | Cosmo : Productivité |
 | URL | `https://thecosmo.app` (jamais de `www.`, jamais de slash final ailleurs qu'à la racine) |
 | Catégorie principale | Productivity / Task Management |
 | Catégories secondaires | Habit Tracker · OKR & Goal Setting · Calendar |
@@ -77,13 +33,13 @@ plusieurs longueurs ci-dessous plutôt qu'une seule tronquée à la main.
 | Image sociale / bannière | `public/og-card.png` (1200×630) |
 | Captures | `public/screenshots/dashboard.png` · `taches.png` · `habitudes.png` · dossier `entreprise/` pour les fiches B2B |
 
-### Accroche — 60 caractères
+### Accroche : 60 caractères
 
 > Tâches, habitudes, agenda et OKR dans une seule app gratuite.
 
 *EN* : Tasks, habits, calendar and OKRs in one free app.
 
-### Description courte — ~150 caractères
+### Description courte : ~150 caractères
 
 > Cosmo réunit tâches, habitudes, agenda et objectifs OKR dans une seule application
 > gratuite. Démo instantanée, sans inscription, avec 12 mois de données.
@@ -91,7 +47,7 @@ plusieurs longueurs ci-dessous plutôt qu'une seule tronquée à la main.
 *EN* : Cosmo brings tasks, habits, calendar and OKR goals together in one free app.
 Instant demo, no sign-up, preloaded with 12 months of data.
 
-### Description moyenne — ~300 caractères
+### Description moyenne : ~300 caractères
 
 > La plupart des gens organisent leur vie dans quatre outils : une todo-list, une app
 > d'habitudes, un agenda et un tableur d'objectifs. Cosmo réunit les quatre. Les tâches se
@@ -103,7 +59,7 @@ and a spreadsheet of goals. Cosmo merges all four. Drag a task into the calendar
 time-block it, track habits on a heatmap, and let OKRs compute their own progress. Free,
 instant demo, no sign-up.
 
-### Description longue — ~600 caractères
+### Description longue : ~600 caractères
 
 > Cosmo est une application de productivité française et gratuite qui réunit quatre briques
 > habituellement éclatées entre plusieurs outils : la gestion de tâches (priorités 1 à 5,
@@ -122,7 +78,7 @@ instant demo, no sign-up.
 
 ### Points forts (bullets pour les fiches à puces)
 
-- Quatre outils en un : tâches, habitudes, agenda, OKR — plus de recopie entre applications
+- Quatre outils en un : tâches, habitudes, agenda, OKR, plus de recopie entre applications
 - Time-blocking natif : glisser une tâche dans l'agenda crée l'événement, qui reste lié
 - Suivi d'habitudes en heatmap 26 semaines, avec séries et taux de complétion
 - OKR avec progression automatique et historique des résultats clés atteints
@@ -132,136 +88,65 @@ instant demo, no sign-up.
 - Démo complète sans inscription ni carte bancaire
 - Hébergement européen, conforme RGPD
 
-### Tarifs (à recopier tel quel — source : `ENTERPRISE_PRICING_TIERS`)
+### Tarifs
 
-| Offre | Prix |
-|---|---|
-| Particulier | Gratuit |
-| Organisation, jusqu'à 5 membres | Gratuit |
-| Organisation, 6 à 10 membres | 20 €/mois |
-| Organisation, 11 à 20 membres | 50 €/mois |
-| Organisation, 21 à 50 membres | 100 €/mois |
-| Organisation, plus de 50 membres | 200 €/mois |
-
-> ⚠️ **Ne jamais saisir un montant de mémoire.** Les tarifs vivent dans
-> `src/modules/billing/premium-config.ts` et sont affichés par la landing. Une fiche annuaire
-> qui annonce un autre prix que le site est un motif de rejet fréquent, et de réclamation
-> légitime le jour où le paiement s'active.
+- 🔴 Ne jamais saisir un montant de mémoire : source `ENTERPRISE_PRICING_TIERS` dans `src/modules/billing/premium-config.ts`, affichée par la landing. Une fiche qui annonce un autre prix que le site est un motif de rejet et de réclamation. Particulier : gratuit ; organisation : gratuite jusqu'à 5 membres, puis par paliers.
 
 ### Audiences à cocher
 
 Freelances · Étudiants · Managers · Petites équipes · TPE/PME · Particuliers
 
----
+## Où soumettre
 
-## 3. Où soumettre, dans quel ordre
+Classé par rapport valeur sur effort.
 
-Classé par rapport valeur / effort. Les deux premières colonnes se remplissent en une
-session ; le reste s'étale.
+### Colonne « État »
 
-### 🔴 La colonne « État » — pourquoi elle existe (C-101, AM-3)
+Cinq états, et cinq seulement : `npm run check:acquisition` refuse une ligne qui n'en porte pas un, et refuse un `fait` ou un `refuse` sans date.
 
-Une liste d'actions manuelles **sans colonne d'état ne distingue pas « pas encore tenté » de
-« tenté sans effet »**, et les deux appellent des décisions opposées : dans un cas il faut y
-aller, dans l'autre il faut arrêter d'y penser. Ce document a vécu un mois sans cette colonne,
-et la seule façon de savoir où on en était était de demander à Axel.
-
-**Cinq états, et cinq seulement.** `npm run check:acquisition` refuse une ligne qui n'en porte
-pas un, et refuse un `fait` ou un `refuse` sans date.
-
-| État | Ce qu'il veut dire | Ce qu'il appelle |
+| État | Sens | Appelle |
 |---|---|---|
 | `a-faire` | Jamais tenté. | Y aller. |
-| `en-cours` | Dossier déposé, en attente de validation. | Attendre, relancer après trois semaines. |
+| `en-cours` | Dossier déposé, en attente. | Attendre, relancer après trois semaines. |
 | `fait` | Fiche en ligne. **Date obligatoire.** | Vérifier que le lien existe encore. |
-| `refuse` | Refusé, ou retiré après coup. **Date obligatoire.** | Ne plus y revenir sans raison neuve. |
+| `refuse` | Refusé ou retiré. **Date obligatoire.** | Ne pas revenir sans raison neuve. |
 | `abandonne` | Décision de ne pas y aller. **Raison obligatoire dans la note.** | Rien. |
 
-❌ **Ne jamais écrire `fait` sans la date.** « Fait » sans date est le même défaut que le ✅ sans
-date du tableau de `LEGAL.md` : il décrit un instant qu'on ne peut plus situer, donc il n'appelle
-jamais de relecture. Un backlink RETIRÉ est invisible — et c'est AM-1 de ce document.
+❌ Ne jamais écrire `fait` sans date : c'est le même défaut qu'un ✅ sans date dans le tableau de `LEGAL.md`. Si une soumission a été faite sans être notée, la corriger ici avec sa date.
 
 | # | Site | Coût | État | Fait le | Ce qu'il faut préparer | Note |
 |---|---|---|---|---|---|---|
-| 1 | **Appvizer** (FR) | Gratuit | `a-faire` | — | Fiche longue, tarifs, 3 captures | Le plus fort en SEO français sur les requêtes « logiciel + métier ». À faire en premier. |
-| 2 | **AlternativeTo** | Gratuit | `a-faire` | — | Description moyenne, logo, alternatives déclarées (Todoist, Notion, TickTick) | Rapide, et alimente les requêtes « alternative à » que le blog vise déjà. |
-| 3 | **SaaSHub** | Gratuit | `a-faire` | — | Description moyenne, catégories | Quelques minutes. |
-| 4 | **Capterra / GetApp / Software Advice** | Gratuit | `a-faire` | — | Un seul dossier Gartner pour les trois, tarifs obligatoires, captures | Le plus long (validation manuelle, parfois un appel) mais trois domaines d'un coup. |
-| 5 | **Product Hunt** | Gratuit | `a-faire` | — | Voir §4 | Le pic de visibilité le plus fort ; ne se joue qu'une fois, donc à préparer. |
-| 6 | **BetaList** | Gratuit | `a-faire` | — | Description courte, capture | Accepte les produits jeunes ; complémentaire de Product Hunt. |
-| 7 | **IndieHackers** | Gratuit | `a-faire` | — | Un post honnête, pas une annonce | Le lien vaut par la discussion, pas par la fiche. |
-| 8 | **Slant / Softpedia / Startupbase / annuaires FR de SaaS** | Gratuit | `a-faire` | — | Description courte | Faible valeur unitaire, mais c'est le volume qui fait le seuil de 20. |
+| 1 | **Appvizer** (FR) | Gratuit | `a-faire` | - | Fiche longue, tarifs, 3 captures | Le plus fort en SEO français sur les requêtes « logiciel + métier ». À faire en premier. |
+| 2 | **AlternativeTo** | Gratuit | `a-faire` | - | Description moyenne, logo, alternatives déclarées (Todoist, Notion, TickTick) | Rapide, et alimente les requêtes « alternative à » que le blog vise déjà. |
+| 3 | **SaaSHub** | Gratuit | `a-faire` | - | Description moyenne, catégories | Quelques minutes. |
+| 4 | **Capterra / GetApp / Software Advice** | Gratuit | `a-faire` | - | Un seul dossier Gartner pour les trois, tarifs obligatoires, captures | Le plus long (validation manuelle, parfois un appel) mais trois domaines d'un coup. |
+| 5 | **Product Hunt** | Gratuit | `a-faire` | - | Voir « Préparer Product Hunt » | Le pic de visibilité le plus fort ; ne se joue qu'une fois, donc à préparer. |
+| 6 | **BetaList** | Gratuit | `a-faire` | - | Description courte, capture | Accepte les produits jeunes ; complémentaire de Product Hunt. |
+| 7 | **IndieHackers** | Gratuit | `a-faire` | - | Un post honnête, pas une annonce | Le lien vaut par la discussion, pas par la fiche. |
+| 8 | **Slant / Softpedia / Startupbase / annuaires FR de SaaS** | Gratuit | `a-faire` | - | Description courte | Faible valeur unitaire, mais c'est le volume qui fait le seuil de 20. |
 
-⚠️ **Les huit sont à `a-faire` au 2026-09-20, et ce n'est pas une valeur par défaut posée à la
-légère** : aucune soumission n'est tracée nulle part dans le dépôt, et le relevé Search Console du
-2026-08-19 donne **0 clic non marqué** avec une position moyenne de 88 — ce qui est cohérent avec
-zéro backlink d'annuaire. Si l'une a été faite sans être notée, c'est ici qu'il faut la corriger,
-avec sa date.
 
-**Règles communes :**
+Règles communes :
 
-- Toujours la même URL exacte : `https://thecosmo.app`. Une fiche qui pointe vers une
-  variante (`www.`, `http://`, slash final) dilue le signal sur deux URL différentes.
-- Ajouter `?ref=<nom-du-site>` **uniquement** sur les liens de fiche non canoniques (Product
-  Hunt, posts de forum), jamais sur le lien principal d'un annuaire : le paramètre affaiblit
-  la reconnaissance du lien vers la racine.
-- Ne jamais accepter une offre « fiche premium payante » avant d'avoir mesuré ce que la
-  fiche gratuite rapporte.
-- Refuser les annuaires qui promettent « 200 backlinks » : ce sont des fermes de liens, et
-  elles nuisent.
+- ✅ Toujours l'URL exacte `https://thecosmo.app` : `www.`, `http://` ou slash final dilue le signal.
+- ✅ `?ref=<nom-du-site>` seulement sur les liens de fiche non canoniques (Product Hunt, posts de forum), jamais sur le lien principal d'un annuaire.
+- ❌ Ne jamais accepter une « fiche premium payante » avant d'avoir mesuré ce que rapporte la gratuite.
+- ❌ Refuser les annuaires qui promettent « 200 backlinks » : fermes de liens, nuisibles.
+- ✅ Relever les domaines référents une fois par mois (Ahrefs Webmaster Tools, gratuit sur sa propre propriété) : c'est la métrique du chantier, pas le nombre de fiches.
 
----
+## Préparer Product Hunt
 
-## 4. Préparer Product Hunt
+Un lancement raté ne se refait pas.
 
-C'est le seul de la liste qui ne se rattrape pas : un lancement raté ne se refait pas.
+- Titre : l'accroche de 60 caractères. Tagline : la description courte. Première image : `public/og-card.png`.
+- Galerie : `dashboard.png`, `taches.png`, `habitudes.png`, plus `screenshots/entreprise/pyramide.webp` et `okr.webp`.
+- Commentaire du maker : le pourquoi (quatre outils réunis, fin de la recopie), pas la liste de fonctionnalités.
+- Lien : `https://thecosmo.app`.
+- Jour : mardi ou mercredi, tôt le matin heure du Pacifique.
+- 🔴 La veille : vérifier que la landing charge vite sur mobile et que la démo sans inscription n'a pas régressé.
 
-- **Titre** : Cosmo — l'accroche de 60 caractères ci-dessus.
-- **Tagline** : reprendre la description courte.
-- **Première image** : `public/og-card.png`.
-- **Galerie** : `dashboard.png`, `taches.png`, `habitudes.png`, plus deux captures
-  entreprise (`screenshots/entreprise/pyramide.webp`, `okr.webp`).
-- **Commentaire du maker** : écrire le « pourquoi », pas la liste de fonctionnalités.
-  L'argument qui porte est celui de la description moyenne : quatre outils réunis, et la
-  friction de recopie qui disparaît.
-- **Lien** : `https://thecosmo.app` — et vérifier ce jour-là que la démo sans inscription
-  fonctionne, c'est ce que 90 % des visiteurs essaieront en premier.
-- **Jour** : mardi ou mercredi, tôt le matin heure du Pacifique.
+## Quand la cible est franchie
 
-> ⚠️ Avant le lancement, vérifier que la landing charge vite sur mobile et que le parcours
-> « démo sans inscription » n'a pas régressé. Un pic de trafic sur une démo cassée coûte
-> plus qu'il ne rapporte.
+Signal : une page passe sous la position 30 dans Search Console sur une requête non-marque. Alors, et pas avant : reprendre la production éditoriale sur de la longue traîne atteignable, approfondir les articles les plus courts, décliner les pages « alternative à X » sur le modèle de `cosmo-vs-todoist`.
 
----
-
-## 5. Tableau de suivi (à remplir au fur et à mesure)
-
-| Date | Site | Statut | URL de la fiche | Lien en `dofollow` ? |
-|---|---|---|---|---|
-| | Appvizer | | | |
-| | AlternativeTo | | | |
-| | SaaSHub | | | |
-| | Capterra | | | |
-| | GetApp | | | |
-| | Software Advice | | | |
-| | Product Hunt | | | |
-| | BetaList | | | |
-| | IndieHackers | | | |
-
-**Vérifier l'effet, pas l'effort** : brancher Ahrefs Webmaster Tools (gratuit sur sa propre
-propriété) et relever le nombre de domaines référents une fois par mois. C'est la seule
-métrique qui compte pour ce chantier — pas le nombre de fiches soumises.
-
----
-
-## 6. Ce qu'on saura quand le seuil sera franchi
-
-Le premier signal ne sera pas des clics : ce sera **une page qui passe sous la position 30**
-dans Search Console sur une requête non-marque. À ce moment-là, et pas avant :
-
-1. reprendre la production éditoriale, sur de la longue traîne réellement atteignable ;
-2. approfondir les articles les plus courts (`okr-vs-smart-vs-kpi` 663 mots,
-   `glossaire-productivite` 681, `matrice-eisenhower` 747) ;
-3. décliner les pages « alternative à X » sur le modèle de `cosmo-vs-todoist`.
-
-Voir [`SEO.md`](./SEO.md) pour l'état technique et les règles permanentes.
+Voir [`SEO.md`](./SEO.md).

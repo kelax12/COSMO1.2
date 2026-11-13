@@ -1,9 +1,6 @@
-# Mode entreprise : liste des fonctionnalités
+# Mode entreprise : fonctionnalités
 
-Pour les commerciaux. Sert à présenter le mode entreprise et à répondre aux questions en rendez-vous.
-Relevé dans le code de `main` le 2026-11-01. Si ce document et le code se contredisent, c'est le code qui a raison.
-
----
+Lire avant de présenter le mode entreprise ou de répondre à une question commerciale. Fait foi : le code (`src/pages/organization/`, `src/modules/organizations/`) ; en cas de contradiction, le code a raison.
 
 ## Démarrer
 
@@ -123,7 +120,7 @@ Relevé dans le code de `main` le 2026-11-01. Si ce document et le code se contr
 
 ## Tarifs et facturation
 
-Prix TTC par mois, par organisation (et non par personne) :
+Fait foi : `ENTERPRISE_PRICING_TIERS` dans `src/modules/billing/premium-config.ts` (`npm run check:stripe-prices`). Prix TTC par mois, par organisation (et non par personne) :
 
 | Membres | Prix mensuel |
 |---|---|
@@ -144,7 +141,7 @@ Prix TTC par mois, par organisation (et non par personne) :
 
 ## À ne pas promettre
 
-- Le SSO, le SAML et le SCIM n'existent pas.
-- Il n'y a plus de grade « manager » : tout passe par les rôles personnalisés. Encadrer quelqu'un ne donne aucun droit sur son travail.
-- L'organigramme est masqué en ce moment, même si la page d'accueil entreprise en parle encore.
-- La page d'accueil annonce « treize droits ». Le bon chiffre est 14.
+- ❌ SSO, SAML et SCIM n'existent pas.
+- ❌ Il n'y a plus de grade « manager » : tout passe par les rôles personnalisés ; encadrer quelqu'un ne donne aucun droit sur son travail.
+- ❌ L'organigramme est masqué : ne pas le présenter, même si la page d'accueil entreprise en parle.
+- ⚠️ La page d'accueil annonce « treize droits » : le bon chiffre est 14.
