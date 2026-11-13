@@ -32,6 +32,8 @@
     "health": "État",
     "bookmarked": "Favori",
     "createdAt": "Créée le",
+    "scheduledDays": "Jours prévus (0 = dimanche)",
+    "scheduleHistory": "Historique des jours prévus",
     "frequency": "Fréquence",
     "color": "Couleur",
     "completions": "Complétions",

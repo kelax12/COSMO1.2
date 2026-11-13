@@ -211,9 +211,9 @@ export const PROMISES_PERSO: LandingPromise[] = [
     claim: 'On définit la fréquence d’une habitude (quotidienne, hebdomadaire, jours spécifiques).',
     verdict: 'fausse',
     constat:
-      'Le formulaire d’habitude écrit toujours `frequency: \'daily\'` : aucun choix « hebdomadaire » n’existe, le type admet weekly et monthly mais aucun écran ne les pose. Depuis la mig. 251 (2026-11-13), les « jours spécifiques » existent (`scheduledDays`, bouton Jours de `HabitModal`), mais la promesse entière, hebdomadaire compris, reste fausse. Réécriture de la FAQ prévue au lot 3.',
+      'Le formulaire d’habitude écrit toujours `frequency: \'daily\'` : aucun choix « hebdomadaire » n’existe, le type admet weekly et monthly mais aucun écran ne les pose. Depuis la mig. 251 (2026-11-13), les « jours spécifiques » existent (`scheduledDays`, bouton Jours de `HabitModal`, charge utile dans `habits/habit-form.ts`), mais la promesse entière, hebdomadaire compris, reste fausse. Réécriture de la FAQ prévue au lot 3.',
     anchors: [{ key: 'faq.a8', includes: 'définissez sa fréquence (quotidienne, hebdomadaire, jours spécifiques)' }],
-    proofs: [{ file: 'src/components/HabitModal.tsx', has: "frequency: 'daily'" }],
+    proofs: [{ file: 'src/components/habits/habit-form.ts', has: "frequency: 'daily'" }],
   },
   {
     id: 'okr-progression-automatique',

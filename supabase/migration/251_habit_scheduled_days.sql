@@ -36,8 +36,9 @@
 --     toutes les coches, prévues ou non.
 --
 -- ⚠️ Les deux RPC changent de type de retour : `CREATE OR REPLACE` le
--- refuse, d'où DROP puis CREATE dans la même transaction, droits reposés à
--- l'identique (REVOKE PUBLIC/anon, GRANT authenticated).
+-- refuse, d'où DROP IF EXISTS puis CREATE OR REPLACE dans la même transaction
+-- (rejouable), droits reposés à l'identique (REVOKE PUBLIC/anon, GRANT
+-- authenticated). Conséquence : la 248 ne se rejoue plus par-dessus la 251.
 --
 -- ── ORDRE DE DÉPLOIEMENT ───────────────────────────────────────────
 --
@@ -147,7 +148,7 @@ COMMENT ON FUNCTION public.habit_day_scheduled(smallint[], jsonb, date) IS
 -- ═══════════════════════════════════════════════════════════════════
 DROP FUNCTION IF EXISTS public.get_my_habits(INTEGER, DATE);
 
-CREATE FUNCTION public.get_my_habits(
+CREATE OR REPLACE FUNCTION public.get_my_habits(
   p_days  INTEGER DEFAULT 400,
   p_today DATE    DEFAULT NULL
 )
@@ -315,7 +316,7 @@ COMMENT ON FUNCTION public.get_my_habits(INTEGER, DATE) IS
 -- ═══════════════════════════════════════════════════════════════════
 DROP FUNCTION IF EXISTS public.toggle_habit_completion_v2(UUID, TEXT, INTEGER, DATE);
 
-CREATE FUNCTION public.toggle_habit_completion_v2(
+CREATE OR REPLACE FUNCTION public.toggle_habit_completion_v2(
   p_habit_id UUID,
   p_date     TEXT,
   p_days     INTEGER DEFAULT 400,
