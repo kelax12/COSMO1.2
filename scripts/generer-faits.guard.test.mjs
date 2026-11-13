@@ -98,22 +98,17 @@ describe('budget d outillage (MAI-02) : un cliquet qui ne fait que baisser',()=>
   it('TEMOIN : au plafond, ca passe', () => {
     const racine = arbre()
     try {
-      ecrire(racine, 'scripts/a.mjs', 'x
-')
-      ecrire(racine, 'scripts/a.guard.test.mjs', 'x
-')
+      ecrire(racine, 'scripts/a.mjs', 'x' + String.fromCharCode(10))
+      ecrire(racine, 'scripts/a.guard.test.mjs', 'x' + String.fromCharCode(10))
       expect(juger(calculerFaits(racine), { ...plafonds, scriptsLignes: 2 })).toEqual([])
     } finally { rmSync(racine, { recursive: true, force: true }) }
   })
   it('TEMOIN : un fichier de plus, ca echoue et la regle est dite', () => {
     const racine = arbre()
     try {
-      ecrire(racine, 'scripts/a.mjs', 'x
-')
-      ecrire(racine, 'scripts/a.guard.test.mjs', 'x
-')
-      ecrire(racine, 'scripts/b.mjs', 'x
-')
+      ecrire(racine, 'scripts/a.mjs', 'x' + String.fromCharCode(10))
+      ecrire(racine, 'scripts/a.guard.test.mjs', 'x' + String.fromCharCode(10))
+      ecrire(racine, 'scripts/b.mjs', 'x' + String.fromCharCode(10))
       const e = juger(calculerFaits(racine), { ...plafonds, scriptsLignes: 2 })
       expect(e).toHaveLength(2)
       expect(e.join(' ')).toContain('un nouvel outil en remplace un')
