@@ -11,6 +11,7 @@ import CategoryField from './CategoryField';
 import SubtaskChecklist from './SubtaskChecklist';
 import TaskStateFields from './TaskStateFields';
 import TaskDependenciesSection from './TaskDependenciesSection';
+import { CreateStateFields, CreateDependenciesField } from './CreateTaskPendingFields';
 import DescriptionField from '@/components/DescriptionField';
 import type { useCreateCategory, Category } from '@/modules/categories';
 import type { useCreateList } from '@/modules/lists';
@@ -29,6 +30,9 @@ type TaskFormState = {
   krId: string;
   recurrence: import('@/modules/tasks').TaskRecurrence;
   subtasks: import('@/modules/tasks').Subtask[];
+  status?: import('@/modules/tasks').TaskStatus;
+  health?: import('@/modules/tasks').TaskHealth | null;
+  blockedByIds?: string[];
 };
 
 export type DetailsTab = 'details' | 'advanced' | 'subtasks' | 'dependencies' | 'share';
@@ -97,7 +101,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
         {/* Statut et État (mig. 214) — édition : enregistrés à chaque choix. */}
         {!isCreating && task
           ? <TaskStateFields taskId={task.id} />
-          : <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('tabs.stateAfterCreate')}</p>}
+          : <CreateStateFields form={formData} setForm={setFormData} setHasChanges={setHasChanges} />}
         {/* Listes affichées d'emblée, trois par ligne : un clic coche ou
             décoche, sans menu déroulant à ouvrir d'abord. Les listes
             intelligentes se remplissent seules : elles n'y figurent pas. */}
@@ -245,13 +249,13 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
   }
 
   if (tab === 'dependencies') {
-    // Dépendances (mig. 132) — édition seulement : une arête référence deux
-    // tâches, la seconde n'existe pas encore tant qu'on est en création.
+    // Dépendances (mig. 132). En création, les arêtes sont gardées dans le
+    // formulaire et posées juste après l'insertion (`createTaskWithShares`).
     return (
       <div className="space-y-5">
         {!isCreating && task
           ? <TaskDependenciesSection taskId={task.id} alwaysOpen />
-          : <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('tabs.dependenciesAfterCreate')}</p>}
+          : <CreateDependenciesField form={formData} setForm={setFormData} setHasChanges={setHasChanges} />}
       </div>
     );
   }

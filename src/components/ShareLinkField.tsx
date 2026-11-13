@@ -83,12 +83,6 @@ const ShareLinkField: React.FC<ShareLinkFieldProps> = ({ taskId, ownerCanShare, 
 
   return (
     <section className={`space-y-3 ${className}`}>
-      <h3 className="text-sm font-semibold inline-flex items-center gap-1.5" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-        <Link2 size={14} aria-hidden="true" /> Lien d'invitation
-      </h3>
-      <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-        {ov.t('shareLink.hint')}
-      </p>
       {showGenerateButton ? (
         <>
           <Button
@@ -104,7 +98,7 @@ const ShareLinkField: React.FC<ShareLinkFieldProps> = ({ taskId, ownerCanShare, 
             {generating ? ov.t('shareLink.creating') : ov.t('shareLink.generate')}
           </Button>
           <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-            {ov.t('shareLink.willSave')}
+            {ov.t('shareLink.hint')}
           </p>
         </>
       ) : (
@@ -135,6 +129,9 @@ const ShareLinkField: React.FC<ShareLinkFieldProps> = ({ taskId, ownerCanShare, 
               {linkCopied ? ov.t('shareLink.copiedShort') : ov.t('shareLink.copy')}
             </Button>
           </div>
+          <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
+            {ov.t('shareLink.hint')}
+          </p>
           {isCreating && (
             <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
               {ov.t('shareLink.saveFirst')}

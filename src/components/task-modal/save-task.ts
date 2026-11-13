@@ -9,6 +9,9 @@ import type {
   Task,
   Subtask,
   TaskRecurrence,
+  TaskStatus,
+  TaskHealth,
+  useAddTaskDependency,
 } from '@/modules/tasks';
 import type { useAddTaskToList, useRemoveTaskFromList, useLists } from '@/modules/lists';
 import type { useFriends, useShareTask, useUnshareTask } from '@/modules/friends';
@@ -29,6 +32,11 @@ export interface TaskSaveFormData {
   recurrence: TaskRecurrence;
   /** Sous-tâches saisies pendant la création (#12) — [] en édition. */
   subtasks?: Subtask[];
+  /** Statut et état choisis en création (mig. 214). Absents = valeurs par défaut. */
+  status?: TaskStatus;
+  health?: TaskHealth | null;
+  /** Tâches qui bloquent celle-ci, reliées juste après la création (mig. 132). */
+  blockedByIds?: string[];
 }
 
 export interface TaskSaveDeps {
@@ -50,6 +58,7 @@ export interface TaskSaveDeps {
   addTaskToListMutation: ReturnType<typeof useAddTaskToList>;
   removeTaskFromListMutation: ReturnType<typeof useRemoveTaskFromList>;
   shareTaskMutation: ReturnType<typeof useShareTask>;
+  addDependencyMutation?: ReturnType<typeof useAddTaskDependency>;
   unshareTaskMutation: ReturnType<typeof useUnshareTask>;
   computeValidationErrors: () => { [key: string]: string };
   setErrors: (errors: { [key: string]: string }) => void;
@@ -76,7 +85,9 @@ export function buildCreateTaskInput(
     // la veille pour tout décalage négatif (risque R-01).
     deadline: deadlineFromDayKey(formData.deadline),
     estimatedTime: Number(formData.estimatedTime),
-    completed: formData.completed,
+    completed: formData.status ? formData.status === 'done' : formData.completed,
+    status: formData.status,
+    health: formData.health ?? undefined,
     bookmarked: formData.bookmarked,
     krId: formData.krId || undefined,
     recurrence: formData.recurrence ?? 'none',
@@ -88,7 +99,7 @@ export function buildCreateTaskInput(
 
 type CreateTaskWithSharesDeps = Pick<TaskSaveDeps,
   'formData' | 'collaborators' | 'pendingInvitesLocal' | 'friends'
-  | 'createTaskMutation' | 'shareTaskMutation'
+  | 'createTaskMutation' | 'shareTaskMutation' | 'addDependencyMutation'
 >;
 
 // Crée la tâche puis partage les collaborateurs sélectionnés (hors invitations
@@ -96,7 +107,7 @@ type CreateTaskWithSharesDeps = Pick<TaskSaveDeps,
 // entre le flux « Créer la tâche » (runTaskSave) et la génération de lien à la
 // volée (useTaskModal.onGenerateShareLink).
 export async function createTaskWithShares(deps: CreateTaskWithSharesDeps): Promise<Task> {
-  const { formData, collaborators, pendingInvitesLocal, friends, createTaskMutation, shareTaskMutation } = deps;
+  const { formData, collaborators, pendingInvitesLocal, friends, createTaskMutation, shareTaskMutation, addDependencyMutation } = deps;
   const newTask = await createTaskMutation.mutateAsync(
     buildCreateTaskInput(formData, collaborators, pendingInvitesLocal)
   );
@@ -104,6 +115,9 @@ export async function createTaskWithShares(deps: CreateTaskWithSharesDeps): Prom
   // On ignore les invitations email en attente — elles vivent dans
   // pendingInvites jusqu'à acceptation.
   if (newTask) {
+    formData.blockedByIds?.forEach((dependsOnId) => {
+      addDependencyMutation?.mutate({ taskId: newTask.id, dependsOnId });
+    });
     collaborators.forEach((userId) => {
       if (pendingInvitesLocal.includes(userId)) return;
       const friend = friends.find(
@@ -127,7 +141,7 @@ export async function runTaskSave(deps: TaskSaveDeps) {
     isCreating, task, formData, collaborators, collaboratorsDirty, pendingInvitesLocal, friends,
     lists, selectedListIds, isTaskOwner, existingShareIds,
     createTaskMutation, updateTaskMutation, addTaskToListMutation,
-    removeTaskFromListMutation, shareTaskMutation, unshareTaskMutation,
+    removeTaskFromListMutation, shareTaskMutation, unshareTaskMutation, addDependencyMutation,
     computeValidationErrors, setErrors, onClose, onCreated,
   } = deps;
 
@@ -145,7 +159,7 @@ export async function runTaskSave(deps: TaskSaveDeps) {
     try {
       const newTask = await createTaskWithShares({
         formData, collaborators, pendingInvitesLocal, friends,
-        createTaskMutation, shareTaskMutation,
+        createTaskMutation, shareTaskMutation, addDependencyMutation,
       });
       // Listes sélectionnées en création (#23) — createTaskWithShares ne gère
       // que le partage, pas les listes : sans ceci, « Ajouter à une liste »

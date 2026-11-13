@@ -11,6 +11,7 @@ import {
   useUpdateTask,
   useDeleteTask,
   useRestoreTask,
+  useAddTaskDependency,
   useTask,
   Task,
   Subtask,
@@ -38,7 +39,7 @@ import {
 // « Qui travaille sur cette tâche » vit dans son propre hook : amis, partages
 // déjà accordés, invitations par email, et les gestes qui les modifient.
 import { useTaskCollaborators } from './useTaskCollaborators';
-import { runTaskSave, createTaskWithShares } from './save-task';
+import { runTaskSave, createTaskWithShares, type TaskSaveFormData } from './save-task';
 import { translator } from '@/i18n/useT';
 import { deadlineDayKey } from '@/lib/deadline';
 
@@ -51,6 +52,18 @@ export interface TaskModalProps {
   initialData?: Partial<Task> & { isFromOKR?: boolean };
 }
 
+// Palette des listes créées depuis la popup : constante, hors du hook.
+const listColorOptions = [
+  { value: 'blue', color: '#3B82F6' },
+  { value: 'red', color: '#EF4444' },
+  { value: 'green', color: '#10B981' },
+  { value: 'purple', color: '#8B5CF6' },
+  { value: 'orange', color: '#F97316' },
+  { value: 'yellow', color: '#F59E0B' },
+  { value: 'pink', color: '#EC4899' },
+  { value: 'indigo', color: '#6366F1' },
+];
+
 export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCollaborators = false, initialData }: TaskModalProps) {
   // TASKS - Depuis le module tasks
   const createTaskMutation = useCreateTask();
@@ -58,6 +71,7 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
   const deleteTaskMutation = useDeleteTask();
   // « Annuler » : rend la tache sous SON identifiant (R-08, C-37).
   const restoreTaskMutation = useRestoreTask();
+  const addDependencyMutation = useAddTaskDependency();
 
   // Tâche créée à la volée pendant la création (clic « Générer le lien ») : une
   // fois persistée, la popup bascule en mode édition sur cette tâche (le lien a
@@ -129,7 +143,7 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
   const { register: dRegister, trigger: dTrigger, clear: dClear, isInvalid: dInvalid } = useInvalidShake();
 
   // Form state
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<TaskSaveFormData & { subtasks: Subtask[] }>({
     name: '',
     description: '',
     priority: 0,
@@ -163,17 +177,6 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
   const [hasChanges, setHasChanges] = useState(false);
   const [step, setStep] = useState(1);
   // Les états inline de création catégorie/liste vivent dans TaskModalDesktopBody.
-
-  const listColorOptions = [
-    { value: 'blue', color: '#3B82F6' },
-    { value: 'red', color: '#EF4444' },
-    { value: 'green', color: '#10B981' },
-    { value: 'purple', color: '#8B5CF6' },
-    { value: 'orange', color: '#F97316' },
-    { value: 'yellow', color: '#F59E0B' },
-    { value: 'pink', color: '#EC4899' },
-    { value: 'indigo', color: '#6366F1' },
-  ];
 
   const collaboratorRef = useRef<HTMLDivElement>(null);
 
@@ -423,7 +426,7 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
       isCreating: effectiveIsCreating, task: effectiveTask, formData, collaborators, collaboratorsDirty, pendingInvitesLocal, friends,
       lists, selectedListIds, isTaskOwner, existingShareIds,
       createTaskMutation, updateTaskMutation, addTaskToListMutation,
-      removeTaskFromListMutation, shareTaskMutation, unshareTaskMutation,
+      removeTaskFromListMutation, shareTaskMutation, unshareTaskMutation, addDependencyMutation,
       // onClose n'est appelé par runTaskSave qu'en cas de succès de MISE À
       // JOUR → on peut purger le brouillon (#47) ici sans risquer de perdre
       // une saisie. La CRÉATION passe par onCreated (reset, pas de fermeture).
@@ -447,7 +450,7 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
     try {
       const t = await createTaskWithShares({
         formData, collaborators, pendingInvitesLocal, friends,
-        createTaskMutation, shareTaskMutation,
+        createTaskMutation, shareTaskMutation, addDependencyMutation,
       });
       setCreatedTask(t);
       setHasChanges(false);

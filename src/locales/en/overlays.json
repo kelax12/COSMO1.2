@@ -125,7 +125,6 @@
     "hint": "Anyone with this link can join the task, even without an account (valid for 7 days).",
     "creating": "Creating…",
     "generate": "Generate the link",
-    "willSave": "The task will be saved to create a shareable link.",
     "aria": "Invitation link to copy",
     "copiedShort": "Copied!",
     "copy": "Copy",

@@ -191,12 +191,24 @@ describe('TaskModal · création', () => {
     expect(screen.getByLabelText(/^Description/)).toBeTruthy();
   });
 
-  it('explique que statut et dépendances se règlent une fois la tâche créée', async () => {
+  it("règle le statut dès la création et l'enregistre avec la tâche", async () => {
     await openCreation();
+    fireEvent.change(nameField(), { target: { value: 'Statut choisi' } });
     fireEvent.click(tab(/Options avancées/));
-    expect(screen.getByText(/statut et l'état se règlent une fois la tâche créée/i)).toBeTruthy();
+    const enCours = screen.getByRole('radio', { name: /En cours/ });
+    expect(screen.getByRole('radio', { name: /À faire/ }).getAttribute('aria-checked')).toBe('true');
+    fireEvent.click(enCours);
+    expect(enCours.getAttribute('aria-checked')).toBe('true');
+    fireEvent.click(screen.getByRole('button', { name: 'Créer la tâche' }));
+    await waitFor(() => expect(storedTasks().some((t) => t.name === 'Statut choisi')).toBe(true));
+    expect(storedTasks().find((t) => t.name === 'Statut choisi')!.status).toBe('in_progress');
+  });
+
+  it('propose les dépendances dès la création', async () => {
+    await openCreation();
     fireEvent.click(tab(/Dépendances/));
-    expect(screen.getByText(/dépendances se relient une fois la tâche créée/i)).toBeTruthy();
+    expect(screen.getByText('Bloquée par')).toBeTruthy();
+    expect(screen.getAllByRole('searchbox').length).toBeGreaterThan(0);
   });
 });
 

@@ -19,9 +19,7 @@
     "advanced": "Advanced options",
     "subtasks": "Subtasks",
     "dependencies": "Dependencies",
-    "dependenciesAfterCreate": "Dependencies can be linked once the task is created.",
-    "share": "Share",
-    "stateAfterCreate": "Status and state can be set once the task is created."
+    "share": "Share"
   },
   "fields": {
     "moreOptions": "More options: due date, category, priority, duration, lists",

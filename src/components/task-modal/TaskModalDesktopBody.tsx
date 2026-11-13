@@ -37,6 +37,9 @@ type TaskFormState = {
   krId: string;
   recurrence: import('@/modules/tasks').TaskRecurrence;
   subtasks: import('@/modules/tasks').Subtask[];
+  status?: import('@/modules/tasks').TaskStatus;
+  health?: import('@/modules/tasks').TaskHealth | null;
+  blockedByIds?: string[];
 };
 
 export interface DesktopBodyProps {
@@ -175,7 +178,7 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
           </div>
 
           {!collaboratorsOnly && (
-            <div role="tablist" aria-label={t('tabs.aria')} className="flex gap-1 px-3 overflow-x-auto overflow-y-hidden border-b shrink-0" style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-surface))' }}>
+            <div role="tablist" aria-label={t('tabs.aria')} className="flex gap-1 px-3 overflow-x-auto overflow-y-hidden border-b shrink-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-surface))' }}>
               {(['details', 'advanced', 'subtasks', 'dependencies', 'share'] as const).map((id) => (
                 <button
                   key={id}

@@ -19,9 +19,7 @@
     "advanced": "Options avancées",
     "subtasks": "Sous-tâches",
     "dependencies": "Dépendances",
-    "dependenciesAfterCreate": "Les dépendances se relient une fois la tâche créée.",
-    "share": "Partager",
-    "stateAfterCreate": "Le statut et l'état se règlent une fois la tâche créée."
+    "share": "Partager"
   },
   "fields": {
     "moreOptions": "Plus d'options : échéance, catégorie, priorité, durée, listes",
