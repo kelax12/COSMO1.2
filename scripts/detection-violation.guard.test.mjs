@@ -77,6 +77,25 @@ describe('classer · ce qu un début de fichier dit de lui', () => {
     expect(classer('sauvegarde.backup', Buffer.from('rien de reconnaissable'))).toMatch(/non chiffré/);
   });
 
+  it('TÉMOIN : un instantané de schéma avec des INSERT dans des fonctions ne sonne pas, un vrai dump sonne', () => {
+    const schema = [
+      'CREATE FUNCTION public.f() RETURNS void LANGUAGE plpgsql AS $fn$',
+      'BEGIN',
+      '  INSERT INTO public.audit (a) VALUES (1);',
+      'INSERT INTO auth.users (id) VALUES (1);',
+      'END;',
+      '$fn$;',
+      'CREATE FUNCTION public.g() RETURNS void LANGUAGE sql AS $$',
+      '  INSERT INTO public.t SELECT 1;',
+      '$$;',
+    ].join('\n');
+    expect(classer('baseline.sql', Buffer.from(schema))).toBeNull();
+    expect(classer('baseline.sql', Buffer.from('CREATE FUNCTION f() AS $$\n  INSERT INTO public.t SELECT 1;'))).toBeNull();
+    expect(classer('d.sql', Buffer.from("SET x = 1;\nINSERT INTO public.users (id, email) VALUES (1, 'a@b.fr');\n"))).toMatch(/INSERT/);
+    expect(classer('d.sql', Buffer.from(schema + '\nINSERT INTO auth.users (id) VALUES (2);\n'))).toMatch(/INSERT/);
+    expect(classer('d.sql', Buffer.from('COPY public.users (id) FROM stdin;\n1\n'))).toMatch(/COPY/);
+  });
+
   it('rougit sur un « .gpg » dont le contenu est en clair', () => {
     expect(classer('d.dump.gpg', PG_DUMP)).toMatch(/extension chiffrée/);
   });

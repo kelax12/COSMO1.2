@@ -140,16 +140,21 @@ if (principal) {
   }
   console.log(`production : ${prod.dates} ligne(s) datée(s), ${prod.rouges} marqueur(s) 🔴 · tests (non bornés) : ${tests.dates} / ${tests.rouges}`)
 
-  if (!existsSync(REFERENCE)) {
+  // Une seule ouverture : lire, et traiter ENOENT, au lieu de tester puis relire
+  // (CodeQL js/file-system-race). `--init` crée avec le drapeau `wx`.
+  let reference
+  try {
+    reference = lireReference()
+  } catch (e) {
+    if (e.code !== 'ENOENT') throw e
     if (process.argv.includes('--init')) {
-      writeFileSync(REFERENCE, JSON.stringify({ dates: prod.dates, rouges: prod.rouges }, null, 2) + '\n')
+      writeFileSync(REFERENCE, JSON.stringify({ dates: prod.dates, rouges: prod.rouges }, null, 2) + '\n', { flag: 'wx' })
       console.log('référence créée')
       process.exit(0)
     }
     console.error('::error::scripts/commentaires.reference.json absent')
     process.exit(1)
   }
-  const reference = lireReference()
   if (process.argv.includes('--update')) {
     const { refus, nouveau } = recaler(prod, reference)
     if (refus.length) {

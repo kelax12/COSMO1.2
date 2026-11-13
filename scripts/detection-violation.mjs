@@ -214,7 +214,10 @@ export function classer(nom, debut) {
   if (t.startsWith('SQLite format 3\u0000')) return 'base SQLite';
   if (/PostgreSQL database dump/.test(t)) return 'dump PostgreSQL (SQL en clair)';
   if (/^COPY\s+[\w."]+\s*\([^)]*\)\s+FROM\s+stdin;/m.test(t)) return 'données de table (COPY … FROM stdin)';
-  if (/INSERT INTO\s+"?(?:public|auth)"?\./i.test(t)) return 'données de table (INSERT INTO public/auth)';
+  // Des DONNÉES, pas du schéma : un INSERT de premier niveau (début de ligne), hors des corps de
+  // fonction `$…$` (un instantané de schéma en porte, indentés ; un corps non fermé est tronqué).
+  const hors = t.replace(/\$(\w*)\$[\s\S]*?(?:\$\1\$|$)/g, ' ');
+  if (/^INSERT INTO\s+"?(?:public|auth)"?\./im.test(hors)) return 'données de table (INSERT INTO public/auth)';
   if (EXT_BASE.test(nom)) return 'nom de dump ou de base, contenu non chiffré';
   // Quantificateurs BORNÉS : un fichier forgé (longue suite sans `@`) ne fait
   // pas exploser le retour arrière sur les 64 Ko lus.

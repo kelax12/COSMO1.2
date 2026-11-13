@@ -330,7 +330,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     const noms = [
       ...(r.verdict?.violations ?? []).map((v) => v.workflow),
       ...(r.verdict?.alertes ?? []).map((a) => `alerte de détection n° ${a.numero}`),
-    ].join(', ');
+    ].join(', ').replace(/[^\p{L}\p{N} ,.:_()\/-]/gu, ' ');
+    // Les noms viennent de l'API GitHub : aucun saut de ligne ne doit pouvoir ouvrir une sortie de plus.
     appendFileSync(process.env.GITHUB_OUTPUT, `nouveau=${r.pub?.nouveau ? 'true' : 'false'}\nnoms=${noms}\nissue=${r.pub?.url ?? ''}\n`);
   }
   if (process.env.GITHUB_STEP_SUMMARY && r.lignes[0] && !r.lignes[0].startsWith('::')) {

@@ -4,9 +4,11 @@
 // du rejeu parce que la prod ne les a pas. Chaque cas refuse un détecteur
 // aveugle : un écart réel doit se voir.
 // ═══════════════════════════════════════════════════════════════════
+import { readFileSync } from 'node:fs';
+import { X509Certificate } from 'node:crypto';
 import { describe, it, expect } from 'vitest';
 
-import { objets, ecarts, rapport, enAttente, masquer, optionsClient } from './schema-prod.mjs';
+import { objets, ecarts, rapport, enAttente, masquer, optionsClient, SUPABASE_ROOT_CA, expliquerErreurTls } from './schema-prod.mjs';
 
 const bloc = (nom, type, corps) => `--\n-- Name: ${nom}; Type: ${type}; Schema: public; Owner: -\n--\n\n${corps}\n\n`;
 const DUMP = [
@@ -66,11 +68,33 @@ describe('schema-prod : comparaison objet par objet', () => {
   it('TLS vers la prod, pas en local ; le sslmode de l URL est retiré', () => {
     expect(optionsClient('postgresql://postgres:postgres@127.0.0.1:54322/postgres').ssl).toBeUndefined();
     const o = optionsClient('postgresql://u:p@pooler.supabase.com:5432/postgres?sslmode=require');
-    expect(o.ssl).toBeTruthy();
+    expect(o.ssl.rejectUnauthorized).toBe(true);
+    expect(o.ssl.ca).toBe(SUPABASE_ROOT_CA);
     expect(o.connectionString).not.toContain('sslmode');
   });
 });
 
+
+describe('schema-prod : vérification TLS de la production', () => {
+  it('TÉMOIN : la racine embarquée est un vrai certificat Supabase, autosigné, non expiré', () => {
+    const c = new X509Certificate(SUPABASE_ROOT_CA);
+    expect(c.subject).toContain('Supabase Root 2021 CA');
+    expect(c.verify(c.publicKey)).toBe(true);
+    expect(new Date(c.validTo).getTime()).toBeGreaterThan(Date.now());
+  });
+
+  it('TÉMOIN : jamais de contournement de la vérification dans le script', () => {
+    const src = readFileSync(new URL('./schema-prod.mjs', import.meta.url), 'utf8');
+    expect(src).not.toMatch(/rejectUnauthorized:s*false/);
+  });
+
+  it('un échec de certificat se dit en clair, une autre erreur passe telle quelle', () => {
+    const e = Object.assign(new Error('self-signed certificate in certificate chain'), { code: 'SELF_SIGNED_CERT_IN_CHAIN' });
+    expect(expliquerErreurTls(e).message).toMatch(/verification TLS.*SELF_SIGNED/);
+    const autre = new Error('password authentication failed');
+    expect(expliquerErreurTls(autre)).toBe(autre);
+  });
+});
 
 describe('schema-prod : migrations retirées du rejeu', () => {
   const INTRO = {
