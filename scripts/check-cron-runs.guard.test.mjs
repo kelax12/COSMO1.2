@@ -9,7 +9,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { JOBS_ATTENDUS, VERDICT_SQL, juger, lireVerdict, run } from './check-cron-runs.mjs';
+import { JOBS_ATTENDUS, JOBS_BASCULES, VERDICT_SQL, juger, lireVerdict, run } from './check-cron-runs.mjs';
 
 const ligne = (job, verdict, extra = {}) => ({
   job,
@@ -52,7 +52,7 @@ describe('juger', () => {
   it('un job absent : rouge, nommé', () => {
     const rows = tousOk();
     rows[4] = ligne('renewal-notice', 'absent', { dernier_debut: null, dernier_statut: null, dernier_code: null });
-    const { exit, lines } = juger(rows);
+    const { exit, lines } = juger(rows, SIX);
     expect(exit).toBe(1);
     expect(lines.some((l) => l.startsWith('::error title=cron renewal-notice absent::') && l.includes('jamais'))).toBe(true);
   });
@@ -69,6 +69,31 @@ describe('juger', () => {
     const rows = tousOk();
     rows[0] = ligne('inactive-accounts', 'peut-etre');
     expect(juger(rows).exit).toBe(1);
+  });
+
+  it('bascule en deux temps : un job encore planifié par GitHub absent avertit, un job basculé absent rougit', () => {
+    const rows = tousOk();
+    rows[4] = ligne('renewal-notice', 'absent');
+    const tenuParGithub = juger(rows, ['org-webhook-dispatch']);
+    expect(tenuParGithub.exit).toBe(0);
+    expect(tenuParGithub.lines.some((l) => l.startsWith('::warning title=cron renewal-notice'))).toBe(true);
+    expect(juger(rows, ['org-webhook-dispatch', 'renewal-notice']).exit).toBe(1);
+  });
+
+  it('TÉMOIN : un job non basculé en échec rougit quand même (la chaîne pg_cron est cassée)', () => {
+    const rows = tousOk();
+    rows[5] = ligne('seat-alert', 'echec');
+    expect(juger(rows, []).exit).toBe(1);
+  });
+
+  it('TÉMOIN : un job basculé que le verdict ne surveille pas = rouge', () => {
+    expect(juger(tousOk(), [...SIX, 'job-fantome']).exit).toBe(1);
+  });
+
+  it('les jobs basculés sont des jobs du verdict, sans doublon', () => {
+    expect(JOBS_BASCULES.length).toBeGreaterThan(0);
+    expect(new Set(JOBS_BASCULES).size).toBe(JOBS_BASCULES.length);
+    for (const j of JOBS_BASCULES) expect(SIX).toContain(j);
   });
 
   it('TÉMOIN : zéro ligne = rien mesuré = rouge', () => {

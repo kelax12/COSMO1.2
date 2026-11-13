@@ -496,12 +496,11 @@ le crée), `supabase_vault` installé avec **zéro secret**, ni `cron_runs` ni `
 texte du ledger identique au fichier :
 
 - `245_cron_journal` : appliquée (`20261113070725`), `pg_net` installée.
-- `246_cron_planification` : **non appliquée**, sa preuve rend `ECHEC Vault : 0 secret(s) sur 2` ; attend
-  les deux secrets Vault (étape 2 ci-dessous).
+- `246_cron_planification` : appliquée (`20261113124319`) après pose des deux secrets Vault ; dix-huit jobs
+  pg_cron relus.
 - `248_habit_completions` : appliquée (`20261113070621`), 1 421 lignes rétro-remplies.
 - `249_taches_echeance_priorite_facultatives` : appliquée (`20261113070529`).
-- `250_friend_requests_forme_prod` : commitée, **non appliquée**. Jusqu'à son application, la porte
-  `edge-deploy.yml` (CI-05) refuse le lot : c'est attendu.
+- `250_friend_requests_forme_prod` : appliquée (`20261113083206`) ; plus aucune migration ne manque.
 
 **Preuves.** Rejouées à chaque commit par `e2e/rls/cron-journal.test.ts` sur une pile Supabase réelle
 (`pg_cron` et `pg_net` vrais) : `245` avec et sans secrets Vault, `246`, chacune `PREUVE-ANNULEE 0 ECHEC`,
@@ -527,7 +526,7 @@ Les autres workflows planifiés lisent, comparent ou sondent : ils restent sur G
 
 **Bascule, dans l'ordre (gestes d'Axel).** Les deux ordonnanceurs tournent ensemble entre les étapes 4 et 8 :
 c'est voulu, il n'y a ni trou ni doublon (bail). ❌ **Ne jamais retirer les `schedule:` avant l'étape 7.**
-Une garde le refuse (`src/edge-cron-lease.guard.test.ts`, constante `BASCULE_FAITE`).
+Une garde le refuse (`src/edge-cron-lease.guard.test.ts`, job par job d'après `JOBS_BASCULES`).
 
 1. **Edge Functions avec bail déployées** : `Edge deploy` le fait au push sur `main` (`success` sur
    `edf90d80`). Contrôle : `Edge deploy drift` vert, ou `npm run check:edge`. Sans la `245`, elles travaillent
@@ -567,7 +566,12 @@ Une garde le refuse (`src/edge-cron-lease.guard.test.ts`, constante `BASCULE_FAI
    ⚠️ Un `ok` veut dire « l'Edge Function a répondu 2xx », y compris `skipped: already_running` pendant la
    double planification. Il prouve que la chaîne pg_cron, Vault, pg_net, fonction marche, pas qu'un envoi réel a
    eu lieu : le contrôle d'envoi reste celui des fonctions (`renewal_notices`, `org_webhook_deliveries`).
-8. **Retirer les `schedule:` GitHub** : le commit existe sur `noyau/cron-bascule-2` (garde les
+   **Bascule en deux temps** (2026-11-13) : un job quitte GitHub le jour de son premier `ok`, en l'ajoutant à
+   `JOBS_BASCULES` (`scripts/check-cron-runs.mjs`, source unique de la garde et de la sonde). Faits le
+   2026-11-13 : `org-webhook-dispatch` et `org-digest-hourly`, `Journal des crons` planifié (minute 51).
+   **Reste** : `inactive-accounts`, `renewal-notice` + `seat-alert` (un seul déclencheur, ensemble),
+   `org-digest-daily`, à basculer après leur premier `ok`, lisible dès 07:45 UTC le 2026-11-14.
+8. **Retirer les `schedule:` GitHub** (lecture historique, remplacé par la bascule en deux temps ci-dessus) : le commit existe sur `noyau/cron-bascule-2` (garde les
    `workflow_dispatch`, planifie `Journal des crons` à la minute 51, retourne `BASCULE_FAITE`, régénère
    `FAITS.md`, corrige la table des classes de `TESTING.md`). Après les étapes 1 à 7 seulement :
 

@@ -16,9 +16,9 @@
 name: org-webhook-dispatch
 
 on:
-  schedule:
-    # Toutes les dix minutes, decale des autres crons du depot.
-    - cron: '7-59/10 * * * *'
+  # Plus de `schedule:` depuis le 2026-11-13 : pg_cron (`cosmo-org-webhook-dispatch`,
+  # mig. 246) appelle la fonction toutes les dix minutes. Ce workflow reste pour le
+  # rattrapage manuel (docs/DEPLOYMENT.md § 2sexies).
   workflow_dispatch:
 
 # Moindre privilege (A-8, CodeQL actions/missing-workflow-permissions) :

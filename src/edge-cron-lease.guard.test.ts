@@ -28,6 +28,7 @@ import {
   withCronLease,
   type RpcCall,
 } from '../supabase/functions/_shared/cron-lease';
+import { JOBS_ATTENDUS, JOBS_BASCULES } from '../scripts/check-cron-runs.mjs';
 
 const LF = String.fromCharCode(10);
 const read = (p: string) => readFileSync(join(process.cwd(), p), 'utf8').split('\r\n').join(LF);
@@ -186,37 +187,68 @@ describe('fonctions planifiées · le bail est pris, au bon endroit', () => {
 // Garde · ordre de la bascule pg_cron (ARC-06, vague 10.1)
 // ═══════════════════════════════════════════════════════════════════
 //
-// Retirer les `schedule:` GitHub AVANT d'avoir appliqué les mig. 245 et 246 en
-// production arrête les six traitements (avis L215-1, alertes de sièges, comptes
-// inactifs, notifications, webhooks) sans qu'aucune alerte ne sonne : la sonde
-// `Journal des crons` lit une table qui n'existe pas encore. Ce volet fige
-// l'ordre : tant que `BASCULE_FAITE` vaut `false`, les quatre workflows gardent
-// leur `schedule:` et la sonde n'en a pas. Le commit de bascule (`DEPLOYMENT.md`
-// § 2sexies, étape 6) retourne la constante ET les workflows, ensemble, après
-// le verdict `cron_runs_verdict()` à six `ok`.
+// Retirer les `schedule:` GitHub AVANT que pg_cron ait réussi un passage arrête
+// le traitement sans qu'aucune alerte ne sonne. Ce volet fige l'ordre, JOB PAR
+// JOB (bascule en deux temps, 2026-11-13) : la liste `JOBS_BASCULES` de
+// `scripts/check-cron-runs.mjs` est la source unique. Un job y figure ⇔ son
+// `schedule:` a disparu ⇔ la sonde `Journal des crons` rougit s'il est absent.
+// La sonde est planifiée dès qu'un job est basculé.
 //
-// ❌ Ne jamais passer cette constante à `true` seule, ni la retourner pour
-//    « faire passer » un retrait de `schedule:` : le test dit que la production
-//    n'a pas encore pris le relais.
-const BASCULE_FAITE = false;
-const WORKFLOWS_DE_PRODUCTION = ['renewal-notice', 'inactive-accounts', 'org-digest', 'org-webhook-dispatch'];
+// ❌ Ne jamais ajouter un job à `JOBS_BASCULES` sans son premier `ok` dans
+//    `cron_runs` (`DEPLOYMENT.md` § 2sexies, étape 7), ni retirer un `schedule:`
+//    sans l'ajouter : le test refuse les deux.
 const aUnSchedule = (yml: string) => /^\s+schedule:/m.test(yml);
+const aLeCron = (yml: string, expr: string) =>
+  yml.split(LF).some((l) => !l.trim().startsWith('#') && l.includes(`cron: '${expr}'`));
+
+/** Job du verdict → workflow et expression `schedule:` qui le déclenchent sur GitHub. */
+const DECLENCHEURS: Record<string, { wf: string; cron: string }> = {
+  'org-webhook-dispatch': { wf: 'org-webhook-dispatch', cron: '7-59/10 * * * *' },
+  'org-digest-hourly': { wf: 'org-digest', cron: '23 * * * *' },
+  'org-digest-daily': { wf: 'org-digest', cron: '41 7 * * *' },
+  'renewal-notice': { wf: 'renewal-notice', cron: '12 7 * * *' },
+  'seat-alert': { wf: 'renewal-notice', cron: '12 7 * * *' },
+  'inactive-accounts': { wf: 'inactive-accounts', cron: '37 6 * * *' },
+};
+const BASCULES = new Set<string>(JOBS_BASCULES);
 
 describe('bascule pg_cron · les plannings GitHub suivent l’état de la production', () => {
   it('TÉMOIN : le détecteur voit un `schedule:` et ne confond pas un commentaire avec lui', () => {
     expect(aUnSchedule('on:\n  schedule:\n    - cron: "1 1 * * *"\n  workflow_dispatch:\n')).toBe(true);
     expect(aUnSchedule('on:\n  # PLUS DE `schedule:` ici\n  workflow_dispatch:\n')).toBe(false);
+    expect(aLeCron("on:\n  schedule:\n    - cron: '23 * * * *'\n", '23 * * * *')).toBe(true);
+    expect(aLeCron("on:\n  schedule:\n    # - cron: '23 * * * *'\n", '23 * * * *')).toBe(false);
   });
 
-  for (const wf of WORKFLOWS_DE_PRODUCTION) {
-    it(`${wf}.yml : ${BASCULE_FAITE ? 'plus de schedule' : 'schedule GitHub conservé'}, rattrapage manuel gardé`, () => {
+  it('chaque job du verdict a son déclencheur, et JOBS_BASCULES n en nomme pas d autre', () => {
+    expect(Object.keys(DECLENCHEURS).length).toBe(JOBS_ATTENDUS);
+    for (const j of JOBS_BASCULES) expect(Object.keys(DECLENCHEURS)).toContain(j);
+  });
+
+  it('un déclencheur partagé bascule d un bloc (renewal-notice et seat-alert)', () => {
+    for (const a of Object.values(DECLENCHEURS)) {
+      const ensemble = Object.entries(DECLENCHEURS).filter(([, b]) => b.wf === a.wf && b.cron === a.cron).map(([j]) => j);
+      expect(new Set(ensemble.map((j) => BASCULES.has(j))).size, `${ensemble.join(' + ')} : bascule partielle`).toBe(1);
+    }
+  });
+
+  for (const [job, { wf, cron }] of Object.entries(DECLENCHEURS)) {
+    const bascule = BASCULES.has(job);
+    it(`${job} (${wf}.yml) : ${bascule ? 'plus de schedule GitHub' : 'schedule GitHub conservé'}, rattrapage manuel gardé`, () => {
       const yml = read(`.github/workflows/${wf}.yml`);
-      expect(aUnSchedule(yml), `${wf}.yml : schedule ${BASCULE_FAITE ? 'revenu' : 'retiré avant la bascule'}`).toBe(!BASCULE_FAITE);
+      expect(aLeCron(yml, cron), `${wf}.yml '${cron}' : ${bascule ? 'revenu après la bascule' : 'retiré avant la bascule'}`).toBe(!bascule);
       expect(yml, `${wf}.yml : rattrapage manuel perdu`).toMatch(/^\s+workflow_dispatch:/m);
     });
   }
 
-  it(`cron-journal.yml : ${BASCULE_FAITE ? 'planifié à l’heure' : 'sans schedule tant que 245 et 246 ne sont pas en production'}`, () => {
-    expect(aUnSchedule(read('.github/workflows/cron-journal.yml'))).toBe(BASCULE_FAITE);
+  it('un workflow dont tous les jobs sont basculés ne garde aucun schedule', () => {
+    for (const wf of new Set(Object.values(DECLENCHEURS).map((d) => d.wf))) {
+      const tous = Object.entries(DECLENCHEURS).filter(([, d]) => d.wf === wf).every(([j]) => BASCULES.has(j));
+      expect(aUnSchedule(read(`.github/workflows/${wf}.yml`)), `${wf}.yml`).toBe(!tous);
+    }
+  });
+
+  it(`cron-journal.yml : planifié dès qu un job est basculé`, () => {
+    expect(aUnSchedule(read('.github/workflows/cron-journal.yml'))).toBe(BASCULES.size > 0);
   });
 });

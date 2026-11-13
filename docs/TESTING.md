@@ -592,8 +592,8 @@ Les règles elles-mêmes, l'inventaire classé et les retraits : [`scripts/CLAUD
 | PLANIFIÉE | `ci-alert.yml`, `ci.yml` (e2e, Lighthouse), `visual.yml`, `captures-regenerer.yml`, `sabotages.yml`, `mutation.yml`, `gardes-calendrier.yml`, `posture.yml`, `migration-coverage.yml`, `edge-deploy-drift.yml`, `deploy-sha-drift.yml`, `secrets-age.yml`, `restore-drill.yml`, `restore-drill-fraicheur.yml`, `db-backup.yml`, `indicateurs.yml`, `prod-errors.yml`, `stripe-prices.yml`, `seo-signals.yml`, `uptime.yml`, `smoke-prod.yml`, `scalability-volume.yml` |
 | REMPLAÇANT standard | `codeql.yml` ; Dependabot (`.github/dependabot.yml`) et secret scanning, sans workflow |
 | DÉPLOIEMENT | `edge-deploy.yml` (après un noyau vert) |
-| PRODUIT | `daily-digest`, `weekly-digest`, `org-digest`, `org-webhook-dispatch`, `inactive-accounts`, `renewal-notice` : traitements de production, pas des gardes |
-| EN ATTENTE | `cron-journal.yml` : `schedule:` posé par la bascule pg_cron (V10.2) |
+| PRODUIT | `daily-digest`, `weekly-digest`, `org-digest` (quotidien), `inactive-accounts`, `renewal-notice` : traitements de production, pas des gardes ; `org-webhook-dispatch` et le mode horaire d'`org-digest` sont dans pg_cron depuis le 2026-11-13 (`workflow_dispatch` seul ici) |
+| SONDE | `cron-journal.yml` : journal des crons pg_cron, horaire (`DEPLOYMENT.md` § 2sexies) |
 
 ## Checklist avant push prod
 

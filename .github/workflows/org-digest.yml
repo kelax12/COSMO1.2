@@ -14,9 +14,9 @@
 name: org-digest
 
 on:
+  # Mode `hourly` planifie par pg_cron depuis le 2026-11-13 (`cosmo-org-digest-hourly`,
+  # mig. 246). Le quotidien reste ici jusqu a son premier passage reussi dans pg_cron.
   schedule:
-    # Minute 23 : decalee des autres crons du depot.
-    - cron: '23 * * * *'
     # 07:41 UTC : le resume quotidien.
     - cron: '41 7 * * *'
   workflow_dispatch:

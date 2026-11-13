@@ -30,13 +30,24 @@ export const VERDICT_SQL = `SELECT job, fenetre::text AS fenetre, dernier_debut,
 /** Nombre de jobs surveillés par `cron_runs_verdict()` (mig. 245). */
 export const JOBS_ATTENDUS = 6;
 
+/**
+ * Jobs que GitHub ne planifie PLUS (`DEPLOYMENT.md` § 2sexies, étape 8), SOURCE
+ * UNIQUE : `src/edge-cron-lease.guard.test.ts` en déduit quels `schedule:` doivent
+ * avoir disparu. Bascule en deux temps : un job y entre le jour où son `schedule:`
+ * sort, après un premier `ok` dans `cron_runs`.
+ * Un job absent de cette liste est encore tenu par GitHub : `absent` n'y est qu'un
+ * avertissement (pg_cron n'a pas encore eu sa fenêtre). `echec` rougit pour tous.
+ * ❌ Jamais retirer un job de cette liste sans rendre son `schedule:` à GitHub.
+ */
+export const JOBS_BASCULES = ['org-webhook-dispatch', 'org-digest-hourly'];
+
 const date = (d) => (d ? new Date(d).toISOString().replace('.000Z', 'Z') : 'jamais');
 
 /**
  * Juge les lignes du verdict. Rend `{ exit, lines }` sans sortir lui-même,
  * pour que le témoin l'exécute.
  */
-export function juger(rows) {
+export function juger(rows, bascules = JOBS_BASCULES) {
   const lines = [];
   if (!Array.isArray(rows) || rows.length === 0) {
     lines.push('::error::cron_runs_verdict() ne rend aucune ligne : rien n a ete mesure (mig. 245 absente ?).');
@@ -50,6 +61,8 @@ export function juger(rows) {
       `derniere reussite ${date(r.dernier_ok)})`;
     if (r.verdict === 'ok') {
       lines.push(`ok ${resume}`);
+    } else if (r.verdict === 'absent' && !bascules.includes(r.job)) {
+      lines.push(`::warning title=cron ${r.job} pas encore vu::${resume}. Encore planifie par GitHub : rien n est perdu, pas encore bascule.`);
     } else if (r.verdict === 'absent') {
       ko += 1;
       lines.push(`::error title=cron ${r.job} absent::${resume}. Aucune execution dans la fenetre : pg_cron arrete, job retire ou jamais planifie (mig. 246).`);
@@ -59,6 +72,12 @@ export function juger(rows) {
     } else {
       ko += 1;
       lines.push(`::error title=cron ${r.job}::verdict inconnu « ${r.verdict} » : la sonde ne sait pas le lire.`);
+    }
+  }
+  for (const j of bascules) {
+    if (!rows.some((r) => r.job === j)) {
+      ko += 1;
+      lines.push(`::error::${j} est bascule (plus de schedule GitHub) mais cron_runs_verdict() ne le surveille pas.`);
     }
   }
   if (rows.length !== JOBS_ATTENDUS) {

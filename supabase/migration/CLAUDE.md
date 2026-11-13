@@ -50,15 +50,15 @@ compilait, la suite passait.
   `243` (`20261107091727`, corps de `can_access_team_project` = fichier, ACL inchangée), `244`
   (`20261107091936`, une SELECT permissive par table ; la prod n'avait déjà plus les doublons).
   ✅ `245` (ARC-06, journal des crons) en prod le 2026-11-13 (`20261113070725`, `pg_net` installée).
-  `246` (planification pg_cron) **non appliquée** : sa preuve rend `ECHEC Vault : 0 secret(s) sur 2`, elle
-  attend les deux secrets Vault d'Axel (`DEPLOYMENT.md` § 2sexies).
+  ✅ `246` (sept jobs `cosmo-*` dans pg_cron) en prod le 2026-11-13 (`20261113124319`), secrets Vault posés ;
+  bascule depuis GitHub en cours (`DEPLOYMENT.md` § 2sexies).
   ✅ `247` (index des 3 FK nées par 230, 233, 237 ; V9.4) en prod le 2026-11-08 (`20261108001203`),
   relue au catalogue : trois index valides, définition = fichier ; `unindexed_foreign_keys` disparu.
   ✅ `248` (`habit_completions`, DAT-02) en prod le 2026-11-13 (`20261113070621`, 1 421 lignes
   rétro-remplies). ✅ `249` (échéance et priorité facultatives sur `tasks`) en prod le 2026-11-13
   (`20261113070529`). Les deux après preuve à 0 ECHEC, relues au catalogue, ledger = fichier.
-  `250` (`friend_requests` sans `user_id` comme la prod, et `sender_id` NOT NULL) commitée,
-  **non appliquée** : procédure en tête de `proofs/250.proof.sql`.
+  `250` (`friend_requests` sans `user_id` comme la prod, et `sender_id` NOT NULL) en prod le 2026-11-13
+  (`20261113083206`).
   Prochain numéro libre : **`251`**. Journal daté de chaque application (preuves, relectures au catalogue) :
   [`docs/archive/SECURITY-journal-migrations-150-223.md`](../../docs/archive/SECURITY-journal-migrations-150-223.md).
 - ✅ **Forme de preuve à reprendre** : un seul bloc `DO` terminé par `RAISE EXCEPTION`
