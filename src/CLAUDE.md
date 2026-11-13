@@ -1,86 +1,45 @@
 # `src/` · providers, routing, type User
 
-> Repris de `CLAUDE.md` le 2026-09-16, **sans une coupe**. Chargé automatiquement dès
-> qu'un fichier de ce dossier est touché. Règles transversales : [`CLAUDE.md`](../CLAUDE.md) à la racine.
+Lire en touchant `src/App.tsx`, `src/main.tsx`, `src/modules/auth/AuthContext.tsx`. Le code fait foi.
+Règles transversales : [`CLAUDE.md`](../CLAUDE.md).
 
----
-
-## Hiérarchie des providers (`src/App.tsx`)
+## Providers (`src/App.tsx`)
 
 ```
-QueryClientProvider
-  AuthProvider
-    ActiveOrgProvider        ← organisation courante (mode entreprise)
-      BillingProvider        ← dépend de useAuth
-        MotionConfig reducedMotion="user"   ← WCAG 2.3.3 pour tout Framer Motion
-          Toaster (Sonner, theme="system", monte en lazy) + Routes
+QueryClientProvider > AuthProvider > ActiveOrgProvider > BillingProvider
+  > MotionConfig reducedMotion="user" > Toaster (Sonner, lazy) + Routes
 ```
 
-🔴 **Il n'y a PLUS de `TooltipProvider` ici, et ce n'est pas un oubli** (ce schéma en a montré un
-jusqu'au 2026-09-20). `ui/tooltip.tsx` fournit déjà le sien, avec le même `delayDuration = 0` :
-celui de la racine était redondant et traînait tout `@radix-ui/react-tooltip` + `floating-ui`,
-113 ko bruts, dans le **chunk d'entrée**, pour un seul consommateur réel (`OrgTabBadge`, déjà lazy).
-❌ **Ne pas le remettre « par sécurité »** : un tooltip sans provider lève à l'affichage, ça se voit
-tout de suite.
+- ❌ Remettre un `TooltipProvider` à la racine : `ui/tooltip.tsx` a le sien, et la racine traînait `@radix-ui/react-tooltip` dans le chunk d'entrée. Un tooltip sans provider lève à l'affichage, c'est visible.
+- ✅ React Query : 5 min stale, 30 min gc, pas de `refetchOnWindowFocus`.
+- ✅ Requêtes : `retry` = prédicat `shouldRetryQuery` (`@/lib/query-retry`), une reprise, seulement quand la cause est inconnue ; un échec nommé par le serveur (`42501`, `PGRST116`, `seat_limit_reached`) rend le même nom.
+- ✅ Mutations : `shouldRetryMutation` (jamais sur un refus nommé, AM-4 de `docs/OBSERVABILITE.md`) ; `useOrgSubscriptionAction` met `retry: 0` : on ne rejoue jamais une mutation qui déplace de l'argent.
+- ❌ Identifier une erreur par une sous-chaîne de son message : il vient du catalogue i18n, donc traduit. Le code vit dans `.code`.
+- 🔴 Trois canaux Realtime (`SharedTasksRealtime`, `OrgInboxRealtime`, `FriendsInboxRealtime`), montés **une fois** ici, chacun dans son `AppErrorBoundary fallback={null}`. Un canal est un WebSocket : jamais dans un composant d'écran.
+- ✅ Montés une fois au niveau App : `CookieBanner`, `NewVersionBanner`, `ShareInviteClaimer`, `CommandPalette` (lazy), `ConsentedAnalytics` (rendu si `useCookieConsent() === 'accepted'`).
+- ✅ Audience maison : démarrée dans `src/main.tsx` (`startTrafficMeasurement`), pas dans un composant. `src/lib/traffic.ts` revérifie avant chaque envoi consentement, page publique, absence de formulaire d'identifiants et de session, puis poste à `/api/collect`.
+- ❌ Appeler `track_hit` depuis le client : seule la clé secrète du collecteur l'exécute (mig. `223`) → [`api/CLAUDE.md`](../api/CLAUDE.md).
 
-React Query : 5 min stale, 30 min gc, pas de `refetchOnWindowFocus`.
-⚠️ **`retry` n'est plus `1` sur les requêtes** : c'est le prédicat `shouldRetryQuery`
-(`@/lib/query-retry`, testé), plus un `retryDelay` exponentiel plafonné à 3 s. On ne retente
-qu'**une** fois, et seulement quand on ignore la cause : un échec **nommé** par le serveur
-(`42501`, `PGRST116`, `seat_limit_reached`…) rendra le même nom, et un dépassement de délai
-enchaînerait 8 s + 1 s + 8 s avant d'afficher quoi que ce soit.
-❌ **Ne jamais identifier une erreur par une sous-chaîne de son message** : il vient du catalogue
-i18n, il est traduit. Le code vit dans `.code`. C'est ce bug-là qui a fait vivre le prédicat
-d'origine sans qu'il puisse matcher une seule fois.
-Les **mutations** passent par `shouldRetryMutation` (une reprise, jamais sur un refus nommé : AM-4 de `docs/OBSERVABILITE.md`), et `useOrgSubscriptionAction` y met `retry: 0` :
-on ne rejoue jamais une mutation qui déplace de l'argent.
+## Type `User`
 
-**Trois canaux Realtime**, chacun monté **une seule fois** ici et isolé dans son propre
-`AppErrorBoundary fallback={null}` : `SharedTasksRealtime`, `OrgInboxRealtime`,
-`FriendsInboxRealtime` (un canal est un WebSocket : jamais dans un composant d'écran).
-Montés aussi une seule fois au niveau App : `CookieBanner`, `NewVersionBanner` (onglet resté sur un
-bundle périmé), `ShareInviteClaimer`, `CommandPalette` (lazy) et `ConsentedAnalytics` (Vercel
-Analytics, rendu seulement si `useCookieConsent() === 'accepted'`).
+✅ Défini **uniquement** dans `src/modules/auth/AuthContext.tsx` (`src/modules/user/types.ts` le ré-exporte) : `id, name, email, avatar?, provider?, autoValidation?`. ❌ Y ajouter un état d'abonnement.
 
-**Mesure d'audience maison** (mig. `222`, depuis le 2026-10-18) : démarrée dans `src/main.tsx`
-(`startTrafficMeasurement`), pas dans un composant. `src/lib/traffic.ts` revérifie **avant chaque
-envoi** consentement, page publique, absence de formulaire d'identifiants et absence de session,
-puis poste à `/api/collect` (même origine). ❌ Aucun appel direct à `track_hit` depuis le client :
-depuis la mig. `223` seule la clé secrète du collecteur peut l'exécuter → [`api/CLAUDE.md`](../api/CLAUDE.md).
-
-### Type User — source de vérité
-
-Défini **uniquement** dans `src/modules/auth/AuthContext.tsx` (`src/modules/user/types.ts` le
-ré-exporte sans le redéfinir) :
-
-```typescript
-export type User = {
-  id: string; name: string; email: string;
-  avatar?: string; provider?: string; autoValidation?: boolean;
-};
-```
-
-### Routing (`src/App.tsx`)
+## Routing (`src/App.tsx`)
 
 | Route | Page | Accès |
 |---|---|---|
-| `/` | LandingPage — **parcours perso**, redirige `/dashboard` si connecté | public |
-| `/entreprise-presentation` (slug localisé) | **même composant `LandingPage`**, parcours entreprise | public |
-| `/login` · `/signup` · `/forgot-password` · `/reset-password` | Auth | public |
-| `/guide` · `/blog` · `/blog/:slug` | Contenu SEO | public |
-| slugs localisés (à-propos, freelances, étudiants, managers, équipes, mentions légales, confidentialité, CGU) | via `routeSlug(key, locale)` — cf. `src/i18n/routes.ts` | public |
-| `/invite/:token` · `/org-invite/:token` | Claim d'invitation (partage / entreprise) | public |
-| `/dashboard` · `/tasks` · `/settings` | Socle | protégé |
-| `/agenda` · `/habits` · `/okr` · `/statistics` | **Toujours visibles pour tout le monde** depuis le 2026-08-23, plus aucun réglage ne les masque | protégé |
-| `/entreprise/:section?/:entityId?` · `/entreprise/onboarding` | Mode entreprise, une route par section, plus un identifiant d'entité pour les liens profonds ; `?tab=` redirigé (onboarding hors Layout) | protégé |
-| `/admin` | Console admin — URL non référencée, gating **serveur** (`get_admin_stats` rejette les non-admins) | protégé |
-| `/premium` | Redirige `/` tant que `PREMIUM_ENFORCED = false` | protégé |
-| `/welcome` | Redirection permanente vers `/` (ancienne URL) | public |
-| `*` | **NotFoundPage** (pas de redirect) | — |
+| `/` | `LandingPage`, parcours perso ; redirige `/dashboard` si connecté | public |
+| `/entreprise-presentation` (slug localisé) | même `LandingPage`, parcours entreprise | public |
+| `/login` `/signup` `/forgot-password` `/reset-password` | Auth | public |
+| `/guide` `/blog` `/blog/:slug` | contenu SEO | public |
+| slugs localisés (à-propos, freelances, étudiants, managers, équipes, légal) | `routeSlug(key, locale)`, `src/i18n/routes.ts` | public |
+| `/invite/:token` `/org-invite/:token` | claim d'invitation | public |
+| `/dashboard` `/tasks` `/settings` `/agenda` `/habits` `/okr` `/statistics` | socle, toujours visibles | protégé |
+| `/entreprise/:section?/:entityId?` `/entreprise/onboarding` | mode entreprise ; `?tab=` redirigé ; onboarding hors Layout | protégé |
+| `/admin` | console admin, URL non référencée, garde **serveur** (`get_admin_stats`) | protégé |
+| `/premium` | redirige `/` tant que `PREMIUM_ENFORCED = false` | protégé |
+| `/welcome` | redirection permanente vers `/` | public |
+| `*` | `NotFoundPage`, pas de redirect | |
 
-Toutes les pages passent par `lazyWithRetry(import, [namespaces])` (`@/lib/lazy-with-retry`) et
-sont enveloppées dans `AppErrorBoundary` : un chunk périmé après déploiement est retenté puis
-recharge la page, et la liste de catalogues i18n de chaque route est **attendue avant le rendu**.
-⚠️ Une page qui utilise un nouveau namespace doit l'ajouter à SA liste dans `App.tsx` :
-`lazy-namespaces.guard.test.ts` lit ces appels.
-
+- ✅ Toute page passe par `lazyWithRetry(import, [namespaces])` (`@/lib/lazy-with-retry`) sous `AppErrorBoundary` : un chunk périmé est retenté puis la page recharge ; les catalogues i18n de la route sont attendus avant le rendu.
+- ⚠️ Une page qui utilise un nouveau namespace l'ajoute à SA liste dans `App.tsx` : `lazy-namespaces.guard.test.ts` lit ces appels.

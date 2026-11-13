@@ -1,184 +1,83 @@
-# Organisations · règles du dossier
+# Organisations (`src/modules/organizations`)
 
-> Repris de `CLAUDE.md` le 2026-09-16, **sans une coupe**. Ce fichier est chargé
-> automatiquement dès qu'un fichier de ce dossier est lu ou édité, et lui seul.
-> Règles transversales : [`CLAUDE.md`](../../../CLAUDE.md) à la racine.
+Lire en touchant `src/modules/organizations/**`, `org-*`, `components/organization/**`, `/entreprise/**`. UI : [`docs/UI-PATTERNS.md`](../../../docs/UI-PATTERNS.md) § « Mode entreprise ». Migrations en prod : [`supabase/migration/CLAUDE.md`](../../../supabase/migration/CLAUDE.md).
+Règles transversales : [`../CLAUDE.md`](../CLAUDE.md).
 
----
+## Navigation : une route par section
 
-## 🧭 Navigation : une route par section (2026-09-23)
+`/entreprise/<section>` (`tasks`, `projects`, `okr`, `stats`, `pyramid`, `members`, `billing`, `teams`, `settings`) ; l'Aperçu reste `/entreprise`. Desktop : `OrgSideNav` monté par portail dans l'emplacement de `Layout` (`page-right-rail.ts`) ; mobile : `OrgSectionSwitcher`. Sections : `org-sections.ts` ; liens : `deep-link.helpers.ts` (`buildOrgLink`).
 
-`/entreprise/<section>` (`tasks`, `projects`, `okr`, `stats`, `pyramid`, `members`, `billing`),
-l'Aperçu restant `/entreprise`. Desktop : panneau à droite (`OrgSideNav`), monté par portail dans
-l'emplacement que `Layout` pose hors de `<main>` (`page-right-rail.ts`). Mobile : `OrgSectionSwitcher`.
-Liste des sections : `org-sections.ts` ; chemins et liens : `deep-link.helpers.ts` (`buildOrgLink`).
+- 🔴 Ne JAMAIS retirer la redirection `?tab=` (`legacyOrgTabRedirect`) : Stripe (`stripe-org-checkout`, `stripe-org-portal`) et les e-mails de `renewal-notice` pointent sur `/entreprise?tab=billing`, URLs hors dépôt.
+- ❌ Un lien entreprise écrit à la main : `buildOrgLink`.
+- ❌ Renommer le segment `members` (liens `?member=` et e-mails). Une seule route `entreprise/:section?/:entityId?` pour ne pas remonter la page.
+- ✅ `members` = annuaire ; `teams` = liste ; `teams/<id>` = `TeamPage` (id lu par `readTeamIdSegment`) ; `settings` = profil, organisations, forfait, invitations, zone de danger (`OrgSettingsSection` ; garde C-39 `org-deletion.guard.test.ts`).
+- ✅ Page d'équipe : fiche éditable (nom, couleur, description, mig. 163) par `can_manage_team` (admin, créateur, responsable) ; `org_id` et `created_by` figés par trigger.
+- 🔴 Retirer un membre passe TOUJOURS par l'assistant de départ (`OffboardMemberDialog`, `offboard_org_member`, mig. 161, `useMemberLifecycle`), annuaire comme pyramide. Un retrait nu laisse tâches, subordonnés, responsables et KR orphelins.
+- ✅ Épinglés / Récents du panneau (`org-pins.ts`) : préférence par personne et appareil, `localStorage`. Une ouverture `?project=` compte comme récente.
 
-- 🔴 **Ne JAMAIS retirer la redirection `?tab=`** (`legacyOrgTabRedirect`). Stripe
-  (`stripe-org-checkout`, `stripe-org-portal`) et les e-mails déjà envoyés par `renewal-notice`
-  pointent sur `/entreprise?tab=billing` : ces URLs vivent hors du dépôt.
-- ❌ Ne jamais écrire un lien entreprise à la main : passer par `buildOrgLink`.
-- **Personnes · Équipes · Paramètres** (audit Membres du 2026-09-24, « quatre pages en une ») :
-  `members` ne porte plus que l'annuaire, `teams` la liste des équipes et `teams/<id>` la page
-  d'une équipe (`TeamPage`, id lu par `readTeamIdSegment`), `settings` les invitations et la zone
-  de danger. ❌ Ne jamais renommer le segment `members` : des liens `?member=` et des e-mails y
-  pointent. Une seule route `entreprise/:section?/:entityId?`, pour ne pas remonter la page.
-- **Page d'équipe** : fiche éditable (nom, couleur, description, mig. 163) par `can_manage_team`
-  (admin, créateur, responsable). `org_id` et `created_by` d'une équipe sont figés par trigger.
-- **Retirer un membre passe TOUJOURS par l'assistant de départ** (`OffboardMemberDialog`,
-  `offboard_org_member`, mig. 161), depuis l'annuaire comme depuis la pyramide. ❌ Ne jamais
-  remonter un retrait nu : il laissait tâches, subordonnés, rôles de responsable et KR orphelins.
-- **Paramètres** (`/entreprise/settings`, M13, 2026-09-24) : profil, organisations, forfait,
-  zone dangereuse, et les invitations depuis l'audit Membres (`OrgSettingsSection`).
-  La garde C-39 (`org-deletion.guard.test.ts`) suit la zone dangereuse jusque-là.
-- **Épinglés / Récents** du panneau (`org-pins.ts`) : préférence par personne et par appareil,
-  donc `localStorage`, jamais la base. Une ouverture `?project=` est notée comme récente.
+## Aperçu : lectures CIBLÉES
 
-## 🏠 Aperçu : lectures CIBLÉES, jamais l'organisation entière (2026-09-24)
+- ❌ `useTeamTasks` / `useTeamTaskWorkingSet` dans l'Aperçu (`MyWorkTab`) : une tâche à moi retombe sous le plafond de 1 000 dans une grande organisation. Chaque bloc passe par `useTeamTaskSlice(orgId, filtres)` (`assigneeId`, 30 prochaines échéances, créées en revue, créations récentes, lecture par `ids`) ; le serveur filtre AVANT le plafond.
+- ✅ Fil d'activité : `team_task_activity` (mig. 094), UPDATE seulement ; les créations viennent des tâches récentes. Dérivations pures : `my-work.helpers.ts`. `canEditDependencies` vient de la PAGE.
+- ✅ L'Aperçu est une grille de widgets ([`src/components/CLAUDE.md`](../../components/CLAUDE.md)) : les tâches sont lues dans `MyWorkTab` / `MyWorkSections` et passées aux widgets ; un widget lit une source ÉTROITE (invitations, commentaires d'une tâche), jamais l'ensemble.
 
-`MyWorkTab` lisait l'ensemble de travail de toute l'organisation (plafond 1 000) pour n'en
-garder que mes tâches. Chaque bloc passe désormais par `useTeamTaskSlice(orgId, filtres)` :
-`assigneeId: moi`, « 30 prochaines échéances », « mes tâches créées en revue », créations
-récentes, et une lecture par `ids` pour nommer le reste. Le serveur filtre AVANT le plafond.
+## Rapports (mig. 202)
 
-- ❌ Ne pas y remonter `useTeamTasks` / `useTeamTaskWorkingSet` : une tâche à moi retomberait
-  sous le plafond dans une grande organisation.
-- Le fil d'activité lit `team_task_activity` (mig. 094). Le journal ne voit que les UPDATE :
-  les créations viennent des tâches récentes. Dérivations pures : `my-work.helpers.ts`.
-- `canEditDependencies` vient de la PAGE, comme pour Projets et Tâches.
-- Depuis le 2026-10-19 l'Aperçu est une grille de widgets ([`src/components/CLAUDE.md`](../../components/CLAUDE.md)) :
-  les tâches sont lues dans `MyWorkTab` / `MyWorkSections` et passées aux widgets ; un widget peut
-  lire une source ÉTROITE (invitations, commentaires d'une tâche), jamais l'ensemble de travail
-  (relu le 2026-10-20 : aucun widget n'appelle `useTeamTasks`).
+- ✅ Droits `report.org` / `report.allTeams` : admin seul par défaut. ❌ Attribution, modification, création ou événement `is_private` dans un rapport.
 
----
+## Permissions : surcharge, jamais remplacement (mig. 115)
 
-## 📊 Rapports (mig. 202)
+Défaut (admin : tout ; membre : `task.create`, `task.editAny`), surchargeable par membre (annuaire, « Modifier les permissions », admin seul).
 
-Droits `report.org` / `report.allTeams` : défaut admin seulement.
-❌ Ni attribution, ni modification, ni création, ni événement `is_private` dans un rapport.
+- 🔴 Plus de « manager » depuis la mig. 229 : un seul grade, administrateur ; le reste passe par les rôles personnalisés ou la fiche. Encadrer quelqu'un n'ouvre AUCUN droit. L'organigramme est masqué (`org-sections.ts`, `hidden`) ; `manager_id` reste en base, dormant. ❌ `is_org_manager` / `isManagerOf` dans un résolveur, une policy ou un écran visible. Portées d'assignation : `self` / `everyone` (CHECK).
+- ⚠️ Reste hiérarchique, en lecture seule : `can_access_team_project`, `can_access_team_okr`, `my_managed_user_ids`, `get_org_member_last_activity`.
+- ✅ Défaut membre réglable (mig. 232) : `org_settings.member_default_perms` (`NULL` = défaut historique, `[]` = rien), lu par `org_member_default_perm` (dernier cran des quatre résolveurs) et `useOrgMemberDefaults` → `effectivePermissions({ memberDefaults })`.
+- ✅ `org_member_permissions (org_id, user_id)`, booléens NULLables : `NULL` = suit le défaut, `true`/`false` = décision. Sans ligne, comportement d'avant la mig. 115 (déploiement réversible).
+- ✅ Droits : `ORG_PERMISSION_KEYS` (`permissions.ts`) fait foi, plus une portée `self` · `everyone` (`{}` = personne).
+- ✅ Une seule source côté client : `src/modules/organizations/permissions.ts` (pur, miroir du SQL) via `useMyOrgPermissions(orgId)`. ❌ Recalculer un droit dans un composant ; le hook lit l'utilisateur par `useAuth`, jamais par prop.
+- ❌ Gater par une position hiérarchique : les dépendances de tâches suivent `task.editAny` (`canEditDependencies`) ; tout droit passe par `can['<clé>']`.
+- ❌ Enregistrer un instantané des droits : la fiche n'écrit que les lignes DÉCIDÉES.
+- ❌ Confondre `assign_targets = NULL` (tout le monde) et `{}` (personne).
+- ❌ Une ligne sur un admin : `my_org_perm` court-circuite sur `is_org_admin` et le trigger la refuse (sinon un admin peut bloquer son organisation).
+- ⚠️ Le contrôle d'assignation ne porte que sur les AJOUTS : retirer un assigné reste permis (tâche héritée, purges RGPD). Sélecteurs : `canAssign(id) || déjà assigné`.
+- 🔴 Supprimer une équipe ne rend JAMAIS rien visible à toute l'organisation (mig. 151, M5) : `team_projects.team_id` et `team_okr_teams.team_id` en `NO ACTION`, la base refuse tant qu'un projet ou OKR y est rattaché. Sortie : `delete_team_with_transfer` (INVOKER, atomique) via `DeleteTeamDialog`. ❌ `SET NULL`/`CASCADE`, ou « toute l'entreprise » comme cible (`NULL` = visible par tous). Un changement d'équipe de projet passe par `ConfirmProjectAudienceDialog`.
+- ⚠️ Archiver un projet est un UPDATE, jamais un DELETE.
+- 🔴 Modifier un projet = `project.edit` OU responsable encore membre (pas `project.create`). Le responsable ne change ni `team_id`, ni `owner_id`, ni `is_template` : trigger `enforce_team_project_edit_scope` (INVOKER).
+- 🔴 Créer un projet avec tâches : `create_team_project_with_tasks` (INVOKER, une transaction), aussi pour duplication et « partir d'un modèle ». ❌ Une boucle de `mutateAsync`.
+- ❌ Un modèle avec de vraies tâches : son contenu est `template_payload` (décalages en jours) ; `useTeamProjects` EXCLUT les modèles (`select`).
+- ❌ La catégorie réécrit `color` : pastille à sa propre couleur (`projectColorFromCategory` sans appelant dans Projets).
 
-## 🔐 Permissions entreprise — surcharge, jamais remplacement (mig. 115)
+### Rôles personnalisés à durée limitée (mig. 219)
 
-Les droits du mode entreprise ont un **défaut** (admin : tout ; membre : `task.create` et
-`task.editAny`) et sont **surchargeables par membre** depuis l'annuaire → menu « … » → **Modifier
-les permissions** (admin seul).
+`org_roles` + `org_member_roles` (`ends_at` NULL = sans limite). Fichiers `roles.*` ; écrans `OrgRolesSettings`, `RoleEditorSheet` (modale centrée malgré son nom), `AssignRoleDialog`. Spec : [`docs/archive/superpowers/specs/2026-10-12-roles-personnalises-design.md`](../../../docs/archive/superpowers/specs/2026-10-12-roles-personnalises-design.md).
 
-- 🔴 **Plus de « manager » depuis la mig. 229 (2026-10-30, décision d'Axel)** : un seul grade,
-  administrateur ; tout le reste passe par les rôles personnalisés (ou la fiche). Encadrer quelqu'un
-  n'ouvre AUCUN droit, ni défaut, ni invitation, ni fiche d'un subordonné, ni ajout d'équipe limité.
-  L'organigramme est masqué (`org-sections.ts`, `hidden`) ; `manager_id` reste en base, dormant.
-  ❌ Ne jamais réintroduire `is_org_manager` / `isManagerOf` dans un résolveur, une policy ou un
-  écran visible. Les portées d'assignation se réduisent à `self` / `everyone` (contrainte CHECK).
-  ⚠️ Reste hiérarchique, en lecture seule : la visibilité de `can_access_team_project`,
-  `can_access_team_okr`, `my_managed_user_ids`, `get_org_member_last_activity` (7 liens en prod).
+- 🔴 Résolution, non-admin : rôles actifs (OU logique) > fiche individuelle > défaut. Un rôle actif ÉCRASE tout : une clé absente est refusée, même `task.create`.
+- 🔴 La couche rôle est dans les QUATRE résolveurs (`my_org_perm`, `my_project_edit_perm`, `my_report_perm`, `my_assign_targets`), juste après le court-circuit admin. ❌ Réécrire l'un sans `my_role_perm` / `my_role_assign_targets` en tête.
+- 🔴 L'expiration se juge à la lecture (`ends_at > now()`), jamais par une purge ; le job `cosmo-expire-org-roles` (horaire) notifie (`role_changed`, `meta.change = custom_role_expired`) et journalise (`role.expired`).
+- ❌ Un rôle sur un admin (trigger) ; un membre promu admin garde une ligne inerte.
+- ✅ `role.manage` : admin seul, droit de CONFIANCE (aucun plafond sur le contenu d'un rôle). Le départ d'un membre emporte ses attributions (FK composite).
+- ✅ Rôle des nouveaux membres (mig. 230) : `org_settings.default_role_id` ; trigger `assign_default_org_role` (AFTER INSERT sur `organization_members`), sans limite, jamais sur un admin, jamais rétroactif. Démo : `assignDefaultRoleOnJoin` (`roles.local.repository.ts`). ❌ Un INSERT client sur `organization_members` : le trigger compte sur les quatre fonctions DEFINER d'arrivée.
 
-- **Défaut d'un membre réglable** (mig. 232) : `org_settings.member_default_perms`, coché par un
-  admin dans la colonne « Membre » de `PermissionsMatrix` (Paramètres › Permissions). `NULL` = défaut
-  historique, `[]` = rien. Lu par `org_member_default_perm` (dernier cran des quatre résolveurs) et,
-  côté client, par `useOrgMemberDefaults` passé à `effectivePermissions({ memberDefaults })`.
-- Table `org_member_permissions (org_id, user_id)`, colonnes booléennes **NULLables** :
-  `NULL` = suit le défaut dérivé, `true`/`false` = décision explicite. Une organisation sans
-  aucune ligne se comporte **exactement** comme avant la mig. 115 — c'est ce qui rend le
-  déploiement réversible.
-- Quatorze droits (`ORG_PERMISSION_KEYS` de `permissions.ts` fait foi) + une portée d'assignation
-  cumulable `self` · `everyone` (`{}` = personne, mig. 229).
-- Côté client, **une seule source de vérité** : `src/modules/organizations/permissions.ts`
-  (fonctions pures, miroir du SQL) exposé par `useMyOrgPermissions(orgId)`. Aucun composant ne
-  recalcule un droit ; le hook lit l'utilisateur via `useAuth`, jamais via une prop.
+### Rôles de projet, recherche, vues (mig. 190-193)
 
-- ❌ **Ne jamais gater quoi que ce soit par une position hiérarchique.** `isManager` n'existe plus ;
-  les dépendances de tâches suivent `task.editAny` (`canEditDependencies`), tout droit passe par
-  `can['<clé>']`.
-- ❌ **Ne jamais enregistrer un instantané des droits.** La fiche n'écrit que les lignes DÉCIDÉES :
-  un instantané figerait les défauts du jour où on l'ouvre.
-- ❌ **Ne jamais confondre `assign_targets = NULL` (aucune décision → tout le monde) et `{}`
-  (personne).** Ce sont deux états opposés.
-- ❌ **Ne jamais poser de ligne sur un admin** : `my_org_perm` court-circuite sur
-  `is_org_admin`, et le trigger la refuse. Sans cette règle, un admin peut se retirer un droit
-  et bloquer son organisation sans chemin de retour.
-- ⚠️ Le contrôle des assignations ne porte que sur les **AJOUTS** : retirer un assigné reste
-  toujours permis, sinon une tâche héritée devient ingérable et les purges RGPD cassent. Les
-  sélecteurs de membres appliquent la même règle (`canAssign(id) || déjà assigné`).
-- 🔴 **Supprimer une équipe ne rend JAMAIS rien visible par toute l'organisation** (mig. 151, M5).
-  `team_projects.team_id` et `team_okr_teams.team_id` sont en `NO ACTION` : la base refuse tant
-  qu'un projet ou un OKR y est rattaché, y compris ceux que l'appelant ne voit pas. La sortie est
-  `delete_team_with_transfer` (INVOKER, atomique), via `DeleteTeamDialog`.
-  ❌ Ne jamais remettre `SET NULL`/`CASCADE`, ni proposer « toute l'entreprise » comme cible : `NULL`
-  y signifie « visible par tous ». Un changement d'équipe de projet passe par
-  `ConfirmProjectAudienceDialog`, qui nomme la nouvelle audience.
-- ⚠️ **L'archivage d'un projet est un UPDATE**, jamais un DELETE. Détail : [`docs/UI-PATTERNS.md`](../../../docs/UI-PATTERNS.md) § « Mode entreprise ».
-- 🔴 **Modifier un projet = `project.edit`, OU responsable encore membre.** Plus `project.create`.
-  Le responsable ne change ni `team_id` (audience, M5), ni `owner_id`, ni `is_template` : c'est le
-  trigger `enforce_team_project_edit_scope` (INVOKER), une policy ne sait pas juger une colonne.
-- 🔴 **Créer un projet avec tâches passe par `create_team_project_with_tasks`** (INVOKER,
-  une transaction). ❌ Ne jamais revenir à une boucle de `mutateAsync` : un échec au milieu laissait
-  un projet à moitié créé. Duplication et « partir d'un modèle » empruntent la même RPC.
-- ❌ **Un modèle ne contient JAMAIS de vraies tâches** : son contenu est `template_payload`
-  (décalages en jours). De vraies tâches remonteraient dans « Mes tâches » et les statistiques.
-  `useTeamProjects` EXCLUT les modèles (`select`). Plus aucun écran ne les lit depuis ebf44b2b.
-- ❌ **La catégorie ne réécrit plus `color`.** Elle s'affiche en pastille à sa propre couleur ;
-  `projectColorFromCategory` n'a plus d'appelant dans l'onglet Projets.
+Détail : `docs/UI-PATTERNS.md` § « Étape 6 ». ❌ Un lecteur de projet se refuse par TRIGGER, jamais par policy. ❌ Un avancement recalculé sur `useTeamTasks`.
 
-### 🏷️ Rôles personnalisés à durée limitée (mig. 219, 2026-10-12)
+## Boîte de réception (mig. 129) et pastille (mig. 142)
 
-Spec : [`docs/archive/superpowers/specs/2026-10-12-roles-personnalises-design.md`](../../../docs/archive/superpowers/specs/2026-10-12-roles-personnalises-design.md).
-`org_roles` (paquet nommé de droits) + `org_member_roles` (attribution, `ends_at` NULL = sans limite).
-Fichiers : `roles.*` ; écrans `OrgRolesSettings`, `RoleEditorSheet` (une modale centrée depuis le 2026-10-19, malgré son nom), `AssignRoleDialog` (crée aussi un rôle depuis l'attribution).
+Règles complètes : [`docs/PERFORMANCE.md`](../../../docs/PERFORMANCE.md) § « La boîte de réception d'entreprise » et « La pastille COMPTE ».
 
-- 🔴 **Ordre de résolution, non-admin** : rôles actifs (OU logique) > fiche individuelle > défaut.
-  Un rôle actif ÉCRASE tout : une clé absente est refusée, même `task.create`.
-- 🔴 **La couche rôle s'insère dans les QUATRE résolveurs** (`my_org_perm`, `my_project_edit_perm`,
-  `my_report_perm`, `my_assign_targets`), juste après le court-circuit admin. ❌ Réécrire l'un d'eux
-  sans `my_role_perm` / `my_role_assign_targets` en tête rendrait les rôles inopérants sur ce droit.
-- 🔴 **L'expiration se juge à la lecture** (`ends_at > now()`), jamais par une purge. Le job
-  `cosmo-expire-org-roles` (horaire) ne fait que notifier (`role_changed`, `meta.change =
-  custom_role_expired`) et journaliser (`role.expired`).
-- ❌ Jamais de rôle sur un admin (trigger) ; un membre promu admin garde une ligne inerte.
-- `role.manage` : défaut admin seul, droit de CONFIANCE (aucun plafond sur le contenu d'un rôle).
-- Le départ d'un membre emporte ses attributions (FK composite vers `organization_members`).
-- **Rôle des nouveaux membres** (mig. 230) : `org_settings.default_role_id`, réglé par un admin dans
-  Paramètres › Rôles. Le trigger `assign_default_org_role` (AFTER INSERT sur `organization_members`)
-  pose l'attribution, sans limite, jamais sur un admin, jamais rétroactive. Démo :
-  `assignDefaultRoleOnJoin` (`roles.local.repository.ts`), appelé à l'acceptation d'une demande.
-  ❌ Ne jamais ouvrir un INSERT client sur `organization_members` : le trigger compte sur les
-  quatre fonctions DEFINER d'arrivée pour écrire `org_member_roles` hors RLS.
-
-### 🧭 Étape 6 (mig. 190-193) : rôles de projet, recherche, vues
-
-Détail : [`docs/UI-PATTERNS.md`](../../../docs/UI-PATTERNS.md) § « Étape 6 ». ❌ Un lecteur de projet se refuse par
-TRIGGER, jamais par policy ; ❌ jamais d'avancement recalculé sur `useTeamTasks`.
-
-### 📬 Boîte de réception (mig. 129) et pastille (mig. 142)
-
-Récit, preuves et règles complètes : [`docs/PERFORMANCE.md`](../../../docs/PERFORMANCE.md)
-§ « La boîte de réception d'entreprise » et « La pastille COMPTE ».
-
-- 🔴 `get_my_org_inbox()` est `SECURITY INVOKER` : agréger des lectures, oui ; des autorisations, jamais.
-- ❌ Jamais de `p_org`, jamais de borne globale (200 / 50 **par organisation**), jamais
-  d'invalidation par section dans `useOrgInboxRealtime` : une seule clé, `orgKeys.inbox()`.
-- ❌ Hors démo, `useOrgBadges` ne monte pas `useTeamTasks`. Ne jamais faire compter une ligne
-  `notified`, ne jamais passer `lastSeen` au serveur.
+- 🔴 `get_my_org_inbox()` est `SECURITY INVOKER` : agréger des lectures, jamais des autorisations.
+- ❌ Un `p_org`, une borne globale (200 / 50 **par organisation**), une invalidation par section dans `useOrgInboxRealtime` : une seule clé, `orgKeys.inbox()`.
+- ❌ Hors démo, `useOrgBadges` ne monte pas `useTeamTasks` ; ne jamais compter une ligne `notified`, ne jamais passer `lastSeen` au serveur.
 - Gardes : `organizations/inbox.hooks.test.tsx`, `src/lib/hooks/org-badges.server-count.test.tsx`.
 
----
+## Configuration et OKR d'entreprise
 
-## ⚙️ Configuration d'entreprise (mig. 195-199, en prod hors ledger)
+- ✅ `org-config` (mig. 195-199) : écrans `components/organization/config/`, via `org-config.lazy.ts`. ❌ `getOrgConfigRepository` hors de `repository.factory` (chunk d'entrée). 🔴 Un lien hiérarchique secondaire ne donne AUCUN droit.
+- 🔴 OKR d'entreprise fermés par défaut (mig. 205, 212) : public seulement si `audience = 'org'` ET sans lien ; un OKR fermé qui perd ses liens se referme. Lier un public : RPC `set_team_okr_links` (droit vérifié avant).
 
-Module `org-config`, écrans `components/organization/config/`, via `org-config.lazy.ts`.
-- ❌ `getOrgConfigRepository` hors de `repository.factory` (chunk d'entrée).
-- 🔴 Un lien hiérarchique secondaire ne donne AUCUN droit.
+## Popups et cas limites
 
-## 🎯 OKR d'entreprise : fermés par défaut (mig. 205, 212)
-
-- 🔴 Un OKR n'est public que si `audience = 'org'` ET sans aucun lien ; un OKR fermé qui perd ses
-  liens se referme. Lier un public passe par la RPC `set_team_okr_links` (droit vérifié avant).
-
-## 🪟 Popups, confirmations, cas limites (audit 2026-09-24)
-
-Détail : [`docs/UI-PATTERNS.md`](../../../docs/UI-PATTERNS.md) § « Mode entreprise ».
-
-- ❌ Personnes : `MemberPickList` seul. Création d'équipe ou de projet : `org-create.context` seul.
-- ❌ `window.confirm` : passer par `OrgConfirmDialog` (garde `org-confirm.guard`).
-- 🔴 Un retrait passe par l'assistant de départ (`useMemberLifecycle`).
+- ❌ Personnes : tout sauf `MemberPickList`. Création d'équipe ou de projet : tout sauf `org-create.context`.
+- ❌ `window.confirm` : `OrgConfirmDialog` (garde `org-confirm.guard`).
 - 🔴 `orgAdmin` : tout chargeur d'un écran qui s'en sert le déclare.
-- ⚠️ État des migrations (lesquelles sont en prod) : [`supabase/migration/CLAUDE.md`](../../../supabase/migration/CLAUDE.md).

@@ -1,410 +1,69 @@
-# Guide opérationnel — 4 chantiers post-audit COSMO
+# Guide opérationnel : cinq chantiers post-audit
 
-> **Toujours d'actualité au 2026-08-14** : `PREMIUM_ENFORCED` vaut bien `false`
-> (`src/modules/billing/premium-config.ts`) et Stripe n'est pas finalisé — ce guide décrit donc
-> encore le chemin de réactivation à suivre. Les commandes et références de fichiers ont été
-> revérifiées à cette date.
+Lire pour réactiver le premium PARTICULIER, rejouer un chantier d'exploitation (index, mot de passe compromis, harnais RLS), ou avant de souscrire les events d'un webhook Stripe. Ce qui fait foi : le code, [`STRIPE-LIVE.md`](./STRIPE-LIVE.md) pour la facturation entreprise, [`DEPLOYMENT.md`](./DEPLOYMENT.md), [`SECURITY.md`](./SECURITY.md).
+Garde : `npm run check:peremption-chantiers` (AM-2) exige sous chaque `## Point N` un marqueur `<!-- chantier: actif relu=AAAA-MM-JJ -->` (relecture ≤ 90 jours, sinon relire contre le dépôt puis re-dater, ou déclarer clos) ou `<!-- chantier: clos le=AAAA-MM-JJ -->`, et un plancher de chantiers. ❌ Mettre `relu=` à la date du jour sans avoir relu ; ❌ supprimer un point pour faire passer la garde. Elle prouve qu'une date est écrite, pas que la relecture a eu lieu. Les modes opératoires exécutés (harnais RLS, bascule Stripe) : [`archive/DOC-FRONT-recits-retires-2026-11-13.md`](./archive/DOC-FRONT-recits-retires-2026-11-13.md).
 
-> 🔴 **Depuis le 2026-10-24 (SV-4), `stripe-create-checkout` refuse tout appel en 403**
-> (`personal_premium_disabled`) : sa constante `PERSONAL_CHECKOUT_ENABLED` suit
-> `PREMIUM_ENFORCED`, et `src/edge-audit-serveur.guard.test.ts` exige qu'elles bougent ensemble.
-> La réactiver suppose d'abord les deux consentements L221-28 que le checkout entreprise exige
-> (S-6) : sans eux, une session particulier s'ouvrirait sans preuve de renonciation.
+## Règles communes
 
-> ⚠️ **Ce guide ne couvre plus que le premium PARTICULIER.** La plomberie de
-> facturation ENTREPRISE est complète et déployée (Edge Functions org, 4 price IDs
-> en secrets, `org_subscriptions`, webhook au routage `org_id`), mais la
-> facturation elle-même est **désactivée** depuis le 2026-08-24 :
-> `ENTERPRISE_BILLING_ENFORCED = false` **et**
-> `billing_flags.enterprise_seat_limit = false`. Tout est gratuit, sans plafond de
-> sièges, tant que la micro-entreprise n'existe pas. État courant et procédure de
-> réactivation : `CLAUDE.md → Facturation entreprise`.
-
-> Issu de l'audit technique du 2026-06-21. Guide pas-à-pas pour exécuter les 4
-> actions prioritaires identifiées comme **hors du périmètre d'un fix automatique**.
-> Voir aussi : `docs/DEPLOYMENT.md`, `faille.md`, `CLAUDE.md → Modèle Premium`.
-
-
-## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
-
-> Ce document affirme des choses que rien ne pèse : chaque ligne nomme une affirmation qui n'était vérifiée
-> par rien, et la garde qui la vérifie depuis. 🔴 **Une garde posée n'est pas un angle mort fermé** : la
-> dernière colonne dit ce que son vert ne prouve pas. L'énoncé du 2026-09-16, la colonne « État » du
-> 2026-09-21 et les mesures datées sont archivés sans une coupe :
-> [`archive/ANGLES-MORTS-2026-09-16-docs-vivantes.md`](./archive/ANGLES-MORTS-2026-09-16-docs-vivantes.md).
-
-| # | Angle mort (énoncé du 2026-09-16) | Garde qui le couvre | 🔴 Ce qu'elle ne prouve pas |
-|---|---|---|---|
-| AM-1 | **Les points cochés ✅ sont des réglages de Dashboard**, et rien ne vérifie qu'ils le sont encore (« Leaked Password Protection », l'index `048`) | `npm run check:supabase-posture` (`C-88`), voir [`SECURITY.md`](./SECURITY.md) AM-2 | Le volet purement manuel : `M-15`, `M-16`, `M-17` |
-| AM-2 | **Un guide de chantiers ne dit pas lesquels sont périmés** (le point 3, tranché le 2026-09-03 et exécuté le 09-04, n'en décrit plus que le contexte) | chaque « Point N » porte un marqueur `<!-- chantier: actif relu=… -->` (péremption à **90 jours**) ou `clos le=…` (exempt, mais daté) ; `npm run check:peremption-chantiers` en CI, témoin vu rouge | Que la relecture a eu lieu : seulement qu'une date est écrite |
-| AM-3 | Ce document n'avait pas de note et n'entrait dans aucun tableau de bord | **Sans objet** depuis le 2026-11-08 : les notes /100 ont cessé (ADR 0012, ADR 0014), `npm run check:docs` refuse leur retour | Sans objet |
+- ❌ `supabase db push` : le layout `supabase/migration/` (singulier, préfixes `NNN_`) n'est pas reconnu par la CLI (`DEPLOYMENT.md` § 6). Une migration : fichier idempotent `NNN_snake_case.sql` (`npm run validate:migrations`), puis `apply_migration` (MCP, inscrit une ligne au ledger) ou SQL editor ; relancer `get_advisors(security)` ET `(performance)` (aucun NOUVEAU warning) ; relire l'objet au catalogue ; `Migration coverage` (quotidien) refuse une migration absente de la prod.
+- ✅ Le projet `ykeugqfgklejcdbrmawy` (« cosmo test ») EST la prod ; le second projet est inactif (`DEPLOYMENT.md` § 2).
+- ✅ Premium PARTICULIER : `PREMIUM_ENFORCED = false` (`src/modules/billing/premium-config.ts`). `stripe-create-checkout` refuse tout appel en 403 (`personal_premium_disabled`, SV-4) : sa constante `PERSONAL_CHECKOUT_ENABLED` suit `PREMIUM_ENFORCED`, et `src/edge-audit-serveur.guard.test.ts` exige qu'elles bougent ensemble. ❌ La réactiver sans les deux consentements L221-28 que le checkout entreprise exige (S-6) : sans eux une session particulier s'ouvrirait sans preuve de renonciation.
+- ✅ Facturation ENTREPRISE : active (`ENTERPRISE_BILLING_ENFORCED = true`), état courant dans `STRIPE-LIVE.md` et [`src/modules/billing/CLAUDE.md`](../src/modules/billing/CLAUDE.md).
+- ⚠️ Les points cochés ✅ de ce guide sont des réglages de Dashboard : `npm run check:supabase-posture` (C-88) les relit ; `M-15`, `M-16`, `M-17` restent manuels.
 
 ---
 
-## Deux corrections importantes (lire en premier)
-
-1. **`supabase db push` ne fonctionne PAS sur ce repo.** Le layout est
-   `supabase/migration/` (singulier, préfixes `NNN_`), non reconnu par la CLI
-   Supabase (qui attend `supabase/migrations/<timestamp>_*.sql`). Le workflow
-   réel = `apply_migration` (MCP) ou SQL editor. (`DEPLOYMENT.md §6`.)
-2. **Le projet `ykeugqfgklejcdbrmawy` (« cosmo test ») EST la prod** (le 2ᵉ projet
-   est inactif — `DEPLOYMENT.md §2`). La migration 048 y a déjà été appliquée et
-   **vérifiée** : `idx_share_links_owner_id` existe en prod. **Point #1 = déjà fait.**
-
-Chaque section est autonome.
-
----
-
-## Point 1 — Index 048 en prod ✅ DÉJÀ FAIT (guide de vérification)
+## Point 1 : index 048 en prod
 <!-- chantier: clos le=2026-06-21 -->
 
-**Statut : appliqué + vérifié le 2026-06-21.** Aucune action requise. Ce qui suit
-documente *pourquoi* et *comment re-vérifier*, car la procédure diffère de ce qui
-était initialement annoncé.
+Appliqué et vérifié : `idx_share_links_owner_id` existe en prod. Re-vérification (lecture seule) :
 
-### Ne PAS faire
-- ❌ `supabase db push` — échoue/ne voit pas les migrations (layout `migration/`
-  singulier non reconnu). Documenté dans `DEPLOYMENT.md §6`.
-
-### La bonne procédure (déjà exécutée) pour TOUTE future migration `NNN_*.sql`
-1. Écrire le fichier idempotent dans `supabase/migration/` (respecter
-   `NNN_snake_case.sql`, gardé par `npm run validate:migrations`).
-2. Appliquer via MCP : `apply_migration(project_id="ykeugqfgklejcdbrmawy",
-   name="NNN_xxx", query=<contenu>)` — enregistre une entrée de ledger.
-   Alternative : SQL editor du dashboard, coller le fichier versionné.
-3. Re-lancer `get_advisors(security)` ET `(performance)` → aucun **nouveau** warning.
-4. Relire l'objet au catalogue après application ; `Migration coverage` (quotidien) refuse une migration absente de la prod.
-
-### Re-vérification de l'index (lecture seule)
 ```sql
 select indexname, indexdef from pg_indexes
 where tablename='share_links' and indexname='idx_share_links_owner_id';
 -- attendu : 1 ligne, USING btree (owner_id)
 ```
-Résultat obtenu le 2026-06-21 : présent. ✔
 
----
-
-## Point 2 — Activer « Leaked Password Protection » (≈ 2 min, dashboard)
+## Point 2 : « Leaked Password Protection »
 <!-- chantier: actif relu=2026-10-24 -->
 
-> 🔎 **Relu le 2026-10-24 : TOUJOURS OUVERT.** `scripts/supabase-posture.reference.json` porte
-> `password_hibp_enabled = false` comme état mesuré le 2026-10-08, et l'advisor
-> `auth_leaked_password_protection` compte 1. Ce chantier reste actif et doit être relu avant le
-> 2027-01-22 (90 jours).
+Toujours OUVERT : `scripts/supabase-posture.reference.json` porte `password_hibp_enabled = false` et l'advisor `auth_leaked_password_protection` compte 1. Relire avant le 2027-01-22. C'est un toggle de config Auth (vérification HaveIBeenPwned par k-anonymity, seul un préfixe de hash SHA-1 part), pas du code.
 
-**Pourquoi** : advisor sécurité `auth_leaked_password_protection` (WARN). Supabase
-Auth peut refuser les mots de passe compromis (vérif HaveIBeenPwned, k-anonymity —
-seul un préfixe de hash SHA-1 est envoyé, jamais le mot de passe). C'est un toggle
-de config Auth, **pas du code** → rien à committer.
+1. Dashboard → projet cosmo → Authentication → Sign In / Providers → Password (selon la version : Policies ou Password security) → activer « Prevent use of leaked passwords » ; en passant, longueur minimale ≥ 8 et lettres + chiffres.
+2. Vérifier : `get_advisors(security)` sans `auth_leaked_password_protection` ; inscription avec `password123` sur `/signup` refusée.
+3. ⚠️ Ne s'applique qu'aux NOUVEAUX mots de passe (signup, reset). Vérifier que l'erreur GoTrue est captée par `normalizeApiError` (`SignupPage`, `SettingsPage`) et lisible en français ; sinon ajouter le mapping du code d'erreur.
 
-### Étapes
-1. Supabase Dashboard → projet **cosmo (`ykeugqfgklejcdbrmawy`)**.
-2. **Authentication → Sign In / Providers → Password** (selon version :
-   *Authentication → Policies* ou *Auth → Settings → Password security*).
-3. Activer **« Prevent use of leaked passwords »** (Leaked password protection).
-4. (Recommandé pendant qu'on y est) **Minimum password length ≥ 8** et
-   **Password requirements** = au moins lettres+chiffres, si pas déjà fait.
-5. Sauvegarder.
-
-### Vérification
-- Re-lancer `get_advisors(security)` → le warning `auth_leaked_password_protection`
-  doit avoir disparu.
-- Test fonctionnel : tenter une inscription avec un mot de passe notoire
-  (`password123`) sur `/signup` → doit être refusé par Supabase.
-- ⚠️ Impact UX : ne s'applique qu'aux **nouveaux** mots de passe (signup + reset),
-  pas aux comptes existants. Vérifier que le message d'erreur GoTrue est bien capté
-  par `normalizeApiError` côté `SignupPage`/`SettingsPage` (changement de mdp) et
-  affiché en FR lisible — sinon ajouter le mapping du code d'erreur.
-
----
-
-## Point 3 — Décision produit Premium · **TRANCHÉE le 2026-09-03, exécutée le 2026-09-04**
+## Point 3 : décision produit Premium (jetons et mur-pub)
 <!-- chantier: clos le=2026-09-04 -->
 
-> ✅ **Chantier CLOS** : décision d'Axel le 2026-09-03, exécutée le 2026-09-04 (`C-04`). Ce qui suit
-> décrit le **contexte** de la décision, pas un état à surveiller.
+Décision d'Axel : le système de jetons et le mur-pub des Habitudes sont supprimés (C-04) ; les Habitudes sont gratuites, la monétisation ne repose que sur l'abonnement. Supprimés : `HabitsAdGate`, `AdModal`, AdSense (script et origines CSP de `vercel.json`), `useDailyAdGate`, `cosmo_adwall_habits`, `addTokens`, les RPC `consume_premium_token` / `credit_premium_token_from_ad` / `bump_win_streak`, les colonnes `premium_tokens` / `win_streak` / `ad_credits_*` de `subscriptions` (mig. `141`).
 
-🟢 **Décision d'Axel** : *« Ce système est une archive du passé, supprime-le afin de ne pas
-complexifier le code avec des choses inutiles. »* Les jetons premium et le mur-pub des Habitudes
-ont été **supprimés** (item C-04). Les Habitudes sont gratuites pour tout le monde et la
-monétisation ne repose plus que sur l'abonnement. C'est l'option C des trois que ce guide
-proposait ; les deux autres (garder la pub, ou câbler des jetons consommables) sont écartées.
+- ❌ Réintroduire jetons ou mur-pub (une pub regardée donnait un jeton permanent, donc les statistiques à vie : contournement de paywall en une manipulation).
+- ✅ « Premium » = `plan='premium'` + `status='active'` + période non dépassée. Reste `PREMIUM_ENFORCED` (statistiques premium et route `/premium`).
 
-**Le défaut qui a motivé la décision, et qu'elle referme** : `consume_premium_token` n'était pas
-câblé, le mur était piloté par un flag `localStorage` daté, et un gratuit qui regardait UNE pub
-gagnait un jeton permanent, donc les statistiques à vie. Le jour où `PREMIUM_ENFORCED` serait
-passé à `true`, c'était un contournement de paywall en une manipulation.
-
-**Ce qui est parti** : `HabitsAdGate`, `AdModal` et tout AdSense (script, et ses origines dans la
-CSP de `vercel.json`), `useDailyAdGate` et la clé `cosmo_adwall_habits`, `addTokens`, les RPC
-`consume_premium_token` / `credit_premium_token_from_ad` / `bump_win_streak`, et les colonnes
-`premium_tokens` / `win_streak` / `ad_credits_*` de `subscriptions` (mig. **141**).
-
-**Ce qui reste**, et n'est PAS dans ce périmètre : `PREMIUM_ENFORCED`, qui garde les statistiques
-premium et la route `/premium`. Le reste de ce guide en décrit toujours la réactivation.
-
-⚠️ **La définition de « premium » a changé** : `plan='premium'` + `status='active'` + période non
-dépassée. Vérifiée ligne par ligne contre les 54 lignes de `subscriptions` en prod avant la
-bascule, verdict identique pour chacune.
-
----
-
-## Point 4 — Harnais de tests RLS d'intégration en CI (filet manquant n°1)
+## Point 4 : harnais RLS d'intégration en CI
 <!-- chantier: clos le=2026-10-24 -->
 
-> ✅ **Relu le 2026-10-24 : EXÉCUTÉ.** `npm run test:rls` existe (`vitest.integration.config.ts`) et le
-> job `rls-integration` tourne dans `ci.yml`. La suite décrit l'architecture **proposée** à l'époque.
+Exécuté : `npm run test:rls` (`vitest.integration.config.ts`, `e2e/rls/*.test.ts`), loader `scripts/apply-migrations.mjs`, job `rls-integration` du noyau → [`TESTING.md`](./TESTING.md) § CI.
 
-**Pourquoi** : toute la sécurité d'accès repose sur RLS + RPC `SECURITY DEFINER`.
-Ces policies ont déjà cassé la prod (récursion 42P17, mig. 045) et sont **non
-testées en intégration**. Avant toute optim RLS (ex. consolider les
-`multiple_permissive_policies` sur `tasks`) ou refactor touchant les accès, il faut
-un filet qui prouve : *A ne lit jamais les données de B*, *un collaborateur lit bien
-une tâche partagée*, *un cursor forgé est rejeté*.
+- ✅ Les policies utilisent `auth.uid()`, les rôles `authenticated` / `anon` et le schéma `auth` : un Postgres nu ne suffit pas, il faut la stack Supabase locale ; les migrations (`supabase/migration/`, singulier) ne sont pas chargées par `supabase start` : loader custom.
+- ✅ Toute assertion de lecture passe par des clients UTILISATEUR (`signInWithPassword`, JWT de A et de B), jamais `service_role` (décor et nettoyage seulement).
+- ✅ Un test qui retire une policy doit faire échouer le harnais (test du filet). Cas minimaux : A ne lit pas les données de B (`tasks`), un collaborateur lit une tâche partagée et un tiers non (`sharing`, chemin de la récursion 42P17, mig. 045), un curseur forgé est rejeté (`cursor`).
 
-### Contrainte clé
-Les policies utilisent `auth.uid()`, les rôles `authenticated`/`anon`, le schéma
-`auth` → un Postgres nu **ne suffit pas**. Il faut la stack Supabase (GoTrue +
-PostgREST + rôles). Et les migrations sont en `supabase/migration/` (singulier) →
-non chargées automatiquement par `supabase start`. Donc : **stack locale + loader
-de migrations custom**.
-
-### Architecture proposée
-
-**a. Loader de migrations** — `scripts/apply-migrations.mjs`
-- Réutiliser le tri de `scripts/validate-migrations.mjs` (lecture `supabase/migration`,
-  filtre `.sql`, `sort()`).
-- Pour chaque fichier dans l'ordre, exécuter le SQL contre une `DATABASE_URL`
-  fournie (via `pg` ou `psql`). Idempotent (les fichiers le sont déjà).
-- Cible = l'URL Postgres de la stack locale Supabase.
-
-**b. Config Vitest séparée** — `vitest.integration.config.ts`
-- `environment: 'node'`, `include: ['e2e/rls/**/*.test.ts']` (ou
-  `src/**/*.integration.test.ts`), **pas de coverage thresholds** (sinon entrelacé
-  avec la suite unitaire). Ne PAS l'inclure dans `vitest.config.ts` (la suite
-  unitaire CI doit rester rapide et sans réseau).
-- Nouveau script : `"test:rls": "vitest run --config vitest.integration.config.ts"`.
-
-**c. Helper clients** — `e2e/rls/helpers.ts`
-- Un client `service_role` (admin) pour : créer 2 users via
-  `supabase.auth.admin.createUser({ email, password, email_confirm: true })`,
-  seed des lignes, cleanup.
-- Deux clients utilisateur : `createClient(url, anonKey)` puis
-  `signInWithPassword` → chacun porte le JWT de A / B. Toutes les assertions de
-  lecture passent par CES clients (jamais le service_role) pour exercer la RLS.
-
-**d. Fichiers de test** — `e2e/rls/*.test.ts`. Cas minimaux :
-- `tasks.test.ts` : A crée une tâche → client B `select` ne la voit pas (0 ligne) ;
-  client A la voit ; B ne peut pas `update`/`delete` (erreur/0 ligne).
-- `sharing.test.ts` : amitié confirmée (RPC `accept_friend_request_v2`) + partage
-  (`shared_tasks` insert) → B (collaborateur) lit la tâche via la policy
-  « Collaborators can read shared tasks » ; un tiers C ne la lit pas. Couvre le
-  chemin qui a causé la 42P17.
-- `cursor.test.ts` : appel paginé avec `cursor`/`cursorDate` forgés → rejeté
-  (complète le test unitaire `assertValidCursor`).
-
-**e. Job CI** — nouveau job `rls-integration` dans `.github/workflows/ci.yml`
-```yaml
-  rls-integration:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '20', cache: 'npm' }
-      - uses: supabase/setup-cli@v1        # CLI Supabase
-        with: { version: latest }
-      - run: supabase start                # Docker dispo sur ubuntu-latest
-      - run: npm ci
-      - run: node scripts/apply-migrations.mjs "$(supabase status -o env | grep DB_URL ...)"
-      - run: npm run test:rls
-        env:
-          SUPABASE_URL: http://127.0.0.1:54321
-          SUPABASE_ANON_KEY: <depuis `supabase status`>
-          SUPABASE_SERVICE_ROLE_KEY: <depuis `supabase status`>
-      - run: supabase stop
-```
-(Les clés/URL locales sont déterministes ou lues via `supabase status -o env` ;
-les injecter dans l'env du step `test:rls`.)
-
-### Dépendances à ajouter (devDependencies)
-- `pg` (ou utiliser `psql` du runner) pour le loader.
-- `supabase` CLI via `supabase/setup-cli` (pas de dep npm).
-- `@supabase/supabase-js` est déjà présent (prod dep) → réutilisable côté test.
-
-### Effort & risque
-- Effort : 1–2 j (le plus dur = stack locale + loader fiable en CI).
-- Risque : faible (additif, isolé dans un nouveau job + nouvelle config Vitest ;
-  n'altère ni le code prod ni la suite unitaire existante).
-- Une fois en place : débloque en sécurité la consolidation des RLS
-  `multiple_permissive_policies` et tout refactor d'accès.
-
----
-
-## Vérification (par point)
-
-| Point | Comment vérifier |
-|---|---|
-| 1 | `pg_indexes` montre `idx_share_links_owner_id` (✔ déjà fait) ; `get_advisors(performance)` sans le finding FK |
-| 2 | `get_advisors(security)` sans `auth_leaked_password_protection` ; signup avec mdp compromis refusé |
-| 3 | Décision écrite dans `CLAUDE.md → Modèle Premium` ; si Option A : `StatisticsPage` reste gated après une pub, abonné Stripe ne voit pas le mur |
-| 4 | `npm run test:rls` vert en local + job CI `rls-integration` vert ; un test qui retire une policy doit faire échouer le harnais (test du filet) |
-
-## Notes
-- Points **1 et 2** sont des opérations (dashboard/MCP), zéro commit de code.
-- Point **3** = décision + petit code (Option A) ou chantier (B/C).
-- Point **4** = le seul vrai développement ; à faire **avant** toute optim RLS.
-- Aucune de ces actions ne doit passer par `supabase db push` (layout non supporté).
-
----
-
-## Point 5 — Activer la facturation entreprise (Stripe par organisation)
+## Point 5 : facturation entreprise (Stripe par organisation)
 <!-- chantier: clos le=2026-10-20 -->
 
-> ✅ **Relu le 2026-10-24 : BASCULE FAITE le 2026-10-20.** `ENTERPRISE_BILLING_ENFORCED = true` et
-> `billing_flags.enterprise_seat_limit = true` (mig. `224`), Stripe en compte live. L'encart « dormante »
-> du 2026-08-17 ci-dessous et le bandeau d'en-tête (« désactivée depuis le 2026-08-24 ») sont des
-> **archives de contexte**. État courant : [`STRIPE-LIVE.md`](./STRIPE-LIVE.md).
+Bascule faite : `ENTERPRISE_BILLING_ENFORCED = true` et `billing_flags.enterprise_seat_limit = true` (mig. `224`), Stripe live. Indépendant du premium particulier (aucune table commune). Les règles qui servent encore :
 
-**Statut au 2026-08-17 : plomberie complète, livrée DORMANTE.** Table, quota serveur, trois
-Edge Functions, onglet Abonnement et coupons sont en place ; aucun euro ne peut être encaissé
-tant que les deux flags ci-dessous ne sont pas basculés. Rien n'a été exécuté ni déployé.
-
-Ce point est indépendant du point 3 (premium **particulier**) : les deux univers de facturation
-ne partagent aucune table.
-
-### 5.1 — Créer les prix et les coupons dans Stripe
-
-**HUIT** prix récurrents en EUR : un mensuel et un annuel par palier payant. L'annuel vaut le
-mensuel **moins 30 %**, appliqué sur les douze mois. C'est la remise consentie contre
-l'engagement (`ENTERPRISE_YEARLY_DISCOUNT`, 2026-08-25).
-
-| Palier | Membres | Mensuel | Annuel (équivalent / mois) | Annuel (débit réel) |
-|---|---|---|---|---|
-| `t10` | 5 à 10 | 20 € | 14 € | **168 €/an** |
-| `t20` | 10 à 20 | 50 € | 35 € | **420 €/an** |
-| `t50` | 20 à 50 | 100 € | 70 € | **840 €/an** |
-| `tmax` | 50 et plus | 200 € | 140 € | **1 680 €/an** |
-
-🟢 **Les 4 prix annuels s'ajoutent sur les produits qui portent déjà les prix mensuels**, pas sur
-de nouveaux produits. C'est ce qui permet à COSMO de les trouver tout seul : le prix annuel d'un
-palier est défini comme « le prix récurrent `year`, actif, du montant exact annoncé, sur le même
-produit que le prix mensuel » (`_shared/org-stripe-prices.ts`). **Aucun secret à poser après
-coup, aucun redéploiement.**
-
-⚠️ Les prix annuels se créent avec un **intervalle de facturation `year`** et le **montant de la
-colonne « débit réel »**, pas l'équivalent mensuel. L'équivalent mensuel n'existe que dans
-l'affichage : comparer 420 € à 50 € ne dit rien de l'économie, comparer 35 € à 50 € la dit d'un
-coup d'œil. Un montant qui ne tombe pas juste au centime près est **refusé** : le checkout répond
-`yearly_unavailable` plutôt que de facturer autre chose que l'annoncé.
-
-⚠️ Le **quota de sièges est identique** dans les deux périodicités : il est porté par le palier
-seul (`max_members`). Un client annuel n'achète pas plus de sièges, il achète le même palier moins
-cher contre un engagement. Ne jamais créer un « palier annuel » distinct côté Stripe.
-
-Puis les **promotion codes** voulus (montant ou %, durée, plafond d'usage, restriction produit).
-COSMO ne valide aucun code : le champ apparaît dans la page Stripe via `allow_promotion_codes`,
-et le code réellement appliqué est relu et stocké dans `org_subscriptions.discount_code` à titre
-purement informatif. Aucun montant n'est recalculé côté COSMO.
-
-### 5.2 — Secrets Supabase
-
-```bash
-supabase secrets set STRIPE_ORG_PRICE_T10=price_... \
-                     STRIPE_ORG_PRICE_T20=price_... \
-                     STRIPE_ORG_PRICE_T50=price_... \
-                     STRIPE_ORG_PRICE_TMAX=price_...
-```
-
-Un secret manquant ne fait pas facturer le mauvais palier : `stripe-org-checkout` alerte via
-`opsAlert` et renvoie `tier_unavailable`. C'est voulu — échouer bruyamment plutôt que
-silencieusement.
-
-🟢 **Quatre secrets, pas huit.** Les `STRIPE_ORG_PRICE_*_YEARLY` ne sont PAS nécessaires : le prix
-annuel se dérive du produit du prix mensuel. Les poser reste possible, comme porte de sortie pour
-épingler un prix annuel qui vivrait sur un autre produit ; ils sont alors lus en premier.
-
-### 5.3 — Migration et déploiement
-
-Appliquer `supabase/migration/101_org_subscriptions.sql` **et
-`supabase/migration/123_org_subscriptions_billing_interval.sql`** selon la procédure du point 1
-(⚠️ **jamais** `supabase db push`). La 123 ajoute `billing_interval`, purement descriptive : sans
-elle, le webhook écrit une colonne inexistante et l'upsert échoue à chaque event. **Les deux sont
-appliquées en prod au 2026-08-25.** Puis :
-
-```bash
-supabase functions deploy stripe-org-checkout
-supabase functions deploy stripe-org-portal
-supabase functions deploy stripe-webhook
-```
-
-✅ **Fait le 2026-08-25** : `stripe-org-checkout` (v3) et `stripe-webhook` (v18) sont déployées
-avec la périodicité ET la dérivation du prix annuel. `stripe-org-portal` n'a pas changé, sa v1
-reste valide. Il ne reste que la création des 4 prix annuels dans Stripe (§5.1) : aucun secret,
-aucun redéploiement derrière.
-
-> ⚠️ **Ces trois numéros de version sont ceux du 2026-08-25 et ne décrivent plus la production.**
-> Relevés par l'API le 2026-09-14 au soir : `stripe-org-checkout` **v15**, `stripe-webhook` **v33**,
-> `stripe-org-portal` **v12**. Ils sont conservés ici parce qu'ils datent le geste, pas l'état.
-
-`supabase/config.toml` déclare déjà les deux nouvelles fonctions en `verify_jwt = true`.
-
-🔴 **SIX events à souscrire sur l'endpoint webhook, pas cinq.** Recomptés dans
-`supabase/functions/stripe-webhook/index.ts` le 2026-09-14 (`grep "case '"`, six branches
-d'événement Stripe) :
-
-- `checkout.session.completed`
-- `customer.subscription.updated`
-- `customer.subscription.deleted`
-- `invoice.payment_succeeded`
-- `invoice.payment_failed`
-- **`charge.refunded`**
-
-⚠️ **Cette liste en comptait CINQ jusqu'au 2026-09-14**, et c'est le seul endroit du dépôt où elle
-était encore fausse : `CLAUDE.md` et [`STRIPE-LIVE.md`](./STRIPE-LIVE.md) avaient été corrigés le
-2026-09-12, **pas le runbook**, c'est-à-dire le document qu'on suit le jour de la bascule. Le
-chiffre est devenu faux le 2026-09-06, quand la v27 du webhook a ajouté la branche de
-remboursement. En réenregistrer cinq laisserait `charge.refunded` non souscrit : un remboursement
-réellement versé, et **aucune ligne compensatoire au journal d'encaissement**, donc un journal qui
-ne montre que l'encaissement. C'est exactement ce qu'on ne veut pas produire en contrôle fiscal.
-
-❌ **Ne jamais corriger un chiffre dans les documents d'explication sans le corriger dans le
-runbook.** Une note périmée dans un document qu'on lit coûte une relecture ; une note périmée dans
-un document qu'on EXÉCUTE coûte l'opération.
-
-### 5.4 — Recette en mode test (`stripe listen --forward-to ...`)
-
-| Cas | Attendu |
-|---|---|
-| Souscription palier 2 par le propriétaire | ligne `org_subscriptions` correcte, quota 20 |
-| Souscription tentée par un membre non propriétaire | 403, aucune session créée |
-| Souscription avec un promotion code | montant réduit chez Stripe, `discount_code` renseigné |
-| **Changement de palier depuis le portail** (ouvert le 2026-11-05, prorata facturé immédiatement) | `tier_key` **et** `max_members` suivent ; la facture de prorata arrive au journal |
-| Résiliation | `status='cancelled'`, quota 5, **aucun membre expulsé** |
-| Échec de paiement | `status='past_due'`, palier **préservé** (restauré tel quel au paiement) |
-| Paiement 3-D Secure | l'état `incomplete` n'écrit rien ; l'abonnement s'active au paiement |
-| Rejeu manuel du même event | dédupliqué |
-
-Le quatrième est le plus important : c'est le seul chemin où le palier change sans passer par
-notre checkout, et une régression y ferait payer 100 € à un client resté au quota de 20 sièges.
-
-### 5.5 — Bascule
-
-```sql
-UPDATE public.billing_flags SET enabled = true WHERE key = 'enterprise_seat_limit';
-```
-
-puis `ENTERPRISE_BILLING_ENFORCED = true` dans `src/modules/billing/premium-config.ts`, et
-déploiement du front avec les clés Stripe **live**.
-
-### 5.6 — ⚠️ À trancher AVANT la bascule : les organisations déjà au-dessus du quota
-
-Aucune organisation n'a d'abonnement aujourd'hui. À l'activation, toute org de plus de
-5 membres est **bloquée en ajout de membre du jour au lendemain**. Les membres existants
-gardent tout leur accès — on bloque la croissance, on ne retire rien — mais le blocage sera
-vécu comme une panne s'il n'est pas annoncé.
-
-Compter les organisations concernées :
+- ✅ Prix : un mensuel et un annuel par palier payant ; l'annuel = mensuel moins la remise `ENTERPRISE_YEARLY_DISCOUNT`, débité à l'année (montant « débit réel », pas l'équivalent mensuel). Grille : `ENTERPRISE_PRICING_TIERS` et `npm run check:stripe-prices`, jamais recopiée ici. Les prix annuels se créent sur les MÊMES produits que les mensuels : le prix annuel d'un palier est « le prix récurrent `year`, actif, du montant exact annoncé, sur le même produit que le mensuel » (`_shared/org-stripe-prices.ts`). Un montant qui ne tombe pas au centime près est refusé : `yearly_unavailable`.
+- ✅ Quota de sièges identique dans les deux périodicités (porté par `max_members` du palier). ❌ Un « palier annuel » distinct côté Stripe.
+- ✅ Secrets : QUATRE (`STRIPE_ORG_PRICE_T10`, `_T20`, `_T50`, `_TMAX`) ; les `*_YEARLY` sont facultatifs (porte de sortie, lus en premier). Un secret manquant : `stripe-org-checkout` alerte (`opsAlert`) et renvoie `tier_unavailable`, jamais le mauvais palier.
+- ✅ Promotion codes : COSMO ne valide aucun code (`allow_promotion_codes`) ; le code appliqué est relu dans `org_subscriptions.discount_code`, informatif, aucun montant recalculé.
+- ✅ Migrations `101_org_subscriptions.sql` et `123_org_subscriptions_billing_interval.sql` (la 123 ajoute `billing_interval` : sans elle l'upsert du webhook échoue à chaque event). Déploiement : `supabase functions deploy stripe-org-checkout`, `stripe-org-portal`, `stripe-webhook` ; `supabase/config.toml` les déclare `verify_jwt = true`. Versions déployées : relever par l'API, jamais citées ici.
+- 🔴 SIX events à souscrire sur l'endpoint webhook (recompter par `grep "case '"` dans `supabase/functions/stripe-webhook/index.ts`) : `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_succeeded`, `invoice.payment_failed`, `charge.refunded`. En réenregistrer cinq laisse `charge.refunded` non souscrit : un remboursement versé sans ligne compensatoire au journal d'encaissement (contrôle fiscal).
+- ❌ Corriger un chiffre dans un document d'explication sans le corriger dans le runbook : une note périmée dans un document qu'on EXÉCUTE coûte l'opération.
+- ✅ Recette en mode test (`stripe listen --forward-to …`) : souscription palier 2 par le propriétaire (ligne `org_subscriptions`, quota) ; par un non-propriétaire (403, aucune session) ; avec un promotion code (`discount_code` renseigné) ; CHANGEMENT DE PALIER depuis le portail, prorata facturé immédiatement (`tier_key` ET `max_members` suivent, la facture de prorata arrive au journal : seul chemin où le palier change sans passer par notre checkout) ; résiliation (`status='cancelled'`, quota gratuit, AUCUN membre expulsé) ; échec de paiement (`past_due`, palier préservé et restauré au paiement) ; 3-D Secure (`incomplete` n'écrit rien, activation au paiement) ; rejeu manuel du même event (dédupliqué).
+- ⚠️ Avant toute bascule d'un drapeau de quota : compter les organisations au-dessus du quota gratuit (elles seraient bloquées en ajout de membre du jour au lendemain, sans perte d'accès) ; les prévenir, ou leur poser une ligne `org_subscriptions` de courtoisie (palier couvrant leur effectif, `status='active'`, sans abonnement Stripe).
 
 ```sql
 SELECT o.id, o.name, COUNT(m.user_id) AS membres
@@ -415,5 +74,4 @@ HAVING COUNT(m.user_id) > 5
 ORDER BY membres DESC;
 ```
 
-Deux options : les prévenir avant de basculer, ou leur poser une ligne `org_subscriptions` de
-courtoisie (palier couvrant leur effectif, `status='active'`, sans abonnement Stripe).
+Bascule (rappel, désormais faite) : `UPDATE public.billing_flags SET enabled = true WHERE key = 'enterprise_seat_limit';` puis `ENTERPRISE_BILLING_ENFORCED = true` dans `src/modules/billing/premium-config.ts` et déploiement du front avec les clés Stripe live.

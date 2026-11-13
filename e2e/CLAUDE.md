@@ -1,92 +1,41 @@
-# `e2e/` · Playwright · règles du dossier
+# `e2e/` · Playwright
 
-> Méthode, comptage par project et checklist avant push : [`docs/TESTING.md`](../docs/TESTING.md)
-> § Playwright. Règles transversales : [`CLAUDE.md`](../CLAUDE.md) à la racine.
+Lire en touchant `e2e/**`, `playwright*.config.ts`, `e2e/__screenshots__/**`. Méthode, comptage et checklist avant push : [`docs/TESTING.md`](../docs/TESTING.md) § Playwright.
+Règles transversales : [`CLAUDE.md`](../CLAUDE.md).
 
-- `npm run test:e2e` (+ `:ui`, `:report`). Le serveur attendu est `npm start`, **port 3000**.
-- ❌ **Ne JAMAIS écrire le total en « N × 2 ».** Les projects ne jouent plus le même ensemble.
-  C est exactement comme ça que le précédent (« 62 × 2 = 124 ») est devenu faux, puis a été recopié
-  pendant onze jours au lieu d'être remesuré.
-- 🔴 **Les références visuelles ne changent que par `captures-regenerer.yml`, avec revue tracée**
-  (V15.4, FRO-02 : quatorze références régénérées d'un geste, sans regard). `CI noyau` refuse
-  (`check:captures-relues`) tout commit de `main` qui touche `e2e/__screenshots__/**` sans le trailer
-  `Captures-relues: <URL du run>`. Le run doit exister, venir de ce workflow et avoir réussi. Pas de PR.
-  1. Lancer le workflow **Captures regenerer** (Actions, `workflow_dispatch`), avec le motif en une phrase.
-  2. Ouvrir l'artefact `captures-revue` du run, puis `index.html` : avant, après, différence. Un changement non voulu est une régression à corriger dans le produit.
-  3. Ramener la branche : `git fetch origin noyau/captures-<run> && git merge --ff-only FETCH_HEAD && git commit --amend --trailer "Captures-relues: <URL du run>"`, puis `git push origin HEAD:main`.
-  4. Supprimer la branche : `git push origin --delete noyau/captures-<run>`.
-  ⚠️ Le trailer prouve qu'un run a produit un artefact, pas qu'on l'a ouvert. ❌ Jamais de référence produite sous Windows (`{platform}`), jamais de `--update-snapshots` en local.
-- ✅ Le total se RECOMPTE par `npx playwright test --list`, jamais de tête.
-- ⚠️ **Tous les projects ne tournent pas dans tous les workflows** : vérifier
-  `.github/workflows/*.yml` avant d'affirmer qu'un parcours est couvert en CI. Relu le
-  **2026-09-21** : le job `e2e` de `ci.yml` joue `chromium`, `supabase-stub`, `mobile-safari`
-  (depuis `af0190bd`, 2026-09-16) et `mobile-chrome` (depuis `2b4c4304`, 09-20) ; le project
-  `visual` a **son propre workflow**, `visual.yml`, et n'est pas dans `ci.yml`.
-  ⚠️ Depuis le 2026-11-06 (vague 2.2), `ci.yml` (`CI etendue`) et `visual.yml` **ne bloquent
-  rien** : seul `ci-noyau.yml` bloque. Un e2e rouge se lit, il ne sonne pas.
-  ❌ Ne pas compter les trois projects `*-warmup` comme des parcours : ce sont des préalables de
-  chauffe, et ils existent parce que le coût de compilation à froid de Vite tombait entièrement
-  sur le premier cas du moteur.
+## Lancer et compter
 
-- 🔴 **LE JOB `e2e` EST ROUGE SUR `main`, et l'est depuis le run 35532009156 (commit `53583d3f`)** :
-  25 échecs sur 204 réussites, les quatre autres jobs verts. Ouvert en `C-111`.
-  ⚠️ **Aucun de ces échecs n'est un faux positif de harnais** : 30 cas distincts en quatre familles,
-  dont des **défauts produit mesurés** (cibles tactiles à 24 × 24 px sur `/settings`, 36 px sur
-  `/okr`, 39 × 39 px sur `/habits`). ❌ Ne pas lire un échec e2e local comme « la CI est rouge de
-  toute façon » : c'est ce réflexe qui expédiera une régression.
-  ⚠️ Conséquence à retenir avant de citer un chiffre : la couverture clavier réelle était tombée à
-  **8 surfaces sur 51**, les deux cas que `C-96` compte comme mesurés expirant.
+- ✅ `npm run test:e2e` (+ `:ui`, `:report`) ; serveur attendu `npm start`, port 3000.
+- ✅ Recompter par `npx playwright test --list`, jamais de tête. ❌ Écrire le total en « N × 2 » : les projects ne jouent plus le même ensemble.
+- ⚠️ Tous les projects ne tournent pas dans tous les workflows : lire `.github/workflows/*.yml` avant d'affirmer qu'un parcours est couvert. `visual` a son workflow `visual.yml`. Seul `ci-noyau.yml` bloque ; `ci.yml` (CI étendue) et `visual.yml` se lisent, ils ne sonnent pas.
+- ❌ Compter les trois projects `*-warmup` comme des parcours : ce sont des chauffes (coût de compilation à froid de Vite).
+- ❌ Lire un échec e2e local comme « la CI est rouge de toute façon » : des échecs ont été des défauts produit mesurés (cibles tactiles sous 44 px, WCAG 2.5.5 / 2.5.8).
+- ❌ Laisser traîner une sonde jetable non suivie par git : elle fausse tout recomptage local.
+- ⚠️ `supabase-stub` (port 3210) joue un parcours hors mode démo : `load` n'y arrive jamais (Realtime), attendre un sélecteur.
+- 🔴 Une alerte que personne n'ouvre est une archive : l'issue `ci-red` se lit.
 
-- 🟠 **ÉTAT AU 2026-09-22 : deux familles sur quatre traitées, le job reste ROUGE.** Ne pas lire
-  ce qui précède comme périmé — le chiffre de 25 échecs date du run 35532009156 et n'a pas été
-  remesuré en CI depuis.
-  · ✅ `touch-targets` : **19 cas sur 19 verts** sur `chromium` (3 échecs avant). Les trois défauts
-    étaient réels ; `/habits` porte désormais un **écart déclaré** dans son fichier, avec son
-    critère (échoue 2.5.5 AAA, tient 2.5.8 AA) — sept cellules de 44 px ne tiennent pas dans
-    301,6 px, c'est de l'arithmétique.
-  · ✅ `a11y-keyboard-audit` : **2 cas sur 4**. La couverture clavier repasse donc à **10 sur 51**,
-    🔴 mais **sur `chromium` seulement** : leurs homologues WebKit n'ont pas été rejoués.
-  · 🔴 Restent : 2 cas clavier **non diagnostiqués** (`ShareListSheet`, `DatePicker` OKR — ils
-    tournent à 1440 px, donc leur cause n'est pas celle des deux autres), 7 parcours de démo
-    WebKit, et 3 `reduced-motion-sheets` sur les deux moteurs mobiles.
-  ✅ **2026-10-16 (C-118) : l'audit clavier JOUE sous WebKit** (`mobile-safari`, 16 cas), et la
-  présomption ci-dessus est soldée : sur 5 cas rouges, **un seul était un défaut produit**
-  (`TaskCard` : Safari n'émet AUCUN `contextmenu` au clavier, `Shift+F10` et la touche Menu
-  n'arrivent qu'en `keydown`, la feuille d'actions d'une tâche était inatteignable au clavier),
-  **un écart Safari** déclaré dans le fichier (Tab saute les liens : le lien d'évitement se mesure par
-  l'ordre du document et Entrée, détecté par sonde, jamais par une touche simulée, Option+Tab
-  n'étant pas émulable), et trois défauts de **harnais** (viewport mobile imposé à des cas de bureau,
-  `/tasks` lu avant son rendu, barre mobile non attendue).
-  ❌ Le fichier remet un poste de BUREAU pour lui-même (`test.use`, 1 280 px, sans tactile) : c'est
-  l'audit d'une personne au clavier. ❌ Ne pas relâcher une assertion pour faire passer WebKit : déclarer
-  l'écart avec sa raison, comme `tabAtteintLesLiens`.
+## Références visuelles
 
-- 🔴 **UN TEST QUI EXPIRE NE DIT PAS CE QU IL CHERCHE**, et ce fichier vient de le payer.
-  `a11y-keyboard-audit` cherchait un bouton « Actions pour … » VISIBLE à 375 px. Mesuré dans le
-  navigateur le 2026-09-22 : il existe, porte le bon nom, et fait **0 × 0 px** — il vit dans
-  `div.hidden md:block`, la ligne DESKTOP. Son timeout passait pour de la lenteur de harnais
-  depuis des semaines, et il masquait le défaut qu'il existait pour trouver : les actions d'une
-  tâche étaient **inatteignables au clavier sur mobile** (WCAG 2.1.1, niveau A).
-  ❌ **Ne jamais classer un timeout en « lenteur » sans avoir ouvert l'écran.**
+🔴 Elles ne changent que par `captures-regenerer.yml`, avec revue tracée. `CI noyau` refuse (`check:captures-relues`) tout commit de `main` qui touche `e2e/__screenshots__/**` sans le trailer `Captures-relues: <URL du run>` (run existant, de ce workflow, réussi). Pas de PR.
 
-- 🔴 **L alerte a fonctionné, c'est la LECTURE qui a manqué** : l'issue `ci-red` #54 a été mise à
-  jour **dix-neuf secondes** après l'échec. Même scénario que `vendor-watch` en août 2026, à
-  l'identique. Une alerte que personne n'ouvre est une archive.
-- ⚠️ Le project `supabase-stub` (port 3210) sert à jouer un parcours **hors mode démo**.
-  `load` n'y arrive jamais, à cause de Realtime : attendre un sélecteur, pas l'événement.
-- ❌ **Ne jamais laisser traîner une sonde jetable non suivie par git** : elle fausse tout
-  recomptage local, et la dernière en date était rouge.
-- 🔴 **Un parcours voit ce qu'aucun test unitaire ne peut voir.** Un écran qui se referme sur son
-  propre effet (`FirstRunSetup`, C-53) ne se détecte qu'en le parcourant, et seulement une fois que
-  le test attend que les écritures atterrissent.
+1. Lancer le workflow **Captures regenerer** (Actions, `workflow_dispatch`), motif en une phrase.
+2. Ouvrir l'artefact `captures-revue` du run, puis `index.html` : avant, après, différence. Un changement non voulu est une régression produit à corriger.
+3. Ramener la branche : `git fetch origin noyau/captures-<run> && git merge --ff-only FETCH_HEAD && git commit --amend --trailer "Captures-relues: <URL du run>"`, puis `git push origin HEAD:main`.
+4. Supprimer la branche : `git push origin --delete noyau/captures-<run>`.
 
-- 🔴 **`e2e/real/` joue l'app contre une VRAIE base Supabase locale** (TST-03, 2026-11-06), par
-  `playwright.real.config.ts` et le workflow `e2e-supabase.yml`, jamais par `npm run test:e2e` :
-  `chromium` et `mobile-safari` les excluent (`testIgnore`). Sans Docker, la CI est le seul moyen de les
-  jouer ; ❌ ne pas les « essayer » contre un projet distant.
-  · ❌ `helpers.ts` refuse tout hôte autre que `127.0.0.1` / `localhost` : ne pas assouplir ce garde-fou.
-    Comptes `@example.com` créés par le test, supprimés en fin de cas, jamais un vrai compte.
-  · ✅ Chaque écriture se relit **après `reload()`** et par le client authentifié du compte (RLS exercée) :
-    le cache React Query masque sinon l'absence de persistance.
-  · 🔴 Un parcours rouge ici est un défaut de production jusqu'à preuve du contraire : le marquer
-    `test.fixme` avec le bug décrit, ❌ jamais relâcher l'assertion. Détail : `docs/TESTING.md` § TST-03.
+- ⚠️ Le trailer prouve qu'un run a produit un artefact, pas qu'on l'a ouvert.
+- ❌ Une référence produite sous Windows (`{platform}`). ❌ `--update-snapshots` en local.
+
+## Écrire un test
+
+- 🔴 Un test qui expire ne dit pas ce qu'il cherche : ❌ classer un timeout en « lenteur » sans avoir ouvert l'écran (un bouton visible à 375 px n'était qu'à 0 × 0 px : actions de tâche inatteignables au clavier sur mobile, WCAG 2.1.1).
+- 🔴 Un parcours voit ce qu'aucun test unitaire ne voit (`FirstRunSetup` se referme sur sa propre création) : attendre que les écritures atterrissent avant d'asserter.
+- ✅ Audit clavier (`a11y-keyboard-audit`) joué aussi sous WebKit (`mobile-safari`) : il remet un poste de BUREAU pour lui-même (`test.use`, 1 280 px, sans tactile). Safari n'émet AUCUN `contextmenu` au clavier (`keydown` seulement : `Shift+F10`, touche Menu) ; Tab y saute les liens, le lien d'évitement se mesure par l'ordre du document et Entrée (sonde), jamais par une touche simulée.
+- ❌ Relâcher une assertion pour faire passer WebKit : déclarer l'écart dans le fichier avec sa raison (`tabAtteintLesLiens`).
+
+## `e2e/real/` : vraie base Supabase locale (TST-03)
+
+- ✅ Joué par `playwright.real.config.ts` et `e2e-supabase.yml`, jamais par `npm run test:e2e` (`chromium` et `mobile-safari` l'excluent par `testIgnore`). Sans Docker, la CI est le seul moyen. ❌ Les « essayer » contre un projet distant.
+- ❌ Assouplir `helpers.ts` : il refuse tout hôte autre que `127.0.0.1` / `localhost`. Comptes `@example.com` créés par le test et supprimés en fin de cas, jamais un vrai compte.
+- ✅ Relire chaque écriture après `reload()` et par le client authentifié du compte (RLS exercée) : le cache React Query masque sinon l'absence de persistance.
+- 🔴 Un parcours rouge ici est un défaut de production jusqu'à preuve du contraire : `test.fixme` avec le bug décrit, ❌ jamais relâcher l'assertion. Détail : `docs/TESTING.md` § TST-03.

@@ -1,185 +1,87 @@
-# Mobile-first — patterns et conventions
+# Mobile-first : patterns et conventions
 
-## Historique des notes et des audits : archivé
+Lire en touchant `src/pages/**` ou `src/components/**` rendus sous 768 px, `src/components/mobile/**`, `src/index.css`, `src/main.tsx`, un bottom-sheet, `TaskCard`, `TaskFilter`. Ce qui fait foi : `src/design-system.guard.test.ts`, `src/components/mobile/mobile-primitives.test.tsx`, le code.
+Notes /100 cessées (ADR 0012). Journal et audit DA : [`archive/MOBILE-journal-des-notes-2026-08-14-au-2026-12-15.md`](./archive/MOBILE-journal-des-notes-2026-08-14-au-2026-12-15.md), [`archive/MOBILE-audit-da-2026-08-14.md`](./archive/MOBILE-audit-da-2026-08-14.md), [`archive/DOC-FRONT-recits-retires-2026-11-13.md`](./archive/DOC-FRONT-recits-retires-2026-11-13.md). Règles d'animation et de modale : [`src/components/CLAUDE.md`](../src/components/CLAUDE.md).
 
-Les notes /100 de ce document ont cessé (ADR 0012, [`INDICATEURS.md`](./INDICATEURS.md)). Leur journal daté, les angles morts mesurés et les récits d'incident qui fondent les règles ci-dessous sont déplacés, sans coupe, dans [`archive/MOBILE-journal-des-notes-2026-08-14-au-2026-12-15.md`](./archive/MOBILE-journal-des-notes-2026-08-14-au-2026-12-15.md). Une règle de ce document qui cite une date ou un incident s'y retrouve.
+## Breakpoint et layout
 
-## Audit mobile / direction artistique du 2026-08-14 : archivé
+- ✅ Mobile = `< md` (768 px) ; `sm` (640 px) sépare petit mobile et phablette. `useIsMobile()` (`@/lib/hooks/use-mobile`, `window.innerWidth < 768`) seulement quand la LOGIQUE JS diverge ; sinon `md:hidden` / `md:flex`. ❌ Lire `window.innerWidth` en boucle dans le render.
+- ✅ `MobileTabBar` (~64 px, mobile seulement) : Accueil, Tâches, Agenda, Habitudes, Plus.
+- 🔴 Toute page protégée : `px-gutter` et `pb-[calc(64px+env(safe-area-inset-bottom)+24px)] md:pb-8` (`+88px` avec FAB), sinon le dernier élément passe sous la tab bar. Appliqué à la main (`MobileScreen` et `ListRow` supprimés, zéro consommateur : ❌ les recréer d'après une note, ils se réécrivent CONTRE un écran réel).
+- ✅ `min-h-[100dvh]` sur les wrappers de page et `h-[100dvh]` pour un plein écran ; ❌ `min-h-screen` / `100vh` (Safari iOS rogne).
+- ✅ FAB global (`src/components/Layout.tsx`, `fixed bottom-20 right-4 z-40 w-14 h-14 rounded-2xl`) : unique bouton de création. Il émet `open-task-create` sur `/tasks`, `open-agenda-create` sur `/agenda` (écouté par `AgendaPage`), `open-quick-add` ailleurs. ❌ Dupliquer un « + » dans l'en-tête d'une page.
+- ✅ Tutoriels : quand une page rend deux en-têtes (`md:hidden` + `hidden md:flex`), `findTarget` (`src/components/tutorial/page-tutorial-helpers.ts`) renvoie le premier élément VISIBLE (rect non nul).
+- ❌ Faire diverger mobile et desktop dans un composant sans `md:hidden` / `md:flex` / `useIsMobile()`.
+- ✅ Thèmes : `light`, `dark`, `black` ; résolution dans `src/lib/theme.ts` (`resolveInitialTheme`, `applyTheme`), avant le premier paint (`src/main.tsx`) et par `src/hooks/useDarkMode.ts`. Sur mobile, un visiteur sans choix démarre en `black`. Test : `src/lib/theme.test.ts`.
 
-Sous `prefers-reduced-motion`, la correction du 2026-08-24 est faite (voir [`archive/MOBILE-audit-da-2026-08-14.md`](./archive/MOBILE-audit-da-2026-08-14.md) pour son récit). Deux constats étaient **encore ouverts au 2026-08-25** : le design system mobile adopté à moitié, et onze bottom-sheets réimplémentés à la main dont cinq mentaient sur leur geste. **Le code fait foi** : leurs règles vivantes sont [§ Design system mobile](#design-system-mobile-2026-07-22-étendu-2026-07-23) et [§ Modals, pattern bottom-sheet](#modals--pattern-bottom-sheet) ; l'archive garde les diagnostics, la liste « vérifié sain » et les mesures.
+## Design system mobile
 
-**§3 de l'audit** (cité dans le code sous « docs/MOBILE.md §3 ») : une poignée de glissement qui ne fait rien n'a pas sa place sur un formulaire, elle y est retirée ; le geste se garde pour les feuilles qui se ferment au glissement. Le diagnostic des onze feuilles est dans l'archive.
-
-## Breakpoint et hook
-
-- Tailwind breakpoint mobile = `< md` (768 px). Le `sm` (640 px) sépare "petit mobile" et "grand mobile / phablette".
-- Hook React : `useIsMobile()` depuis `@/lib/hooks/use-mobile` — boolean réactif basé sur `window.innerWidth < 768`. À utiliser quand une logique JS doit diverger mobile/desktop (ex. vue par défaut d'un calendrier). Préférer Tailwind responsive classes (`md:hidden`, `md:flex`) quand c'est purement visuel.
-- Détection viewport en JS pur : `window.matchMedia('(min-width: 768px)')`.
-
-## Layout shell mobile
-
-- **`MobileTabBar`** (bottom tab bar, hauteur ~64 px) — visible sur mobile uniquement : `Accueil / Tâches / Agenda / Habitudes / Plus`.
-- **Padding-bottom obligatoire** sur les pages : `pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-8` (avec FAB) ou `+24px` (sans FAB). **Toutes les pages protégées doivent l'avoir** — sinon le dernier élément est caché derrière la tab bar.
-- **`min-h-[100dvh]`** (jamais `min-h-screen`/`100vh`) sur les wrappers de page — sinon Safari iOS rogne le contenu.
-- **FAB global** (`src/components/Layout.tsx`) : `fixed bottom-20 right-4 z-40 w-14 h-14 rounded-2xl`, unique bouton de création sur toutes les pages protégées. Il dispatch un `CustomEvent` différent selon la route : `open-task-create` sur `/tasks` (formulaire complet), `open-agenda-create` sur `/agenda` (modal d'ajout d'événement, écoutée par `AgendaPage` via `useEffect`), `open-quick-add` ailleurs (capture rapide). **Ne jamais** dupliquer un bouton "+" dans l'en-tête d'une page tant que le FAB peut couvrir le même besoin — cf. l'ancien bouton "+" de l'en-tête Agenda, retiré le 2026-07-23 au profit du FAB seul (évitait un doublon flottant au-dessus du calendrier).
-
-## Design system mobile (2026-07-22, étendu 2026-07-23)
-
-Le mobile n'avait aucun système : 10 tailles de texte arbitraires (`text-[8px]` → `text-[17px]`) en plus des 9 tailles Tailwind, 4 gouttières de page différentes, 9 rayons arbitraires, 176 boutons sous la cible tactile. Tout est désormais adossé à des **tokens**.
-
-**Les 8 pages mobiles sont migrées** : Tâches (page vitrine, 3 passes), Réglages, OKR, Statistiques, Premium, Habitudes, Dashboard, Agenda. Voir `git log --oneline -- 'src/pages/*' 'src/components/mobile'` pour l'historique. Le budget d'arbitraire et le plancher 11px (`design-system.guard.test.ts`) sont passés de 294/143 à 204/85 sur cette dernière vague.
-
-### Échelle typographique — FERMÉE à 6 crans
-
-Tokens dans `src/index.css` (`:root`), exposés en utilitaires Tailwind (`tailwind.config.js`).
+Tout est adossé à des TOKENS (`src/index.css` `:root`, utilitaires dans `tailwind.config.js`).
 
 | Utilitaire | Token | Taille | Usage |
 |---|---|---|---|
-| `text-display` | `--t-display` | 28 px | Titre de page (`MobileHeader`) |
-| `text-title` | `--t-title` | 22 px | Titre de section majeur |
-| `text-headline` | `--t-headline` | 17 px | Titre de carte, header compacté |
-| `text-body` | `--t-body` | 15 px | Texte courant, titre de ligne |
-| `text-label` | `--t-label` | 13 px | Labels, boutons, chips |
-| `text-caption` | `--t-caption` | 11 px | Meta, badges, labels de tab bar |
-
-> **Deux sous-arbres montent d'un pixel, et c'est la SEULE façon de le faire.** `.dashboard-mobile-text-boost`
-> (accueil) et `.task-title-boost` (titre d'une tâche dans la liste mobile) redéfinissent les
-> **tokens** `--t-*` sous 768 px, hors de tout `@layer` : les classes `.text-*` de Tailwind vivent
-> dans son layer `utilities`, qui gagnerait quelle que soit la spécificité. Redéfinir le token
-> plutôt que `font-size` laisse la règle suivre le cran appliqué par le composant sans avoir à le
-> connaître. ❌ Ni `text-[14px]` (le cliquet le refuse), ni un 7ᵉ cran dans l'échelle.
-> ⚠️ `.task-title-boost` couvre `--t-label` ET `--t-body` : `TaskCard` monte d'un cran quand la
-> tâche est EN RETARD, n'en décaler qu'un effacerait ce signal.
-
-> **11 px est le plancher absolu.** Le test `src/design-system.guard.test.ts` échoue si une taille sous 11 px apparaît, et plafonne le stock de `text-[Npx]` restants (budget qui ne doit que baisser).
-
-### Grille, rayons, cible tactile
+| `text-display` | `--t-display` | 28 px | titre de page (`MobileHeader`) |
+| `text-title` | `--t-title` | 22 px | titre de section majeur |
+| `text-headline` | `--t-headline` | 17 px | titre de carte, header compacté |
+| `text-body` | `--t-body` | 15 px | texte courant, titre de ligne |
+| `text-label` | `--t-label` | 13 px | labels, boutons, chips |
+| `text-caption` | `--t-caption` | 11 px | meta, badges, labels de tab bar |
 
 | Utilitaire | Token | Valeur |
 |---|---|---|
-| `p-gutter` / `gap-gutter` | `--gutter` | 16 px — gouttière unique de toutes les pages |
-| `gap-row` | `--gap-row` | 12 px — entre deux lignes de liste |
-| `gap-section` | `--gap-section` | 28 px — entre deux sections |
+| `p-gutter` / `gap-gutter` | `--gutter` | 16 px, gouttière unique |
+| `gap-row` / `gap-section` | `--gap-row` / `--gap-section` | 12 px / 28 px |
 | `rounded-row` / `rounded-card` / `rounded-sheet` | `--r-row` / `--r-card` / `--r-sheet` | 12 / 16 / 20 px |
 | `min-h-touch` / `min-w-touch` | `--touch-min` | 44 px (WCAG 2.5.5) |
 
-### ⚠️ tailwind-merge doit connaître ces tailles
+- ❌ `text-[Npx]` sur du mobile ; ❌ un 7ᵉ cran. L'échelle est FERMÉE à 6 crans ; 11 px est le plancher absolu et `design-system.guard.test.ts` plafonne le stock de `text-[Npx]` (budget qui ne fait que baisser).
+- ✅ Deux sous-arbres montent d'un pixel : `.dashboard-mobile-text-boost` (accueil) et `.task-title-boost` (titre de tâche mobile) redéfinissent les TOKENS `--t-*` sous 768 px, hors de tout `@layer` (les `.text-*` Tailwind vivent dans `utilities` et gagneraient). ⚠️ `.task-title-boost` couvre `--t-label` ET `--t-body` : `TaskCard` monte d'un cran quand la tâche est EN RETARD, n'en décaler qu'un effacerait ce signal.
+- 🔴 `cn()` (`src/lib/utils.ts`) déclare les six tailles dans le groupe `font-size` par `extendTailwindMerge` : sans cela tailwind-merge les prend pour des couleurs et les SUPPRIME silencieusement si une couleur suit. ❌ Ajouter une taille custom à `tailwind.config.js` sans l'ajouter aussi là.
+- ✅ Champs de saisie : `src/index.css` impose `font-size: 16px` sous 768 px (en dessous, iOS zoome au focus). ❌ `text-xs` sur un input mobile.
+- ✅ Listes bord à bord : `.card-plain-mobile` neutralise le chrome de `.card` sous 768 px (la carte ajouterait une 2ᵉ gouttière, ~24 px par ligne) ; utilisé par `TasksPage`, `OKRCard`, les widgets Dashboard. ❌ Enfermer une liste mobile dans une `.card`.
+- ❌ Réintroduire dans `MobileCollapsible` (`src/components/MobileCollapsible.tsx`, Dashboard) le hack `[&>div]:rounded-t-none [&>div]:border-t-0` : corriger le widget lui-même. `.mobile-collapsible-body` reste nécessaire (masque le titre dupliqué du widget).
+- ✅ Exceptions documentées, à ne pas « corriger » : `HabitHeatmap` (labels 8-9 px dans des cellules de 13-20 px, une grille de 26 semaines doit tenir à 393 px) ; toggle iOS de `SettingsPage` (`w-[51px] h-[31px]`, seule occurrence, pas de `Toggle` partagé) ; rayons de `DashboardBarChart.tsx` (`rounded-[2px]`, `rounded-t-[3px]`, derrière `SHOW_REPARTITION_CHART=false`).
+- ⚠️ `mobileCalendarStyles` (`src/pages/agenda/MobileAgenda.tsx`, bloc `<style>` brut qui surcharge `.fc-*`) échappe au garde-fou (pas la syntaxe `text-[Npx]`) : toute valeur de taille s'y aligne à la main sur l'échelle (`.fc-timegrid-slot-label` à 11 px).
 
-`cn()` (`src/lib/utils.ts`) utilise `extendTailwindMerge` pour déclarer `text-display/title/headline/body/label/caption` dans le groupe `font-size`. **Sans cette config**, tailwind-merge les prend pour des couleurs de texte et les **supprime silencieusement** dès qu'une couleur suit dans le même `cn()` — symptôme constaté : les libellés de `MobileTabBar` retombés à 16 px, sans erreur. Toute nouvelle taille custom doit être ajoutée à cette liste.
-
-### Primitives — `src/components/mobile/`
+### Primitives (`src/components/mobile/`)
 
 | Primitive | Rôle |
 |---|---|
-| `MobileHeader` | Grand titre qui se compacte au scroll (motif « large title » iOS) + slot actions |
-| `SectionHeader` | Titre de section discret + compte + action |
-| `Segmented` | Contrôle segmenté (pastille active animée via `layoutId`) |
-| `TouchTarget` | Bouton-icône dont la zone tactile fait réellement 44×44 px |
-| `BottomSheet` | Feuille bas-d'écran mobile / dialogue centré desktop (`sm:`), drag-to-dismiss, extrait de la modale de choix Premium — réutilisée telle quelle par toute nouvelle feuille modale à 2 choix ou plus |
+| `MobileHeader` | grand titre qui se compacte au scroll (« large title » iOS) + slot actions |
+| `SectionHeader` | titre de section discret + compte + action |
+| `Segmented` | contrôle segmenté (pastille active animée via `layoutId`) |
+| `TouchTarget` | bouton-icône dont la zone tactile fait réellement 44×44 px |
+| `BottomSheet` | feuille bas-d'écran mobile / dialogue centré desktop (`sm:`), drag-to-dismiss ; réutilisée par toute nouvelle feuille à 2 choix ou plus |
+| `mobile-motion.ts` | courbes partagées (`SHEET_SPRING`…), `haptic()`, `prefersReducedMotion()`, `useSheetMotion()`, `useSheetDrag()` |
 
-> 🗑️ **`MobileScreen` et `ListRow` ont été supprimés le 2026-09-05** (C-10) : six semaines
-> d'existence, zéro écran les montant. Ils sont restés dans cette table tout ce temps, et une
-> table qui liste une primitive que rien n'utilise décrit une architecture qui n'existe pas.
->
-> ❌ **Ne pas les recréer d'après cette note.** Si le besoin revient, ils se réécrivent CONTRE un
-> écran réel : c'est la seule façon de savoir ce qu'ils doivent porter, et c'est précisément ce
-> qui manquait à `MobileHeader` — utilisé par une page, et cassé pendant un mois sans que
-> personne le voie.
-| `mobile-motion.ts` | Courbes partagées (`SHEET_SPRING`…) + `haptic()` + `prefersReducedMotion()` |
+- ✅ Composer ces briques plutôt que redessiner un en-tête, une ligne ou un contrôle segmenté.
+- ⚠️ Le hook `useBottomSheet` (`src/hooks/use-bottom-sheet.ts`, drag-to-dismiss) précède la primitive et sert encore quelques feuilles maison : ❌ fusionner les deux implémentations sans passage dédié.
 
-Composer ces briques plutôt que redessiner. Tests : `src/components/mobile/mobile-primitives.test.tsx`.
+## Chips de filtre : pattern Spotify
 
-> **Le pattern bottom-sheet existe aussi hors de `BottomSheet`** : le hook `useBottomSheet` (`src/hooks/use-bottom-sheet.ts`), avec drag-to-dismiss, est antérieur à la primitive partagée et sert encore quelques feuilles maison. Son premier porteur, `AdModal.tsx`, a été supprimé le 2026-09-04 avec le mur-pub (C-04). Ne pas fusionner les deux implémentations sans un passage dédié.
-
-### Champs de saisie — 16 px obligatoire
-
-`src/index.css` impose `font-size: 16px` à tous les champs texte sous 768 px. En dessous de 16 px, **iOS Safari zoome automatiquement** au focus et la page reste décalée. Ne pas rétablir un `text-xs` sur un input mobile.
-
-### Listes bord à bord — `.card-plain-mobile`
-
-Une liste mobile ne vit pas dans une carte : la carte ajoute une 2ᵉ gouttière et vole ~24 px de largeur utile par ligne. `.card-plain-mobile` (dans `src/index.css`) neutralise le chrome de `.card` sous 768 px ; au-delà, `.card` reprend à l'identique. Utilisé par `TasksPage`, `OKRCard`, et les 4 widgets Dashboard (`TodayTasks`, `TodayHabits`, `CollaborativeTasks`, `ActiveOKRs` + `DashboardCardSkeleton`).
-
-**Piège `MobileCollapsible`** (`src/components/MobileCollapsible.tsx`, Dashboard uniquement) : le composant enveloppait chaque widget déplié dans un hack `[&>div]:rounded-t-none [&>div]:border-t-0` pour masquer la couture entre son en-tête (bg/bordure pleins) et la carte `.card` de l'enfant. Depuis que les 4 widgets utilisent `.card-plain-mobile` (transparents sous 768 px), il n'y a plus de couture à masquer — le hack a été retiré. **Ne pas le réintroduire** si un futur widget wrappé garde encore un fond/bordure plein sur mobile ; corriger plutôt le widget lui-même. La classe `.mobile-collapsible-body` reste nécessaire (elle masque le titre dupliqué du widget via `src/index.css`), seul le child-selector de couture a disparu.
-
-### Chips de filtre — pattern Spotify (2026-09-06)
-
-Toute pilule de **filtre/sélection** (liste rapide, filtre rapide, catégorie) suit le pattern
-Spotify — comparé côte à côte à l'ancien style Cosmo par Axel, tranché en sa faveur : `rounded-full`,
-**jamais de bordure**, fond PLEIN dans les deux états (au repos ET actif), jamais de fond
-transparent + contour coloré.
+Toute pilule de filtre ou de sélection (liste rapide, filtre rapide, catégorie) : `rounded-full`, JAMAIS de bordure, fond PLEIN dans les deux états.
 
 ```
 Repos  : bg-[rgb(var(--color-chip-bg))]      text-[rgb(var(--color-text-secondary))]
 Actif  : bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]
          (ou la couleur de la catégorie elle-même, cf. CategoryFilterBar)
-Hover  : bg-[rgb(var(--color-hover))] (repos uniquement — l'état actif ne change pas au survol)
+Hover  : bg-[rgb(var(--color-hover))] (repos uniquement)
 ```
 
-- **Seule exception** : une chip qui représente une catégorie ou une liste garde sa **pastille de
-  couleur** avant le nom (`<span className="rounded-full" style={{backgroundColor}}/>`, ~8-10px) —
-  c'est une information (quelle couleur est associée à cet élément), pas un contour décoratif.
-- ❌ **Ne jamais coder un état inactif en `border-[rgb(var(--color-border))]` + fond transparent** :
-  c'est exactement l'ancien pattern Cosmo, remplacé par cette note. Un fond transparent avec un
-  simple contour est plus fragile en accessibilité (contraste dépendant du fond de page) et
-  moins dense visuellement qu'un fond plein.
-- ❌ **Ne jamais garder de bordure sur l'état ACTIF non plus** — y compris les couleurs
-  sémantiques ad hoc (ex. l'ancien traitement vert bordé de la chip « Aujourd'hui » dans
-  `TaskListsBar`, retiré : elle suit désormais le même plein neutre que les autres chips).
-- ✅ **Ne s'applique PAS** aux contrôles segmentés (un seul conteneur bordé, boutons internes sans
-  bordure propre — `TaskQuickFilters` « Tout/Perso/Entreprise », le sélecteur de vue
-  d'`HabitsPage`) : c'est un pattern différent (choix exclusif dans un rail unique), pas une
-  rangée de pilules indépendantes.
-- ✅ **Ne s'applique PAS** à un bouton d'action « ajouter » à bordure pointillée (`+ Nouvelle
-  liste`, `+ Nouvelle catégorie`) : ce n'est pas un filtre, c'est une action, le pointillé signale
-  justement « ceci n'est pas encore un élément réel ».
-- Composants migrés au 2026-09-06 : `TaskQuickFilters`, `TaskListsBar` (chip « Tout », « Aujourd'hui »,
-  chips de liste), `CategoryFilterBar` (OKR perso + équipe, partagé), `OKRCategoryPicker`,
-  `TeamCategoryPicker`. Tout nouveau filtre/chip de sélection réutilise ce pattern — ne pas
-  repartir d'une bordure.
+- ✅ Une chip de catégorie ou de liste garde sa pastille de couleur (~8-10 px) avant le nom : c'est une information.
+- ❌ État inactif en `border-[rgb(var(--color-border))]` + fond transparent (contraste dépendant du fond de page). ❌ Bordure sur l'état ACTIF, y compris une couleur sémantique ad hoc (chip « Aujourd'hui » de `TaskListsBar`).
+- ✅ Ne s'applique PAS aux contrôles segmentés (un conteneur bordé, boutons sans bordure : `TaskQuickFilters` « Tout/Perso/Entreprise », sélecteur de vue d'`HabitsPage`), ni à un bouton d'action « ajouter » à bordure pointillée (`+ Nouvelle liste`).
+- ✅ Migrés : `TaskQuickFilters`, `TaskListsBar`, `CategoryFilterBar` (OKR perso et équipe), `OKRCategoryPicker`, `TeamCategoryPicker`. Tout nouveau filtre réutilise ce pattern.
 
-### Exceptions documentées (densité / mimique volontaire — ne pas "corriger")
+## FullCalendar au doigt
 
-- **`HabitHeatmap`** (`src/pages/statistics/HabitHeatmap.tsx`) : labels de jour/mois à 8-9px dans des cellules de calendrier de 13-20px. Forcer 11px ferait déborder une grille de 26 semaines × 7 jours sur un écran de 393px. Densité de données assumée, pas une dette.
-- **Toggle iOS** (`src/pages/SettingsPage.tsx`, rappel habitudes du soir) : `w-[51px] h-[31px]` mimant les proportions natives iOS. Seule occurrence dans l'app (pas de `Toggle` partagé créé pour un seul appelant).
-- **Rayons de graphique** (`DashboardBarChart.tsx` barres/légende `rounded-[2px]`/`rounded-t-[3px]`, dormant derrière `SHOW_REPARTITION_CHART=false`) : accents décoratifs sub-pixel sur des barres fines, hors de l'échelle `rounded-row/card/sheet` qui vise les cartes/lignes, pas les micro-détails de chart.
+- 🔴 Les deux calendriers posent `selectLongPressDelay={250}` : au toucher, `select` n'est émis qu'après 250 ms d'appui MAINTENU ; le tap court ne produit rien. Un tap se branche sur `dateClick` (part au doigt et à la souris). À la souris les deux rappels partent sur le même clic : la bascule Mois → Jour a besoin d'un miroir SYNCHRONE du mode de vue (une ref, pas l'état React). Câblage : `src/pages/agenda/useAgendaMobileView.ts`, témoin à côté.
+- ❌ Valider un geste tactile à la souris ou dans une fenêtre étroite : événements `Touch`.
+- ❌ Animer cette bascule par une `key` sur le conteneur (remonte `<FullCalendar>`, alors que la bascule s'appuie sur `api.changeView` pour ne PAS démonter) : `useAnimationControls`, aucune clé de transform sous `prefers-reduced-motion`.
 
-### Thèmes
+## Modals : bottom-sheet
 
-3 thèmes : `light`, `dark`, `black` (graphite + accent bleu). Résolution et application centralisées dans **`src/lib/theme.ts`** (`resolveInitialTheme` / `applyTheme`), consommées par `src/main.tsx` (avant le premier paint) ET `src/hooks/useDarkMode.ts`. **Sur mobile, un visiteur sans choix explicite démarre en `black`** ; un choix utilisateur reste toujours prioritaire. Les anciennes valeurs `midnight` / `monochrome` sont migrées vers `black`. Tests : `src/lib/theme.test.ts`.
-
-### CSS injecté non-Tailwind — FullCalendar mobile
-
-`src/pages/agenda/MobileAgenda.tsx` exporte `mobileCalendarStyles`, un bloc `<style>` brut injecté pour surcharger le CSS interne de FullCalendar (les classes `.fc-*` ne sont pas atteignables en Tailwind). Le garde-fou `design-system.guard.test.ts` ne voit **pas** ces occurrences (ce n'est pas la syntaxe `text-[Npx]`) — `font-size: 11px !important` sur `.fc-timegrid-slot-label` a été corrigé manuellement (était 10px). Si une autre valeur y est ajoutée, l'aligner à la main sur l'échelle mobile ; le garde-fou ne le fera pas pour vous.
-
-### FullCalendar · au doigt, `select` n'existe pas au tap court (2026-09-19)
-
-Les deux calendriers posent `selectLongPressDelay={250}`. Sur une surface tactile, cela veut dire
-qu'un `select` **n'est émis qu'après 250 ms d'appui MAINTENU** : le tap court, le seul geste qu'on
-fait sur une case de mois, ne produit aucun `select`. Une bascule Mois → Jour branchée sur `select`
-ne s'est donc jamais déclenchée sur un vrai téléphone, alors qu'à la souris `select` part au clic
-et que tout paraissait fonctionner.
-
-C'est un défaut **invisible en largeur mobile tant que l'émulation tactile n'est pas active** : il
-a survécu à trois tentatives de correction, chacune validée à la souris. Un geste tactile se
-vérifie avec des événements `Touch`, pas avec une fenêtre étroite.
-
-Un tap se branche sur **`dateClick`**, qui part au doigt comme à la souris. À la souris les deux
-rappels partent sur le même clic : la bascule a donc besoin d'un miroir **synchrone** du mode de
-vue (une ref, pas l'état React, encore périmé dans le second appel) pour ne pas s'exécuter deux
-fois. Câblage : `src/pages/agenda/useAgendaMobileView.ts`, témoin à côté.
-
-⚠️ Animer cette bascule ne doit **pas** passer par une `key` sur le conteneur : elle remonterait
-`<FullCalendar>`, alors que la bascule s'appuie justement sur `api.changeView` pour ne PAS
-démonter (la course qui laissait la vue Jour s'ouvrir sur le mauvais jour). Contrôles impératifs
-(`useAnimationControls`), et aucune clé de transform sous `prefers-reduced-motion`.
-
-### Tutoriels et rendus mobile/desktop séparés
-
-Quand une page rend deux en-têtes (`md:hidden` + `hidden md:flex`), un même `data-tutorial-id` existe deux fois. `findTarget` (`src/components/tutorial/page-tutorial-helpers.ts`) renvoie le premier élément **visible** (rect non nul), pas le premier du DOM — sinon le spotlight vise la version masquée.
-
-## Modals — pattern bottom-sheet
-
-Tous les modals tâche (TaskModal, AddTaskForm, AddToListModal, EventModal, ColorSettingsModal, confirms de suppression) suivent ce pattern :
+Tous les modals tâche (`TaskModal`, `AddTaskForm`, `AddToListModal`, `EventModal`, `ColorSettingsModal`, confirms de suppression) suivent ce squelette :
 
 ```tsx
 <motion.div
@@ -206,173 +108,59 @@ Tous les modals tâche (TaskModal, AddTaskForm, AddToListModal, EventModal, Colo
 </motion.div>
 ```
 
-Règles non négociables :
-- ✅ ESC pour fermer + clic backdrop + verrouillage `body.overflow` quand ouvert
-- ✅ Drag handle visuel sur mobile
-- ✅ Sticky header + sticky footer ; le body scrolle seul
-- ✅ Boutons footer empilés sur mobile (`flex-col-reverse`), inline sur desktop
-- ✅ Touch targets ≥ 44×44 px (`min-w-11 min-h-11` ou icônes ≥ 22 px dans wrapper 11)
-- ✅ `env(safe-area-inset-bottom)` partout
-- ❌ Pas de modal centré avec marge sur mobile — toujours bottom-sheet
+- ✅ Échap + clic backdrop + verrouillage `body.overflow` ; header et footer sticky, le body scrolle seul ; boutons du footer empilés sur mobile (`flex-col-reverse`), inline sur desktop ; touch targets ≥ 44×44 ; `env(safe-area-inset-bottom)` partout. Piège de focus et Échap : `useModalA11y` ([`src/components/CLAUDE.md`](../src/components/CLAUDE.md)).
+- ❌ Un modal centré avec marge sur mobile : toujours bottom-sheet.
+- ✅ `TaskModal` et `AddTaskForm` sont plein écran sur mobile (override des classes shadcn `Dialog` : `top-0 left-0 translate-x-0 translate-y-0 max-w-none w-full h-[100dvh] sm:rounded-2xl sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-2xl`).
+- ✅ `src/components/task-modal/` : `TaskModalMobileBody.tsx` est entièrement piloté par props (`MobileBodyProps`), avec `primitives.tsx` (`Cell`, `SectionCard`…) et `constants.ts` (`PRIORITY_OPTIONS`, `priorityColor`). ❌ Les refusionner.
+- ✅ Audit §3 (cité dans le code sous « docs/MOBILE.md §3 ») : une poignée de glissement qui ne fait rien n'a pas sa place sur un formulaire, elle y est retirée ; le geste se garde pour les feuilles qui se ferment au glissement.
 
-`TaskModal` et `AddTaskForm` sont **full-screen** sur mobile (override des classes shadcn Dialog avec `top-0 left-0 translate-x-0 translate-y-0 max-w-none w-full h-[100dvh] sm:rounded-2xl sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-2xl`). Utiliser `100dvh` plutôt que `100vh`.
+## `TaskCard` mobile (`src/components/TaskTable.tsx`)
 
-> **Structure TaskModal** (refactor 2026-06-06) : le corps mobile full-screen est extrait dans `src/components/task-modal/` (`TaskModalMobileBody.tsx` + `primitives.tsx` pour `Cell`/`SectionCard`/… + `constants.ts` pour `PRIORITY_OPTIONS`/`priorityColor`). `TaskModalMobileBody` est **entièrement piloté par props** (`MobileBodyProps`) — il ne lit aucun état du parent par closure. Ne pas refusionner ces fichiers.
+- ✅ Barre verticale colorée à gauche (`w-1`, `self-stretch` : rouge pour retard, jaune pour favori, sinon couleur de catégorie) ; case de complétion inline avec le titre ; titre tronqué + ligne meta `date · temps` ; badge `P{priorité}` à droite. ❌ `TaskCategoryIndicator` ou icônes inline.
+- ✅ Les icônes d'action sont cachées ; révélées par appui long (500 ms, `navigator.vibrate(15)`) ou glissement à gauche > 80 px (`drag="x"`). Glissement à droite > 80 px : bascule `completed`. Le bouton « Actions pour … » n'existe pas sur téléphone (`div.hidden md:block`) : chemin sans geste de pointeur = `contextmenu` / `Shift+F10`.
+- ❌ Une action (validation, suppression) accessible QUE par glissement : toujours un repli visible.
+- ✅ `<TaskCard>` est enveloppé dans `md:hidden`, la `<table>` desktop dans `hidden md:block`. ❌ Modifier l'un sans vérifier l'autre.
+- ❌ Un `Reorder.Group` / `drag` Framer Motion sur une barre `overflow-x-auto` mobile sans `drag={isEditing || isMobile ? false : 'x'}` (le drag horizontal capture le swipe de scroll ; vaut pour la barre de chips des listes).
 
-## TaskCard mobile (`src/components/TaskTable.tsx → TaskCard`)
+## `TaskFilter` mobile et recherche (`MobileTaskSearch`)
 
-Layout style "agenda" :
-- Barre verticale colorée à gauche (`w-1` rounded, `self-stretch`) — rouge pour retard, jaune pour favori, sinon couleur de catégorie
-- Checkbox de complétion **inline avec le titre**
-- Titre tronqué + ligne meta `date · temps` en dessous
-- Badge `P{priorité}` à droite
-- **Pas de TaskCategoryIndicator** (carré coloré supprimé sur mobile)
-- **Toutes les icônes d'action cachées par défaut** (Bookmark, UserPlus, Calendar, MoreHorizontal, Trash2). Révélation via :
-  1. **Long press** (500 ms) — `navigator.vibrate(15)` si dispo
-  2. **Swipe à gauche** > 80 px (Framer Motion `drag="x"`) → `setActionsVisible(true)`
-- **Swipe à droite** > 80 px → bascule `completed` (haptique + handle dans `onDragEnd`)
-- Le `<TaskCard>` est wrappé dans `md:hidden` ; la `<table>` desktop dans `hidden md:block`
+La recherche et le lien « + d'options » ne sont plus dans la rangée haute de `TaskFilter` sur mobile (hors de portée du pouce) ; modèle repris : Notes (iOS). Cette rangée est `hidden md:flex`.
 
-## TaskFilter mobile (`src/components/TaskFilter.tsx`)
+- ✅ `MobileTaskSearch` (`src/pages/tasks/MobileTaskSearch.tsx`, `md:hidden`) : barre `fixed` à `calc(4rem + safe-area + 0.5rem)`, qui ne défile jamais, avec le tri : `[🔍 Rechercher] [⇅ Priorité]` (la pilule AFFICHE le critère courant ; un appui ouvre une `BottomSheet` avec cinq critères et le sens). ⚠️ Ni critère ni sens ne referment la feuille (choix en deux temps ; changer de critère remet le sens en croissant, `handleFilterChange`). Au tap, un écran de recherche plein et OPAQUE remplace la page ; champ vide → « Filtres suggérés » (Favoris, Fait, Retard, Collaboration, Sélectionner : les pastilles de `TaskQuickFilters`) ET les LISTES (« Aujourd'hui », chaque liste avec sa pastille). Une ligne applique ET referme ; un second appui sur la liste active la retire. Sortie : croix ronde, repli du clavier, Échap.
+- ✅ UI : titre HORS de la carte, casse normale, `text-title` gras ; séparateurs en retrait (à l'aplomb du libellé, arrêtés à 16 px du bord droit, aucun sous la dernière ligne) ; champ en pilule pleine ; carte en haut, champ en bas. La carte défile (`overflow-y-auto` + `min-h-0`).
+- ❌ Compter sur `focus:ring-*` ou `border-0` pour désarmer l'anneau d'un champ : `index.css` impose à tout `input` bordure 1 px et, au focus, bordure + halo d'accent en `!important`. Échappatoire : `no-input-chrome`, qui force aussi `border-radius: 0` : un champ arrondi est TRANSPARENT dans un conteneur qui porte la forme et le fond.
+- ✅ La carte « Tâches en cours » (légende des catégories) est masquée sous 768 px et son engrenage est repris dans l'en-tête mobile, à côté de la boîte de réception (libellé `common → colorLegend.edit`, jamais recopié). 🔴 Déplacer une surface, c'est déplacer ses COMMANDES.
+- 🔴 Pendant la recherche, tout ce qui est AU-DESSUS de la première tâche s'efface (en-tête et compteurs, barre des listes, tri, pilules de filtre actif, `SwipeHintBanner`). État : `pages/tasks/search-open.store.ts` (`TaskTable` ne peut pas recevoir une prop de plus sans dépasser 600 lignes). ⚠️ La classe de retour rend à chaque bloc son affichage naturel (`md:flex` pour une rangée `flex`, `md:block` sinon) : l'état d'ouverture survit à un élargissement de fenêtre.
+- ⚠️ Dès la première frappe le fond s'efface (`pointer-events-none`, seule la rangée du champ reste cliquable).
+- ⚠️ `z-50`, le cran publié des modales : `DemoBridgePrompt` (`z-[190]`) flotte par-dessus TOUTES les modales, c'est sa propriété. ❌ `z-[195]` (refusé par `design-system.guard` : l'échelle est fermée).
+- 🔴 Taper la barre doit LEVER le clavier : sur iOS `focus()` doit être appelé PENDANT la tâche du geste ; `useModalA11y` focalise dans un `useEffect` (après la peinture). Donc `flushSync(() => setOpen(true))` PUIS `inputRef.current.focus()` dans le gestionnaire de clic ; `useModalA11y` s'abstient quand le focus est déjà dans la surface.
+- 🔴 Replier le clavier referme la recherche : le signal est la PERTE de focus (`onBlur`). ❌ Un `blur` nu rend les suggestions intouchables (le champ se défocalise AVANT le `click`) : un garde posé au `pointerdown` du panneau neutralise le blur. ❌ Lever ce garde (`pointerInPanel`) sur le panneau lui-même (taper une suggestion le démonte, `onPointerUp` n'arrive jamais) : il se lève sur `window` et se remet à zéro à chaque ouverture.
+- 🔴 `visualViewport` ne sert QU'À PLACER le champ, jamais à juger « clavier ouvert » : `innerHeight - visualViewport.height` ne vaut pas 0 au repos (barre d'outils de Safari, ~60 à 100 px). Ligne de base RELATIVE mesurée à l'ouverture (`measureKeyboardInset()`, lecture synchrone), clavier ouvert au-delà de `ligne de base + 80 px`. Clavier ouvert, le champ se pose DESSUS sans gouttière.
+- ❌ Laisser la barre fermée montée pendant l'overlay (deux champs empilés dont un inerte).
+- ❌ Dupliquer l'état du filtre rapide : `quick-filter.store.ts` (`useSyncExternalStore`), lu ET écrit par les deux surfaces (un évènement `window` ne va que dans un sens).
+- 🔴 La pilule du filtre actif dans la barre est le SEUL moyen de l'enlever sur mobile (la rangée de pastilles est `hidden md:flex`).
+- ⚠️ Trois surfaces se disputent le bas de l'écran : barre de recherche (`safe + 72px`), barre d'actions groupées (`safe + 84px`), FAB de `Layout` (`bottom-[8.5rem]` sur `/tasks` seulement). La recherche s'efface en mode sélection (`select-mode.store.ts`). Toute 4ᵉ surface ancrée se place dans cette liste. Réserve de défilement de `/tasks` : `+144px`.
+- ⚠️ `#search-tasks-main` (raccourci « / ») reste le champ desktop.
+- ✅ Bouton « Filtres » caché sur mobile (`hidden sm:inline-flex`) ; label de tri compacté (`hidden sm:inline` « Trier par : » / `sm:hidden` « Tri : »).
 
-🔴 **Depuis le 2026-09-20, la recherche n'est plus dans cette rangée sur mobile**, et le lien
-`+ d'options` **n'existe plus** (il toggait `showQuickFilters`). Les deux étaient en HAUT de page,
-hors de portée du pouce, et poussaient la liste vers le bas. Modèle repris : Notes (iOS).
+## `DeadlineCalendar` mobile
 
-- **`MobileTaskSearch`** (`src/pages/tasks/MobileTaskSearch.tsx`, `md:hidden`) : barre de recherche
-  `fixed` à `calc(4rem + safe-area + 0.5rem)`, **elle ne défile jamais**. Au tap, un écran de
-  recherche **plein et opaque** (`z-[195]`, fond de l'app) remplace la page ; **champ vide →
-  « Filtres suggérés »** (Favoris, Fait, Retard, Collaboration, Sélectionner), qui sont les
-  pastilles de `TaskQuickFilters` et rien d'autre. Une suggestion applique **et referme**. Sortie
-  par la **croix ronde**, par le repli du clavier ou par Échap.
-- 🔴 **L'UI a été refaite le 2026-09-21 en comparant les captures au modèle**, écart par écart, après
-  deux passes de consignes verbales qui n'avaient pas suffi. Ce qui doit rester : titre **hors** de
-  la carte, casse normale, `text-title` gras ; séparateurs **en retrait** (ils commencent à
-  l'aplomb du libellé, s'arrêtent à 16 px du bord droit, aucun sous la dernière ligne) ; champ en
-  **pilule pleine** ; carte **en haut**, champ **en bas**, le vide entre les deux.
-- ❌ **Ne jamais compter sur `focus:ring-*` ou `border-0` pour désarmer l'anneau bleu d'un champ.**
-  `index.css` impose à **tout** `input` une bordure 1px et, au focus, une bordure + un halo à la
-  couleur d'accent, en `!important`. L'échappatoire est la classe **`no-input-chrome`**, mais elle
-  force aussi `border-radius: 0` : un champ arrondi doit donc être **transparent à l'intérieur d'un
-  conteneur** qui porte la forme et le fond.
-- **Les LISTES suivent les cinq filtres dans la même carte** (2026-09-22) : « Aujourd'hui » avec son
-  icône, puis chaque liste avec sa pastille de couleur, celle des chips. Sans elles, choisir une
-  liste pendant une recherche obligeait à fermer l'écran d'abord, puisque la barre de chips
-  s'efface. Même geste que les filtres : la ligne applique **et referme**, et un second appui sur la
-  liste active la retire. ⚠️ La carte doit pouvoir **défiler** (`overflow-y-auto` + `min-h-0`) :
-  mesuré à 375x460, elle se réduit et défile au lieu de pousser le champ hors de l'écran.
-- **La barre ancrée porte AUSSI le tri** (2026-09-22) : `[🔍 Rechercher] [⇅ Priorité]`. Le
-  `<select>` de `TaskFilter` était le dernier rescapé d'une rangée dont la recherche et
-  « + d'options » étaient déjà partis ; cette rangée est donc `hidden md:flex`, elle n'a plus rien à
-  montrer sous 768 px. La pilule **affiche le critère courant** : une icône seule aurait retiré
-  l'information en même temps que la commande. Un appui ouvre une `BottomSheet` avec les cinq
-  critères et le sens.
-  ⚠️ **Ni le critère ni le sens ne referment la feuille**, contrairement aux suggestions de
-  recherche : trier est un choix en deux temps, et changer de critère remet le sens en croissant
-  (`handleFilterChange`). Refermer au premier appui obligerait à rouvrir pour la moitié du réglage.
-- **La carte « Tâches en cours » (légende des catégories) est masquée sous 768 px**, et son
-  engrenage est repris dans l'en-tête mobile, à côté de la boîte de réception. 🔴 Déplacer une
-  surface, c'est déplacer ses COMMANDES : masquée sans ce report, la seule porte vers les réglages
-  de couleurs des catégories disparaissait avec elle. Le libellé reste `common → colorLegend.edit`,
-  jamais recopié.
-- 🔴 **Pendant la recherche, tout ce qui vit AU-DESSUS de la première tâche s'efface** : en-tête de
-  page et compteurs, barre des listes, rangée de tri, pilules de filtre actif, et l'astuce de
-  balayage (`SwipeHintBanner`). Mesuré : la liste commence à **44 px** du haut au lieu de 267, soit
-  trois tâches de plus entre le haut de l'écran et le champ. L'état vit dans
-  `pages/tasks/search-open.store.ts` : `SwipeHintBanner` est deux niveaux plus bas, dans
-  `TaskTable`, qui ne peut pas recevoir une prop de plus sans dépasser son plafond de 600 lignes.
-  ⚠️ La classe de retour doit rendre à chaque bloc son affichage **naturel** (`md:flex` pour une
-  rangée `flex`, `md:block` sinon) : l'écran est `md:hidden`, mais l'état d'ouverture, lui, survit à
-  un élargissement de fenêtre.
-- ⚠️ **Dès la première frappe, le fond s'efface** (`pointer-events-none`, seule la rangée du champ
-  reste cliquable) : le modèle remplit cet espace avec ses résultats, COSMO ne le peut pas sans
-  remonter toute sa liste dans l'overlay. Chercher derrière un fond opaque revenait à chercher à
-  l'aveugle. Décision du 2026-09-21.
-- ⚠️ **`z-50`, le cran publié des modales**, et pas une valeur choisie pour l'occasion. En mode
-  démo, `DemoBridgePrompt` (`z-[190]`) flotte par-dessus : il flotte par-dessus **toutes** les
-  modales de l'app, c'est une propriété de ce composant. `z-[195]` a été écrit puis retiré le
-  2026-09-21, refusé par `design-system.guard` — l'échelle est fermée, et c'est ce qui l'empêche de
-  redevenir seize valeurs pour sept paliers.
-- 🔴 **Taper la barre doit LEVER le clavier, et un `focus()` dans un effet ne le fait pas.** Sur
-  iOS, le clavier ne s'ouvre que si `focus()` est appelé **pendant la tâche du geste**.
-  `useModalA11y` pose le focus dans un `useEffect`, donc après la peinture : le champ était
-  focalisé, curseur visible, clavier fermé, et il fallait un second appui pour écrire.
-  L'ouverture passe donc par `flushSync(() => setOpen(true))` **puis** `inputRef.current.focus()`,
-  dans le gestionnaire de clic. `useModalA11y` ne le déplace pas ensuite : il s'abstient quand le
-  focus est déjà dans la surface.
-- 🔴 **Replier le clavier referme la recherche**, comme dans Notes. Le signal est le champ qui
-  **perd le focus** (`onBlur`) : la touche « OK » de la barre d'accessoires iOS comme le repli du
-  clavier le déclenchent. ❌ **Un `blur` nu rendrait les suggestions intouchables** — sur un appui,
-  le champ se défocalise AVANT que le `click` n'atteigne la ligne : un garde posé au `pointerdown`
-  du panneau neutralise le blur pendant un appui.
-- 🔴 **`visualViewport` ne sert QU'À PLACER le champ, jamais à juger « clavier ouvert ».** Première
-  version livrée, puis retirée le 2026-09-21 : elle comparait `innerHeight - visualViewport.height`
-  à des constantes (`> 60` = clavier). **Cette mesure ne vaut pas 0 au repos** — la barre d'outils
-  de Safari en prend déjà ~60 à 100 px. Verte sur l'émulateur, qui repose à 0 ; sur un téléphone,
-  le champ flottait à l'ouverture et replier le clavier ne refermait plus rien. Ce qui reste est
-  **relatif** : une ligne de base mesurée à l'ouverture (`measureKeyboardInset()`, lecture
-  **synchrone** — l'état du hook vaut encore 0 à cet instant), et le clavier est tenu pour ouvert
-  au-delà de `ligne de base + 80 px`.
-- ⚠️ **Clavier ouvert, le champ se pose DESSUS sans gouttière** : la zone sûre est déjà couverte par
-  le clavier, l'additionner creusait une bande vide entre les deux.
-- ❌ **Ne pas laisser la barre fermée montée pendant l'overlay.** Elle réapparaît dès la première
-  frappe, quand la carte de suggestions qui la masquait disparaît, et on lit deux champs de
-  recherche empilés, dont un inerte.
-- ❌ **Ne jamais lever le garde de pointeur (`pointerInPanel`) sur le panneau lui-même.** Taper une
-  suggestion le DÉMONTE depuis le gestionnaire de clic : son `onPointerUp` n'arrive jamais, le
-  garde reste levé, et le repli du clavier ne referme plus rien pour le reste de la session. Il se
-  lève sur `window`, et se remet à zéro à chaque ouverture.
-- ❌ **Ne jamais dupliquer l'état du filtre rapide.** Il vit dans `quick-filter.store.ts`
-  (`useSyncExternalStore`), lu ET écrit par les deux surfaces. Un évènement `window` ne suffisait
-  pas : il ne va que dans un sens, la barre serait aveugle au filtre courant.
-- 🔴 **La pilule du filtre actif dans la barre est le SEUL moyen de l'enlever sur mobile** : la
-  rangée de pastilles y est masquée (`hidden md:flex`). La retirer enfermerait dans une liste
-  filtrée.
-- ⚠️ **Trois surfaces se disputent le bas de l'écran** : la barre de recherche (`safe + 72px`), la
-  barre d'actions groupées de la sélection (`safe + 84px`) et le FAB de `Layout`. La recherche
-  s'efface en mode sélection (`select-mode.store.ts`), et le FAB monte à `bottom-[8.5rem]` **sur
-  `/tasks` uniquement**. Toute 4ᵉ surface ancrée doit se placer dans cette liste, pas à côté.
-- ⚠️ Réserve de défilement de `/tasks` portée à `+144px` (au lieu de `+88px`) : la barre ancrée
-  masquerait sinon la dernière tâche.
-- ⚠️ `#search-tasks-main` (cible du raccourci « / ») reste le champ **desktop** : il n'y a pas de
-  clavier physique en face de la barre mobile.
-- Bouton "Filtres" caché sur mobile (`hidden sm:inline-flex`).
-- Label de tri compacté : `<span className="hidden sm:inline">Trier par :</span><span className="sm:hidden">Tri :</span>`.
+✅ Vue **agenda** (liste verticale par jour) UNIQUEMENT : boutons Sem./Mois et toggle « Agenda » masqués (`hidden sm:flex`, `hidden sm:inline-flex`), `useEffect` force `currentView = 'agenda'` quand `isMobile`, bouton « Aujourd'hui ».
 
-## DeadlineCalendar mobile (`src/components/DeadlineCalendar.tsx`)
+## Composants touchés par les conventions mobile
 
-- Mobile = vue **agenda** (liste verticale par jour) **uniquement**. Boutons Sem./Mois masqués (`hidden sm:flex`).
-- Le toggle "Agenda" est masqué sur mobile (`hidden sm:inline-flex`).
-- `useEffect` force `currentView = 'agenda'` quand `isMobile` devient true.
-- Bouton "Aujourd'hui" pour retour rapide.
-
-## Modules touchés par les conventions mobile
-
-| Composant | Particularité mobile |
+| Composant | Particularité |
 |---|---|
-| `TasksPage.tsx` | H1 réduit (`text-lg sm:text-3xl`), Calendrier inline, padding-bottom safe-area |
-| `TaskTable.tsx → TaskCard` | Voir section dédiée |
-| `TaskFilter.tsx` | Voir section dédiée |
-| `TaskModal.tsx` | Full-screen, single-column, Supprimer comme icône, pas de "Marquer complétée" |
-| `AddTaskForm.tsx` | `h-[100dvh]` full-screen, sticky footer empilé |
-| `DeadlineCalendar.tsx` | Vue agenda forcée |
-| `AddToListModal.tsx`, `EventModal.tsx`, `ColorSettingsModal.tsx` | Bottom-sheet pattern |
+| `TasksPage.tsx` | H1 réduit (`text-lg sm:text-3xl`), calendrier inline, padding-bottom safe-area |
+| `TaskModal.tsx` | plein écran, une colonne, Supprimer en icône, pas de « Marquer complétée » |
+| `AddTaskForm.tsx` | `h-[100dvh]`, footer sticky empilé |
+| `AddToListModal.tsx`, `EventModal.tsx`, `ColorSettingsModal.tsx` | pattern bottom-sheet |
 
-## Drag-to-reorder — desktop only
+## iOS Safari : fetches parallèles (`src/main.tsx`)
 
-Sur la barre de chips des listes (TasksPage), le drag-to-reorder Framer Motion est **désactivé sur mobile** :
-```tsx
-drag={isEditing || isMobile ? false : 'x'}
-```
-Raison : la barre a `overflow-x-auto`. Le drag horizontal capturerait le swipe de scroll → conflit. Même logique pour toute barre scrollable horizontale avec items draggables.
+Bug WebKit ([#171501](https://bugs.webkit.org/show_bug.cgi?id=171501), [supabase-js #684](https://github.com/supabase/supabase-js/issues/684)) : plusieurs fetches cross-origin en parallèle avant que HTTP/2 soit stabilisé, le 1er stream passe, les suivants sont rejetés (`TypeError: Load failed`). Symptôme : `/tasks` ou `/habits` plante après ~8 s sur iOS Safari seulement, « Impossible de charger les tâches », aucune requête Supabase visible ; uniquement la première fois.
 
-## iOS Safari — bug WebKit fetches parallèles (`src/main.tsx`)
-
-iOS Safari WebKit a un bug documenté ([WebKit #171501](https://bugs.webkit.org/show_bug.cgi?id=171501), [supabase-js #684](https://github.com/supabase/supabase-js/issues/684)) : quand une page charge et lance **plusieurs fetches cross-origin en parallèle** avant que la connexion HTTP/2 soit stabilisée, le navigateur accepte le 1er stream mais **rejette silencieusement les suivants** avec `TypeError: Load failed` / DOMException.
-
-**Symptômes** : page `/tasks` ou `/habits` plante après ~8 s sur iOS Safari uniquement, "Impossible de charger les tâches", **aucune requête Supabase visible** dans Network. Ne se reproduit **que** la première fois (connexion HTTP/2 ensuite en keep-alive).
-
-**Fix obligatoire** dans `src/main.tsx`, **avant `createRoot()`** :
+Obligatoire dans `src/main.tsx`, AVANT `createRoot()` :
 
 ```ts
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -388,48 +176,13 @@ if (supabaseUrl) {
 }
 ```
 
-⚠️ **Règles non négociables** :
-- ✅ Garder **les deux** warmup fetches — un seul n'amorce qu'un seul pool de streams
-- ✅ Garder le `.catch(() => {})` — la requête peut échouer (401, CORS), peu importe
-- ✅ Tester sur un vrai iPhone (Eruda console + `?debug=1`)
-- ❌ **Ne JAMAIS** retirer ces fetches — la régression est invisible en CI/dev/desktop
-- ❌ Remplacer par `<link rel="preconnect">` seul — ne committe pas de stream HTTP
-- ❌ Centraliser les premières requêtes dans un seul fetch — le bug reviendra dès qu'une autre fetch sera ajoutée
-
-**Cache localStorage complémentaire** : `src/modules/auth/use-offline-cache.ts` (abonné aux événements de session d'`AuthContext`, ARC-03) persiste `tasks` et `habits` (clés `cosmo:qcache:{userId}:{key}`, TTL 24 h, write-through via `queryCache.subscribe`). Cleaning : `clearLocalCache(userId)` sur logout et user-change.
-
-**Skip retry sur timeout** : `src/App.tsx` retire le retry sur `timeout` / `aborted` / `Délai` — sinon worst-case 17 s avant erreur.
-
-**Debug iOS sans Mac** : ajouter `?debug=1` → Eruda console flottante (CDN). Logs `[AUTH] @Xms` et `[FETCH→] /path`. Zéro overhead sans le query param.
+- ✅ Garder les DEUX fetches (un seul n'amorce qu'un pool de streams) et le `.catch(() => {})` (401, CORS sans importance).
+- ❌ Retirer ces fetches (régression invisible en CI, dev, desktop). ❌ Les remplacer par `<link rel="preconnect">` seul (ne committe aucun stream). ❌ Centraliser les premières requêtes en un fetch (le bug revient dès qu'une autre est ajoutée). ❌ Lancer > 5-6 requêtes Supabase en parallèle au mount sans test sur un vrai iPhone.
+- ✅ Cache complémentaire : `src/modules/auth/use-offline-cache.ts` (abonné aux événements de session d'`AuthContext`, ARC-03) persiste `tasks` et `habits` (`cosmo:qcache:{userId}:{key}`, TTL 24 h, write-through par `queryCache.subscribe`) ; `clearLocalCache(userId)` au logout et au changement d'utilisateur. ❌ Le retirer.
+- ✅ `src/App.tsx` retire le retry sur `timeout` / `aborted` / `Délai` (sinon 17 s avant erreur). ❌ Le retirer.
+- ✅ Debug iOS sans Mac : `?debug=1` charge Eruda (CDN), logs `[AUTH] @Xms` et `[FETCH→] /path`, zéro coût sans le paramètre.
 
 ## Tester le mobile
 
-- DevTools responsive → **375 × 812**, **393 × 852**, **412 × 915**
-- Touch targets : `document.querySelectorAll('button').forEach(b => { const r = b.getBoundingClientRect(); if (r.width < 44 || r.height < 44) console.warn(b); })`
-- Mode démo : 100 tâches seedées sur 12 mois — stress-test du rendu
-
-## Ne jamais faire (mobile)
-
-- ❌ **Écrire `text-[Npx]` sur du mobile** — utiliser l'échelle à 6 crans (`design-system.guard.test.ts` bloque sous 11 px)
-- ❌ **Ajouter une taille custom à `tailwind.config.js` sans l'ajouter aussi à `extendTailwindMerge`** dans `src/lib/utils.ts` — elle disparaîtra silencieusement du DOM
-- ❌ **Oublier la réserve de bas de page** — une page mobile pose `px-gutter` et
-  `pb-[calc(64px+env(safe-area-inset-bottom)+24px)]`, ou `+88px` si elle porte un FAB. Sans elle,
-  le dernier élément passe sous la tab bar. ⚠️ `MobileScreen` portait ce calcul et a été supprimé
-  le 2026-09-05 (C-10, zéro consommateur) : la règle est donc à appliquer à la main, comme le font
-  déjà toutes les pages
-- ❌ **Enfermer une liste mobile dans une `.card`** — utiliser `.card-plain-mobile`
-- ❌ Mettre un input mobile sous 16 px (iOS zoome au focus)
-- ❌ Redessiner un en-tête / une ligne / un contrôle segmenté au lieu de composer `src/components/mobile/`
-- ❌ Modal centré sur mobile (toujours bottom-sheet)
-- ❌ Touch target < 44 × 44 px (WCAG 2.5.5)
-- ❌ Lire `window.innerWidth` en boucle dans le render — utiliser `useIsMobile()`
-- ❌ `100vh` pour un modal full-screen (utiliser `100dvh`)
-- ❌ Action (validation, suppression) accessible **que** par swipe — toujours un fallback visible
-- ❌ Faire diverger mobile/desktop dans le même composant sans `md:hidden` / `md:flex` / `useIsMobile()`
-- ❌ **Valider un geste tactile à la souris** — `selectLongPressDelay` rend `select` inatteignable
-  au tap ; vérifier avec de vrais événements `Touch` (cf. § FullCalendar ci-dessus)
-- ❌ Modifier `<TaskCard>` (`md:hidden`) sans vérifier que la table desktop reste intacte (`hidden md:block`)
-- ❌ Réintroduire `TaskCategoryIndicator` ou des icônes inline sur la TaskCard mobile
-- ❌ Retirer le warmup `fetch()` iOS Safari, le cache `cosmo:qcache:*`, ou le skip-retry sur timeout
-- ❌ Lancer > 5-6 requêtes Supabase en parallèle au mount sans tester sur vrai iPhone
-- ❌ Activer un `Reorder.Group` / `drag` Framer Motion sur une barre `overflow-x-auto` mobile sans guard `drag={isMobile ? false : 'x'}`
+- ✅ DevTools responsive 375×812, 393×852, 412×915. Mode démo : 100 tâches seedées sur 12 mois (stress du rendu).
+- ✅ Cibles tactiles : `document.querySelectorAll('button').forEach(b => { const r = b.getBoundingClientRect(); if (r.width < 44 || r.height < 44) console.warn(b); })` ; garde : `e2e/touch-targets.spec.ts`. ❌ Cible < 44 × 44 px sans les décisions de [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) § Cibles tactiles.

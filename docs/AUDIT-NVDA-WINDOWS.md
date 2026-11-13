@@ -1,50 +1,36 @@
 <!-- echeance-lecteur-ecran: 2027-01-15 initiale=2027-01-15 -->
 
-# Audit NVDA (Windows) et revue humaine WCAG · check-list à jouer d'une traite
+# Audit NVDA (Windows) et revue humaine WCAG : check-list à jouer d'une traite
 
-**Statut : à jouer, ÉCHÉANCE 2027-01-15. Rien dans ce fichier n'est coché.** Posé le 2026-10-24.
-C'est le pendant Windows de [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md) (`M-40`, `M-52`)
-et le support de la revue humaine des critères que `axe-core` ne voit pas (`M-51`, `ACCESSIBILITY.md`
-AM-1). Les deux se jouent dans la **même séance d'environ 75 minutes**, la partie B réutilisant ce
-que la partie A fait entendre.
+Lire pour jouer la séance NVDA, ou en touchant `scripts/check-lecteurs-ecran.mjs`. Ce qui fait foi : le registre ci-dessous et `npm run check:lecteurs-ecran`. Pendant Windows de [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md) (`M-40`, `M-52`) et support de la revue humaine des critères qu'`axe-core` ne voit pas (`M-51`, `ACCESSIBILITY.md` AM-1).
 
-> 🕓 Passé le 2027-01-15 sans ligne « ✅ joué » au [registre](#registre-des-séances),
-> `npm run check:lecteurs-ecran` échoue en CI. Repousser la date de plus de 30 jours après
-> `initiale=` est refusé : c'est une reconduction. Chaque étape ci-dessous porte son résultat
-> attendu, vérifié par la même garde.
+**Statut : à jouer, échéance 2027-01-15. Rien n'est coché.** Une seule séance d'environ 75 minutes : la partie B réutilise ce que la partie A fait entendre.
 
-🔴 **Il ne se simule pas.** Playwright prouve le **focus**, jamais l'**annonce**. NVDA lit l'arbre
-d'accessibilité : seul un humain avec NVDA entend ce que le produit dit.
+- 🔴 `npm run check:lecteurs-ecran` échoue en CI passé l'échéance sans ligne `✅ joué` au [registre](#registre-des-séances). ❌ Repousser l'échéance de plus de 30 jours après `initiale=` (reconduction). ❌ Supprimer des étapes : la garde exige un plancher d'étapes et un résultat attendu non vide pour chacune.
+- 🔴 Il ne se simule pas : Playwright prouve le FOCUS, jamais l'ANNONCE ; NVDA lit l'arbre d'accessibilité.
 
 ## 0. Préparation (5 min)
 
-1. **Windows réel**, NVDA à jour (version notée), **Firefox** pour la passe principale, **Chrome** pour
-   la passe de contrôle de l'étape 8.
-2. **Noter en tête du compte-rendu** : version de Windows, de NVDA, du navigateur. Sans elles, un
-   finding n'est pas reproductible.
-3. Touche NVDA = `Insert` (ou `Verr. Maj`). `NVDA+Espace` bascule mode navigation / mode formulaire.
-4. **Débit de parole vers 40 %**, enregistreur de parole NVDA ou dictaphone : garder l'annonce
-   **verbatim**.
-5. Site : `https://thecosmo.app`, thème clair, zoom 100 %, **sans souris** (la débrancher).
-6. Le gabarit de finding est celui de [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md) § « Comment
-   consigner » : l'ENTENDU avant l'attendu.
+1. Windows réel, NVDA à jour (version notée), **Firefox** pour la passe principale, **Chrome** pour l'étape 8. Noter versions de Windows, de NVDA, du navigateur : sans elles un finding n'est pas reproductible.
+2. Touche NVDA = `Insert` (ou `Verr. Maj`). `NVDA+Espace` bascule mode navigation / mode formulaire.
+3. Débit de parole vers 40 %, enregistreur de parole NVDA ou dictaphone : l'annonce se garde VERBATIM.
+4. Site `https://thecosmo.app`, thème clair, zoom 100 %, SANS souris (la débrancher).
+5. Gabarit de finding : [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md) § « Comment consigner » (l'ENTENDU avant l'attendu). Statuts : ✅ conforme · ❌ défaut · ⚠️ douteux · ⬜ non atteint (une ligne de justification).
 
-Statuts : ✅ conforme · ❌ défaut · ⚠️ douteux · ⬜ non atteint (une ligne de justification).
-
-## 1. Le témoin · à jouer EN PREMIER
+## 1. Le témoin : à jouer EN PREMIER
 
 | # | Geste | Attendu | Piège connu |
 |---|---|---|---|
-| 1.1 | `Tab` jusqu'au bouton principal du hero de `/` | NVDA dit « **Essayer la démo sans inscription** » puis « bouton » | si NVDA dit « gratuite », le nom accessible (`landing:hero.demoAria`) n'est pas appliqué : **arrêter**, rien de la suite n'est interprétable |
-| 1.2 | `NVDA+F7` (liste des éléments), onglet Titres | un seul titre de niveau 1, puis des niveaux qui descendent d'un cran à la fois | `heading-order` a été mesuré caduc sur `/okr`, jamais à la landing |
+| 1.1 | `Tab` jusqu'au bouton principal du hero de `/` | NVDA dit « **Essayer la démo sans inscription** » puis « bouton » | « gratuite » entendu : nom accessible (`landing:hero.demoAria`) non appliqué, **arrêter**, rien de la suite n'est interprétable |
+| 1.2 | `NVDA+F7` (liste des éléments), onglet Titres | un seul titre de niveau 1, puis des niveaux qui descendent d'un cran à la fois | `heading-order` jamais mesuré à la landing |
 
 ## 2. Landing `/` · 8 min
 
 | # | Geste | Attendu | Piège connu |
 |---|---|---|---|
 | 2.1 | `NVDA+Bas` (tout lire) depuis le haut | rien de décoratif n'est lu : illustrations et icônes sont muettes | une icône sans `aria-hidden` se lit « graphique » |
-| 2.2 | `K` (lien suivant) jusqu'à l'aiguillage perso / entreprise | deux liens distincts, compréhensibles hors contexte | structure décrite dans `CLAUDE.md` § Landing |
-| 2.3 | atteindre la grille de tarifs | le montant est lu avec son unité et sa période, un prix barré est annoncé comme barré | deux prix lus sans le mot « barré » se contredisent |
+| 2.2 | `K` (lien suivant) jusqu'à l'aiguillage perso / entreprise | deux liens distincts, compréhensibles hors contexte | structure : [`src/pages/landing/CLAUDE.md`](../src/pages/landing/CLAUDE.md) |
+| 2.3 | atteindre la grille de tarifs | le montant est lu avec son unité et sa période, un prix barré est annoncé comme barré | deux prix lus sans « barré » se contredisent |
 | 2.4 | bandeau cookies, s'il apparaît | annoncé à son apparition, ses deux choix sont atteignables au `Tab` et distincts | `CookieBanner` est un `aside` avec `aria-label` |
 | 2.5 | `D` (repère suivant) | les repères principaux (navigation, contenu, pied de page) sont annoncés avec un nom | un repère sans nom ne se distingue pas d'un autre |
 
@@ -60,18 +46,17 @@ Statuts : ✅ conforme · ❌ défaut · ⚠️ douteux · ⬜ non atteint (une 
 
 | # | Geste | Attendu | Piège connu |
 |---|---|---|---|
-| 4.1 | `Tab` jusqu'à une ligne de tâche | « case à cocher, non cochée » **avec le nom de la tâche** | ne jamais entendre « bouton » seul |
+| 4.1 | `Tab` jusqu'à une ligne de tâche | « case à cocher, non cochée » **avec le nom de la tâche** | jamais « bouton » seul |
 | 4.2 | `Espace` dessus | le nouvel état est annoncé (« cochée ») sans rebalayer | |
 | 4.3 | juste après | le toast de confirmation est lu, **sans voler le focus** | Sonner porte sa propre région live |
-| 4.4 | `Shift+F10` sur une ligne de tâche | la feuille d'actions s'ouvre et son nom est annoncé (« Actions pour \<nom\> ») | chemin ouvert par l'évènement `contextmenu`, annoncé par `aria-keyshortcuts` |
+| 4.4 | `Shift+F10` sur une ligne de tâche | la feuille d'actions s'ouvre et son nom est annoncé (« Actions pour \<nom\> ») | chemin `contextmenu`, annoncé par `aria-keyshortcuts` |
 | 4.5 | une tâche en retard | l'état « en retard » est annoncé, pas seulement montré en rouge | une couleur n'est pas une information pour un lecteur d'écran |
-| 4.6 | ouvrir la fiche d'une tâche | le focus entre dans la modale, son titre est annoncé, le fond n'est plus atteignable | surface Radix : son piège vient de la bibliothèque |
+| 4.6 | ouvrir la fiche d'une tâche | le focus entre dans la modale, son titre est annoncé, le fond n'est plus atteignable | surface Radix : piège de la bibliothèque |
 | 4.7 | `Échap` dans la fiche | elle se ferme et le focus revient sur le contrôle qui l'avait ouverte | |
 
 ## 5. Modales maison · 6 min
 
-Même méthode que les quatre détecteurs de [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md)
-(M1 à M4), jouée sur deux surfaces représentatives.
+Les quatre détecteurs M1 à M4 de [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md), sur une surface représentative.
 
 | # | Geste | Attendu | Piège connu |
 |---|---|---|---|
@@ -100,11 +85,9 @@ Même méthode que les quatre détecteurs de [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-
 |---|---|---|---|
 | 8.1 | rejouer 1.1, 4.1 et 5.1 sous Chrome | les trois annonces sont identiques à celles de Firefox, ou la différence est consignée | NVDA ne lit pas l'arbre de la même façon sous les deux moteurs |
 
-## B. Revue humaine des critères que axe-core ne voit pas · 12 min
+## B. Revue humaine des critères qu'axe-core ne voit pas · 12 min
 
-C'est `ACCESSIBILITY.md` AM-1 (`M-51`) : l'ordre de lecture, la pertinence d'un libellé et le sens porté
-par une couleur seule sont **non automatisables par nature**. Chaque étape se juge à l'écoute NVDA
-déjà lancée, sur les écrans de la partie A.
+`ACCESSIBILITY.md` AM-1 (`M-51`) : ordre de lecture, pertinence d'un libellé, sens porté par une couleur seule, non automatisables par nature. Chaque étape se juge à l'écoute NVDA, sur les écrans de la partie A.
 
 | # | Geste | Attendu | Piège connu |
 |---|---|---|---|
@@ -118,9 +101,7 @@ déjà lancée, sur les écrans de la partie A.
 
 ## Registre des séances
 
-Une ligne par séance **réellement jouée**, jamais avant. `✅ joué` exige les parties A et B en entier ;
-`⚠️ partiel` est à refaire et n'éteint **pas** l'échéance. Les findings vont dans des issues
-(étiquette `zone:accessibilite`), verbatim conservé.
+Une ligne par séance RÉELLEMENT jouée, jamais avant. `✅ joué` exige les parties A et B en entier ; `⚠️ partiel` est à refaire et n'éteint PAS l'échéance. Findings : issues (étiquette `zone:accessibilite`), verbatim conservé.
 
 | Date | Appareil (Windows · NVDA · navigateur) | Statut | Findings |
 |---|---|---|---|
@@ -130,7 +111,6 @@ Une ligne par séance **réellement jouée**, jamais avant. `✅ joué` exige le
 
 ## Après la séance
 
-1. Ouvrir une issue par finding (étiquette `zone:accessibilite`), avec le verbatim.
-2. Renoter l'accessibilité dans [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) (AM-1 et AM-3) en disant ce qui
-   a été mesuré, sur quelle version de NVDA.
-3. Ne pas refermer `M-40`, `M-51` ni `M-52` sur une séance partielle.
+1. Une issue par finding (`zone:accessibilite`), verbatim gardé.
+2. Mettre à jour [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) (AM-1 et AM-3) en disant ce qui a été mesuré, sur quelle version de NVDA.
+3. ❌ Refermer `M-40`, `M-51` ou `M-52` sur une séance partielle.
