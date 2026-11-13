@@ -59,7 +59,8 @@ compilait, la suite passait.
   (`20261113070529`). Les deux après preuve à 0 ECHEC, relues au catalogue, ledger = fichier.
   `250` (`friend_requests` sans `user_id` comme la prod, et `sender_id` NOT NULL) en prod le 2026-11-13
   (`20261113083206`).
-  Prochain numéro libre : **`251`**. Journal daté de chaque application (preuves, relectures au catalogue) :
+  `251` (jours prévus des habitudes) commitée avec sa preuve, PAS appliquée : avant le front qui écrit ses colonnes.
+  Prochain numéro libre : **`252`**. Journal daté de chaque application (preuves, relectures au catalogue) :
   [`docs/archive/SECURITY-journal-migrations-150-223.md`](../../docs/archive/SECURITY-journal-migrations-150-223.md).
 - ✅ **Forme de preuve à reprendre** : un seul bloc `DO` terminé par `RAISE EXCEPTION`
   (`proofs/208-210.proof.sql`). L'annulation n'est pas une instruction qu'on peut oublier, c'est la

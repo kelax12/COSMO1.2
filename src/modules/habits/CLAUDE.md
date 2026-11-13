@@ -54,6 +54,16 @@ le front marche avant comme après application.
   ❌ Ne pas retirer la colonne avant de les avoir basculés.
 
 
+### 📅 Jours prévus (mig. 251) : commitée, PAS appliquée en prod
+
+`habits.scheduled_days` (0 = dimanche, NULL = tous les jours) et `schedule_history` (changements datés).
+Un jour non prévu est NEUTRE pour la série ; changer les jours ne rejuge pas le passé.
+
+- 🔴 **Un jour se juge par `isHabitScheduledOn(habit, jour)`** (`schedule.ts`), jamais par
+  `scheduledDays` seul : même règle, à la lettre, que `habit_day_scheduled` en SQL.
+- ⚠️ Une habitude sans réglage garde le calcul de la 248 (preuve `251` : rien ne bouge pour elle).
+  « Tous les jours » s'écrit NULL / `[]` et se relit ABSENT, démo comprise.
+
 ---
 
 ### 🌍 Fuseau horaire — la préférence pilote AUSSI les journées

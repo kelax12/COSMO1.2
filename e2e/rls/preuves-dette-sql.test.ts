@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// Preuves des mig. 242, 243, 244, 248, 249 et 250, rejouées sur la base fraîche du job
+// Preuves des mig. 242, 243, 244, 248, 249, 250 et 251, rejouées sur la base fraîche du job
 // `rls-integration`.
 //
 // Une preuve de `supabase/proofs/` est un bloc `DO` qui se termine TOUJOURS
@@ -32,6 +32,8 @@ const PREUVES: { preuve: string; migration: string }[] = [
   { preuve: '249.proof.sql', migration: '249_taches_echeance_priorite_facultatives.sql' },
   // `friend_requests` à la forme de la production (divergence FRIENDS-USER-ID).
   { preuve: '250.proof.sql', migration: '250_friend_requests_forme_prod.sql' },
+  // Jours prévus des habitudes : séries sur les seuls jours prévus, rien ne bouge sans réglage.
+  { preuve: '251.proof.sql', migration: '251_habit_scheduled_days.sql' },
 ];
 
 const lire = (chemin: string) => readFileSync(join(process.cwd(), chemin), 'utf8').replace(/\r\n/g, '\n');
@@ -41,7 +43,7 @@ afterAll(async () => {
   await db.end();
 });
 
-describe('supabase/proofs : preuves 242 à 244, 248, 249 et 250 rejouées sur la base fraîche', () => {
+describe('supabase/proofs : preuves 242 à 244 et 248 à 251 rejouées sur la base fraîche', () => {
   for (const { preuve, migration } of PREUVES) {
     it(`${preuve} embarque le texte exact de ${migration}`, () => {
       const texte = lire(`supabase/proofs/${preuve}`);

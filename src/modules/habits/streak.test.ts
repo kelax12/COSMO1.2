@@ -34,6 +34,74 @@ const key = (daysAgo: number) => {
 const completionsFor = (daysAgo: number[]) =>
   Object.fromEntries(daysAgo.map(n => [key(n), true]));
 
+describe('calculateStreak : jours prévus (mig. 251)', () => {
+  // Prévus : un jour sur deux en remontant (aujourd'hui, J-2, J-4…).
+  const evenDays = new Set([0, 2, 4, 6, 8, 10].map(key));
+  const every2 = (k: string) => evenDays.has(k);
+
+  it('un jour non prévu est neutre : la série passe par-dessus', () => {
+    expect(calculateStreak(completionsFor([0, 2, 4]), NOW, every2)).toBe(3);
+  });
+
+  it('aujourd’hui prévu et pas coché : la série se juge du jour prévu précédent', () => {
+    expect(calculateStreak(completionsFor([2, 4, 6]), NOW, every2)).toBe(3);
+  });
+
+  it('un jour PRÉVU manqué casse la série', () => {
+    expect(calculateStreak(completionsFor([0, 4, 6]), NOW, every2)).toBe(1);
+  });
+
+  it('une coche sur un jour non prévu ne compte pas', () => {
+    expect(calculateStreak(completionsFor([0, 1, 2, 3]), NOW, every2)).toBe(2);
+  });
+
+  it("aujourd'hui non prévu : la série d'hier et d'avant tient", () => {
+    const odd = new Set([1, 3, 5].map(key));
+    expect(calculateStreak(completionsFor([1, 3, 5]), NOW, (k) => odd.has(k))).toBe(3);
+  });
+
+  it('habitStreak applique les jours prévus de l’habitude en repli démo', () => {
+    const today = NOW.getDay();
+    const twoAgo = (today + 5) % 7;
+    const habit = { completions: completionsFor([0, 2]), scheduledDays: [today, twoAgo] };
+    expect(habitStreak(habit, NOW)).toBe(2);
+    // Sans réglage, J-1 manquant casse la série.
+    expect(habitStreak({ completions: completionsFor([0, 2]) }, NOW)).toBe(1);
+  });
+});
+
+// Mêmes scénarios, mêmes valeurs en dur que `supabase/proofs/251.proof.sql` :
+// le JS (démo, cache optimiste) et le SQL rendent la même série.
+describe('jours prévus : scénarios de la preuve 251', () => {
+  const w = NOW.getDay();
+  // Trois jours par semaine : aujourd'hui, J-2, J-4 (modulo 7).
+  const S = [w, (w + 5) % 7, (w + 3) % 7];
+  const P1 = completionsFor([1, 2, 3, 4, 7, 9, 11, 16, 18]);
+
+  it('P0 sans jours prévus : 4', () => {
+    expect(habitStreak({ completions: P1 }, NOW)).toBe(4);
+  });
+
+  it('P1 trois jours par semaine : 5, coches des jours non prévus neutres', () => {
+    expect(habitStreak({ completions: P1, scheduledDays: S }, NOW)).toBe(5);
+    const tomorrow = new Date(NOW);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    // Demain (non prévu) : aujourd'hui, prévu, est manqué : la série casse.
+    expect(habitStreak({ completions: P1, scheduledDays: S }, tomorrow)).toBe(0);
+    expect(habitStreak({ completions: { ...P1, [key(0)]: true }, scheduledDays: S }, NOW)).toBe(6);
+  });
+
+  it('P2 historique daté : le passé se juge avec l’ancien réglage (7, pas 4)', () => {
+    const completions = completionsFor([2, 4, 6, 7, 8, 9, 10, 13]);
+    const scheduleHistory = [
+      { from: '1970-01-01', days: [0, 1, 2, 3, 4, 5, 6] },
+      { from: key(5), days: S },
+    ];
+    expect(habitStreak({ completions, scheduledDays: S, scheduleHistory }, NOW)).toBe(7);
+    expect(habitStreak({ completions, scheduledDays: S }, NOW)).toBe(4);
+  });
+});
+
 describe('calculateStreak', () => {
   it('aucune complétion → streak 0', () => {
     expect(calculateStreak({}, NOW)).toBe(0);

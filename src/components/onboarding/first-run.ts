@@ -13,6 +13,7 @@
 // quitter est un mur, pas un accueil.
 import type { CreateTaskInput } from '@/modules/tasks/types';
 import type { CreateHabitInput } from '@/modules/habits/types';
+import { isEveryDay, normalizeScheduledDays } from '@/modules/habits/schedule';
 import type { CreateOKRInput } from '@/modules/okrs/types';
 import type { CreateEventInput } from '@/modules/events/types';
 
@@ -109,14 +110,20 @@ export const HABIT_MINUTES = [10, 20, 30, 45, 60] as const;
  *  soit indiscernable d'une habitude créée dans l'application. La durée est
  *  CHOISIE par la personne : « Se coucher avant 23 h » ne dure
  *  pas trente minutes, et l'imposer faussait ses statistiques de temps. */
-export const buildHabitInput = (name: string, minutes = 30): CreateHabitInput => ({
-  name: name.trim(),
-  description: '',
-  frequency: 'daily',
-  estimatedTime: Number.isFinite(minutes) && minutes > 0 ? Math.round(minutes) : 30,
-  color: '#3B82F6',
-  icon: '✓',
-});
+export const buildHabitInput = (name: string, minutes = 30, days?: readonly number[]): CreateHabitInput => {
+  const scheduled = normalizeScheduledDays(days);
+  return {
+    name: name.trim(),
+    description: '',
+    frequency: 'daily',
+    estimatedTime: Number.isFinite(minutes) && minutes > 0 ? Math.round(minutes) : 30,
+    color: '#3B82F6',
+    icon: '✓',
+    // Jours prévus : écrits seulement s'ils diffèrent de « tous les jours »,
+    // comme `HabitModal` (mig. 251).
+    ...(isEveryDay(scheduled) ? {} : { scheduledDays: scheduled }),
+  };
+};
 
 /**
  * Une cible saisie en texte (« 10 », « 2,5 ») : un nombre strictement positif,

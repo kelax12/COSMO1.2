@@ -10,6 +10,7 @@ import type { IHabitsRepository } from '@/modules/habits/repository';
 import type { IStatsRepository } from '@/modules/stats/repository';
 import type { CreateHabitInput, Habit } from '@/modules/habits/types';
 import { habitStreak } from '@/modules/habits/streak';
+import { weekdayOfKey } from '@/modules/habits/schedule';
 import { contractCase, dayKey, rejects, unique, type ContractOptions } from './harness';
 
 export interface HabitsContractContext {
@@ -177,6 +178,60 @@ export function habitsContract(side: string, make: () => Promise<HabitsContractC
       expect(await rejects(repo.toggleCompletion(created.id, '2026-1-5')), 'sans zéros').toBe(true);
       expect(await rejects(repo.toggleCompletion(created.id, '2026-02-30')), '30 février').toBe(true);
       expect(Object.values((await find(created.id))!.completions).filter(Boolean)).toEqual([]);
+    });
+
+    // ── Jours prévus (mig. 251) : mêmes scénarios que `supabase/proofs/251.proof.sql` ──
+    // S = aujourd'hui, J-2 et J-4 modulo 7 : trois jours par semaine, quel que
+    // soit le jour où la suite tourne.
+    const w = weekdayOfKey(dayKey(0));
+    const S = [w, (w + 5) % 7, (w + 3) % 7].sort((a, b) => a - b);
+    const jours = (offsets: number[]) => Object.fromEntries(offsets.map((o) => [dayKey(o), true]));
+
+    contractCase(opts, 'les jours prévus se relisent triés ; « tous les jours » se relit absent', async () => {
+      const created = await repo.createHabit(input({ scheduledDays: [S[2], S[0], S[1], S[0]] }));
+      expect((await find(created.id))?.scheduledDays).toEqual(S);
+      const every = await repo.createHabit(input({ scheduledDays: [0, 1, 2, 3, 4, 5, 6] }));
+      expect((await find(every.id))?.scheduledDays).toBeUndefined();
+      await repo.updateHabit(created.id, { scheduledDays: [] });
+      expect((await find(created.id))?.scheduledDays).toBeUndefined();
+      expect((await find(created.id))?.scheduleHistory).toBeUndefined();
+    });
+
+    contractCase(opts, 'la série ne compte que les jours prévus, un jour non prévu est neutre', async () => {
+      const created = await repo.createHabit(input({ scheduledDays: S, completions: jours([-1, -2, -3, -4, -7, -9, -11, -16, -18]) }));
+      expect(habitStreak((await find(created.id))!)).toBe(5);
+      await repo.toggleCompletion(created.id, dayKey(-5)); // non prévu : neutre
+      expect(habitStreak((await find(created.id))!)).toBe(5);
+      await repo.toggleCompletion(created.id, dayKey(0));
+      expect(habitStreak((await find(created.id))!)).toBe(6);
+      await repo.toggleCompletion(created.id, dayKey(-7)); // prévu : coupe
+      expect(habitStreak((await find(created.id))!)).toBe(3);
+    });
+
+    contractCase(opts, 'sans jours prévus, la même carte garde la série de toujours', async () => {
+      const created = await repo.createHabit(input({ completions: jours([-1, -2, -3, -4, -7, -9, -11, -16, -18]) }));
+      expect(habitStreak((await find(created.id))!)).toBe(4);
+    });
+
+    contractCase(opts, 'changer les jours ne rejuge pas le passé (historique daté)', async () => {
+      const created = await repo.createHabit(input({ completions: jours([-2, -4, -6, -7, -8, -9, -10, -13]) }));
+      await repo.updateHabit(created.id, {
+        scheduledDays: S,
+        scheduleHistory: [
+          { from: '1970-01-01', days: [0, 1, 2, 3, 4, 5, 6] },
+          { from: dayKey(-5), days: S },
+        ],
+      });
+      const read = (await find(created.id))!;
+      expect(read.scheduleHistory?.map((e) => e.from)).toEqual(['1970-01-01', dayKey(-5)]);
+      expect(habitStreak(read)).toBe(7);
+    });
+
+    contractCase(opts, 'un historique de jours prévus invalide est refusé', async () => {
+      const created = await repo.createHabit(input());
+      expect(await rejects(repo.updateHabit(created.id, { scheduleHistory: [{ from: '2026-02-30', days: [1] }] })), 'date').toBe(true);
+      expect(await rejects(repo.updateHabit(created.id, { scheduleHistory: [{ from: '2026-01-05', days: [] }] })), 'vide').toBe(true);
+      expect((await find(created.id))?.scheduleHistory).toBeUndefined();
     });
 
     contractCase(opts, '« Annuler » recrée l’habitude sous son identifiant d’origine (R-08)', async () => {

@@ -81,6 +81,7 @@
       "previewStreak": "Your streak starts today",
       "previewCaption": "Every checked box makes the streak longer.",
       "durationLabel": "How long, each day?",
+      "daysLabel": "Which days?",
       "minutes": "{{minutes}} min",
       "previewEvery": "{{minutes}} min · every day",
       "alreadyCreated": "Habit added: {{name}}. You can edit it in Habits."

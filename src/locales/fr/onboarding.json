@@ -81,6 +81,7 @@
       "previewStreak": "La série commence aujourd'hui",
       "previewCaption": "Chaque case cochée allonge la série.",
       "durationLabel": "Combien de temps, chaque jour ?",
+      "daysLabel": "Quels jours ?",
       "minutes": "{{minutes}} min",
       "previewEvery": "{{minutes}} min · chaque jour",
       "alreadyCreated": "Habitude ajoutée : {{name}}. Vous pourrez la modifier dans Habitudes."

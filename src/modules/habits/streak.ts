@@ -4,6 +4,9 @@
 // si aujourd'hui n'est pas encore coché — la journée n'est pas finie). Un seul
 // jour manqué remet la série à zéro (pas de joker/gel : cf. suppression 2026-07).
 
+import type { Habit } from './types';
+import { scheduleOf } from './schedule';
+
 const dayKey = (d: Date): string => d.toLocaleDateString('en-CA');
 
 /**
@@ -20,19 +23,26 @@ export function toggleCompletionDay(
   return wasDone ? rest : { ...rest, [date]: true };
 }
 
+//
+// Jours prévus (mig. 251) : un jour pour lequel `isScheduled` rend faux est
+// NEUTRE, il ne casse ni ne prolonge la série. Même règle que le SQL.
 export function calculateStreak(
   completions: Record<string, boolean>,
-  now: Date = new Date()
+  now: Date = new Date(),
+  isScheduled: (dayKey: string) => boolean = () => true,
 ): number {
   const cursor = new Date(now);
-  // Aujourd'hui pas encore coché → la série se juge à partir d'hier.
-  if (!completions[dayKey(cursor)]) cursor.setDate(cursor.getDate() - 1);
+  // Aujourd'hui prévu mais pas encore coché → la journée n'est pas finie.
+  const todayKey = dayKey(cursor);
+  if (isScheduled(todayKey) && !completions[todayKey]) cursor.setDate(cursor.getDate() - 1);
 
   let streak = 0;
   for (let dayIndex = 0; dayIndex < 3650; dayIndex++) {
-    if (!completions[dayKey(cursor)]) break;
-    streak++;
+    const key = dayKey(cursor);
     cursor.setDate(cursor.getDate() - 1);
+    if (!isScheduled(key)) continue;
+    if (!completions[key]) break;
+    streak++;
   }
   return streak;
 }
@@ -54,8 +64,8 @@ export function calculateStreak(
  * contient effectivement tout.
  */
 export function habitStreak(
-  habit: { completions: Record<string, boolean>; streakCurrent?: number },
+  habit: Pick<Habit, 'completions' | 'streakCurrent' | 'scheduledDays' | 'scheduleHistory'>,
   now: Date = new Date(),
 ): number {
-  return habit.streakCurrent ?? calculateStreak(habit.completions, now);
+  return habit.streakCurrent ?? calculateStreak(habit.completions, now, scheduleOf(habit));
 }

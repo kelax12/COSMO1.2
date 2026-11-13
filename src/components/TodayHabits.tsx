@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { Clock, Check, ChevronDown, ChevronUp } from 'lucide-react';
 
-import { useHabits, useToggleHabitCompletion } from '@/modules/habits';
+import { useHabits, useToggleHabitCompletion, type Habit } from '@/modules/habits';
 import { habitStreak } from '@/modules/habits/streak';
+import { isHabitScheduledOn } from '@/modules/habits/schedule';
 import { useT } from '@/i18n/useT';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { formatDurationMinutes } from '@/lib/duration';
@@ -17,6 +18,27 @@ const getVisibleLimit = () => {
   if (typeof window === 'undefined') return 5;
   const available = window.innerHeight - CARD_OVERHEAD;
   return Math.max(3, Math.floor(available / HABIT_ITEM_HEIGHT));
+};
+
+/**
+ * Habitudes du jour : jour non prévu (mig. 251) = grisée, non cochable, hors du
+ * décompte, rangée en fin ; une coche déjà posée reste décochable.
+ */
+const habitsForDay = (habits: Habit[], day: string) => {
+  const all = habits.map((habit) => {
+    const completedToday = habit.completions[day] || false;
+    return { ...habit, completedToday, offToday: !completedToday && !isHabitScheduledOn(habit, day) };
+  });
+  return [...all.filter((h) => !h.offToday), ...all.filter((h) => h.offToday)];
+};
+
+const cardClass = (habit: { offToday: boolean; completedToday: boolean }): string => {
+  const base = 'p-4 rounded-2xl border-2 transition-all duration-300';
+  if (habit.offToday) return `${base} opacity-45 cursor-not-allowed bg-[rgb(var(--color-hover))] border-[rgb(var(--color-border))]`;
+  const tone = habit.completedToday
+    ? 'bg-[rgb(var(--color-accent-solid))] dark:bg-blue-900 border-[rgb(var(--color-accent-solid))] dark:border-[rgb(var(--color-accent-solid))] shadow-md noir:bg-[rgb(var(--color-hover))] noir:border-[rgb(var(--color-success))] noir:shadow-none'
+    : 'bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent-solid-hover))] hover:bg-blue-50/50 dark:hover:bg-slate-700/50 noir:hover:bg-[rgb(var(--color-hover))]';
+  return `${base} cursor-pointer hover:scale-105 hover:shadow-lg ${tone}`;
 };
 
 const TodayHabits: React.FC = () => {
@@ -36,17 +58,16 @@ const TodayHabits: React.FC = () => {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  const todayHabits = habits.map((habit) => ({
-    ...habit,
-    completedToday: habit.completions[today] || false
-  }));
+  const todayHabits = habitsForDay(habits, today);
+  const dueHabits = todayHabits.filter((h) => !h.offToday);
 
-  const completedCount = todayHabits.filter((h) => h.completedToday).length;
+  const completedCount = dueHabits.filter((h) => h.completedToday).length;
   const totalTime = todayHabits.reduce((sum, habit) =>
   habit.completedToday ? sum + habit.estimatedTime : sum, 0
   );
 
   const handleToggle = (habitId: string) => {
+    if (todayHabits.find((h) => h.id === habitId)?.offToday) return;
     toggleCompletionMutation.mutate({ id: habitId, date: today });
   };
 
@@ -58,10 +79,12 @@ const TodayHabits: React.FC = () => {
   const renderMobileRow = (habit: (typeof todayHabits)[number]) => (
     <li
       key={habit.id}
-      className="flex items-center gap-2.5 border-b border-[rgb(var(--color-border))] last:border-b-0 py-2.5"
+      className={`flex items-center gap-2.5 border-b border-[rgb(var(--color-border))] last:border-b-0 py-2.5 ${habit.offToday ? 'opacity-45' : ''}`}
+      data-unscheduled={habit.offToday || undefined}
     >
       <button
         type="button"
+        disabled={habit.offToday}
         onClick={() => handleToggle(habit.id)}
         aria-label={habit.completedToday ? t('today.markUndone', { name: habit.name }) : t('today.markDone', { name: habit.name })}
         aria-pressed={habit.completedToday}
@@ -128,14 +151,14 @@ const TodayHabits: React.FC = () => {
         <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">{t('sections.todayHabits')}</h2>
         <p className="text-[rgb(var(--color-text-secondary))] text-sm">
           {/* Célébration (#39) : récompenser le zéro restant, pas juste le compter */}
-          {todayHabits.length > 0 && completedCount === todayHabits.length ? (
+          {dueHabits.length > 0 && completedCount === dueHabits.length ? (
             <span className="font-medium text-emerald-600 dark:text-emerald-400 noir:text-[rgb(var(--color-success))]">
-              {t('habits.allDone', { done: completedCount, total: todayHabits.length })}
+              {t('habits.allDone', { done: completedCount, total: dueHabits.length })}
             </span>
           ) : (
             t('habits.progress', {
               done: completedCount,
-              total: todayHabits.length,
+              total: dueHabits.length,
               duration: formatDurationMinutes(totalTime),
             })
           )}
@@ -176,11 +199,9 @@ const TodayHabits: React.FC = () => {
         (showAll ? todayHabits : todayHabits.slice(0, visibleLimit)).map((habit) =>
         <div
           key={habit.id}
-            className={`p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer hover:scale-105 hover:shadow-lg ${
-              habit.completedToday ?
-              'bg-[rgb(var(--color-accent-solid))] dark:bg-blue-900 border-[rgb(var(--color-accent-solid))] dark:border-[rgb(var(--color-accent-solid))] shadow-md noir:bg-[rgb(var(--color-hover))] noir:border-[rgb(var(--color-success))] noir:shadow-none' :
-              'bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent-solid-hover))] hover:bg-blue-50/50 dark:hover:bg-slate-700/50 noir:hover:bg-[rgb(var(--color-hover))]'}`
-              }
+            data-unscheduled={habit.offToday || undefined}
+            aria-disabled={habit.offToday || undefined}
+            className={cardClass(habit)}
             onClick={() => handleToggle(habit.id)}>
 
               <div className="flex items-center gap-4">

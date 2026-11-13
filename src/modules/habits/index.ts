@@ -3,7 +3,18 @@
 // ═══════════════════════════════════════════════════════════════════
 
 // Types
-export type { Habit, CreateHabitInput, UpdateHabitInput, HabitFrequency } from './types';
+export type { Habit, CreateHabitInput, UpdateHabitInput, HabitFrequency, HabitScheduleChange } from './types';
+
+// Jours prévus (mig. 251) : « ce jour est-il prévu ? », historique daté.
+export {
+  ALL_WEEK_DAYS,
+  isEveryDay,
+  isHabitScheduledOn,
+  normalizeScheduledDays,
+  nextScheduleHistory,
+  scheduledDaysOn,
+  scheduleOf,
+} from './schedule';
 
 // Constants
 export { habitKeys, HABITS_STORAGE_KEY } from './constants';

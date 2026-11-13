@@ -12,6 +12,7 @@
 //    par une page, il n'a pas de locale à lui.
 
 import type { Task } from '@/modules/tasks';
+import { isHabitScheduledOn } from '@/modules/habits/schedule';
 import type { Habit } from '@/modules/habits';
 
 /** Un fait mesuré, prêt à être mis en mots par le catalogue `statistics`. */
@@ -88,9 +89,16 @@ export function fragileHabitInsight(habits: Habit[], now: Date = new Date()): In
     const liveDays = createdDay ? days.filter((day) => day >= createdDay) : days;
     if (liveDays.length === 0) continue;
 
-    const done = liveDays.filter((day) => h.completions[day]).length;
+    // Jours prévus (mig. 251) : seuls les jours prévus sont attendus, et une
+    // coche sur un jour non prévu ne rattrape rien.
+    const dueDays = h.frequency === 'daily'
+      ? liveDays.filter((day) => isHabitScheduledOn(h, day))
+      : liveDays;
+    const done = dueDays.filter((day) => h.completions[day]).length;
     // Attendu ramené au prorata de la fenêtre réellement vécue.
-    const dueOnWindow = Math.round((expected * liveDays.length) / 7);
+    const dueOnWindow = h.frequency === 'daily'
+      ? dueDays.length
+      : Math.round((expected * liveDays.length) / 7);
     const missed = Math.max(0, dueOnWindow - done);
     if (missed > 0 && (!worst || missed > worst.missed)) {
       worst = { name: h.name, missed };
@@ -98,6 +106,34 @@ export function fragileHabitInsight(habits: Habit[], now: Date = new Date()): In
   }
   if (!worst || worst.missed < 3) return null; // rien d'alarmant
   return { kind: 'fragileHabit', name: worst.name, missed: worst.missed };
+}
+
+/**
+ * Jours PRÉVUS d'une habitude entre deux bornes incluses (jours calendaires
+ * locaux), et coches tombées sur ces jours-là. Base du taux de réussite des
+ * statistiques : il se calcule sur les seuls jours prévus (mig. 251), et une
+ * coche sur un jour non prévu ne gonfle pas le taux.
+ */
+export function scheduledPeriodStats(
+  habit: Pick<Habit, 'completions' | 'scheduledDays' | 'scheduleHistory'>,
+  start: Date,
+  end: Date,
+): { scheduledDays: number; scheduledCompletions: number } {
+  let scheduledDays = 0;
+  let scheduledCompletions = 0;
+  const cursor = new Date(start);
+  cursor.setHours(12, 0, 0, 0);
+  const last = new Date(end);
+  last.setHours(12, 0, 0, 0);
+  for (let guard = 0; cursor <= last && guard < 3700; guard++) {
+    const key = cursor.toLocaleDateString('en-CA');
+    if (isHabitScheduledOn(habit, key)) {
+      scheduledDays++;
+      if (habit.completions[key]) scheduledCompletions++;
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return { scheduledDays, scheduledCompletions };
 }
 
 /** Dynamique de complétion : cette semaine vs la précédente. */
