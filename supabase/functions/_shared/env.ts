@@ -31,3 +31,13 @@ export function corsHeadersFor(req: Request): Record<string, string> {
   origins ??= allowedOrigins(requireEnv('APP_URL'), Deno.env.get('CORS_DEV_ORIGINS'))
   return corsHeaders(req.headers.get('Origin'), origins)
 }
+
+/**
+ * Les origines de l app cosmo-analytics (variable `AFFILIATION_ALLOWED_ORIGINS`,
+ * liste separee par des virgules), reduites a leur origine. Absente ou vide :
+ * on leve, comme `requireEnv`. Une entree qui n est pas une URL leve aussi.
+ */
+export function analyticsOrigins(): ReadonlySet<string> {
+  const raw = requireEnv('AFFILIATION_ALLOWED_ORIGINS')
+  return new Set(raw.split(',').map((s) => s.trim()).filter(Boolean).map((s) => new URL(s).origin))
+}

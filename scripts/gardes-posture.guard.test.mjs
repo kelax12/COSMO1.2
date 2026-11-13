@@ -436,9 +436,10 @@ describe('témoin — sondes de fumée des Edge Functions (C-91)', () => {
     // 8 jusqu'au 2026-09-30 : les quatre fonctions du mode entreprise
     // n'étaient sondées par rien (A-2). Une par dossier de supabase/functions/ ;
     // 14 depuis affiliation-api, 15 depuis stripe-org-subscription (2026-11-01),
-    // 16 depuis seat-alert (2026-11-06 : sans sonde, `Edge deploy` refusait tout).
-    expect(SONDES).toHaveLength(16);
-    expect(new Set(SONDES.map((s) => s.fonction)).size).toBe(16);
+    // 16 depuis seat-alert (2026-11-06 : sans sonde, `Edge deploy` refusait tout),
+    // 17 depuis analytics-admin-login (2026-11-13).
+    expect(SONDES).toHaveLength(17);
+    expect(new Set(SONDES.map((s) => s.fonction)).size).toBe(17);
     for (const s of SONDES) {
       expect(s.prouve.length).toBeGreaterThan(30);
       expect(s.statut.length).toBeGreaterThan(0);

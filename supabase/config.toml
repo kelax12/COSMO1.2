@@ -100,3 +100,9 @@ verify_jwt = true
 # not demand a JWT.
 [functions.affiliation-api]
 verify_jwt = false
+
+# analytics-admin-login: TOTP-only admin login for the cosmo-analytics app. The
+# caller has no session yet, so the gateway must not demand a JWT; the function
+# checks the Origin, rate-limits (fail closed) and verifies the code itself.
+[functions.analytics-admin-login]
+verify_jwt = false

@@ -114,6 +114,7 @@ export interface RateLimitVerdict {
 export async function consumeRateLimits(
   fnName: string,
   buckets: { domain: string; value: string; limit: number; window: string }[],
+  options: { failClosed?: boolean } = {},
 ): Promise<RateLimitVerdict> {
   const admin = createClient(
     Deno.env.get('SUPABASE_URL') ?? '',
@@ -136,6 +137,11 @@ export async function consumeRateLimits(
     })
 
     if (error) {
+      // `failClosed` (connexions) : un compteur illisible REFUSE l'essai.
+      if (options.failClosed) {
+        await opsAlert(fnName, `plafond de debit non evalue (${error.message}), appel REFUSE`)
+        return { allowed: false, misconfigured: true }
+      }
       // ⚠️ Panne de la base : on laisse passer et on alerte. Couper le
       // signalement de bugs pour tout le monde serait pire que l'abus qu'on
       // cherche à borner — et la conséquence d'un faux négatif est un e-mail

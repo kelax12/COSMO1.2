@@ -259,6 +259,17 @@ export const SONDES = [
       'Le module se charge et son routage refuse une route inconnue. Aucune '
       + 'lecture des tables 236, aucun clic compté, aucun essai de code consommé.',
   },
+  // 2026-11-13 : connexion admin de cosmo-analytics. GET : le 404 vient du routage
+  // de méthode, avant la lecture de l'origine, du corps et de tout plafond.
+  {
+    fonction: 'analytics-admin-login',
+    methode: 'GET',
+    statut: [404],
+    marqueur: '"error":"not_found"',
+    prouve:
+      'Le module se charge (origines lues) et refuse une méthode autre que POST. '
+      + 'Aucun jeton de plafond consommé, aucune session ouverte.',
+  },
 ];
 
 /** Joue une sonde. Rend `{ ok, statut, extrait, raison }`. */
