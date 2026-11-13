@@ -8,12 +8,12 @@ Les chiffres de production (tables vivantes, ledger, taille de base) ne sont pas
 | Fait | Valeur | Source |
 |---|---|---|
 | Edge Functions déployables | **17** | dossiers de `supabase/functions/` portant un `index.ts` (hors `_shared`) |
-| Migrations SQL | **226** | fichiers `NNN_*.sql` de `supabase/migration/` |
-| Dernière migration | **250** | plus grand préfixe numérique de `supabase/migration/` |
+| Migrations SQL | **227** | fichiers `NNN_*.sql` de `supabase/migration/` |
+| Dernière migration | **252** | plus grand préfixe numérique de `supabase/migration/` |
 | Workflows GitHub | **36** | fichiers de `.github/workflows/` |
 | dont planifiés | **27** | workflows portant un `schedule:` |
 | Fichiers de `scripts/` | **179** | fichiers suivis (budget d outillage, `scripts/outillage.reference.json`) |
-| Lignes de `scripts/` | **42018** | lignes des fichiers suivis de `scripts/` |
+| Lignes de `scripts/` | **42053** | lignes des fichiers suivis de `scripts/` |
 | Tests de garde | **115** | fichiers `*.guard.test.*` du dépôt |
 | Modules applicatifs | **23** | dossiers de `src/modules/` |
 | Namespaces i18n | **34** | fichiers de `src/locales/fr/` |
