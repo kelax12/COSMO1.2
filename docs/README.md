@@ -115,6 +115,7 @@ Rangées par nature. Aucune n'est maintenue.
   (journal daté des migrations `150` → `240`). Les récits d'incident, de mesure et de bascule retirés de
   `SECURITY.md` le 2026-11-08 (angles morts, base de données, gardes SQL, garde-fous transversaux, AM-5) :
   [`SECURITY-recits-base-gardes-angles-morts-2026-08-26-au-2026-11-08.md`](./archive/SECURITY-recits-base-gardes-angles-morts-2026-08-26-au-2026-11-08.md).
+- **Tests** : [`TESTING-journal-2026-11-13.md`](./archive/TESTING-journal-2026-11-13.md) (mesure de couverture du 2026-11-09, divergences V12.2, récits du harnais `supabase-stub` et de WebKit, décisions du 2026-11-07, tableau React Compiler, extraits du 2026-11-13).
 - **Performance** : [`PERFORMANCE-journal-2026-11-13.md`](./archive/PERFORMANCE-journal-2026-11-13.md) (tailles de chunks des 2026-08-24 et 08-25, récit images et polices, 29 requêtes ramenées à 21, onglets zombies, tableau avant / après de la pagination, extraits du 2026-11-13).
 - **Juridique** : [`LEGAL-journal-2026-11-13.md`](./archive/LEGAL-journal-2026-11-13.md) (recomptages, chaîne de paiement désarmée du 2026-09-14, relevé d'antériorité de marque, extraits de `LEGAL.md`).
 - **Exploitation et migration** : [`DEPLOYMENT-journal-2026-11-13.md`](./archive/DEPLOYMENT-journal-2026-11-13.md) (extraits du runbook et des mises en service, 2026-11-13), [`DEPLOYMENT-recits-et-releves-2026-06-07-au-2026-11-08.md`](./archive/DEPLOYMENT-recits-et-releves-2026-06-07-au-2026-11-08.md)
