@@ -335,7 +335,7 @@
     },
     "src/components/task-modal/useTaskModal.ts": {
       "complexity": [47],
-      "max-lines-per-function": [354]
+      "max-lines-per-function": [345]
     },
     "src/components/task-table/TaskBulkActionsBar.tsx": {
       "max-lines-per-function": [253]
