@@ -16,12 +16,10 @@ test('partager une tâche entre deux comptes', async ({ page, browser, baseURL, 
   const bob = await makeAccount('bob');
 
   // ── Préalable : Alice et Bob sont amis ──
-  // 🔴 Insertion par service_role AVEC `user_id` : sur une base rejouee, la colonne
-  // heritee de la migration 007 est NOT NULL, et l'insertion de l'application (sans
-  // elle) est refusee (cf. `schema-drift.spec.ts`, test.fixme).
+  // Insertion par service_role, forme de `sendFriendRequest` (sans `user_id`, mig. 250).
   const { data: request, error: reqError } = await adminClient
     .from('friend_requests')
-    .insert([{ email: bob.email, status: 'pending', sent_at: new Date().toISOString(), sender_id: alice.id, user_id: alice.id }])
+    .insert([{ email: bob.email, status: 'pending', sent_at: new Date().toISOString(), sender_id: alice.id }])
     .select()
     .single();
   expect(reqError, reqError?.message).toBeNull();

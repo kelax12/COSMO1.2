@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// Preuves des mig. 242, 243, 244, 248 et 249, rejouées sur la base fraîche du job
+// Preuves des mig. 242, 243, 244, 248, 249 et 250, rejouées sur la base fraîche du job
 // `rls-integration`.
 //
 // Une preuve de `supabase/proofs/` est un bloc `DO` qui se termine TOUJOURS
@@ -30,6 +30,8 @@ const PREUVES: { preuve: string; migration: string }[] = [
   { preuve: '248.proof.sql', migration: '248_habit_completions.sql' },
   // Échéance et priorité facultatives (PAR-01, PAR-02), décision du 2026-11-09.
   { preuve: '249.proof.sql', migration: '249_taches_echeance_priorite_facultatives.sql' },
+  // `friend_requests` à la forme de la production (divergence FRIENDS-USER-ID).
+  { preuve: '250.proof.sql', migration: '250_friend_requests_forme_prod.sql' },
 ];
 
 const lire = (chemin: string) => readFileSync(join(process.cwd(), chemin), 'utf8').replace(/\r\n/g, '\n');
@@ -39,7 +41,7 @@ afterAll(async () => {
   await db.end();
 });
 
-describe('supabase/proofs : preuves 242 à 244, 248 et 249 rejouées sur la base fraîche', () => {
+describe('supabase/proofs : preuves 242 à 244, 248, 249 et 250 rejouées sur la base fraîche', () => {
   for (const { preuve, migration } of PREUVES) {
     it(`${preuve} embarque le texte exact de ${migration}`, () => {
       const texte = lire(`supabase/proofs/${preuve}`);
@@ -67,7 +69,7 @@ describe('supabase/proofs : preuves 242 à 244, 248 et 249 rejouées sur la base
   it('l’annulation a tout emporté : ni table de preuve, ni compte, ni organisation', async () => {
     const { rows } = await db.query<{ table_242: string | null; comptes: string; orgs: string }>(
       `SELECT to_regclass('public.preuve_242_ferme')::text AS table_242,
-              (SELECT count(*)::text FROM auth.users WHERE email LIKE '%24_@proof.invalid') AS comptes,
+              (SELECT count(*)::text FROM auth.users WHERE email LIKE ANY (ARRAY['%24_@proof.invalid', '%25_@proof.invalid'])) AS comptes,
               (SELECT count(*)::text FROM public.organizations WHERE join_code LIKE 'PRF243%') AS orgs`,
     );
     expect(rows[0]).toEqual({ table_242: null, comptes: '0', orgs: '0' });

@@ -49,13 +49,17 @@ compilait, la suite passait.
   catalogue : `242` (`20261107091512`, `anon` hors des défauts tables et séquences de `postgres`),
   `243` (`20261107091727`, corps de `can_access_team_project` = fichier, ACL inchangée), `244`
   (`20261107091936`, une SELECT permissive par table ; la prod n'avait déjà plus les doublons).
-  `245`-`246` (ARC-06, pg_cron) commitées, **non appliquées** : `DEPLOYMENT.md` § 2sexies.
+  ✅ `245` (ARC-06, journal des crons) en prod le 2026-11-13 (`20261113070725`, `pg_net` installée).
+  `246` (planification pg_cron) **non appliquée** : sa preuve rend `ECHEC Vault : 0 secret(s) sur 2`, elle
+  attend les deux secrets Vault d'Axel (`DEPLOYMENT.md` § 2sexies).
   ✅ `247` (index des 3 FK nées par 230, 233, 237 ; V9.4) en prod le 2026-11-08 (`20261108001203`),
   relue au catalogue : trois index valides, définition = fichier ; `unindexed_foreign_keys` disparu.
-  `248` (`habit_completions`, DAT-02) commitée, **non appliquée** : preuve `proofs/248.proof.sql`
-  à rejouer en prod avant. `249` (échéance et priorité facultatives sur `tasks`, PAR-01 et PAR-02)
-  commitée, **non appliquée** : procédure en tête de `proofs/249.proof.sql`, indépendante de la `248`.
-  Prochain numéro libre : **`250`**. Journal daté de chaque application (preuves, relectures au catalogue) :
+  ✅ `248` (`habit_completions`, DAT-02) en prod le 2026-11-13 (`20261113070621`, 1 421 lignes
+  rétro-remplies). ✅ `249` (échéance et priorité facultatives sur `tasks`) en prod le 2026-11-13
+  (`20261113070529`). Les deux après preuve à 0 ECHEC, relues au catalogue, ledger = fichier.
+  `250` (`friend_requests` sans `user_id` comme la prod, et `sender_id` NOT NULL) commitée,
+  **non appliquée** : procédure en tête de `proofs/250.proof.sql`.
+  Prochain numéro libre : **`251`**. Journal daté de chaque application (preuves, relectures au catalogue) :
   [`docs/archive/SECURITY-journal-migrations-150-223.md`](../../docs/archive/SECURITY-journal-migrations-150-223.md).
 - ✅ **Forme de preuve à reprendre** : un seul bloc `DO` terminé par `RAISE EXCEPTION`
   (`proofs/208-210.proof.sql`). L'annulation n'est pas une instruction qu'on peut oublier, c'est la
