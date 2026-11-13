@@ -2095,6 +2095,88 @@ $$;
 
 
 --
+-- Name: cron_probe(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.cron_probe() RETURNS integer
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_projet text;
+  v_req    bigint;
+  v_n      integer := 0;
+  s        record;
+BEGIN
+  SELECT d.decrypted_secret INTO v_projet
+    FROM vault.decrypted_secrets d WHERE d.name = 'cosmo_project_url';
+
+  FOR s IN
+    SELECT t.job, t.url FROM (VALUES
+      ('sonde-site',  'https://thecosmo.app/'),       -- adresse publique du site
+      ('sonde-guide', 'https://thecosmo.app/guide'),
+      ('sonde-auth',  CASE WHEN coalesce(v_projet, '') <> ''
+                           THEN rtrim(v_projet, '/') || '/auth/v1/health' END)
+    ) AS t(job, url)
+  LOOP
+    IF s.url IS NULL THEN
+      INSERT INTO public.cron_runs (job, finished_at, status, detail)
+      VALUES (s.job, now(), 'config_missing', 'secret Vault absent : cosmo_project_url');
+    ELSE
+      v_req := net.http_get(
+        url := s.url,
+        headers := jsonb_build_object('User-Agent', 'cosmo-sonde-pg-cron'),
+        timeout_milliseconds := 20000
+      );
+      INSERT INTO public.cron_runs (job, request_id) VALUES (s.job, v_req);
+    END IF;
+    v_n := v_n + 1;
+  END LOOP;
+  RETURN v_n;
+END;
+$$;
+
+
+--
+-- Name: cron_probe_defaut(text, integer, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.cron_probe_defaut(p_job text, p_http_code integer, p_content text) RETURNS text
+    LANGUAGE plpgsql IMMUTABLE
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_c        text := coalesce(p_content, '');
+  v_absents  text := '';
+BEGIN
+  IF p_http_code IS NULL THEN
+    RETURN 'injoignable (aucun code HTTP)';
+  END IF;
+  IF p_job = 'sonde-site' THEN
+    IF p_http_code <> 200 THEN RETURN format('HTTP %s (attendu 200)', p_http_code); END IF;
+    IF strpos(v_c, 'id="seo-fallback"') = 0 THEN v_absents := v_absents || ' seo-fallback'; END IF;
+    IF strpos(v_c, '"FAQPage"') = 0 THEN v_absents := v_absents || ' FAQPage'; END IF;
+    IF strpos(v_c, '/assets/') = 0 THEN v_absents := v_absents || ' assets'; END IF;
+  ELSIF p_job = 'sonde-guide' THEN
+    IF p_http_code <> 200 THEN RETURN format('HTTP %s (attendu 200)', p_http_code); END IF;
+    IF strpos(v_c, 'id="seo-fallback"') = 0 THEN v_absents := v_absents || ' seo-fallback'; END IF;
+  ELSIF p_job = 'sonde-auth' THEN
+    IF p_http_code NOT IN (200, 401) THEN RETURN format('HTTP %s (attendu 200 ou 401)', p_http_code); END IF;
+    IF p_http_code = 200 AND v_c !~* '(gotrue|"version")' THEN
+      RETURN 'HTTP 200 mais pas la reponse de GoTrue (projet en pause ?)';
+    END IF;
+  ELSE
+    RAISE EXCEPTION 'cron_probe_defaut : sonde inconnue (%)', p_job USING ERRCODE = '22023';
+  END IF;
+  IF v_absents <> '' THEN
+    RETURN 'HTTP 200 sans :' || v_absents || ' (coquille SPA servie a la place du prerendu ?)';
+  END IF;
+  RETURN NULL;
+END;
+$$;
+
+
+--
 -- Name: cron_run_status(integer, boolean); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2119,8 +2201,24 @@ CREATE FUNCTION public.cron_runs_close() RETURNS integer
     SET search_path TO ''
     AS $$
 DECLARE
+  v_sondes integer;
   v_closed integer;
 BEGIN
+  UPDATE public.cron_runs r
+     SET finished_at = x.created,
+         http_code = x.status_code,
+         status = CASE
+                    WHEN x.timed_out IS TRUE THEN 'timeout'
+                    WHEN public.cron_probe_defaut(r.job, x.status_code, x.content) IS NULL THEN 'ok'
+                    ELSE 'error'
+                  END,
+         detail = left(coalesce(x.error_msg, public.cron_probe_defaut(r.job, x.status_code, x.content)), 300)
+    FROM net._http_response x
+   WHERE r.status = 'started'
+     AND r.job IN ('sonde-site', 'sonde-guide', 'sonde-auth')
+     AND x.id = r.request_id;
+  GET DIAGNOSTICS v_sondes = ROW_COUNT;
+
   UPDATE public.cron_runs r
      SET finished_at = x.created,
          http_code = x.status_code,
@@ -2140,7 +2238,7 @@ BEGIN
 
   DELETE FROM public.cron_runs WHERE started_at < now() - interval '90 days';
 
-  RETURN v_closed;
+  RETURN v_sondes + v_closed;
 END;
 $$;
 
@@ -2160,7 +2258,10 @@ CREATE FUNCTION public.cron_runs_verdict(p_now timestamp with time zone DEFAULT 
       ('org-digest-daily',     interval '26 hours'),
       ('renewal-notice',       interval '26 hours'),
       ('seat-alert',           interval '26 hours'),
-      ('inactive-accounts',    interval '26 hours')
+      ('inactive-accounts',    interval '26 hours'),
+      ('sonde-site',           interval '20 minutes'),
+      ('sonde-guide',          interval '20 minutes'),
+      ('sonde-auth',           interval '20 minutes')
   )
   SELECT a.job,
          a.fenetre,
@@ -18721,6 +18822,20 @@ GRANT ALL ON FUNCTION public.cron_lease_release(p_job text, p_token uuid) TO ser
 
 
 --
+-- Name: FUNCTION cron_probe(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.cron_probe() FROM PUBLIC;
+
+
+--
+-- Name: FUNCTION cron_probe_defaut(p_job text, p_http_code integer, p_content text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.cron_probe_defaut(p_job text, p_http_code integer, p_content text) FROM PUBLIC;
+
+
+--
 -- Name: FUNCTION cron_run_status(p_http_code integer, p_timed_out boolean); Type: ACL; Schema: public; Owner: -
 --
 
@@ -21342,3 +21457,4 @@ SELECT cron.schedule('cosmo-purge-traffic', '17 0 * * *', 'SELECT public.purge_t
 SELECT cron.schedule('cosmo-purge-webhook-deliveries', '35 4 * * *', 'DELETE FROM public.org_webhook_deliveries WHERE created_at < now() - interval ''7 days'';');
 SELECT cron.schedule('cosmo-renewal-notice', '12 7 * * *', 'SELECT public.cron_invoke(''renewal-notice'');');
 SELECT cron.schedule('cosmo-seat-alert', '14 7 * * *', 'SELECT public.cron_invoke(''seat-alert'');');
+SELECT cron.schedule('cosmo-uptime', '2-59/5 * * * *', 'SELECT public.cron_probe();');

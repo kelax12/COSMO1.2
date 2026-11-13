@@ -2187,6 +2187,12 @@ isOneToOne: false
 "cron_lease_release":
 { Args: { "p_job": string,"p_token": string }; Returns: boolean
                            },
+"cron_probe":
+{ Args: Record<PropertyKey, never>; Returns: number
+                           },
+"cron_probe_defaut":
+{ Args: { "p_content": string,"p_http_code": number,"p_job": string }; Returns: string
+                           },
 "cron_run_status":
 { Args: { "p_http_code": number,"p_timed_out": boolean }; Returns: string
                            },

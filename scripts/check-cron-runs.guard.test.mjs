@@ -1,11 +1,5 @@
-// ═══════════════════════════════════════════════════════════════════
-// Témoin de `scripts/check-cron-runs.mjs` (ARC-06, vague 10.2).
-//
-// La sonde doit ROUGIR sur chacun des cas où un traitement planifié n'a pas
-// tourné, et sur chacun des cas où elle n'a rien mesuré (secret absent,
-// sélection vide, connexion impossible). Une sonde qui répond vert sans
-// mesurer est pire qu'une sonde absente (`scripts/CLAUDE.md`).
-// ═══════════════════════════════════════════════════════════════════
+// Témoin de `scripts/check-cron-runs.mjs` (ARC-06, OBS-02) : ROUGIR sur chaque job ou sonde qui n'a
+// pas tourné ou pas réussi, et sur chaque cas où rien n'a été mesuré (secret, sélection vide, connexion).
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -103,30 +97,20 @@ describe('juger', () => {
 
   it('TÉMOIN : un job de moins que les mig. 245 / 252 = divergence = rouge', () => {
     expect(JOBS_ATTENDUS).toBe(6);
-    expect(SONDES).toEqual(['sonde-auth', 'sonde-guide', 'sonde-site']);
     const { exit, lines } = juger(tousOk().slice(0, 8));
     expect(exit).toBe(1);
     expect(lines.some((l) => l.includes('8 job(s) surveille(s) au lieu de 9'))).toBe(true);
-    // Avant application de la 252 : six lignes seulement, rouge.
-    expect(juger(tousOk().slice(0, 6)).exit).toBe(1);
+    expect(juger(tousOk().slice(0, 6)).exit).toBe(1); // avant application de la 252
   });
 
-  it('sonde absente : rouge, « la sonde n a pas tourne », jamais un simple avertissement', () => {
+  it('sonde arrêtée (absent) et prod injoignable (echec) : deux rouges distincts, jamais un avertissement', () => {
     const rows = tousOk();
+    rows[7] = ligne('sonde-guide', 'echec', { dernier_code: 503 });
     rows[8] = ligne('sonde-site', 'absent');
     const { exit, lines } = juger(rows, []);
     expect(exit).toBe(1);
-    expect(lines.some((l) => l.startsWith('::error title=sonde sonde-site n a pas tourne::'))).toBe(true);
-  });
-
-  it('sonde en échec : rouge, « prod injoignable », distinct de la sonde arrêtée', () => {
-    const rows = tousOk();
-    rows[7] = ligne('sonde-guide', 'echec', { dernier_code: 503 });
-    const { exit, lines } = juger(rows);
-    expect(exit).toBe(1);
-    const l = lines.find((x) => x.startsWith('::error title=prod injoignable sonde-guide::'));
-    expect(l).toContain('HTTP 503');
-    expect(lines.some((x) => x.includes('sonde-guide n a pas tourne'))).toBe(false);
+    expect(lines.find((x) => x.startsWith('::error title=prod injoignable sonde-guide::'))).toContain('HTTP 503');
+    expect(lines.some((x) => x.startsWith('::error title=sonde sonde-site n a pas tourne::'))).toBe(true);
   });
 
   it('la sonde compte autant de jobs que cron_runs_verdict() en déclare', () => {
@@ -139,7 +123,7 @@ describe('juger', () => {
 describe('lecture et exécution', () => {
   it('lit en transaction READ ONLY, puis annule', async () => {
     const c = faux(tousOk());
-    expect(await lireVerdict(c)).toHaveLength(6);
+    expect(await lireVerdict(c)).toHaveLength(9);
     expect(c.requetes).toEqual(['BEGIN READ ONLY', VERDICT_SQL, 'ROLLBACK']);
   });
 

@@ -16,7 +16,7 @@ Regenerer : npm run contrat:generer (Docker, supabase start, node scripts/apply-
 
 | Mesure | Nombre |
 |---|---|
-| Fonctions | 245 |
+| Fonctions | 247 |
 | Executables par `anon` | 3 |
 | Executables par `authenticated` | 110 |
 | Executables par `service_role` | 241 |
@@ -86,6 +86,8 @@ Aucune.
 | `cron_invoke(p_job text)` | INVOKER | `""` | - | - | - | - |
 | `cron_lease_acquire(p_job text, p_ttl_seconds integer)` | DEFINER | `""` | - | - | oui | `supabase/functions/_shared/cron-lease.ts` |
 | `cron_lease_release(p_job text, p_token uuid)` | DEFINER | `""` | - | - | oui | `supabase/functions/_shared/cron-lease.ts` |
+| `cron_probe()` | INVOKER | `""` | - | - | - | - |
+| `cron_probe_defaut(p_job text, p_http_code integer, p_content text)` | INVOKER | `""` | - | - | - | - |
 | `cron_run_status(p_http_code integer, p_timed_out boolean)` | INVOKER | `""` | - | - | - | - |
 | `cron_runs_close()` | INVOKER | `""` | - | - | - | - |
 | `cron_runs_verdict(p_now timestamp with time zone)` | INVOKER | `""` | - | - | - | - |

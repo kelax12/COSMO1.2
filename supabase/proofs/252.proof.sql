@@ -370,9 +370,10 @@ $mig$;
   nb := public.cron_probe();
   SELECT string_agg(c.job || '=' || c.status || CASE WHEN c.request_id IS NULL THEN '' ELSE '+req' END, ',' ORDER BY c.job)
     INTO v_det FROM public.cron_runs c WHERE c.job LIKE 'sonde-%' AND c.started_at >= now();
-  IF nb = 3 AND v_det = CASE WHEN coalesce(v_proj, '') = ''
-       THEN 'sonde-auth=config_missing,sonde-guide=started+req,sonde-site=started+req'
-       ELSE 'sonde-auth=started+req,sonde-guide=started+req,sonde-site=started+req' END THEN
+  -- Attendu calculé à part : en PL/pgSQL, la condition d un IF s arrête au premier THEN.
+  v_st := CASE WHEN coalesce(v_proj, '') = '' THEN 'sonde-auth=config_missing' ELSE 'sonde-auth=started+req' END
+          || ',sonde-guide=started+req,sonde-site=started+req';
+  IF nb = 3 AND v_det = v_st THEN
     r := r || format('ok cron_probe : %s (requetes en file, annulees avec la preuve)', v_det);
   ELSE ko := ko + 1; r := r || format('ECHEC cron_probe : %s ligne(s), %s', nb, v_det); END IF;
   SELECT string_agg(v.job, ',' ORDER BY v.job) INTO v_det FROM public.cron_runs_verdict() v WHERE v.job LIKE 'sonde-%';
