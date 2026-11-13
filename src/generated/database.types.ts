@@ -318,14 +318,14 @@ isOneToOne: false
                   ]
                 },"friend_requests": {
                   Row: {
-                    "created_at": string | null,"email": string,"id": string,"receiver_id": string | null,"sender_email": string | null,"sender_id": string,"sent_at": string | null,"status": string,"user_id": string
+                    "created_at": string | null,"email": string,"id": string,"receiver_id": string | null,"sender_email": string | null,"sender_id": string,"sent_at": string | null,"status": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string | null,"email": string,"id"?: string,"receiver_id"?: string | null,"sender_email"?: string | null,"sender_id": string,"sent_at"?: string | null,"status"?: string,"user_id": string
+                    "created_at"?: string | null,"email": string,"id"?: string,"receiver_id"?: string | null,"sender_email"?: string | null,"sender_id": string,"sent_at"?: string | null,"status"?: string
                   }
                   Update: {
-                    "created_at"?: string | null,"email"?: string,"id"?: string,"receiver_id"?: string | null,"sender_email"?: string | null,"sender_id"?: string,"sent_at"?: string | null,"status"?: string,"user_id"?: string
+                    "created_at"?: string | null,"email"?: string,"id"?: string,"receiver_id"?: string | null,"sender_email"?: string | null,"sender_id"?: string,"sent_at"?: string | null,"status"?: string
                   }
                   Relationships: [
 

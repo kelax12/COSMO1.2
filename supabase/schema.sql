@@ -10052,7 +10052,6 @@ COMMENT ON COLUMN public.events.review_dismissed_at IS 'Instant où la personne 
 
 CREATE TABLE public.friend_requests (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    user_id uuid NOT NULL,
     email text NOT NULL,
     status text DEFAULT 'pending'::text NOT NULL,
     sent_at timestamp with time zone DEFAULT now(),
@@ -10064,6 +10063,13 @@ CREATE TABLE public.friend_requests (
 );
 
 ALTER TABLE ONLY public.friend_requests REPLICA IDENTITY FULL;
+
+
+--
+-- Name: COLUMN friend_requests.sender_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.friend_requests.sender_id IS 'Expéditeur de la demande (mig. 250) : toujours auth.uid() à l''insertion (policy « Senders can create requests »), NOT NULL. La table n''a plus de user_id.';
 
 
 --
@@ -11631,14 +11637,6 @@ ALTER TABLE ONLY public.friend_requests
 
 
 --
--- Name: friend_requests friend_requests_user_id_email_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.friend_requests
-    ADD CONSTRAINT friend_requests_user_id_email_key UNIQUE (user_id, email);
-
-
---
 -- Name: friends friends_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -12510,13 +12508,6 @@ CREATE INDEX idx_friend_requests_sender_id ON public.friend_requests USING btree
 --
 
 CREATE INDEX idx_friend_requests_status ON public.friend_requests USING btree (status);
-
-
---
--- Name: idx_friend_requests_user_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_friend_requests_user_id ON public.friend_requests USING btree (user_id);
 
 
 --
@@ -14811,14 +14802,6 @@ ALTER TABLE ONLY public.friend_requests
 
 ALTER TABLE ONLY public.friend_requests
     ADD CONSTRAINT friend_requests_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES auth.users(id) ON DELETE CASCADE;
-
-
---
--- Name: friend_requests friend_requests_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.friend_requests
-    ADD CONSTRAINT friend_requests_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 
 
 --
