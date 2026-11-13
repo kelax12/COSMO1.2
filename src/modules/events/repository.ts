@@ -19,6 +19,12 @@ export interface IEventsRepository {
   getAll(): Promise<CalendarEvent[]>;
   getFiltered(filters: EventFilters): Promise<CalendarEvent[]>;
   getPage(params?: PaginationParams): Promise<PaginatedResult<CalendarEvent>>;
+  /**
+   * TOUS les événements personnels, pour l'export de portabilité (RGPD
+   * art. 20) : pages de clé enchaînées jusqu'à la dernière, SANS plafond
+   * (PER-01). `getAll()`, lu par les écrans, reste plafonné et le signale.
+   */
+  getAllForExport(): Promise<CalendarEvent[]>;
   /** Événements de la fenêtre [startISO, endISO] + TOUS les récurrents (cf. window.ts). */
   getWindow(startISO: string, endISO: string): Promise<CalendarEvent[]>;
   /**

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { toast } from '@/lib/toast';
 import { getEventsRepository } from '@/lib/repository.factory';
@@ -28,6 +28,15 @@ export const useEvents = () => {
     queryKey: eventsKeys.lists(),
     queryFn: () => repository.getAll(),
   });
+};
+
+/**
+ * Relit au clic TOUS les événements, sans plafond, pour l'export de
+ * portabilité (PER-01). Même forme que `useLoadAllTasks`.
+ */
+export const useLoadAllEvents = () => {
+  const repository = useEventsRepository();
+  return useCallback(() => repository.getAllForExport(), [repository]);
 };
 
 /**

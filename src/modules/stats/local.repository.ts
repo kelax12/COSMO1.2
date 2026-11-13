@@ -33,7 +33,7 @@ export class LocalStatsRepository implements IStatsRepository {
       this.events.getAll(),
       this.habits.fetchHabits(),
       this.okrs.getAll(),
-      this.krCompletions.getAll(),
+      this.krCompletions.getAllForExport(),
     ]);
     return ranges.map(({ start, end }) => {
       const startDate = parseLocalDate(start);

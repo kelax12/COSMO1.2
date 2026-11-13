@@ -458,15 +458,24 @@ cache filtré ce qui ne répond plus à sa requête. Aucune migration : tout pas
 ### Lectures complètes restantes
 
 `fetchAllPages` (plafond `MAX_ROWS` = 5 000) ne sert plus qu'à ces lectures, chacune pour une
-raison écrite :
+raison écrite. Toutes passent par `warnIfTruncated` : plafond atteint, un message Sentry
+(`pagination truncated: <table>`) et un toast une fois par session, jamais une liste amputée
+présentée comme complète.
 
-- `habits` `getAll` : par compte, une ligne par habitude (dizaines) ; l'historique non borné vit
-  dans `completions`, déjà fenêtré par `get_my_habits(p_days)` (mig. 119).
+- `habits` `getAll` : par compte, une ligne par habitude (dizaines) ; l'historique vit dans
+  `habit_completions` (mig. `248`), fenêtré par `get_my_habits(p_days)`.
 - `okrs` `getAll`, `team-okrs` : quelques dizaines d'objectifs par compte ou par organisation.
-- `kr-completions` `getAll` : journal qui grossit ; ses lecteurs (statistiques, export) le
-  veulent entier. Candidat à une fenêtre, comme les tâches terminées : suite à donner.
-- `events` `getAll` (`useEvents()`) : tableau de bord, statistiques, palette, export. Hors agenda,
-  hors périmètre de la V14.2 : suite à donner sur le modèle des tâches (fenêtre de dates).
+- `events` `getAll` (`useEvents()`) : tableau de bord, statistiques, palette. Huit écrans, dont la
+  palette qui cherche dans tout l'historique : une fenêtre changerait ce qu'elle trouve. Suite à
+  donner écran par écran.
+
+Bornées sans plafond (PER-01) :
+
+- `kr-completions` : les écrans lisent `getSince` (fenêtre de `KR_COMPLETIONS_WINDOW_DAYS` = 400
+  jours, l'écran le plus long étant /statistics sur 365) ; `getFiltered` (le journal d'un OKR,
+  capturé avant suppression pour « Annuler ») et `getAllForExport` lisent tout. Pages de clé
+  `(completed_at, id)`, curseur validé avant interpolation.
+- `events` `getAllForExport` : l'export CSV relit tout au clic par les pages de clé de `getPage`.
 - `events` `getWindow`, `getWindowForUser`, `getLinkedToTasks` : `fetchAllPages` **sans plafond**
   (`UNCAPPED`), pages par décalage parce que le filtre de fenêtre occupe déjà le `.or()`.
 

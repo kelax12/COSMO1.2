@@ -120,8 +120,8 @@ describe('production : lecture sous RLS, bornée à la personne', () => {
     const lues = await new SupabaseKRCompletionsRepository().getAllForExport();
 
     expect(supabaseMock.argsOf('kr_completions', 'eq')).toEqual(['user_id', '11111111-1111-4111-8111-111111111111']);
-    expect(supabaseMock.argsOf('kr_completions', 'range')).toBeDefined();
-    expect(supabaseMock.argsOf('kr_completions', 'limit')).toBeUndefined();
+    // Pages de clé sans plafond (PER-01) : une page de 1 000, +1 pour la suite.
+    expect(supabaseMock.argsOf('kr_completions', 'limit')).toEqual([1001]);
     exportKRCompletionsCSV(lues);
     expect((await lignes())[1]).toBe('2026-06-10T09:00:00.000Z,okr-1,Santé,kr-1,Courir 10 km');
   });
@@ -151,7 +151,7 @@ describe('production : lecture sous RLS, bornée à la personne', () => {
 describe('démo : mêmes fichiers depuis le localStorage', () => {
   it('kr_completions : le journal seedé sort en entier', async () => {
     const repo = new LocalStorageKRCompletionsRepository();
-    const tout = await repo.getAll();
+    const tout = await repo.getFiltered({});
     const lues = await repo.getAllForExport();
     expect(lues).toHaveLength(tout.length);
     exportKRCompletionsCSV(lues);

@@ -5,7 +5,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const fakeRepo = {
-  getAll: vi.fn(),
+  getSince: vi.fn(),
   create: vi.fn(),
 };
 
@@ -14,6 +14,7 @@ vi.mock('@/lib/app-mode.store', () => ({ useIsDemo: () => true }));
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn(), warning: vi.fn() } }));
 
 import { useKRCompletions } from './hooks';
+import { KR_COMPLETIONS_WINDOW_DAYS } from './constants';
 import type { KRCompletion } from './types';
 
 const completion: KRCompletion = {
@@ -30,24 +31,29 @@ function makeWrapper() {
 }
 
 beforeEach(() => {
-  fakeRepo.getAll.mockReset();
+  fakeRepo.getSince.mockReset();
   fakeRepo.create.mockReset();
 });
 
 describe('useKRCompletions', () => {
   it('fetches the append-only journal', async () => {
-    fakeRepo.getAll.mockResolvedValue([completion]);
+    fakeRepo.getSince.mockResolvedValue([completion]);
     const { wrapper } = makeWrapper();
     const { result } = renderHook(() => useKRCompletions(), { wrapper });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual([completion]);
+    // PER-01 : une fenêtre de dates, pas l'historique entier plafonné.
+    const since = Date.parse(fakeRepo.getSince.mock.calls[0][0] as string);
+    const days = (Date.now() - since) / 86_400_000;
+    expect(days).toBeGreaterThan(KR_COMPLETIONS_WINDOW_DAYS - 1);
+    expect(days).toBeLessThan(KR_COMPLETIONS_WINDOW_DAYS + 2);
   });
 
   it('does not fetch when disabled', () => {
-    fakeRepo.getAll.mockResolvedValue([]);
+    fakeRepo.getSince.mockResolvedValue([]);
     const { wrapper } = makeWrapper();
     renderHook(() => useKRCompletions({ enabled: false }), { wrapper });
-    expect(fakeRepo.getAll).not.toHaveBeenCalled();
+    expect(fakeRepo.getSince).not.toHaveBeenCalled();
   });
 });
 

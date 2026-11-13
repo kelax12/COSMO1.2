@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import { Download, FileSpreadsheet, FileUp } from 'lucide-react';
 import { useTaskCount, useLoadAllTasks, useTaskDependencies } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
-import { useEvents } from '@/modules/events';
+import { useEvents, useLoadAllEvents } from '@/modules/events';
 import { useOkrs } from '@/modules/okrs';
 import { useCategories } from '@/modules/categories';
 import { useLists } from '@/modules/lists';
@@ -48,7 +48,10 @@ export function DataTab() {
   // au titre de l'article 20 au même titre que les tâches qu'il ordonne.
   const { data: taskDependencies = [] } = useTaskDependencies();
   const { data: habits = [] } = useHabits();
+  // PER-01 : `useEvents()` (plafonné, signalé) ne sert qu'au compte affiché ;
+  // l'export relit tout au clic, sans plafond.
   const { data: events = [] } = useEvents();
+  const loadAllEvents = useLoadAllEvents();
   const { data: okrs = [] } = useOkrs();
   const { data: categories = [] } = useCategories();
   const { data: lists = [] } = useLists();
@@ -77,7 +80,7 @@ export function DataTab() {
     { label: t('data.tasks'), icon: FileSpreadsheet, count: taskCount, run: async () => { const tasks = await loadAllTasks(); exportTasksCSV(tasks); toast.success(t('data.tasksExported', { count: tasks.length })); } },
     { label: t('data.taskDependencies'), icon: FileSpreadsheet, count: taskDependencies.length, run: async () => { exportTaskDependenciesCSV(taskDependencies, await loadAllTasks()); toast.success(t('data.taskDependenciesExported', { count: taskDependencies.length })); } },
     { label: t('data.habits'), icon: FileSpreadsheet, count: habits.length, run: () => { exportHabitsCSV(habits); toast.success(t('data.habitsExported', { count: habits.length })); } },
-    { label: t('data.events'), icon: FileSpreadsheet, count: events.length, run: () => { exportEventsCSV(events); toast.success(t('data.eventsExported', { count: events.length })); } },
+    { label: t('data.events'), icon: FileSpreadsheet, count: events.length, run: async () => { const all = await loadAllEvents(); exportEventsCSV(all); toast.success(t('data.eventsExported', { count: all.length })); } },
     { label: t('data.okrs'), icon: FileSpreadsheet, count: okrs.length, run: () => { exportOKRsCSV(okrs); toast.success(t('data.okrsExported', { count: okrs.length })); } },
     { label: t('data.categories'), icon: FileSpreadsheet, count: categories.length, run: () => { exportCategoriesCSV(categories); toast.success(t('data.categoriesExported', { count: categories.length })); } },
     { label: t('data.lists'), icon: FileSpreadsheet, count: lists.length, run: () => { exportListsCSV(lists); toast.success(t('data.listsExported', { count: lists.length })); } },
@@ -87,12 +90,12 @@ export function DataTab() {
   ];
 
   const handleExportAll = async () => {
-    const tasks = await loadAllTasks();
-    exportAllCSV({ tasks, taskDependencies, habits, events, okrs, categories, lists, krCompletions, orgRoles, profile });
+    const [tasks, allEvents] = await Promise.all([loadAllTasks(), loadAllEvents()]);
+    exportAllCSV({ tasks, taskDependencies, habits, events: allEvents, okrs, categories, lists, krCompletions, orgRoles, profile });
     toast.success(t('data.exportingAll'), {
       description: t('data.exportingAllHint', {
         count:
-          tasks.length + taskDependencies.length + habits.length + events.length + okrs.length
+          tasks.length + taskDependencies.length + habits.length + allEvents.length + okrs.length
           + categories.length + lists.length + krCompletions.length + orgRoles.length,
       }),
     });

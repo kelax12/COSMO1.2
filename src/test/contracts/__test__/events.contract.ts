@@ -164,6 +164,14 @@ export function eventsContract(side: string, make: () => Promise<EventsContractC
       expect((await repo.getAll()).filter((e) => mine.has(e.id)).map((e) => e.id)).toEqual([early.id, middle.id, late.id]);
     });
 
+    // PER-01 : l'export de portabilité ne passe par aucun plafond.
+    contractCase(opts, 'getAllForExport rend tous les événements, y compris loin dans le temps', async () => {
+      const far = await repo.create(input(2073, { start: at(2073, 3, 10, 10), end: at(2073, 3, 10, 11) }));
+      const exported = await repo.getAllForExport();
+      expect(exported.map((e) => e.id)).toContain(far.id);
+      expect(new Set(exported.map((e) => e.id)).size, 'aucune ligne en double entre deux pages').toBe(exported.length);
+    });
+
     contractCase(opts, 'getWindow rend ce qui chevauche la fenêtre, bornes comprises, et tous les récurrents', async () => {
       const year = 2070;
       const inside = await repo.create(input(year, { start: at(year, 3, 10, 10), end: at(year, 3, 10, 11) }));

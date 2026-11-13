@@ -37,6 +37,25 @@ describe('SupabaseEventsRepository', () => {
     expect(result[0].id).toBe('e1');
   });
 
+  // PER-01 : l'export de portabilité enchaîne les pages de clé jusqu'au bout,
+  // sans le plafond de 5 000 lignes de `getAll()`.
+  it('getAllForExport: enchaîne les pages de clé au-delà de 5 000 lignes, sans plafond', async () => {
+    const uuid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
+    const page = (n: number, offset: number) =>
+      Array.from({ length: n }, (_, i) => ({ ...row, id: uuid(offset + i) }));
+    for (let p = 0; p < 6; p++) supabaseMock.queueTable('events', { data: page(1001, p * 1000) });
+    supabaseMock.queueTable('events', { data: page(7, 6000) });
+
+    const result = await repo.getAllForExport();
+
+    expect(result).toHaveLength(6007);
+    expect(supabaseMock.argsOf('events', 'limit')).toEqual([1001]);
+    expect(supabaseMock.argsOf('events', 'eq')).toEqual(['user_id', expect.any(String)]);
+    expect(supabaseMock.argsOf('events', 'or', 1)?.[0]).toBe(
+      `start_time.lt.${row.start_time},and(start_time.eq.${row.start_time},id.lt.${uuid(999)})`,
+    );
+  });
+
   it('getPage with FORGED cursor: rejects before any .or() reaches PostgREST (N6/H-1)', async () => {
     supabaseMock.queueTable('events', { data: [] });
     await expect(

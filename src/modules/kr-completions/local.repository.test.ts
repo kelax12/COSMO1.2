@@ -23,11 +23,11 @@ beforeEach(() => {
 
 describe('LocalStorageKRCompletionsRepository', () => {
   it('seede les complétions démo au premier accès et les persiste', async () => {
-    const all = await repo.getAll();
+    const all = await repo.getAllForExport();
     expect(all.length).toBeGreaterThan(0);
     // Persisté pour les accès suivants.
     expect(localStorage.getItem(KR_COMPLETIONS_STORAGE_KEY)).not.toBeNull();
-    const again = await repo.getAll();
+    const again = await repo.getAllForExport();
     expect(again).toHaveLength(all.length);
   });
 
@@ -55,6 +55,18 @@ describe('LocalStorageKRCompletionsRepository', () => {
     expect(res.map((c) => c.id)).toEqual(['mid']);
   });
 
+  // PER-01 : la lecture des écrans est bornée par une date, jamais par un
+  // nombre de lignes. Instants comparés, pas des chaînes (`Z` contre `+00:00`).
+  it('getSince rend ce qui suit la borne (incluse), du plus récent au plus ancien', async () => {
+    seed([
+      row({ id: 'old', completedAt: '2026-01-01T00:00:00.000Z' }),
+      row({ id: 'edge', completedAt: '2026-03-01T00:00:00+00:00' }),
+      row({ id: 'new', completedAt: '2026-12-01T00:00:00.000Z' }),
+    ]);
+    const res = await repo.getSince('2026-03-01T00:00:00.000Z');
+    expect(res.map((c) => c.id)).toEqual(['new', 'edge']);
+  });
+
   it('create ajoute une ligne avec un id généré (append-only)', async () => {
     seed([]);
     const created = await repo.create({
@@ -62,7 +74,7 @@ describe('LocalStorageKRCompletionsRepository', () => {
       completedAt: '2026-06-10T00:00:00.000Z', krTitle: 'KR X', okrTitle: 'OKR X',
     });
     expect(created.id).toBeTruthy();
-    const all = await repo.getAll();
+    const all = await repo.getAllForExport();
     expect(all).toHaveLength(1);
     expect(all[0].krId).toBe('kr-x');
   });

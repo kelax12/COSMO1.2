@@ -80,12 +80,26 @@ export function okrsContract(side: string, make: () => Promise<OkrsContractConte
     contractCase(opts, 'chaque rep gagnée entre au journal, chaque rep retirée en sort', async () => {
       const a = kr({ targetValue: 10 });
       const created = await ctx.okrs.create(okrInput([a]));
-      const journal = async () => (await ctx.krCompletions.getAll()).filter((c) => c.krId === a.id).length;
+      const journal = async () => (await ctx.krCompletions.getFiltered({ krId: a.id })).length;
       expect(await journal(), 'la valeur de départ ne compte pas').toBe(0);
       await ctx.okrs.updateKeyResult(created.id, a.id, { currentValue: 3 });
       expect(await journal()).toBe(3);
       await ctx.okrs.updateKeyResult(created.id, a.id, { currentValue: 1 });
       expect(await journal()).toBe(1);
+    });
+
+    // PER-01 : les écrans lisent une FENÊTRE de dates, sans plafond de lignes.
+    contractCase(opts, 'getSince borne le journal par date, et getFiltered par OKR le rend entier', async () => {
+      const a = kr({ targetValue: 10 });
+      const created = await ctx.okrs.create(okrInput([a]));
+      await ctx.okrs.updateKeyResult(created.id, a.id, { currentValue: 2 });
+      const mine = async (since: string) =>
+        (await ctx.krCompletions.getSince(since)).filter((c) => c.krId === a.id).length;
+      const hourAgo = new Date(Date.now() - 3_600_000).toISOString();
+      const inAnHour = new Date(Date.now() + 3_600_000).toISOString();
+      expect(await mine(hourAgo), 'dans la fenêtre').toBe(2);
+      expect(await mine(inAnHour), 'avant la borne : exclu').toBe(0);
+      expect((await ctx.krCompletions.getFiltered({ okrId: created.id })).length).toBe(2);
     });
 
     contractCase(opts, 'C-77 : le temps OKR du jour vaut les minutes estimées × les reps du jour', async () => {

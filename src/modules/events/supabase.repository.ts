@@ -10,7 +10,7 @@ import { CalendarEvent, CreateEventInput, UpdateEventInput, EventFilters } from 
 import { mapEventFromDb, mapEventToDb } from './mappers';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE, assertValidCursor } from '@/lib/pagination.types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
-import { fetchAllPages, MAX_ROWS, PAGE_SIZE } from '@/lib/fetch-all-pages';
+import { fetchAllByCursor, fetchAllPages, MAX_ROWS, PAGE_SIZE } from '@/lib/fetch-all-pages';
 
 /** Lecture de fenêtre : sans plafond (V14.2), cf. getWindow. */
 const UNCAPPED = Number.POSITIVE_INFINITY;
@@ -88,6 +88,25 @@ export class SupabaseEventsRepository implements IEventsRepository {
       nextCursor: hasMore && lastItem ? lastItem.id : null,
       nextCursorDate: hasMore && lastItem ? lastItem.start_time : null,
     };
+  }
+
+  async getAllForExport(): Promise<CalendarEvent[]> {
+    // Les pages de `getPage` (clé `(start_time, id)` décroissante, curseur
+    // validé avant interpolation, `user_id = self`) enchaînées jusqu'au bout.
+    return fetchAllByCursor<CalendarEvent, { id: string; date: string }>(
+      async (cursor) => {
+        const page = await this.getPage({
+          limit: PAGE_SIZE,
+          cursor: cursor?.id,
+          cursorDate: cursor?.date,
+        });
+        return {
+          rows: page.data,
+          next: page.nextCursor && page.nextCursorDate ? { id: page.nextCursor, date: page.nextCursorDate } : null,
+        };
+      },
+      (a, b) => a.id === b.id && a.date === b.date,
+    );
   }
 
   async getWindow(startISO: string, endISO: string): Promise<CalendarEvent[]> {

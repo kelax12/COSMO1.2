@@ -33,4 +33,5 @@ export type { IKRCompletionsRepository } from './repository';
 export {
   useKRCompletions,
   useKRCompletionsExport,
+  useLoadOkrJournal,
 } from './hooks';

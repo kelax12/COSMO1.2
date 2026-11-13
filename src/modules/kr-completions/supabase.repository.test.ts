@@ -19,32 +19,43 @@ const row = {
 beforeEach(() => supabaseMock.reset());
 
 describe('SupabaseKRCompletionsRepository', () => {
-  it('getAll: selects *, orders by completed_at desc, paginates by range, maps to camelCase', async () => {
+  it('getSince: selects *, borne par completed_at >= since, clé (completed_at, id) décroissante, maps to camelCase', async () => {
     supabaseMock.queueTable('kr_completions', { data: [row] });
-    const result = await repo.getAll();
+    const result = await repo.getSince('2025-10-01T00:00:00.000Z');
 
     expect(supabaseMock.argsOf('kr_completions', 'select')).toEqual(['*']);
+    expect(supabaseMock.argsOf('kr_completions', 'gte')).toEqual(['completed_at', '2025-10-01T00:00:00.000Z']);
     expect(supabaseMock.argsOf('kr_completions', 'order')).toEqual(['completed_at', { ascending: false }]);
-    expect(supabaseMock.argsOf('kr_completions', 'range')).toEqual([0, 999]);
-    expect(supabaseMock.argsOf('kr_completions', 'limit')).toBeUndefined();
+    expect(supabaseMock.argsOf('kr_completions', 'limit')).toEqual([1001]);
+    expect(supabaseMock.argsOf('kr_completions', 'range')).toBeUndefined();
     expect(result).toEqual([{
       id: 'c1', krId: 'kr1', okrId: 'o1', userId: 'u1',
       completedAt: row.completed_at, krTitle: 'KR', okrTitle: 'OKR',
     }]);
   });
 
-  // COSMO-40 : un journal de plus de 500 lignes etait coupe a l'affichage
-  // (graphique « KR realises », historique OKR, statistiques).
-  it('getAll: fetches the next page instead of truncating past 500 rows (COSMO-40)', async () => {
+  // COSMO-40 puis PER-01 : ni troncature à 500, ni plafond à 5 000. La page
+  // suivante part du curseur de clé de la dernière ligne, validé avant d'être
+  // interpolé dans `.or()`.
+  it('getSince: enchaîne les pages par curseur de clé, sans plafond', async () => {
+    const uuid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
     const page = (n: number, offset: number) =>
-      Array.from({ length: n }, (_, i) => ({ ...row, id: `c${offset + i}` }));
-    supabaseMock.queueTable('kr_completions', { data: page(1000, 0) });
-    supabaseMock.queueTable('kr_completions', { data: page(120, 1000) });
+      Array.from({ length: n }, (_, i) => ({ ...row, id: uuid(offset + i) }));
+    for (let p = 0; p < 6; p++) supabaseMock.queueTable('kr_completions', { data: page(1001, p * 1000) });
+    supabaseMock.queueTable('kr_completions', { data: page(120, 6000) });
 
-    const result = await repo.getAll();
+    const result = await repo.getSince('2020-01-01T00:00:00.000Z');
 
-    expect(result).toHaveLength(1120);
-    expect(supabaseMock.argsOf('kr_completions', 'range', 1)).toEqual([1000, 1999]);
+    expect(result).toHaveLength(6120);
+    expect(new Set(result.map((c) => c.id)).size).toBe(6120);
+    expect(supabaseMock.argsOf('kr_completions', 'or', 1)).toEqual([
+      `completed_at.lt.${row.completed_at},and(completed_at.eq.${row.completed_at},id.lt.${uuid(999)})`,
+    ]);
+  });
+
+  it('getSince: refuse un curseur forgé au lieu de l’interpoler', async () => {
+    supabaseMock.queueTable('kr_completions', { data: Array.from({ length: 1001 }, () => ({ ...row, id: 'x),id.gt.(0' })) });
+    await expect(repo.getSince('2020-01-01T00:00:00.000Z')).rejects.toThrow('Invalid pagination cursor');
   });
 
   it('getFiltered: applies every provided filter as eq/gte/lte', async () => {
@@ -82,8 +93,8 @@ describe('SupabaseKRCompletionsRepository', () => {
     expect(supabaseMock.queries).toHaveLength(0); // aucun INSERT tenté
   });
 
-  it('getAll: normalizes DB errors (no raw message surfaced)', async () => {
+  it('getSince: normalizes DB errors (no raw message surfaced)', async () => {
     supabaseMock.queueTable('kr_completions', { data: null, error: { message: 'relation does not exist', code: '42P01' } });
-    await expect(repo.getAll()).rejects.toBeTruthy();
+    await expect(repo.getSince('2020-01-01T00:00:00.000Z')).rejects.toBeTruthy();
   });
 });

@@ -83,6 +83,10 @@ export class LocalStorageEventsRepository implements IEventsRepository {
     return events.filter(e => e.taskId === taskId);
   }
 
+  async getAllForExport(): Promise<CalendarEvent[]> {
+    return this.getAll();
+  }
+
   async getLinkedToTasks(): Promise<CalendarEvent[]> {
     return this.getEvents().filter((e) => !!e.taskId);
   }

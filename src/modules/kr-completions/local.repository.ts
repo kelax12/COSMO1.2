@@ -34,8 +34,13 @@ export class LocalStorageKRCompletionsRepository implements IKRCompletionsReposi
   // READ OPERATIONS
   // ═══════════════════════════════════════════════════════════════════
 
-  async getAll(): Promise<KRCompletion[]> {
-    return this.getCompletions();
+  async getSince(sinceISO: string): Promise<KRCompletion[]> {
+    // Comparaison d'INSTANTS : les deux côtés peuvent porter des formats ISO
+    // différents (`Z` ou `+00:00`), un tri de chaînes se tromperait.
+    const since = Date.parse(sinceISO);
+    return this.getCompletions()
+      .filter((c) => Date.parse(c.completedAt) >= since)
+      .sort((a, b) => b.completedAt.localeCompare(a.completedAt));
   }
 
   async getAllForExport(): Promise<KRCompletion[]> {

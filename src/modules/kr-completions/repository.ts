@@ -14,12 +14,18 @@ import type { KRCompletion, CreateKRCompletionInput, KRCompletionFilters } from 
 
 export interface IKRCompletionsRepository {
   // Read operations
-  getAll(): Promise<KRCompletion[]>;
+  /**
+   * Le journal depuis `sinceISO` (inclus), du plus récent au plus ancien, sans
+   * plafond. C'est la lecture des écrans (graphiques, statistiques), bornée par
+   * une fenêtre de dates (`KR_COMPLETIONS_WINDOW_DAYS`) et non par un nombre de
+   * lignes (PER-01).
+   */
+  getSince(sinceISO: string): Promise<KRCompletion[]>;
+  /** Le journal filtré, ENTIER (sans plafond) : par exemple celui d'un OKR. */
   getFiltered(filters: KRCompletionFilters): Promise<KRCompletion[]>;
   /**
    * Le journal ENTIER de la personne connectée, pour l'export de portabilité
-   * (RGPD art. 20), filtré explicitement sur `user_id`. `getAll()` pagine aussi
-   * (COSMO-40) mais reste sous le seul périmètre de la RLS.
+   * (RGPD art. 20), filtré explicitement sur `user_id`, sans plafond.
    */
   getAllForExport(): Promise<KRCompletion[]>;
 

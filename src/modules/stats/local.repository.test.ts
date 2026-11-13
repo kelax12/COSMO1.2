@@ -30,7 +30,7 @@ const fakeRepos = (data: { tasks?: Task[]; events?: CalendarEvent[]; habits?: Ha
   habits: { fetchHabits: async () => data.habits ?? [] } as unknown as IHabitsRepository,
   okrs: { getAll: async () => data.okrs ?? [] } as unknown as IOKRsRepository,
   krCompletions: {
-    getAll: async () => data.krCompletions ?? [],
+    getAllForExport: async () => data.krCompletions ?? [],
   } as unknown as IKRCompletionsRepository,
 });
 
