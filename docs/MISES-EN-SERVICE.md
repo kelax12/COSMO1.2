@@ -207,11 +207,15 @@ exportent hors fournisseur (`db-backup`, `restore-drill` vers un projet jetable)
 | `cron_leases` | mig. `245` + `_shared/cron-lease.ts` | un bail par job : deux passages simultanés ne travaillent jamais ensemble |
 | 7 jobs `cosmo-*` | mig. `246` | six appels + `cosmo-cron-runs-close` (relevé des réponses pg_net, toutes les 5 min) |
 | `Journal des crons` | `cron-journal.yml` → `ci-alert.yml` | rougit sur un job `absent` ou en `echec` dans sa fenêtre |
+| `cosmo-uptime` + `cron_probe()` | mig. `252` | sonde de disponibilité toutes les 5 min (contrôles d'`uptime.yml`), trois lignes `sonde-*` par passage, fenêtre 20 min |
 
 Secrets Vault (noms fixés, jamais de valeur dans le dépôt) : `cosmo_project_url`
 (`https://<ref>.supabase.co`) et `cosmo_cron_secret` (**même valeur** que `CRON_SECRET` des Edge
 Functions et des secrets Actions). Rattrapage d'un passage manqué : `select public.cron_invoke('<job>');`
 en `postgres`, ou le `workflow_dispatch` du workflow d'origine : sûrs tous les deux (bail + rejeu idempotent).
+
+**Sonde pg_cron (mig. `252`, OBS-02)** : voit toutes les 5 min le site Vercel (home et `/guide` prérendus) et GoTrue ; `echec` = la cible répond mal, `absent` = la sonde n'a pas tourné ; `cron_runs_verdict()` rend alors **neuf** lignes.
+Elle ne voit PAS une panne de la base elle-même (Postgres ou pg_cron arrêté : seul `absent` le dit) et l'alerte part encore par GitHub : `uptime.yml` garde son `schedule:`, regard extérieur.
 
 **État** : `245` et `246` appliquées et prouvées en production (2026-11-13). Preuves rejouées à chaque commit par
 `e2e/rls/cron-journal.test.ts` ; relevés datés : archive.

@@ -60,10 +60,11 @@ afterAll(async () => {
   await db.end();
 });
 
-describe('supabase/proofs : preuves 245 et 246 rejouées sur la base fraîche', () => {
+describe('supabase/proofs : preuves 245, 246 et 252 rejouées sur la base fraîche', () => {
   const PREUVES = [
     { preuve: '245.proof.sql', migration: '245_cron_journal.sql' },
     { preuve: '246.proof.sql', migration: '246_cron_planification.sql' },
+    { preuve: '252.proof.sql', migration: '252_sonde_disponibilite.sql' },
   ];
   for (const { preuve, migration } of PREUVES) {
     it(`${preuve} embarque le texte exact de ${migration}`, () => {
@@ -90,6 +91,25 @@ describe('supabase/proofs : preuves 245 et 246 rejouées sur la base fraîche', 
       }
       console.log(`PREUVE 245 (${avecSecrets ? 'avec' : 'sans'} secrets)\n  ${verdict.split(' | ').join('\n  ')}`);
       expect(verdict).toMatch(/^PREUVE-ANNULEE 0 ECHEC \|/);
+    }, 60_000);
+  }
+
+  // 252 se joue sans et avec Vault ; la clôture simulée doit tourner ici
+  // (rôle postgres de la pile locale), pas tomber dans sa branche `info`.
+  for (const avecSecrets of [false, true]) {
+    it(`252.proof.sql : PREUVE-ANNULEE 0 ECHEC, clôture des sondes simulée (${avecSecrets ? 'avec' : 'sans'} secrets Vault)`, async () => {
+      if (avecSecrets) await poserSecrets();
+      else await retirerSecrets();
+      let verdict: string;
+      try {
+        await db.query(lire('supabase/proofs/252.proof.sql'));
+        verdict = 'le bloc DO a VALIDÉ au lieu de lever : la preuve ne s’annule pas';
+      } catch (e) {
+        verdict = (e as Error).message;
+      }
+      console.log(`PREUVE 252 (${avecSecrets ? 'avec' : 'sans'} secrets)\n  ${verdict.split(' | ').join('\n  ')}`);
+      expect(verdict).toMatch(/^PREUVE-ANNULEE 0 ECHEC \|/);
+      expect(verdict).toContain('ok cloture sonde : passage reussi');
     }, 60_000);
   }
 

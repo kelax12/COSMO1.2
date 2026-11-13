@@ -15,7 +15,7 @@
 //
 // ❌ Ne jamais rendre cette sonde conditionnelle à son propre secret :
 //    `DB_URL` absent = ÉCHEC, jamais un avertissement dans un run vert.
-// ❌ Une sélection vide est un ÉCHEC : la fonction rend toujours six lignes,
+// ❌ Une sélection vide est un ÉCHEC : la fonction rend toujours neuf lignes (six jobs, trois sondes),
 //    zéro ligne veut dire qu'on n'a rien mesuré.
 // ⚠️ Rien n'est imprimé qui ne soit dans le journal : nom du job, dates,
 //    statut, code HTTP. Le journal ne porte ni secret ni donnée utilisateur.
@@ -27,8 +27,15 @@
 export const VERDICT_SQL = `SELECT job, fenetre::text AS fenetre, dernier_debut, dernier_statut, dernier_code, dernier_ok, verdict
   FROM public.cron_runs_verdict()`;
 
-/** Nombre de jobs surveillés par `cron_runs_verdict()` (mig. 245). */
+/** Nombre de jobs d Edge Functions surveillés par `cron_runs_verdict()` (mig. 245). */
 export const JOBS_ATTENDUS = 6;
+
+/**
+ * Sondes de disponibilité (mig. 252, OBS-02), jugées par le même verdict, fenêtre 20 min.
+ * Elles ne sont tenues par aucun `schedule:` GitHub : `absent` y rougit toujours.
+ * `absent` = la sonde n a pas tourné ; `echec` = la cible ne répond pas comme attendu.
+ */
+export const SONDES = ['sonde-auth', 'sonde-guide', 'sonde-site'];
 
 /**
  * Jobs que GitHub ne planifie PLUS (`MISES-EN-SERVICE.md` § 2sexies, étape 8), SOURCE
@@ -61,6 +68,12 @@ export function juger(rows, bascules = JOBS_BASCULES) {
       `derniere reussite ${date(r.dernier_ok)})`;
     if (r.verdict === 'ok') {
       lines.push(`ok ${resume}`);
+    } else if (SONDES.includes(r.job) && r.verdict === 'absent') {
+      ko += 1;
+      lines.push(`::error title=sonde ${r.job} n a pas tourne::${resume}. La SONDE est arretee (pg_cron, job cosmo-uptime retire, ou base injoignable) : on ne sait rien du site.`);
+    } else if (SONDES.includes(r.job) && r.verdict === 'echec') {
+      ko += 1;
+      lines.push(`::error title=prod injoignable ${r.job}::${resume}. La sonde tourne et la CIBLE ne repond pas comme attendu (detail dans cron_runs.detail), ou le releve cosmo-cron-runs-close est arrete.`);
     } else if (r.verdict === 'absent' && !bascules.includes(r.job)) {
       lines.push(`::warning title=cron ${r.job} pas encore vu::${resume}. Encore planifie par GitHub : rien n est perdu, pas encore bascule.`);
     } else if (r.verdict === 'absent') {
@@ -80,9 +93,10 @@ export function juger(rows, bascules = JOBS_BASCULES) {
       lines.push(`::error::${j} est bascule (plus de schedule GitHub) mais cron_runs_verdict() ne le surveille pas.`);
     }
   }
-  if (rows.length !== JOBS_ATTENDUS) {
+  const total = JOBS_ATTENDUS + SONDES.length;
+  if (rows.length !== total) {
     ko += 1;
-    lines.push(`::error::${rows.length} job(s) surveille(s) au lieu de ${JOBS_ATTENDUS} : la sonde et la mig. 245 ont diverge.`);
+    lines.push(`::error::${rows.length} job(s) surveille(s) au lieu de ${total} : la sonde et les mig. 245 / 252 ont diverge.`);
   }
   lines.push(`${rows.length - Math.min(ko, rows.length)} job(s) sur ${rows.length} dans leur fenetre.`);
   return { exit: ko > 0 ? 1 : 0, lines };

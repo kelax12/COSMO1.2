@@ -121,7 +121,8 @@ $mig$;
   SELECT string_agg(j.job, ',' ORDER BY j.job) INTO planifies
     FROM (SELECT substring(command FROM 'cron_invoke\(''([a-z-]+)''\)') AS job
             FROM cron.job WHERE command LIKE '%public.cron_invoke(%') j;
-  SELECT string_agg(v.job, ',' ORDER BY v.job) INTO surveilles FROM public.cron_runs_verdict() v;
+  SELECT string_agg(v.job, ',' ORDER BY v.job) INTO surveilles FROM public.cron_runs_verdict() v
+   WHERE v.job NOT LIKE 'sonde-%'; -- les sondes (mig. 252) passent par cron_probe(), preuve 252
   IF planifies = surveilles THEN r := r || format('ok planifie = surveille : %s', planifies);
   ELSE ko := ko + 1; r := r || format('ECHEC planifie {%s} <> surveille {%s}', planifies, surveilles); END IF;
 

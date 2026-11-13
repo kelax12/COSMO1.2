@@ -9,7 +9,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { JOBS_ATTENDUS, JOBS_BASCULES, VERDICT_SQL, juger, lireVerdict, run } from './check-cron-runs.mjs';
+import { JOBS_ATTENDUS, JOBS_BASCULES, SONDES, VERDICT_SQL, juger, lireVerdict, run } from './check-cron-runs.mjs';
 
 const ligne = (job, verdict, extra = {}) => ({
   job,
@@ -22,7 +22,7 @@ const ligne = (job, verdict, extra = {}) => ({
   ...extra,
 });
 const SIX = ['inactive-accounts', 'org-digest-daily', 'org-digest-hourly', 'org-webhook-dispatch', 'renewal-notice', 'seat-alert'];
-const tousOk = () => SIX.map((j) => ligne(j, 'ok'));
+const tousOk = () => [...SIX, ...SONDES].map((j) => ligne(j, 'ok'));
 
 /** Faux client pg : enregistre les requêtes, rend `rows` au SELECT. */
 function faux(rows, { echoue = false } = {}) {
@@ -42,10 +42,10 @@ function faux(rows, { echoue = false } = {}) {
 }
 
 describe('juger', () => {
-  it('six jobs dans leur fenêtre : vert', () => {
+  it('six jobs et trois sondes dans leur fenêtre : vert', () => {
     const { exit, lines } = juger(tousOk());
     expect(exit).toBe(0);
-    expect(lines.at(-1)).toBe('6 job(s) sur 6 dans leur fenetre.');
+    expect(lines.at(-1)).toBe('9 job(s) sur 9 dans leur fenetre.');
     expect(lines.filter((l) => l.startsWith('::error'))).toEqual([]);
   });
 
@@ -101,11 +101,32 @@ describe('juger', () => {
     expect(juger(undefined).exit).toBe(1);
   });
 
-  it('TÉMOIN : un job de moins que la mig. 245 = divergence = rouge', () => {
+  it('TÉMOIN : un job de moins que les mig. 245 / 252 = divergence = rouge', () => {
     expect(JOBS_ATTENDUS).toBe(6);
-    const { exit, lines } = juger(tousOk().slice(0, 5));
+    expect(SONDES).toEqual(['sonde-auth', 'sonde-guide', 'sonde-site']);
+    const { exit, lines } = juger(tousOk().slice(0, 8));
     expect(exit).toBe(1);
-    expect(lines.some((l) => l.includes('5 job(s) surveille(s) au lieu de 6'))).toBe(true);
+    expect(lines.some((l) => l.includes('8 job(s) surveille(s) au lieu de 9'))).toBe(true);
+    // Avant application de la 252 : six lignes seulement, rouge.
+    expect(juger(tousOk().slice(0, 6)).exit).toBe(1);
+  });
+
+  it('sonde absente : rouge, « la sonde n a pas tourne », jamais un simple avertissement', () => {
+    const rows = tousOk();
+    rows[8] = ligne('sonde-site', 'absent');
+    const { exit, lines } = juger(rows, []);
+    expect(exit).toBe(1);
+    expect(lines.some((l) => l.startsWith('::error title=sonde sonde-site n a pas tourne::'))).toBe(true);
+  });
+
+  it('sonde en échec : rouge, « prod injoignable », distinct de la sonde arrêtée', () => {
+    const rows = tousOk();
+    rows[7] = ligne('sonde-guide', 'echec', { dernier_code: 503 });
+    const { exit, lines } = juger(rows);
+    expect(exit).toBe(1);
+    const l = lines.find((x) => x.startsWith('::error title=prod injoignable sonde-guide::'));
+    expect(l).toContain('HTTP 503');
+    expect(lines.some((x) => x.includes('sonde-guide n a pas tourne'))).toBe(false);
   });
 
   it('la sonde compte autant de jobs que cron_runs_verdict() en déclare', () => {

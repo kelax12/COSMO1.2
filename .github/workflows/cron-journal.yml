@@ -7,6 +7,10 @@
 # `cron_runs` (mig. 245). Cette sonde lit `cron_runs_verdict()` en lecture
 # seule et ROUGIT des qu un job n a pas tourne, ou pas reussi, dans sa
 # fenetre. Le rouge part sur le canal d alerte par `ci-alert.yml`.
+# Depuis la mig. 252 (OBS-02), elle juge aussi les trois sondes de
+# disponibilite (`sonde-site`, `sonde-guide`, `sonde-auth`, pg_cron toutes
+# les 5 min, fenetre 20 min) : `absent` = la sonde n a pas tourne, `echec` =
+# le site ou l API ne repond pas comme attendu. Deux titres d erreur distincts.
 #
 # 🔴 POURQUOI ELLE RESTE SUR GITHUB : une surveillance logee dans pg_cron se
 #    tairait le jour ou pg_cron s arrete. Le retard du cron de GitHub ne
@@ -20,9 +24,11 @@ name: Journal des crons
 
 on:
   schedule:
-    # Toutes les heures, minute 51. La fenetre la plus courte est celle des
-    # webhooks (35 min) : une absence se voit en moins de deux heures.
-    - cron: '51 * * * *'
+    # Trois fois par heure. La fenetre la plus courte est celle des sondes
+    # (20 min, mig. 252). Le cron de GitHub saute des passages (OBS-02) :
+    # planifier plus souvent donne plus de chances qu un passage ait lieu. Le
+    # delai d alerte reste celui de GitHub ; la MESURE est faite toutes les 5 min.
+    - cron: '11,31,51 * * * *'
   workflow_dispatch:
 
 # Moindre privilege (A-8) : le job lit la base, il ne lit ni n ecrit le depot
