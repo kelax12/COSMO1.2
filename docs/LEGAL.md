@@ -1,17 +1,14 @@
 # LEGAL.md — obligations légales de COSMO
 
-> **Vivant.** Établi le 2026-08-26 à partir de l'état réel du code, de la base et des comptes
-> Stripe et Supabase. Décrit la situation courante, pas une cible. **Repassé le 2026-09-14** sur
-> le seul point de la chaîne de paiement entreprise (§ État au 2026-09-14 et ligne E9) : la
-> facturation est désarmée, vérifiée en base. Les autres sections n'ont pas été revérifiées à
-> cette date et portent encore le statut du 2026-08-26.
+> **Vivant.** Établi le 2026-08-26 à partir de l'état réel du code, de la base et des comptes Stripe et Supabase.
+> Décrit la situation courante, pas une cible. Le statut de chaque ligne se lit dans le tableau de conformité.
 
 > 🔴 **Ce document n'est pas un avis juridique.** Il est rédigé par un assistant, pas par un
 > avocat ni un expert-comptable. Il sert à ne rien oublier et à savoir quoi demander. Aucune
 > phrase ici ne protège en cas de contrôle. Les points marqués ⚠️ portaient, à cette date, sur
 > des textes déjà modifiés au moins une fois : ils se revérifient à la source.
 
-**Plan** : [Audits et état des lieux archivés](#audits-datés-et-état-des-lieux--archivés) · [**Tableau de conformité**](#-tableau-de-conformité) · [État de la chaîne de paiement](#-état-au-2026-09-14--la-chaîne-de-paiement-est-désarmée-mode-entreprise-gratuit-sans-plafond) · [La décision structurante](#-la-décision-structurante--tout-client-est-un-consommateur)
+**Plan** : [Audits et état des lieux archivés](#audits-datés-et-état-des-lieux--archivés) · [**Tableau de conformité**](#-tableau-de-conformité) · [État de la chaîne de paiement](#-état-de-la-chaîne-de-paiement) · [La décision structurante](#-la-décision-structurante--tout-client-est-un-consommateur)
 · [Actif aujourd'hui](#1-actif-aujourdhui-sans-structure) · [À la création](#2-à-la-création-de-la-structure)
 · [Au premier euro](#3-au-premier-euro-encaissé) · [Droit de la consommation](#4-droit-de-la-consommation)
 · [Produit et marque](#5-produit-marque-et-dépendances) · [Sous-traitants](#6-sous-traitants-et-transferts)
@@ -23,9 +20,8 @@
 ## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
 
 > Ce document affirme des choses que rien ne pèse : chaque ligne nomme une affirmation qui n'était vérifiée
-> par rien, et la garde qui la vérifie depuis. 🔴 **Une garde posée n'est pas un angle mort fermé** : la
-> dernière colonne dit ce que son vert ne prouve pas. L'énoncé du 2026-09-16, la colonne « État » du
-> 2026-09-21 et les mesures datées sont archivés sans une coupe :
+> Chaque ligne nomme une affirmation que rien ne vérifiait, et la garde qui la vérifie depuis. 🔴 **Une garde posée
+> n'est pas un angle mort fermé** : la dernière colonne dit ce que son vert ne prouve pas. Énoncé d'origine et mesures :
 > [`archive/ANGLES-MORTS-2026-09-16-docs-vivantes.md`](./archive/ANGLES-MORTS-2026-09-16-docs-vivantes.md).
 
 | # | Angle mort (énoncé du 2026-09-16) | Garde qui le couvre | 🔴 Ce qu'elle ne prouve pas |
@@ -175,112 +171,22 @@ Par l'effet de la décision structurante ci-dessous : aucun client n'est vérifi
 | ⬜ Sans objet aujourd'hui | **5** |
 | **Total** | **61** |
 
-> 🔎 **2026-11-05** : B1, B2 et B5 passent à ✅ (immatriculation RNE du 2026-10-20 et domiciliation, publiées le 2026-10-21) ; E5 réécrite après la refonte rétractation / résiliation du 2026-11-01.
->
-> 🔎 **2026-11-01** : E2 remonte à ✅ (phrase précontractuelle remise).
->
-> 🔎 **Recompté le 2026-10-31** (`npm run check:legal`) : la garde était rouge en arrivant, 18 / 21 / 16
-> contre une synthèse à 19 / 20 / 17, et E2 vient de redescendre à 🟡 (retrait de l'information
-> précontractuelle, `9eedd3ca`). ⚠️ **À remesurer depuis l'armement de la facturation (2026-10-20)** :
-> E5 dit le portail Stripe vide (mesure du 2026-08-26) quand [`STRIPE-LIVE.md`](./STRIPE-LIVE.md) le dit
-> configuré le 2026-09-01, et E9 s'appuie encore sur une facturation dormante.
->
-> 🔎 **Recompté par `node scripts/check-legal-table.mjs` le 2026-10-13**, après l'audit du jour :
-> quatre lignes nouvelles (A15, E14, F10, F11), A2 remontée à ✅, A9 redescendue à 🟡. La garde
-> était ROUGE en arrivant : A3 était passée à 🟡 le 2026-10-10 sans que la synthèse suive.
-
-> 🔎 **Recompté par `node scripts/check-legal-table.mjs` le 2026-09-24**, après l'audit du jour :
-> onze lignes nouvelles (A11 à A14, E10 à E13, F7 à F9), A2 redescendue à 🟡, A3 dégradée à ❌, F9 refermée le jour même.
-> Le total monte parce que l'audit a **trouvé** des obligations, pas parce que la situation
-> s'est dégradée : dix des onze lignes nouvelles sont refermées ou avancées le jour même.
-
-> ⚠️ Seules les lignes E9 (🟡 → ✅) et A5 (❌ → 🟡) ont été revérifiées et recomptées le
-> 2026-09-14 (cf. § État au 2026-09-14 et § DPA des sous-traitants). Les 44 autres lignes portent
-> encore leur statut du 2026-08-26, **non revérifié** depuis : ne pas les lire comme un état
-> courant sans repasser par leur source.
-
-**Point de départ le matin du 2026-08-26 : 0 vert.** Sont passées au vert dans la journée :
-A1, A2, A4, A7, A8, A9, C9, C10, E2, E3, E7, F3. **E9 les a rejointes le 2026-09-14** (A5 reste
-🟡 : le DPA Supabase est acquis sans action, mais Sentry et Vercel dépendent encore d'Axel).
-
-**Les 16 lignes rouges se répartissent en trois familles**, et une seule dépend encore de moi :
-
-| Famille | Lignes | Qui agit |
-|---|---|---|
-| Actes juridiques ou administratifs | A5, B3, B4, B6, C2, C3, C12, D2, E4, F2 | **Axel seul.** Immatriculer, ouvrir un compte, adhérer, signer, déposer. Aucun code n'y change rien. |
-| Réglages hors dépôt | C4, C5, C6, E5 | **Axel**, depuis le Dashboard Stripe. Deux minutes chacun, mais C4 à C6 supposent d'être immatriculé pour ne pas afficher une mention fausse. |
-| Développement restant | C7 | Facturation électronique, qui suppose une plateforme agréée. **E6 est sortie de cette colonne** : construite et déployée le 2026-08-26, elle n'attend plus que trois secrets. |
-
-**Les 11 lignes jaunes n'attendent aucun développement** : quatre sont des décisions déjà prises
-qui attendent leur exécution (C1, C11, D1), et les autres un réglage de console, un contrat
-signé ou un déploiement.
+Recomptages datés et avancement du 2026-08-26 au 2026-11-05 : [`archive/LEGAL-journal-2026-11-13.md`](./archive/LEGAL-journal-2026-11-13.md).
+**Ne jamais reporter un total, toujours le recompter** (`npm run check:legal`).
 
 ---
 
-## 🟢 État au 2026-09-14 : la chaîne de paiement est DÉSARMÉE, mode entreprise gratuit sans plafond
+## 🟢 État de la chaîne de paiement
 
-> Remplace la section « État d'alerte au 2026-08-26 » ci-dessous, conservée pour l'historique.
-> Reverifié le 2026-09-14 par lecture du code (`src/modules/billing/premium-config.ts`) **et**
-> requête SQL en lecture seule sur la base de prod (`SELECT key, enabled FROM billing_flags`) —
-> pas déduit d'une note plus ancienne.
+La facturation entreprise est **ACTIVE** depuis le 2026-10-20 (`ENTERPRISE_BILLING_ENFORCED = true`, Stripe **live**,
+[`STRIPE-LIVE.md`](./STRIPE-LIVE.md)) : le bloc « premier euro encaissé » (§ 3) et le droit de la consommation lié au
+paiement (§ 4, E1, E4 à E8) sont **dus**. La période où la chaîne était désarmée (2026-09-14) et l'état d'alerte du
+2026-08-26 sont archivés.
 
-| Vérification | Valeur réelle |
-|---|---|
-| `ENTERPRISE_BILLING_ENFORCED` (client) | **`false`** |
-| `billing_flags.enterprise_seat_limit` (serveur) | **`false`** |
-| Quota de sièges appliqué | **Aucun** — `org_seats_allowed()` ne bloque plus personne |
-| Landing entreprise (`ENTERPRISE_FREE_OFFER`) | Affiche « Gratuit » partout, offre de lancement en cours |
-| CTA de paiement (Stripe Checkout) | **Non monté** — personne ne peut arriver sur un Stripe Checkout |
-| Abonnements souscrits | 0 |
-
-**Conséquence directe sur ce document.** Tant que ce couple de drapeaux reste à `false`, tout le
-bloc « premier euro encaissé » et le droit de la consommation lié au **paiement** (§3, E1, E4 à
-E8) sont **dormants, pas résolus** : rien ne les déclenche parce qu'aucune transaction ne peut
-avoir lieu. Ce n'est pas une mise en conformité, c'est l'absence du fait générateur — le jour où
-`ENTERPRISE_BILLING_ENFORCED` repasse à `true`, la liste de réserves ci-dessous (E5 portail de
-résiliation non configuré, STRIPE_SECRET_KEY de test, etc.) redevient intégralement valable.
-
-- ✅ **E9 (garantie de conformité) n'est plus en défaut pour les deux phrases citées** :
-  `enterprise.hero.reassuranceFree` et `enterprise.pricing.i5` (« résiliable/réversible à tout
-  moment ») sont désormais **vraies par construction** — il n'y a pas d'abonnement à quitter,
-  donc pas besoin d'un portail Stripe pour ça. La fonctionnalité de sortie (quitter/supprimer une
-  organisation) existe indépendamment de la facturation (`src/modules/organizations/`).
-- ⚠️ **Ne pas en conclure que E5/E6/E8 sont corrigées** : elles sont sans objet **aujourd'hui**
-  parce qu'il n'y a rien à vendre, pas parce que le portail Stripe a été configuré ou que le
-  webhook annuel a été câblé. Rien n'a changé côté Stripe depuis le 2026-08-26.
-- ❌ **Ne jamais réarmer `ENTERPRISE_BILLING_ENFORCED` sans repasser par ce document.** Le
-  réarmer sans avoir réglé E5 (portail) reproduit exactement l'impasse du 2026-08-26 : un client
-  qui grandit se voit proposer de payer, tombe sur une clé Stripe de TEST, et ne peut pas non
-  plus résilier.
-
-### Historique — État d'alerte au 2026-08-26 (chaîne de paiement ARMÉE, depuis corrigé)
-
-Vérifié en base et dans le code le même jour, pas déduit :
-
-| Vérification | Valeur réelle au 2026-08-26 |
-|---|---|
-| `ENTERPRISE_BILLING_ENFORCED` (client) | `true` |
-| `billing_flags.enterprise_seat_limit` (serveur) | `true` |
-| `STRIPE_SECRET_KEY` en prod | clé de TEST |
-| Configuration du portail de résiliation | absente, sur les deux comptes |
-| Organisations | 4, dont 1 déjà au plafond |
-| Abonnements souscrits | 0 |
-
-**Le parcours réel d'un client à cette date :** son organisation atteint cinq membres, l'invitation
-suivante est refusée par `org_seats_allowed`, l'écran lui propose de payer, il clique, arrive sur
-un Stripe Checkout en **mode test**, et sa vraie carte est refusée. Il ne peut ni grandir, ni
-payer. Et s'il voulait partir, la résiliation échouerait aussi.
-
-**Issue retenue** : l'option 1 des trois proposées alors (« repasser `ENTERPRISE_BILLING_ENFORCED`
-à `false` et le drapeau serveur à `false` ») a été appliquée — c'est l'état décrit dans la section
-du dessus, vérifié à nouveau le 2026-09-14.
-
-> ⚠️ Cet épisode n'a jamais présenté de risque juridique au sens strict : **aucun euro n'a été
-> encaissé**, donc ni travail dissimulé ni TVA due. Le problème était une impasse produit pour le
-> client qui essayait de payer, et une promesse de résiliation non tenue.
+- ❌ **Ne jamais changer `ENTERPRISE_BILLING_ENFORCED` sans repasser par ce document** (E5, portail de résiliation, § 3, § 4).
+- Aucun SIREN, aucun bouton de paiement réel : voir § 3 et les garde-fous.
 
 ---
-
 ## 🔴 La décision structurante : tout client est un consommateur
 
 Axel a tranché le 2026-08-26 : **un particulier doit pouvoir acheter l'offre entreprise**, et
@@ -305,9 +211,7 @@ consommateurs. Tout le §4 s'applique donc, à toute l'offre.
 ## 1. Actif aujourd'hui, sans structure
 
 Ces obligations ne dépendent ni d'une société ni d'un chiffre d'affaires. Elles se déclenchent
-parce qu'un service en ligne traite les données de personnes réelles. Leur état courant est **uniquement** dans le tableau de conformité (famille A) plus haut. Le
-tableau de départ du 2026-08-26 qui figurait ici (registre « absent », procédure 72 h « à écrire »)
-était démenti par ce tableau ; il se relit dans l'historique git.
+parce qu'un service en ligne traite les données de personnes réelles. Leur état courant est **uniquement** dans le tableau de conformité (famille A) plus haut.
 
 
 > Le risque de contrôle CNIL sur 27 utilisateurs est proche de zéro. La raison de traiter ce
@@ -456,63 +360,12 @@ le bloc 2 se pose dans le pied de facture par défaut du Dashboard (action manue
 
 ## 5. Produit, marque et dépendances
 
-### Marque « COSMO » — recherche d'antériorité faite le 2026-08-28
+### Marque « COSMO »
 
-> ⚠️ **Ce n'est pas un avis juridique, et la source le dit elle-même.** TMview précise que ses
-> données « ne constituent pas des registres officiels » et **n'ont aucun effet juridique**. Ce
-> qui suit est un relevé factuel, destiné à ce qu'un conseil en propriété industrielle parte d'un
-> dossier au lieu d'une page blanche.
-
-**Méthode.** Interrogation de **TMview** (portail de l'EUIPO qui agrège 142 millions de marques,
-INPI-France **et** EUIPO compris — c'est-à-dire exactement les deux registres que cette ligne
-exigeait, en une seule requête). Périmètre : nom de marque contenant `COSMO`, offices **FR** et
-**EM**, **classes 9** (logiciel téléchargeable) **et 42** (logiciel en tant que service). 536
-résultats balayés, dont **21 portent le nom exactement `COSMO`**.
-
-**Résultat : 11 marques `COSMO` exactes et ACTIVES** (enregistrées ou déposées).
-
-| Classe | Titulaire | Office | Dépôt | Classes couvertes |
-|---|---|---|---|---|
-| **42** | Cosmo Technologies Limited | EM | 2022 | 5, 10, 42 |
-| **42** | Cosmo Technologies Limited | EM | 2022 | 5, 10, 42 |
-| **42** | ISTITUTO VENETO DI TERAPIA FAMIGLIARE SRL | EM | 2024 | 9, 16, 35, 41, **42**, 44 |
-| **42** | COSMO PHARMACEUTICALS SPA | EM | 2012 | 5, 10, 42 |
-| **9** | TANAZA S.p.A. | EM | 2020 | 9 |
-| **9** | Cosmo Beheer B.V. | EM | 2016 | 9, 16, 35, 41 |
-| **9** | Hearst Communications, Inc. | EM | 2006 | 9, 16, 41 |
-| **9** | Halfords Limited | EM | 2010 | 9, 12, 28 |
-| **9** | ten Haaft GmbH | EM | 2006 | 9 |
-| **9** | GC Großhandels Contor GmbH | EM | 2008 | 6, 7, 9, 11, 17, 19, 37 |
-| **9** | PIP GLOBAL SAFETY FRANCE SAS | **FR** | 1988 | 9 |
-
-**Ce que ça répond.** La question posée par ce document était : *« l'enjeu réel n'est pas
-"existe-t-il une marque COSMO" mais "une marque COSMO couvre-t-elle le logiciel" »*. La réponse
-est **oui, plusieurs, et en vigueur dans l'Union**.
-
-**Les deux lignes à regarder en premier**, parce qu'elles sont les plus proches de l'activité :
-
-- **TANAZA S.p.A.** (EM, 2020, **classe 9 seule**) : éditeur de logiciel en nuage. C'est
-  l'antériorité la plus proche du produit.
-- **ISTITUTO VENETO DI TERAPIA FAMIGLIARE** (EM, 2024, **9 et 42**) : dépôt récent et très large,
-  qui couvre les deux classes visées d'un coup.
-
-Les trois marques pharmaceutiques (Cosmo Technologies, COSMO PHARMACEUTICALS) occupent la
-classe 42 mais dans un secteur éloigné — c'est précisément le genre de nuance qu'un conseil
-tranche, et pas ce document.
-
-**Ce que ça ne dit pas, et qu'il ne faut pas déduire.** Rien ici ne dit que COSMO ne peut pas être
-utilisé : l'appréciation d'un risque de confusion dépend des produits réellement visés, de la
-notoriété et de la similarité d'ensemble. Ce relevé dit seulement que **le terrain est occupé
-dans les deux classes**, donc qu'un dépôt à l'identique se heurterait très probablement à un
-refus ou à une opposition, et qu'un usage n'est pas à l'abri d'une contestation.
-
-**Suite à donner** : une consultation de conseil en PI, dossier en main. **Avant d'investir
-davantage en acquisition** — se voir opposer une marque après le lancement oblige à renommer le
-produit, le domaine et toute la communication.
-
-**Reproduire ce relevé** : `https://www.tmdn.org/tmview/`, recherche `COSMO`, filtres Offices
-`FR` + `EM` et Produits/Services `9` + `42`, puis ne retenir que les noms exactement `COSMO` dont
-le statut est « Enregistrée » ou « Déposée ».
+Relevé d'antériorité du 2026-08-28 (TMview, classes 9 et 42 : onze marques `COSMO` exactes et actives) : état courant et suite dans
+[`MARQUE-COSMO.md`](./MARQUE-COSMO.md), relevé d'origine en archive. Ce n'est pas un avis juridique : **consulter un conseil en PI
+avant d'investir davantage en acquisition** (se voir opposer une marque après le lancement oblige à renommer produit, domaine
+et communication).
 - **Licences open source** des dépendances : inventaire à produire, attribution à publier, et
   vérification qu'aucune licence à réciprocité forte n'est embarquée dans un produit
   propriétaire.
@@ -592,17 +445,10 @@ le statut est « Enregistrée » ou « Déposée ».
 Un document article 32 qui ne recense que ses forces ne vaut rien en contrôle. Les suivantes
 sont connues et documentées dans le code :
 
-1. ~~**Fenêtre du script de mesure d'audience.**~~ **Levée le 2026-10-18** : le script tiers est
-   retiré (`faille.md` V-1). La mesure maison (`src/lib/traffic.ts`) ne charge aucun code tiers et
-   revérifie l'absence de session avant chaque envoi.
-2. **`style-src 'unsafe-inline'`** reste nécessaire à la chaîne de styles. C'est un
-   assouplissement conscient de la CSP.
-3. ~~**La CSP autorise les domaines publicitaires Google.**~~ **Refermé le 2026-09-04** (C-04) :
-   le système de jetons et le mur-pub ont été supprimés, AdSense n'est plus chargé nulle part, et
-   les origines publicitaires ont été **retirées de la CSP** de `vercel.json`. La réserve portait
-   sur ce qui se serait passé le jour où `PREMIUM_ENFORCED` serait passé à `true` ; il n'y a plus
-   de publicité à charger. ❌ Réintroduire un script publicitaire rouvrirait la question du
-   consentement (ligne A4) : la publicité n'en est JAMAIS exemptée.
+1. **Fenêtre du script de mesure d'audience** : levée le 2026-10-18 (script tiers retiré, `faille.md` V-1).
+2. **`style-src 'unsafe-inline'`** reste nécessaire à la chaîne de styles. C'est un assouplissement conscient de la CSP.
+3. **Origines publicitaires** : retirées de la CSP le 2026-09-04 (C-04). ❌ Réintroduire un script publicitaire rouvrirait la
+   question du consentement (ligne A4) : la publicité n'en est JAMAIS exemptée.
 4. **Aucun exercice de restauration n'a été conduit.** Les sauvegardes dépendent du plan
    Supabase souscrit ; leur existence et leur délai de restauration restent à vérifier.
 5. **Pas de journal d'accès applicatif** distinct des logs d'infrastructure.
@@ -638,9 +484,7 @@ existe pour qu'aucun de ces engagements ne soit découvert le jour où il est in
 
 ### Engagements envers tes clients, dès le premier paiement
 
-> ⚠️ **Sans objet aujourd'hui** : `ENTERPRISE_BILLING_ENFORCED = false` (vérifié le 2026-09-14),
-> aucun paiement n'est possible, donc aucun de ces engagements n'est actuellement dû. Ce tableau
-> redevient actif le jour où la facturation est réarmée — voir § État au 2026-09-14.
+> Facturation active depuis le 2026-10-20 : ces engagements sont dus (voir § État de la chaîne de paiement).
 
 | Engagement | Ce que ça t'oblige à faire | Coût si tu l'oublies |
 |---|---|---|
