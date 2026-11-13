@@ -1,57 +1,27 @@
-# Tâches · règles du dossier
+# Tâches (`src/modules/tasks`)
 
-> Repris de `CLAUDE.md` le 2026-09-16, **sans une coupe**. Ce fichier est chargé
-> automatiquement dès qu'un fichier de ce dossier est lu ou édité, et lui seul.
-> Règles transversales : [`CLAUDE.md`](../../../CLAUDE.md) à la racine.
+Lire en touchant `src/modules/tasks/**`. Échéances : [`src/lib/CLAUDE.md`](../../lib/CLAUDE.md). Lectures paginées : [`docs/PERFORMANCE.md`](../../../docs/PERFORMANCE.md) § « Tâches et agenda : pagination serveur ».
+Règles transversales : [`../CLAUDE.md`](../CLAUDE.md).
 
----
+## Récurrence : serveur uniquement
 
-## 🔁 Récurrence des tâches — serveur uniquement
+- ✅ `toggle_task_complete_v2` (mig. 086) génère l'occurrence suivante : atomique (même transaction), idempotente (index unique `ux_tasks_recurrence_parent`). Le client fournit SEULEMENT la date suivante en date locale (`nextOccurrenceDeadline`), le serveur ignore son fuseau.
+- ❌ `repository.create(nextOccurrence)` côté client (H1 : occurrence perdue si l'onglet se ferme, doublon au recochage).
+- ❌ Écrire `recurrence_parent_id` depuis le client : c'est la clé d'idempotence, `mapTaskToDb` ne l'émet pas.
 
-La génération de l'occurrence suivante appartient à `toggle_task_complete_v2` (mig. 086), **pas
-au client**. Elle est atomique (même transaction que la bascule) et idempotente (index unique
-`ux_tasks_recurrence_parent`). Le client ne fournit QUE la date suivante, calculée en date locale
-(`nextOccurrenceDeadline`) — le serveur ne connaît pas son fuseau.
+## Statut et État (mig. `214`)
 
-- ❌ Ne jamais recréer un `repository.create(nextOccurrence)` côté client (faille H1 : occurrence
-  perdue si l'onglet se ferme, doublon si on décoche puis recoche, échec avalé).
-- ❌ Ne jamais écrire `recurrence_parent_id` depuis le client — c'est la clé d'idempotence,
-  `mapTaskToDb` ne l'émet volontairement pas.
+`tasks.status` (`todo`, `in_progress`, `blocked`, `done`), `tasks.health` (`on_track`, `at_risk`, `off_track`, NULL). Le trigger `sync_task_status` (`INVOKER`) accorde `status` et `completed` ; `applyStatusSync` (`status-sync.ts`) en est le miroir démo et optimiste. `review` n'existe pas en perso.
 
+- ❌ `update({ status: 'done' })` pour terminer une tâche À SOI : `toggleComplete` (seule la RPC génère l'occurrence ; Tableau : `use-move-task.ts`). Depuis la mig. `215` la RLS décide : un ami « editor » coche une tâche reçue, l'occurrence reste au propriétaire.
+- ❌ Déduire un statut dans `mapTaskFromDb`, ou en ajouter un dans le cache à une ligne qui n'en a pas : « Annuler » et « Dupliquer » le renverraient en base.
+- ❌ `completed` dans `save-task.ts` : la fiche ne l'édite pas, et renvoyer la valeur d'ouverture décocherait une tâche cochée entre-temps.
+- ❌ Une colonne de `tasks` lue par l'interface hors de `TASK_LIST_COLUMNS` (`supabase.repository.ts`) : la relecture après mise à jour optimiste l'efface. Reporter la liste dans `scripts/cosmo/api.mjs` ; `scripts/cosmo/api.test.mjs` refuse la dérive.
 
-## 🗂️ Statut et État (mig. `214`, appliquée le 2026-10-08)
+## Lectures (PER-01)
 
-`tasks.status` (`todo`, `in_progress`, `blocked`, `done`) et `tasks.health` (`on_track`,
-`at_risk`, `off_track`, NULL). Le trigger `sync_task_status` (`SECURITY INVOKER`) tient
-`status` et `completed` d'accord ; `applyStatusSync` (`status-sync.ts`) en est le miroir pour la
-démo et les mises à jour optimistes. `review` n'existe pas en perso, exprès.
+`useTasks()` est le jeu de travail (non terminées + 35 jours de terminées), pas l'historique.
 
-- ❌ **Ne jamais écrire `update({ status: 'done' })` pour terminer une tâche À SOI.** Passer par
-  `toggleComplete` : seule `toggle_task_complete_v2` génère l'occurrence récurrente (Tableau :
-  `use-move-task.ts`). Depuis la mig. `215`, la RPC laisse la RLS décider : un ami « editor »
-  coche une tâche reçue, l'occurrence suivante reste réservée au propriétaire.
-- ❌ **Ne jamais déduire un statut dans `mapTaskFromDb`, ni en ajouter un dans le cache à une
-  ligne qui n'en a pas.** Une tâche lue repart entière dans « Annuler » et « Dupliquer » : un
-  statut inventé partirait en base.
-- ❌ **La fiche (`save-task.ts`) n'envoie pas `completed`.** Elle ne l'édite pas, et le Statut de
-  la fiche peut cocher la tâche pendant qu'elle est ouverte : renvoyer la valeur de l'ouverture
-  la décocherait.
-- ❌ **Une colonne ajoutée à `tasks` et lue par l'interface entre dans `TASK_LIST_COLUMNS`**
-  (`supabase.repository.ts`), sinon la relecture qui suit une mise à jour optimiste l'efface :
-  l'État choisi disparaissait après 2 s (`8b253a1b`, 2026-10-18). Reporter la même liste dans
-  `scripts/cosmo/api.mjs` : `scripts/cosmo/api.test.mjs` refuse toute dérive.
-
-## 📄 Lectures : jeu de travail, archive, sous-ensemble, compte (V14.1, PER-01)
-
-`useTasks()` n'est PLUS « toutes les tâches » : c'est le jeu de travail (non terminées + 35 jours
-de terminées). Tableau des lectures et des écrans convertis : [`docs/PERFORMANCE.md`](../../../docs/PERFORMANCE.md)
-§ « Tâches et agenda : pagination serveur ».
-
-- ❌ **Ne jamais compter, chercher ou calculer sur `useTasks()` comme sur l'historique** :
-  `useTaskCount`, `useTaskArchive`, `useTaskSubset`.
-- ❌ **Une mise à jour optimiste ne passe plus par `setQueryData(taskKeys.lists())` seul** :
-  `patchTaskCaches` (`cache-patch.ts`), sinon l'archive affiche l'état d'avant.
-- ❌ **Aucun filtre de `TaskQuery` en `.or()`** : le curseur de clé l'occupe (`task-query.ts`).
-
-> Les ÉCHÉANCES (`tasks.deadline`, un jour et non un instant) sont documentées dans
-> [`src/lib/CLAUDE.md`](../../lib/CLAUDE.md) : le module qui fait foi est `src/lib/deadline.ts`.
+- ❌ Compter, chercher ou calculer sur `useTasks()` : `useTaskCount`, `useTaskArchive`, `useTaskSubset`.
+- ❌ Une mise à jour optimiste par `setQueryData(taskKeys.lists())` seul : `patchTaskCaches` (`cache-patch.ts`), sinon l'archive affiche l'état d'avant.
+- ❌ Un filtre de `TaskQuery` en `.or()` : le curseur de clé l'occupe (`task-query.ts`).

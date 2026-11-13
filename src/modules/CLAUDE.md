@@ -1,53 +1,22 @@
 # Modules · règles transversales
 
-> Chargé dès qu'un fichier de `src/modules/**` est lu ou édité. Chaque module a en plus
-> son propre `CLAUDE.md` : [billing](billing/CLAUDE.md) · [tasks](tasks/CLAUDE.md) ·
-> [habits](habits/CLAUDE.md) · [okrs](okrs/CLAUDE.md) · [categories](categories/CLAUDE.md) ·
-> [team-categories](team-categories/CLAUDE.md) · [organizations](organizations/CLAUDE.md) ·
-> [team-projects](team-projects/CLAUDE.md).
+Lire en touchant `src/modules/**`. Carte module → fichiers, tables, RPC : [`docs/MODULES.md`](../../docs/MODULES.md) ; nombre de modules : [`docs/FAITS.md`](../../docs/FAITS.md).
+Par module : [billing](billing/CLAUDE.md) · [tasks](tasks/CLAUDE.md) · [habits](habits/CLAUDE.md) · [okrs](okrs/CLAUDE.md) · [categories](categories/CLAUDE.md) · [team-categories](team-categories/CLAUDE.md) · [organizations](organizations/CLAUDE.md) · [team-projects](team-projects/CLAUDE.md).
 
-## Architecture : double mode (démo / production)
+## Double mode
 
-- **Mode démo** : pas de Supabase, données en `localStorage`. Automatique si les env vars
-  sont absentes, ou via `loginDemo()`.
-- **Mode production** : Supabase, si les deux env vars sont définies.
+- ✅ Démo : pas de Supabase, `localStorage` ; automatique sans env vars ou via `loginDemo()`. Production : Supabase si les deux env vars existent.
+- ✅ `src/lib/app-mode.store.ts` : `appModeStore.isDemo`, `appModeStore.setDemo(bool)`, `useIsDemo()`.
+- ✅ Repositories choisis par `src/lib/repository.factory.ts` (`getTasksRepository()`, …, `resetRepositories()`, `clearDemoStorage()`).
+- ❌ Dériver `isDemo` de l'email. ❌ Appeler `login(email, password)` pour l'utilisateur démo.
 
-```typescript
-// src/lib/app-mode.store.ts
-appModeStore.isDemo          // getter
-appModeStore.setDemo(bool)   // setter
-useIsDemo()                  // hook React
-```
+`loginDemo()` (`AuthContext.tsx`, transitions dans `auth/demo-session.ts`), dans cet ordre : `clearDemoStorage()` → `appModeStore.setDemo(true)` → `resetRepositories()` → `queryClient.clear()` → `setUser({ id: 'demo-user', … })` → `setIsLoading(false)`.
 
-Repositories sélectionnés dynamiquement via `src/lib/repository.factory.ts`
-(`getTasksRepository()`, `getHabitsRepository()`, … `resetRepositories()`, `clearDemoStorage()`).
+- ❌ `navigate('/dashboard')` après `loginDemo()` sans `setTimeout(…, 0)` : `ProtectedRoute` doit voir `setUser()` commité.
+- ❌ Modifier un seed sans `clearDemoStorage()` avant. Seeds dans le `local.seed.ts` du module, rechargés à chaque `loginDemo()` ; ❌ `Math.random()` (utiliser `generateCompletions`, dates relatives).
+- ❌ Muter `DEMO_FRIENDS` / `DEMO_INCOMING_REQUESTS` en place : `JSON.parse(JSON.stringify(...))` (B12).
 
-### loginDemo() — séquence exacte (`AuthContext.tsx`, transitions dans `auth/demo-session.ts`)
-
-```typescript
-loginDemo() {
-  clearDemoStorage()            // 1. Efface l'ancien localStorage démo
-  appModeStore.setDemo(true)    // 2. Active le flag global
-  resetRepositories()           // 3. Nullifie les singletons
-  queryClient.clear()           // 4. Vide le cache React Query
-  setUser({ id: 'demo-user', email: 'demo@cosmo.app', ... })
-  setIsLoading(false)
-  // 6. navigate('/dashboard') dans le composant appelant, en setTimeout(…, 0)
-}
-```
-
-> `setTimeout(() => navigate('/dashboard'), 0)` est **obligatoire** : il laisse React commiter
-> `setUser()` avant que `ProtectedRoute` vérifie `isAuthenticated`.
-
-### Données seed démo
-
-Rechargées à chaque `loginDemo()` grâce à `clearDemoStorage()`. Chaque seed vit dans le
-`local.seed.ts` de son module (tâches : **12**, recompté le 2026-09-10). Helpers : dates
-relatives, historique déterministe (`generateCompletions`, **pas de `Math.random()`**).
-
----
-
-## Forme d'un module (V12.3, garde `src/architecture.guard.test.ts` § 3)
+## Forme d'un module (garde `src/architecture.guard.test.ts` § 3)
 
 ```
 src/modules/{module}/
@@ -60,200 +29,59 @@ src/modules/{module}/
 └── index.ts                 # surface publique ; n'exporte JAMAIS la classe démo
 ```
 
-- Facette (`governance`, `roles`, `execution`) : même forme, préfixée (`governance.local.repository.ts`).
-  Module à un seul backend : `supabase.repository.ts` seul (`admin`).
-- Instanciation : **uniquement** `defineRepository(démo, production)` (`src/lib/define-repository.ts`),
-  chaque côté `eager` ou `lazy`. Démo toujours `lazy`, depuis `src/lib/demo-repositories.ts` :
-  ❌ jamais d'import statique d'un `local.repository` / `local.seed` hors des fichiers démo et des tests.
-- Hors forme (dépôts-fonctions à deux modes) : `follows`, `messages`, `audience`, `inbox`,
-  `notifications`, `member-activity`, `share-link`, `profile`, `billing`.
+- ✅ Facette (`governance`, `roles`, `execution`) : même forme préfixée (`governance.local.repository.ts`). Un seul backend : `supabase.repository.ts` seul (`admin`).
+- ✅ Instanciation **uniquement** par `defineRepository(démo, production)` (`src/lib/define-repository.ts`), côté démo toujours `lazy` depuis `src/lib/demo-repositories.ts`. ❌ Import statique d'un `local.repository` / `local.seed` hors fichiers démo et tests.
+- ✅ Hors forme (dépôts-fonctions à deux modes) : `follows`, `messages`, `audience`, `inbox`, `notifications`, `member-activity`, `share-link`, `profile`, `billing`.
+- 🔴 Un baril importé pour un TYPE s'importe en `import type` (`npm run check:cycles`, C-103).
+- ✅ Import par zone : Tâches `tasks` `categories` `lists` · Agenda `events` `tasks` · Habitudes `habits` `categories` · OKR `okrs` `kr-completions` · Amis `friends` · Entreprise `organizations` `org-teams` `org-config` `org-reports` `team-projects` `team-okrs` `team-categories` `team-lists` · UI `ui-states` · Dashboard `tasks` `habits` `events` `kr-completions` `okrs` `auth`.
 
-Les modules, leur rôle, leurs tables et leurs RPC : une ligne chacun dans
-[`docs/MODULES.md`](../../docs/MODULES.md), la carte qui fait foi. Leur nombre vit dans
-[`docs/FAITS.md`](../../docs/FAITS.md), généré depuis `src/modules/`.
+## Auth
 
-### Règle d'import par zone
+- ✅ `import { useAuth } from '@/modules/auth/AuthContext'` (`user, isAuthenticated, isDemo, isLoading, login, logout, register, loginWithGoogle, updateDemoProfile`). ❌ Depuis `@/modules/user`.
+- ✅ `updateDemoProfile(patch)` est le SEUL chemin pour modifier le profil en démo (`name`, `email`, `avatar`, `autoValidation`, whitelistés) ; no-op hors démo (`supabase.auth.updateUser`). ❌ Écrire dans `localStorage` en espérant que l'écran suive (faille B7).
 
-| Zone | Modules |
-|---|---|
-| Tâches | `tasks`, `categories`, `lists` |
-| Agenda | `events`, `tasks` |
-| Habitudes | `habits`, `categories` |
-| OKR | `okrs`, `kr-completions` |
-| Amis / Collaboration | `friends` |
-| Entreprise | `organizations`, `org-teams`, `org-config`, `org-reports`, `team-projects`, `team-okrs`, `team-categories`, `team-lists` |
-| UI / Filtres | `ui-states` |
-| Dashboard | `tasks`, `habits`, `events`, `kr-completions`, `okrs`, `auth` |
+## Lecture : RPC, jamais la table
 
-🔴 **Un baril importé pour un TYPE s'importe en `import type`**, sinon le module entier est
-chargé en valeur. Sept cycles ainsi trouvés le 2026-09-20 — `npm run check:cycles`, C-103.
-
----
-
-## Hooks essentiels
-
-### Auth — source de vérité unique
+Les policies RLS de `tasks`, `team_tasks`, `team_projects`, `team_task_dependencies`, `events` sont des prédicats non indexables : lire la table force un `Seq Scan` dont le coût suit le volume de TOUTE la plateforme.
 
 ```typescript
-import { useAuth } from '@/modules/auth/AuthContext';
-const { user, isAuthenticated, isDemo, isLoading, login, logout, register, loginWithGoogle,
-        updateDemoProfile } = useAuth();
-```
-
-> **Ne jamais importer `useAuth` depuis `@/modules/user`** — source unique = `@/modules/auth/AuthContext`.
->
-> `updateDemoProfile(patch)` est le **seul** chemin pour modifier le profil en mode démo
-> (`name` / `email` / `avatar` / `autoValidation`, whitelistés). Hors démo, c'est un no-op :
-> un vrai profil passe par `supabase.auth.updateUser`. Écrire dans `localStorage` en espérant
-> que l'écran suive est exactement le bug corrigé le 2026-08-24 (faille B7, 2ᵉ occurrence).
-
-
-### Données métier
-
-```typescript
-import { useFavoriteColors, usePriorityRange, useColorSettings } from '@/modules/ui-states';
-import { useFriends, useSendFriendRequest, useShareTask, useFriendRequests } from '@/modules/friends';
-import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from '@/modules/tasks';
-import { useHabits } from '@/modules/habits';
-import { useEvents } from '@/modules/events';
-import { useOkrs, useUpdateKeyResult } from '@/modules/okrs';
-import { useKRCompletions } from '@/modules/kr-completions';
-import { useCategories } from '@/modules/categories';
-import { useLists } from '@/modules/lists';
-```
-
----
-
-## ⚡ Lecture : passer par les RPC, jamais par la table
-
-Les policies RLS de `tasks`, `team_tasks`, `team_projects`, `team_task_dependencies` et `events`
-sont des prédicats que Postgres **ne peut pas indexer**. Lire la table en direct force un `Seq Scan`
-dont le coût croît avec le volume de TOUTE la plateforme, pas avec celui de l'utilisateur.
-
-```typescript
-supabase.from('tasks').select(...)                              // ❌ Seq Scan global
+supabase.from('tasks').select(...)                              // ❌
 supabase.rpc('get_my_tasks')                                    // ✅ mig. 085
 supabase.rpc('get_my_team_tasks',             { p_org: orgId }) // ✅ mig. 113
 supabase.rpc('get_my_team_projects',          { p_org: orgId }) // ✅ mig. 113
 supabase.rpc('get_my_team_task_dependencies', { p_org: orgId }) // ✅ mig. 117
 ```
 
-- Le périmètre vient de `auth.uid()` **seul** : `p_org` est un filtre, pas une portée. Forger un
-  `p_org` étranger rend 0 ligne.
-- ❌ **Ne jamais faire dépendre un prédicat de policy d'un argument pris dans la ligne.** Un helper
-  sans argument est évalué une fois par requête ; un helper sur une colonne, une fois par ligne.
-- ❌ **Ne pas ajouter de table entreprise sur le modèle prédicat-fonction.** Exprimer l'appartenance
-  en jointure indexable dans une RPC.
-- ⚠️ **Le mode `SECURITY` d'une RPC se lit dans [`supabase/rpc-inventory.md`](../../supabase/rpc-inventory.md)**
-  (généré : mode, `search_path`, droits, appelants), jamais ici. La majorité sont `DEFINER`, `search_path`
-  figé. Agrégats de lecture (`get_work_time_stats`, `get_team_project_task_stats`,
-  `get_team_member_workload`, `get_my_habits`) : `INVOKER`, la RLS filtre. Lectures indexables
-  `get_my_tasks` et `get_my_team_*` : `DEFINER` (en `INVOKER` la policy reviendrait par ligne), périmètre
-  tiré de `auth.uid()` ou de `my_team_project_ids()` seuls, comme les policies via
-  `can_access_team_project` (mig. `243`). ❌ Jamais de prédicat de visibilité réécrit dans une RPC, ni
-  d'agrégat d'**autorisations** en `DEFINER`. Témoin : `e2e/rls/regle-unique-projet.test.ts`.
-- Exception légitime : `getById` (accès par clé primaire). `task_dependencies` (mig. 132) se lit en
-  direct, sa policy portant sur une colonne dénormalisée, donc indexable.
+- ✅ Le périmètre vient de `auth.uid()` seul ; `p_org` est un filtre (un `p_org` étranger rend 0 ligne).
+- ❌ Un prédicat de policy qui dépend d'un argument pris dans la ligne (helper sans argument : une fois par requête ; sur colonne : par ligne).
+- ❌ Une table entreprise sur le modèle prédicat-fonction : l'appartenance en jointure indexable dans une RPC.
+- ✅ Le mode `SECURITY` d'une RPC se lit dans [`supabase/rpc-inventory.md`](../../supabase/rpc-inventory.md) (généré), jamais ici. Règle : agrégats de lecture en `INVOKER` (la RLS filtre) ; lectures indexables `get_my_tasks` et `get_my_team_*` en `DEFINER`, périmètre tiré de `auth.uid()` ou `my_team_project_ids()` seuls (mig. `243`).
+- ❌ Un prédicat de visibilité réécrit dans une RPC. ❌ Un agrégat d'**autorisations** en `DEFINER`. Témoin : `e2e/rls/regle-unique-projet.test.ts`.
+- ✅ Exceptions : `getById` (clé primaire) ; `task_dependencies` (mig. 132, colonne dénormalisée, indexable).
+- Mesures et plans : [`docs/PERFORMANCE.md`](../../docs/PERFORMANCE.md) § « Chemins de lecture indexables » ; [`docs/SCALABILITY.md`](../../docs/SCALABILITY.md).
 
-📄 **Mesures, plans d'exécution et détail de chaque migration :**
-[`docs/PERFORMANCE.md`](../../docs/PERFORMANCE.md) § « Chemins de lecture indexables » ·
-[`docs/SCALABILITY.md`](../../docs/SCALABILITY.md) §2.
+## Synchronisation : Realtime, pas sondage
 
+- 🔴 Trois canaux, montés UNE fois dans `App.tsx` : `useSharedTasksRealtime` (`shared_tasks`), `useOrgInboxRealtime` (mig. 118), `useFriendsInboxRealtime` (mig. 120). ❌ Un canal dans un composant de page (un WebSocket par écran).
+- ❌ Un `refetchInterval` « pour être sûr » : chaque tick est une requête pour tout le monde. Une donnée qui doit se rafraîchir passe par Realtime ; sinon `refetchOnWindowFocus`. ❌ Remonter la cadence d'un sondage (chaque tick = `getAll()` complet).
+- ✅ Les seuls `refetchInterval` autorisés, tous non permanents : `organizations/hooks.ts` `useOrgMembers` (`live`) · `team-projects/hooks.ts` `useTeamTasks` (`live`) · `team-okrs/hooks.ts` `useTeamOKRs` (`live`) · `tasks/hooks.ts` `useTasks` (filet 5 min, seulement si collaboration active) · `billing/org-billing.hooks.ts` `useOrgSubscription` (1,5 s pendant 20 s au plus, retour de Stripe). Garde : `src/modules/polling.guard.test.ts`. ⚠️ Compter ne suffit pas : qualifier chacun.
+- ⚠️ Une nouvelle table écoutée en Realtime entre dans la publication `supabase_realtime` ET passe en `REPLICA IDENTITY FULL` (sinon les DELETE ne portent que la clé primaire, les filtres client ne matchent jamais), cf. mig. 087.
+- 🔴 `connect-src` doit porter `wss:` : sans lui les canaux sont coupés en prod sans signal, et plus aucun sondage ne rattrape.
 
----
-## 📡 Synchronisation de la collaboration — Realtime, pas sondage
-
-Trois canaux, tous montés **une seule fois** dans `App.tsx` :
-`useSharedTasksRealtime` (`shared_tasks`), `useOrgInboxRealtime` (mig. 118 : notifications,
-invitations et demandes d'adhésion d'organisation) et `useFriendsInboxRealtime` (mig. 120 :
-demandes d'amis reçues/envoyées, listes partagées).
-
-Ensemble, ils ont remplacé **huit** sondages permanents, soit environ 30 requêtes par minute et
-par utilisateur connecté avant toute interaction.
-
-**Il reste CINQ déclarations de `refetchInterval`, et aucune n'est permanente** (vérifié le
-2026-11-02) :
-
-| Où | Nature |
-|---|---|
-| `organizations/hooks.ts` · `useOrgMembers` | conditionnelle (`live`) |
-| `team-projects/hooks.ts` · `useTeamTasks` | conditionnelle (`live`) |
-| `team-okrs/hooks.ts` · `useTeamOKRs` | conditionnelle (`live`) |
-| `tasks/hooks.ts` · `useTasks` | filet à 5 min, et seulement si une collaboration est active |
-| `billing/org-billing.hooks.ts` · `useOrgSubscription` | bornée : 1,5 s pendant 20 s au plus, au retour de Stripe seulement |
-
-> ⚠️ **Compter les `refetchInterval` ne suffit pas : il faut qualifier chacun** (récit :
-> `docs/SCALABILITY.md`, `useOrgJoinRequests`). Le décompte ci-dessus est nominatif exprès.
-
-- ❌ Ne pas remonter la cadence du sondage : chaque tick est un `getAll()` complet. La version à
-  15 s coûtait ≈ 58 Mo/mois/utilisateur d'egress.
-- ❌ Ne pas monter le canal Realtime dans un composant de page : c'est un WebSocket, il s'en
-  ouvrirait un par écran affiché.
-- ❌ **Ne pas rajouter un `refetchInterval` « juste pour être sûr ».** Chaque tick est une requête
-  pour tout le monde, en permanence. Si une donnée doit se rafraîchir toute seule, elle passe par
-  Realtime (publication `supabase_realtime` + `REPLICA IDENTITY FULL`) ; sinon
-  `refetchOnWindowFocus` suffit.
-- ⚠️ Toute nouvelle table écoutée en Realtime doit être ajoutée à la publication
-  `supabase_realtime` **et** passée en `REPLICA IDENTITY FULL` (sinon les DELETE ne portent que
-  la clé primaire et les filtres client ne matchent jamais) — cf. mig. 087.
-- ✅ **Le décompte nominatif est MÉCANISÉ depuis le 2026-09-02** : `src/modules/polling.guard.test.ts`
-  nomme les cinq fichiers qui doivent garder un `refetchInterval` conditionnel, et embarque un
-  témoin qui refuse une détection qui ne détecterait plus rien. Un checkpoint qu'on rejoue à la
-  main est un checkpoint qu'on oubliera, et **celui-ci a déjà été faux une fois**.
-- 🔴 **Ces canaux ont été COUPÉS en production sans que rien ne le dise**, du fait d'un `wss://`
-  manquant dans `connect-src` (corrigé le 2026-09-01, cf. garde-fous § Sécurité & env). Un canal
-  Realtime qui remplace un sondage supprime aussi le filet qui rattrapait sa panne.
-
----
-
-## ↩️ « Annuler » restaure l'identifiant (R-08)
-
-Cinq chemins d'annulation écrivaient le même déstructurage, qui perdait l'identité de l'objet :
+## « Annuler » restaure l'identifiant (R-08)
 
 ```typescript
 const { id: _id, ...rest } = snapshot;   // ❌ revient sous un NOUVEL id
-createMutation.mutate(rest);
 restoreCategoryMutation.mutate(snapshot); // ✅ useRestoreX, id d'origine conservé
 ```
 
-- Un `useRestoreX` existe pour `tasks`, `categories`, `events`, `lists`, `okrs`, **`habits`**
-  (`habits/restore.hooks.ts`) et les **commentaires de tâche d'équipe**
-  (`team-projects/restore-comment.hooks.ts`). Il passe l'identifiant par le **second argument** de
-  `create()`, jamais par le payload.
-  ⚠️ Cette liste est **nominative exprès**, comme celle des `refetchInterval` : un total ne prouve
-  rien, et elle a déjà été fausse (les deux derniers manquaient, ajoutés le 2026-09-20). La
-  recompter, jamais la recopier : `grep -rn "export const useRestore" src/`.
-- 🔴 **Pourquoi pas un champ `id` dans l'input** : le payload vient d'un état de formulaire, donc
-  d'un objet que des devtools peuvent enrichir. Un `id` forgé y ouvrait un **oracle d'existence**
-  (collision de clé primaire = 23505 au lieu d'un succès, donc la ligne d'autrui existe). Le test
-  de garde `categories/supabase.repository.test.ts` a refusé la première version du correctif, et
-  il avait raison. Contrat complet : `src/lib/restore-id.ts`.
-- ✅ **Restaurer un OKR ramène AUSSI son journal `kr_completions`, depuis C-01.** Ce paragraphe a
-  décrit ce trou comme une limite acceptée jusqu'au 2026-09-20 : les règles sont dans
-  [`okrs/CLAUDE.md`](okrs/CLAUDE.md), il n'y a plus rien à en dire ici.
+- ✅ `useRestoreX` existe pour `tasks`, `categories`, `events`, `lists`, `okrs`, `habits` (`habits/restore.hooks.ts`), commentaires de tâche d'équipe (`team-projects/restore-comment.hooks.ts`). Il passe l'id en SECOND argument de `create()`. Liste à recompter : `grep -rn "export const useRestore" src/`.
+- 🔴 ❌ Un champ `id` dans l'input : un `id` forgé ouvre un oracle d'existence (23505 au lieu d'un succès). Contrat : `src/lib/restore-id.ts` ; garde `categories/supabase.repository.test.ts`.
+- ✅ Restaurer un OKR ramène aussi son journal `kr_completions` → [`okrs/CLAUDE.md`](okrs/CLAUDE.md).
 
+## Champs canoniques
 
----
-
-## Champs canoniques du modèle
-
-- ❌ `habit.completedDates` — canonique : `habit.completions: Record<string, boolean>` (B5)
-- ❌ `task.title` / `task.dueDate` / `task.isBookmarked` → `name` / `deadline` / `bookmarked` (B6).
-  `task.status` n'est pas « terminée », c'est `completed` : [`tasks/CLAUDE.md`](tasks/CLAUDE.md)
-- ❌ Faire porter au type `User` un état d'abonnement — il ne porte QUE l'identité ; l'état
-  premium vient de `useBilling()`, jamais d'ailleurs (ex-N5). Les champs que cette règle nommait
-  (`premiumTokens`, `premiumWinStreak`, `lastTokenConsumption`) n'existent plus nulle part depuis
-  C-04 : la règle survit sur sa forme, pas sur ces trois noms
-- ❌ Stocker un collaborateur par `friend.name` — utiliser `friend.id` partout (B6, B22)
-
-
----
-
-## Garde-fous du mode démo
-
-- ❌ Appeler `login(email, password)` pour l'utilisateur démo — utiliser `loginDemo()`
-- ❌ `navigate('/dashboard')` après `loginDemo()` sans `setTimeout(…, 0)`
-- ❌ Oublier `clearDemoStorage()` avant de modifier les seeds
-- ❌ Dériver `isDemo` de l'email — utiliser `useIsDemo()` / `appModeStore.isDemo` (B0)
-- ❌ Muter `DEMO_FRIENDS` / `DEMO_INCOMING_REQUESTS` en place — `JSON.parse(JSON.stringify(...))` (B12)
-
+- ❌ `habit.completedDates` : `habit.completions: Record<string, boolean>` (B5).
+- ❌ `task.title` / `task.dueDate` / `task.isBookmarked` : `name` / `deadline` / `bookmarked` (B6). `task.status` n'est pas « terminée » : `completed` → [`tasks/CLAUDE.md`](tasks/CLAUDE.md).
+- ❌ Un état d'abonnement sur `User` : il vient de `useBilling()` (ex-N5).
+- ❌ Un collaborateur stocké par `friend.name` : `friend.id` (B6, B22).
