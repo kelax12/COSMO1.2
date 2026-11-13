@@ -16,7 +16,7 @@ import { completionColor } from './completion-color';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import { formatDurationMinutes } from '@/lib/duration';
-import { scheduledPeriodStats } from '@/lib/stats-insights';
+import { scheduledPeriodStats } from '@/modules/habits/schedule';
 import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -29,24 +29,22 @@ interface HabitStatItemProps {
     periodCompletions: number;
     periodTime: number;
     relevantDaysCount: number;
-    /** Jours prévus dans la période (mig. 251). Absent = tous les jours. */
-    scheduledDaysCount?: number;
+    /** Jours prévus dans la période (mig. 251). */
+    scheduledDaysCount: number;
     /** Coches tombées sur un jour prévu. */
-    scheduledCompletions?: number;
+    scheduledCompletions: number;
     frequency?: 'daily' | 'weekly' | 'monthly';
   };
   formatTime: (minutes: number) => string;
 }
 
 const HabitStatItem = React.memo<HabitStatItemProps>(({ habit, formatTime }) => {
-  const isDaily = habit.frequency !== 'weekly' && habit.frequency !== 'monthly';
+  // Quotidienne : attendu et fait sur les seuls jours prévus (mig. 251).
+  const daily = habit.frequency !== 'weekly' && habit.frequency !== 'monthly';
   const expectedCompletions =
-    habit.frequency === 'weekly'  ? Math.ceil(habit.relevantDaysCount / 7) :
-    habit.frequency === 'monthly' ? Math.max(1, Math.round(habit.relevantDaysCount / 30)) :
-    habit.scheduledDaysCount ?? habit.relevantDaysCount;
-  const doneCompletions = isDaily
-    ? habit.scheduledCompletions ?? habit.periodCompletions
-    : habit.periodCompletions;
+    !daily ? (habit.frequency === 'weekly' ? Math.ceil(habit.relevantDaysCount / 7) : Math.max(1, Math.round(habit.relevantDaysCount / 30))) :
+    habit.scheduledDaysCount;
+  const doneCompletions = daily ? habit.scheduledCompletions : habit.periodCompletions;
   const rate = expectedCompletions > 0
     ? Math.min(100, Math.round((doneCompletions / expectedCompletions) * 100))
     : 0;
@@ -528,17 +526,13 @@ export const HabitsStatistics: React.FC<{
 
     // Taux de réussite sur les seuls jours PRÉVUS (mig. 251). Le temps passé,
     // lui, compte toutes les coches.
-    const scheduled = relevantDaysCount > 0
-      ? scheduledPeriodStats(habit, effectiveStart, effectiveEnd)
-      : { scheduledDays: 0, scheduledCompletions: 0 };
-
+    // Bornes inversées (habitude créée après la période) : zéro jour prévu.
     return {
       ...habit,
       periodCompletions: completionsCount,
       periodTime: completionsCount * habit.estimatedTime,
       relevantDaysCount,
-      scheduledDaysCount: scheduled.scheduledDays,
-      scheduledCompletions: scheduled.scheduledCompletions,
+      ...scheduledPeriodStats(habit, effectiveStart, effectiveEnd),
       frequency: habit.frequency,
     };
   }), [habits, rollingRange, now]);

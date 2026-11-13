@@ -98,3 +98,31 @@ export function nextScheduleHistory(
   history.sort((a, b) => (a.from < b.from ? -1 : a.from > b.from ? 1 : 0));
   return history.slice(-MAX_SCHEDULE_HISTORY);
 }
+
+/**
+ * Jours PRÉVUS d'une habitude entre deux bornes incluses (jours calendaires
+ * locaux), et coches tombées sur ces jours-là. Base du taux de réussite des
+ * statistiques : il se calcule sur les seuls jours prévus (mig. 251), et une
+ * coche sur un jour non prévu ne gonfle pas le taux.
+ */
+export function scheduledPeriodStats(
+  habit: Pick<Habit, 'completions' | 'scheduledDays' | 'scheduleHistory'>,
+  start: Date,
+  end: Date,
+): { scheduledDaysCount: number; scheduledCompletions: number } {
+  let scheduledDaysCount = 0;
+  let scheduledCompletions = 0;
+  const cursor = new Date(start);
+  cursor.setHours(12, 0, 0, 0);
+  const last = new Date(end);
+  last.setHours(12, 0, 0, 0);
+  for (let guard = 0; cursor <= last && guard < 3700; guard++) {
+    const key = cursor.toLocaleDateString('en-CA');
+    if (isHabitScheduledOn(habit, key)) {
+      scheduledDaysCount++;
+      if (habit.completions[key]) scheduledCompletions++;
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return { scheduledDaysCount, scheduledCompletions };
+}

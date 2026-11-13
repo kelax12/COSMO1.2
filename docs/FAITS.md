@@ -22,6 +22,6 @@ Les chiffres de production (tables vivantes, ledger, taille de base) ne sont pas
 | Tables du schéma `public` | **92** | `CREATE TABLE public.` dans `supabase/schema.sql` |
 | dont sous RLS | **92** | `ENABLE ROW LEVEL SECURITY` dans `supabase/schema.sql` |
 | Policies RLS | **208** | `CREATE POLICY` dans `supabase/schema.sql` |
-| Fonctions SQL de `public` | **245** | `CREATE FUNCTION public.` dans `supabase/schema.sql` |
+| Fonctions SQL de `public` | **247** | `CREATE FUNCTION public.` dans `supabase/schema.sql` |
 
 Vérifié dans le noyau CI : `npm run check:faits` échoue si ce fichier diffère de la génération.
