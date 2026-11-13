@@ -1,13 +1,9 @@
 # Gabarits de la procédure de violation
 
-Pièces à **copier hors dépôt** (dossier privé) au moment d'une violation, et à remplir dans l'ordre de
-`RGPD-VIOLATION.md` (hors dépôt). Créés le 2026-10-24 après l'exercice à blanc, qui a trouvé
-qu'aucun gabarit n'existait dans le dépôt : les brouillons de la violation `BK-1` vivaient dans un
-dossier privé et ne se retrouvaient pas à froid.
+Lire en cas de violation. Fait foi : l'ordre de `RGPD-VIOLATION.md` (hors dépôt). Pièces à copier hors dépôt (dossier privé) et à remplir dans cet ordre.
 
-> 🔴 **Ce fichier est PUBLIC (le dépôt l'est).** Il ne porte que des champs vides. ❌ Ne jamais y
-> écrire un fait d'une violation réelle : ils vont dans le registre privé.
-> `npm run check:exercice-violation` vérifie que chaque titre ci-dessous existe.
+- 🔴 Fichier PUBLIC : champs vides seulement. ❌ Jamais un fait de violation réelle : ils vont dans le registre privé.
+- ✅ `npm run check:exercice-violation` exige que chaque titre `##` ci-dessous existe.
 
 ## Chronologie horodatée
 
@@ -31,8 +27,7 @@ Dès la ligne « prise de connaissance » écrite, poser **deux rappels datés**
 Échéance = heure de prise de connaissance + 72 h, **écrite en clair** ici :
 `prise de connaissance : ____ UTC · échéance : ____ UTC`.
 
-Pourquoi : lors de `BK-1`, les brouillons étaient prêts la veille et l'échéance est passée sans
-décision consignée, parce que rien ne la rappelait.
+Pourquoi : sans rappel, l'échéance passe sans décision consignée.
 
 ## Qualification en six questions
 
