@@ -170,12 +170,19 @@ export function selectionner({ changes, slugs, perimetre, source }) {
  * `estAncetre(a, b)` : `a` est-il contenu dans `b` (`git merge-base
  * --is-ancestor`, vrai aussi pour a === b) ? `diff(base, tete)` rend les
  * chemins modifies.
+ *
+ * `existe(sha)` (facultatif) : le commit est-il dans le clone COMPLET ? Une
+ * base absente d'un clone complet a ete purgee par une reecriture d'historique
+ * (cas du 2026-11-13) : on redeploie tout, comme pour `historique-reecrit`,
+ * au lieu d'echouer sur `git merge-base`. Le clone superficiel, lui, ne
+ * prouve rien : c'est `existeGit` qui refuse de repondre.
  */
-export function planifier({ base, tete, estAncetre, diff }) {
+export function planifier({ base, tete, estAncetre, diff, existe }) {
   if (!SHA_RE.test(String(tete))) {
     throw new Error(`SHA a deployer invalide : « ${tete} ». Le deploiement ne devine pas.`);
   }
   if (!base) return { mode: 'amorcage', changes: null };
+  if (existe && !existe(base)) return { mode: 'base-introuvable', changes: null };
   if (estAncetre(tete, base)) return { mode: 'deja-deploye', changes: [] };
   if (!estAncetre(base, tete)) return { mode: 'historique-reecrit', changes: null };
   return { mode: 'diff', changes: diff(base, tete) };
@@ -200,10 +207,10 @@ export function verifierTriple(slugs, { sections, sondes }) {
 }
 
 /** Tout le calcul, entrees et sorties injectees : c'est `main` sans I/O. */
-export async function decider({ tete, lireRuns, estAncetre, diff, slugs, perimetre, source, sections, sondes }) {
+export async function decider({ tete, lireRuns, estAncetre, diff, existe, slugs, perimetre, source, sections, sondes }) {
   const runs = await lireRuns();
   const base = choisirBase(runs);
-  const plan = planifier({ base, tete, estAncetre, diff });
+  const plan = planifier({ base, tete, estAncetre, diff, existe });
 
   let selection;
   if (plan.changes === null) {
@@ -233,6 +240,15 @@ function estAncetreGit(a, b) {
   if (r.status === 1) return false;
   // 128 : SHA inconnu du clone. Ni vrai ni faux : on ne devine pas.
   throw new Error(`git merge-base ${a} ${b} : code ${r.status} ${r.stderr.trim()}`);
+}
+
+function existeGit(sha) {
+  // Un clone superficiel ne sait pas si un commit absent a existe : on ne devine pas.
+  const superficiel = git(['rev-parse', '--is-shallow-repository']);
+  if (superficiel.status !== 0 || superficiel.stdout.trim() !== 'false') {
+    throw new Error('clone superficiel ou illisible : impossible de dire si la base existe (fetch-depth: 0 requis).');
+  }
+  return git(['cat-file', '-e', `${sha}^{commit}`]).status === 0;
 }
 
 function diffGit(base, tete) {
@@ -289,6 +305,7 @@ async function main() {
     tete,
     lireRuns: lireRunsGitHub,
     estAncetre: estAncetreGit,
+    existe: existeGit,
     diff: diffGit,
     slugs: slugsDuDepot(),
     perimetre: (slug) => [...repoFilesFor(slug).keys()],

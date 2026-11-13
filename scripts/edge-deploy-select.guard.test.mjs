@@ -176,6 +176,20 @@ describe('edge-deploy · le plan', () => {
     expect(planifier({ base: A, tete: B, estAncetre: () => false, diff }).mode).toBe('historique-reecrit');
   });
 
+  // 2026-11-13 : la base deployee a ete purgee par la reecriture d'historique.
+  it('deploie tout quand la base n existe plus dans le clone complet', () => {
+    const estAncetre = () => { throw new Error('git merge-base ne doit pas etre appele'); };
+    expect(planifier({ base: A, tete: B, estAncetre, diff, existe: () => false })).toEqual({
+      mode: 'base-introuvable',
+      changes: null,
+    });
+  });
+
+  it('garde le chemin nominal quand la base existe', () => {
+    const estAncetre = (x, y) => x === A && y === B;
+    expect(planifier({ base: A, tete: B, estAncetre, diff, existe: () => true }).mode).toBe('diff');
+  });
+
   it('suit le diff dans le cas nominal', () => {
     const estAncetre = (x, y) => x === A && y === B;
     expect(planifier({ base: A, tete: B, estAncetre, diff })).toEqual({
