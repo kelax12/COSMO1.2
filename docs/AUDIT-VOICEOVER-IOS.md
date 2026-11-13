@@ -1,137 +1,59 @@
 <!-- echeance-lecteur-ecran: 2026-12-15 initiale=2026-12-15 -->
 
-# Audit VoiceOver iOS · check-list à jouer d'une traite
+# Audit VoiceOver iOS : check-list à jouer d'une traite
 
-**Statut : à jouer, ÉCHÉANCE 2026-12-15. Rien dans ce fichier n'est coché.** C'est le **quatrième** des audits
-d'accessibilité listés par `C-24` (devenu l'issue n° 183, voir `a-faire-code.md`), et le seul que le 2026-09-03 n'a pas passé.
-Les trois autres (parcours clavier, modales, `/agenda`) l'ont été, sur **Chromium desktop**, avec le
-harnais `e2e/a11y-keyboard-audit.spec.ts`.
+Lire pour jouer la séance VoiceOver sur iPhone réel, ou en touchant `scripts/check-lecteurs-ecran.mjs`. Ce qui fait foi : le registre ci-dessous et `npm run check:lecteurs-ecran`. Procédure NVDA et revue WCAG : [`AUDIT-NVDA-WINDOWS.md`](./AUDIT-NVDA-WINDOWS.md).
 
-> 🕓 **Échéance posée le 2026-10-24 : le 2026-12-15.** Passé ce jour sans ligne « ✅ joué » au
-> [registre des séances](#registre-des-séances) ci-dessous, `npm run check:lecteurs-ecran` échoue en
-> CI (`M-52`). La date ne se repousse que de 30 jours au plus (marqueur `initiale=`) : au-delà,
-> c'est une reconduction, et c'est exactement ce qui s'est passé du 2026-09-03 au 2026-10-24.
-> La garde vérifie aussi que **chacune des 94 étapes numérotées porte son résultat attendu** : la
-> séance se joue pas à pas, une ligne après l'autre, et se consigne avec le gabarit de « Comment
-> consigner ». La séance NVDA et la revue humaine WCAG sont dans
-> [`AUDIT-NVDA-WINDOWS.md`](./AUDIT-NVDA-WINDOWS.md), échéance 2027-01-15.
+**Statut : à jouer, échéance 2026-12-15. Rien n'est coché.** Quatrième audit d'accessibilité de `C-24` (issue n° 183), le seul jamais passé ; les trois autres (clavier, modales, `/agenda`) l'ont été sur Chromium desktop.
 
-🔴 **Il ne se simule pas, et il ne se déduit pas.** Playwright interroge le DOM et
-`document.activeElement` : ce qui est prouvé aujourd'hui, c'est le **FOCUS**, jamais l'**ANNONCE**.
-La limite complète est écrite dans [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) § « Ce que nos mesures
-prouvent, et ce qu'elles ne prouvent pas ». Cette page existe pour qu'une seule séance sur un
-iPhone réel la referme.
-
-> **Révision du 2026-09-08.** La version du 2026-09-04 (commit `7008bc6`) précédait le câblage
-> C-53. Depuis, **52 surfaces modales maison** passent par `useModalA11y`, chacune avec un **nom
-> accessible connu**, et 8 autres sont déclarées non modales avec leur motif
-> (`src/components/modal-a11y.guard.test.ts`). La check-list a été reprise sur ce périmètre :
-> chaque surface atteignable sur iPhone a désormais sa ligne, avec le nom qu'elle **doit** dire.
-> Ce qui n'est pas atteignable sur iPhone est **nommé et motivé** en annexe B, pour qu'un écran non
-> joué ne se confonde jamais avec un écran conforme. La page `/tasks` a été redessinée dans la même
-> fenêtre (chips de listes, carte à balayage, feuille d'actions) : sa section a été refaite sur les
-> gestes d'aujourd'hui.
->
-> ⚠️ **Le câblage ne rend pas cet audit inutile, il le rend mesurable.** `useModalA11y` pose le
-> piège de focus, la restitution du focus et `aria-modal` : ce sont des propriétés du DOM,
-> vérifiées au clavier sur 10 surfaces et tenues par un cliquet sur les 43 autres. Ce que VoiceOver
-> en fait reste **entièrement non mesuré**.
-
-- **Durée** : environ 90 minutes, préparation comprise (60 pour les sections 1 à 12, 30 de plus si
-  tu joues l'annexe A en entier).
-- **Où** : `https://thecosmo.app`, **en mode démo**. Aucune donnée réelle n'est touchée, et les
-  seeds garantissent qu'il y a quelque chose à lire sur chaque écran.
-- **Ce que ça produit** : des findings `V-xx`, qui rejoignent le backlog comme les autres : une issue chacune, gabarit « Tâche de backlog ».
-  Pas de correctif pendant la séance : on mesure, on note, on corrige après.
-
----
-
-
-## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
-
-> Ce document affirme des choses que rien ne pèse : chaque ligne nomme une affirmation qui n'était vérifiée
-> par rien, et la garde qui la vérifie depuis. 🔴 **Une garde posée n'est pas un angle mort fermé** : la
-> dernière colonne dit ce que son vert ne prouve pas. L'énoncé du 2026-09-16, la colonne « État » du
-> 2026-09-21 et les mesures datées sont archivés sans une coupe :
-> [`archive/ANGLES-MORTS-2026-09-16-docs-vivantes.md`](./archive/ANGLES-MORTS-2026-09-16-docs-vivantes.md).
-
-| # | Angle mort (énoncé du 2026-09-16) | Garde qui le couvre | 🔴 Ce qu'elle ne prouve pas |
-|---|---|---|---|
-| AM-1 | **Ce document est lui-même un angle mort** : « Statut : à jouer », rien n'est coché, et un audit jamais joué ne révèle rien. Il ne s'outille pas (`axe-core` voit des attributs, pas ce que VoiceOver prononce) | **L'exécution reste humaine** (`M-40`) ; tout le reste est outillé : échéance **2026-12-15**, 94 étapes à résultat attendu vérifié, registre des séances, `npm run check:lecteurs-ecran` en CI (témoin vu rouge : échéance dépassée, séance absente, attendu vide) | Qu'une séance a été bien faite, seulement qu'elle est consignée |
-| AM-2 | **Le coût de son absence n'est pas nommé** dans la note d'accessibilité (VoiceOver est la seule mesure de ce que le produit **annonce** à une personne aveugle, comme AM-3 de [`ACCESSIBILITY.md`](./ACCESSIBILITY.md)) | **Arbitré le 2026-10-24** (`M-56`, volet lecteur d'écran) ; l'arbitrage est archivé avec le journal des notes d'accessibilité : [`archive/ACCESSIBILITY-journal-des-notes-2026-08-24-au-2027-01-15.md`](./archive/ACCESSIBILITY-journal-des-notes-2026-08-24-au-2027-01-15.md) | Sans objet depuis l'arrêt des notes /100 (ADR 0012) |
-| AM-3 | **Aucune échéance** : « à jouer » sans date se reconduit indéfiniment (c'est ce qui s'est produit depuis le 2026-09-03) | échéance **2026-12-15** dans le marqueur d'en-tête ; `npm run check:lecteurs-ecran` échoue le lendemain sans séance consignée (`M-52`) | Que la séance a lieu : son absence devient **rouge**, pas impossible |
-
----
+- 🔴 `npm run check:lecteurs-ecran` (CI, `M-52`) échoue passé l'échéance sans ligne `✅ joué` au [registre](#registre-des-séances). ❌ Repousser l'échéance de plus de 30 jours après `initiale=` (marqueur d'en-tête) : c'est une reconduction. ❌ Cocher une ligne du registre sans séance réelle.
+- 🔴 La garde exige aussi que CHAQUE étape numérotée porte son résultat attendu, et un plancher d'étapes : ❌ supprimer des étapes pour raccourcir. Elle prouve qu'une séance est CONSIGNÉE avec un appareil, pas qu'elle est bien faite.
+- 🔴 Il ne se simule pas et ne se déduit pas : Playwright prouve le FOCUS, jamais l'ANNONCE ([`ACCESSIBILITY.md`](./ACCESSIBILITY.md) § « Ce que nos mesures prouvent, et ne prouvent pas »). `useModalA11y` rend les propriétés DOM mesurables ; ce que VoiceOver en fait reste non mesuré.
+- ✅ Durée : environ 90 min (60 pour les sections 1 à 12, 30 pour l'annexe A en entier). Où : `https://thecosmo.app`, mode démo (aucune donnée réelle). Produit : des findings `V-xx`, une issue chacun (gabarit « Tâche de backlog »). Pas de correctif pendant la séance.
+- ✅ Annexe A : une ligne par surface atteignable sur iPhone, avec le nom qu'elle DOIT dire ; recompter par `grep -rn "= useModalA11y" src --include=*.tsx` (hors `use-modal-a11y.guard.test.tsx`). Annexe B : ce qui n'est pas atteignable, motivé, pour qu'un écran non joué ne se lise jamais comme conforme.
 
 ## 0. Préparation (5 min)
 
-1. **Un iPhone réel.** Le simulateur Xcode ne compte pas : son VoiceOver n'est pas le même et les
-   gestes n'existent pas. C'est la même règle que M-25 dans `a-faire-manuel.md`.
-2. **Noter en tête du compte-rendu** : modèle, version d'iOS, version de Safari
-   (Réglages › Général › Informations). Sans ces trois lignes, un finding n'est pas reproductible.
-3. **Raccourci d'accessibilité** : Réglages › Accessibilité › Raccourci d'accessibilité ›
-   VoiceOver. Un triple-clic sur le bouton latéral l'allume et l'éteint. Indispensable : sans lui,
-   sortir de VoiceOver au milieu de l'audit est pénible.
-4. **Débit de parole vers 40 %** (Réglages › Accessibilité › VoiceOver › Débit). À vitesse par
-   défaut on entend une bouillie, et on note ce qu'on croit avoir entendu.
-5. **Safari, portrait, thème clair, aucun zoom d'affichage** pour la première passe. Les variantes
-   se jouent à l'étape 12.
-6. **Le dictaphone en marche.** C'est le seul moyen fiable de garder l'annonce **verbatim** :
-   reformuler ce que VoiceOver a dit, c'est perdre le défaut.
-7. **iPhone en français** pour la passe principale. Une passe en anglais est prévue à l'étape 12 :
-   cinq noms de surfaces sont écrits **en dur en français** dans le code, et c'est là qu'ils
-   s'entendront (annexe A, lignes marquées 🇫🇷).
+1. **Un iPhone réel** (le simulateur n'a ni le même VoiceOver ni les gestes). Noter modèle, version d'iOS, version de Safari (Réglages › Général › Informations) : sans elles un finding n'est pas reproductible.
+2. **Raccourci d'accessibilité** : Réglages › Accessibilité › Raccourci d'accessibilité › VoiceOver (triple-clic du bouton latéral).
+3. **Débit de parole vers 40 %** (Réglages › Accessibilité › VoiceOver › Débit).
+4. **Safari, portrait, thème clair, aucun zoom d'affichage** pour la première passe ; variantes à l'étape 12.
+5. **Dictaphone en marche** : l'annonce se garde VERBATIM, reformuler perd le défaut.
+6. **iPhone en français** pour la passe principale ; passe en anglais à l'étape 12 (cinq noms de surfaces sont écrits en dur en français, lignes 🇫🇷 de l'annexe A).
 
 ## Les gestes qui suffisent
 
 | Geste | Ce qu'il fait |
 |---|---|
-| balayage droite / gauche (1 doigt) | élément suivant / précédent dans l'ordre de lecture |
-| double tap | activer l'élément sous le curseur VoiceOver |
-| **double tap maintenu** | équivalent d'un **appui long**. Le seul moyen d'atteindre un menu d'appui long sous VoiceOver, cf. 4.8 |
-| toucher-déplacer | explorer par la **position** à l'écran (révèle l'ordre visuel réel) |
+| balayage droite / gauche (1 doigt) | élément suivant / précédent |
+| double tap | activer l'élément sous le curseur |
+| **double tap maintenu** | équivalent d'un appui long ; seul moyen d'atteindre un menu d'appui long (cf. 4.8) |
+| toucher-déplacer | explorer par la POSITION (révèle l'ordre visuel réel) |
 | balayage 2 doigts vers le haut | lire toute la page depuis le haut |
 | balayage 3 doigts | faire défiler |
-| rotor (2 doigts, rotation) puis balayage haut/bas | parcourir par **titres**, **liens**, **contrôles**, **champs de formulaire** |
+| rotor (2 doigts, rotation) puis balayage haut/bas | parcourir par titres, liens, contrôles, champs de formulaire |
 | « Z » à 2 doigts (scrub) | revenir en arrière, fermer une couche |
 
-## 🧪 Le témoin · à jouer en PREMIER, sinon rien ne compte
+## Le témoin : à jouer en PREMIER
 
-Le harnais clavier embarque un témoin ; cette check-list en a un aussi, pour la même raison : une
-mesure dont on ne sait pas si l'instrument fonctionnait ne vaut rien.
+Une mesure dont on ignore si l'instrument fonctionnait ne vaut rien. Sur `https://thecosmo.app`, balayer jusqu'au bouton principal du hero.
 
-Sur `https://thecosmo.app`, balayer jusqu'au bouton principal du hero.
-
-- **Attendu, verbatim** : « **Essayer la démo sans inscription, bouton** ». Ce nom accessible vient
-  de `landing:hero.demoAria` et **diffère volontairement du texte visible**, qui est « Essayer la
-  démo gratuite » (`landing:hero.demoCta`).
-- ✅ Tu entends « sans inscription » : VoiceOver lit bien l'arbre d'accessibilité, l'audit peut
-  commencer.
-- ❌ Tu entends « gratuite » : soit le nom accessible n'est pas appliqué, soit la verbosité a été
-  modifiée. **Arrêter là.** Aucune ligne de la suite ne serait interprétable.
+- **Attendu, verbatim** : « **Essayer la démo sans inscription, bouton** » (nom accessible `landing:hero.demoAria`, qui diffère volontairement du texte visible « Essayer la démo gratuite », `landing:hero.demoCta`).
+- ✅ « sans inscription » entendu : l'audit peut commencer. ❌ « gratuite » entendu : nom accessible non appliqué ou verbosité modifiée. **Arrêter là** : rien de la suite ne serait interprétable.
 
 ## Les 4 détecteurs d'une surface modale
 
-Toutes les lignes de modale de cette check-list posent les **mêmes quatre questions**, dans cet
-ordre. C'est le pendant VoiceOver des cinq détecteurs du harnais clavier.
+Toute ligne de modale pose ces quatre questions, dans cet ordre (pendant VoiceOver des détecteurs du harnais clavier).
 
 | # | Question | Attendu |
 |---|---|---|
-| **M1** | à l'ouverture, qu'est-ce qui est annoncé ? | le **nom** de la surface (colonne « nom attendu » de l'annexe A), suivi de « boîte de dialogue » |
-| **M2** | le curseur entre-t-il dedans ? | oui, sur un élément **de la surface**, jamais sur la page dessous |
-| **M3** | balayer à droite **en boucle**, une dizaine de fois | on **ne ressort jamais** sur la page dessous. Un seul élément de l'arrière-plan annoncé est un ❌ |
-| **M4** | « Z » à 2 doigts | la surface se ferme **et** le curseur revient sur le contrôle qui l'a ouverte |
+| **M1** | à l'ouverture, qu'est-ce qui est annoncé ? | le NOM de la surface (colonne « nom attendu » de l'annexe A), suivi de « boîte de dialogue » |
+| **M2** | le curseur entre-t-il dedans ? | oui, sur un élément DE la surface, jamais sur la page dessous |
+| **M3** | balayer à droite en boucle, une dizaine de fois | on ne ressort jamais sur la page dessous ; un seul élément d'arrière-plan annoncé est un ❌ |
+| **M4** | « Z » à 2 doigts | la surface se ferme ET le curseur revient sur le contrôle qui l'a ouverte |
 
-⚠️ **M4 a une exception assumée, et trois surfaces la portent.** `ReassignManagerSheet`,
-`TeamTaskModal` et `BugReportModal` refusent de se fermer pendant une opération en cours
-(`pending` / `sending`) : le « Z » ne doit **rien** faire tant que l'opération tourne, exactement
-comme la croix et le voile. Un « Z » qui ferme là où le clic ne peut pas est un ❌, pas un ✅.
-
-⚠️ **Trois autres portent une fermeture À ÉTAGES.** Le premier « Z » annule un sous-état, le second
-ferme. C'est voulu, et l'inverse perdrait une saisie sans le dire : `BulkAddToListModal` (annule
-d'abord le sous-formulaire de création), `MobileAddToList` (même escalade), `OKRDeadlineReviewModal`
-(ne se ferme qu'en phase d'édition). `AgendaSlotReviewModal` est encore à part : son « Z »
-**reporte** le créneau, il ne l'annule pas.
+- ⚠️ Exception M4 : `TeamTaskModal` et `BugReportModal` refusent de se fermer pendant `pending` / `sending` : le « Z » ne doit RIEN faire tant que l'opération tourne (comme la croix et le voile). Un « Z » qui ferme là où le clic ne peut pas est un ❌.
+- ⚠️ Fermeture À ÉTAGES (le premier « Z » annule un sous-état, le second ferme ; l'inverse perdrait une saisie) : `BulkAddToListModal`, `MobileAddToList` (sous-formulaire de création), `OKRDeadlineReviewModal` (ne ferme qu'en phase d'édition). `AgendaSlotReviewModal` : son « Z » REPORTE le créneau.
 
 ## Comment consigner
 
@@ -144,134 +66,106 @@ Attendu : « Marquer Faire les courses comme faite, case à cocher, non cochée 
 Appareil : iPhone 13, iOS 18.5, Safari 18.5
 ```
 
-- **Écrire l'ENTENDU avant l'attendu.** Dans l'autre sens, on écrit ce qu'on espérait.
-- Statuts : ✅ conforme · ❌ défaut · ⚠️ douteux · **⬜ non atteint**. Un ⚠️ non rejoué compte comme
-  non mesuré, jamais comme conforme. Un ⬜ se justifie en une ligne.
-- Un écran non atteint se note « non atteint », pas « rien à signaler ».
+- ✅ Écrire l'ENTENDU avant l'attendu. Statuts : ✅ conforme · ❌ défaut · ⚠️ douteux · ⬜ non atteint. Un ⚠️ non rejoué compte comme non mesuré ; un ⬜ se justifie en une ligne ; un écran non atteint se note « non atteint », jamais « rien à signaler ».
 
 ---
 
-## 1. Landing `/` · 5 min · page publique, donc EAA sans réserve
+## 1. Landing `/` · 5 min
 
 | # | Geste | Attendu | Piège connu |
 |---|---|---|---|
-| 1.1 | rotor › Titres, balayer vers le bas | un seul `h1`, puis des niveaux qui descendent d'un cran à la fois | `heading-order` a été mesuré caduc sur `/okr`, jamais sur la landing |
-| 1.2 | lire depuis le haut (2 doigts) | rien de décoratif n'est lu : illustrations et icônes sont muettes | une icône lucide sans `aria-hidden` se lit « image » |
-| 1.3 | atteindre l'aiguillage perso / entreprise | deux liens distincts, compréhensibles hors contexte, et le parcours choisi dit « sélectionné » | c'est la structure de la page, cf. `CLAUDE.md` § Landing |
-| 1.4 | atteindre la grille de tarifs | le montant est lu **avec** son unité et sa période, et un prix barré est annoncé comme barré | l'offre de lancement affiche « Gratuit » et garde l'ancien prix barré : lu sans le mot « barré », ce sont deux prix contradictoires |
+| 1.1 | rotor › Titres, balayer vers le bas | un seul `h1`, puis des niveaux qui descendent d'un cran à la fois | `heading-order` jamais mesuré sur la landing |
+| 1.2 | lire depuis le haut (2 doigts) | rien de décoratif n'est lu : illustrations et icônes muettes | une icône lucide sans `aria-hidden` se lit « image » |
+| 1.3 | atteindre l'aiguillage perso / entreprise | deux liens distincts, compréhensibles hors contexte, et le parcours choisi dit « sélectionné » | structure de la page ([`src/pages/landing/CLAUDE.md`](../src/pages/landing/CLAUDE.md)) |
+| 1.4 | atteindre la grille de tarifs | le montant est lu AVEC son unité et sa période, et un prix barré est annoncé comme barré | l'offre de lancement affiche « Gratuit » et garde l'ancien prix barré : sans « barré », deux prix contradictoires |
 | 1.5 | bandeau cookies, s'il apparaît | annoncé, atteignable au balayage, ses deux choix distincts | `CookieBanner` est un `aside` avec `aria-label` |
-| 1.6 | atteindre les liens du pied de page (CGU, confidentialité, mentions légales) | chacun est un lien, et il **ouvre bien sa page** | ces liens tombaient sur une 404 en anglais avant le 2026-09-02 : à rejouer en anglais à l'étape 12 |
-| 1.7 | hero du parcours **entreprise** (`/entreprise-presentation`) | le canvas de rayons est **muet** et n'est pas atteignable au balayage | il peint le viewport entier ; atteignable, il serait annoncé « image » au milieu du titre |
+| 1.6 | atteindre les liens du pied de page (CGU, confidentialité, mentions légales) | chacun est un lien, et il OUVRE bien sa page | tombaient sur une 404 en anglais : à rejouer à l'étape 12 |
+| 1.7 | hero du parcours entreprise (`/entreprise-presentation`) | le canvas de rayons est MUET et inatteignable au balayage | il peint le viewport entier ; atteignable, il serait annoncé « image » au milieu du titre |
 
 ## 2. Entrée en démo et changement de route · 5 min
 
 | # | Geste | Attendu | Piège connu |
 |---|---|---|---|
 | 2.1 | double tap sur « Essayer la démo » | l'application s'ouvre sur `/dashboard` | |
-| 2.2 | juste après l'ouverture | **quelque chose est annoncé** : titre de page, ou premier élément du nouvel écran | 🔴 la classe de défaut la plus probable de tout cet audit : dans une SPA, changer d'URL n'annonce **rien** par défaut, et le curseur VoiceOver peut rester sur l'écran précédent |
+| 2.2 | juste après l'ouverture | QUELQUE CHOSE est annoncé : titre de page, ou premier élément du nouvel écran | 🔴 classe de défaut la plus probable : dans une SPA changer d'URL n'annonce rien par défaut, le curseur peut rester sur l'écran précédent |
 | 2.3 | naviguer `/dashboard` → `/tasks` → `/habits` par la barre d'onglets | même question à chaque fois, et le curseur ne retombe pas tout en haut du document à chaque route | |
-| 2.4 | si l'accueil de premier lancement s'ouvre | `FirstRunSetup` : M1 « **Bienvenue dans COSMO** », puis M2, M3, M4 | il ne s'ouvre que sur un compte **vide** (`taskCount === 0`) et une seule fois par appareil. En démo, les seeds le remplissent : si tu ne l'atteins pas, note ⬜, ne cherche pas à le forcer |
+| 2.4 | si l'accueil de premier lancement s'ouvre | `FirstRunSetup` : M1 « **Bienvenue dans COSMO** », puis M2, M3, M4 | il ne s'ouvre que sur un compte VIDE (`taskCount === 0`), une fois par appareil ; en démo les seeds le remplissent : noter ⬜, ne pas le forcer |
 
-## 3. Navigation mobile · barre d'onglets et feuille « Plus » · 5 min
+## 3. Navigation mobile : barre d'onglets et feuille « Plus » · 5 min
 
 | # | Geste | Attendu | Piège connu |
 |---|---|---|---|
-| 3.1 | atteindre la barre d'onglets | annoncée « **Navigation mobile** », et l'onglet courant dit « page active » ou « sélectionné » | `aria-current="page"` n'est écrit nulle part dans notre JSX ici : il vient du `NavLink` de React Router, qui le pose par défaut sur le lien actif. Vérifié dans le code le 2026-09-08, jamais entendu |
-| 3.2 | atteindre un badge | le nombre **avec son sens** : « 3 demandes en attente », « 2 notifications entreprise », « 5 tâches pour aujourd'hui ». Jamais « 3 » seul | les trois libellés existent (`common:nav.badge.*`, formes de pluriel comprises) ; la question est leur audibilité |
-| 3.3 | ouvrir « Plus » | M1 « **Plus d'options** », puis M2 | `MobileMoreSheet` est le **seul** accès mobile à OKR, Statistiques, Réglages et à la déconnexion |
-| 3.4 | balayer à droite en boucle dans la feuille | M3 : on ne ressort pas sur la page dessous | l'une des rares surfaces déjà mesurées au clavier en viewport 375 × 812 |
+| 3.1 | atteindre la barre d'onglets | annoncée « **Navigation mobile** », et l'onglet courant dit « page active » ou « sélectionné » | `aria-current="page"` vient du `NavLink` de React Router ; jamais entendu |
+| 3.2 | atteindre un badge | le nombre AVEC son sens : « 3 demandes en attente », « 2 notifications entreprise », « 5 tâches pour aujourd'hui ». Jamais « 3 » seul | libellés `common:nav.badge.*` ; la question est leur audibilité |
+| 3.3 | ouvrir « Plus » | M1 « **Plus d'options** », puis M2 | `MobileMoreSheet` est le SEUL accès mobile à OKR, Statistiques, Réglages et à la déconnexion |
+| 3.4 | balayer à droite en boucle dans la feuille | M3 : on ne ressort pas sur la page dessous | |
 | 3.5 | « Z » à 2 doigts | M4 : elle se ferme, le curseur revient sur « Plus d'options » | |
-| 3.6 | dans la feuille, atteindre l'entrée de la page où l'on se trouve | elle dit « page active » | `aria-current="page"` est posé à la main ici |
+| 3.6 | dans la feuille, atteindre l'entrée de la page où l'on se trouve | elle dit « page active » | `aria-current="page"` posé à la main ici |
 
-## 4. `/tasks` · 15 min · l'écran le plus retouché depuis la version précédente de cette page
+## 4. `/tasks` · 15 min
 
-🔴 **Section refaite le 2026-09-08.** La liste mobile a été redessinée entre-temps : les gestes
-ci-dessous sont ceux du produit d'aujourd'hui, pas ceux du 2026-09-04.
+🔴 Le bouton « ⋯ » de la carte de tâche n'existe plus sur téléphone (maquette 86) : l'élément qui porte ce nom vit dans `div.hidden md:block`, à 0 × 0 px au format mobile. Les actions d'une tâche n'y sont atteignables que par appui long ou glissement (gestes de pointeur). Le chemin ouvert est l'évènement `contextmenu` (`Shift+F10`), annoncé par `aria-keyshortcuts`, NON vérifié sous VoiceOver iOS (pas de touche menu contextuel). C'est une QUESTION que cet audit doit trancher : noter ce que VoiceOver propose (rotor « Actions », actions personnalisées) ; « rien » est un finding de niveau A, pas une erreur de manipulation.
 
 | # | Geste | Attendu | Piège connu |
-
-> 🔴 **AVERTISSEMENT DU 2026-09-22, à lire AVANT de jouer le bloc 4.** L'étape 4.5 décrivait un
-> bouton « ⋯ » sur la carte de tâche comme « l'affordance permanente ». **Il n'existe plus sur
-> téléphone** : la maquette 86 l'a retiré, et l'élément qui porte encore ce nom accessible vit
-> dans la ligne DESKTOP (`div.hidden md:block`), donc à **0 × 0 px** au format mobile — mesuré
-> dans le navigateur.
->
-> Conséquence directe, et c'est un défaut ouvert : sur mobile, les actions d'une tâche n'étaient
-> atteignables que par **appui long ou glissement**, deux gestes de pointeur. Un chemin clavier a
-> été ouvert le 2026-09-22 (évènement `contextmenu`, `Shift+F10`), **mais rien ne dit qu'il est
-> praticable sous VoiceOver iOS**, où il n'y a pas de touche menu contextuel.
->
-> ⚠️ **C'est donc une QUESTION que cet audit doit trancher, pas un chemin à vérifier.** Noter ce
-> que VoiceOver propose réellement (rotor « Actions », actions personnalisées), et si la réponse
-> est « rien », c'est un finding de niveau A à ouvrir — pas une erreur de manipulation.
-
 |---|---|---|---|
-| 4.1 | atteindre une ligne de tâche | « case à cocher, non cochée », **avec le nom de la tâche** | `role="checkbox"` + `aria-checked` sont posés (`task-table/list.tsx`, `TodayTasks`) : ne jamais entendre « bouton » |
-| 4.2 | double tap dessus | le **nouvel état** est annoncé (« cochée ») sans qu'il faille rebalayer | |
-| 4.3 | juste après | le toast de confirmation est-il lu ? et **sans voler le curseur** ? | Sonner porte sa propre région live ; un toast qui déplace le curseur casse le parcours |
+| 4.1 | atteindre une ligne de tâche | « case à cocher, non cochée », AVEC le nom de la tâche | `role="checkbox"` + `aria-checked` (`task-table/list.tsx`, `TodayTasks`) : jamais « bouton » |
+| 4.2 | double tap dessus | le NOUVEL état est annoncé (« cochée ») sans rebalayer | |
+| 4.3 | juste après | le toast de confirmation est lu, et sans voler le curseur | Sonner porte sa région live ; un toast qui déplace le curseur casse le parcours |
 | 4.4 | atteindre le titre d'une tâche | annoncé comme un contrôle activable, pas comme du texte inerte | |
-| 4.5 | 🔴 **atteindre les actions d'une tâche** — ⚠️ **PAS par un bouton « ⋯ » : il n'y en a plus sur téléphone.** Balayer jusqu'à la ligne de tâche, puis chercher ce que VoiceOver propose (rotor « Actions », geste personnalisé) | la carte doit être atteignable, et ses actions accessibles **sans geste de pointeur** | 🔴 **ÉTAPE RÉÉCRITE LE 2026-09-22, et c'est la plus importante de ce bloc.** Elle décrivait le « ⋯ » comme « l'affordance permanente » : la maquette 86 l'a retiré des cartes mobiles, et le seul élément qui porte encore ce nom vit dans `div.hidden md:block`, donc à **0 × 0 px** sur téléphone. ❌ **Ne pas conclure « VoiceOver est cassé » si rien ne répond « Actions pour … » au balayage : c'est attendu.** Le chemin ouvert le 2026-09-22 est l'évènement `contextmenu` (`Shift+F10` au clavier), annoncé par `aria-keyshortcuts` — **et il n'est PAS vérifié sous VoiceOver iOS, où il n'existe pas de touche menu.** C'est précisément ce que cette étape doit mesurer : par quel geste, s'il en existe un, une personne aveugle ouvre `TaskActionsSheet` sur iPhone |
-| 4.6 | une fois la feuille ouverte (par le chemin trouvé en 4.5) | `TaskActionsSheet` : M1 « **Actions pour \<nom\>** », puis M2, M3, M4 | ⚠️ Le nom de la feuille, lui, est juste : c'est son DÉCLENCHEUR qui a disparu. Si 4.5 échoue, noter l'échec et ouvrir la feuille autrement pour ne pas perdre 4.6 → 4.7 |
-| 4.7 | dans la feuille, « Ajouter à une liste » | `MobileAddToList` : M1 annonce « **Listes** » | ⚠️ son nom accessible pointe sur un paragraphe qui ne contient que le mot « Listes », en dur. Un nom d'une syllabe pour une surface qui recouvre l'écran : à consigner tel quel |
-| 4.8 | 🔴 **appui long sur une chip de liste** (double tap **maintenu**) | `ListActionsSheet` : M1 « **Actions pour la liste \<nom\>** » | 🔴 **le point le plus exposé de l'écran.** Sur mobile, renommer / partager / supprimer / épingler / recolorer une liste n'a **aucun autre chemin** : les boutons flottants sont conditionnés à `!isMobile`, et le menu contextuel natif est neutralisé. Si le double tap maintenu n'ouvre pas la feuille, ces actions sont **inatteignables** sous VoiceOver, et c'est un finding WCAG 2.5.1 |
+| 4.5 | 🔴 atteindre les actions d'une tâche : balayer jusqu'à la ligne, puis chercher ce que VoiceOver propose (rotor « Actions », geste personnalisé). PAS de bouton « ⋯ » | la carte doit être atteignable et ses actions accessibles SANS geste de pointeur | ❌ Ne pas conclure « VoiceOver est cassé » si rien ne répond « Actions pour … » : attendu. L'étape mesure par quel geste, s'il en existe un, une personne aveugle ouvre `TaskActionsSheet` sur iPhone |
+| 4.6 | une fois la feuille ouverte (par le chemin trouvé en 4.5) | `TaskActionsSheet` : M1 « **Actions pour \<nom\>** », puis M2, M3, M4 | le nom est juste, c'est le DÉCLENCHEUR qui a disparu ; si 4.5 échoue, ouvrir la feuille autrement pour ne pas perdre 4.6 et 4.7 |
+| 4.7 | dans la feuille, « Ajouter à une liste » | `MobileAddToList` : M1 annonce « **Listes** » | nom d'une syllabe, en dur, pour une surface plein écran : à consigner tel quel |
+| 4.8 | 🔴 appui long sur une chip de liste (double tap MAINTENU) | `ListActionsSheet` : M1 « **Actions pour la liste \<nom\>** » | point le plus exposé : renommer, partager, supprimer, épingler, recolorer une liste n'a AUCUN autre chemin sur mobile (boutons flottants conditionnés à `!isMobile`, menu contextuel natif neutralisé). Si le double tap maintenu n'ouvre rien : WCAG 2.5.1 |
 | 4.9 | bouton « Nouvelle liste » de la barre de chips | `CreateListSheet` : M1 « **Nouvelle liste** », puis M2 à M4 | |
-| 4.10 | partager une liste **manuelle** | `ShareListSheet` : M1 « **Partager la liste \<nom\>** » | le jeu de démo ne contient **que des listes intelligentes**, et « Partager » n'est monté que pour les autres : en créer une à la main d'abord, sinon le déclencheur n'existe pas. C'est exactement ce qui aurait fait expirer la garde clavier |
-| 4.11 | supprimer une tâche depuis la feuille d'actions | `ConfirmDeleteSheet` : le **titre passé en prop** est le nom annoncé, et la conséquence est lue **avant** les boutons | une confirmation dont on n'entend que « Supprimer / Annuler » ne dit pas ce qu'on supprime |
-| 4.12 | ouvrir la fiche d'une tâche | le curseur entre dans la modale, son titre est annoncé, le fond n'est plus atteignable | `TaskModal` est une surface **Radix** : son piège vient de la bibliothèque, pas de `useModalA11y`. C'est le point de comparaison de la séance, cf. § 11 |
-| 4.13 | dans la fiche, le bouton de suppression | `DeleteTaskConfirm` : « **Supprimer la tâche** » si on est propriétaire, « **Quitter la tâche partagée** » sinon | deux noms pour le même bouton : c'est voulu, et ça doit s'entendre |
+| 4.10 | partager une liste MANUELLE | `ShareListSheet` : M1 « **Partager la liste \<nom\>** » | la démo ne contient que des listes intelligentes et « Partager » n'est monté que pour les autres : en créer une d'abord |
+| 4.11 | supprimer une tâche depuis la feuille d'actions | `ConfirmDeleteSheet` : le titre passé en prop est le nom annoncé, et la conséquence est lue AVANT les boutons | « Supprimer / Annuler » seul ne dit pas ce qu'on supprime |
+| 4.12 | ouvrir la fiche d'une tâche | le curseur entre dans la modale, son titre est annoncé, le fond n'est plus atteignable | `TaskModal` est une surface RADIX (piège de la bibliothèque) : point de comparaison, cf. § 11 |
+| 4.13 | dans la fiche, le bouton de suppression | `DeleteTaskConfirm` : « **Supprimer la tâche** » si propriétaire, « **Quitter la tâche partagée** » sinon | deux noms pour le même bouton, voulu : doit s'entendre |
 | 4.14 | dans la fiche mobile, une sous-tâche | « case à cocher », avec son libellé | `SubtaskChecklist` porte `role="checkbox"` |
-| 4.15 | une tâche **en retard** | l'état « en retard » est annoncé, pas seulement montré en rouge | une couleur n'est pas une information pour un lecteur d'écran |
-| 4.16 | sélection multiple, puis « Ajouter à une liste » | `BulkAddToListModal` : M1 « **Ajouter à une liste** ». ⚠️ fermeture à étages | si la sélection multiple n'est pas atteignable au doigt, le noter ⬜ et passer |
+| 4.15 | une tâche EN RETARD | l'état « en retard » est annoncé, pas seulement montré en rouge | une couleur n'est pas une information pour un lecteur d'écran |
+| 4.16 | sélection multiple, puis « Ajouter à une liste » | `BulkAddToListModal` : M1 « **Ajouter à une liste** ». ⚠️ fermeture à étages | sélection multiple inatteignable au doigt : noter ⬜ et passer |
 
-## 5. Le calendrier COSMO · 10 min · le composant le plus jeune du produit
+## 5. Le calendrier COSMO · 10 min
 
-Il a remplacé le sélecteur natif du navigateur et n'a **jamais** été entendu par un lecteur d'écran.
-Onze fichiers le montent aujourd'hui
-(`grep -rl "DatePicker\|DateCalendarPanel" src --include=*.tsx`), dont plusieurs sont hors d'atteinte
-sur téléphone. Trois chemins suffisent, et ce sont trois **façons d'ouvrir** différentes :
-
-1. depuis un **champ** : échéance dans la fiche de tâche ;
-2. depuis un **menu** : report d'échéance d'une tâche en retard (`OverdueQuickActions`, dans la
-   carte mobile). C'est la classe que les sondes clavier n'avaient jamais atteinte (C-55) ;
-3. depuis une **fiche d'objectif** : `/okr`, échéance d'un OKR.
+Il a remplacé le sélecteur natif et n'a jamais été entendu. Montés par `DatePicker` / `DateCalendarPanel` (`grep -rl "DatePicker\|DateCalendarPanel" src --include=*.tsx`). Trois façons d'ouvrir : depuis un CHAMP (échéance de la fiche de tâche) ; depuis un MENU (report d'échéance, `OverdueQuickActions`, carte mobile, C-55) ; depuis une fiche d'objectif (`/okr`, échéance d'un OKR).
 
 | # | Geste | Attendu | Piège connu |
 |---|---|---|---|
-| 5.1 | ouvrir le calendrier | le curseur entre dedans, et le **mois affiché est annoncé** | C-51 : le mois affiché était le mois courant, pas celui du champ |
-| 5.2 | balayer dans la grille | chaque jour est annoncé avec sa date **complète et en français** | 🔴 C-52 : `react-day-picker` traduit ses dates, **pas** ses libellés ARIA. « Go to the Previous Month » a été corrigé, rien ne garantit qu'il n'en reste pas |
+| 5.1 | ouvrir le calendrier | le curseur entre dedans, et le MOIS affiché est annoncé | C-51 : le mois affiché était le mois courant, pas celui du champ |
+| 5.2 | balayer dans la grille | chaque jour est annoncé avec sa date COMPLÈTE et en français | 🔴 C-52 : `react-day-picker` traduit ses dates, PAS ses libellés ARIA |
 | 5.3 | atteindre le jour sélectionné | il dit « sélectionné » | |
 | 5.4 | atteindre les flèches de mois et les presets | libellés en français, et rôle de bouton | |
 | 5.5 | choisir un jour | le champ annonce la nouvelle valeur | |
-| 5.6 | rouvrir depuis un **menu** (chemin 2) | même comportement, et **aucun jour passé n'est proposé** | C-55 ; et sans `minDate`, un report d'échéance permet de reporter vers hier |
-| 5.7 | les deux champs de date d'`EventModal` | ce sont des `input[type=date]` **natifs** : c'est la roue iOS qui parle | arbitrage assumé, sur mobile la roue système vaut mieux qu'un calendrier maison. Noter ✅ « natif », pas ❌ |
+| 5.6 | rouvrir depuis un MENU (chemin 2) | même comportement, et AUCUN jour passé n'est proposé | C-55 ; sans `minDate`, un report permet de reporter vers hier |
+| 5.7 | les deux champs de date d'`EventModal` | `input[type=date]` NATIFS : la roue iOS parle | arbitrage assumé : noter ✅ « natif », pas ❌ |
 
-## 6. `/agenda` · 10 min · le point le plus faible connu
+## 6. `/agenda` · 10 min
 
 | # | Geste | Attendu | Piège connu |
 |---|---|---|---|
-| 6.1 | explorer la grille au toucher-déplacer | jours et événements lisibles, avec heure et titre | C-54 : **0 cellule de jour focalisable sur 8** au clavier |
-| 6.2 | balayage droite depuis le haut | **compter les balayages** avant d'atteindre le premier événement, et le noter | c'est l'équivalent VoiceOver des 38 tabulations de C-54 |
+| 6.1 | explorer la grille au toucher-déplacer | jours et événements lisibles, avec heure et titre | C-54 : cellules de jour hors du parcours clavier (décision rendue) |
+| 6.2 | balayage droite depuis le haut | COMPTER les balayages avant le premier événement, et le noter | équivalent VoiceOver des tabulations de C-54 |
 | 6.3 | changer de mois | l'action est atteignable et le nouveau mois est annoncé | |
-| 6.4 | ouvrir un événement | `EventModal` : M1 annonce son titre d'en-tête, puis M2, M3 | C-53 : au clavier, le focus **restait derrière**, et Échap ne fermait pas |
-| 6.5 | modifier le titre, puis « Z » | 🔴 la modale **ne se ferme pas** : `ConfirmDiscardDialog` s'ouvre par-dessus, « **Abandonner les modifications ?** », et la saisie est **intacte** si on refuse | c'est la garde mesurée au clavier le 2026-09-08 : un « Z » qui ferme directement jette une saisie que le même geste à la souris protège |
-| 6.6 | dans `EventModal`, « Créer une catégorie » | `ColorSettingsModal` s'ouvre **par-dessus** : M1 « **Modifier les catégories** », et M3 piège sur **elle**, pas sur `EventModal` | trois modales sœurs sont rendues dans l'arbre d'`EventModal` : seule la dernière empilée doit réagir |
-| 6.7 | dans `EventModal`, récurrence « Personnaliser » | `RecurrenceDaysModal` : M1 « **Répéter les jours** », et chaque jour est une « case à cocher » avec son état | `role="checkbox"` + `aria-checked` y sont posés |
-| 6.8 | « Z » dans une des trois sœurs | elle seule se ferme, `EventModal` reste ouverte et **reprend** le piège | |
-| 6.9 | créer un événement par appui long sur un créneau | `QuickEventCard` : M1 « **Création rapide d'un événement** » | même remarque qu'en 4.8 : si l'appui long ne passe pas sous VoiceOver, chercher l'autre chemin, et son absence est le finding |
+| 6.4 | ouvrir un événement | `EventModal` : M1 annonce son titre d'en-tête, puis M2, M3 | |
+| 6.5 | modifier le titre, puis « Z » | 🔴 la modale NE SE FERME PAS : `ConfirmDiscardDialog` s'ouvre par-dessus, « **Abandonner les modifications ?** », et la saisie est INTACTE si on refuse | un « Z » qui ferme directement jette une saisie que la souris protège |
+| 6.6 | dans `EventModal`, « Créer une catégorie » | `ColorSettingsModal` par-dessus : M1 « **Modifier les catégories** », M3 piège sur ELLE | trois modales sœurs dans l'arbre d'`EventModal` : seule la dernière empilée réagit |
+| 6.7 | dans `EventModal`, récurrence « Personnaliser » | `RecurrenceDaysModal` : M1 « **Répéter les jours** », chaque jour « case à cocher » avec son état | `role="checkbox"` + `aria-checked` |
+| 6.8 | « Z » dans une des trois sœurs | elle seule se ferme, `EventModal` reste ouverte et REPREND le piège | |
+| 6.9 | créer un événement par appui long sur un créneau | `QuickEventCard` : M1 « **Création rapide d'un événement** » | comme 4.8 : si l'appui long ne passe pas, chercher l'autre chemin ; son absence est le finding |
 | 6.10 | ouvrir la gestion des événements récurrents | M1 « **Événements récurrents** » | |
-| 6.11 | déclencher la conversion d'un événement en tâche | `AgendaEventToTaskConfirm` : M1 « **Que faire de cet événement ?** » | si le déclencheur est un glisser-déposer, il n'a **probablement aucun équivalent VoiceOver** : le noter comme tel |
-| 6.12 | fin d'un créneau planifié | `AgendaSlotReviewModal` : M1 « **Créneau terminé** ». ⚠️ le « Z » **reporte** le créneau | fermeture branchée sur `onSnooze` : si le report est silencieux, personne ne sait ce qui vient de se passer |
-| 6.13 | le voile du panneau latéral mobile | il n'est **pas** une boîte de dialogue et ne doit pas être annoncé comme telle | déclaré non modal dans la garde, avec son motif |
+| 6.11 | déclencher la conversion d'un événement en tâche | `AgendaEventToTaskConfirm` : M1 « **Que faire de cet événement ?** » | un glisser-déposer n'a probablement aucun équivalent VoiceOver : le noter |
+| 6.12 | fin d'un créneau planifié | `AgendaSlotReviewModal` : M1 « **Créneau terminé** ». ⚠️ « Z » REPORTE le créneau | fermeture sur `onSnooze` : un report silencieux laisse ignorer ce qui s'est passé |
+| 6.13 | le voile du panneau latéral mobile | il n'est PAS une boîte de dialogue et ne doit pas être annoncé comme telle | déclaré non modal dans la garde |
 
 ## 7. `/habits` · 5 min
 
 | # | Geste | Attendu | Piège connu |
 |---|---|---|---|
-| 7.1 | atteindre une case de jour | « case à cocher », avec **nom de l'habitude et date en toutes lettres** | les libellés existent (`table.dayCell`) ; le risque est une date lue en fragments |
+| 7.1 | atteindre une case de jour | « case à cocher », avec nom de l'habitude et date en toutes lettres | libellés `table.dayCell` ; risque : date lue en fragments |
 | 7.2 | cocher | le nouvel état est annoncé | |
-| 7.3 | atteindre la série | « série de 12 jours », pas « 12 » seul | la valeur affichée vient du serveur, ne jamais la recalculer depuis `completions` |
-| 7.4 | balayer une ligne entière | l'ordre de lecture suit la **ligne**, pas la colonne | une grille lue en colonnes est illisible |
-| 7.5 | créer une habitude | `HabitModal` : M1 « **Créer l'habitude** » (« **Modifier l'habitude** » en édition), puis M2 à M4 | c'est la surface qui a révélé le défaut de restitution du focus : après « Z », le curseur doit revenir **sur le bouton de création**, pas en haut de page |
+| 7.3 | atteindre la série | « série de 12 jours », pas « 12 » seul | valeur serveur, jamais recalculée depuis `completions` |
+| 7.4 | balayer une ligne entière | l'ordre de lecture suit la LIGNE, pas la colonne | une grille lue en colonnes est illisible |
+| 7.5 | créer une habitude | `HabitModal` : M1 « **Créer l'habitude** » (« **Modifier l'habitude** » en édition), puis M2 à M4 | après « Z », le curseur revient SUR le bouton de création, pas en haut de page |
 | 7.6 | dans `HabitModal`, ouvrir les catégories | `ColorSettingsModal` s'empile : M1 « **Modifier les catégories** », M3 piège sur elle | |
 
 ## 8. `/okr` · 8 min
@@ -279,42 +173,41 @@ sur téléphone. Trois chemins suffisent, et ce sont trois **façons d'ouvrir** 
 | # | Geste | Attendu | Piège connu |
 |---|---|---|---|
 | 8.1 | atteindre une barre d'avancement | « Avancement de X sur Y », avec des nombres, pas un pourcentage seul | |
-| 8.2 | rotor › Titres | la hiérarchie tient (mesurée caduque à l'œil le 2026-08-24, jamais à l'oreille) | |
-| 8.3 | supprimer une catégorie personnelle | `DeleteCategoryDialog` : M1 « **Supprimer « \<nom\> » ?** », et **l'impact est lu** (« n tâches, n objectifs ») **avant** la confirmation | R-02 : réaffecter avant de supprimer suppose d'avoir compris l'impact. Un impact affiché mais non annoncé revient à ne pas l'avoir |
+| 8.2 | rotor › Titres | la hiérarchie tient | mesurée à l'œil, jamais à l'oreille |
+| 8.3 | supprimer une catégorie personnelle | `DeleteCategoryDialog` : M1 « **Supprimer « \<nom\> » ?** », et l'IMPACT est lu (« n tâches, n objectifs ») AVANT la confirmation | R-02 : un impact affiché mais non annoncé revient à ne pas l'avoir |
 | 8.4 | supprimer un objectif | `DeleteObjectiveConfirm` : M1 « **Supprimer l'objectif** » | |
 | 8.5 | ouvrir « OKR terminés » | `CompletedOKRsModal` : M1 « **OKR terminés** » | |
-| 8.6 | ouvrir le check-in hebdo | `WeeklyCheckinModal` : M1 « **Check-in hebdo** » | 🇫🇷 ce titre est écrit **en dur en français** dans le JSX : il restera français dans une interface anglaise (étape 12) |
-| 8.7 | un OKR dont l'échéance est passée | `OKRDeadlineReviewModal` s'ouvre seul : M1 annonce **le titre de l'objectif**. ⚠️ le « Z » ne ferme **qu'en phase d'édition** | une modale qui s'ouvre toute seule et qu'un geste ne ferme pas est une impasse : mesurer dans quelle phase le « Z » répond, et le noter |
-| 8.8 | créer ou éditer un OKR | `OKRModalSheet` est une surface **Radix** : jouer M1 à M4 quand même, comme point de comparaison | cf. § 11 |
+| 8.6 | ouvrir le check-in hebdo | `WeeklyCheckinModal` : M1 « **Check-in hebdo** » | 🇫🇷 titre en dur en français (étape 12) |
+| 8.7 | un OKR dont l'échéance est passée | `OKRDeadlineReviewModal` s'ouvre seul : M1 annonce le TITRE de l'objectif. ⚠️ « Z » ne ferme qu'en phase d'édition | une modale qui s'ouvre seule et qu'un geste ne ferme pas est une impasse : noter dans quelle phase « Z » répond |
+| 8.8 | créer ou éditer un OKR | `OKRModalSheet` est une surface RADIX : jouer M1 à M4 quand même | cf. § 11 |
 
-## 9. `/entreprise` · 10 min · thème noir, et la zone la moins mesurée du produit
+## 9. `/entreprise` · 10 min · thème noir, zone la moins mesurée
 
-Les correctifs D4, D5 et E2 du 2026-08-27 ont été écrits **sans qu'un lecteur d'écran les
-vérifie**. Et **quinze** des 52 surfaces câblées vivent ici.
+Les correctifs D4, D5, E2 ont été écrits sans qu'un lecteur d'écran les vérifie.
 
 | # | Geste | Attendu | Piège connu |
 |---|---|---|---|
-| 9.1 | frise, pastille de date | « 27 août 2026 », en un seul bloc | D4 : elle se lisait « 27août » |
+| 9.1 | frise, pastille de date | « 27 août 2026 », en un seul bloc | D4 : se lisait « 27août » |
 | 9.2 | en-tête « Mes tâches (3) · 1 h 45 » | le séparateur s'entend | D5 : un `ml-2` n'existe pas pour un lecteur d'écran |
-| 9.3 | pastille de priorité | elle est annoncée | E2 : elle n'était portée que par `title=`, muet au toucher |
-| 9.4 | pyramide managériale | la structure se parcourt, et un membre est annoncé **avec son rôle** | jamais entendue |
-| 9.5 | barre d'onglets de l'organisation | l'onglet actif dit « page active » | `aria-current="page"` posé à la main dans `OrgTabsBar` |
+| 9.3 | pastille de priorité | elle est annoncée | E2 : portée par `title=` seul, muet au toucher |
+| 9.4 | pyramide managériale | la structure se parcourt, et un membre est annoncé AVEC son rôle | jamais entendue |
+| 9.5 | barre d'onglets de l'organisation | l'onglet actif dit « page active » | `aria-current="page"` à la main dans `OrgTabsBar` |
 | 9.6 | annuaire › fiche d'un membre | `MemberSheet` : M1 « **Fiche de \<nom\>** » | |
-| 9.7 | annuaire › « … » › modifier les permissions | `MemberPermissionsSheet` : M1 « **Modifier les permissions de \<nom\>** », et chaque droit est une « case à cocher » avec son état | dix droits plus une portée d'assignation : le formulaire le plus dense du produit |
-| 9.8 | annuaire › « … » › organiser le départ | `ReassignManagerSheet` **retirée le 2026-09-25** : le retrait passe par `OffboardMemberDialog` (assistant de départ), à mesurer | |
+| 9.7 | annuaire › « … » › modifier les permissions | `MemberPermissionsSheet` : M1 « **Modifier les permissions de \<nom\>** », chaque droit « case à cocher » avec son état | formulaire le plus dense du produit |
+| 9.8 | annuaire › « … » › organiser le départ | le retrait passe par `OffboardMemberDialog` (assistant de départ) : mesurer son nom et son parcours | `ReassignManagerSheet` n'existe plus |
 | 9.9 | pyramide › ajouter sous quelqu'un | `AddUnderSheet` : M1 « **Ajouter sous \<nom\>** » | |
-| 9.10 | pyramide › placer un membre | `MemberPlacementSheet` : M1 « **Placer \<nom\>** » | 🇫🇷 nom écrit en dur en français |
-| 9.11 | créer une équipe | `CreateTeamModal` : M1 « **Nouvelle équipe** », et chaque pastille de couleur dit son état | `aria-checked` posé sur les couleurs |
+| 9.10 | pyramide › placer un membre | `MemberPlacementSheet` : M1 « **Placer \<nom\>** » | 🇫🇷 nom en dur en français |
+| 9.11 | créer une équipe | `CreateTeamModal` : M1 « **Nouvelle équipe** », chaque pastille de couleur dit son état | `aria-checked` sur les couleurs |
 | 9.12 | créer un projet d'équipe | `NewTeamProjectModal` : M1 « **Nouveau projet d'équipe** » | |
-| 9.13 | ouvrir une tâche d'équipe | `TeamTaskModal` : M1 « **Modifier la tâche \<nom\>** », ou « **Nouvelle tâche d'équipe** ». ⚠️ **exception M4** | |
-| 9.14 | assigner une tâche à un membre | `AssignTaskSheet` : M1 « **Attribuer une tâche à \<nom\>** », ou « **Ajouter une tâche non assignée** » | |
-| 9.15 | planifier une tâche d'équipe | `AssignEventDialog` : M1 dit « **Assigner l'événement** », puis le nom de la tâche | le séparateur du nom accessible est un tiret cadratin : noter s'il s'entend, se tait, ou coupe la phrase |
-| 9.16 | supprimer une catégorie d'OKR d'équipe | `DeleteCategoryConfirm` : M1 « **Supprimer « \<nom\> » ?** », **avec son impact** | corrigé le 2026-09-06 (C-02) : l'impact est annoncé et la réaffectation vient avant. Jamais entendu |
+| 9.13 | ouvrir une tâche d'équipe | `TeamTaskModal` : M1 « **Modifier la tâche \<nom\>** » ou « **Nouvelle tâche d'équipe** ». ⚠️ exception M4 | |
+| 9.14 | assigner une tâche à un membre | `AssignTaskSheet` : M1 « **Attribuer une tâche à \<nom\>** » ou « **Ajouter une tâche non assignée** » | |
+| 9.15 | planifier une tâche d'équipe | `AssignEventDialog` : M1 « **Assigner l'événement** », puis le nom de la tâche | séparateur du nom accessible : noter s'il s'entend, se tait, ou coupe la phrase |
+| 9.16 | supprimer une catégorie d'OKR d'équipe | `DeleteCategoryConfirm` : M1 « **Supprimer « \<nom\> » ?** », AVEC son impact | C-02 : impact annoncé, réaffectation avant. Jamais entendu |
 | 9.17 | revue de la semaine | `WeeklyReviewSheet` : M1 « **Revue de la semaine** » | |
 | 9.18 | profil de l'entreprise | `OrgProfileSheet` : M1 « **Profil de l'entreprise** » | |
-| 9.19 | créer ou rejoindre une entreprise | `InviteOrJoinModal` : M1 « **Créer ou rejoindre une entreprise** » | monté dans `Layout`, donc atteignable depuis toutes les pages protégées |
-| 9.20 | supprimer l'organisation | `DeleteOrganizationDialog` : M1 « **Supprimer \<nom\> ?** » | **ne pas confirmer** : on mesure, on ne détruit pas le jeu de démo |
-| 9.21 | cloche de notifications | c'est un **popover**, pas une boîte de dialogue : on doit pouvoir en sortir au balayage | déclaré non modal avec son motif ; piéger le focus dedans empêcherait de le fermer |
+| 9.19 | créer ou rejoindre une entreprise | `InviteOrJoinModal` : M1 « **Créer ou rejoindre une entreprise** » | monté dans `Layout`, atteignable de toute page protégée |
+| 9.20 | supprimer l'organisation | `DeleteOrganizationDialog` : M1 « **Supprimer \<nom\> ?** » | NE PAS confirmer : on mesure, on ne détruit pas le jeu de démo |
+| 9.21 | cloche de notifications | un POPOVER, pas une boîte de dialogue : on doit pouvoir en sortir au balayage | non modal, motivé : piéger le focus empêcherait de le fermer |
 
 ## 10. Formulaires, erreurs et signalement · 7 min
 
@@ -322,107 +215,58 @@ Se déconnecter (feuille « Plus »), puis `/login`.
 
 | # | Geste | Attendu | Piège connu |
 |---|---|---|---|
-| 10.1 | atteindre chaque champ | le **libellé** est annoncé, pas « champ de texte » | |
-| 10.2 | valider avec un e-mail mal formé | l'erreur est **annoncée toute seule** | `AuthForm` porte une région live ; reste à l'entendre |
+| 10.1 | atteindre chaque champ | le LIBELLÉ est annoncé, pas « champ de texte » | |
+| 10.2 | valider avec un e-mail mal formé | l'erreur est ANNONCÉE toute seule | `AuthForm` porte une région live ; reste à l'entendre |
 | 10.3 | après l'erreur | le curseur n'a pas sauté ailleurs | une région live ne doit pas voler le curseur |
 | 10.4 | rotor › Champs de formulaire | tous les champs y sont, dans l'ordre visuel | |
 | 10.5 | depuis la landing, ouvrir la connexion en modale | `LoginModal` : M1 « **Connexion ou inscription** » | |
-| 10.6 | reconnecté, ouvrir « Signaler un bug » | `BugReportModal` : M1 « **Signaler un bug** ». ⚠️ **exception M4** pendant l'envoi | sinon on perd une saisie sans savoir si le message est parti |
+| 10.6 | reconnecté, ouvrir « Signaler un bug » | `BugReportModal` : M1 « **Signaler un bug** ». ⚠️ exception M4 pendant l'envoi | sinon une saisie se perd sans savoir si le message est parti |
 
-## 11. Cinq questions transverses, à se poser sur chaque écran
+## 11. Cinq questions transverses, sur chaque écran
 
-- **L'ordre de lecture au balayage suit-il l'ordre visuel ?** Comparer un balayage droite avec un
-  toucher-déplacer. C'est la question que le clavier ne pose pas : l'ordre de tabulation ignore tout
-  ce qui n'est pas focalisable, l'ordre de lecture non.
-- **Quelque chose est-il lu deux fois ?** Un texte à la fois visible et en `sr-only` s'entend en
-  double. C'est précisément le risque introduit par les correctifs D4 et D5.
-- **Une surface maison se comporte-t-elle comme une surface Radix ?** `TaskModal` (4.12) et
-  `OKRModalSheet` (8.8) viennent de la bibliothèque, les 52 autres de `useModalA11y`. Si les deux
-  familles ne s'annoncent pas pareil, la différence est le finding.
-  ⚠️ Ne pas en conclure que Radix est la référence : au clavier, le témoin Radix lui-même échoue sur
-  la restitution du focus. On compare, on ne suppose pas.
-- **Une action n'existe-t-elle que par un geste ?** Appui long (4.8, 6.9), balayage de carte (4.5),
-  glisser-déposer (6.11). Chacun doit avoir un chemin de rechange atteignable au balayage. Quand il
-  n'y en a pas, c'est un finding, même si le geste finit par marcher.
-- **Le nom annoncé reste-t-il français quand l'interface est en anglais ?** Cinq surfaces portent un
-  nom écrit en dur (annexe A, lignes 🇫🇷). Se garde pour l'étape 12.
+- **L'ordre de lecture au balayage suit-il l'ordre visuel ?** Comparer un balayage droite et un toucher-déplacer (l'ordre de tabulation ignore ce qui n'est pas focalisable).
+- **Quelque chose est-il lu deux fois ?** Un texte visible ET en `sr-only` s'entend en double (risque des correctifs D4, D5).
+- **Une surface maison se comporte-t-elle comme une surface Radix ?** `TaskModal` (4.12) et `OKRModalSheet` (8.8) viennent de la bibliothèque, les autres de `useModalA11y`. La différence est le finding. ⚠️ Radix n'est pas la référence : le témoin Radix échoue lui-même sur la restitution du focus.
+- **Une action n'existe-t-elle que par un geste ?** Appui long (4.8, 6.9), balayage de carte (4.5), glisser-déposer (6.11) : chacun doit avoir un chemin de rechange atteignable au balayage ; sinon c'est un finding.
+- **Le nom annoncé reste-t-il français en interface anglaise ?** Cinq surfaces portent un nom en dur (annexe A, 🇫🇷) : étape 12.
 
 ## 12. Variantes système · 8 min
 
-À jouer VoiceOver **éteint**, sauf la dernière :
+VoiceOver ÉTEINT, sauf la dernière :
 
-- **Texte plus grand** au maximum (Accessibilité › Affichage et taille du texte) : la mise en page
-  tient-elle sur `/dashboard`, `/tasks` et la feuille « Plus » ?
-- **Réduire les animations** activé : les feuilles s'ouvrent-elles vraiment ? C'est la classe de
-  bug du 2026-08-24, où `MobileMoreSheet` s'ouvrait à **0 px visible**, et le seul chemin mobile
-  vers les réglages était sans issue.
+- **Texte plus grand** au maximum (Accessibilité › Affichage et taille du texte) : la mise en page tient-elle sur `/dashboard`, `/tasks` et la feuille « Plus » ?
+- **Réduire les animations** : les feuilles s'ouvrent-elles vraiment ? (`MobileMoreSheet` pouvait s'ouvrir à 0 px visible, sans issue vers les réglages.)
 - **Thème sombre** : l'icône des sélecteurs de date natifs est-elle visible sur `/agenda` ?
-  Corrigée le 2026-09-03, jamais vue sur un écran iOS.
-- **VoiceOver rallumé, iPhone en anglais** (Réglages › Général › Langue) : rouvrir
-  `MobileMoreSheet`, `ListActionsSheet` (4.8), `MobileAddToList` (4.7), `WeeklyCheckinModal` (8.6)
-  et `MemberPlacementSheet` (9.10), puis reparcourir les liens du pied de landing (1.6).
-  **Attendu** : tout est annoncé en anglais, et les quatre liens contractuels ouvrent bien leur page.
-  Les surfaces marquées 🇫🇷 en annexe A **diront leur nom en français** : c'est un finding attendu,
-  à consigner quand même, avec le verbatim.
+- **VoiceOver rallumé, iPhone en anglais** (Réglages › Général › Langue) : rouvrir `MobileMoreSheet`, `ListActionsSheet` (4.8), `MobileAddToList` (4.7), `WeeklyCheckinModal` (8.6), `MemberPlacementSheet` (9.10), puis les liens du pied de landing (1.6). **Attendu** : tout en anglais, et les quatre liens contractuels ouvrent leur page. Les surfaces 🇫🇷 diront leur nom en français : finding attendu, à consigner avec le verbatim.
 
 ---
 
-## Annexe A · les surfaces câblées, et ce que chacune doit dire
+## Annexe A · les surfaces câblées et le nom que chacune doit dire
 
-> 🔴 **Recompté le 2026-10-15 : 60 appels du hook en production** (même commande, hors témoins,
-> à `f74b0874`), contre 51 au 2026-09-14. **Onze surfaces câblées manquaient à cette annexe**,
-> presque toutes dans le mode entreprise : elles sont ajoutées en tête du tableau, datées. Deux d'entre elles
-> (`AssignRoleDialog`, `RoleEditorSheet`) n'étaient pas non plus déclarées à l'audit clavier
-> (`keyboard-audit-coverage`, rouge à `HEAD`, cf. [`ACCESSIBILITY.md`](./ACCESSIBILITY.md)) ; elles y sont
-> **mesurées** depuis le 2026-10-22. Le clavier n'est pas VoiceOver : leur ligne ci-dessous reste à jouer. Cette
-> check-list n'a toujours **jamais été jouée** (AM-1) : chaque mois qui passe l'allonge.
-
-> 🔴 **Recompté le 2026-09-14 au soir : deux surfaces câblées manquaient à cette annexe.**
-> Le comptage de référence est désormais le nombre d'APPELS du hook, pas de fichiers qui le
-> mentionnent : `grep -rn "= useModalA11y\|useModalA11y<" src --include=*.tsx` rend **54** sites,
-> dont **3** dans `use-modal-a11y.guard.test.tsx` (les témoins), soit **51 surfaces de production**
-> réparties sur 51 fichiers.
->
-> **Les deux absentes, ajoutées ci-dessous**, sont l'une et l'autre atteignables au doigt :
-> `MoveCategoryDialog` (ouverte depuis `ColorSettingsModal`) et `DeleteTeamCategoryConfirm`
-> (ouverte depuis `TeamOKRTab`). Une check-list qui promet « les 52 surfaces » et en oublie deux
-> laisse deux écrans non annoncés le jour où on la joue, **et c'est le seul instrument qui mesure
-> l'annonce**.
->
-> ⚠️ **L'écart de comptage n'est pas entièrement résolu** : cette annexe énumérait 52 lignes alors
-> que 51 appels existent, et il manquait 2 de ces 51. Il y a donc au moins deux lignes qui ne
-> correspondent pas à un appel du hook (surface Radix rangée ici, ou doublon). À trancher en
-> jouant la check-list, ligne par ligne, plutôt qu'en recomptant de tête : c'est exactement ce que
-> ce document existe pour faire.
-
-Source : `grep -rn "= useModalA11y" src --include=*.tsx`, croisée avec le nom accessible lu dans le
-code et résolu dans `src/locales/fr/`. **Ce n'est pas une liste de cases à cocher de plus** : c'est
-la référence des noms attendus, pour que « M1 » ait un contenu vérifiable à chaque ligne.
-
-🇫🇷 = nom accessible écrit **en dur en français**, donc faux dans une interface anglaise.
+Référence des noms attendus, pour que « M1 » ait un contenu vérifiable (nom lu dans le code, résolu dans `src/locales/fr/`). 🇫🇷 = nom en dur en français, faux en interface anglaise. « à relire dans le code » = nom à relever dans le fichier avant la séance ; surface jamais auditée.
 
 | Surface | Où l'ouvrir | Nom attendu (M1) | § |
 |---|---|---|---|
-| **`AssignRoleDialog`** 🆕 2026-10-15 | `/entreprise` › annuaire (`MemberDirectory`) › attribuer un rôle personnalisé | à relire dans le code · **jamais auditée** · ⚠️ affiche « aucun rôle » pendant le chargement (`loading-empty-state.guard`) | 9 |
-| **`RoleEditorSheet`** 🆕 2026-10-15 | `/entreprise` › Paramètres › rôles (`OrgRolesSettings`) | à relire dans le code · **jamais auditée** | 9 |
-| **`InviteModeDialog`** 🆕 2026-10-15 | `/entreprise` › Personnes › inviter | à relire dans le code · **jamais auditée** | 9 |
-| **`InviteByEmailDialog`** 🆕 2026-10-15 | Personnes ou Paramètres › inviter par e-mail | à relire dans le code · **jamais auditée** | 9 |
-| **`MemberBulkPicker`** 🆕 2026-10-15 | annuaire › sélection multiple | à relire dans le code · **jamais auditée** | 9 |
-| **`OrgSectionSwitcher`** 🆕 2026-10-15 | `/entreprise`, changement de section sur téléphone | à relire dans le code · **jamais auditée** | 9 |
-| **`OrgGlossarySheet`** 🆕 2026-10-15 | `/entreprise`, un terme de rôle souligné (`RoleTerm`) | à relire dans le code · **jamais auditée** | 9 |
-| **`ProjectEditDialog`** 🆕 2026-10-15 | projets › nouveau projet, ou page projet › modifier | à relire dans le code · **jamais auditée** | 9 |
-| **`PyramidPlacementSheet`** 🆕 2026-10-15 | pyramide › placer une personne | à relire dans le code · **jamais auditée** | 9 |
-| **`OrgWelcomeVideo`** 🆕 2026-10-15 | premier passage dans `/entreprise`, créateur comme membre : lecteur de la vidéo d'accueil (`f74b0874`, qui retire `MemberWelcome`) | à relire dans le code · **jamais auditée** · déclarée à l'audit clavier | 9 |
-| **`MobileTaskSearch`** 🆕 2026-10-15 | `/tasks` sur téléphone, recherche | à relire dans le code · **jamais auditée** | 4 |
-| **`MoveCategoryDialog`** 🆕 | `ColorSettingsModal` › déplacer une catégorie | à relire dans le code · **jamais auditée** | · |
-| **`DeleteTeamCategoryConfirm`** 🆕 | onglet OKR d'équipe › supprimer une catégorie | à relire dans le code · **jamais auditée** | · |
+| `AssignRoleDialog` | `/entreprise` › annuaire › attribuer un rôle personnalisé | à relire dans le code (affiche « aucun rôle » pendant le chargement, `loading-empty-state.guard`) | 9 |
+| `RoleEditorSheet` | `/entreprise` › Paramètres › rôles (`OrgRolesSettings`) | à relire dans le code | 9 |
+| `InviteModeDialog` | Personnes › inviter | à relire dans le code | 9 |
+| `InviteByEmailDialog` | Personnes ou Paramètres › inviter par e-mail | à relire dans le code | 9 |
+| `MemberBulkPicker` | annuaire › sélection multiple | à relire dans le code | 9 |
+| `OrgSectionSwitcher` | `/entreprise`, changement de section sur téléphone | à relire dans le code | 9 |
+| `OrgGlossarySheet` | un terme de rôle souligné (`RoleTerm`) | à relire dans le code | 9 |
+| `ProjectEditDialog` | projets › nouveau projet, ou page projet › modifier | à relire dans le code | 9 |
+| `PyramidPlacementSheet` | pyramide › placer une personne (sans point d'entrée depuis la mig. 229) | à relire dans le code | 9 |
+| `OrgWelcomeVideo` | premier passage dans `/entreprise` : lecteur de la vidéo d'accueil | à relire dans le code | 9 |
+| `MobileTaskSearch` | `/tasks` sur téléphone, recherche | à relire dans le code | 4 |
+| `MoveCategoryDialog` | `ColorSettingsModal` › déplacer une catégorie | à relire dans le code | · |
+| `DeleteTeamCategoryConfirm` | onglet OKR d'équipe › supprimer une catégorie | à relire dans le code | · |
 | `MobileMoreSheet` | barre d'onglets, « Plus » | Plus d'options | 3.3 |
 | `FirstRunSetup` | premier lancement, compte vide | Bienvenue dans COSMO | 2.4 |
-| `TaskActionsSheet` | 🔴 carte de tâche — **plus de bouton « ⋯ » sur téléphone** (maquette 86). Appui long, glissement à gauche, ou évènement `contextmenu` depuis le 2026-09-22 | Actions pour \<nom\> | 4.5, 4.6 |
+| `TaskActionsSheet` | carte de tâche : appui long, glissement à gauche, ou `contextmenu` (aucun bouton « ⋯ » sur téléphone) | Actions pour \<nom\> | 4.5, 4.6 |
 | `MobileAddToList` | feuille d'actions › Ajouter à une liste | Listes 🇫🇷 | 4.7 |
 | `ListActionsSheet` | appui long sur une chip de liste | Actions pour la liste \<nom\> 🇫🇷 | 4.8 |
 | `CreateListSheet` | barre de chips, nouvelle liste | Nouvelle liste | 4.9 |
-| `ShareListSheet` | liste **manuelle**, partager | Partager la liste \<nom\> | 4.10 |
+| `ShareListSheet` | liste MANUELLE, partager | Partager la liste \<nom\> | 4.10 |
 | `ConfirmDeleteSheet` | supprimer une tâche | le titre passé en prop | 4.11 |
 | `DeleteTaskConfirm` | fiche de tâche, supprimer | Supprimer la tâche · Quitter la tâche partagée | 4.13 |
 | `MobileActionSheet` | fiche de tâche mobile, actions | le titre passé en prop | 4.13 |
@@ -443,7 +287,7 @@ la référence des noms attendus, pour que « M1 » ait un contenu vérifiable �
 | `OKRDeadlineReviewModal` | OKR échu · ⚠️ « Z » selon la phase | le titre de l'objectif | 8.7 |
 | `MemberSheet` | `/entreprise` › annuaire | Fiche de \<nom\> | 9.6 |
 | `MemberPermissionsSheet` | annuaire › « … » › permissions | Modifier les permissions de \<nom\> | 9.7 |
-| `ReassignManagerSheet` | annuaire › « … » · ⚠️ exception M4 | Réassigner l'équipe de \<nom\> | 9.8 |
+| `OffboardMemberDialog` | annuaire ou pyramide › retirer un membre | à relire dans le code | 9.8 |
 | `AddUnderSheet` | pyramide › ajouter sous | Ajouter sous \<nom\> | 9.9 |
 | `MemberPlacementSheet` | pyramide › placer | Placer \<nom\> 🇫🇷 | 9.10 |
 | `CreateTeamModal` | pyramide ou projets › nouvelle équipe | Nouvelle équipe | 9.11 |
@@ -458,70 +302,42 @@ la référence des noms attendus, pour que « M1 » ait un contenu vérifiable �
 | `DeleteOrganizationDialog` | `/entreprise` › supprimer | Supprimer \<nom\> ? | 9.20 |
 | `LoginModal` | landing › se connecter | Connexion ou inscription | 10.5 |
 | `BugReportModal` | `Layout` · ⚠️ exception M4 | Signaler un bug | 10.6 |
-| `TodayTasks` (dialogue de suppression) | `/dashboard`, supprimer une tâche du jour | Supprimer la tâche | 4.11 |
-| `CollaborativeTasks` (dialogue de suppression) | `/dashboard`, tâches partagées | Supprimer la tâche | 4.11 |
+| `TodayTasks`, `CollaborativeTasks` (dialogues de suppression) | `/dashboard`, supprimer une tâche | Supprimer la tâche | 4.11 |
 | `RemoveFriendConfirm` | boîte de réception › retirer un ami | Confirmer la suppression de l'ami | à jouer si tu passes par la boîte de réception |
 | `ShareInviteClaimer` | ouvrir un lien `/invite/:token` | Tâche partagée avec vous | à jouer si tu as un lien sous la main |
 
-**Six surfaces câblées ne figurent pas dans ce tableau**, parce qu'aucune séance sur iPhone ne peut
-les ouvrir : `DesktopAddToList`, `BottomSheet`, `PremiumGateModal`, `CommandPalette`,
-`ShortcutsHelp` et `QuickAddBar`. Leur motif est en annexe B. **46 + 6 = 52.**
-
-✅ **`CategoryManager` est SUPPRIMÉE, le 2026-09-14** — et c'est ce qui fait passer le total de 53 à
-**52**. Elle était câblée sur `useModalA11y` et montée **nulle part** : 452 lignes, trois imports
-dans tout le dépôt et tous pour le seul helper `getColorHex`. Signalée ⬜ ici le 2026-09-08, « à
-traiter ailleurs » — elle n'a été traitée que six jours plus tard, parce qu'un défaut sans item n'a
-pas de propriétaire. Ce qui survit vit dans `src/lib/category-colors.ts`.
-
-⚠️ **Ce qu'un composant mort mais CÂBLÉ coûtait, et c'est le sujet de cette check-list** : il
-comptait comme une surface à auditer. Quelqu'un aurait fini par chercher au doigt, sur un iPhone,
-une modale qu'aucun écran n'ouvre. **Du code mort ne coûte pas des octets, il coûte du temps à qui
-le prend pour vivant** — et il allongeait précisément la séance que ce document organise.
+- ⚠️ Un composant mort mais CÂBLÉ compte comme une surface à auditer et coûte du temps à qui le prend pour vivant : supprimer le code mort (`CategoryManager` l'a été ; ce qui survit vit dans `src/lib/category-colors.ts`).
 
 ## Annexe B · ce qu'un iPhone ne peut pas atteindre, et pourquoi
-
-Écrit noir sur blanc pour qu'un écran non joué ne se lise jamais comme un écran conforme.
 
 | Surface | Pourquoi elle est hors d'atteinte |
 |---|---|
 | `CommandPalette` | ouverte au clavier, aucun déclencheur tactile |
-| `ShortcutsHelp` | ouverte par la touche `?`, ou par un événement émis par la palette. 🇫🇷 son nom, « Raccourcis clavier », est écrit en dur |
+| `ShortcutsHelp` | ouverte par la touche `?` ou par un événement de la palette. 🇫🇷 son nom, « Raccourcis clavier », est en dur |
 | `QuickAddBar` | ouverte par la touche `N` |
 | `DesktopAddToList` | `AddToListModal` aiguille sur `useIsMobile()` : au-dessus du point de rupture seulement |
-| `BottomSheet` | `WeeklyRecapSheet`, son unique consommateur produit, est derrière `WEEKLY_RECAP_ENABLED = false` |
-| `PremiumGateModal` | `PREMIUM_ENFORCED = false` : `isPremium()` répond `true` pour tout le monde, le mur ne s'ouvre jamais |
+| `BottomSheet` | `WeeklyRecapSheet`, son seul consommateur produit, est derrière `WEEKLY_RECAP_ENABLED = false` |
+| `PremiumGateModal` | `PREMIUM_ENFORCED = false` : `isPremium()` répond `true` pour tous, le mur ne s'ouvre jamais |
 
-⚠️ **Les trois premières se rouvrent avec un clavier Bluetooth.** Si tu en branches un, elles
-rentrent dans le périmètre, et il faut le dire dans le compte-rendu : « joué avec clavier externe »
-n'est pas la même mesure que « joué au doigt ».
+⚠️ Les trois premières se rouvrent avec un clavier Bluetooth : le dire dans le compte-rendu (« joué avec clavier externe » n'est pas « joué au doigt »).
 
 ---
 
 ## Registre des séances
 
-Une ligne par séance **réellement jouée**, jamais avant. Statuts : `✅ joué` (les 12 étapes, témoin
-compris), `⚠️ partiel` (à refaire : n'éteint **pas** l'échéance). Le détail des findings va dans
-des issues (étiquette `zone:accessibilite`), avec le verbatim.
+Une ligne par séance RÉELLEMENT jouée, jamais avant. Statuts : `✅ joué` (les 12 étapes, témoin compris), `⚠️ partiel` (à refaire : n'éteint PAS l'échéance). Détail des findings : issues (étiquette `zone:accessibilite`), avec le verbatim.
 
 | Date | Appareil (modèle · iOS · Safari) | Statut | Findings |
 |---|---|---|---|
 | _(aucune séance à ce jour)_ | | | |
 
----
+## Hors périmètre
 
-## Hors périmètre, volontairement
-
-Android TalkBack, VoiceOver macOS, le contraste (déjà mesuré, cf. `ACCESSIBILITY.md`) et la
-performance (M-38). Cet audit répond à **une** question : ce que le produit **dit** à quelqu'un qui
-ne le voit pas, sur l'appareil où il est le plus utilisé.
+Android TalkBack, VoiceOver macOS, le contraste ([`ACCESSIBILITY.md`](./ACCESSIBILITY.md)), la performance. Cet audit répond à UNE question : ce que le produit DIT à quelqu'un qui ne le voit pas, sur l'appareil où il est le plus utilisé.
 
 ## Après la séance
 
-1. Ouvrir une issue par finding (étiquette `zone:accessibilite`), en gardant le verbatim.
-2. Refermer l'issue n° 183 (ex `C-24`) : c'est le quatrième et dernier des quatre audits. 🔴 **Et seulement là.**
-   Tant qu'aucune ligne de ce fichier n'a été jouée sur un appareil réel, C-24 reste ouvert :
-   écrire le protocole ne mesure rien, et une check-list à jour n'est pas une check-list jouée.
-3. Renoter l'accessibilité dans [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) et dans le tableau de bord
-   de [`README.md`](./README.md), en disant ce qui a été mesuré et sur quel appareil.
-4. Si l'audit n'a pas pu aller au bout, l'écrire ainsi. Un audit partiel est « à refaire », pas
-   « fait » : c'est déjà l'arbitrage rendu pour A-4.
+1. Une issue par finding (`zone:accessibilite`), verbatim gardé.
+2. Refermer l'issue n° 183 (ex `C-24`) : ❌ avant qu'une ligne de ce fichier ait été jouée sur un appareil réel (écrire le protocole ne mesure rien).
+3. Mettre à jour [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) en disant ce qui a été mesuré et sur quel appareil.
+4. Un audit qui n'a pas pu aller au bout s'écrit « à refaire », pas « fait ».

@@ -1,635 +1,115 @@
-# Accessibilité (a11y) — COSMO
+# Accessibilité (a11y)
 
-**Cibles** : WCAG 2.1 AA (obligation EAA — European Accessibility Act, applicable depuis le 28 juin 2025).
-**Outillage** : `e2e/a11y-audit.spec.ts` (axe-core, 11 routes, dumpe les violations par route)
-**+ `e2e/a11y-contrast-themes.spec.ts`** (AM-5, 2026-10-23) : `color-contrast` **bloquant** dans les quatre thèmes, sept routes de démo, page entière
-**+ Lighthouse CI** (`lighthouserc.json`, job `lighthouse`) sur les 4 routes prérendues.
-**Gates CI** : les violations `impact: 'critical'` sont **bloquantes** (`assertNoCritical`). `serious` / `moderate` / `minor` sont dumpées dans `test-results/a11y/<route>.json` mais non bloquantes. Le score a11y de Lighthouse est **bloquant** sur `/`, `/guide`, `/blog`, `/pour-freelances`, à 0,9, et à **1** sur `/guide/` depuis le 2026-10-22 (`assertMatrix`, desktop et mobile).
+Lire en touchant un composant interactif, une modale, un thème (`src/index.css`), `e2e/a11y-*.spec.ts`, `lighthouserc*.json`. Ce qui fait foi : les specs `e2e/a11y-*`, `src/theme-contrast.guard.test.ts`, `src/components/modal-a11y.guard.test.ts`.
+Cible : WCAG 2.1 AA (EAA, applicable depuis le 28 juin 2025). Notes /100 cessées (ADR 0012). Journal et récits : [`archive/ACCESSIBILITY-journal-des-notes-2026-08-24-au-2027-01-15.md`](./archive/ACCESSIBILITY-journal-des-notes-2026-08-24-au-2027-01-15.md), [`archive/DOC-FRONT-recits-retires-2026-11-13.md`](./archive/DOC-FRONT-recits-retires-2026-11-13.md).
 
-## 🔎 Ce que nos mesures prouvent, et ce qu'elles ne prouvent pas
+## Outillage et gates
 
-🔴 **Tout ce que ce document appelle « mesuré » a été mesuré sur Chromium desktop**, en viewport de
-bureau, par axe-core et par Playwright. Or **Playwright ne lit pas l'arbre d'accessibilité comme un
-lecteur d'écran** : il interroge le DOM, `document.activeElement` et des attributs. Ce qui est
-prouvé ici, c'est le **FOCUS**. Ce n'est pas l'**ANNONCE**.
+- `e2e/a11y-audit.spec.ts` : axe-core sur 11 routes (liste : [`TESTING.md`](./TESTING.md) § Accessibilité automatisée), violations dumpées dans `test-results/a11y/<route>.json`. **Bloquant sur `critical`** (`assertNoCritical`) et sur `serious` sauf les règles de `SERIOUS_NOT_BLOCKING` : il n'en reste qu'une, `color-contrast` (dispense motivée, § C-23).
+- `e2e/a11y-contrast-themes.spec.ts` (AM-5) : `color-contrast` bloquant dans les quatre thèmes, sept routes de démo, page entière.
+- `e2e/a11y-keyboard-audit*.spec.ts` : parcours clavier (modales, calendrier, liens d'évitement), avec un TÉMOIN (modale Radix sur laquelle les trois détecteurs doivent répondre « conforme » : sinon aucune mesure du fichier ne vaut).
+- Lighthouse CI (`lighthouserc.json`, `lighthouserc.mobile.json`) : score a11y bloquant sur `/`, `/guide`, `/blog`, `/pour-freelances` (seuils dans les fichiers ; ❌ les baisser).
+- `src/theme-contrast.guard.test.ts` lit `src/index.css` et recalcule le contraste des QUATRE thèmes.
 
-| Prouvé aujourd'hui | Non prouvé, et donc à ne pas affirmer |
+## Ce que nos mesures prouvent, et ne prouvent pas
+
+🔴 Tout ce qui est « mesuré » l'a été sur Chromium desktop, par axe-core et Playwright, qui interrogent le DOM, `document.activeElement` et des attributs, pas l'arbre d'accessibilité d'un lecteur d'écran. Prouvé : le **FOCUS**. Pas l'**ANNONCE**.
+
+| Prouvé | Non prouvé |
 |---|---|
-| Où part le focus à l'ouverture d'une surface, et où il revient à sa fermeture | Ce qu'un lecteur d'écran **prononce** en arrivant sur cet élément |
-| Qu'une flèche déplace le focus, et de quelle cellule à quelle cellule | Le **rôle** annoncé (« case à cocher » plutôt que « bouton »), et l'état (« cochée », « sélectionné ») |
-| Qu'un élément est atteignable au clavier, et en combien de tabulations | L'**ordre de lecture au balayage**, qui inclut le texte non focalisable et diffère de l'ordre de tabulation |
-| Qu'un attribut ARIA est **présent** dans le DOM (`aria-label`, `aria-modal`, `aria-live`) | Qu'il produise **un effet audible** : une région live peut exister et n'être jamais vocalisée |
-| Qu'un nom accessible existe (axe-core le vérifie) | Qu'il soit **intelligible** : « 27août » avait un nom accessible, et il était faux (finding D4) |
-| Le comportement d'un clavier physique | Les gestes VoiceOver, le rotor, l'exploration au doigt, et ce que le double tap déclenche |
+| Où part le focus à l'ouverture d'une surface, où il revient | Ce qu'un lecteur d'écran prononce |
+| Qu'une flèche déplace le focus, de quelle cellule à quelle cellule | Le rôle annoncé (« case à cocher ») et l'état |
+| Qu'un élément est atteignable au clavier, en combien de tabulations | L'ordre de lecture au balayage |
+| Qu'un attribut ARIA est PRÉSENT (`aria-label`, `aria-modal`, `aria-live`) | Qu'il produise un effet audible |
+| Qu'un nom accessible existe | Qu'il soit intelligible (« 27août » avait un nom, faux, D4) |
+| Le comportement d'un clavier physique | Gestes VoiceOver, rotor, exploration au doigt |
 
-Conséquences pratiques, à tenir :
+- ❌ Écrire qu'un écran est « lisible par un lecteur d'écran » tant que l'audit VoiceOver iOS n'a pas été joué. Formule autorisée : « le focus se déplace correctement ».
+- ❌ Compter comme vérifié un correctif d'annonce parce qu'il est écrit (D4, D5, E2 portent sur ce qui est prononcé : relus, jamais entendus).
+- ✅ Le seul instrument qui mesure l'annonce est un vrai lecteur d'écran sur un vrai appareil : [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md), [`AUDIT-NVDA-WINDOWS.md`](./AUDIT-NVDA-WINDOWS.md).
+- ⚠️ axe ne scanne que l'ÉTAT INITIAL de chaque route (aucune modale, aucun menu, aucun calendrier ouvert) et que le THÈME PAR DÉFAUT. Un silence se prend pour un accord : une zone que rien ne mesure n'est pas conforme.
+- ❌ Citer un total `color-contrast` d'axe comme un état : c'est un tirage (les pages entrent en fondu, ratios photographiés de 1,02 à 4,44 selon l'instant).
 
-- ❌ **Ne jamais écrire dans ce document qu'un écran est « lisible par un lecteur d'écran »** tant
-  que l'audit VoiceOver iOS n'a pas été joué. La formule autorisée est « le focus se déplace
-  correctement », qui est ce qui a été observé.
-- ❌ **Ne jamais compter un correctif d'annonce comme vérifié** parce qu'il est écrit. Les trois
-  correctifs D4, D5 et E2 du 2026-08-27 portent sur ce qui est **prononcé** : ils n'ont jamais été
-  entendus, seulement relus.
-- ✅ **Le seul instrument qui mesure l'annonce est un vrai lecteur d'écran sur un vrai appareil.**
-  La check-list est prête et se joue d'une traite :
-  [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md).
+## Contraste et thèmes
 
-## Historique des notes et des audits : archivé
+- ✅ Le token `--color-text-muted` porte dates, méta et labels de toute l'application : il est conforme dans les quatre thèmes (clair, dark, gris, noir). Un défaut de contraste est d'abord un défaut de token.
+- ✅ Le bouton principal (`--color-accent-solid`) : thème `gris` `#2f75d5`, `sombre` `#3472d8` (assombri au minimum nécessaire, chaque thème garde sa teinte), `clair` et `noir` déjà conformes. Options écartées : aligner sur le bleu du thème clair (jugé terne sur graphite) ; foncer le TEXTE du bouton (le bouton se lit désactivé).
+- ✅ `--color-error` = `red-600` (4,83:1), pas un arbitrage de marque.
 
-Les notes /100 de ce document ont cessé (ADR 0012, [`INDICATEURS.md`](./INDICATEURS.md)). Leur journal daté, les angles morts mesurés et les récits d'incident qui fondent les règles ci-dessous sont déplacés, sans coupe, dans [`archive/ACCESSIBILITY-journal-des-notes-2026-08-24-au-2027-01-15.md`](./archive/ACCESSIBILITY-journal-des-notes-2026-08-24-au-2027-01-15.md). Une règle de ce document qui cite une date ou un incident s'y retrouve.
+### C-23 · pourquoi le bleu du thème clair reste à 4,31:1
 
-## ✅ A-8 et A-11 tranchés le 2026-08-24 (mesurés, pas estimés)
+Décision d'Axel, pas un oubli : la dispense `color-contrast` de `e2e/a11y-audit.spec.ts` renvoie à cette section ; le cliquet est `src/theme-contrast.guard.test.ts` § « C-23 ».
 
-Les deux findings « non prouvés » depuis mai traînaient parce que personne ne les avait
-mesurés. Fait, dans le navigateur, mode démo, viewport 375×812.
+- ✅ Reproductible dans toutes les passes, UNE paire : `#2563eb` sur `#e3ebfa` (4,31:1, AA demande 4,5) = le lien « Créez un compte » de `DemoConversionBanner`, un seul composant rendu sur 9 routes protégées (le rapport compte par route). Il est peint par `--color-accent-solid` sur le même token à 10 % ; les liens et l'anneau de focus (`--color-accent`) ne sont flaggés nulle part (5,17:1 sur blanc).
+- ✅ Options mesurées côte à côte dans le produit : garder `#2563eb` (retenu) ; `#1d4ed8` sur ce seul texte ; `#1d4ed8` ou `#1e40af` sur les deux tokens (déplace liens, focus, boutons pleins, chips). Aucune ne l'emporte à l'œil sur 0,19 point de ratio ; le bleu est l'identité du produit.
+- ✅ Acceptable ici : lien secondaire d'un bandeau informatif, souligné (WCAG 1.4.1), 14 px semi-gras, texte voisin conforme, même geste conforme depuis l'écran de connexion, aucune information ni action ne repose sur l'écart.
+- ❌ Transporter ce raisonnement : il ne couvre PAS un libellé de bouton, un message d'erreur, un texte porteur d'information, une couleur sémantique. Une nouvelle paire sous 4,5:1 est une régression, pas un précédent.
+- 🔴 ❌ Baisser le plancher de 4,31:1 du cliquet (« on garde » est défendable à 4,31, plus à 3,2). Toute amélioration le fait monter ; au-delà de 4,5 la dispense tombe.
 
-### A-11 — `heading-order` : **caduc**
+## Cibles tactiles
 
-Séquence relevée sur `/okr` : `h1 → h2 → h3 → h2 → h3 → h2 → h3 → h3`.
-**Aucun saut de niveau supérieur à 1.** Le finding est fermé, sans correctif.
+- ✅ Règle INTERNE : 44×44 px (iOS HIG, WCAG 2.5.5 AAA). WCAG 2.1 AA n'exige PAS 44 ; WCAG 2.2 AA (2.5.8) exige 24×24. Les cibles entre 24 et 44 sont conformes AA.
+- ✅ Décisions à ne pas « corriger » : cases à cocher des listes denses à **24×24** (lignes de 32 px : 44 chevaucherait la ligne voisine, on cocherait la mauvaise tâche) ; boutons-titres de tâche à **32 px** (hauteur de leur ligne) ; chips de filtre à 44 sur mobile seulement (le desktop garde sa densité). Mesure : `e2e/touch-targets.spec.ts`. Détail : [`UI-PATTERNS.md`](./UI-PATTERNS.md) § Dette UI/UX ouverte.
 
-### A-8 — contraste : **PROUVÉ, et bien plus large que « les pills OKR »**
+## Surfaces modales
 
-27 violations de contraste sur `/okr`, dont 23 au ratio **3,79** — une seule et même
-cause : le token `--color-text-muted`, qui porte les dates, les méta et les labels dans
-toute l'application. Ce n'était pas un problème de pills.
+`useModalA11y` (`src/hooks/use-modal-a11y.ts`) porte piège de focus, restitution du focus, Échap et `role="dialog" aria-modal="true"` pour toute surface maison. Règles d'écriture : [`src/components/CLAUDE.md`](../src/components/CLAUDE.md) § Modales.
 
-| Thème | avant (sur surface / sur fond) | après | statut |
-|---|---|---|---|
-| clair | **2,56** / **2,45** | 4,74 / 4,53 | 🔴 le pire, corrigé |
-| dark | 5,71 / 6,96 | inchangé | ✅ était déjà conforme |
-| gris | **3,39** / **3,79** | 4,55 / 5,07 | corrigé |
-| noir | **2,88** / **3,18** | 4,58 / 5,07 | corrigé |
+### FRO-01 · le décompte se recalcule, il ne se recopie pas
 
-**Trois thèmes sur quatre étaient non conformes AA.** Après correctif : 27 → **4**
-violations sur `/okr`.
+`src/components/modal-a11y.guard.test.ts` balaie `src/**/*.tsx`, compare à trois listes (maison, `RADIX_SURFACES`, `BOTTOMSHEET_CONSUMERS`) et imprime le décompte (`::notice title=fro-01`). `keyboard-audit-coverage` chiffre la mesure navigateur de la famille maison.
 
-> ✅ **ARBITRÉ ET APPLIQUÉ le 2026-09-12 (C-25).** Axel a tranché : **assombrir la
-> teinte au minimum nécessaire**, chaque thème gardant la sienne. Deux thèmes sur
-> quatre étaient concernés — le `gris` à **3,34** (`#388bfd` → `#2f75d5`, **4,54**)
-> et le `sombre` à **3,68** (`#3b82f6` → `#3472d8`, **4,62**) ; `clair` (5,17) et
-> `noir` (17,57) étaient déjà conformes. Deux options écartées, et pourquoi :
-> aligner les deux sur le bleu du thème clair revenait au `#1f6feb` jugé « trop
-> terne sur graphite » quand le thème gris a été réglé ; foncer le TEXTE du bouton
-> au lieu du fond faisait lire le bouton comme désactivé (vérifié à l'œil, les
-> trois options rendues côte à côte dans le produit).
->
-> 🔴 **Ce que cet épisode apprend, et qui dépasse le contraste** : ce 3,34 venait
-> d'une mesure MANUELLE de l'audit A-8, recopiée ici, et **aucune garde ne pouvait
-> le faire échouer** — `e2e/a11y-audit.spec.ts` fait tourner axe sur onze routes,
-> mais axe ne scanne que **le thème par défaut**. Les trois autres thèmes n'ont
-> jamais été dans un seul de ses totaux. Ce n'est pas une garde qui mesure à côté,
-> c'est une zone que rien ne mesure — et un silence se prend pour un accord.
-> `src/theme-contrast.guard.test.ts` ferme ce trou : il lit `src/index.css` et
-> recalcule le contraste des **quatre** thèmes. Vu rouge sur l'ancienne valeur
-> (3,34) avant d'être committé.
-> La 3ᵉ est une pastille de catégorie dont la couleur est **choisie par l'utilisateur**
-> (contraste non garantissable par construction) ; la 4ᵉ est un bouton à 3,93.
-
-### Cibles tactiles — mesurées et corrigées le 2026-08-24
-
-| Page | avant | après | dont sous 24×24 (minimum WCAG 2.5.8) |
-|---|---|---|---|
-| `/tasks` | 18 | **5** | **1** — un lien inline dans une phrase (exempté) |
-| `/entreprise` | 22 | **8** | **1** — le même lien inline |
-
-Ce qui a été fait : croix des bannières 28→44, cloche de notifications 36→44, boutons
-« Masquer » 24→44, chips de filtre 40→44 sur mobile (le desktop garde sa densité),
-pastille de forfait 36→44, onglets d'organisation 42→44.
-
-> ⚠️ **Deux décisions à ne pas « corriger » plus tard.**
-> 1. Les cases à cocher des listes denses sont passées à **24×24**, pas 44. Les lignes
->    font 32 px : une cible de 44 déborderait de 6 px en haut et en bas et chevaucherait
->    la ligne voisine — on cocherait la mauvaise tâche. 24×24 est le minimum WCAG 2.5.8
->    (AA) atteint sans invoquer l'exception d'espacement.
-> 2. Les boutons-titres de tâche sont passés à **32 px** (hauteur de leur ligne), pas 44,
->    pour la même raison : passer à 44 aurait fait grossir chaque ligne de 37 %.
->
-> 📏 **Rappel de seuil, parce qu'il est souvent confondu** : WCAG 2.1 AA n'exige PAS
-> 44×44. C'est 2.5.5 (AAA). WCAG 2.2 ajoute 2.5.8 « Target Size (Minimum) » à **24×24**
-> en AA. Les 44 px du projet sont une règle INTERNE (iOS HIG), plus stricte que la
-> conformité. Les cibles restantes entre 24 et 44 sont donc conformes AA.
-
-## ⌨️ A-3 · audit clavier du 2026-09-03 (mesuré, pas estimé)
-
-Premier parcours **au clavier** de ce dépôt, souris débranchée. Harnais :
-`e2e/a11y-keyboard-audit.spec.ts`, qui embarque un **témoin** — une modale Radix sur laquelle les
-trois détecteurs (entrée du focus, piège, Échap) doivent répondre « conforme ». S'il échoue, aucune
-mesure du fichier n'a de valeur.
-
-**Ce qui a été corrigé** (findings C-51 et C-52 de `a-faire-code.md`) :
-
-- Le **calendrier COSMO** ne se pilotait pas au clavier, sur ses **huit** surfaces. Ouvrir le
-  calendrier posait le focus sur la rangée de presets, où les flèches ne font rien ; le mois
-  affiché était le mois COURANT même quand le champ portait une autre date ; et `initialFocus`
-  était une prop **morte** depuis `react-day-picker` 9. Après correctif : le focus part du jour
-  sélectionné, dans le bon mois, et `→ → ↓` déplace bien de 3 déc. à 4 déc. puis 11 déc.
-- Les **libellés ARIA du calendrier étaient en anglais** (« Go to the Previous Month »,
-  « Today, jeudi 3 septembre 2026 ») : `react-day-picker` ne traduit que les DATES, jamais ses
-  libellés. Idem pour le bouton de fermeture par défaut de `DialogContent`, nommé `Close` sur sept
-  composants du produit.
-
-**Ce qui reste ouvert**, mesuré et non corrigé :
-
-| Constat | Où | Finding |
-|---|---|---|
-| ~~Aucune modale maison ne piège le focus~~ | `EventModal`, `HabitModal`, les feuilles | C-53, **corrigé le 2026-09-05**, cf. § « C-53 refermé » |
-| ~~`EventModal` : le focus **reste derrière** la modale, et Échap ne ferme pas~~ | `/agenda` | C-53, **corrigé le 2026-09-05** |
-| `/agenda` : **0 cellule de jour focalisable** sur 8 | FullCalendar | C-54, **tranché le 2026-09-04**, cf. section suivante |
-| Trois surfaces que les sondes n'ont pas atteintes | calendrier ouvert depuis un MENU | C-55 |
-
-⚠️ **Limites, à dire plutôt qu'à laisser croire.** Tout vient de **Chromium desktop** ; ce qui est
-prouvé, c'est le déplacement du FOCUS, pas ce qu'un lecteur d'écran ANNONCE (le partage exact est
-dans le § « Ce que nos mesures prouvent » en tête de ce document). Deux modales sur cinquante-huit
-ont été réellement ouvertes : l'absence totale d'utilitaire de piège de focus dans le dépôt rend le
-résultat généralisable, mais c'est une inférence.
-⚠️ **Cette limite vaut toujours après le correctif, dans l'autre sens** : dix surfaces sont câblées
-et mesurées, les quarante-huit autres ne le sont pas. « Le hook existe » ne veut pas dire « toutes
-les modales piègent le focus » — ne jamais écrire la seconde phrase à la place de la première.
-
-### FRO-01 · le décompte des surfaces modales, remesuré le 2026-11-07
-
-Le constat FRO-01 de l'audit externe du 2026-11-06 (« le piège de focus est mesuré sur 10 surfaces
-modales sur 53 ») repose sur un chiffre périmé : « 10 sur 53 » date du 2026-09-16, avant que
-`e2e/a11y-keyboard-audit*.spec.ts` ne parcoure les surfaces atteignables (AM-2, 2026-10-23). Il
-ignorait aussi deux familles de surfaces que le cliquet C-53 ne voyait pas.
-
-**Décompte au 2026-11-07 : 91 fichiers de surfaces modales, 90 couverts par un mécanisme mesuré,
-62 montés eux-mêmes par une mesure.**
-
-| Famille | Fichiers | Mesure |
-|---|---|---|
-| Maison (`useModalA11y`) | 64 | 59 au clavier dans un navigateur (`e2e/a11y-keyboard-audit*.spec.ts`), 3 en jsdom depuis cette passe (`TeamBulkAddToListDialog`, `TeamTaskListsField`, `PremiumGateModal`), la primitive `BottomSheet` en jsdom (`mobile-primitives.test.tsx`). **1 non mesurée** : `PyramidPlacementSheet`, sans point d'entrée depuis la mig. 229 |
-| Radix (`Dialog`, `Sheet`, `AlertDialog`) | 20 | le contrat des cinq critères est mesuré **une fois**, sur les trois enveloppes réelles, par `components/ui/modal-contract.test.tsx` ; le nom accessible (`*Title`) est vérifié fichier par fichier par la garde |
-| Feuilles `BottomSheet` seules | 7 | par la primitive : `ariaLabel` y est obligatoire par le TYPE |
-
-⚠️ **Deux niveaux, jamais fondus.** « 62 montées elles-mêmes » est la mesure la plus forte. Les 28 autres
-(20 Radix, 7 feuilles, la primitive) partagent un mécanisme mesuré : une régression locale (un
-`onCloseAutoFocus` qui empêche le retour du focus, une surface qui sort du mécanisme) n'y serait vue
-que par la garde statique, pas par une mesure de la surface.
-
-**Méthode.** L'inventaire n'est plus tenu à la main : `src/components/modal-a11y.guard.test.ts` balaie
-`src/**/*.tsx`, compare à trois listes (maison, `RADIX_SURFACES`, `BOTTOMSHEET_CONSUMERS`) et imprime le
-décompte (`::notice title=fro-01`). Une surface neuve sans déclaration, une déclaration périmée, un
-`*Content` Radix sans `*Title`, une primitive Radix importée en direct (qui contournerait les
-enveloppes) ou un Échap désactivé sans justification font rougir la garde. `keyboard-audit-coverage`
-continue de chiffrer la mesure navigateur de la famille maison.
-
-**Défauts trouvés et corrigés (mesurés rouges avant correction, jsdom).**
-
-- (d) **Le focus ne revenait pas au déclencheur pour toute surface Radix sans `DialogTrigger`**, soit la
-  quasi-totalité : le produit pilote ses surfaces par `open` / `onOpenChange`. Radix fait
-  `event.preventDefault()` dans `onCloseAutoFocus` puis ne rend le focus qu'à `triggerRef`, nul : le
-  focus tombait sur `body`. Même chute quand la surface s'ouvre depuis l'entrée d'un menu qui disparaît.
-  Correctif : `useRadixFocusReturn` (`use-modal-a11y.ts`), même historique de focus que les surfaces
-  maison, branché dans `DialogContent`, `SheetContent` et `AlertDialogContent`. Seul un focus perdu sur
-  `body` est rattrapé : un `preventDefault()` de l'appelant est respecté.
-- (d) **Trois causes de plus, vues dans le navigateur et jamais en jsdom** (`/tasks`, « Nouvelle tâche »,
-  Entrée puis Échap : le focus tombait sur `body` après le premier correctif). La première hypothèse
-  (un enfant `autoFocus`) était fausse : l'ancien code passait ce cas. Les causes mesurées, avec une
-  trace des appels à `focus()` :
-  1. **Le bouton déclencheur est recréé par le rendu qui ouvre la surface.** L'élément d'origine est
-     détaché avant le montage ; l'historique le sautait (`isConnected`). La capture garde désormais un
-     élément détaché, et la restitution lui retrouve son équivalent monté par `id`, `aria-label` ou
-     `data-testid` sur la même balise, rien de plus vague.
-  2. **L'historique des focus n'existait pas encore.** Installé au premier rendu d'une modale, il
-     arrivait après le `focusin` du déclencheur de toute modale montée à l'ouverture (`TaskModal`).
-     Il vit désormais dans `src/lib/focus-history.ts` et est installé au démarrage par `src/main.tsx`,
-     ce que la garde vérifie. Les tests jsdom ne le voyaient pas : un test précédent avait déjà installé
-     l'écouteur au niveau du module.
-  3. **Le déclencheur n'est pas lu dans `onOpenAutoFocus`**, qui ne part pas si un enfant a déjà pris le
-     focus au commit : il est lu par un `ref` sur le contenu.
-  Témoin : `modal-contract.test.tsx` recrée le déclencheur à l'ouverture ; vu rouge (3 échecs) sur le
-  hook d'avant, vert après. Vu vert aussi dans le navigateur (desktop) : le focus revient au bouton recréé.
-- (d) **Les surfaces maison à animation de sortie perdaient le focus, par la faute de React.** Mesuré dans
-  un navigateur en largeur mobile (`MobileDisplaySheet`, Échap) : le hook rendait le focus au
-  déclencheur dans son nettoyage, puis React le REPRENAIT. Après un commit, `restoreSelection`
-  refocalise l'élément qui avait le focus avant le commit, s'il est encore dans le document ; une
-  feuille en sortie (`AnimatePresence`) garde ses boutons montés. Le focus retournait dans la
-  feuille, puis tombait sur `body` quand elle disparaissait (trace des appels à `focus()`, pile
-  `flushMutationEffects`). Touche toute feuille `BottomSheet`. Correctif : `useModalA11y` rend le focus
-  en microtâche, après le commit, en relisant l'état du focus à ce moment. Témoin :
-  `use-modal-a11y.guard.test.tsx` (surface dont le DOM reste monté pendant sa sortie), vu rouge avec une
-  restitution synchrone, vert avec la microtâche. ⚠️ **Non revu dans le navigateur après correctif** : le
-  serveur de dev, en démarrage à froid sur un poste saturé, a dépassé le garde de démarrage de
-  l'application à chaque essai.
-- (e) **`aria-modal` manquait sur les trois enveloppes Radix.** Ajouté.
-- (e) **La croix de `SheetContent` portait « Close » en dur**, entendu en anglais par un lecteur d'écran
-  francophone. Traduite par `common.actions.close`, comme `DialogContent`.
-- (c) Aucune surface ne désactive Échap : aucune exception à justifier, et la garde refuse d'en laisser
-  entrer une sans écrit.
-
-⚠️ **Ce que ces mesures ne prouvent pas.** jsdom ne simule pas Tab natif (le piège se mesure en émettant
-Tab au bord de la surface), et aucune mesure n'a été jouée avec un lecteur d'écran ni sur un appareil
-réel : vagues 16.1, 16.2 et 16.4. Le retour du focus des surfaces Radix est mesuré en jsdom, plus un
-contrôle manuel dans un navigateur sur UNE surface (`TaskModal`, desktop, clavier) : pas en largeur
-mobile, et le harnais Playwright ne le gate toujours pas (`focusReturned` reste imprimé, cf. ci-dessus).
-
-### C-53 refermé le 2026-09-05 · un hook porte le piège, pas 58 fichiers
-
-`useModalA11y` (`src/hooks/use-modal-a11y.ts`) porte, pour toute surface modale maison, le piège
-de focus, la restitution du focus au déclencheur, Échap et `role="dialog" aria-modal="true"`.
-Aucune surface n'a été corrigée à la main, et **Radix n'a pas été généralisé**.
-
-🔴 **L'énoncé vérifiable a changé de nature le 2026-09-08 : ce n'est plus une liste tenue à la
-main, c'est un CLIQUET.** `src/components/modal-a11y.guard.test.ts` balaie `src/**/*.tsx`, retient
-tout fichier qui monte une surface modale maison, et exige de chacun qu'il importe `useModalA11y`.
-Les exceptions sont déclarées dans le fichier, **une par une, avec leur motif**.
-
-**Mesuré le 2026-09-08 : 61 surfaces détectées, 53 câblées, 8 déclarées non-modales avec leur
-motif.** Ces chiffres ne sont plus à recompter : la garde les recalcule à chaque exécution, et
-échoue si une surface sort du compte. Une liste qu'on relit à la main est une liste qu'on oubliera
-de relire — c'est exactement comme ça que ce finding est resté ouvert pendant trois passes.
-
-⚠️ **Le « 58 » qui circulait depuis l'audit A-3 n'a jamais été remesuré, et il était faux dans les
-deux sens** : le recensement cherchait `fixed inset-0` et ratait les surfaces qui ne portent qu'un
-`role="dialog"`, tout en comptant des popovers qui n'en sont pas. Le message du commit `a8305a1` le
-reprend encore ; le chiffre opposable est celui de la garde, pas celui-là.
-
-⚠️ **Câblé n'est pas mesuré, et les deux ne se confondent pas.** 10 surfaces sont mesurées au
-clavier dans un vrai navigateur (liste ci-dessous) ; les 43 autres sont câblées et couvertes par le
-cliquet, pas par une mesure. Écrire « les 52 piègent le focus » serait exactement le glissement que
-ce paragraphe existe pour empêcher.
-
-#### Ce que la garde a trouvé que l'inventaire manuel avait raté (2026-09-08)
-
-Elle n'a pas seulement figé l'existant, elle a corrigé le recensement :
-
-- **6 surfaces absentes de l'inventaire manuel**, qui cherchait `fixed inset-0` alors qu'elles ne
-  portaient qu'un `role="dialog"` posé à la main. Cinq se sont révélées être des **popovers ancrés**
-  ou un carton de tutoriel — non modaux, déclarés comme tels avec leur motif ; piéger le focus dans
-  un popover empêcherait d'en sortir en tabulant, ce qui est précisément sa façon de se fermer.
-- **5 surfaces câblées gardaient un Échap écrit à la main**, en plus de celui du hook. Le
-  comportement était identique, donc invisible — mais deux propriétaires pour une touche, ce sont
-  deux endroits où la règle de fermeture peut diverger. C'est le défaut d'origine de `HabitModal`,
-  réapparu en cinq exemplaires. La garde le refuse désormais.
-- L'une d'elles, `BulkAddToListModal`, portait une fermeture **à étages** : Échap annule d'abord le
-  sous-formulaire de création, et ne ferme la modale qu'au second appui. Déplacer la touche sans
-  déplacer l'escalade aurait fait perdre une saisie en cours, **sans que rien ne le signale**.
-- Le détecteur lisait aussi les **commentaires** : un fichier `.ts` était signalé parce qu'un
-  commentaire y décrit un overlay. Le JSX vit dans les `.tsx`, s'y restreindre supprime la classe
-  entière de faux positifs.
-
-🔎 **Témoins.** La garde compte les surfaces détectées et refuse de passer sous 40 : sans ça, casser
-le détecteur rendrait le fichier **vert**. Et elle a été vue échouer, en retirant le hook de
-`WeeklyCheckinModal` : elle nomme le fichier fautif.
-
-#### Trois règles que le câblage des 43 a dégagées
-
-- ❌ **Le chemin de fermeture n'est pas toujours `onClose`.** C'est `onCancel`, `onSnooze`,
-  `closeAfter`, `onOpenChange(false)`, ou un `setState`. Échap doit emprunter **exactement** le
-  chemin du voile et de la croix, jamais un raccourci.
-- ❌ **Une surface qui refuse de fermer pendant une opération refuse aussi Échap.**
-  `TeamTaskModal` et `BugReportModal` (et `ReassignManagerSheet`, retirée le 2026-09-25 au profit de
-  l'assistant de départ) gardent leur fermeture derrière un
-  `pending` / `sending` : sans la même garde sur la touche, Échap ferait ce qu'aucun clic ne peut
-  faire — abandonner un réattachement en cours, ou perdre une saisie sans savoir si le mail est
-  parti.
-- ❌ **Un hook ne se pose jamais après un `return` anticipé.** Sept fichiers ont un état de
-  chargement ou un `if (!open) return null` avant leur surface. Le codemod refusait ces cas, et
-  ESLint a rattrapé les deux fois où j'ai passé outre : `react-hooks/rules-of-hooks` avait raison.
-
-#### Les 10 surfaces mesurées au clavier
-
-**Les 9 mesurées dans un vrai navigateur** (`e2e/a11y-keyboard-audit.spec.ts`, Chromium,
-14 tests verts le 2026-09-08). Cinq détecteurs sauf mention : `focusMovedIn` · `trapped` ·
-`escClosed` · `role="dialog"` · `aria-modal="true"`.
-
-| Surface | Chemin mesuré | En plus des cinq détecteurs |
-|---|---|---|
-| `HabitModal` | `/habits`, bouton de création | — |
-| `EventModal` | `/agenda`, bouton « Nouveau » | Échap passe par `guardedClose` |
-| `MobileMoreSheet` | « Plus d'options », viewport 375 × 812 | — |
-| `ConfirmDiscardDialog` | Échap sur un `EventModal` modifié | prend le piège au parent, le lui rend |
-| `ColorSettingsModal` | `EventModal` → « Créer une catégorie » | prend le piège au parent, le lui rend |
-| `RecurrenceDaysModal` | `EventModal` → récurrence « Personnaliser » | prend le piège au parent, le lui rend |
-| `TaskActionsSheet` | `/tasks` mobile, « Afficher les actions » | — |
-| `MobileAddToList` | `TaskActionsSheet` → « Ajouter à une liste » | relais de surface, pas empilement |
-| `ShareListSheet` | `/tasks` desktop, liste **manuelle** créée puis survolée | — |
-
-**Ajoutées le 2026-10-22** (`chromium` et `mobile-safari`, déclencheurs ouverts au clavier), ce qui
-porte le compte de la garde `C-96` à **12 mesurées sur 63 câblées** :
-
-| Surface | Chemin mesuré | En plus des cinq détecteurs |
-|---|---|---|
-| `AssignRoleDialog` | `/entreprise/members`, « Actions pour … » d'un membre, « Attribuer un rôle » | mesurée après la fin du squelette (`aria-busy`) |
-| `RoleEditorSheet` | `/entreprise/settings`, rubrique Rôles, « Créer un rôle » ; et depuis `AssignRoleDialog` | prend le piège au parent, le lui rend |
-
-**La 10ᵉ, `BottomSheet`, est mesurée en jsdom, et il faut dire pourquoi.** Aucun geste utilisateur
-ne l'ouvre : son unique consommateur produit est `WeeklyRecapSheet`, monté derrière
-`WEEKLY_RECAP_ENABLED = false` (`src/pages/HabitsPage.tsx`). Un test de navigateur devrait activer
-du code mort pour l'atteindre. Le composant réel est donc monté dans
-`src/components/mobile/mobile-primitives.test.tsx`, sur `focusMovedIn`, `trapped`, `escClosed` et
-`aria-modal` — les mêmes détecteurs, un environnement plus faible : jsdom ne calcule aucune
-géométrie et ne simule aucune tabulation native.
-⚠️ **Le jour où ce drapeau repasse à `true`, cette couverture ne suffit plus** : il faudra une ligne
-dans le harnais clavier.
-
-**Ce que les mesures ont appris sur le produit, en passant :**
-
-- Le jeu de démo ne contient **que des listes intelligentes**, et « Partager » n'est monté que pour
-  `list.type !== 'smart'`. La garde `ShareListSheet` crée donc sa liste manuelle : sans ça elle
-  n'aurait jamais trouvé son déclencheur et aurait **expiré**. Un timeout n'est pas un résultat.
-- `AddToListModal` aiguille sur `useIsMobile()` : au-dessus du point de rupture il rend
-  `DesktopAddToList`, qui **n'est pas câblée**. Mesurer sur desktop aurait parlé d'un autre
-  composant que celui que la garde nomme.
-- `TaskActionsSheet` appartient à la carte mobile : au-dessus du point de rupture, le bouton
-  « Actions pour … » existe encore mais n'ouvre pas cette surface.
-- L'URL passe à `/tasks` **avant** que le chunk lazy ait remplacé le tableau de bord. Trois sondes
-  successives ont mesuré le dashboard en croyant lire la page Tâches : les gardes attendent
-  désormais un élément DE la page, jamais un délai.
-
-Les lignes correspondantes de `e2e/a11y-keyboard-audit.spec.ts` sont passées de `console.log` à
-`expect` : un rapport que personne ne lit est une archive, pas une garde.
-
-#### Ce que la passe du 2026-09-08 a ajouté, et pourquoi
-
-`EventModal` était la dernière des trois surfaces principales à ne pas être câblée, et c'est celle
-qui portait le seul cas que le câblage pouvait casser : ses **trois modales frères**. Deux gardes
-ont donc été écrites, et chacune a été **vue échouer** avant d'être retenue.
-
-- **Échap passe par `guardedClose`.** Le mode d'échec visé est silencieux : un Échap branché sur
-  `onClose` au lieu de `guardedClose` ferme proprement, sans erreur, et jette une saisie que le
-  même geste à la souris aurait protégée. La garde ouvre un événement existant, modifie le titre,
-  presse Échap, et exige que la confirmation d'abandon s'affiche, que `EventModal` reste montée et
-  que la saisie soit intacte — puis qu'elle le soit encore après avoir refusé l'abandon.
-  🔎 **Témoin** : en remplaçant `onClose: guardedClose` par `onClose` dans `EventModal.tsx`, la
-  garde vire au rouge sur « Échap ne passe pas par guardedClose : la saisie est perdue ».
-- **Le piège se déplace, dans les DEUX sens.** À l'ouverture d'un frère le focus entre chez lui et
-  y reste ; à sa fermeture, `EventModal` le rattrape. Ne vérifier que l'aller laisserait passer une
-  modale parente définitivement inerte derrière son enfant refermé — un écran qu'on voit et où le
-  clavier ne fait plus rien.
-  🔎 **Témoin** : en neutralisant `isTopmost` (la fonction rend `true` quel que soit l'appelant),
-  Échap traverse et ferme les **deux** surfaces d'un coup ; la garde échoue sur « fermer la modale
-  enfant ne doit pas fermer le parent ».
-- ⚠️ **Les surfaces sont désignées par leur NOM ACCESSIBLE**, jamais par
-  `div.fixed.inset-0 … .last()`. Avec deux overlays empilés, « le dernier » désigne tantôt le
-  parent, tantôt l'enfant : l'assertion changerait de cible en cours de test sans jamais échouer.
-  Ce choix fait au passage de `aria-label` une chose testée, pas seulement posée.
-- ⚠️ **Un rôle EXPLICITE écrase le rôle implicite.** La puce « Personnaliser » de la récurrence est
-  un `<button role="radio">` : cherchée comme un bouton, elle est introuvable, et le test **expire**
-  au lieu d'échouer sur ce qu'il mesure. Un timeout n'est pas un résultat.
-
-- 🔴 **Un gestionnaire de modale ne peut pas dépendre de l'endroit où se trouve le focus.**
-  `HabitModal` avait déjà un Échap : un `onKeyDown` React posé sur l'overlay, donc suspendu à la
-  remontée d'un évènement depuis l'élément focalisé. Focus sorti, Échap mort — c'est-à-dire
-  inopérant exactement dans le cas qu'il existait pour rattraper. L'écouteur vit désormais sur
-  `document`, en **capture**, ce qui le protège aussi des champs qui appellent `stopPropagation`
-  sur leurs touches (les champs de date natifs le font).
-- 🔴 **Une pile, parce que les modales s'empilent réellement.** `EventModal` rend
-  `ConfirmDiscardDialog`, `ColorSettingsModal` et `RecurrenceDaysModal` en **frères** de son
-  overlay, pas dedans : sans pile, le piège du parent leur reprendrait le focus. Seule la dernière
-  surface empilée réagit à Échap et au Tab.
-- ❌ **`aria-modal` n'est pas décoratif ici.** Il manquait partout, y compris sur le témoin Radix —
-  acceptable pour Radix, qui neutralise les frères par `aria-hidden`, et pas pour une modale
-  maison, qui ne fait ni l'un ni l'autre.
-- ⚠️ **`focusReturned` est mesuré et imprimé, jamais assertionné** : le témoin Radix lui-même le
-  rend `false`. Un détecteur que la bibliothèque de référence ne passe pas mesure le détecteur,
-  pas la modale.
-- ⚠️ **Le hook existe, 52 surfaces y passent, et un cliquet le tient** (2026-09-08, **recompté le
-  2026-09-14** : 53 → 52, `CategoryManager` étant supprimée — elle était câblée et montée nulle
-  part). 🔴 **Compter ces surfaces par un `grep` sur le NOM du hook donne un faux chiffre** : il
-  attrape les commentaires qui le citent, et c'est arrivé ici même le 09-14 (53 fichiers annoncés,
-  dont un qui ne fait que le mentionner). Le compte opposable est celui des fichiers qui
-  **importent** `@/hooks/use-modal-a11y` — **50** — et des surfaces qu'ils montent, certains en
-  portant plusieurs. Ce n'était
-  pas le cas pendant les trois premières passes : le câblage s'est fait par vagues, et la liste des
-  surfaces restantes vivait dans un fichier Markdown. Elle vit maintenant dans un test. **Câblé
-  n'est toujours pas mesuré** : 10 surfaces sont mesurées au clavier, 43 sont câblées et gardées.
-
-### C-54 tranché le 2026-09-04 · le bouton « Nouveau » EST le chemin clavier de l'agenda
-
-**Décision rendue, pas différée.** Les cellules de jour de FullCalendar restent hors du parcours de
-tabulation, et le motif grille ARIA n'est **pas** adopté. Créer un événement au clavier passe par le
-bouton « Nouveau », qui ouvre la saisie pré-remplie sur le prochain créneau libre. Ce qui a été
-corrigé dans la même passe, c'est le coût du trajet : deux liens d'évitement, qui manquaient.
-
-**Pourquoi ce sens.** Adopter le motif grille n'est pas un réglage, c'est un composant : gérer
-`tabindex` roving sur 7 colonnes × N créneaux, câbler les huit flèches, `Home` / `Fin` / `PagePrec` /
-`PageSuiv`, annoncer la cellule active, et refaire le tout à chaque changement de vue (jour, semaine,
-mois) et à chaque zoom, les cinq crans de `slotDuration` compris. Le geste équivalent existe déjà,
-il est atteignable, et il ouvre un formulaire où le jour et l'heure se saisissent explicitement.
-L'écart réel entre les deux chemins est un confort, pas un accès.
-
-**Ce qui a changé** (`src/components/SkipLink.tsx`) :
-
-- un lien d'évitement **global**, premier arrêt de tabulation de `Layout`, qui pose le focus sur le
-  `<main>` et saute la barre latérale entière : logo, thème, recherche, dix entrées de navigation,
-  état de synchronisation, signalement de bug ;
-- un **second** lien, propre à `/agenda`, qui saute le panneau des tâches, ses filtres et ses onze
-  boutons « Options de la tâche » tous nommés pareil. Il n'est monté que lorsque ce panneau est
-  ouvert, et sur desktop seulement : sur mobile le panneau est un calque, il ne s'interpose pas dans
-  l'ordre de tabulation quand il est fermé.
-
-**Mesuré après correctif** (2026-09-04, Chromium desktop, jeu de démo, `e2e/a11y-keyboard-audit.spec.ts`) :
-
-| Trajet | Tabulations |
+| Famille | Mesure |
 |---|---|
-| Haut de page → `<main>` | 1, puis Entrée |
-| `<main>` → conteneur du calendrier | 1, puis Entrée |
-| Conteneur du calendrier → premier événement | 1 |
-| Bouton « Nouveau » → modale de saisie | ~~4~~ → **0** (remesuré le 2026-09-08) |
-| Bouton « Nouveau » → premier champ d'heure | ~~7~~ → **3** (remesuré le 2026-09-08) |
+| Maison (`useModalA11y`) | au clavier dans un navigateur (`e2e/a11y-keyboard-audit*.spec.ts`), ou en jsdom pour quelques-unes (`TeamBulkAddToListDialog`, `TeamTaskListsField`, `PremiumGateModal`, primitive `BottomSheet` par `mobile-primitives.test.tsx`) ; `PyramidPlacementSheet` non mesurée (aucun point d'entrée depuis la mig. 229) |
+| Radix (`Dialog`, `Sheet`, `AlertDialog`) | le contrat des cinq critères est mesuré UNE fois sur les trois enveloppes (`components/ui/modal-contract.test.tsx`) ; le `*Title` est vérifié fichier par fichier par la garde |
+| Feuilles `BottomSheet` seules | par la primitive : `ariaLabel` obligatoire par le TYPE |
 
-⚠️ **Le « 38 tabulations » du 2026-09-03 était compté trop bas.** La marche partait de
-`body.press('Tab')` alors que le focus se trouvait encore sur le lien « Agenda » de la barre
-latérale, cliqué par la fixture : Chromium garde ce lien comme point de départ de la navigation
-séquentielle, et la mesure repartait donc du MILIEU de la navigation. Le chiffre sous-estimait le
-trajet réel depuis le haut de page. Un `blur()` ne corrige rien, le point de départ lui survit :
-les mesures ci-dessus repartent d'un **rechargement**.
+- ⚠️ Deux niveaux, jamais fondus : « montée elle-même par une mesure » est la plus forte ; les autres partagent un mécanisme mesuré, une régression locale n'y serait vue que par la garde statique.
+- ❌ Écrire « toutes les modales piègent le focus » : câblé n'est pas mesuré. ❌ Compter par `grep` sur le NOM du hook (attrape les commentaires) : le compte opposable est celui de la garde.
+- ✅ La garde refuse : surface neuve sans déclaration, déclaration périmée, `*Content` sans `*Title`, primitive Radix importée en direct, Échap désactivé sans justification ; elle refuse de passer sous un plancher de surfaces détectées (un détecteur cassé rendrait le fichier vert). Elle lit les `.tsx` seuls (pas les commentaires).
+- ✅ Les popovers ancrés et cartons de tutoriel sont non modaux, déclarés avec leur motif : piéger le focus dans un popover empêcherait d'en sortir en tabulant.
+- 🔴 Focus rendu au déclencheur : `useRadixFocusReturn` (dans `use-modal-a11y.ts`) est branché dans `DialogContent`, `SheetContent`, `AlertDialogContent` (Radix ne rend le focus qu'à un `DialogTrigger`, jamais utilisé ici ; seul un focus perdu sur `body` est rattrapé, un `preventDefault()` de l'appelant est respecté). Trois causes que jsdom ne voit pas : le déclencheur est RECRÉÉ par le rendu qui ouvre la surface (retrouvé par `id`, `aria-label` ou `data-testid` sur la même balise) ; l'historique `src/lib/focus-history.ts` doit être installé au démarrage par `src/main.tsx` (la garde le vérifie) ; le déclencheur se lit par un `ref` sur le contenu, pas dans `onOpenAutoFocus`. Témoin : `modal-contract.test.tsx` recrée le déclencheur à l'ouverture.
+- 🔴 Une surface à animation de sortie (`AnimatePresence`) perd son focus par la faute de React (`restoreSelection` refocalise l'élément qui l'avait avant le commit) : `useModalA11y` rend le focus en MICROTÂCHE, après le commit, en relisant l'état. Témoin : `use-modal-a11y.guard.test.tsx` (DOM monté pendant la sortie). ⚠️ Non revu dans un navigateur mobile.
+- ✅ `aria-modal` sur les trois enveloppes Radix ; croix de `SheetContent` traduite (`common.actions.close`), comme `DialogContent`.
+- ⚠️ Limites : jsdom ne simule pas Tab natif ; aucune mesure jouée avec un lecteur d'écran ni sur appareil réel ; `focusReturned` est imprimé, jamais assertionné (le témoin Radix le rend `false`).
+- ✅ Surfaces mesurées au clavier dans un navigateur (`e2e/a11y-keyboard-audit.spec.ts`), détecteurs `focusMovedIn`, `trapped`, `escClosed`, `role="dialog"`, `aria-modal="true"` : `HabitModal`, `EventModal` (Échap par `guardedClose`), `MobileMoreSheet` (375×812), `ConfirmDiscardDialog`, `ColorSettingsModal`, `RecurrenceDaysModal` (les trois prennent le piège à `EventModal` et le lui rendent), `TaskActionsSheet` (mobile), `MobileAddToList` (relais de surface), `ShareListSheet` (liste manuelle créée puis survolée), `AssignRoleDialog` (après la fin du squelette, `aria-busy`), `RoleEditorSheet`.
+- ⚠️ `BottomSheet` n'est ouvert par aucun geste produit (`WeeklyRecapSheet` derrière `WEEKLY_RECAP_ENABLED = false`, `src/pages/HabitsPage.tsx`) : mesuré en jsdom. Le jour où le drapeau passe à `true`, il faut une ligne dans le harnais clavier.
+- ✅ Pièges de mesure : le jeu de démo ne contient que des listes intelligentes et « Partager » n'existe que pour `list.type !== 'smart'` (la garde crée sa liste, sinon elle expire) ; `AddToListModal` aiguille sur `useIsMobile()` (`DesktopAddToList` n'est pas câblée) ; `TaskActionsSheet` appartient à la carte mobile ; l'URL passe à `/tasks` AVANT que le chunk lazy remplace le dashboard : attendre un élément DE la page, jamais un délai ; une surface se désigne par son NOM ACCESSIBLE, jamais `div.fixed.inset-0 … .last()` ; un rôle EXPLICITE écrase le rôle implicite (`<button role="radio">` introuvable comme bouton : un timeout n'est pas un résultat).
+- ✅ Deux gardes `EventModal` vues rouges : Échap passe par `guardedClose` (sinon la saisie est perdue en silence) ; le piège se déplace dans les DEUX sens (à la fermeture d'un frère, `EventModal` le rattrape, sinon le parent reste inerte).
+- ❌ Un `console.log` pour une mesure : `expect`. Un rapport que personne ne lit est une archive.
 
-**Ce que la décision NE règle pas, et qu'il ne faut pas laisser croire réglé :**
+## Clavier
 
-- ✅ **RÉGLÉ DEPUIS, et ce paragraphe disait le contraire.** Il affirmait que le focus n'entre pas
-  dans la modale de saisie et qu'Échap ne la ferme pas — vrai le 2026-09-04, faux depuis que
-  `EventModal` est câblée sur `useModalA11y`. Remesuré le 2026-09-08 : le focus **entre** à
-  l'ouverture, Échap **ferme** (via `guardedClose`), et le trajet jusqu'au premier champ d'heure
-  tombe de 7 tabulations à **3**, toutes DANS la modale. Les deux lignes du tableau ci-dessus
-  portent leur ancienne valeur barrée : un « avant » se relit à sa source, il ne se recopie pas.
-- Une `<table>` de FullCalendar porte `role="grid"` sans aucun descendant focalisable géré, donc
-  annonce un motif d'interaction qu'elle n'implémente pas. Le rôle vient de la bibliothèque, sur un
-  arbre qu'elle re-rend à chaque changement de vue : le réécrire demanderait de repasser derrière
-  chaque rendu. **Arbitrage assumé, pas oubli** : on ne patche pas le rôle, on ne prétend pas non
-  plus que le motif grille est implémenté. Si un audit lecteur d'écran montre que l'annonce
-  « tableau de N lignes » égare réellement, la réponse sera d'adopter le motif, pas de maquiller le
-  rôle.
-- Rien de tout ceci n'a été entendu dans un lecteur d'écran. Ce qui est prouvé, c'est le déplacement
-  du FOCUS (cf. le § « Ce que nos mesures prouvent » en tête de ce document).
+- ✅ Calendrier COSMO : `DatePicker` / `DateCalendarPanel` se pilotent au clavier (le focus part du jour sélectionné, dans le bon mois, `→ → ↓` déplace). ❌ `initialFocus` de `react-day-picker` : prop morte depuis la v9.
+- ✅ Une bibliothèque traduit ses DATES, pas ses libellés ARIA (`react-day-picker` : « Go to the Previous Month ») : ces chaînes vivent dans `node_modules`, `i18n:scan` ne les voit pas.
+- ✅ Une prop d'accessibilité recopiée d'un exemple se vérifie CONTRE LA VERSION INSTALLÉE : une prop qui ne fait rien ne prévient pas.
 
-**Gardes** : deux tests assertionnés dans `e2e/a11y-keyboard-audit.spec.ts`, **vus rouges avant
-d'être verts** (la première assertion tombait sur « OKR », ce qui a précisément révélé le biais de
-mesure ci-dessus). Le premier vérifie que
-chaque lien d'évitement **déplace `document.activeElement`** vers sa cible, jamais qu'il fait
-défiler : un lien dont la cible a perdu son `tabIndex={-1}` fait défiler sans déplacer le focus,
-c'est le mode d'échec silencieux du lien d'évitement. Le second remonte l'ordre de tabulation depuis
-le calendrier jusqu'au bouton « Nouveau », l'active à la touche Entrée, et redescend jusqu'à un champ
-d'heure : c'est la décision elle-même qui est gardée, pas seulement le lien.
+### C-54 tranché · le bouton « Nouveau » EST le chemin clavier de l'agenda
 
-### Gate axe-core · le chiffre qui manquait
+Décision rendue : les cellules de jour de FullCalendar restent HORS du parcours de tabulation et le motif grille ARIA n'est PAS adopté (composant à part entière : `tabindex` roving sur 7 colonnes × N créneaux, huit flèches, `Home`/`Fin`/`PagePrec`/`PageSuiv`, annonce, refaite à chaque vue et zoom). Créer un événement au clavier passe par « Nouveau » (saisie pré-remplie sur le prochain créneau libre).
 
-Dix routes scannées le 2026-09-03 : **zéro `critical`**, et **trois** violations `serious`
-distinctes une fois dédoublonnées, toutes de contraste, portées par **deux tokens** —
-`--color-error` (`#ef4444`, 3,76:1 sur blanc) et `--color-accent-solid` (`#2563eb`, 4,31:1 sur son
-fond teinté), toutes dans le bandeau d'échéances. Passer la gate à `serious` est donc **bon marché
-mais pas gratuit** : `red-600` (`#dc2626`, 4,83:1) suffit pour les deux premières, la troisième est
-le même arbitrage que le bleu de marque.
-
-> ⚠️ **Cette mesure a été DÉPASSÉE deux fois, et ce paragraphe est conservé pour l'historique du
-> chiffrage, pas comme état courant.** La gate est passée à `serious` le **2026-09-04**,
-> `--color-error` est à `red-600` depuis, et le troisième cas a été tranché le **2026-09-13** :
-> cf. « C-23 — pourquoi le bleu du thème clair reste à 4,31:1 » ci-dessous, qui fait foi. Le
-> « trois violations distinctes » ci-dessus vient par ailleurs d'un rapport tronqué à trois
-> échantillons — le rapport ne tronque plus.
-
-### C-23 — pourquoi le bleu du thème clair reste à 4,31:1 (décidé le 2026-09-13)
-
-**C'est une décision, pas un oubli, et c'est ici qu'elle se lit.** La dispense `color-contrast` de
-`e2e/a11y-audit.spec.ts` renvoie nommément à cette section, et le cliquet qui la tient est
-`src/theme-contrast.guard.test.ts` § « C-23 ».
-
-**Ce qui est mesuré.** Trois passes de `e2e/a11y-audit.spec.ts` sur le même commit rendent des
-totaux `color-contrast` différents — 21, 41 puis 55 nœuds le 2026-09-12, 18 le 2026-09-13. Le total
-n'est **pas** reproductible : axe photographie chaque route à un instant, et ces pages entrent en
-fondu. Les ratios de ces couples-là s'étalent **de 1,02 à 4,44** selon l'instant où l'opacité est
-photographiée, et le même élément y apparaît sous des couleurs différentes d'une passe à l'autre
-(`#2563eb` devient `#2573eb`, `#487cee`, `#729af1`…). ⚠️ C'est ce qui a fait croire à une famille
-« blanc sur le **dégradé** du bouton principal, 3,49 à 4,48 », longtemps citée comme distincte :
-c'est le même bleu, photographié plus tôt. ❌ **Ne jamais citer un total de ce rapport comme un
-état** : c'est un tirage.
-
-Reproductible dans toutes les passes, une seule paire :
-
-| Paire | Nœuds | Ratio mesuré | Ce que c'est |
-|---|---|---|---|
-| `#2563eb` sur `#e3ebfa` | **9** | **4,31:1** (AA en demande 4,5) | le lien « Créez un compte » du bandeau de mode démo |
-
-🔴 **Les 9 nœuds sont UN SEUL composant**, `DemoConversionBanner`, rendu sur les 9 routes protégées.
-Le rapport les compte par route, ce qui fait lire « neuf endroits » là où il n'y en a qu'un. Et il
-est peint par **`--color-accent-solid`**, sur un fond fait du **même token à 10 %** posé sur
-`--color-background` — pas par `--color-accent`. Les deux valent la même chose en thème clair, mais
-la distinction change le périmètre de la décision : **les liens et l'anneau de focus, qui sont
-`--color-accent`, ne sont flaggés nulle part** (le lien sur blanc vaut 5,17:1). Le backlog a écrit
-pendant plusieurs jours que corriger « demanderait de foncer la couleur des liens et du focus » :
-c'était faux, et c'est ce que la mesure a corrigé.
-
-**Les options ont été rendues côte à côte dans le produit** le 2026-09-13 — `/dashboard` en mode
-démo, thème clair, tokens surchargés sur le vrai bandeau — puis mesurées dans le navigateur, pas
-calculées :
-
-| Option | Teinte | Ratio sur la teinte | Ce que ça déplace ailleurs |
-|---|---|---|---|
-| **retenue** | `#2563eb` inchangé | 4,31 | rien |
-| T1 | `#1d4ed8` sur ce seul texte | 5,59 | rien (token dédié « accent sur fond teinté ») |
-| T2 | `#1d4ed8` sur les deux tokens | 5,50 | liens, focus, boutons pleins, chips |
-| T3 | `#1e40af` sur les deux tokens | 7,05 | idem, bleu nettement plus profond |
-
-**Décision d'Axel : on garde `#2563eb`.** Le bleu est l'identité visuelle du produit, et aucune des
-trois variantes ne l'a emporté à l'œil sur un écart de 0,19 point de ratio.
-
-**Où c'est acceptable, et où ça ne le serait pas.** L'écart porte sur **un lien secondaire d'un
-bandeau informatif de mode démo** : le texte qu'il accompagne (`--color-text-secondary` et
-`--color-text-primary`) est conforme, le lien est **souligné** — donc il ne dépend pas de la
-couleur pour être identifié comme lien (WCAG 1.4.1) — il fait 14 px semi-gras, et le même geste
-(« créer un compte ») est atteignable depuis l'écran de connexion, où il est conforme. Aucune
-information, aucune action et aucun message d'erreur ne repose sur cet écart.
-
-❌ **Ce raisonnement ne se transporte nulle part ailleurs.** Il ne couvre PAS un libellé de bouton,
-un message d'erreur, un texte porteur d'information, ni une couleur sémantique — `--color-error`
-est justement passé à `red-600` (4,83:1) pour cette raison, et ce n'était pas un arbitrage de
-marque. Une nouvelle paire sous 4,5:1 est une régression, pas un précédent.
-
-⚠️ **Deux réserves qui valent pour tous les chiffres de cette section**, et qu'il ne faut jamais
-omettre en les citant :
-
-1. **axe ne scanne que l'ÉTAT INITIAL de chaque route.** Aucune modale, aucun menu, aucun
-   calendrier ouvert n'entre dans ces totaux.
-2. **axe ne scanne que le THÈME PAR DÉFAUT.** C'est ce qui a laissé le bouton principal à 3,34:1
-   pendant dix-neuf jours sans qu'aucun run ne puisse le dire. `src/theme-contrast.guard.test.ts`
-   couvre désormais les quatre thèmes, mais **seulement** pour le couple `--color-accent-solid` /
-   son texte, plus ce cliquet-ci.
-
-**Ce que la décision engage.** La dispense `color-contrast` reste en place — c'est la seule règle
-`serious` non bloquante — et elle ne tombera pas. En échange, le cliquet de
-`src/theme-contrast.guard.test.ts` refuse que la paire descende **sous 4,31:1** : « on garde » est
-défendable à 4,31, il ne l'est plus à 3,2, et sans cliquet une dérive passerait sous silence
-puisque le seul outil qui la voit est précisément celui qu'on a dispensé. ❌ **Ne jamais baisser ce
-plancher.** Toute amélioration doit le faire monter ; au-delà de 4,5 il devient un vrai seuil AA et
-la dispense tombe.
-
-## Findings résiduels de l'audit du 2026-05-29
-
-L'audit d'origine listait A-1 → A-11. Vérifié dans le code le **2026-08-14** :
-
-| ID | Sujet | État réel |
-|---|---|---|
-| A-1 → A-6 | Critical (aria-label, labels, `<main>`, `<th>` vides…) | ✅ Corrigés — codifiés en règles ci-dessous |
-| A-7 | `text-blue-100` sur `bg-blue-600` (4.23:1) | ✅ Corrigé — plus aucune occurrence dans `src/` |
-| A-8 | Pills OKR `text-*-600 / bg-*-100` sous 4.5:1 | ✅ **Tranché le 2026-08-24** : la cause n'était pas les pills mais le token `--color-text-muted` ; 27 → 4 violations. Résiduel : le bleu de marque à 3,34 (arbitrage produit, cf. plus haut) |
-| A-9 | `page-has-heading-one` (h1 animé en `opacity:0`) | ✅ Caduc — plus aucun `motion.h1` dans `src/pages/` |
-| A-10 | `CookieBanner` hors landmark | ✅ Corrigé — `motion.aside` + `aria-label` |
-| A-11 | `heading-order` OKR (`h3` après `h1`) | ✅ **Caduc, mesuré le 2026-08-24** · aucun saut de niveau > 1 sur `/okr` |
-
-**Il ne reste donc aucun finding « non prouvé » : les deux qui traînaient depuis mai ont été
-mesurés, pas estimés.** C'est la leçon de méthode de cette série : un finding qu'on n'a jamais
-mesuré n'est ni vrai ni faux, il est **inutilisable** : A-8 s'est révélé cinq fois plus large que
-son intitulé, A-11 purement caduc, et les deux avaient survécu trois mois côte à côte.
-
-**Cibles tactiles, corrigées le 2026-08-24, remesurées le 2026-08-25** : `/tasks` 18 → **5**,
-`/entreprise` 22 → **8**. Les restantes sont soit des liens inline dans une phrase (exemptés), soit
-des cibles de 24 à 32 px **conformes AA** (WCAG 2.5.8 exige 24×24, pas 44, cf. le rappel de seuil
-plus haut). Détail : [`UI-PATTERNS.md`](./UI-PATTERNS.md) §Dette UI/UX ouverte.
-
-Reste ouvert par ailleurs : **VoiceOver iOS sur un vrai appareil**, le seul des quatre audits que
-le 2026-09-03 n'a pas passé — il ne se simule pas. Les trois autres (`/agenda`, modales, parcours
-clavier) sont couverts par la section « A-3 » ci-dessus, avec leurs findings ouverts.
-**Sa check-list est prête depuis le 2026-09-04** et se joue d'une traite, témoin compris :
-[`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md). Ce qui manque n'est plus le protocole, c'est
-l'appareil et l'heure.
-Durcissement : **fait le 2026-09-04**. La gate casse la CI sur tout `serious` sauf les règles
-nommées dans `SERIOUS_NOT_BLOCKING`, où il n'en reste qu'une, `color-contrast`, désormais motivée et
-définitive (section C-23 ci-dessus). Ce n'était pas « gratuit », comme cette page l'a écrit du
-2026-08-24 au 2026-09-03 sans jamais compter les violations concernées : ça a coûté un token
-(`--color-error` → `red-600`) et un arbitrage rendu.
+- ✅ `src/components/SkipLink.tsx` : un lien d'évitement GLOBAL (premier arrêt de `Layout`, pose le focus sur `<main>`) et un second propre à `/agenda` (saute le panneau des tâches et ses boutons « Options de la tâche » homonymes), monté seulement panneau ouvert et sur desktop.
+- ✅ Gardes dans `e2e/a11y-keyboard-audit.spec.ts` : chaque lien d'évitement DÉPLACE `document.activeElement` vers sa cible (jamais « fait défiler ») ; l'ordre de tabulation remonte du calendrier à « Nouveau », Entrée, et redescend à un champ d'heure. Les trajets se mesurent depuis un RECHARGEMENT (le point de départ de la navigation séquentielle survit à `blur()`).
+- ⚠️ Une `<table>` de FullCalendar porte `role="grid"` sans descendant focalisable géré : arbitrage assumé, on ne patche pas le rôle (arbre re-rendu à chaque vue) ni ne prétend le motif implémenté. Si un audit lecteur d'écran montre que l'annonce égare, la réponse est d'adopter le motif.
 
 ## Règles
 
-- ✅ **Touch targets ≥ 44×44 px** (WCAG 2.5.5) — `min-w-11 min-h-11` ou wrapper l'icône.
-- ✅ **`aria-label` obligatoire** sur tout `<button>` qui ne contient qu'une icône — `title=` est ignoré par les lecteurs d'écran sur mobile. Ajouter `aria-hidden="true"` sur l'icône lucide enfant. (Faille A-1.)
-- ✅ **`<input>` doit avoir un label associé** : `<label htmlFor>` + `id`, `aria-label`, ou `aria-labelledby`. Sur formulaires dynamiques — `aria-label={"Avancement de <X> sur <Y>"}`. (Faille A-2.)
-- ✅ **Checkbox custom** stylé en `<button>` : `role="checkbox"` + `aria-checked={state}` + `aria-label` dynamique. Exemples : TodayTasks, HabitTable DayButtons.
-- ✅ **`focus-visible:`** sur tous les boutons custom — navigation clavier (iPad + clavier physique).
-- ✅ **`aria-pressed`** sur les toggles (favoris, terminées, sélections).
-- ✅ **`<main>` landmark obligatoire** sur toute page racine (LandingPage, LoginPage, SignupPage…). Layout protégé contient déjà `<main>`. (Faille A-5 — sans `<main>`, axe flag jusqu'à 162 nodes "not contained by landmarks".)
-- ✅ **`<th>` vides** (colonnes d'icônes) : ajouter `<span className="sr-only">Label</span>`. (Faille A-6.)
-- ✅ **Liens dans un paragraphe** : `underline underline-offset-2` toujours visible — pas seulement `hover:underline` (WCAG 1.4.1).
-- ✅ **Contraste texte ≥ 4.5:1** sur fond clair (3:1 pour large 18pt+ / 14pt bold). `text-green-600` (3.29:1) → `text-green-700` (4.78:1). `text-blue-100` sur bleu 600 (4.23:1) → `text-white`. Vérifier via axe-core.
-- ✅ Préférer `<button>` à `<div onClick>`.
-- ❌ **Pas de changement de contenu sans annonce** — `role="status"` ou `aria-live="polite"`.
-- ❌ **Pas de couleur seule pour transmettre l'information** — toujours doubler avec une icône, du texte, ou un état.
-- ❌ **Pas de `motion.h1 initial={{opacity:0}}`** sans aussi laisser un h1 statique présent — axe flag `page-has-heading-one`.
-- ✅ **Un texte découpé en fragments visuels doit avoir un nom accessible ENTIER** (2026-08-27, D4/D5) : mettre la phrase complète en `sr-only`, passer les fragments en `aria-hidden`, et pour une date ajouter un `<time dateTime>`. Sans ça, « 27 » + « août » empilés se lisent « 27août », et un espacement obtenu par `ml-2` n'existe pas pour un lecteur d'écran.
-- ✅ **Une prop d'accessibilité recopiée d'un exemple se vérifie CONTRE LA VERSION INSTALLéE**
-  (2026-09-03, C-51). `initialFocus` de `react-day-picker` survit dans les types, marqué déprécié,
-  et n'est plus lu par personne : la prop était écrite, le focus n'allait nulle part. Même classe
-  que le `Button` non `forwardRef` du 2026-08-30. **Une prop qui ne fait rien ne prévient pas.**
-- ✅ **Une bibliothèque traduit ses DATES, pas ses libellés ARIA** (2026-09-03, C-52). Passer
-  `locale` à `react-day-picker` laisse « Go to the Previous Month » intact. Ces chaînes vivent dans
-  `node_modules` : `i18n:scan` ne peut pas les voir, et ne le pourra jamais.
-- ✅ **Tout bloc répété avant le contenu se saute** (2026-09-04, C-54, WCAG 2.4.1). Un lien
-  d'évitement se pose avec `SkipLink`, et sa cible porte `tabIndex={-1}` : sans lui, `href="#x"`
-  fait DÉFILER sans déplacer le focus, et la garde paraît verte pendant que le clavier reste
-  coincé. Un second lien se justifie quand une page interpose son propre bloc, comme le panneau
-  des tâches de `/agenda` et ses onze boutons homonymes.
-- ✅ **Une pastille purement visuelle qui porte une information est `role="img"` + `aria-label`** (2026-08-27, E2). `title=` seul ne se voit ni au clavier ni au toucher, et ne remplace pas un nom accessible.
-
-## Ne jamais faire — Accessibilité
-
-- ❌ Créer un `<button>` icon-only sans `aria-label` (A-1, critical).
-- ❌ Créer un `<input>` sans label associé (A-2, critical).
-- ❌ Page racine publique sans `<main>` landmark (A-5).
-- ❌ `<th>` vide pour une colonne d'icône — ajouter `<span className="sr-only">Label</span>` (A-6).
-- ❌ Lien dans un paragraphe distingué uniquement par couleur (A-4 / WCAG 1.4.1).
-- ❌ `text-green-600`, `text-blue-100` sur fond clair sans vérifier le contraste 4.5:1.
-- ❌ Faire annoncer une checkbox custom comme « bouton » — utiliser `role="checkbox" aria-checked`.
-- ❌ Annoncer un motif d'interaction qu'on n'implémente pas (`role="grid"` sans descendant
-  focalisable géré, `role="dialog"` sans piège de focus). Un rôle est une PROMESSE de clavier.
+- ✅ Touch targets ≥ 44×44 px (`min-w-11 min-h-11` ou wrapper l'icône), sauf les décisions de § Cibles tactiles.
+- ✅ `aria-label` sur tout `<button>` icon-only (`title=` est ignoré sur mobile), `aria-hidden="true"` sur l'icône lucide enfant (A-1, critical).
+- ✅ `<input>` avec label associé : `<label htmlFor>` + `id`, `aria-label` ou `aria-labelledby` ; formulaires dynamiques `aria-label="Avancement de <X> sur <Y>"` (A-2, critical).
+- ✅ Checkbox custom stylée en `<button>` : `role="checkbox"` + `aria-checked` + `aria-label` dynamique (TodayTasks, HabitTable DayButtons, cases de la grille mobile `HabitCard`, nommées par l'habitude et le jour).
+- ✅ `focus-visible:` sur tout bouton custom ; `aria-pressed` sur les toggles.
+- ✅ `<main>` sur toute page racine (LandingPage, LoginPage, SignupPage… ; `Layout` protégé l'a déjà) (A-5).
+- ✅ `<th>` vide (colonne d'icônes) : `<span className="sr-only">Label</span>` (A-6).
+- ✅ Lien dans un paragraphe : `underline underline-offset-2` toujours visible (WCAG 1.4.1, A-4).
+- ✅ Contraste texte ≥ 4,5:1 (3:1 pour 18 pt+ ou 14 pt gras) : `text-green-600` (3,29) → `text-green-700` ; `text-blue-100` sur bleu 600 → `text-white`.
+- ✅ `<button>` plutôt que `<div onClick>`.
+- ✅ Un texte découpé en fragments visuels porte un nom accessible ENTIER : phrase complète en `sr-only`, fragments en `aria-hidden`, `<time dateTime>` pour une date (D4, D5 : « 27 » + « août » se lisent « 27août »).
+- ✅ Une pastille visuelle qui porte une information : `role="img"` + `aria-label` (E2) ; `title=` seul ne se voit ni au clavier ni au toucher.
+- ✅ Tout bloc répété avant le contenu se saute (WCAG 2.4.1) : `SkipLink`, cible en `tabIndex={-1}` (sinon `href="#x"` défile sans déplacer le focus).
+- ✅ Un `<h1>` statique présent (jamais `motion.h1 initial={{opacity:0}}` seul : `page-has-heading-one`).
+- ❌ Changement de contenu sans annonce : `role="status"` ou `aria-live="polite"`.
+- ❌ Couleur seule pour transmettre une information : icône, texte ou état.
+- ❌ Un `<button>` icon-only sans `aria-label` ; un `<input>` sans label ; une page racine publique sans `<main>`.
+- ❌ Annoncer un motif d'interaction non implémenté (`role="grid"` sans descendant focalisable géré, `role="dialog"` sans piège de focus) : un rôle est une PROMESSE de clavier.

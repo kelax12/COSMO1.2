@@ -1,187 +1,70 @@
-# Composants · règles du dossier
+# `src/components/` · onboarding, animations, modales, dates
 
-> Repris de `CLAUDE.md` le 2026-09-16, **sans une coupe**. Chargé automatiquement dès
-> qu'un fichier de ce dossier est touché. Règles transversales : [`CLAUDE.md`](../../CLAUDE.md) à la racine.
+Lire en touchant `src/components/**`, `src/hooks/use-modal-a11y.ts`, un `motion.*`, une feuille mobile. Détail : [`docs/UI-PATTERNS.md`](../../docs/UI-PATTERNS.md), [`docs/MOBILE.md`](../../docs/MOBILE.md), [`docs/ACCESSIBILITY.md`](../../docs/ACCESSIBILITY.md).
+Règles transversales : [`CLAUDE.md`](../../CLAUDE.md).
 
----
+## Onboarding
 
-## Onboarding (perso et entreprise, refaits le 2026-10-03)
-
-Récit, captures et historique : [`docs/UI-PATTERNS.md`](../../docs/UI-PATTERNS.md) § Onboarding & Tutoriels.
-🔴 La sélection de modules N'EXISTE PLUS (supprimée le 2026-08-23) : ne pas la décrire.
-
-- **Perso** : `onboarding/FirstRunSetup` (planétaire), monté dans `Layout`. Présentation → tâches →
-  agenda (créneau facultatif, relié à la 1re tâche) → habitude (durée choisie) → objectif (cible
-  facultative) → bilan avec sorties concrètes. Suit le thème de l'app (`perso/perso-theme.ts`).
-- ❌ **Revenir en arrière ne recrée JAMAIS** : une étape faite s'affiche « enregistrée ». Compte VIDE, une fois par appareil
-  (`cosmo_first_run_done`), jamais en démo, jamais sur `/entreprise`.
-- **Entreprise** (refait le 2026-10-14) : `/entreprise/onboarding` = `OrgChoice` seul (créer |
-  rejoindre). Une création passe par « Combien serez-vous ? » (`OrgSizeStep`, 2026-11-05, facturation
-  active et hors démo) : palier payant → `/entreprise/billing?tier=` (récapitulatif, jamais Stripe en direct),
-  gratuit ou « plus tard » → `/entreprise`. L'assistant de mise en place (équipe,
-  invitations, projet, cap, constellation) est SUPPRIMÉ : ne pas le recréer.
-  `OrgWelcomeVideo` (vidéo V2 `public/videos/onboarding-entreprise-v2.mp4`, sous-titres `.fr.vtt`) s'ouvre
-  au premier passage, créateur comme membre : une fois par entreprise et par appareil, AUSSI en
-  démo depuis le 2026-10-19 (fixture e2e : drapeau posé), hors démo seulement aux arrivés depuis le 2026-10-03, et SEULEMENT à une arrivée sans paramètre
-  (`arrivedBare`, décidé à l'arrivée). Relue à chaque rendu, la garde l'ouvrait après coup sur
-  `?tab=`, `?task=` : 8 e2e rouges (10-04). Lecture avec le son, repli muet + « Activer le son ».
-- ❌ **Guides entreprise ET perso** : ne jamais renommer ni déplacer un `data-guide-id` sans relancer la garde
-  `src/components/org-guide/guide-scenarios.guard.test.ts` (elle couvre les deux). Le guide perso
-  (`perso-guide/`, boussole du `Layout` desktop, hors `/entreprise`) partage le moteur `use-guide-demo.tsx` ;
-  pendant une démo, `useTutorial` n'ouvre aucun tutoriel de page (`src/lib/guide-demo-active.ts`).
-- ❌ **Jamais sur une route** pour le perso : une inscription Google ne repasse pas par `SignupPage`.
-- ❌ **Jamais de création différée** : chaque étape crée quand elle est validée, et passer avance
-  sans rien créer.
-- ❌ **Jamais d'échéance ni de cible inventée** : première tâche sans date, résultat clé sans
-  nombre = binaire (cible 1).
-- 🔴 **Une garde d'entrée se fige à l'entrée** (`latched`) : relue à chaque rendu, l'accueil se
-  refermait sur sa propre première création (2026-09-08).
-- 🔴 **Un id de résultat clé est un UUID** : `syncKRsToTable` refuse le reste (`invalid_input`).
-  Témoin e2e : le `DELETE` de `key_results`, jamais l'upsert, qui part avant la garde.
-- ⚠️ **DA fixe de l'accueil perso** (clair) : variables de thème redéclarées sur le conteneur
-  (`LIGHT_SCOPE`), sinon les champs globaux suivent le thème de l'app. La vidéo d'accueil
-  entreprise, elle, SUIT le thème choisi (jetons `--color-*`, 2026-10-20) ; `ENT_SCOPE` et
-  `ent-ui.tsx` (DA nuit) sont supprimés, ils n'habillaient plus qu'elle.
+- 🔴 La sélection de modules n'existe plus : ne pas la décrire ni la recréer.
+- ✅ Perso : `onboarding/FirstRunSetup` (planétaire), monté dans `Layout`, suit le thème (`perso/perso-theme.ts`). Étapes : présentation, tâches, agenda, habitude, objectif, bilan. Compte VIDE, une fois par appareil (`cosmo_first_run_done`), jamais en démo, jamais sur `/entreprise`.
+- ❌ Revenir en arrière recrée quelque chose : une étape faite s'affiche « enregistrée ».
+- ❌ Une route dédiée pour le perso (une inscription Google ne repasse pas par `SignupPage`).
+- ❌ Création différée : chaque étape crée à la validation, passer avance sans rien créer.
+- ❌ Échéance ou cible inventée : première tâche sans date, résultat clé sans nombre = binaire (cible 1).
+- 🔴 Une garde d'entrée se fige à l'entrée (`latched`) : relue à chaque rendu, l'accueil se referme sur sa première création.
+- 🔴 Un id de résultat clé est un UUID : `syncKRsToTable` refuse le reste (`invalid_input`). Témoin e2e : le `DELETE` de `key_results`.
+- ⚠️ DA fixe de l'accueil perso (clair) : variables de thème redéclarées sur le conteneur (`LIGHT_SCOPE`).
 - ⚠️ Sous mouvement réduit, aucun SMIL monté (il ignore le réglage) : le dessin final tient seul.
+- ✅ Entreprise : `/entreprise/onboarding` = `OrgChoice` (créer | rejoindre). Une création passe par `OrgSizeStep` (facturation active, hors démo) : palier payant → `/entreprise/billing?tier=` (récapitulatif, jamais Stripe en direct), gratuit ou « plus tard » → `/entreprise`.
+- ❌ Recréer l'assistant de mise en place entreprise (équipe, invitations, projet, cap, constellation) : supprimé.
+- ✅ `OrgWelcomeVideo` (`public/videos/onboarding-entreprise-v2.mp4`, sous-titres `.fr.vtt`) : une fois par entreprise et par appareil, SEULEMENT à une arrivée sans paramètre (`arrivedBare`, décidé à l'arrivée). Relue à chaque rendu, elle s'ouvrait après coup sur `?tab=` / `?task=` et rougissait des e2e. Elle suit le thème choisi (jetons `--color-*`).
+- ❌ Renommer ou déplacer un `data-guide-id` sans relancer `src/components/org-guide/guide-scenarios.guard.test.ts` (couvre guides entreprise ET perso). Le guide perso (`perso-guide/`) partage le moteur `use-guide-demo.tsx` ; pendant une démo `useTutorial` n'ouvre aucun tutoriel de page (`src/lib/guide-demo-active.ts`).
 
-## Aperçu entreprise en widgets (2026-10-19)
+## Aperçu entreprise en widgets
 
-- Registre `organization/apercu-widgets.ts`, modèles par rôle `apercu-templates.ts`, grille
-  `ApercuWidgetGrid`. Disposition en `localStorage` (`cosmo_apercu_layout_v1:<org>:<user>`) :
-  une préférence, jamais une donnée ; la perdre rend le modèle par défaut, jamais un écran vide.
-- Chaque widget passe par `WidgetShell` (`section` nommée par son titre : les e2e la cherchent par
-  `getByRole('region')`). En édition, contenu `inert`, flèches et formats au clavier.
-- ⚠️ Ce qui ne sert qu'en édition (`AddWidgetPage`, `TemplatePicker`) pèse dans le chunk
-  `OrganizationPage`, plafonné : le charger en `lazy`.
-
----
+- ✅ Registre `organization/apercu-widgets.ts`, modèles par rôle `apercu-templates.ts`, grille `ApercuWidgetGrid`. Disposition en `localStorage` (`cosmo_apercu_layout_v1:<org>:<user>`) : une préférence ; la perdre rend le modèle par défaut.
+- ✅ Chaque widget passe par `WidgetShell` (`section` nommée par son titre : les e2e la cherchent par `getByRole('region')`). En édition : contenu `inert`, flèches et formats au clavier.
+- ⚠️ `AddWidgetPage` et `TemplatePicker` pèsent dans le chunk `OrganizationPage` (plafonné) : les charger en `lazy`.
 
 ## Animations
 
-- ❌ **Ne jamais écrire à la main le mouvement d'une feuille.** Utiliser `useSheetMotion()` et
-  `useSheetDrag()` (`src/components/mobile/mobile-motion.ts`). **Mesuré dans le navigateur le
-  2026-08-24**, `prefers-reduced-motion: reduce` réellement actif : `MobileMoreSheet` s'ouvrait à
-  `transform: matrix(1, 0, 0, 1, 0, 510)` — `top: 812` pour un viewport de 812, soit **0 px
-  visible**. Le voile s'affichait, la feuille non. Or c'est le SEUL accès mobile à OKR,
-  Statistiques, Paramètres et à la déconnexion : la navigation mobile était **sans issue** pour ces
-  utilisateurs. Même mécanisme sur les cascades `staggerChildren` (dix blocs du dashboard figés
-  20 px trop bas). Garde : `src/design-system.guard.test.ts`.
-- ❌ **Ne jamais faire dépendre une position finale d'une animation de transform.**
-  `App.tsx` monte `<MotionConfig reducedMotion="user">` : chez un utilisateur en
-  `prefers-reduced-motion`, les animations de transform ne jouent pas et la valeur `initial`
-  **reste appliquée**. Un `initial={{ y: 120 }} animate={{ y: 0 }}` sur un élément `fixed` le
-  laisse 120 px trop bas, définitivement. Mesuré le 2026-08-14 sur `CookieBanner` et
-  `DemoBridgePrompt` : leur CTA sortait de l'écran. La position vient du CSS, l'animation ne
-  porte que sur l'opacité. Détail : [`docs/MOBILE.md`](../../docs/MOBILE.md).
-- ⚠️ `prefers-reduced-motion` est **actif sur la machine d'Axel** : si une animation « ne
-  s'affiche pas », vérifier ce réglage avant de suspecter le code.
-- ❌ **Une POIGNÉE de feuille promet un geste : elle doit le tenir** (C-07, 2026-09-22). Une barre
-  arrondie courte en haut d'une feuille est une affordance. Sans `useSheetDrag(onClose)`, on tire,
-  rien ne bouge, et on en conclut que l'app est cassée — c'est **pire que pas de poignée**.
-  Trois surfaces l'avaient reconstitué ; deux sont câblées, la troisième (`RemoveFriendConfirm`)
-  a vu sa poignée **retirée** : c'est un `alertdialog` de suppression, et une poignée y présente
-  une décision comme une feuille qu'on chasse au pouce. Cliquet :
-  `src/design-system.guard.test.ts`, 4 témoins, vu rouge sur 3 sabotages.
-  ⚠️ Une **barre de progression** a exactement la même forme : c'est son `overflow-hidden`, sur le
-  MÊME élément, qui la distingue. Le détecteur raisonne par élément, jamais par fichier.
-- ❌ **Une rotation automatique doit pouvoir s'ARRÊTER** (C-69, WCAG 2.2.2, **niveau A**). Pause,
-  arrêt au survol ET au focus, et `prefers-reduced-motion` respecté.
-  🔴 **`aria-hidden="true"` ne dispense de rien** : le critère ne parle pas des lecteurs d'écran,
-  il parle des personnes qui ne peuvent pas lire une page pendant que quelque chose bouge à côté.
-  ⚠️ Et il faut un **troisième état** : sous mouvement réduit, l'utilisateur doit pouvoir DEMANDER
-  le mouvement, sinon la vitrine reste figée sur sa première vue pour toujours. WCAG 2.3.3
-  interdit le mouvement non demandé, pas le mouvement.
-- 🔴 **Un geste n'est JAMAIS le seul chemin vers une action** (C-111, WCAG 2.1.1, niveau A).
-  Mesuré le 2026-09-22 : les actions d'une tâche (`TaskActionsSheet`) n'étaient atteignables sur
-  mobile que par appui long ou glissement — le bouton « Actions pour … » existe mais vit dans
-  `div.hidden md:block`, donc à **0 × 0 px** sur téléphone. Au clavier, modifier ou supprimer une
-  tâche était **impossible**.
-  ✅ Le chemin standard, et il ne coûte aucun pixel : `onContextMenu` sur l'élément focalisé — la
-  touche « menu contextuel » et `Shift+F10` l'émettent toutes deux. L'annoncer par
-  `aria-keyshortcuts`.
-  ⚠️ **Un test qui expire ne dit pas ce qu'il cherche** : le harnais clavier cherchait ce bouton
-  invisible depuis des semaines, et son timeout passait pour de la lenteur.
+- ❌ Écrire à la main le mouvement d'une feuille : `useSheetMotion()` et `useSheetDrag()` (`src/components/mobile/mobile-motion.ts`). Sous `prefers-reduced-motion` une feuille manuelle reste à `translateY` initial, hors écran, et `MobileMoreSheet` (seul accès mobile à OKR, Statistiques, Paramètres, déconnexion) devient inaccessible. Garde : `src/design-system.guard.test.ts`.
+- ❌ Faire dépendre une position finale d'une animation de transform : `<MotionConfig reducedMotion="user">` laisse la valeur `initial` appliquée. La position vient du CSS, l'animation ne porte que l'opacité (`CookieBanner`, `DemoBridgePrompt`). Détail : `docs/MOBILE.md`.
+- ⚠️ `prefers-reduced-motion` est actif sur la machine d'Axel : une animation « absente » = vérifier ce réglage avant le code.
+- ❌ Une POIGNÉE de feuille sans le geste (`useSheetDrag(onClose)`) : pire que pas de poignée. `RemoveFriendConfirm` (`alertdialog` de suppression) n'en a pas. Cliquet : `design-system.guard.test.ts`. ⚠️ Une barre de progression a la même forme : c'est son `overflow-hidden` sur le MÊME élément qui la distingue.
+- ❌ Une rotation automatique qui ne peut pas s'arrêter (C-69, WCAG 2.2.2, niveau A) : pause, arrêt au survol ET au focus, `prefers-reduced-motion` respecté, avec un **troisième état** pour DEMANDER le mouvement (sinon la vitrine reste figée ; WCAG 2.3.3 interdit le mouvement non demandé, pas le mouvement).
+- 🔴 `aria-hidden="true"` ne dispense de rien : le critère concerne les personnes qui ne peuvent pas lire pendant que quelque chose bouge.
+- 🔴 Un geste n'est JAMAIS le seul chemin vers une action (WCAG 2.1.1, niveau A) : `onContextMenu` sur l'élément focalisé (touche menu et `Shift+F10`), annoncé par `aria-keyshortcuts`. `TaskActionsSheet` n'était atteignable que par appui long : le bouton « Actions pour … » est à 0 × 0 px sur mobile (`div.hidden md:block`).
+- ⚠️ Un test qui expire ne dit pas ce qu'il cherche : ouvrir l'écran avant de parler de lenteur.
 
+## Modales : `useModalA11y`
 
----
-
-### 🪟 Une surface modale maison passe par `useModalA11y` (C-53)
-
-`src/hooks/use-modal-a11y.ts` porte le piège de focus, la restitution du focus au déclencheur,
-Échap et `role="dialog" aria-modal="true"`. **58 fichiers** montent une surface modale hors
-`ui/dialog`, et le dépôt ne contenait avant lui **aucun** utilitaire de piège ni **aucune** capture
-de `document.activeElement`.
+`src/hooks/use-modal-a11y.ts` : piège de focus, restitution du focus, Échap, `role="dialog" aria-modal="true"`.
 
 ```tsx
 const { ref, dialogProps } = useModalA11y({ open: isOpen, onClose, label: t('title') });
 <div ref={ref} {...dialogProps} className="fixed inset-0 …" onClick={onClose}>
 ```
 
-- ❌ **Ne jamais écrire un Échap de modale en `onKeyDown` sur l'overlay.** C'était le défaut de
-  `HabitModal` : un gestionnaire React dépend de la remontée d'un évènement depuis l'élément
-  focalisé, donc il meurt dès que le focus est sorti — précisément le cas qu'il existe pour
-  rattraper. Le hook écoute `document` en **capture** (un champ de date natif appelle
-  `stopPropagation` sur ses touches).
-- ❌ **Ne jamais poser un piège sur un parent sans en poser un sur ses modales enfants.**
-  `EventModal` rend `ConfirmDiscardDialog`, `ColorSettingsModal` et `RecurrenceDaysModal` en
-  **frères** de son overlay : le piège du parent leur reprendrait le focus. La pile interne du
-  hook (`openStack`) fait que seule la dernière surface empilée réagit.
-- ❌ **Ne jamais relire `ref.current` dans le nettoyage d'un `useEffect`.** Un effet passif tourne
-  APRÈS que React a détaché les refs : `ref.current` y vaut `null`. C'est ce qui cassait la
-  restitution du focus (`focusReturned: false` sur `HabitModal`), et ESLint le disait.
-- ⚠️ **`focusReturned` n'est pas une gate**, et ce n'est pas de la complaisance : le témoin Radix
-  lui-même le rend `false`. Un détecteur que la bibliothèque de référence ne passe pas mesure le
-  détecteur, pas la modale. Les trois détecteurs opposables sont `focusMovedIn`, `trapped` et
-  `escClosed`.
-- ✅ **Les 53 surfaces modales maison sont câblées** (2026-09-08), et un CLIQUET les tient :
-  `src/components/modal-a11y.guard.test.ts` balaie `src/**/*.tsx` et refuse toute surface non
-  câblée. Les exceptions y sont déclarées une par une, avec leur motif.
-  ❌ **Ne JAMAIS y ajouter une entrée pour faire passer la CI.** Une surface qui capture l'écran se
-  câble ; une surface qui n'en est pas une se déclare, et la déclaration doit dire pourquoi.
-- ⚠️ **Câblé n'est pas mesuré.** Le décompte vit dans `docs/ACCESSIBILITY.md` § « FRO-01 » et se
-  recalcule : ne jamais le recopier d'ici, ni écrire « toutes les modales piègent le focus ».
-- ❌ **Une surface Radix passe par `ui/dialog`, `ui/sheet` ou `ui/alert-dialog`, jamais par la
-  primitive** : les enveloppes portent `aria-modal` et le retour du focus (`useRadixFocusReturn`),
-  que Radix ne rend qu'à un `DialogTrigger`, jamais utilisé ici. Chaque `*Content` porte son `*Title`.
-- ❌ **Le chemin de fermeture n'est pas toujours `onClose`** (`onCancel`, `closeAfter`,
-  `onOpenChange(false)`, un `setState`) : Échap emprunte EXACTEMENT celui du voile et de la croix.
-  Une surface qui refuse de fermer pendant `pending` / `sending` refuse aussi Échap.
-- ❌ **Ne jamais laisser un Échap maison à côté de celui du hook** : deux propriétaires pour une
-  touche, deux endroits où la règle diverge. Une fermeture À ÉTAGES (annuler un sous-formulaire
-  d'abord) se déplace avec son escalade, sinon une saisie se perd en silence.
-- Gardes : `modal-a11y.guard.test.ts` (inventaire des trois familles), `ui/modal-contract.test.tsx`
-  (contrat Radix), `src/hooks/use-modal-a11y.guard.test.tsx` (dont **3 témoins** sans le hook).
+- ❌ Un Échap de modale en `onKeyDown` sur l'overlay : il meurt dès que le focus sort. Le hook écoute `document` en capture.
+- ❌ Un piège sur un parent sans piège sur ses modales enfants (`EventModal` rend `ConfirmDiscardDialog`, `ColorSettingsModal`, `RecurrenceDaysModal` en frères) : la pile `openStack` du hook ne laisse réagir que la dernière surface.
+- ❌ Relire `ref.current` dans le nettoyage d'un `useEffect` : il vaut `null` (refs détachées avant).
+- ⚠️ `focusReturned` n'est pas une gate (Radix le rend `false` lui-même). Détecteurs opposables : `focusMovedIn`, `trapped`, `escClosed`.
+- ✅ Cliquet : `src/components/modal-a11y.guard.test.ts` balaie `src/**/*.tsx` et refuse toute surface non câblée ; exceptions déclarées une par une avec leur motif. ❌ Y ajouter une entrée pour faire passer la CI : une surface qui capture l'écran se câble.
+- ⚠️ Câblé n'est pas mesuré : le décompte vit dans `docs/ACCESSIBILITY.md` § « FRO-01 ». Ne jamais écrire « toutes les modales piègent le focus ».
+- ❌ Une surface Radix par la primitive : passer par `ui/dialog`, `ui/sheet`, `ui/alert-dialog` (`aria-modal`, `useRadixFocusReturn`). Chaque `*Content` porte son `*Title`.
+- ❌ Supposer que la fermeture est `onClose` (`onCancel`, `closeAfter`, `onOpenChange(false)`, un `setState`) : Échap emprunte EXACTEMENT le chemin du voile et de la croix ; une surface qui refuse de fermer pendant `pending` refuse aussi Échap.
+- ❌ Un Échap maison à côté de celui du hook. Une fermeture À ÉTAGES (annuler un sous-formulaire d'abord) se déplace avec son escalade.
+- Gardes : `modal-a11y.guard.test.ts`, `ui/modal-contract.test.tsx`, `src/hooks/use-modal-a11y.guard.test.tsx` (3 témoins sans le hook).
 
+## Saisie de date
 
----
+- ✅ `DatePicker` / `DateCalendarPanel` (un corps de calendrier, deux façons de l'ouvrir) ; jamais le calendrier du navigateur (hors thème, hors locale).
+- ✅ Les deux `input[type=date]` d'`EventModalForm` restent natifs : sur mobile la roue système vaut mieux.
+- ❌ `filter: invert(1)` sur l'icône d'un sélecteur natif : `.dark` pose `color-scheme: dark`, l'inversion la peint noir sur noir (garde-fou dans `index.css`).
+- ❌ Un report d'échéance sans `minDate` : on reporte vers hier.
 
-### 📆 Saisie de date — le calendrier COSMO, sauf sur téléphone
+## `ref` et shadcn
 
-Six surfaces ouvraient encore le calendrier du navigateur : hors thème, hors locale de l'app, sans
-les presets. Elles passent toutes par `DatePicker` / `DateCalendarPanel` (un seul corps de
-calendrier, deux façons de l'ouvrir, dont les entrées de menu qui n'ont aucun champ où s'ancrer).
-
-- ✅ **Les deux `input[type=date]` d'`EventModalForm` restent natifs, et c'est un arbitrage** : sur
-  mobile la roue système vaut mieux que n'importe quel calendrier maison.
-- ❌ **Ne jamais réintroduire `filter: invert(1)` sur l'icône d'un sélecteur de date natif.** La
-  règle datait d'avant que `.dark` pose `color-scheme: dark` ; depuis, le navigateur dessine déjà
-  l'icône en clair et l'inversion la repeignait **en noir sur fond noir**, soit exactement le
-  défaut qu'elle prétendait corriger. Mesuré côte à côte dans le navigateur. Un garde-fou est posé
-  dans `index.css`.
-- ❌ **Ne jamais oublier `minDate` sur un report d'échéance** : sans lui on peut reporter une tâche
-  en retard **vers hier**.
-
-### ⌨️ `Button` reçoit un `ref`, et ce ref doit être attaché
-
-Depuis React 19 (2026-10-23), `ref` est une prop ordinaire : `Button`, `Input` et `DialogOverlay`
-n'ont plus de `forwardRef`, comme la source shadcn amont. Sous React 18 il en fallait un, et
-l'avertissement « Function components cannot be given refs » n'était pas du bruit : le `ref`
-n'était **jamais attaché**, et le `ref.current?.focus()` de `CalendarDayButton` ne faisait rien :
-**les flèches ne déplaçaient pas le focus dans le calendrier** (WCAG 2.1.1). Témoin :
-`ui/button.test.tsx`.
-
-- ❌ **Ne jamais recopier un composant shadcn amont sans vérifier sa cible React.** C'est la classe
-  de bug, pas le cas particulier.
-- ⚠️ Prouvé dans le navigateur après correctif (Tab atteint la grille, Flèche droite passe du 30 au
-  31 août), et pas déduit de la lecture du code.
-
+- ✅ React 19 : `ref` est une prop ordinaire, `Button`, `Input`, `DialogOverlay` n'ont pas de `forwardRef`. Témoin : `ui/button.test.tsx`.
+- ❌ Recopier un composant shadcn amont sans vérifier sa cible React : un `ref` jamais attaché a désactivé les flèches du calendrier (WCAG 2.1.1).
