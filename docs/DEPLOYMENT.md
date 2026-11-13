@@ -492,6 +492,17 @@ le crée), `supabase_vault` installé avec **zéro secret**, ni `cron_runs` ni `
 `247`, aucune trace de `245` ni `246`. Les cinq Edge Functions sont `ACTIVE` avec `verify_jwt = false`
 (pg_net n'envoie pas de JWT, les workflows non plus : même porte, `x-cron-secret`).
 
+**État des migrations au 2026-11-13**, chacune appliquée après sa preuve à 0 ECHEC, relue au catalogue,
+texte du ledger identique au fichier :
+
+- `245_cron_journal` : appliquée (`20261113070725`), `pg_net` installée.
+- `246_cron_planification` : **non appliquée**, sa preuve rend `ECHEC Vault : 0 secret(s) sur 2` ; attend
+  les deux secrets Vault (étape 2 ci-dessous).
+- `248_habit_completions` : appliquée (`20261113070621`), 1 421 lignes rétro-remplies.
+- `249_taches_echeance_priorite_facultatives` : appliquée (`20261113070529`).
+- `250_friend_requests_forme_prod` : commitée, **non appliquée**. Jusqu'à son application, la porte
+  `edge-deploy.yml` (CI-05) refuse le lot : c'est attendu.
+
 **Preuves.** Rejouées à chaque commit par `e2e/rls/cron-journal.test.ts` sur une pile Supabase réelle
 (`pg_cron` et `pg_net` vrais) : `245` avec et sans secrets Vault, `246`, chacune `PREUVE-ANNULEE 0 ECHEC`,
 et un job pg_cron de test qui écrit dans `cron_runs` puis se ferme sur la réponse de pg_net (job

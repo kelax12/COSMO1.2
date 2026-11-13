@@ -5,8 +5,8 @@ import {
 const TOGGLE_UNCHECKED = '[aria-label="Marquer comme complétée"]';
 
 /**
- * Parcours 2 · creer, modifier, terminer une tache. La CREATION par l'ecran est
- * en `test.fixme` dans `schema-drift.spec.ts` (defaut de base rejouee) : ici la
+ * Parcours 2 · creer, modifier, terminer une tache. La CREATION par l'ecran sans
+ * echeance est couverte par `schema-drift.spec.ts` (mig. 249) : ici la
  * tache est posee par le client du compte, avec une echeance, puis modifiee et
  * terminee par l'interface. Chaque ecriture est RELUE
  * apres un rechargement de page ET par le client authentifie du compte : le

@@ -7,26 +7,22 @@ import { test, expect, loginViaUi, createTaskViaUi, tasksList, reload } from './
  *
  * Trouvés par la première exécution de `e2e-supabase` (2026-11-06) : la pile
  * locale rejoue les migrations de `supabase/migration/` sur une base vierge, et
- * l'application construite pour la production ne peut pas y écrire deux choses
- * qu'elle écrit en production. Les contraintes de la migration d'origine y ont
- * très probablement été assouplies HORS migration (cf. l'en-tête de
- * `012_friend_requests_align.sql` : « en prod, le schéma a évolué via le tableau
- * de bord », et `007_out_of_band_columns.sql`) : ⚠️ à CONFIRMER par un `\d tasks`
- * et un `\d friend_requests` en production, ce n'est pas vérifié ici. Quelle que
- * soit la réponse, toute base reconstruite depuis le dépôt
- * (restauration, préproduction, nouvelle région) refuse ces écritures.
+ * l'application construite pour la production n'y pouvait pas écrire deux choses
+ * qu'elle écrit en production, où les contraintes avaient été assouplies HORS
+ * migration. Corrigés par la mig. 249 (`tasks`) et la mig. 250
+ * (`friend_requests`), relues au catalogue de production le 2026-11-13.
+ * Ces deux tests gardent la base rejouée alignée sur l'application.
  *
  * ❌ Ne jamais relâcher ces assertions pour passer au vert : le correctif est une
- * migration (`ALTER COLUMN ... DROP NOT NULL`), à prouver en BEGIN/ROLLBACK puis
- * à appliquer. Retirer `test.fixme` dès qu'elle est posée.
+ * migration, prouvée en transaction annulée puis appliquée.
  */
 
 // 1 · `tasks.deadline` est NOT NULL et `tasks.priority` est limitée à 1..5
 // (`001_tasks.sql`). L'écran de création n'exige que le NOM (échéance facultative,
-// `validation.ts`) et envoie `deadline: null` et `priority: 0` : la base répond
+// `validation.ts`) et envoie `deadline: null` et `priority: 0` : la base répondait
 // 23502 « null value in column "deadline" » (puis `tasks_priority_check`), et la
 // modale affiche « Erreur lors de la création ».
-test.fixme('créer une tâche SANS échéance par l\'écran (tasks.deadline NOT NULL et tasks_priority_check sur base rejouée)', async ({ page, makeAccount }) => {
+test('créer une tâche SANS échéance par l\'écran (mig. 249)', async ({ page, makeAccount }) => {
   const account = await makeAccount('drift-task');
   await loginViaUi(page, account);
   const name = `Tâche sans échéance ${Date.now()}`;
@@ -36,12 +32,12 @@ test.fixme('créer une tâche SANS échéance par l\'écran (tasks.deadline NOT 
     .toBeVisible({ timeout: 30_000 });
 });
 
-// 2 · `friend_requests.user_id` est NOT NULL depuis `007_friends.sql`, et
+// 2 · `friend_requests.user_id` était NOT NULL depuis `007_friends.sql`, et
 // `012_friend_requests_align.sql` ne le retire que « si la colonne existe encore »
 // sans jamais la rendre nullable. L'insertion du module `friends` n'envoie que
 // `sender_id` : refusée (23502) sur une base rejouée, donc AUCUNE demande d'ami
 // (ni partage de tâche qui en dépend, mig. 036) ne peut partir.
-test.fixme('envoyer une demande d\'ami (friend_requests.user_id NOT NULL sur base rejouée)', async ({ makeAccount }) => {
+test('envoyer une demande d\'ami sans user_id (mig. 250)', async ({ makeAccount }) => {
   const alice = await makeAccount('drift-alice');
   const bob = await makeAccount('drift-bob');
   const { error } = await alice.client
