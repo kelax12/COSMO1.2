@@ -11,12 +11,58 @@
 // `npm run faits:generer` puis un commit du fichier : on ne l'édite jamais à la main.
 import { readFileSync, writeFileSync, readdirSync, statSync, existsSync } from 'node:fs'
 import { join, sep } from 'node:path'
+import { execFileSync } from 'node:child_process'
 
 const lireTexte = (chemin) => readFileSync(chemin, 'utf8').replace(/\r\n/g, '\n')
 const sousDossiers = (rep) =>
   existsSync(rep) ? readdirSync(rep).filter((e) => statSync(join(rep, e)).isDirectory()).sort() : []
 const fichiers = (rep, re) => (existsSync(rep) ? readdirSync(rep).filter((e) => re.test(e)).sort() : [])
 const compter = (texte, re) => (texte.match(re) ?? []).length
+
+const IGNORES = new Set(['node_modules', '.git', 'dist', 'coverage'])
+const marcher = (rep, sortie = []) => {
+  for (const e of existsSync(rep) ? readdirSync(rep) : []) {
+    if (IGNORES.has(e)) continue
+    const p = join(rep, e)
+    if (statSync(p).isDirectory()) marcher(p, sortie)
+    else sortie.push(p)
+  }
+  return sortie
+}
+
+/** Fichiers suivis par git (le même ensemble en local et en CI), sinon parcours du disque. */
+function suivis(racine, dossier) {
+  try {
+    const sortie = execFileSync('git', ['ls-files', '-z', '--', dossier], { cwd: racine, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] })
+    const liste = sortie.split(String.fromCharCode(0)).filter(Boolean)
+    if (liste.length) return liste.map((f) => join(racine, ...f.split('/')))
+  } catch {
+    /* hors dépôt git (arbre de test) : parcours du disque */
+  }
+  return marcher(join(racine, dossier))
+}
+
+/** Les quatre mesures du budget d'outillage (MAI-02). */
+export function mesurerOutillage(racine, planifies) {
+  const scripts = suivis(racine, 'scripts').filter((f) => existsSync(f))
+  const lignes = scripts.reduce((n, f) => n + lireTexte(f).split(String.fromCharCode(10)).length - 1, 0)
+  const gardes = suivis(racine, '.').filter((f) => /\.guard\.test\./.test(f)).length
+  return { scriptsFichiers: scripts.length, scriptsLignes: lignes, workflowsPlanifies: planifies, gardesTests: gardes }
+}
+
+export const REFERENCE_OUTILLAGE = ['scripts', 'outillage.reference.json']
+const CLES = ['scriptsFichiers', 'scriptsLignes', 'workflows', 'workflowsPlanifies', 'gardesTests']
+const REGLE = 'un nouvel outil en remplace un : retire ou fusionne avant d ajouter. Ne jamais relever un plafond.'
+
+/** Verdict du cliquet : un dépassement échoue, une baisse doit être recopiée (`--recaler`). */
+export function juger(faits, plafonds) {
+  const erreurs = []
+  for (const c of CLES) {
+    if (faits[c] > plafonds[c]) erreurs.push(`${c} : ${faits[c]} > plafond ${plafonds[c]}. ${REGLE}`)
+    else if (faits[c] < plafonds[c]) erreurs.push(`${c} : ${faits[c]} < plafond ${plafonds[c]}. Recopier la baisse : npm run faits:generer -- --recaler`)
+  }
+  return erreurs
+}
 
 /** Les faits, calculés depuis les fichiers du dépôt à `racine`. */
 export function calculerFaits(racine = process.cwd()) {
@@ -42,6 +88,7 @@ export function calculerFaits(racine = process.cwd()) {
   const schema = existsSync(schemaChemin) ? lireTexte(schemaChemin) : ''
 
   return {
+    ...mesurerOutillage(racine, planifies.length),
     edgeFunctions: edge.length,
     migrations: migrations.length,
     derniereMigration: derniere,
@@ -66,6 +113,9 @@ export function rendre(f) {
     ['Dernière migration', f.derniereMigration, 'plus grand préfixe numérique de `supabase/migration/`'],
     ['Workflows GitHub', f.workflows, 'fichiers de `.github/workflows/`'],
     ['dont planifiés', f.workflowsPlanifies, 'workflows portant un `schedule:`'],
+    ['Fichiers de `scripts/`', f.scriptsFichiers, 'fichiers suivis (budget d outillage, `scripts/outillage.reference.json`)'],
+    ['Lignes de `scripts/`', f.scriptsLignes, 'lignes des fichiers suivis de `scripts/`'],
+    ['Tests de garde', f.gardesTests, 'fichiers `*.guard.test.*` du dépôt'],
     ['Modules applicatifs', f.modules, 'dossiers de `src/modules/`'],
     ['Namespaces i18n', f.namespaces, 'fichiers de `src/locales/fr/`'],
     ['Gardes `check:` / `i18n:` / `validate:`', f.gardes, 'scripts de `package.json`'],
@@ -98,8 +148,27 @@ const principal = process.argv[1] && import.meta.url.endsWith(process.argv[1].sp
 if (principal) {
   const racine = process.cwd()
   const cible = join(racine, ...CHEMIN_FAITS)
-  const attendu = rendre(calculerFaits(racine))
+  const faits = calculerFaits(racine)
+  const attendu = rendre(faits)
+  const refChemin = join(racine, ...REFERENCE_OUTILLAGE)
+  const mesure = Object.fromEntries(CLES.map((c) => [c, faits[c]]))
+  if (process.argv.includes('--recaler')) {
+    const ancien = existsSync(refChemin) ? JSON.parse(lireTexte(refChemin)) : mesure
+    const monte = CLES.filter((c) => mesure[c] > ancien[c])
+    if (monte.length) {
+      console.error(`::error title=Outillage::le plafond ne se relève pas (${monte.join(', ')}). ${REGLE}`)
+      process.exit(1)
+    }
+    writeFileSync(refChemin, JSON.stringify(mesure, null, 2) + String.fromCharCode(10))
+    console.log('plafonds recalés : ' + JSON.stringify(mesure))
+    process.exit(0)
+  }
   if (process.argv.includes('--verifier')) {
+    const erreursOutillage = existsSync(refChemin) ? juger(mesure, JSON.parse(lireTexte(refChemin))) : ['scripts/outillage.reference.json absent']
+    if (erreursOutillage.length) {
+      for (const e of erreursOutillage) console.error(`::error title=Outillage::${e}`)
+      process.exit(1)
+    }
     const actuel = existsSync(cible) ? lireTexte(cible) : null
     if (actuel === attendu) {
       console.log('docs/FAITS.md est à jour avec les sources.')

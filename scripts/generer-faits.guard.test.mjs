@@ -4,7 +4,7 @@ import { describe, it, expect } from 'vitest'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { calculerFaits, rendre, CHEMIN_FAITS } from './generer-faits.mjs'
+import { calculerFaits, rendre, juger, CHEMIN_FAITS } from './generer-faits.mjs'
 
 const ecrire = (racine, chemin, texte = '') => {
   const p = join(racine, ...chemin.split('/'))
@@ -46,6 +46,7 @@ describe('calculerFaits : chaque chiffre vient de la source', () => {
     try {
       expect(calculerFaits(racine)).toEqual({
         edgeFunctions: 2, migrations: 2, derniereMigration: '002', workflows: 2, workflowsPlanifies: 1,
+        scriptsFichiers: 0, scriptsLignes: 0, gardesTests: 0,
         modules: 1, namespaces: 2, gardes: 3, adr: 1,
         tables: 2, tablesRls: 1, policies: 1, fonctionsSql: 1,
       })
@@ -89,5 +90,36 @@ describe('le dépôt', () => {
     const texte = rendre(calculerFaits(process.cwd()))
     expect(texte).not.toMatch(/note-audit/)
     expect(texte).not.toMatch(/Note d'audit/)
+  })
+})
+
+describe('budget d outillage (MAI-02) : un cliquet qui ne fait que baisser',()=>{
+  const plafonds = { scriptsFichiers: 2, scriptsLignes: 10, workflows: 2, workflowsPlanifies: 1, gardesTests: 1 }
+  it('TEMOIN : au plafond, ca passe', () => {
+    const racine = arbre()
+    try {
+      ecrire(racine, 'scripts/a.mjs', 'x
+')
+      ecrire(racine, 'scripts/a.guard.test.mjs', 'x
+')
+      expect(juger(calculerFaits(racine), { ...plafonds, scriptsLignes: 2 })).toEqual([])
+    } finally { rmSync(racine, { recursive: true, force: true }) }
+  })
+  it('TEMOIN : un fichier de plus, ca echoue et la regle est dite', () => {
+    const racine = arbre()
+    try {
+      ecrire(racine, 'scripts/a.mjs', 'x
+')
+      ecrire(racine, 'scripts/a.guard.test.mjs', 'x
+')
+      ecrire(racine, 'scripts/b.mjs', 'x
+')
+      const e = juger(calculerFaits(racine), { ...plafonds, scriptsLignes: 2 })
+      expect(e).toHaveLength(2)
+      expect(e.join(' ')).toContain('un nouvel outil en remplace un')
+    } finally { rmSync(racine, { recursive: true, force: true }) }
+  })
+  it('une baisse doit etre recopiee', () => {
+    expect(juger({ ...plafonds, scriptsFichiers: 1 }, plafonds).join(' ')).toContain('Recopier la baisse')
   })
 })

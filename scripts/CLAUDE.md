@@ -71,6 +71,8 @@
 `peremption-chantiers`, `acquisition`, `coffre`) : `gardes-calendrier.yml`, quotidien, issue
 `calendrier-red`. ❌ Jamais dans un job bloquant (CI-01) → `docs/TESTING.md` § CI.
 
+🧮 **Budget d'outillage** (MAI-02) : fichiers et lignes de `scripts/`, workflows planifiés, tests `*.guard.test.*`, plafonds dans `scripts/outillage.reference.json`, joués par `check:faits`. Un nouvel outil en remplace un : retirer ou fusionner avant d'ajouter ; une baisse se recopie (`npm run faits:generer -- --recaler`), jamais de relèvement.
+
 🔒 **Hooks** : `pre-push` refuse un noyau rouge (`CI noyau` seul), sans contournement →
 `docs/DEPLOYMENT.md` § 1 ; `pre-commit` lance `check:fichiers-sensibles --index`.
 
