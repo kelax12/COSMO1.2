@@ -387,10 +387,12 @@ export function rendre({ indicateurs, audit, alertes, meta }) {
   const sha = meta.sha ? `, au commit \`${String(meta.sha).slice(0, 7)}\`` : '';
   const l = [];
   l.push('<!-- GENERE par scripts/indicateurs.mjs. NE PAS EDITER A LA MAIN. Regenerer : npm run indicateurs -->');
-  l.push('> Ce document ne porte aucune note. Il remplace les notes sur 100 par six indicateurs mesurés, chacun daté et sourcé (ADR 0012).');
   l.push('');
   l.push('# Indicateurs COSMO');
   l.push('');
+  l.push('> **Quand lire** : avant d\'affirmer l\'état de santé du dépôt ou de la prod. **Fait foi** : les API lues par `scripts/indicateurs.mjs`.');
+  l.push('');
+  l.push('> Ce document ne porte aucune note. Il remplace les notes sur 100 par six indicateurs mesurés, chacun daté et sourcé (ADR 0012).');
   l.push('> 🔴 **Fichier généré, ne pas éditer à la main.** `npm run indicateurs` (`scripts/indicateurs.mjs`) le réécrit ;');
   l.push('> `.github/workflows/indicateurs.yml` le régénère chaque lundi et le pousse sur `main`.');
   l.push('> Une valeur introuvable s\'écrit « non mesuré », avec sa raison : jamais un chiffre de repli.');

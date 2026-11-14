@@ -1,52 +1,25 @@
-// ═══════════════════════════════════════════════════════════════════
-// check-docs-budget.mjs — le cliquet des CLAUDE.md
-//
-// 🔴 POURQUOI CE FICHIER EXISTE
-//
-// `CLAUDE.md` est le SEUL fichier de ce depot qui se paie a chaque session :
-// il est charge integralement avant chaque demande. Le 2026-09-16 il pesait
-// 2 070 lignes et ~43 000 tokens, contre 17,8 ko dix semaines plus tot, soit
-// x8,4, avec 78 commits sur ce seul fichier en trente jours.
-//
-// La courbe ne s est JAMAIS auto-corrigee. Elle ne se corrigera pas davantage
-// par bonne volonte : un fichier se complete par le bas, sans etre relu, et
-// c est ainsi qu il a porte des affirmations fausses pendant des jours.
-//
-// Ce script mesure QUATRE choses, pas une. Un simple comptage d octets
-// laisserait passer la vraie regression : une regle qui descend dans un
-// CLAUDE.md de dossier que le racine ne cite plus devient ORPHELINE, donc
-// invisible depuis toute autre zone. C est le seul risque du decoupage, et
-// c est le point 3.
-//
-// ❌ Ne JAMAIS relever un plafond pour faire passer la CI. Un depassement dit
-// qu un contenu doit descendre d un cran (dossier, puis docs/), pas que la
-// borne est trop basse.
-// ═══════════════════════════════════════════════════════════════════
+// check-docs-budget.mjs : garde de la documentation vivante (`npm run check:docs`, noyau CI).
+// Convention et pourquoi de chaque regle : `docs/README.md` § Convention, ADR 0012, 0014, 0021.
+//   1-2 plafond d'octets des CLAUDE.md (racine, dossier)   5 liens des docs vivantes
+//   3   chaque CLAUDE.md de dossier cite par le racine      6 aucune note /100 (ADR 0012)
+//   4   liens des CLAUDE.md                                 7 ancres des liens
+//   8   convention (en-tete, dates, numeros de ligne, plafond de lignes), en cliquet
+// ❌ Ne JAMAIS relever un plafond ni ajouter une exception pour faire passer : un depassement
+// dit qu'un contenu doit descendre d'un cran (dossier, docs/, archive), pas que la borne est basse.
+//   node scripts/check-docs-budget.mjs [--list | --mesurer]
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs'
 import { join, dirname, resolve, relative, sep } from 'node:path'
 
-/** Plafonds, poses ~5 % au-dessus du mesure du 2026-09-16 (23 189 / 13 289). */
 export const ROOT_MAX_BYTES = 24_500
 export const NESTED_MAX_BYTES = 14_000
+/** Un CLAUDE.md se charge seul (~3 000 tokens) ; un doc de docs/ se lit sur declencheur (~6 000). */
+export const PLAFOND_LIGNES_CLAUDE = 150
+export const PLAFOND_LIGNES_DOC = 300
+export const CHEMIN_EXCEPTIONS = 'docs/convention-exceptions.json'
 
-// `.claude` et `.worktrees` portent des COPIES du depot (worktrees d autres
-// sessions, skills installes). Les mesurer ferait echouer la garde sur un
-// arbre qui n est pas le notre, et dont le CLAUDE.md est celui d AVANT.
-const IGNORED = new Set([
-  'node_modules',
-  '.git',
-  'dist',
-  'coverage',
-  '.next',
-  'build',
-  '.claude',
-  '.worktrees',
-])
+// `.claude` et `.worktrees` portent des copies du depot (autres sessions) : jamais mesurees.
+const IGNORED = new Set(['node_modules', '.git', 'dist', 'coverage', '.next', 'build', '.claude', '.worktrees'])
 
-/**
- * Les marques d'une note /100 dans un doc vivant (ADR 0012) : le marqueur de
- * l'ancienne garde, sa phrase, et l'en-tete `## Note ... : 80 → 94 / 100`.
- */
 export const REGLES_NOTES = [
   { re: /<!--\s*note-audit:/, dit: 'marqueur `note-audit` (ancienne garde C-109)' },
   { re: /^>\s*\*\*Note d'audit\*\*/m, dit: "phrase « Note d'audit »" },
@@ -54,101 +27,63 @@ export const REGLES_NOTES = [
   { re: /^#{1,4} Note (?:de |d'|du )?[^\n]*:\s*\d{2,3}\s*(?:→|->)/m, dit: 'en-tete de journal de notes (80 → 94)' },
 ]
 
+const posix = (p) => p.split(sep).join('/')
+const lire = (root, rel) => readFileSync(join(root, rel), 'utf8')
+
 /** Tous les CLAUDE.md du depot, chemins POSIX relatifs a `root`. */
 export function findClaudeFiles(root) {
   const out = []
   ;(function walk(dir) {
-    let entries
-    try {
-      entries = readdirSync(dir)
-    } catch {
-      return
-    }
+    let entries = []
+    try { entries = readdirSync(dir) } catch { return }
     for (const e of entries) {
       if (IGNORED.has(e)) continue
       const p = join(dir, e)
       let st
-      try {
-        st = statSync(p)
-      } catch {
-        continue
-      }
+      try { st = statSync(p) } catch { continue }
       if (st.isDirectory()) walk(p)
-      else if (e === 'CLAUDE.md') out.push(relative(root, p).split(sep).join('/'))
+      else if (e === 'CLAUDE.md') out.push(posix(relative(root, p)))
     }
   })(root)
   return out.sort()
 }
 
-/** Les liens markdown d un fichier, resolus depuis SON dossier. */
-function linksOf(root, rel) {
-  const body = readFileSync(join(root, rel), 'utf8')
-  const found = []
-  const re = /\]\(([^)\s]+\.md)(?:#[^)]*)?\)/g
-  let m
-  while ((m = re.exec(body)) !== null) {
-    const href = m[1]
-    if (/^[a-z]+:\/\//i.test(href)) continue
-    const abs = resolve(join(root, dirname(rel)), href)
-    found.push({ href, rel: relative(root, abs).split(sep).join('/') })
-  }
-  return found
-}
-
-/**
- * Les documents VIVANTS dont les liens doivent tenir.
- *
- * `docs/archive/**` en est exclu : ce sont des instantanes dates, non
- * maintenus, et le depot interdit deja de les lire comme un etat courant.
- * Un lien mort y est une trace d'epoque, pas une regression.
- */
+/** Les docs vivants : `docs/*.md` (ni `archive/` ni `adr/`) et `a-faire-code.md`. */
 export function findLivingDocs(root) {
   const out = []
   const dir = join(root, 'docs')
   try {
-    for (const e of readdirSync(dir)) {
-      if (e.endsWith('.md') && statSync(join(dir, e)).isFile()) out.push(`docs/${e}`)
-    }
-  } catch {
-    /* pas de docs/ : rien a verifier */
-  }
-  // `faille.md` retiré de la liste le 2026-11-06 : sorti du dépôt public
-  // (SEC-02), il vit hors dépôt (`prive/` du checkout principal). Le garder
-  // ici le ferait sauter en silence à chaque passe.
-  for (const f of ['a-faire-code.md']) {
-    if (existsSync(join(root, f))) out.push(f)
-  }
+    for (const e of readdirSync(dir)) if (e.endsWith('.md') && statSync(join(dir, e)).isFile()) out.push(`docs/${e}`)
+  } catch { /* pas de docs/ */ }
+  if (existsSync(join(root, 'a-faire-code.md'))) out.push('a-faire-code.md')
   return out.sort()
 }
 
-/**
- * Ancre GitHub d'un titre : minuscules, ponctuation retiree (sauf `-` et `_`),
- * espaces en tirets. Les emoji sont de la ponctuation, ils tombent.
- */
-export function ancreDe(titre) {
-  let sansBalises = titre.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1');
-  for (let avant = ''; avant !== sansBalises; ) {
-    avant = sansBalises;
-    sansBalises = sansBalises.replace(/<[^>]*>/g, '');
+/** Les liens markdown `](x.md)` d'un fichier, resolus depuis SON dossier. */
+function linksOf(root, rel) {
+  const found = []
+  for (const m of lire(root, rel).matchAll(/\]\(([^)\s]+\.md)(?:#[^)]*)?\)/g)) {
+    if (/^[a-z]+:\/\//i.test(m[1])) continue
+    found.push({ href: m[1], rel: posix(relative(root, resolve(join(root, dirname(rel)), m[1]))) })
   }
-  return sansBalises
-    .replace(/`/g, '')
-    .replace(/[*~]/g, '')
-    .trim()
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s_-]/gu, '')
-    .replace(/\s/g, '-')
+  return found
 }
 
-/** Les ancres d'un fichier markdown (titres hors blocs de code, doublons suffixes -1, -2). */
+/** Ancre GitHub d'un titre : minuscules, ponctuation (emoji compris) retiree sauf `-` et `_`, espaces en tirets. */
+export function ancreDe(titre) {
+  let t = titre.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+  for (let avant = ''; avant !== t; ) { avant = t; t = t.replace(/<[^>]*>/g, '') }
+  return t.replace(/`/g, '').replace(/[*~]/g, '').trim().toLowerCase().replace(/[^\p{L}\p{N}\s_-]/gu, '').replace(/\s/g, '-')
+}
+
+/** Les ancres d'un fichier (titres hors blocs de code, doublons suffixes -1, -2). */
 export function ancresDe(texte) {
   const out = new Set()
   const vus = {}
   let code = false
   for (const l of texte.replace(/\r\n/g, '\n').split('\n')) {
     if (/^\s*```/.test(l)) code = !code
-    if (code) continue
-    const m = /^#{1,6}\s+(.*?)\s*#*\s*$/.exec(l)
+    const m = code ? null : /^#{1,6}\s+(.*?)\s*#*\s*$/.exec(l)
     if (!m) continue
     const base = ancreDe(m[1])
     const n = vus[base] ?? 0
@@ -158,167 +93,137 @@ export function ancresDe(texte) {
   return out
 }
 
-/** Les liens `](fichier.md#ancre)` et `](#ancre)` d'un fichier, resolus depuis SON dossier. */
+/** Les liens `](x.md#ancre)` et `](#ancre)` d'un fichier. */
 function liensAvecAncre(root, rel) {
-  const body = readFileSync(join(root, rel), 'utf8')
   const found = []
-  const re = /\]\(([^)\s#]*)#([^)\s]+)\)/g
-  let m
-  while ((m = re.exec(body)) !== null) {
+  for (const m of lire(root, rel).matchAll(/\]\(([^)\s#]*)#([^)\s]+)\)/g)) {
     const href = m[1]
-    if (/^[a-z]+:/i.test(href)) continue
-    if (href !== '' && !href.endsWith('.md')) continue
-    const cible = href === '' ? rel : relative(root, resolve(join(root, dirname(rel)), href)).split(sep).join('/')
+    if (/^[a-z]+:/i.test(href) || (href !== '' && !href.endsWith('.md'))) continue
     let ancre = m[2]
-    try {
-      ancre = decodeURIComponent(ancre)
-    } catch {
-      /* ancre deja lisible */
-    }
+    try { ancre = decodeURIComponent(ancre) } catch { /* deja lisible */ }
+    const cible = href === '' ? rel : posix(relative(root, resolve(join(root, dirname(rel)), href)))
     found.push({ href: `${href}#${m[2]}`, cible, ancre: ancre.toLowerCase() })
   }
   return found
+}
+
+/** Une date AAAA-MM-JJ isolee. Collee a un identifiant (`x-2026-01-02.md`, `noyau/2026-…`), c'est un nom. */
+export function datesIsolees(texte) {
+  return [...texte.matchAll(/[\w./@-]*\d{4}-\d{2}-\d{2}[\w./@-]*/g)]
+    .map((m) => m[0].replace(/[.-]+$/, ''))
+    .filter((j) => /^\d{4}-\d{2}-\d{2}$/.test(j))
+}
+
+/** Un numero de ligne cite d'un `.md` : `X.md:12`, `X.md#L12`, `X.md` ligne 12, `X.md, l. 12`. */
+export function numerosDeLigne(texte) {
+  return texte.match(/\.md(?::\d+|#L\d+\b|`?\]?(?:\([^)\s]*\))?,?\s+(?:lignes?|l\.)\s*\d+)/gi) ?? []
+}
+
+/** Dans les trois lignes non vides sous le premier `# `, « **Quand lire** » et « **Fait foi** ». */
+export function aUnEnTete(texte) {
+  const lignes = texte.replace(/\r\n/g, '\n').split('\n')
+  const i = lignes.findIndex((l) => /^# /.test(l))
+  const suite = i < 0 ? '' : lignes.slice(i + 1).filter((l) => l.trim() !== '').slice(0, 3).join('\n')
+  return /\*\*Quand lire\*\*/.test(suite) && /\*\*Fait foi\*\*/.test(suite)
+}
+
+/** La mesure d'un fichier. Un fichier GENERE date ses mesures par construction : ses dates ne comptent pas. */
+export function mesurerConvention(rel, texte) {
+  return {
+    plafond: rel.endsWith('CLAUDE.md') ? PLAFOND_LIGNES_CLAUDE : PLAFOND_LIGNES_DOC,
+    lignes: texte.replace(/\r\n/g, '\n').replace(/\n$/, '').split('\n').length,
+    dates: texte.startsWith('<!-- GENERE') ? 0 : datesIsolees(texte).length,
+    numerosDeLigne: numerosDeLigne(texte).length,
+    entete: aUnEnTete(texte),
+  }
+}
+
+/** Regle 8 en cliquet : une exception couvre sa mesure ; une mesure qui monte ou une exception inutile est rouge. */
+export function auditConvention(root, fichiers) {
+  const errors = []
+  const p = join(root, CHEMIN_EXCEPTIONS)
+  const exceptions = existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')).fichiers ?? {} : {}
+  const retirer = (f, cle) => errors.push(`${f} : « ${cle} » n'est plus en defaut. Retirer « ${cle} » de ses exceptions dans ${CHEMIN_EXCEPTIONS}.`)
+  for (const f of fichiers) {
+    const m = mesurerConvention(f, lire(root, f))
+    const ex = exceptions[f] ?? {}
+    if (m.lignes > m.plafond && ex.lignes === undefined)
+      errors.push(`${f} : ${m.lignes} lignes, au-dela du plafond de ${m.plafond}. Deplacer un recit dans docs/archive/ ou une regle dans le CLAUDE.md de sa zone ; jamais relever la borne.`)
+    else if (m.lignes > m.plafond && m.lignes > ex.lignes)
+      errors.push(`${f} : ${m.lignes} lignes, au-dela de sa mesure d'exception (${ex.lignes}). Le cliquet ne remonte pas.`)
+    else if (m.lignes <= m.plafond && ex.lignes !== undefined) retirer(f, 'lignes')
+    for (const [cle, dit, remede] of [
+      ['dates', 'date(s) AAAA-MM-JJ isolee(s)', "Un recit date va dans docs/archive/, une decision dans docs/adr/ ; l'etat courant ne se date pas"],
+      ['numerosDeLigne', "numero(s) de ligne cite(s) d'un .md", 'Renvoyer a une ancre de section, qui survit au commit suivant'],
+    ]) {
+      const permis = ex[cle] ?? 0
+      if (m[cle] > permis) errors.push(`${f} : ${m[cle]} ${dit}${permis ? `, au-dela de sa mesure d'exception (${permis})` : ''}. ${remede}.`)
+      else if (ex[cle] !== undefined && m[cle] === 0) retirer(f, cle)
+    }
+    if (!m.entete && ex.entete !== false)
+      errors.push(`${f} : pas d'en-tete. Sous le titre, trois lignes au plus portant « **Quand lire** » (chemins touches) et « **Fait foi** » (code ou fichier source).`)
+    else if (m.entete && ex.entete === false) retirer(f, 'entete')
+  }
+  for (const f of Object.keys(exceptions))
+    if (!fichiers.includes(f)) errors.push(`${CHEMIN_EXCEPTIONS} cite ${f}, qui n'est plus un doc vivant : retirer l'entree.`)
+  return errors
 }
 
 export function audit(root = process.cwd()) {
   const errors = []
   const rows = []
   const files = findClaudeFiles(root)
+  if (!files.includes('CLAUDE.md')) return { errors: ['CLAUDE.md est absent de la racine.'], rows, files }
+  const docs = findLivingDocs(root)
 
-  if (!files.includes('CLAUDE.md')) {
-    errors.push('CLAUDE.md est absent de la racine.')
-    return { errors, rows, files }
-  }
-
-  // ── 1 et 2 · les plafonds ────────────────────────────────────────
-  for (const f of files) {
+  for (const f of files) { // 1-2
     const bytes = statSync(join(root, f)).size
     const max = f === 'CLAUDE.md' ? ROOT_MAX_BYTES : NESTED_MAX_BYTES
-    const pct = Math.round((bytes / max) * 1000) / 10
-    rows.push({ file: f, bytes, max, pct })
-    if (bytes > max) {
-      errors.push(
-        `${f} pese ${bytes} o, au-dela du plafond de ${max} o. ` +
-          `Faire DESCENDRE un contenu d un cran (CLAUDE.md de dossier, puis docs/), jamais relever la borne.`,
-      )
-    }
+    rows.push({ file: f, bytes, max, pct: Math.round((bytes / max) * 1000) / 10 })
+    if (bytes > max)
+      errors.push(`${f} pese ${bytes} o, au-dela du plafond de ${max} o. Faire DESCENDRE un contenu d un cran (CLAUDE.md de dossier, puis docs/), jamais relever la borne.`)
   }
-
-  // ── 3 · integrite des pointeurs, dans LES DEUX SENS ──────────────
-  //
-  // Sens A : un CLAUDE.md de dossier que le racine ne cite pas est
-  // ORPHELIN. Personne ne peut le trouver depuis une autre zone, et la
-  // regle qu il porte est perdue sans qu aucun octet ne manque.
   const rootLinks = new Set(linksOf(root, 'CLAUDE.md').map((l) => l.rel))
-  for (const f of files) {
-    if (f === 'CLAUDE.md') continue
-    if (!rootLinks.has(f)) {
-      errors.push(
-        `${f} n est cite par aucun pointeur du CLAUDE.md racine : la regle qu il porte est ` +
-          `invisible depuis toute autre zone. L ajouter a la table « Ou est ecrit le reste ».`,
-      )
-    }
+  for (const f of files) // 3 : un CLAUDE.md de dossier que le racine ne cite pas est orphelin
+    if (f !== 'CLAUDE.md' && !rootLinks.has(f))
+      errors.push(`${f} n est cite par aucun pointeur du CLAUDE.md racine : la regle qu il porte est invisible depuis toute autre zone. L ajouter a la table des CLAUDE.md de zone.`)
+  for (const f of [...files, ...docs]) // 4-5
+    for (const l of linksOf(root, f)) if (!existsSync(join(root, l.rel))) errors.push(`${f} pointe vers ${l.href}, qui n existe pas.`)
+  for (const f of docs) { // 6
+    const texte = lire(root, f)
+    for (const r of REGLES_NOTES)
+      if (r.re.test(texte)) errors.push(`${f} : ${r.dit}. Les notes /100 ont cesse (ADR 0012) : renvoyer vers docs/INDICATEURS.md, deplacer l'historique dans docs/archive/.`)
   }
-  // Sens B : un pointeur qui ne vise rien.
-  for (const l of linksOf(root, 'CLAUDE.md')) {
-    if (!existsSync(join(root, l.rel))) {
-      errors.push(`CLAUDE.md pointe vers ${l.href}, qui n existe pas.`)
-    }
-  }
-
-  // ── 4 · tout lien cite par un CLAUDE.md doit exister ─────────────
-  for (const f of files) {
-    for (const l of linksOf(root, f)) {
-      if (!existsSync(join(root, l.rel))) {
-        errors.push(`${f} pointe vers ${l.href}, qui n existe pas.`)
-      }
-    }
-  }
-
-  // ── 5 · les liens des DOCS vivants ───────────────────────────────
-  //
-  // Ajoute le 2026-09-16, apres que la decoupe de `CLAUDE.md` a produit SIX
-  // liens morts d'un coup : des chemins ecrits pour la racine (`./docs/X.md`)
-  // recopies tels quels dans `docs/`, ou ils visent `docs/docs/`. Ils ont ete
-  // trouves A LA MAIN, donc ils seraient revenus.
-  //
-  // ⚠️ Un lien mort dans un doc n'est pas cosmetique : c'est la carte qui
-  // envoie dans le vide, et ce depot RENVOIE au doc de domaine pour presque
-  // toute regle depuis la meme decoupe.
-  for (const f of findLivingDocs(root)) {
-    for (const l of linksOf(root, f)) {
-      if (!existsSync(join(root, l.rel))) {
-        errors.push(`${f} pointe vers ${l.href}, qui n existe pas.`)
-      }
-    }
-  }
-
-  // ── 6 · aucune note /100 dans les docs vivantes (ADR 0012) ───────
-  //
-  // Les notes sur 100 auto-attribuees ont cesse le 2026-11-08 : elles se
-  // negociaient et sont restees hautes pendant que la CI etait rouge (audit
-  // externe, PRO-05). Les six indicateurs mesures de `docs/INDICATEURS.md` les
-  // remplacent. Cette regle remplace `check:docs-scored` (C-109), retiree par
-  // l'ADR 0012 : elle empeche le retour du marqueur et de l'en-tete de note.
-  for (const f of findLivingDocs(root)) {
-    const texte = readFileSync(join(root, f), 'utf8')
-    for (const r of REGLES_NOTES) {
-      if (r.re.test(texte)) {
-        errors.push(
-          `${f} : ${r.dit}. Les notes /100 ont cesse (ADR 0012) : renvoyer vers docs/INDICATEURS.md, ` +
-            `deplacer l'historique dans docs/archive/.`,
-        )
-      }
-    }
-  }
-
-  // ── 7 · les ANCRES internes tiennent ──────────────────────────────
-  //
-  // Une section deplacee en archive (ADR 0014) emporte son ancre : le lien
-  // `](./X.md#section)` qui y menait ne casse pas la garde des fichiers (regle
-  // 5) mais envoie en haut de page, ou nulle part. Chaque lien avec ancre, dans
-  // un doc vivant ou un CLAUDE.md, doit viser un titre qui existe.
-  const cache = new Map()
-  const ancresDuFichier = (rel) => {
-    if (!cache.has(rel)) cache.set(rel, ancresDe(readFileSync(join(root, rel), 'utf8')))
-    return cache.get(rel)
-  }
-  for (const f of [...findLivingDocs(root), ...files]) {
+  const cache = new Map() // 7
+  for (const f of [...docs, ...files])
     for (const l of liensAvecAncre(root, f)) {
       if (!l.cible.endsWith('.md') || !existsSync(join(root, l.cible))) continue
-      if (!ancresDuFichier(l.cible).has(l.ancre)) {
-        errors.push(`${f} pointe vers ${l.href}, dont l'ancre n'existe pas dans ${l.cible}.`)
-      }
+      if (!cache.has(l.cible)) cache.set(l.cible, ancresDe(lire(root, l.cible)))
+      if (!cache.get(l.cible).has(l.ancre)) errors.push(`${f} pointe vers ${l.href}, dont l'ancre n'existe pas dans ${l.cible}.`)
     }
-  }
-
+  errors.push(...auditConvention(root, [...new Set([...docs, ...files])].sort())) // 8
   return { errors, rows, files }
 }
 
-// ── CLI ────────────────────────────────────────────────────────────
-const isMain = process.argv[1] && import.meta.url.endsWith(process.argv[1].split(sep).join('/'))
+const isMain = process.argv[1] && import.meta.url.endsWith(posix(process.argv[1]))
 if (isMain) {
-  const { errors, rows } = audit(process.cwd())
-  const wantList = process.argv.includes('--list')
-
-  if (wantList || errors.length) {
-    for (const r of rows.sort((a, b) => b.pct - a.pct)) {
-      const flag = r.bytes > r.max ? '❌' : r.pct > 90 ? '⚠️ ' : '  '
-      console.log(`${flag} ${String(r.bytes).padStart(6)} o / ${r.max}  (${r.pct} %)  ${r.file}`)
-    }
+  const root = process.cwd()
+  if (process.argv.includes('--mesurer')) {
+    for (const f of [...findLivingDocs(root), ...findClaudeFiles(root)].sort())
+      console.log(JSON.stringify({ f, ...mesurerConvention(f, lire(root, f)) }))
+    process.exit(0)
+  }
+  const { errors, rows } = audit(root)
+  if (process.argv.includes('--list') || errors.length) {
+    for (const r of rows.sort((a, b) => b.pct - a.pct))
+      console.log(`${r.bytes > r.max ? '❌' : r.pct > 90 ? '⚠️ ' : '  '} ${String(r.bytes).padStart(6)} o / ${r.max}  (${r.pct} %)  ${r.file}`)
     console.log('')
   }
-
   if (errors.length) {
     for (const e of errors) console.error(`::error::${e}`)
     console.error(`\n${errors.length} probleme(s). CLAUDE.md est charge a CHAQUE session : il reste court.`)
     process.exit(1)
   }
-
-  const root = rows.find((r) => r.file === 'CLAUDE.md')
-  const docs = findLivingDocs(process.cwd()).length
-  console.log(
-    `${rows.length} CLAUDE.md + ${docs} doc(s) vivant(s) verifie(s) : racine a ${root.bytes} o ` +
-      `(${root.pct} % du plafond), pointeurs coherents, aucun lien mort.`,
-  )
+  const r = rows.find((x) => x.file === 'CLAUDE.md')
+  console.log(`${rows.length} CLAUDE.md + ${findLivingDocs(root).length} doc(s) vivant(s) verifie(s) : racine a ${r.bytes} o (${r.pct} % du plafond), pointeurs coherents, aucun lien mort.`)
 }
