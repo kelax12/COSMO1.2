@@ -44,6 +44,7 @@ describe('raisonSensible : la règle', () => {
     ['supabase/.temp/project-ref'],
     ['supabase/.temp/linked-project.json'],
     ['.claude/settings.local.json'],
+    ['faille.md'], ['docs/archive/faille-historique.md'], ['a-faire-manuel.md'], ['docs/RGPD-VIOLATION.md'], ['docs/archive/prompts/prompt-suite-failles-2026-10-01.md'],
     ['docs/offre-commerciale.docx'],
     ['pitch.PPTX'],
     ['exports/Clients.XLSX'],
@@ -88,6 +89,7 @@ describe('raisonSensible : la règle', () => {
   it('la liste porte les motifs exigés par SEC-01 et SEC-07, un par un', () => {
     expect(CHEMINS_INTERDITS.map(([g]) => g)).toEqual([
       'prive/**', 'docs/business-plan/**', '**/leads-*', 'supabase/.temp/**', '.claude/settings.local.json',
+      '**/faille*.md', '**/a-faire-manuel*', '**/rgpd-violation.md', '**/prompt-*failles*',
     ]);
   });
 

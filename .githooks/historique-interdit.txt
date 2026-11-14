@@ -5,3 +5,6 @@
 ff91cf707189230c9ca36736bbae358533efa90c
 # 58f1bf0c
 58f1bf0cae3c2813c50ddfc812ac8f29f526076c
+# Purge du 2026-11-14 : ancienne racine (tout l'ancien historique en descend), ancienne tete de main
+900ee3e87d71f6a7f96e92a745bed2fd2579bce1
+a518f6f8b66c973f1cb9e58d65aa722ab01a7590

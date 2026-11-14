@@ -428,6 +428,12 @@ jobs:
           else
             PLAGE="$AVANT..$GITHUB_SHA"
           fi
+          BASE="${PLAGE%%..*}"
+          if [ "$EVENEMENT" != pull_request ] && ! git merge-base --is-ancestor "$BASE" "$GITHUB_SHA" 2>/dev/null; then
+            # Historique reecrit (purges des 2026-11-13 et 2026-11-14) : la base n'est pas un ancetre.
+            echo "::warning::Base $BASE hors de l'historique de $GITHUB_SHA (historique reecrit) : seul le dernier commit est examine, l'arbre complet l'est toujours."
+            PLAGE="$GITHUB_SHA~1..$GITHUB_SHA"
+          fi
           echo "PLAGE=$PLAGE" >> "$GITHUB_ENV"
       - name: Fichiers sensibles (arbre et commits pousses)
         # Pas de repli silencieux : une plage sans base (premier push d'une
@@ -439,7 +445,9 @@ jobs:
       - name: Historique purge (chemins absents de tout commit)
         run: |
           set -euo pipefail
-          VU=$(git log --all --oneline -- leads-50.csv docs/business-plan)
+          CHEMINS=$(sed -n 's/^CHEMINS="\(.*\)"$/\1/p' .githooks/garde-historique.sh)
+          # shellcheck disable=SC2086
+          VU=$(git log --all --oneline -- $CHEMINS)
           if [ -n "$VU" ]; then
             echo "::error::Des commits touchent un chemin purge :"
             echo "$VU"

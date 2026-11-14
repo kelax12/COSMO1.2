@@ -3,16 +3,13 @@
 // dépôt PUBLIC sans décision écrite (SEC-01, SEC-05, 2026-11-06)
 // ═══════════════════════════════════════════════════════════════════
 //
-// 🔴 LE DÉFAUT. Le 2026-10-30, un commit a poussé `leads-50.csv` (cinquante
-// prospects nommés) et six PDF de business plan sur ce dépôt public. Rien ne
-// filtrait avant le commit, rien ne filtrait en CI. Retirer un fichier du
-// suivi n'efface pas l'historique : la seule défense utile est AVANT.
+// 🔴 Retirer un fichier du suivi n'efface pas l'historique : la seule défense utile est AVANT.
 //
 // ── CE QUE CETTE GARDE REFUSE (la liste UNIQUE, SEC-01 et SEC-07) ───
 //
 //   · des chemins, quel que soit le suffixe (`CHEMINS_INTERDITS`) :
-//     `prive/**`, `docs/business-plan/**`, `leads-*`, `supabase/.temp/**`,
-//     `.claude/settings.local.json` ;
+//     `prive/**`, `docs/business-plan/**`, `leads-*`, `supabase/.temp/**`, `.claude/settings.local.json`,
+//     les documents internes hors de `prive/` (`faille*`, `a-faire-manuel*`, `RGPD-VIOLATION.md`) ;
 //   · les tableurs et exports : `*.csv`, `*.xlsx`, `*.xls` ;
 //   · les documents : `*.pdf`, `*.docx`, `*.pptx` ;
 //   · les dumps : `*.sql.gz`, `*.dump`, `*.backup` ;
@@ -20,16 +17,12 @@
 //     `.env.e2e-stub` (gabarits sans secret, lus par le dépôt) ;
 //   · tout fichier de plus de 1 Mo.
 //
-// Le hook `.githooks/pre-commit`, le job CI `fichiers-sensibles` et la garde
-// Vitest `scripts/fichiers-suivis.guard.test.mjs` (`git ls-files`) lisent
-// tous CE module : un motif ajouté ici vaut aux trois endroits.
+// Lu par le hook `pre-commit`, le job CI `fichiers-sensibles` et `fichiers-suivis.guard.test.mjs`.
 //
 // Une exception se déclare UNE PAR UNE dans `EXCEPTIONS`, avec son chemin,
 // l'empreinte git (blob) de la version admise et le motif. Une autre version
 // du même fichier est refusée tant que l'entrée n'est pas relue.
-// ❌ AUCUNE variable de contournement. `git commit --no-verify` saute le
-//    hook : c'est pour ça que la CI rejoue la même garde, et elle ne se
-//    saute pas.
+// ❌ AUCUNE variable de contournement : `--no-verify` saute le hook, la CI rejoue la même garde.
 //
 // ── TROIS LECTURES ──────────────────────────────────────────────────
 //
@@ -80,6 +73,10 @@ export const CHEMINS_INTERDITS = [
   ['**/leads-*', 'fichier de prospection (`leads-*`)'],
   ['supabase/.temp/**', 'état local du CLI Supabase (`supabase/.temp/`)'],
   ['.claude/settings.local.json', 'réglages locaux d agent (`.claude/settings.local.json`)'],
+  ['**/faille*.md', 'document interne de sécurité (`faille*.md`, vit dans `prive/`)'],
+  ['**/a-faire-manuel*', 'gestes manuels d Axel (`a-faire-manuel*`, vit dans `prive/`)'],
+  ['**/rgpd-violation.md', 'procédure de violation (`RGPD-VIOLATION.md`, vit dans `prive/`)'],
+  ['**/prompt-*failles*', 'prompt d audit de failles (document interne)'],
 ];
 
 /** Un glob de `CHEMINS_INTERDITS` en expression régulière ancrée. */
