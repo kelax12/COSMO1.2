@@ -26,7 +26,7 @@
 | Tables du schéma `public` | **92** | `CREATE TABLE public.` dans `supabase/schema.sql` |
 | dont sous RLS | **92** | `ENABLE ROW LEVEL SECURITY` dans `supabase/schema.sql` |
 | Policies RLS | **208** | `CREATE POLICY` dans `supabase/schema.sql` |
-| Fonctions SQL de `public` | **249** | `CREATE FUNCTION public.` dans `supabase/schema.sql` |
+| Fonctions SQL de `public` | **251** | `CREATE FUNCTION public.` dans `supabase/schema.sql` |
 
 ## Se mesurent, ne s'écrivent pas
 
