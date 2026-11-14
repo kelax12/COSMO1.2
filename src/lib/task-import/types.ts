@@ -7,7 +7,7 @@ export type ImportSource = 'todoist' | 'ticktick' | 'generic';
 export interface ImportedTask {
   name: string;
   description?: string;
-  /** Jour `YYYY-MM-DD`, jamais un instant : `deadlineFromDayKey` à l'écriture (R-01). */
+  /** Jour `YYYY-MM-DD`, jamais un instant (DAT-01). */
   dueDay?: string;
   /** 0 = non définie, 1..5 comme COSMO (1 = la plus haute). */
   priority: number;

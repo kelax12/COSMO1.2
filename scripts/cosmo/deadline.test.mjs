@@ -18,7 +18,7 @@ describe('deadline du CLI (R-01)', () => {
 
   it('rend la borne haute au dernier instant du jour local', () => {
     const iso = deadlineEndOfDay('2026-09-02');
-    expect(deadlineDayKey(iso)).toBe('2026-09-02');
+    expect(new Date(iso).getDate()).toBe(2);
     expect(new Date(iso).getHours()).toBe(23);
     expect(new Date(iso).getMinutes()).toBe(59);
   });
@@ -29,11 +29,15 @@ describe('deadline du CLI (R-01)', () => {
     expect(end - start).toBe(24 * 60 * 60 * 1000 - 1);
   });
 
-  it('relit un jour VECU, pas le jour UTC (le piege de .slice(0, 10))', () => {
-    // Minuit local en UTC+2 : l'instant porte la veille en UTC.
-    expect(deadlineDayKey('2026-09-01T22:00:00.000Z')).toBe(
-      new Date('2026-09-01T22:00:00.000Z').toLocaleDateString('en-CA'),
-    );
+  it('relit le jour saisi comme la base (echeance_jour, mig. 251), pas le jour UTC', () => {
+    // Minuit du 12 ecrit a Paris, a Montreal, a Tokyo, et l'ancien minuit UTC.
+    expect(deadlineDayKey('2026-11-11T23:00:00.000Z')).toBe('2026-11-12');
+    expect(deadlineDayKey('2026-11-12T05:00:00.000Z')).toBe('2026-11-12');
+    expect(deadlineDayKey('2026-11-11T15:00:00.000Z')).toBe('2026-11-12');
+    expect(deadlineDayKey('2026-11-12T00:00:00.000Z')).toBe('2026-11-12');
+    // Instant quelconque (ancien report) : jour vecu a Paris.
+    expect(deadlineDayKey('2026-11-12T22:30:12.345Z')).toBe('2026-11-12');
+    expect(deadlineDayKey('2026-11-12T23:30:12.345Z')).toBe('2026-11-13');
   });
 
   it('laisse passer une valeur vide comme NULL', () => {

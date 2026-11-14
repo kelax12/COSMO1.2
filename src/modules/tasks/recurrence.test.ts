@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { nextOccurrenceDeadline, buildNextOccurrence } from './recurrence';
 import type { Task } from './types';
-import { deadlineDayKey, deadlineFromDayKey } from '@/lib/deadline';
+import { deadlineDayKey, storedDeadlineInstant } from '@/lib/deadline';
 import type { TimezonePref } from '@/lib/timezone';
 
 // Mercredi 8 juillet 2026, 12 h UTC : le même jour dans tous les fuseaux
@@ -24,14 +24,14 @@ const ZONES: [string, number][] = [
 ];
 
 /** Échéance stockée pour un jour donné, dans le fuseau testé. */
-const stored = (day: string, pref: TimezonePref) => deadlineFromDayKey(day, pref);
+const stored = (day: string, pref: TimezonePref) => storedDeadlineInstant(day, pref);
 
 const baseTask: Task = {
   id: 't1',
   name: 'Sortir les poubelles',
   priority: 2,
   category: 'cat1',
-  deadline: deadlineFromDayKey('2026-07-08', manual(2)),
+  deadline: storedDeadlineInstant('2026-07-08', manual(2)),
   estimatedTime: 10,
   bookmarked: false,
   completed: true,

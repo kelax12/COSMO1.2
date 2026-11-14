@@ -25,3 +25,9 @@ Règles transversales : [`../CLAUDE.md`](../CLAUDE.md).
 - ❌ Compter, chercher ou calculer sur `useTasks()` : `useTaskCount`, `useTaskArchive`, `useTaskSubset`.
 - ❌ Une mise à jour optimiste par `setQueryData(taskKeys.lists())` seul : `patchTaskCaches` (`cache-patch.ts`), sinon l'archive affiche l'état d'avant.
 - ❌ Un filtre de `TaskQuery` en `.or()` : le curseur de clé l'occupe (`task-query.ts`).
+
+## Échéance : `due_date` (mig. 251), bascule en cours
+
+- ❌ `deadline` ou `due_date` en dur dans une liste de colonnes : `listColumns(cols)` (`supabase.repository.ts`), `taskColumns(cols)` (CLI). La colonne présente dépend de la migration appliquée (`deadline-columns.ts`, sonde `probeTaskColumn`).
+- ❌ Une écriture d'échéance hors `mapTaskToDb` (les deux colonnes) suivi de `fitDeadlineColumns` (retire celle que la base n'a pas).
+- ⚠️ Le jour de la `253` : retirer `deadline` de `LegacyDeadlineColumn`, des sondes, du CLI et de `scripts/check-portability-export.mjs`, dans le commit qui déplace le fichier.

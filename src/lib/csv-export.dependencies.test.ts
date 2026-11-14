@@ -11,6 +11,7 @@ vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn(), warning: v
 import { exportAllCSV, exportTaskDependenciesCSV } from './csv-export';
 import type { Task, TaskDependency } from '@/modules/tasks';
 import { SupabaseTasksRepository } from '@/modules/tasks/supabase.repository';
+import { setDeadlineColumnsForTests } from '@/modules/tasks/deadline-columns';
 import { LocalStorageTasksRepository } from '@/modules/tasks/local.repository';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -28,7 +29,7 @@ const telecharges: { name: string; text: Promise<string> }[] = [];
 
 beforeEach(() => {
   telecharges.length = 0;
-  supabaseMock.reset();
+  supabaseMock.reset(); setDeadlineColumnsForTests({ day: true, instant: true });
   localStorage.clear();
   let dernierBlob: Blob | null = null;
   vi.spyOn(URL, 'createObjectURL').mockImplementation((b) => {

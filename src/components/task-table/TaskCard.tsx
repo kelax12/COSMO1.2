@@ -8,8 +8,6 @@ import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { Bookmark, MoreHorizontal, AlertTriangle, Hourglass, CheckCircle2 } from "lucide-react";
 import { OverdueQuickActions } from "./OverdueQuickActions";
 import TaskActionsSheet from "./TaskActionsSheet";
-import { deadlineFromDayKey } from "@/lib/deadline";
-import { getTimezonePref } from "@/lib/timezone";
 import CollaboratorAvatars from "@/components/CollaboratorAvatars";
 import { useCategoryLookup } from "@/modules/categories";
 import { Task } from "@/modules/tasks";
@@ -156,7 +154,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   // d'écriture, et passe par `@/lib/deadline` comme les trois autres (R-01).
   const rescheduleTo = (dayKey: string) => {
     setRescheduleOpen(false);
-    onSnooze(task.id, deadlineFromDayKey(dayKey, getTimezonePref()));
+    onSnooze(task.id, dayKey);
   };
 
   // Deux initiales pour le rond de la maquette 15. `sharedBy` est un nom

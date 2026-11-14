@@ -15,7 +15,6 @@ import { categoryKeys, DEFAULT_CATEGORY_COLOR, useCategories } from '@/modules/c
 import { taskKeys } from '@/modules/tasks';
 import { teamCategoryKeys, TEAM_CATEGORY_COLORS, useTeamCategories } from '@/modules/team-categories';
 import { teamProjectKeys } from '@/modules/team-projects/constants';
-import { deadlineFromDayKey } from '@/lib/deadline';
 import { parseCsv } from '@/lib/task-import/csv';
 import { detectFormat } from '@/lib/task-import/detect';
 import { parseTodoist, type ImportTexts } from '@/lib/task-import/todoist';
@@ -93,7 +92,7 @@ export function useTaskImport(target?: OrgImportTarget) {
         }),
         deleteTask: (id) => teamRepo.deleteTask(id),
         deleteCategory: (id) => catRepo.deleteCategory(id),
-        toDeadline: (day) => deadlineFromDayKey(day),
+        toDeadline: (day) => day,
       };
     }
     const tasksRepo = getTasksRepository();
@@ -107,7 +106,7 @@ export function useTaskImport(target?: OrgImportTarget) {
       createTask: (input) => tasksRepo.create(input),
       deleteTask: (id) => tasksRepo.delete(id),
       deleteCategory: (id) => categoriesRepo.delete(id),
-      toDeadline: (day) => deadlineFromDayKey(day),
+      toDeadline: (day) => day,
     };
   }, [categories, target]);
 

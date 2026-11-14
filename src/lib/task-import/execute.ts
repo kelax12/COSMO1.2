@@ -32,7 +32,7 @@ export interface ImportDeps {
   createTask: (input: CreateTaskInput) => Promise<{ id: string }>;
   deleteTask: (id: string) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
-  /** `deadlineFromDayKey` : un jour → l'instant à stocker (R-01). */
+  /** Un jour `YYYY-MM-DD` → l'échéance du domaine (la clé elle-même, DAT-01). */
   toDeadline: (dayKey: string) => string;
 }
 

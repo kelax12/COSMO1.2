@@ -8,6 +8,8 @@ vi.mock('@/lib/supabase', async () => {
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn(), warning: vi.fn() } }));
 
 import { SupabaseTasksRepository } from './supabase.repository';
+import { setDeadlineColumnsForTests } from './deadline-columns';
+import { storedDeadlineInstant } from '@/lib/deadline';
 import type { UpdateTaskInput } from './types';
 
 const repo = new SupabaseTasksRepository();
@@ -24,7 +26,11 @@ const ownRow = {
 };
 const sharedRow = { ...ownRow, id: 't2', name: 'Partagée', user_id: 'owner-uid' };
 
-beforeEach(() => supabaseMock.reset());
+beforeEach(() => {
+  supabaseMock.reset();
+  // État de la base entre les mig. 251 et 253 ; les autres en fin de fichier.
+  setDeadlineColumnsForTests({ day: true, instant: true });
+});
 
 describe('SupabaseTasksRepository — lecture', () => {
   // ⚠️ getAll() lit via la RPC `get_my_tasks()` et NON `.from('tasks')`
@@ -52,7 +58,7 @@ describe('SupabaseTasksRepository — lecture', () => {
     // Colonnes indispensables aux vues liste
     // status + health : la colonne État du TaskTable les lit ; absentes, la relecture
     // qui suit la mise à jour optimiste effaçait l'état choisi au bout de ~2 s.
-    for (const col of ['id', 'name', 'priority', 'deadline', 'completed', 'user_id', 'status', 'health']) {
+    for (const col of ['id', 'name', 'priority', 'due_date', 'completed', 'user_id', 'status', 'health']) {
       expect(select).toContain(col);
     }
   });
@@ -154,11 +160,12 @@ describe('SupabaseTasksRepository — écriture', () => {
     expect(payload.name).toBe('New');
   });
 
-  it('update: empty deadline is normalized to NULL (timestamp column)', async () => {
+  it('update: empty deadline is normalized to NULL on both columns', async () => {
     supabaseMock.queueTable('tasks', { data: ownRow });
     await repo.update('t1', { deadline: '' });
     const payload = supabaseMock.argsOf('tasks', 'update')?.[0] as Record<string, unknown>;
     expect(payload.deadline).toBeNull();
+    expect(payload.due_date).toBeNull();
   });
 
   it('toggleComplete / toggleBookmark: atomic RPCs (TOCTOU-3), no read-then-write', async () => {
@@ -192,7 +199,8 @@ describe('SupabaseTasksRepository — écriture', () => {
     const res = await repo.toggleComplete('t1', '2026-06-22');
 
     expect(supabaseMock.rpcCalls).toEqual([
-      { fn: 'toggle_task_complete_v2', args: { p_task_id: 't1', p_next_deadline: '2026-06-22' } },
+      // Le jour part en instant de minuit du fuseau retenu (signature mig. 133).
+      { fn: 'toggle_task_complete_v2', args: { p_task_id: 't1', p_next_deadline: storedDeadlineInstant('2026-06-22') } },
     ]);
     expect(res.spawned?.id).toBe('t1-next');
     // Aucune écriture directe sur la table : tout passe par la transaction RPC.
@@ -335,5 +343,52 @@ describe('SupabaseTasksRepository — partages en attente et suppression', () =>
       error: { message: 'permission denied', code: '42501' },
     });
     await expect(repo.delete('t1')).rejects.toBeTruthy();
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// Bascule DAT-01 : le front est déployé avant les migrations 251 et 253,
+// il sert les trois états de la base (`deadline-columns.ts`).
+// ═══════════════════════════════════════════════════════════════════
+describe('SupabaseTasksRepository : échéance avant la mig. 251 (deadline seule)', () => {
+  beforeEach(() => setDeadlineColumnsForTests({ day: false, instant: true }));
+
+  it('lit et filtre l ancienne colonne, en instants du fuseau retenu', async () => {
+    supabaseMock.queueRpc('get_my_tasks', { data: [{ ...ownRow, deadline: '2026-11-11T23:00:00+00:00' }] });
+    const [t] = await repo.listAll({ deadlineFrom: '2026-11-12' });
+    expect(supabaseMock.argsOf('get_my_tasks', 'select')?.[0]).toMatch(/,deadline$/);
+    expect(supabaseMock.argsOf('get_my_tasks', 'gte')).toEqual(['deadline', storedDeadlineInstant('2026-11-12')]);
+    expect(t.deadline).toBe('2026-11-12');
+  });
+
+  it('n écrit jamais due_date, que la base n a pas encore', async () => {
+    supabaseMock.queueTable('tasks', { data: ownRow });
+    await repo.update('t1', { deadline: '2026-11-12' });
+    expect(supabaseMock.argsOf('tasks', 'update')?.[0]).toEqual({ deadline: storedDeadlineInstant('2026-11-12') });
+  });
+});
+
+describe('SupabaseTasksRepository : échéance après la mig. 253 (due_date seule)', () => {
+  beforeEach(() => setDeadlineColumnsForTests({ day: true, instant: false }));
+
+  it('lit et filtre la colonne jour, sans conversion', async () => {
+    supabaseMock.queueRpc('get_my_tasks', { data: [{ ...ownRow, deadline: undefined, due_date: '2026-11-12' }] });
+    const [t] = await repo.listAll({ deadlineFrom: '2026-11-12', deadlineTo: '2026-11-30' });
+    expect(supabaseMock.argsOf('get_my_tasks', 'select')?.[0]).toMatch(/,due_date$/);
+    expect(supabaseMock.argsOf('get_my_tasks', 'gte')).toEqual(['due_date', '2026-11-12']);
+    expect(supabaseMock.argsOf('get_my_tasks', 'lte')).toEqual(['due_date', '2026-11-30']);
+    expect(t.deadline).toBe('2026-11-12');
+  });
+
+  it('n écrit plus deadline, retirée de la base', async () => {
+    supabaseMock.queueTable('tasks', { data: { ...ownRow, due_date: '2026-11-12' } });
+    await repo.update('t1', { deadline: '2026-11-12' });
+    expect(supabaseMock.argsOf('tasks', 'update')?.[0]).toEqual({ due_date: '2026-11-12' });
+  });
+
+  it('getByDate compare le jour, plus une fenêtre d instants', async () => {
+    supabaseMock.queueRpc('get_my_tasks', { data: [] });
+    await repo.getByDate('2026-11-12');
+    expect(supabaseMock.argsOf('get_my_tasks', 'eq')).toEqual(['due_date', '2026-11-12']);
   });
 });

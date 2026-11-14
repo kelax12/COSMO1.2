@@ -19,7 +19,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router';
 import { appModeStore } from '@/lib/app-mode.store';
 import { resetRepositories, getCategoriesRepository, getListsRepository } from '@/lib/repository.factory';
-import { deadlineFromDayKey } from '@/lib/deadline';
 import { translator } from '@/i18n/useT';
 import { ActiveOrgProvider } from '@/modules/organizations/ActiveOrgContext';
 import { categoryKeys } from '@/modules/categories/constants';
@@ -84,7 +83,7 @@ export function makeTask(overrides: Partial<Task> & { id: string; name: string; 
     description: '',
     priority: 3,
     category: '',
-    deadline: dueDay ? deadlineFromDayKey(dueDay) : '',
+    deadline: dueDay ?? '',
     estimatedTime: 30,
     createdAt: '2026-11-01T08:00:00.000Z',
     bookmarked: false,

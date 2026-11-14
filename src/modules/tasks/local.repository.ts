@@ -25,6 +25,12 @@ function assertPriorityInRange(priority: number | undefined): void {
   if (!Number.isInteger(priority) || priority < 0 || priority > 5) throw makeApiError('invalid_input');
 }
 
+/** Une échéance de démo est une clé de jour ; un instant d'avant la bascule DAT-01 y est ramené. */
+const withDayDeadline = (t: Task): Task => {
+  const day = deadlineDayKey(t.deadline);
+  return day === (t.deadline ?? '') ? t : { ...t, deadline: day };
+};
+
 export class LocalStorageTasksRepository implements ITasksRepository {
   private getTasks(): Task[] {
     const stored = safeParseArray<Task>(safeGetItem(STORAGE_KEY));
@@ -35,11 +41,11 @@ export class LocalStorageTasksRepository implements ITasksRepository {
       this.saveTasks(seeded);
       return seeded;
     }
-    return stored;
+    return stored.map(withDayDeadline);
   }
 
   private saveTasks(tasks: Task[]): void {
-    writeJsonOrThrow(STORAGE_KEY, tasks);
+    writeJsonOrThrow(STORAGE_KEY, tasks.map(withDayDeadline));
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -95,10 +101,7 @@ export class LocalStorageTasksRepository implements ITasksRepository {
       tasks = tasks.filter(t => t.priority <= filters.priorityMax!);
     }
 
-    // Comparaison de JOURS, jamais de chaînes hétérogènes : `t.deadline` est un
-    // instant ISO, `deadlineBefore` une clé de jour. `' T22:00:00.000Z'
-    // <= '<jour ISO>'` est vrai par hasard lexicographique, et faux dès que
-    // l'instant du 3 est stocké en heure locale négative.
+    // Comparaison de JOURS : `deadlineDayKey` tolère encore un instant hérité.
     if (filters.deadlineBefore) {
       tasks = tasks.filter(t => !!t.deadline && deadlineDayKey(t.deadline) <= filters.deadlineBefore!);
     }

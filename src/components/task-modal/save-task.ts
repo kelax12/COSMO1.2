@@ -1,6 +1,5 @@
 import { toast } from '@/lib/toast';
 import { translator } from '@/i18n/useT';
-import { deadlineFromDayKey } from '@/lib/deadline';
 import type {
   useCreateTask,
   useUpdateTask,
@@ -83,7 +82,7 @@ export function buildCreateTaskInput(
     // Le champ porte un JOUR ; on stocke l'instant de minuit dans le fuseau
     // de la personne. `new Date(jour).toISOString()` donnait minuit UTC, donc
     // la veille pour tout décalage négatif (risque R-01).
-    deadline: deadlineFromDayKey(formData.deadline),
+    deadline: formData.deadline,
     estimatedTime: Number(formData.estimatedTime),
     completed: formData.status ? formData.status === 'done' : formData.completed,
     status: formData.status,
@@ -178,7 +177,7 @@ export async function runTaskSave(deps: TaskSaveDeps) {
       description: formData.description.trim() || undefined,
       priority: formData.priority,
       category: formData.category,
-      deadline: deadlineFromDayKey(formData.deadline),
+      deadline: formData.deadline,
       estimatedTime: Number(formData.estimatedTime),
       // 🔴 `completed` ne part PAS : la fiche ne l'édite pas, elle en garde la
       // valeur À L'OUVERTURE. Depuis la mig. 214, le Statut de la fiche peut

@@ -2433,6 +2433,31 @@ $$;
 
 
 --
+-- Name: echeance_jour(timestamp with time zone); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.echeance_jour(p_instant timestamp with time zone) RETURNS date
+    LANGUAGE sql STABLE
+    SET search_path TO ''
+    AS $$
+  SELECT CASE
+    WHEN p_instant IS NULL THEN NULL
+    WHEN date_trunc('minute', p_instant) = p_instant
+         AND extract(minute FROM (p_instant AT TIME ZONE 'UTC'))::int % 15 = 0
+      THEN ((p_instant AT TIME ZONE 'UTC') + interval '13 hours')::date
+    ELSE (p_instant AT TIME ZONE 'Europe/Paris')::date
+  END
+$$;
+
+
+--
+-- Name: FUNCTION echeance_jour(p_instant timestamp with time zone); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.echeance_jour(p_instant timestamp with time zone) IS 'Jour d''une ancienne échéance timestamptz (mig. 251) : minuit au quart d''heure près → jour de l''instant + 13 h en UTC, sinon jour à Europe/Paris. Miroir : dayKeyFromStoredDeadline (src/lib/deadline.ts).';
+
+
+--
 -- Name: enforce_category_tree(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -4102,6 +4127,7 @@ CREATE TABLE public.tasks (
     recurrence_parent_id uuid,
     status text DEFAULT 'todo'::text NOT NULL,
     health text,
+    due_date date,
     CONSTRAINT tasks_health_check CHECK (((health IS NULL) OR (health = ANY (ARRAY['on_track'::text, 'at_risk'::text, 'off_track'::text])))),
     CONSTRAINT tasks_priority_check CHECK (((priority >= 0) AND (priority <= 5))),
     CONSTRAINT tasks_recurrence_check CHECK ((recurrence = ANY (ARRAY['none'::text, 'daily'::text, 'weekly'::text, 'monthly'::text]))),
@@ -4127,7 +4153,7 @@ COMMENT ON COLUMN public.tasks.category IS 'Catégorie de la tâche. NULL = aucu
 -- Name: COLUMN tasks.deadline; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.tasks.deadline IS 'Échéance FACULTATIVE (mig. 249) : instant de minuit du jour choisi, dans le fuseau de la personne (src/lib/deadline.ts). NULL = aucune échéance.';
+COMMENT ON COLUMN public.tasks.deadline IS 'ANCIENNE échéance (timestamptz), tenue d''accord avec due_date par trg_tasks_sync_echeance. Retirée par la mig. 253.';
 
 
 --
@@ -4177,6 +4203,13 @@ COMMENT ON COLUMN public.tasks.status IS 'Statut perso (mig. 214) : todo, in_pro
 --
 
 COMMENT ON COLUMN public.tasks.health IS 'État déclaré (mig. 214) : on_track, at_risk, off_track, NULL. Même vocabulaire que team_tasks.health (mig. 204).';
+
+
+--
+-- Name: COLUMN tasks.due_date; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.tasks.due_date IS 'Échéance FACULTATIVE, un jour (mig. 251). NULL = aucune échéance. Remplace deadline (retirée par la mig. 253).';
 
 
 --
@@ -8518,6 +8551,33 @@ $$;
 
 
 --
+-- Name: tasks_sync_echeance(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.tasks_sync_echeance() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    IF NEW.due_date IS NULL AND NEW.deadline IS NOT NULL THEN
+      NEW.due_date := public.echeance_jour(NEW.deadline);
+    ELSIF NEW.due_date IS NOT NULL AND NEW.deadline IS NULL THEN
+      NEW.deadline := NEW.due_date::timestamp AT TIME ZONE 'Europe/Paris';
+    END IF;
+  ELSIF NEW.due_date IS DISTINCT FROM OLD.due_date
+        AND NEW.deadline IS NOT DISTINCT FROM OLD.deadline THEN
+    NEW.deadline := NEW.due_date::timestamp AT TIME ZONE 'Europe/Paris';
+  ELSIF NEW.deadline IS DISTINCT FROM OLD.deadline
+        AND NEW.due_date IS NOT DISTINCT FROM OLD.due_date THEN
+    NEW.due_date := public.echeance_jour(NEW.deadline);
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+
+--
 -- Name: team_automation_before_write(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -9112,7 +9172,7 @@ BEGIN
      AND v_row.user_id = auth.uid()  -- 215 : l'occurrence suivante reste au propriétaire
   THEN
     INSERT INTO public.tasks (
-      user_id, name, description, priority, category, deadline,
+      user_id, name, description, priority, category, due_date,
       estimated_time, bookmarked, completed, subtasks, kr_id, recurrence,
       recurrence_parent_id
     )
@@ -9122,7 +9182,7 @@ BEGIN
       v_row.description,
       v_row.priority,
       v_row.category,
-      p_next_deadline,
+      public.echeance_jour(p_next_deadline),  -- 251 : le jour, plus l'instant
       v_row.estimated_time,
       v_row.bookmarked,
       false,
@@ -13270,6 +13330,13 @@ CREATE INDEX idx_tasks_deadline ON public.tasks USING btree (deadline);
 
 
 --
+-- Name: idx_tasks_due_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_tasks_due_date ON public.tasks USING btree (due_date);
+
+
+--
 -- Name: idx_tasks_user_created; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -14562,6 +14629,13 @@ CREATE TRIGGER trg_sync_team_task_status BEFORE UPDATE ON public.team_tasks FOR 
 --
 
 CREATE TRIGGER trg_tasks_status_sync BEFORE INSERT OR UPDATE OF completed, status ON public.tasks FOR EACH ROW EXECUTE FUNCTION public.sync_task_status();
+
+
+--
+-- Name: tasks trg_tasks_sync_echeance; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_tasks_sync_echeance BEFORE INSERT OR UPDATE OF deadline, due_date ON public.tasks FOR EACH ROW EXECUTE FUNCTION public.tasks_sync_echeance();
 
 
 --
@@ -18883,6 +18957,15 @@ GRANT ALL ON FUNCTION public.drop_muted_org_notification() TO service_role;
 
 
 --
+-- Name: FUNCTION echeance_jour(p_instant timestamp with time zone); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.echeance_jour(p_instant timestamp with time zone) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.echeance_jour(p_instant timestamp with time zone) TO authenticated;
+GRANT ALL ON FUNCTION public.echeance_jour(p_instant timestamp with time zone) TO service_role;
+
+
+--
 -- Name: FUNCTION enforce_category_tree(); Type: ACL; Schema: public; Owner: -
 --
 
@@ -20302,6 +20385,14 @@ GRANT ALL ON FUNCTION public.sync_task_status() TO service_role;
 
 REVOKE ALL ON FUNCTION public.sync_team_task_status() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.sync_team_task_status() TO service_role;
+
+
+--
+-- Name: FUNCTION tasks_sync_echeance(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.tasks_sync_echeance() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.tasks_sync_echeance() TO service_role;
 
 
 --

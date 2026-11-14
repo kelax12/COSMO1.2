@@ -17,7 +17,7 @@ import TaskModal from './TaskModal';
 import {
   renderApp, resetDemoWorld, setViewport, makeTask, storedTasks, fakeAuth, fakeBilling,
   dayKeyFromToday, TODAY_KEY, lazyT, findFiche, warmDemoCaches, itBug } from '@/test/tasks-ui-harness';
-import { deadlineDayKey, deadlineFromDayKey } from '@/lib/deadline';
+import { deadlineDayKey, storedDeadlineInstant } from '@/lib/deadline';
 import { useTimezonePref, todayKeyInTz, DEFAULT_TIMEZONE_PREF } from '@/lib/timezone';
 import type { Task } from '@/modules/tasks';
 
@@ -427,7 +427,7 @@ describe('TaskModal · ÉCHÉANCE (vague 13)', () => {
 
     await waitFor(() => expect(storedTasks().some((t) => t.name === 'Rappeler le notaire')).toBe(true));
     const task = storedTasks().find((t) => t.name === 'Rappeler le notaire')!;
-    expect(task.deadline).toBe(deadlineFromDayKey(dayKeyFromToday(1)));
+    expect(task.deadline).toBe(dayKeyFromToday(1));
     expect(deadlineDayKey(task.deadline)).toBe(dayKeyFromToday(1));
   });
 
@@ -454,8 +454,8 @@ describe('TaskModal · ÉCHÉANCE (vague 13)', () => {
     act(() => result.current.setOffsetHours(-10));
     const pref = { mode: 'manual', offsetHours: -10 } as const;
     const task = makeTask({ id: 't5', name: 'Tâche du fuseau', priority: 3 });
-    // Minuit du 12 novembre à UTC-10 : le jour vécu est le 12, même si le jour UTC est le 12 à 10 h.
-    task.deadline = deadlineFromDayKey('2026-11-12', pref);
+    // Valeur d'avant DAT-01 (minuit du 12 à UTC-10) : la démo la relit au jour vécu, le 12.
+    task.deadline = storedDeadlineInstant('2026-11-12', pref);
     resetDemoWorld([task]);
     await openEdition(task);
     expect(screen.getByRole('button', { name: '12/11/2026' })).toBeTruthy();
@@ -467,7 +467,7 @@ describe('TaskModal · ÉCHÉANCE (vague 13)', () => {
     act(() => result.current.setOffsetHours(-10));
     const pref = { mode: 'manual', offsetHours: -10 } as const;
     const task = makeTask({ id: 't6', name: 'Tâche du fuseau', priority: 3 });
-    task.deadline = deadlineFromDayKey('2026-11-12', pref);
+    task.deadline = storedDeadlineInstant('2026-11-12', pref);
     resetDemoWorld([task]);
     await openEdition(task);
     fireEvent.change(nameField(), { target: { value: 'Tâche du fuseau bis' } });

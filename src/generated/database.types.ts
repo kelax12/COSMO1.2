@@ -1222,14 +1222,14 @@ isOneToOne: false
                   ]
                 },"tasks": {
                   Row: {
-                    "bookmarked": boolean,"category": string | null,"collaborator_validations": Json | null,"completed": boolean,"completed_at": string | null,"created_at": string | null,"deadline": string | null,"description": string | null,"estimated_time": number,"health": string | null,"id": string,"is_collaborative": boolean,"kr_id": string | null,"name": string,"pending_invites": (string)[] | null,"priority": number,"recurrence": string,"recurrence_parent_id": string | null,"status": string,"subtasks": NonNullable<Json>,"updated_at": string | null,"user_id": string
+                    "bookmarked": boolean,"category": string | null,"collaborator_validations": Json | null,"completed": boolean,"completed_at": string | null,"created_at": string | null,"deadline": string | null,"description": string | null,"due_date": string | null,"estimated_time": number,"health": string | null,"id": string,"is_collaborative": boolean,"kr_id": string | null,"name": string,"pending_invites": (string)[] | null,"priority": number,"recurrence": string,"recurrence_parent_id": string | null,"status": string,"subtasks": NonNullable<Json>,"updated_at": string | null,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "bookmarked"?: boolean,"category"?: string | null,"collaborator_validations"?: Json | null,"completed"?: boolean,"completed_at"?: string | null,"created_at"?: string | null,"deadline"?: string | null,"description"?: string | null,"estimated_time"?: number,"health"?: string | null,"id"?: string,"is_collaborative"?: boolean,"kr_id"?: string | null,"name": string,"pending_invites"?: (string)[] | null,"priority"?: number,"recurrence"?: string,"recurrence_parent_id"?: string | null,"status"?: string,"subtasks"?: NonNullable<Json>,"updated_at"?: string | null,"user_id": string
+                    "bookmarked"?: boolean,"category"?: string | null,"collaborator_validations"?: Json | null,"completed"?: boolean,"completed_at"?: string | null,"created_at"?: string | null,"deadline"?: string | null,"description"?: string | null,"due_date"?: string | null,"estimated_time"?: number,"health"?: string | null,"id"?: string,"is_collaborative"?: boolean,"kr_id"?: string | null,"name": string,"pending_invites"?: (string)[] | null,"priority"?: number,"recurrence"?: string,"recurrence_parent_id"?: string | null,"status"?: string,"subtasks"?: NonNullable<Json>,"updated_at"?: string | null,"user_id": string
                   }
                   Update: {
-                    "bookmarked"?: boolean,"category"?: string | null,"collaborator_validations"?: Json | null,"completed"?: boolean,"completed_at"?: string | null,"created_at"?: string | null,"deadline"?: string | null,"description"?: string | null,"estimated_time"?: number,"health"?: string | null,"id"?: string,"is_collaborative"?: boolean,"kr_id"?: string | null,"name"?: string,"pending_invites"?: (string)[] | null,"priority"?: number,"recurrence"?: string,"recurrence_parent_id"?: string | null,"status"?: string,"subtasks"?: NonNullable<Json>,"updated_at"?: string | null,"user_id"?: string
+                    "bookmarked"?: boolean,"category"?: string | null,"collaborator_validations"?: Json | null,"completed"?: boolean,"completed_at"?: string | null,"created_at"?: string | null,"deadline"?: string | null,"description"?: string | null,"due_date"?: string | null,"estimated_time"?: number,"health"?: string | null,"id"?: string,"is_collaborative"?: boolean,"kr_id"?: string | null,"name"?: string,"pending_invites"?: (string)[] | null,"priority"?: number,"recurrence"?: string,"recurrence_parent_id"?: string | null,"status"?: string,"subtasks"?: NonNullable<Json>,"updated_at"?: string | null,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -2210,6 +2210,9 @@ isOneToOne: false
 "delete_team_with_transfer":
 { Args: { "p_archive_projects"?: boolean,"p_target": string,"p_team": string }; Returns: undefined
                            },
+"echeance_jour":
+{ Args: { "p_instant": string }; Returns: string
+                           },
 "enqueue_team_task_webhook":
 { Args: { "p_event": string,"p_task": string }; Returns: undefined
                            },
@@ -2267,6 +2270,7 @@ isOneToOne: false
 "created_at": string | null,
 "deadline": string | null,
 "description": string | null,
+"due_date": string | null,
 "estimated_time": number,
 "health": string | null,
 "id": string,
@@ -2426,6 +2430,7 @@ isOneToOne: false
 "created_at": string | null,
 "deadline": string | null,
 "description": string | null,
+"due_date": string | null,
 "estimated_time": number,
 "health": string | null,
 "id": string,
@@ -2797,6 +2802,7 @@ isOneToOne: false
 "created_at": string | null,
 "deadline": string | null,
 "description": string | null,
+"due_date": string | null,
 "estimated_time": number,
 "health": string | null,
 "id": string,
@@ -2828,6 +2834,7 @@ isOneToOne: false
 "created_at": string | null,
 "deadline": string | null,
 "description": string | null,
+"due_date": string | null,
 "estimated_time": number,
 "health": string | null,
 "id": string,

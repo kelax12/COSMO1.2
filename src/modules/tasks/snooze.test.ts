@@ -48,14 +48,12 @@ describe('getSnoozeOptions', () => {
     expect(dayOf(nextWeek.deadline, pref)).toBe('2026-07-13');
   });
 
-  it("rend un INSTANT à stocker, plus une date nue castée à minuit UTC", () => {
-    // Régression R-01 : `'2026-07-02'` envoyé tel quel devenait minuit UTC,
-    // donc le 1er au soir aux Antilles. On vérifie qu'on écrit bien un instant,
-    // et que cet instant se relit au bon jour.
+  it("rend le JOUR du fuseau retenu (DAT-01), jamais un instant", () => {
+    // Régression R-01 : le jour est celui du fuseau choisi (UTC-4), et c'est
+    // une clé de jour : la frontière Supabase seule le convertit.
     const pref = manual(-4);
     const [tomorrow] = getSnoozeOptions(wednesday, pref);
-    expect(tomorrow.deadline).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
-    expect(tomorrow.deadline).not.toBe('2026-07-02');
+    expect(tomorrow.deadline).toBe('2026-07-02');
     expect(dayOf(tomorrow.deadline, pref)).toBe('2026-07-02');
   });
 

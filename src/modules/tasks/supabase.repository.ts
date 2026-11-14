@@ -3,7 +3,9 @@ import { getCurrentUser } from '@/lib/auth-user';
 import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { ITasksRepository, ToggleCompleteResult, type TaskPageParams } from './repository';
 import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskDependency } from './types';
-import { TaskRow, TaskDbInput, mapTaskFromDb, mapTaskToDb } from './mappers';
+import { TaskRowRead, TaskDbWrite, mapTaskFromDb, mapTaskToDb } from './mappers';
+import { deadlineColumns, type DeadlineColumns, type ColumnProbe } from './deadline-columns';
+import { storedDeadlineInstant } from '@/lib/deadline';
 import { PaginatedResult, DEFAULT_PAGE_SIZE, assertValidCursor } from '@/lib/pagination.types';
 import { fetchAllByCursor } from '@/lib/fetch-all-pages';
 import {
@@ -13,7 +15,26 @@ import type { CreateOptions } from '@/lib/restore-id';
 import { dayEndInTz, dayStartISOInTz } from '@/lib/timezone';
 
 /** Fields the client is allowed to set on insert (user_id is added server-side from auth.uid()). */
-type TaskDbCreateInput = Omit<TaskDbInput, 'user_id'> & { user_id: string };
+type TaskDbCreateInput = Omit<TaskDbWrite, 'user_id'> & { user_id: string };
+
+/** Code PostgREST / Postgres d'une colonne inconnue. */
+const MISSING_COLUMN = new Set(['42703', 'PGRST204']);
+
+/** Sonde d'une colonne d'échéance (bascule DAT-01) : aucune ligne lue. */
+export const probeTaskColumn: ColumnProbe = async (column) => {
+  if (!supabase) return null;
+  const { error } = await supabase.from('tasks').select(column).limit(0);
+  if (!error) return true;
+  return MISSING_COLUMN.has(error.code ?? '') ? false : null;
+};
+
+/** Retire du payload la colonne d'échéance que la base n'a pas (bascule DAT-01). */
+function fitDeadlineColumns<T extends TaskDbWrite>(payload: T, cols: DeadlineColumns): T {
+  const out = { ...payload };
+  if (!cols.day) delete out.due_date;
+  if (!cols.instant) delete out.deadline;
+  return out;
+}
 
 /**
  * Colonnes minimales pour les lectures de LISTE (audit scalabilité — réduction
@@ -24,7 +45,12 @@ type TaskDbCreateInput = Omit<TaskDbInput, 'user_id'> & { user_id: string };
  * Ne PAS y ajouter une colonne sans vérifier qu'un consommateur de liste la lit.
  */
 const TASK_LIST_COLUMNS =
-  'id,name,priority,category,deadline,estimated_time,created_at,updated_at,bookmarked,completed,completed_at,subtasks,kr_id,recurrence,is_collaborative,pending_invites,user_id,status,health' as const;
+  'id,name,priority,category,estimated_time,created_at,updated_at,bookmarked,completed,completed_at,subtasks,kr_id,recurrence,is_collaborative,pending_invites,user_id,status,health' as const;
+
+/** Liste de colonnes, plus l'échéance sous la forme que la base porte. */
+export function listColumns(cols: DeadlineColumns): string {
+  return `${TASK_LIST_COLUMNS},${cols.day ? 'due_date' : 'deadline'}`;
+}
 
 /** Taille d'une page de clé quand on enchaîne tout un sous-ensemble (listAll). */
 const LIST_ALL_PAGE_SIZE = 1000;
@@ -63,7 +89,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
   // quand il est borné par nature, et le compte vient de `count()`.
 
   /** Applique les filtres d'une `TaskQuery` (miroir : `matchesTaskQuery`). */
-  private applyQuery<B>(builder: B, q: TaskQuery): B {
+  private applyQuery<B>(builder: B, q: TaskQuery, cols: DeadlineColumns): B {
     // Typage volontairement minimal : les génériques de PostgREST, rappliqués
     // filtre après filtre, dépassent la profondeur d'instanciation de tsc.
     let b = builder as unknown as TaskFilterBuilder;
@@ -80,10 +106,14 @@ export class SupabaseTasksRepository implements ITasksRepository {
     }
     if (q.priorities) b = b.in('priority', [...q.priorities]);
     if (q.ids) b = b.in('id', [...q.ids]);
-    // Clés de jour → instants du fuseau retenu, sinon Postgres les caste en
-    // minuit UTC et la borne glisse d'un jour (même règle que getFiltered).
-    if (q.deadlineFrom) b = b.gte('deadline', dayStartISOInTz(q.deadlineFrom));
-    if (q.deadlineTo) b = b.lte('deadline', dayEndInTz(q.deadlineTo).toISOString());
+    if (cols.day) {
+      if (q.deadlineFrom) b = b.gte('due_date', q.deadlineFrom);
+      if (q.deadlineTo) b = b.lte('due_date', q.deadlineTo);
+    } else {
+      // Ancienne colonne : clés de jour → instants du fuseau retenu.
+      if (q.deadlineFrom) b = b.gte('deadline', dayStartISOInTz(q.deadlineFrom));
+      if (q.deadlineTo) b = b.lte('deadline', dayEndInTz(q.deadlineTo).toISOString());
+    }
     return b as unknown as B;
   }
 
@@ -92,16 +122,18 @@ export class SupabaseTasksRepository implements ITasksRepository {
     q: TaskQuery,
     limit: number,
     cursor: TaskCursor | null,
-  ): Promise<{ rows: TaskRow[]; hasMore: boolean }> {
+  ): Promise<{ rows: TaskRowRead[]; hasMore: boolean }> {
     if (!supabase) throw new Error('Supabase not configured');
     if (isEmptyTaskQuery(q)) return { rows: [], hasMore: false };
+    const cols = await deadlineColumns(probeTaskColumn);
     let query = this.applyQuery(
       supabase
         .rpc('get_my_tasks')
-        .select(TASK_LIST_COLUMNS)
+        .select(listColumns(cols))
         .order('created_at', { ascending: false })
         .order('id', { ascending: false }),
       q,
+      cols,
     ).limit(limit + 1); // +1 pour savoir s'il y a une page suivante
 
     if (cursor) {
@@ -114,13 +146,13 @@ export class SupabaseTasksRepository implements ITasksRepository {
 
     const { data, error } = await query;
     if (error) throw normalizeApiError(error);
-    const rows = (data || []) as unknown as TaskRow[];
+    const rows = (data || []) as unknown as TaskRowRead[];
     const hasMore = rows.length > limit;
     return { rows: hasMore ? rows.slice(0, limit) : rows, hasMore };
   }
 
   async listAll(query: TaskQuery = {}): Promise<Task[]> {
-    const rows = await fetchAllByCursor<TaskRow, TaskCursor>(
+    const rows = await fetchAllByCursor<TaskRowRead, TaskCursor>(
       async (cursor) => {
         const page = await this.fetchKeysetPage(query, LIST_ALL_PAGE_SIZE, cursor);
         const last = page.rows[page.rows.length - 1];
@@ -137,11 +169,13 @@ export class SupabaseTasksRepository implements ITasksRepository {
   async count(query: TaskQuery = {}): Promise<number> {
     if (!supabase) throw new Error('Supabase not configured');
     if (isEmptyTaskQuery(query)) return 0;
+    const cols = await deadlineColumns(probeTaskColumn);
     // `head` : aucune ligne transférée, PostgREST rend le total dans
     // `Content-Range`. Même chemin indexable que les lectures (C1).
     const { count, error } = await this.applyQuery(
       supabase.rpc('get_my_tasks', undefined, { head: true, count: 'exact' }),
       query,
+      cols,
     );
     if (error) throw normalizeApiError(error);
     return count ?? 0;
@@ -210,13 +244,14 @@ export class SupabaseTasksRepository implements ITasksRepository {
    */
   async getPendingSharedTasks(): Promise<Task[]> {
     if (!supabase) throw new Error('Supabase not configured');
+    const cols = await deadlineColumns(probeTaskColumn);
     const { data, error } = await supabase
       .rpc('get_pending_shared_tasks')
-      .select(TASK_LIST_COLUMNS)
+      .select(listColumns(cols))
       .order('created_at', { ascending: false })
       .limit(200);
     if (error) throw normalizeApiError(error);
-    return this.enrichSharedBy(((data || []) as unknown as TaskRow[]).map(mapTaskFromDb));
+    return this.enrichSharedBy(((data || []) as unknown as TaskRowRead[]).map(mapTaskFromDb));
   }
 
   async getById(id: string): Promise<Task | null> {
@@ -238,27 +273,24 @@ export class SupabaseTasksRepository implements ITasksRepository {
   async getByDate(date: string): Promise<Task[]> {
     if (!supabase) throw new Error('Supabase not configured');
     const targetDate = date.split('T')[0];
-    // La fenêtre est celle du jour VÉCU, pas du jour UTC. Les échéances sont
-    // écrites à minuit dans le fuseau retenu (`deadlineFromDayKey`) : borner en
-    // `…T00:00:00.000Z` faisait tomber hors fenêtre toute tâche du jour à l'est
-    // de Greenwich, et y faisait entrer celle de la veille à l'ouest.
-    const startOfDay = dayStartISOInTz(targetDate);
-    const endOfDay = dayEndInTz(targetDate).toISOString();
-    if (!startOfDay) return [];
-
-    // Même chemin indexable que getAll (cf. C1). Sans cela, cette lecture
-    // conservait le `Seq Scan` de la table globale : le filtre `deadline`
-    // ne rattrape rien, puisque c'est le OR de la policy qui rend l'index
-    // `idx_tasks_user_id` inutilisable, pas l'absence de prédicat.
-    const { data, error } = await supabase
-      .rpc('get_my_tasks')
-      .select(TASK_LIST_COLUMNS)
-      .gte('deadline', startOfDay)
-      .lte('deadline', endOfDay)
-      .order('deadline', { ascending: true });
+    const cols = await deadlineColumns(probeTaskColumn);
+    // Même chemin indexable que getAll (cf. C1).
+    let query = supabase.rpc('get_my_tasks').select(listColumns(cols));
+    if (cols.day) {
+      query = query.eq('due_date', targetDate).order('due_date', { ascending: true });
+    } else {
+      // Ancienne colonne : la fenêtre du jour VÉCU, dans le fuseau retenu.
+      const startOfDay = storedDeadlineInstant(targetDate);
+      if (!startOfDay) return [];
+      query = query
+        .gte('deadline', startOfDay)
+        .lte('deadline', dayEndInTz(targetDate).toISOString())
+        .order('deadline', { ascending: true });
+    }
+    const { data, error } = await query;
 
     if (error) throw normalizeApiError(error);
-    return this.enrichSharedBy(((data || []) as unknown as TaskRow[]).map(mapTaskFromDb));
+    return this.enrichSharedBy(((data || []) as unknown as TaskRowRead[]).map(mapTaskFromDb));
   }
 
   async getFiltered(filters: TaskFilters): Promise<Task[]> {
@@ -266,7 +298,8 @@ export class SupabaseTasksRepository implements ITasksRepository {
     // Même chemin indexable que getAll (cf. C1). `usePendingTasks` (consommé
     // par DeadlineCalendar et TasksSummary) passe par ici : c'était donc un
     // second Seq Scan de la table globale à chaque affichage du dashboard.
-    let query = supabase.rpc('get_my_tasks').select(TASK_LIST_COLUMNS);
+    const cols = await deadlineColumns(probeTaskColumn);
+    let query = supabase.rpc('get_my_tasks').select(listColumns(cols));
 
     if (filters.completed !== undefined) {
       query = query.eq('completed', filters.completed);
@@ -288,21 +321,23 @@ export class SupabaseTasksRepository implements ITasksRepository {
       query = query.lte('priority', filters.priorityMax);
     }
 
-    // `deadlineBefore` / `deadlineAfter` sont des CLÉS DE JOUR ('YYYY-MM-DD'),
-    // bornes incluses. Les convertir en instants du fuseau retenu, sinon
-    // Postgres les caste en minuit UTC et la borne glisse d'un jour.
+    // `deadlineBefore` / `deadlineAfter` : CLÉS DE JOUR, bornes incluses.
     if (filters.deadlineBefore) {
-      query = query.lte('deadline', dayEndInTz(filters.deadlineBefore).toISOString());
+      query = cols.day
+        ? query.lte('due_date', filters.deadlineBefore)
+        : query.lte('deadline', dayEndInTz(filters.deadlineBefore).toISOString());
     }
 
     if (filters.deadlineAfter) {
-      query = query.gte('deadline', dayStartISOInTz(filters.deadlineAfter));
+      query = cols.day
+        ? query.gte('due_date', filters.deadlineAfter)
+        : query.gte('deadline', dayStartISOInTz(filters.deadlineAfter));
     }
 
     const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) throw normalizeApiError(error);
-    return this.enrichSharedBy(((data || []) as unknown as TaskRow[]).map(mapTaskFromDb));
+    return this.enrichSharedBy(((data || []) as unknown as TaskRowRead[]).map(mapTaskFromDb));
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -317,8 +352,9 @@ export class SupabaseTasksRepository implements ITasksRepository {
     // c'est un second argument, reserve aux « Annuler » (R-08). La
     // whitelist `mapToDb` et le `user_id` pose depuis la session sont
     // inchanges.
+    const cols = await deadlineColumns(probeTaskColumn);
     const dbInput: TaskDbCreateInput = {
-      ...mapTaskToDb(input),
+      ...fitDeadlineColumns(mapTaskToDb(input), cols),
       user_id: user.id,
       ...(options?.restoreId ? { id: options.restoreId } : {}),
     };
@@ -335,7 +371,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
 
   async update(id: string, updates: UpdateTaskInput): Promise<Task> {
     if (!supabase) throw new Error('Supabase not configured');
-    const dbUpdates = mapTaskToDb(updates);
+    const dbUpdates = fitDeadlineColumns(mapTaskToDb(updates), await deadlineColumns(probeTaskColumn));
 
     const { data, error } = await supabase
       .from('tasks')
@@ -370,18 +406,15 @@ export class SupabaseTasksRepository implements ITasksRepository {
     // fire-and-forget côté client : perdu si l'onglet se fermait, dupliqué si
     // l'utilisateur décochait puis recochait.
     //
-    // `p_next_deadline` est calculée par l'appelant : c'est l'INSTANT de minuit
-    // du jour visé, dans le fuseau de l'utilisateur (mig. 133). Elle transitait
-    // avant en date nue, que le SQL castait en timestamptz avec le fuseau du
-    // serveur, donc UTC : l'occurrence suivante naissait la veille pour tout
-    // décalage négatif (risque R-01). Le serveur ne juge jamais quel jour on
-    // est — il ne connaît pas le fuseau de l'utilisateur.
+    // `nextDeadline` est un JOUR calculé par l'appelant. La RPC reçoit l'instant
+    // de minuit de ce jour dans le fuseau de l'utilisateur (mig. 133), que
+    // `echeance_jour` (mig. 251) ramène au même jour sans connaître le fuseau.
     const { data, error } = await supabase.rpc('toggle_task_complete_v2', {
       p_task_id: id,
-      p_next_deadline: nextDeadline ?? null,
+      p_next_deadline: nextDeadline ? storedDeadlineInstant(nextDeadline) : null,
     });
     if (error) throw normalizeApiError(error);
-    const payload = data as { task: TaskRow; spawned: TaskRow | null };
+    const payload = data as { task: TaskRowRead; spawned: TaskRowRead | null };
     return {
       task: mapTaskFromDb(payload.task),
       spawned: payload.spawned ? mapTaskFromDb(payload.spawned) : null,
@@ -394,7 +427,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
       p_task_id: id,
     });
     if (error) throw normalizeApiError(error);
-    return mapTaskFromDb(data as TaskRow);
+    return mapTaskFromDb(data as TaskRowRead);
   }
 
   // ═══════════════════════════════════════════════════════════════════

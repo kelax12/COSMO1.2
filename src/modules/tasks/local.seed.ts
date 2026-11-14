@@ -7,6 +7,7 @@
 
 import { Task } from './types';
 import { localizeSeed } from '@/lib/seed-i18n';
+import { addDaysToKey, todayKeyInTz } from '@/lib/timezone';
 
 // Helper pour générer des dates
 const getDate = (daysFromNow: number): string => {
@@ -14,6 +15,9 @@ const getDate = (daysFromNow: number): string => {
   date.setDate(date.getDate() + daysFromNow);
   return date.toISOString();
 };
+
+// Échéance : une clé de jour (DAT-01).
+const getDay = (daysFromNow: number): string => addDaysToKey(todayKeyInTz(), daysFromNow);
 
 // Raccourci pour créer une tâche rapidement
 const t = (
@@ -25,7 +29,7 @@ const t = (
   isCollaborative = false
 ): Task => ({
   id, name, description, priority, category,
-  deadline: getDate(deadlineDays),
+  deadline: getDay(deadlineDays),
   estimatedTime,
   createdAt: getDate(createdDays),
   bookmarked,
@@ -72,7 +76,7 @@ export const DEMO_TASKS: Task[] = [
     description: 'Vérifier les chiffres et commenter',
     priority: 3,
     category: 'cat-6',
-    deadline: getDate(5),
+    deadline: getDay(5),
     estimatedTime: 45,
     createdAt: getDate(-1),
     bookmarked: false,
@@ -87,7 +91,7 @@ export const DEMO_TASKS: Task[] = [
     description: 'Agenda + présentation + invitations',
     priority: 2,
     category: 'cat-5',
-    deadline: getDate(3),
+    deadline: getDay(3),
     estimatedTime: 90,
     createdAt: getDate(-2),
     bookmarked: false,
