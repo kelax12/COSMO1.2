@@ -12,7 +12,7 @@
 | Migrations SQL | **229** | fichiers `NNN_*.sql` de `supabase/migration/` |
 | Dernière migration | **254** | plus grand préfixe numérique de `supabase/migration/` |
 | Workflows GitHub | **36** | fichiers de `.github/workflows/` |
-| dont planifiés | **27** | workflows portant un `schedule:` |
+| dont planifiés | **24** | workflows portant un `schedule:` |
 | Fichiers de `scripts/` | **179** | fichiers suivis (budget d outillage, `scripts/outillage.reference.json`) |
 | Lignes de `scripts/` | **41921** | lignes des fichiers suivis de `scripts/` |
 | Tests de garde | **115** | fichiers `*.guard.test.*` du dépôt |

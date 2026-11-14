@@ -15,10 +15,9 @@
 name: renewal-notice
 
 on:
-  schedule:
-    # 07:12 UTC, tous les jours. Heure decalee des autres crons du depot pour
-    # ne pas empiler les executions sur la meme minute.
-    - cron: '12 7 * * *'
+  # Plus de `schedule:` depuis le 2026-11-14 : pg_cron (`cosmo-renewal-notice` 07:12 et
+  # `cosmo-seat-alert` 07:14 UTC, mig. 246) appelle les fonctions. Ce workflow reste pour
+  # le rattrapage manuel (docs/MISES-EN-SERVICE.md § 2sexies).
   workflow_dispatch:
 
 # Moindre privilege (A-8, CodeQL actions/missing-workflow-permissions) :

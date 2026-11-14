@@ -84,7 +84,7 @@ DELETE FROM auth.mfa_factors WHERE user_id = '<uid>';
 | `cosmo-uptime`, `cron_probe()` | mig. `252` | sonde de disponibilité toutes les 5 min (contrôles d'`uptime.yml`), lignes `sonde-site`, `sonde-guide`, `sonde-auth`, fenêtre 20 min |
 | `Journal des crons` | `cron-journal.yml` → `ci-alert.yml` | rouge sur un job ou une sonde `absent` ou en `echec` dans sa fenêtre |
 
-| Workflow GitHub (UTC) | Job pg_cron | `cron_invoke` | Fenêtre |
+| Ancien déclencheur GitHub (UTC), retiré | Job pg_cron | `cron_invoke` | Fenêtre |
 |---|---|---|---|
 | `org-webhook-dispatch` (`7-59/10 * * * *`) | `cosmo-org-webhook-dispatch` | `org-webhook-dispatch` | 35 min |
 | `org-digest` horaire (`23 * * * *`) | `cosmo-org-digest-hourly` | `org-digest?mode=hourly` | 2 h 15 |
@@ -95,8 +95,8 @@ DELETE FROM auth.mfa_factors WHERE user_id = '<uid>';
 
 - Secrets Vault (noms fixes) : `cosmo_project_url`, `cosmo_cron_secret` (= `CRON_SECRET` des Edge Functions et d'Actions).
 - Rattrapage d'un passage : `select public.cron_invoke('<job>');` en `postgres`, ou le `workflow_dispatch` d'origine (bail + rejeu idempotent).
-- État courant : `JOBS_BASCULES` de `scripts/check-cron-runs.mjs` (source unique de la garde et de la sonde) dit quels jobs ont quitté GitHub ; le ledger de prod dit les migrations.
-- 🔴 Bascule job par job : un job entre dans `JOBS_BASCULES` et perd son `schedule:` GitHub dans le même commit, le jour de son premier `ok` dans `cron_runs`. `src/edge-cron-lease.guard.test.ts` refuse l'un sans l'autre.
+- État courant : les six jobs sont basculés, aucun n'est planifié par GitHub ; `workflow_dispatch` reste sur chacun pour le rattrapage. `JOBS_BASCULES` de `scripts/check-cron-runs.mjs` (source unique de la garde et de la sonde) le dit ; le ledger de prod dit les migrations.
+- 🔴 Bascule job par job : un job entre dans `JOBS_BASCULES` et perd son `schedule:` GitHub dans le même commit, après son premier `ok` dans `cron_runs`. `src/edge-cron-lease.guard.test.ts` refuse l'un sans l'autre.
 - ❌ `renewal-notice` et `seat-alert` partagent un déclencheur : ils basculent ensemble.
 - ✅ Deux ordonnanceurs ensemble sont sûrs (bail) ; un trou ne l'est pas.
 - ⚠️ La sonde pg_cron ne voit pas une panne de la base elle-même (seul `absent` la dit), et l'alerte part par GitHub : `uptime.yml` garde son `schedule:`.

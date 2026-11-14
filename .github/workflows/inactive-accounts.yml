@@ -16,9 +16,9 @@
 name: inactive-accounts
 
 on:
-  schedule:
-    # 06:37 UTC, tous les jours. Heure decalee des autres crons du depot.
-    - cron: '37 6 * * *'
+  # Plus de `schedule:` depuis le 2026-11-14 : pg_cron (`cosmo-inactive-accounts`, 06:37 UTC,
+  # mig. 246) appelle la fonction. Ce workflow reste pour le rattrapage manuel
+  # (docs/MISES-EN-SERVICE.md § 2sexies).
   workflow_dispatch:
 
 # Moindre privilege (A-8) : le job n appelle qu une URL.

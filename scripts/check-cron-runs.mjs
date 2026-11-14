@@ -30,7 +30,7 @@ export const SONDES = ['sonde-auth', 'sonde-guide', 'sonde-site'];
  * `ok`. Hors liste, `absent` n'est qu'un avertissement ; `echec` rougit pour tous.
  * ❌ Jamais retirer un job de cette liste sans rendre son `schedule:` à GitHub.
  */
-export const JOBS_BASCULES = ['org-webhook-dispatch', 'org-digest-hourly'];
+export const JOBS_BASCULES = ['org-webhook-dispatch', 'org-digest-hourly', 'org-digest-daily', 'renewal-notice', 'seat-alert', 'inactive-accounts'];
 
 const date = (d) => (d ? new Date(d).toISOString().replace('.000Z', 'Z') : 'jamais');
 

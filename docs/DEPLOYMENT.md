@@ -87,6 +87,9 @@ supabase secrets set BUG_REPORT_FROM="COSMO <thecosmo@send.thecosmo.app>"
 
 E-mails d'authentification, Turnstile, second facteur de `/admin`, traitements planifiés pg_cron : [`MISES-EN-SERVICE.md`](./MISES-EN-SERVICE.md), mêmes numéros de section.
 
+- Traitements planifiés : les six jobs de `cron_runs_verdict()` tournent dans pg_cron, plus aucun `schedule:` GitHub ; `workflow_dispatch` reste pour le rattrapage.
+- Restent planifiés sur GitHub les workflows qui lisent, comparent ou sondent (`Journal des crons`, `uptime.yml`, dérives, postures, sauvegardes, digests de lecture) : leur rôle est de voir pg_cron et la production de l'extérieur, un ordonnanceur logé dans la base se tairait avec elle.
+
 ## 3. Rollback
 
 Front (immédiat, sans rebuild ni porte) : Vercel → Deployments → déploiement vert précédent → **⋯ → Promote to Production** (ou `vercel rollback <deployment-url>`).

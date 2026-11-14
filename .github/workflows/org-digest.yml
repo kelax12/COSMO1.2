@@ -14,11 +14,9 @@
 name: org-digest
 
 on:
-  # Mode `hourly` planifie par pg_cron depuis le 2026-11-13 (`cosmo-org-digest-hourly`,
-  # mig. 246). Le quotidien reste ici jusqu a son premier passage reussi dans pg_cron.
-  schedule:
-    # 07:41 UTC : le resume quotidien.
-    - cron: '41 7 * * *'
+  # Plus de `schedule:` : pg_cron appelle les deux modes (`cosmo-org-digest-hourly` depuis
+  # le 2026-11-13, `cosmo-org-digest-daily` 07:41 UTC depuis le 2026-11-14, mig. 246).
+  # Ce workflow reste pour le rattrapage manuel (docs/MISES-EN-SERVICE.md § 2sexies).
   workflow_dispatch:
     inputs:
       mode:
@@ -39,7 +37,6 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://ykeugqfgklejcdbrmawy.supabase.co' }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
-          SCHEDULE: ${{ github.event.schedule }}
           INPUT_MODE: ${{ github.event.inputs.mode }}
         run: |
           if [ -z "$SUPABASE_URL" ] || [ -z "$CRON_SECRET" ]; then
@@ -47,7 +44,7 @@ jobs:
             exit 1
           fi
           MODE="hourly"
-          if [ "$SCHEDULE" = "41 7 * * *" ] || [ "$INPUT_MODE" = "daily" ]; then MODE="daily"; fi
+          if [ "$INPUT_MODE" = "daily" ]; then MODE="daily"; fi
           code=$(curl -s -o /tmp/out.json -w '%{http_code}' -X POST \
             "$SUPABASE_URL/functions/v1/org-digest?mode=$MODE" \
             -H "x-cron-secret: $CRON_SECRET")

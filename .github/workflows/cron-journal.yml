@@ -15,9 +15,8 @@
 # 🔴 POURQUOI ELLE RESTE SUR GITHUB : une surveillance logee dans pg_cron se
 #    tairait le jour ou pg_cron s arrete. Le retard du cron de GitHub ne
 #    fausse rien : la fenetre se juge sur les dates du journal.
-# ⚠️ Planifiee depuis la premiere bascule (2026-11-13). Elle ne rougit sur un
-#    job `absent` que s il est bascule (`JOBS_BASCULES`, check-cron-runs.mjs) :
-#    les autres sont encore tenus par GitHub.
+# ⚠️ Planifiee depuis la premiere bascule (2026-11-13). Les six jobs sont
+#    bascules (`JOBS_BASCULES`, check-cron-runs.mjs) : `absent` rougit pour tous.
 # ⚠️ Secret absent = ECHEC, jamais un silence vert.
 # ═══════════════════════════════════════════════════════════════════
 name: Journal des crons
