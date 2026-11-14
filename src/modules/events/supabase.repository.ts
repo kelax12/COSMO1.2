@@ -34,8 +34,10 @@ export class SupabaseEventsRepository implements IEventsRepository {
   // ═══════════════════════════════════════════════════════════════════
 
   /** Tout, par pages de clé jusqu'à la dernière, sans plafond (PER-01) : réservé à l'export. */
+  // Les pages de clé vont du plus récent au plus ancien : on rend l'ordre de
+  // la démo et du contrat, début croissant (`ORDER BY start_time, id`).
   async getAll(): Promise<CalendarEvent[]> {
-    return this.getAllForExport();
+    return (await this.getAllForExport()).reverse();
   }
 
   /** Nombre exact d'événements personnels, sans rapatrier les lignes. */
