@@ -29,6 +29,11 @@ function arbre() {
   ecrire(racine, 'src/locales/fr/tasks.json', '{}')
   ecrire(racine, 'docs/adr/0001-x.md')
   ecrire(racine, 'docs/adr/README.md')
+  ecrire(racine, 'docs/TESTING.md')
+  ecrire(racine, 'api/collect.ts')
+  ecrire(racine, 'api/collect.test.ts')
+  ecrire(racine, 'api/_lib.ts')
+  ecrire(racine, 'node_modules/x/CLAUDE.md')
   ecrire(racine, 'package.json', JSON.stringify({ scripts: { 'check:a': 'x', 'i18n:b': 'x', 'validate:c': 'x', build: 'x' } }))
   ecrire(racine, 'supabase/schema.sql', [
     'CREATE TABLE public.t1 (id int);',
@@ -48,6 +53,7 @@ describe('calculerFaits : chaque chiffre vient de la source', () => {
         edgeFunctions: 2, migrations: 2, derniereMigration: '002', workflows: 2, workflowsPlanifies: 1,
         scriptsFichiers: 0, scriptsLignes: 0, gardesTests: 0,
         modules: 1, namespaces: 2, gardes: 3, adr: 1,
+        fonctionsVercel: 1, claudeMd: 1, docsVivantes: 1,
         tables: 2, tablesRls: 1, policies: 1, fonctionsSql: 1,
       })
     } finally {
