@@ -10185,7 +10185,7 @@ CREATE TABLE public.affiliate_settings (
     code_hash text,
     token_secret text DEFAULT encode(extensions.gen_random_bytes(32), 'hex'::text) NOT NULL,
     code_changed_at timestamp with time zone,
-    deduction_bp integer DEFAULT 2560 NOT NULL,
+    deduction_bp integer DEFAULT 1280 NOT NULL,
     CONSTRAINT affiliate_settings_commission_bp_check CHECK (((commission_bp >= 0) AND (commission_bp <= 10000))),
     CONSTRAINT affiliate_settings_deduction_bp_check CHECK (((deduction_bp >= 0) AND (deduction_bp <= 10000))),
     CONSTRAINT affiliate_settings_fee_bp_check CHECK (((fee_bp >= 0) AND (fee_bp <= 10000))),

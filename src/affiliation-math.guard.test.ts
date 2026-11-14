@@ -8,31 +8,31 @@ import {
   refundCommission,
 } from '../supabase/functions/_shared/affiliation-math';
 
-const TAUX = { deductionBp: 2560, feeBp: 150, feeFixedCents: 25, rateBp: 5000 };
+const TAUX = { deductionBp: 1280, feeBp: 150, feeFixedCents: 25, rateBp: 5000 };
 
 describe('affiliation-math', () => {
-  it('2000 c sans TVA : déduction 512, frais 55, base 1433, commission 717', () => {
+  it('2000 c sans TVA : déduction 256, frais 55, base 1689, commission 845', () => {
     expect(computeCommission({ grossCents: 2000, vatBp: 0, ...TAUX })).toEqual({
       vatCents: 0,
-      deductionCents: 512,
+      deductionCents: 256,
       feeCents: 55,
-      baseCents: 1433,
-      commissionCents: 717,
+      baseCents: 1689,
+      commissionCents: 845,
     });
   });
 
-  it('2400 c avec TVA 20 % : TVA 400, déduction 614, frais 61, base 1325, commission 663', () => {
+  it('2400 c avec TVA 20 % : TVA 400, déduction 307, frais 61, base 1632, commission 816', () => {
     expect(computeCommission({ grossCents: 2400, vatBp: 2000, ...TAUX })).toEqual({
       vatCents: 400,
-      deductionCents: 614,
+      deductionCents: 307,
       feeCents: 61,
-      baseCents: 1325,
-      commissionCents: 663,
+      baseCents: 1632,
+      commissionCents: 816,
     });
   });
 
-  it('1000 c : (1000 − 256 − 40) × 1/2 = 352', () => {
-    expect(computeCommission({ grossCents: 1000, vatBp: 0, ...TAUX }).commissionCents).toBe(352);
+  it('1000 c : (1000 − 128 − 40) × 1/2 = 416', () => {
+    expect(computeCommission({ grossCents: 1000, vatBp: 0, ...TAUX }).commissionCents).toBe(416);
   });
 
   it('ancienne formule (déduction 0, 39,5 %) : 2000 c → 768, inchangé', () => {

@@ -13,7 +13,7 @@
 export interface CommissionInput {
   grossCents: number;
   vatBp: number;
-  /** Part du montant payé retirée avant commission (mig. 238, 2560 = 25,6 %). */
+  /** Part du montant payé retirée avant commission (mig. 238, 1280 = 12,8 % depuis la mig. 255). */
   deductionBp: number;
   feeBp: number;
   feeFixedCents: number;
