@@ -63,6 +63,8 @@ const EXPORTS = {
       category: 'category',
       priority: 'priority',
       deadline: 'deadline',
+      // Mig. 251 : le jour d'échéance, même donnée que `deadline` (retirée par la 253).
+      due_date: 'deadline',
       estimated_time: 'durationMin',
       recurrence: 'recurrence',
       subtasks: 'subtasks',

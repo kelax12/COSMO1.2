@@ -37,7 +37,6 @@ import {
   type SmartRulePreset,
   type TaskList,
 } from '@/modules/lists';
-import { deadlineFromDayKey } from '@/lib/deadline';
 import { todayKeyInTz } from '@/lib/timezone';
 import { VIRTUAL_TODAY_ID } from './task-page-filter';
 import type { Translator } from '@/i18n/useT';
@@ -171,7 +170,7 @@ export function useTaskLists({ updateTaskDeadline, t }: Params) {
     // Ajouter une tâche = poser sa deadline à aujourd'hui (00:00 local).
     if (selectingTasksForListId === VIRTUAL_TODAY_ID) {
       // Un seul chemin d'écriture pour toutes les échéances (@/lib/deadline).
-      const todayISO = deadlineFromDayKey(todayKeyInTz());
+      const todayISO = todayKeyInTz();
       selectedTasksForList.forEach((taskId) => updateTaskDeadline(taskId, todayISO));
     } else {
       // Liste manuelle classique

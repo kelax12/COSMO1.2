@@ -16,22 +16,24 @@ import { toast } from 'sonner';        // ❌ y compris dans une page lazy
 - ⚠️ Le `<Toaster>` d'`App.tsx` est en `lazy()` derrière son PROPRE `<Suspense fallback={null}>` : suspendre sur la frontière des routes cacherait la page.
 - ⚠️ Une règle qui ne s'appuie sur aucun fichier commité n'est qu'une intention : vérifier que la façade est suivie par git avant de la citer.
 
-## Échéances : un jour, pas un instant
+## Échéances : un jour, pas un instant (DAT-01)
 
-`tasks.deadline` est un `timestamptz`, mais la personne saisit un **jour**. Un seul module fait foi : `src/lib/deadline.ts`.
+La personne saisit un **jour**. Dans le front, `Task.deadline` et `TeamTask.deadline` sont des clés `'YYYY-MM-DD'` (`''` = aucune) ; seules les frontières (repository Supabase, démo, CLI) parlent aux colonnes. Module qui fait foi : `src/lib/deadline.ts`.
 
 ```typescript
-new Date(formData.deadline).toISOString()   // ❌ minuit UTC, la veille à l'ouest
-task.deadline.slice(0, 10)                  // ❌ jour UTC, pas le jour vécu
-deadlineFromDayKey(formData.deadline)       // ✅ écriture
-deadlineDayKey(task.deadline)               // ✅ lecture
-isDueToday(...) / isOverdue(...)            // ✅ comparaisons
+new Date(task.deadline)                     // ❌ minuit UTC, la veille à l'ouest
+task.deadline.slice(0, 10)                  // ❌ jour UTC d'un instant hérité
+updates: { deadline: dayKey }               // ✅ écriture : la clé de jour
+deadlineDayKey(task.deadline)               // ✅ lecture (tolère un instant hérité)
+deadlineLocalDate(task.deadline)            // ✅ Date locale à midi, pour formater
+isDueToday(...) / isOverdue(...)            // ✅ comparaisons de jours
 ```
 
-- 🔴 Trois écritures divergentes ont produit, à l'ouest du méridien, « En retard » pour une tâche du jour. Invisible depuis la métropole : ne pas conclure de l'avoir vu marcher.
-- ❌ Comparer des INSTANTS pour décider « en retard » (`new Date(deadline) < new Date()`) : on compare des jours.
-- ⚠️ Les lignes écrites avant le correctif ne sont pas migrées, volontairement : la base ne connaît pas le fuseau de chaque compte.
-- ✅ `team_tasks.deadline` est une `date` et traverse sans conversion ; `deadlineDayKey` gère les deux formes.
+- 🔴 Base : `tasks.due_date date` (mig. `251`) remplace `tasks.deadline timestamptz`, retirée par la `253` (`supabase/migration-differee/`, après vérification). Le front est déployé avant : `tasks/deadline-columns.ts` tient l'état sondé une fois par session, le repository lit, filtre et écrit la forme que la base porte ; le CLI fait de même.
+- 🔴 Ancien instant → jour : `dayKeyFromStoredDeadline` (front, CLI) et `public.echeance_jour` (SQL) sont miroirs. Instant au quart d'heure près = minuit écrit dans le fuseau de son auteur, jour de l'instant + 13 h en UTC (exact de UTC-10 à UTC+13) ; autre instant : jour à Paris. Aucun fuseau n'est stocké par compte.
+- ⚠️ `toggle_task_complete_v2` garde sa signature : le front envoie `storedDeadlineInstant(jour)`, la RPC écrit `due_date = echeance_jour(...)`.
+- ❌ Comparer des INSTANTS pour décider « en retard » : on compare des jours. Invisible depuis la métropole : ne pas conclure de l'avoir vu marcher.
+- ✅ `team_tasks.deadline` reste une `date` et garde son nom : même type que `due_date`, et un renommage toucherait le journal `team_task_activity` (champ `'deadline'` écrit), les agrégats et le contrat sortant des webhooks, sans changer aucun comportement.
 
 ## Fuseau horaire
 

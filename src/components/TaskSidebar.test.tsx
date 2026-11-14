@@ -11,8 +11,8 @@ import { screen, within, waitFor, cleanup, fireEvent, act, renderHook } from '@t
 import TaskSidebar from './TaskSidebar';
 import {
   renderApp, resetDemoWorld, setViewport, makeTask, storedTasks, fakeAuth, fakeBilling,
-  dayKeyFromToday, TODAY_KEY, lazyT, findFiche, warmDemoCaches, itBug } from '@/test/tasks-ui-harness';
-import { deadlineFromDayKey } from '@/lib/deadline';
+  dayKeyFromToday, TODAY_KEY, lazyT, findFiche, warmDemoCaches } from '@/test/tasks-ui-harness';
+import { storedDeadlineInstant } from '@/lib/deadline';
 import { useTimezonePref, todayKeyInTz } from '@/lib/timezone';
 import type { Task } from '@/modules/tasks';
 
@@ -252,12 +252,10 @@ describe('TaskSidebar · ÉCHÉANCE (vague 13)', () => {
     expect(within(cardOf('Échéance du jour')).getByText(agenda.t('sidebar.deadline', { date: '20/11/2026' }))).toBeTruthy();
   });
 
-  // 🔴 BUG DÉCRIT : la carte formate `new Date(task.deadline)` avec le fuseau de
-  // la MACHINE (`formatDate`), alors que l'échéance est un jour vécu dans le
-  // fuseau CHOISI (`deadlineDayKey`, src/lib/CLAUDE.md). Avec un fuseau manuel
-  // qui change de jour par rapport à la machine, la carte annonce le mauvais
-  // jour. Le tableau, lui, passe par `formatDeadlineSmart` et reste juste.
-  itBug('ÉCHÉANCE · fuseau manuel : la carte affiche le jour du fuseau choisi (BUG : jour de la machine)', async () => {
+  // Bug corrigé par DAT-01 : la carte formatait `new Date(task.deadline)`, jour de
+  // la MACHINE ; elle passe par `deadlineLocalDate`. L'échéance semée est une
+  // valeur d'avant la bascule (instant), que la démo ramène au jour du fuseau choisi.
+  it('ÉCHÉANCE · fuseau manuel : la carte affiche le jour du fuseau choisi', async () => {
     const machineOffset = -new Date().getTimezoneOffset() / 60;
     const chosen = machineOffset <= 0 ? Math.min(14, Math.trunc(machineOffset) + 14) : Math.max(-12, Math.trunc(machineOffset) - 11);
     const pref = { mode: 'manual', offsetHours: chosen } as const;
@@ -266,7 +264,7 @@ describe('TaskSidebar · ÉCHÉANCE (vague 13)', () => {
     act(() => result.current.setOffsetHours(chosen));
     try {
       const day = todayKeyInTz(pref);
-      resetDemoWorld([makeTask({ id: 'x', name: 'Échéance du fuseau', deadline: deadlineFromDayKey(day, pref) })]);
+      resetDemoWorld([makeTask({ id: 'x', name: 'Échéance du fuseau', deadline: storedDeadlineInstant(day, pref) })]);
       renderApp(<TaskSidebar />, { route: '/agenda' });
       await waitFor(() => expect(names()).toEqual(['Échéance du fuseau']));
       const [y, m, d] = day.split('-');

@@ -21,7 +21,7 @@ import TaskTable from './TaskTable';
 import {
   renderApp, resetDemoWorld, setViewport, makeTask, storedTasks, fakeAuth, fakeBilling,
   dayKeyFromToday, TODAY_KEY, lazyT, findFiche, warmDemoCaches } from '@/test/tasks-ui-harness';
-import { deadlineFromDayKey, deadlineDayKey } from '@/lib/deadline';
+import { storedDeadlineInstant, deadlineDayKey } from '@/lib/deadline';
 import { useTimezonePref, todayKeyInTz, addDaysToKey } from '@/lib/timezone';
 import type { Task } from '@/modules/tasks';
 
@@ -259,8 +259,8 @@ describe('TaskTable · ÉCHÉANCE (vague 13)', () => {
       const todayThere = todayKeyInTz(pref);
       expect(todayThere).not.toBe(TODAY_KEY);
       resetDemoWorld([
-        makeTask({ id: '1', name: 'T jour du fuseau', deadline: deadlineFromDayKey(todayThere, pref) }),
-        makeTask({ id: '2', name: 'T veille du fuseau', deadline: deadlineFromDayKey(addDaysToKey(todayThere, -1), pref) }),
+        makeTask({ id: '1', name: 'T jour du fuseau', deadline: storedDeadlineInstant(todayThere, pref) }),
+        makeTask({ id: '2', name: 'T veille du fuseau', deadline: storedDeadlineInstant(addDaysToKey(todayThere, -1), pref) }),
       ]);
       renderApp(<ControlledTable sortField="name" />);
       await waitFor(() => expect(rowNames()).toHaveLength(2));
@@ -274,7 +274,7 @@ describe('TaskTable · ÉCHÉANCE (vague 13)', () => {
     }
   });
 
-  it('ÉCHÉANCE · replanifier une tâche en retard « à demain » stocke le minuit de demain', async () => {
+  it('ÉCHÉANCE · replanifier une tâche en retard « à demain » stocke le jour de demain', async () => {
     resetDemoWorld([makeTask({ id: 'late', name: 'En retard', dueDay: dayKeyFromToday(-3) })]);
     renderApp(<ControlledTable />);
     await waitFor(() => expect(rowNames()).toEqual(['En retard']));
@@ -284,7 +284,7 @@ describe('TaskTable · ÉCHÉANCE (vague 13)', () => {
     fireEvent.keyDown(sub, { key: 'ArrowRight' });
     fireEvent.click(await screen.findByRole('menuitem', { name: 'Demain' }));
     await waitFor(() => expect(deadlineDayKey(stored('late')!.deadline)).toBe(dayKeyFromToday(1)));
-    expect(stored('late')!.deadline).toBe(deadlineFromDayKey(dayKeyFromToday(1)));
+    expect(stored('late')!.deadline).toBe(dayKeyFromToday(1));
   });
 });
 

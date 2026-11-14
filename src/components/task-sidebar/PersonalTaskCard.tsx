@@ -12,6 +12,7 @@ import type { Task } from '@/modules/tasks';
 import type { Friend } from '@/modules/friends';
 import CollaboratorAvatars from '../CollaboratorAvatars';
 import { formatDate } from '@/i18n/format';
+import { deadlineLocalDate } from '@/lib/deadline';
 import { useT } from '@/i18n/useT';
 
 interface PersonalTaskCardProps {
@@ -135,7 +136,7 @@ const PersonalTaskCard: React.FC<PersonalTaskCardProps> = ({
 
       <div className="mt-2 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
         {task.deadline
-          ? t('sidebar.deadline', { date: formatDate(new Date(task.deadline)) })
+          ? t('sidebar.deadline', { date: formatDate(deadlineLocalDate(task.deadline) ?? new Date()) })
           : t('sidebar.noDeadline')}
       </div>
 

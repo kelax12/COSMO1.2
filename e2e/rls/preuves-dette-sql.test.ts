@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// Preuves des mig. 242, 243, 244, 248, 249 et 250, rejouées sur la base fraîche du job
+// Preuves des mig. 242, 243, 244, 248 à 251 et 253, rejouées sur la base fraîche du job
 // `rls-integration`.
 //
 // Une preuve de `supabase/proofs/` est un bloc `DO` qui se termine TOUJOURS
@@ -21,7 +21,9 @@ import { join } from 'node:path';
 import { describe, it, expect, afterAll } from 'vitest';
 import { connecter } from './catalogue';
 
-const PREUVES: { preuve: string; migration: string }[] = [
+// `dossier` : `supabase/migration-differee` pour une migration écrite mais pas
+// encore rejouée (253, retrait de `tasks.deadline`).
+const PREUVES: { preuve: string; migration: string; dossier?: string }[] = [
   { preuve: '242.proof.sql', migration: '242_ferme_par_defaut_anon.sql' },
   { preuve: '243.proof.sql', migration: '243_regle_unique_projet_equipe.sql' },
   { preuve: '244.proof.sql', migration: '244_select_permissive_unique.sql' },
@@ -32,6 +34,8 @@ const PREUVES: { preuve: string; migration: string }[] = [
   { preuve: '249.proof.sql', migration: '249_taches_echeance_priorite_facultatives.sql' },
   // `friend_requests` à la forme de la production (divergence FRIENDS-USER-ID).
   { preuve: '250.proof.sql', migration: '250_friend_requests_forme_prod.sql' },
+  { preuve: '251.proof.sql', migration: '251_taches_due_date.sql' },
+  { preuve: '253.proof.sql', migration: '253_taches_retrait_deadline.sql', dossier: 'supabase/migration-differee' },
 ];
 
 const lire = (chemin: string) => readFileSync(join(process.cwd(), chemin), 'utf8').replace(/\r\n/g, '\n');
@@ -41,14 +45,14 @@ afterAll(async () => {
   await db.end();
 });
 
-describe('supabase/proofs : preuves 242 à 244, 248, 249 et 250 rejouées sur la base fraîche', () => {
-  for (const { preuve, migration } of PREUVES) {
+describe('supabase/proofs : preuves 242 à 244, 248 à 251 et 253 rejouées sur la base fraîche', () => {
+  for (const { preuve, migration, dossier = 'supabase/migration' } of PREUVES) {
     it(`${preuve} embarque le texte exact de ${migration}`, () => {
       const texte = lire(`supabase/proofs/${preuve}`);
       const m = texte.match(/EXECUTE \$mig\$\n([\s\S]*?)\n\$mig\$;/);
       expect(m, `${preuve} : aucun bloc EXECUTE $mig$ … $mig$`).not.toBeNull();
       expect(m![1], `${preuve} : le texte embarqué a dérivé de ${migration}`).toBe(
-        lire(`supabase/migration/${migration}`).replace(/\n+$/, ''),
+        lire(`${dossier}/${migration}`).replace(/\n+$/, ''),
       );
     });
 

@@ -5,20 +5,36 @@
 // C'est cette couche, et elle seule, qu'un futur serveur MCP réutilisera :
 // chaque fonction exportée correspond à un tool.
 import { CosmoApiError, CosmoNotFoundError, CosmoValidationError } from './errors.mjs';
-import { deadlineEndOfDay, deadlineToTimestamp } from './deadline.mjs';
+import { dayKeyFromStoredDeadline, deadlineEndOfDay, deadlineToTimestamp } from './deadline.mjs';
 
-/**
- * Colonnes de `tasks`. Duplique volontairement TASK_LIST_COLUMNS du
- * repository applicatif (on ne veut pas de chaîne de build TS dans scripts/).
- * Le test anti-dérive de api.test.mjs casse si les deux divergent.
- */
+/** = TASK_LIST_COLUMNS du repository applicatif (garde anti-dérive : api.test.mjs). */
 export const TASK_COLUMNS =
-  'id,name,priority,category,deadline,estimated_time,created_at,updated_at,bookmarked,completed,completed_at,subtasks,kr_id,recurrence,is_collaborative,pending_invites,user_id,status,health';
+  'id,name,priority,category,estimated_time,created_at,updated_at,bookmarked,completed,completed_at,subtasks,kr_id,recurrence,is_collaborative,pending_invites,user_id,status,health';
 
-/**
- * Date locale YYYY-MM-DD. `en-CA` est la convention du projet : elle évite la
- * classe de bugs où toISOString() décale d'un jour en soirée.
- */
+// Colonnes d'échéance présentes (DAT-01), comme src/modules/tasks/deadline-columns.ts.
+const columnsByClient = new WeakMap();
+async function columnExists(client, column) {
+  const { error } = await client.from('tasks').select(column).limit(0);
+  return !error ? true : ['42703', 'PGRST204'].includes(error.code ?? '') ? false : null;
+}
+
+export async function deadlineColumns(client) {
+  if (columnsByClient.has(client)) return columnsByClient.get(client);
+  const day = await columnExists(client, 'due_date');
+  const instant = await columnExists(client, 'deadline');
+  if (day === null || instant === null || (!day && !instant)) return { day: !!day, instant: !day };
+  const cols = { day, instant };
+  columnsByClient.set(client, cols);
+  return cols;
+}
+
+export const taskColumns = (cols) => `${TASK_COLUMNS},${cols.day ? 'due_date' : 'deadline'}`;
+const deadlineFields = (day, cols) => ({
+  ...(cols.day ? { due_date: day || null } : {}),
+  ...(cols.instant ? { deadline: day ? deadlineToTimestamp(day) : null } : {}),
+});
+
+/** Date locale YYYY-MM-DD (`en-CA`, jamais toISOString qui décale en soirée). */
 export function todayLocal(now = new Date()) {
   return now.toLocaleDateString('en-CA');
 }
@@ -35,7 +51,7 @@ function mapTaskFromRow(row) {
     name: row.name,
     priority: row.priority,
     category: row.category ?? '',
-    deadline: row.deadline ?? '',
+    deadline: row.due_date !== undefined ? (row.due_date ?? '') : dayKeyFromStoredDeadline(row.deadline),
     estimatedTime: row.estimated_time,
     bookmarked: row.bookmarked ?? false,
     completed: row.completed ?? false,
@@ -43,9 +59,7 @@ function mapTaskFromRow(row) {
     krId: row.kr_id ?? undefined,
     recurrence: row.recurrence ?? 'none',
     createdAt: row.created_at,
-    // Absente de TASK_COLUMNS (liste allegee, cf. commentaire sur TASK_COLUMNS) :
-    // `undefined` pour listTasks/completeTask/reopenTask, peuplee uniquement
-    // quand la ligne source vient d'un `select('*')` (createTask/updateTask).
+    // Hors liste allégée : peuplée par les seuls `select('*')`.
     description: row.description ?? undefined,
   };
 }
@@ -62,16 +76,7 @@ export async function listCategories(client) {
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/**
- * Résout ce que l'appelant donne comme catégorie vers l'IDENTIFIANT attendu
- * par la colonne `tasks.category`.
- *
- * ⚠️ `tasks.category` stocke un UUID de `categories.id`, PAS un nom. Écrire un
- * nom y produit une tâche orpheline : elle existe en base mais n'est rattachée
- * à aucune catégorie dans l'app. On accepte donc les deux en entrée (un UUID
- * passe tel quel, un nom est résolu), et on échoue avec la liste des noms
- * valides plutôt que d'écrire une valeur qui ne correspond à rien.
- */
+/** Nom ou UUID → UUID de `categories.id` (un nom écrit tel quel ferait une tâche orpheline). */
 async function resolveCategoryId(client, wanted) {
   const categories = await listCategories(client);
   if (categories.length === 0) {
@@ -92,39 +97,23 @@ async function resolveCategoryId(client, wanted) {
   return match.id;
 }
 
-/**
- * Liste les tâches. La RLS restreint déjà à l'utilisateur courant : pas de
- * filtre user_id nécessaire ici (contrairement à `events`, voir listEvents).
- */
+/** Liste les tâches (la RLS borne à l'utilisateur). `full` : `select('*')`, description comprise. */
 export async function listTasks(client, { completed, category, deadlineBefore, limit, full } = {}) {
-  // `full` : select('*') au lieu de la liste allegee, pour que `description`
-  // remonte. Sans ca un agent qui relit son travail ne voit jamais le champ
-  // qu'il vient d'ecrire et en conclut que l'ecriture a echoue.
-  let query = client.from('tasks').select(full ? '*' : TASK_COLUMNS);
+  const cols = await deadlineColumns(client);
+  let query = client.from('tasks').select(full ? '*' : taskColumns(cols));
   if (completed !== undefined) query = query.eq('completed', completed);
-  // Un nom passe par la meme resolution qu'a la creation (categories.name ->
-  // UUID) : sans ca, `--category claude` comparait le nom brut a la colonne
-  // UUID et ne matchait jamais rien, silencieusement (liste vide, pas d'erreur).
-  // `resolveCategoryId(undefined)` retournerait la categorie par defaut, ce qui
-  // filtrerait alors qu'aucun filtre n'a ete demande — donc on ne resout que
-  // si `category` a ete explicitement fourni.
+  // Résolu seulement si fourni : sans valeur, la résolution rendrait la catégorie par défaut.
   if (category) query = query.eq('category', await resolveCategoryId(client, category));
-  // Borne HAUTE incluse, exprimee en instant : une cle de jour nue serait
-  // castee en minuit UTC et exclurait toutes les taches du jour demande.
-  if (deadlineBefore) query = query.lte('deadline', deadlineEndOfDay(deadlineBefore));
-  query = query.order('deadline', { ascending: true }).order('priority', { ascending: false });
+  // Borne haute incluse ; l'ancienne colonne attend un instant.
+  const column = cols.day ? 'due_date' : 'deadline';
+  if (deadlineBefore) query = query.lte(column, cols.day ? deadlineBefore : deadlineEndOfDay(deadlineBefore));
+  query = query.order(column, { ascending: true }).order('priority', { ascending: false });
   if (limit) query = query.limit(limit);
   const rows = unwrap(await query) ?? [];
   return rows.map(mapTaskFromRow);
 }
 
-/**
- * Une tâche complète, `description` incluse.
- *
- * `select('*')` et non TASK_COLUMNS : la liste allégée existe pour la parité
- * avec l'app, mais elle rend la description invisible — c'est ce qui empêchait
- * un agent de vérifier qu'il l'avait bien écrite.
- */
+/** Une tâche complète, `description` incluse (`select('*')`). */
 export async function getTask(client, taskId) {
   if (!taskId) throw new CosmoValidationError('Identifiant de tache manquant.');
   const rows = unwrap(await client.from('tasks').select('*').eq('id', taskId));
@@ -133,16 +122,7 @@ export async function getTask(client, taskId) {
   return mapTaskFromRow(row);
 }
 
-/**
- * Crée une tâche.
- *
- * `user_id` DOIT être envoyé : la policy RLS de `tasks` porte un
- * `WITH CHECK (auth.uid() = user_id)` et la colonne n'a pas de DEFAULT — un
- * insert sans user_id est rejeté. La frontière de sécurité n'est donc pas
- * « ne jamais l'émettre » mais « le prendre de la session vérifiée, jamais de
- * `input` », exactement comme le repository applicatif
- * (src/modules/tasks/supabase.repository.ts).
- */
+/** Crée une tâche. `user_id` vient de la session vérifiée, jamais de `input` (RLS WITH CHECK). */
 export async function createTask(client, input, { now = new Date(), userId } = {}) {
   const name = (input?.name ?? '').trim();
   if (!name) throw new CosmoValidationError('Le nom de la tache est obligatoire.');
@@ -154,39 +134,27 @@ export async function createTask(client, input, { now = new Date(), userId } = {
 
   const category = await resolveCategoryId(client, input.category);
   const deadline = input.deadline === undefined ? todayLocal(now) : input.deadline;
+  const cols = await deadlineColumns(client);
   const row = {
     name,
     priority: input.priority ?? DEFAULT_TASK.priority,
     category,
-    // Jour saisi -> instant vrai de minuit (cf. ./deadline.mjs). Envoyer la
-    // cle de jour nue ecrivait minuit UTC : 4e chemin d'ecriture divergent.
-    deadline: deadline ? deadlineToTimestamp(deadline) : null,
+    ...deadlineFields(deadline, cols),
     estimated_time: input.estimatedTime ?? DEFAULT_TASK.estimatedTime,
     bookmarked: false,
     completed: false,
     recurrence: input.recurrence ?? 'none',
-    // Depuis la session, jamais depuis `input` : c'est ça, la garde
-    // anti-mass-assignment.
     user_id: userId,
   };
   if (input.description !== undefined) row.description = input.description;
   if (input.krId) row.kr_id = input.krId;
 
-  // `select('*')`, pas TASK_COLUMNS : meme choix que `getById` cote app
-  // (src/modules/tasks/supabase.repository.ts) — la confirmation de creation
-  // doit montrer `description`, qu'une liste n'a pas besoin d'afficher.
+  // `select('*')` : la confirmation montre `description`.
   const data = unwrap(await client.from('tasks').insert(row).select('*').single());
   return mapTaskFromRow(data);
 }
 
-/**
- * Coche une tâche.
- *
- * `completed_at` reçoit un INSTANT complet (`toISOString`), pas une date seule :
- * c'est ce que fait l'app (src/modules/tasks/hooks.ts:338), et `sortCompletedTasks`
- * trie les tâches terminées en comparant cette chaîne. Une date seule est
- * coercee a minuit, ce qui melangeait l'ordre des taches cochees via le CLI.
- */
+/** Coche une tâche ; `completed_at` est un INSTANT complet, comme l'app (tri des terminées). */
 export async function completeTask(client, taskId, { now = new Date() } = {}) {
   if (!taskId) throw new CosmoValidationError('Identifiant de tache manquant.');
   const data = unwrap(
@@ -194,7 +162,7 @@ export async function completeTask(client, taskId, { now = new Date() } = {}) {
       .from('tasks')
       .update({ completed: true, completed_at: now.toISOString() })
       .eq('id', taskId)
-      .select(TASK_COLUMNS)
+      .select(taskColumns(await deadlineColumns(client)))
       .single()
   );
   return mapTaskFromRow(data);
@@ -209,35 +177,27 @@ export async function reopenTask(client, taskId) {
       .from('tasks')
       .update({ completed: false, completed_at: null })
       .eq('id', taskId)
-      .select(TASK_COLUMNS)
+      .select(taskColumns(await deadlineColumns(client)))
       .single()
   );
   return mapTaskFromRow(data);
 }
 
-/**
- * Champs modifiables via le CLI. Whitelist explicite : tout ce qui n'est pas
- * ici est ignoré. `user_id` en est absent par construction — c'est la même
- * frontière anti-mass-assignment que `mapTaskToDb`.
- */
+/** Champs modifiables : whitelist, sans `user_id` (même frontière que `mapTaskToDb`). */
 const UPDATABLE_FIELDS = {
   name: (v) => ['name', String(v).trim()],
   description: (v) => ['description', v],
   priority: (v) => ['priority', v],
   category: (v) => ['category', v],
-  // Chaîne vide = « pas d'échéance » → NULL (la colonne est un timestamp).
-  deadline: (v) => ['deadline', v ? deadlineToTimestamp(v) : null],
+  // Chaîne vide = « pas d'échéance » → NULL. Colonnes posées dans updateTask.
+  deadline: (v) => ['deadline', v || ''],
   estimatedTime: (v) => ['estimated_time', v],
   bookmarked: (v) => ['bookmarked', v],
   recurrence: (v) => ['recurrence', v],
   krId: (v) => ['kr_id', v ? v : null],
 };
 
-/**
- * Modifie une tâche existante. Refuse un patch vide plutôt que d'envoyer un
- * UPDATE sans effet, et refuse un nom vidé — `name` est non-optionnel dans le
- * modèle domaine.
- */
+/** Modifie une tâche ; refuse un patch vide et un nom vidé. */
 export async function updateTask(client, taskId, patch = {}) {
   if (!taskId) throw new CosmoValidationError('Identifiant de tache manquant.');
 
@@ -254,7 +214,8 @@ export async function updateTask(client, taskId, patch = {}) {
     const mapper = UPDATABLE_FIELDS[key];
     if (!mapper) continue;
     const [column, mapped] = mapper(value);
-    row[column] = mapped;
+    if (column === 'deadline') Object.assign(row, deadlineFields(mapped, await deadlineColumns(client)));
+    else row[column] = mapped;
   }
 
   if (Object.keys(row).length === 0) {
@@ -273,18 +234,13 @@ export async function updateTask(client, taskId, patch = {}) {
   return mapTaskFromRow(data);
 }
 
-/**
- * Supprime définitivement une tâche.
- *
- * Irréversible : la RLS empêche de toucher aux tâches d'autrui, mais rien ne
- * rattrape une suppression de la sienne. Le garde-fou vit dans cli.mjs, qui
- * exige `--confirm`. On renvoie la tâche telle qu'elle était pour que
- * l'appelant puisse afficher ce qui a disparu.
- */
+/** Supprime définitivement une tâche (`--confirm` exigé par cli.mjs) ; rend ce qui a disparu. */
 export async function deleteTask(client, taskId) {
   if (!taskId) throw new CosmoValidationError('Identifiant de tache manquant.');
 
-  const existing = unwrap(await client.from('tasks').select(TASK_COLUMNS).eq('id', taskId));
+  const existing = unwrap(
+    await client.from('tasks').select(taskColumns(await deadlineColumns(client))).eq('id', taskId)
+  );
   const row = Array.isArray(existing) ? existing[0] : existing;
   if (!row) throw new CosmoNotFoundError(`Tache introuvable : ${taskId}`);
 

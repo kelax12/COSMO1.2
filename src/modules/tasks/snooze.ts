@@ -10,7 +10,6 @@
 // chemins d'écriture divergents du risque R-01 ; ils passent tous par
 // `@/lib/deadline` maintenant.
 
-import { deadlineFromDayKey } from '@/lib/deadline';
 import {
   addDaysToKey,
   todayKeyInTz,
@@ -44,8 +43,8 @@ export function getSnoozeOptions(
 ): SnoozeOption[] {
   const today = todayKeyInTz(pref, now);
   return [
-    { id: 'tomorrow', labelKey: 'snooze.tomorrow', deadline: deadlineFromDayKey(addDaysToKey(today, 1), pref) },
-    { id: 'weekend', labelKey: 'snooze.weekend', deadline: deadlineFromDayKey(nextWeekdayKey(today, 6), pref) },
-    { id: 'next-week', labelKey: 'snooze.nextWeek', deadline: deadlineFromDayKey(nextWeekdayKey(today, 1), pref) },
+    { id: 'tomorrow', labelKey: 'snooze.tomorrow', deadline: addDaysToKey(today, 1) },
+    { id: 'weekend', labelKey: 'snooze.weekend', deadline: nextWeekdayKey(today, 6) },
+    { id: 'next-week', labelKey: 'snooze.nextWeek', deadline: nextWeekdayKey(today, 1) },
   ];
 }

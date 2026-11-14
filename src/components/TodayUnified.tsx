@@ -15,7 +15,6 @@ import { useActiveOrganization } from '@/modules/organizations';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useBilling } from '@/modules/billing/billing.context';
 import { useIsDemo } from '@/lib/app-mode.store';
-import { deadlineFromDayKey } from '@/lib/deadline';
 import { addDaysToKey, getTimezonePref, todayKeyInTz } from '@/lib/timezone';
 import { showUndoToast } from '@/lib/undo-toast';
 import { toast } from '@/lib/toast';
@@ -85,7 +84,7 @@ const TodayUnified = ({ compact = false }: TodayUnifiedProps) => {
   // du fuseau choisi, la tâche d'équipe une clé de jour.
   const moveTo = (item: TodayItem, dayKey: string) => {
     if (item.source === 'personal') {
-      updateTask.mutate({ id: item.id, updates: { deadline: deadlineFromDayKey(dayKey, getTimezonePref()) } });
+      updateTask.mutate({ id: item.id, updates: { deadline: dayKey } });
     } else {
       updateTeamTask.mutate({ taskId: item.id, input: { deadline: dayKey } });
     }

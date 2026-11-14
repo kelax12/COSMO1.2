@@ -2,6 +2,7 @@
 // entre ISO et valeur de champ local. Sortis de l'ancienne popup « Planifier »
 // (`ScheduleEventModal`, remplacée par EventModal).
 import type { Task } from '@/modules/tasks';
+import { deadlineLocalDate } from '@/lib/deadline';
 
 /** Ce que la planification lit d'une tâche (une tâche d'équipe s'y ramène). */
 export type SchedulableTask = Pick<Task, 'id' | 'name' | 'category' | 'deadline' | 'estimatedTime'>;
@@ -25,7 +26,7 @@ export function localInputToIso(value: string): string {
 
 /** Échéance de la tâche (ou aujourd'hui) à 12:00, + fin selon durée estimée. */
 export function defaultSlot(task: SchedulableTask | null): { start: string; end: string } {
-  const base = task?.deadline ? new Date(task.deadline) : new Date();
+  const base = deadlineLocalDate(task?.deadline) ?? new Date();
   if (Number.isNaN(base.getTime())) base.setTime(Date.now());
   base.setHours(12, 0, 0, 0);
   const end = new Date(base);

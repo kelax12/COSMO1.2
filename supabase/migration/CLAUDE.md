@@ -25,6 +25,7 @@
 - ⚠️ Plusieurs sessions écrivent des migrations : relire le ledger ET `ls supabase/migration` avant de choisir un numéro.
 - Exceptions permanentes : `164`, `181`, `190`-`195`, `197`-`199` en base sans ligne au ledger (décision d'Axel) ; `196` retirée par la `200`. ❌ Jamais réappliquer la `164` (elle retire la branche « membre du projet » de la `190`).
 - ⚠️ `206` (suppression des jalons) s'applique APRÈS le front qui ne les lit plus.
+- ⚠️ `supabase/migration-differee/` : migration écrite, hors de toute base rejouée, à appliquer plus tard (`253`, retrait de `tasks.deadline`, après la `251`). Le jour de l'application, la déplacer ici dans le commit qui consigne la relecture au catalogue.
 - Les migrations `000_` formalisent l'existant de prod : no-op en production, elles alignent le dépôt sur la prod, jamais l'inverse.
 
 ## `npm run check:migration-coverage` (`C-79`)

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import {
-  TASK_COLUMNS, todayLocal, listTasks,
+  TASK_COLUMNS, taskColumns, todayLocal, listTasks,
   createTask, completeTask, DEFAULT_TASK,
   listHabitsToday, markHabitDone,
   listUpcomingEvents, listOkrs,
@@ -90,8 +90,8 @@ describe('listTasks', () => {
     const client = makeFakeClient({ data: [], error: null });
     await listTasks(client, {});
     expect(client.calls).toContainEqual(['from', 'tasks']);
-    expect(client.calls).toContainEqual(['select', TASK_COLUMNS]);
-    expect(client.calls.some(([m, col]) => m === 'order' && col === 'deadline')).toBe(true);
+    expect(client.calls).toContainEqual(['select', `${TASK_COLUMNS},due_date`]);
+    expect(client.calls.some(([m, col]) => m === 'order' && col === 'due_date')).toBe(true);
   });
 
   it('filtre sur completed quand l option est fournie', async () => {
@@ -173,6 +173,7 @@ describe('createTask', () => {
       estimated_time: DEFAULT_TASK.estimatedTime,
       // Instant vrai de minuit LOCAL, pas la cle de jour nue : celle-ci serait
       // castee en minuit UTC par Postgres (R-01, 4e chemin d'ecriture).
+      due_date: '2026-07-27',
       deadline: deadlineToTimestamp('2026-07-27'),
       bookmarked: false,
       completed: false,
@@ -207,6 +208,7 @@ describe('createTask', () => {
     await createTask(client, { name: 'X', category: 'Perso', deadline: '' }, { userId: 'u1' });
     const insert = client.calls.find(([m]) => m === 'insert');
     expect(insert[1].deadline).toBeNull();
+    expect(insert[1].due_date).toBeNull();
   });
 });
 
@@ -360,6 +362,7 @@ describe('updateTask', () => {
     await updateTask(client, 't1', { deadline: '' });
     const update = client.calls.find(([m]) => m === 'update');
     expect(update[1].deadline).toBeNull();
+    expect(update[1].due_date).toBeNull();
   });
 
   it('refuse un patch vide au lieu d envoyer un UPDATE sans effet', async () => {
@@ -404,7 +407,7 @@ describe('description — lisibilite', () => {
   it('listTasks sans full garde la liste allegee', async () => {
     const client = makeFakeClient({ data: [], error: null });
     await listTasks(client, {});
-    expect(client.calls).toContainEqual(['select', TASK_COLUMNS]);
+    expect(client.calls).toContainEqual(['select', `${TASK_COLUMNS},due_date`]);
   });
 
   it('createTask transmet la description telle quelle', async () => {
@@ -435,5 +438,50 @@ describe('deleteTask', () => {
     const client = makeFakeClient({ data: [], error: null });
     await expect(deleteTask(client, 'inconnu')).rejects.toThrow(/introuvable/i);
     expect(client.calls.some(([m]) => m === 'delete')).toBe(false);
+  });
+});
+
+// Bascule DAT-01 : le CLI sert la base avant la mig. 251 (`deadline` seule),
+// entre 251 et 253 (les deux) et après 253 (`due_date` seule).
+function schemaClient(missing, rows = []) {
+  const calls = [];
+  let probe = null;
+  const chain = {
+    select: (col) => { calls.push(['select', col]); probe = col; return chain; },
+    limit: (n) => { calls.push(['limit', n]); if (n !== 0) probe = null; return chain; },
+    eq: (...a) => (calls.push(['eq', ...a]), (probe = null), chain),
+    lte: (...a) => (calls.push(['lte', ...a]), (probe = null), chain),
+    order: (...a) => (calls.push(['order', ...a]), (probe = null), chain),
+    insert: (...a) => (calls.push(['insert', ...a]), chain),
+    update: (...a) => (calls.push(['update', ...a]), chain),
+    single: () => chain,
+    then: (resolve) => {
+      const isProbe = calls.at(-1)?.[0] === 'limit' && calls.at(-1)?.[1] === 0;
+      if (isProbe && missing.includes(probe)) return resolve({ data: null, error: { code: '42703', message: 'x' } });
+      return resolve({ data: isProbe ? [] : rows, error: null });
+    },
+  };
+  return { calls, from: () => chain, rpc: () => chain };
+}
+
+describe('echeance : trois etats de la base (DAT-01)', () => {
+  it('avant la 251 : lit et ecrit la seule colonne deadline', async () => {
+    const client = schemaClient(['due_date'], [{ id: 't1', deadline: '2026-11-11T23:00:00+00:00' }]);
+    const [task] = await listTasks(client, {});
+    expect(client.calls).toContainEqual(['select', taskColumns({ day: false, instant: true })]);
+    expect(task.deadline).toBe('2026-11-12');
+    await updateTask(client, 't1', { deadline: '2026-11-12' });
+    const update = client.calls.find(([m]) => m === 'update');
+    expect(update[1]).toEqual({ deadline: deadlineToTimestamp('2026-11-12') });
+  });
+
+  it('apres la 253 : lit et ecrit la seule colonne due_date', async () => {
+    const client = schemaClient(['deadline'], [{ id: 't1', due_date: '2026-11-12' }]);
+    const [task] = await listTasks(client, { deadlineBefore: '2026-11-30' });
+    expect(client.calls).toContainEqual(['lte', 'due_date', '2026-11-30']);
+    expect(task.deadline).toBe('2026-11-12');
+    await updateTask(client, 't1', { deadline: '2026-11-12' });
+    const update = client.calls.find(([m]) => m === 'update');
+    expect(update[1]).toEqual({ due_date: '2026-11-12' });
   });
 });

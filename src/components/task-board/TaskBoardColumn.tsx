@@ -11,7 +11,6 @@ import { Plus } from 'lucide-react';
 import { useCreateTask, type CreateTaskInput, type Task } from '@/modules/tasks';
 import { useCategories } from '@/modules/categories';
 import { parseQuickAdd } from '@/lib/quick-add-parser';
-import { deadlineFromDayKey } from '@/lib/deadline';
 import { useT } from '@/i18n/useT';
 import TaskBoardCard, { TASK_DRAG_TYPE } from './TaskBoardCard';
 
@@ -65,7 +64,7 @@ const TaskBoardColumn = ({ column, showStatus, canDrag, onOpen, onRequestMove, o
       priority: parsed.priority ?? 0,
       category: categoryIdFor(parsed.categoryToken),
       // Un jour, pas un instant (R-01) : `@/lib/deadline` fait foi.
-      deadline: deadlineFromDayKey(parsed.deadline),
+      deadline: parsed.deadline ?? '',
       estimatedTime: parsed.estimatedTime ?? 0,
       recurrence: parsed.recurrence ?? 'none',
       bookmarked: false,

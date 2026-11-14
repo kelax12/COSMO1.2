@@ -16,10 +16,10 @@ Regenerer : npm run contrat:generer (Docker, supabase start, node scripts/apply-
 
 | Mesure | Nombre |
 |---|---|
-| Fonctions | 247 |
+| Fonctions | 249 |
 | Executables par `anon` | 3 |
-| Executables par `authenticated` | 110 |
-| Executables par `service_role` | 241 |
+| Executables par `authenticated` | 111 |
+| Executables par `service_role` | 243 |
 | Droit accorde a `PUBLIC` | 0 |
 | SECURITY DEFINER | 157 |
 | SECURITY DEFINER sans `search_path` fige | 0 |
@@ -94,6 +94,7 @@ Aucune.
 | `delete_organization(p_org uuid)` | DEFINER | `""` | - | oui | oui | `src/modules/organizations/supabase.repository.ts`<br>~`src/components/organization/DeleteOrganizationDialog.tsx`<br>~`src/components/organization/OrgSettingsSection.tsx`<br>~`src/pages/organization/useDeleteOrgFlow.ts` |
 | `delete_team_with_transfer(p_team uuid, p_target uuid, p_archive_projects boolean)` | INVOKER | `""` | - | oui | oui | `src/modules/org-teams/supabase.repository.ts`<br>~`src/modules/org-teams/local.repository.ts`<br>~`src/modules/org-teams/repository.ts` |
 | `drop_muted_org_notification()` (trigger) | INVOKER | `""` | - | - | oui | ~`src/components/organization/OrgNotificationSettingsDialog.tsx` |
+| `echeance_jour(p_instant timestamp with time zone)` | INVOKER | `""` | - | oui | oui | ~`src/modules/tasks/supabase.repository.ts` |
 | `enforce_category_tree()` (trigger) | INVOKER | `""` | - | - | oui | ~`src/modules/categories/local.repository.ts`<br>~`src/modules/categories/tree.ts`<br>~`src/modules/team-categories/tree.ts` |
 | `enforce_org_invite_domain()` (trigger) | INVOKER | `""` | - | - | oui | - |
 | `enforce_org_member_role_write()` (trigger) | INVOKER | `""` | - | - | oui | - |
@@ -254,6 +255,7 @@ Aucune.
 | `sync_profile_email()` (trigger) | DEFINER | `""` | - | - | oui | - |
 | `sync_task_status()` (trigger) | INVOKER | `""` | - | - | oui | ~`src/modules/tasks/status-sync.ts`<br>~`src/modules/tasks/types.ts` |
 | `sync_team_task_status()` (trigger) | INVOKER | `""` | - | - | oui | ~`src/modules/team-projects/local.repository.ts` |
+| `tasks_sync_echeance()` (trigger) | INVOKER | `""` | - | - | oui | - |
 | `team_automation_before_write()` (trigger) | INVOKER | `""` | - | - | oui | - |
 | `team_okr_trash_guard()` (trigger) | INVOKER | `""` | - | - | oui | - |
 | `team_project_dependency_before_insert()` (trigger) | INVOKER | `""` | - | - | oui | - |

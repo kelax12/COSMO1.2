@@ -12,7 +12,7 @@
 // l'instant côté SQL.
 // ═══════════════════════════════════════════════════════════════════
 import { Task, TaskRecurrence, CreateTaskInput } from './types';
-import { deadlineDayKey, deadlineFromDayKey } from '@/lib/deadline';
+import { deadlineDayKey } from '@/lib/deadline';
 import { addDaysToKey, todayKeyInTz, getTimezonePref, type TimezonePref } from '@/lib/timezone';
 
 /**
@@ -48,7 +48,7 @@ export function nextOccurrenceDeadline(
     cursor.setUTCMonth(cursor.getUTCMonth() + 1);
     nextKey = cursor.toISOString().slice(0, 10);
   }
-  return deadlineFromDayKey(nextKey, pref);
+  return nextKey;
 }
 
 /**

@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { mapTaskFromDb, mapTaskToDb, TaskRow } from './mappers';
+import { mapTaskFromDb, mapTaskToDb, TaskRowRead } from './mappers';
+import { storedDeadlineInstant } from '@/lib/deadline';
 import type { Task } from './types';
 
-const baseRow: TaskRow = {
+const baseRow: TaskRowRead = {
   id: 't1',
   name: 'Task',
   priority: 3,
@@ -63,9 +64,11 @@ describe('mapTaskToDb (whitelist / anti-mass-assignment)', () => {
     expect(out).toEqual({ priority: 5 });
   });
 
-  it('converts empty-string deadline to null, keeps real dates', () => {
-    expect(mapTaskToDb({ deadline: '' }).deadline).toBeNull();
-    expect(mapTaskToDb({ deadline: '2026-01-01T00:00:00Z' }).deadline).toBe('2026-01-01T00:00:00Z');
+  it('converts empty-string deadline to null on BOTH columns, writes the day and its legacy instant', () => {
+    expect(mapTaskToDb({ deadline: '' })).toEqual({ due_date: null, deadline: null });
+    expect(mapTaskToDb({ deadline: '2026-01-01' })).toEqual({
+      due_date: '2026-01-01', deadline: storedDeadlineInstant('2026-01-01'),
+    });
   });
 
   it('maps camelCase fields to snake_case columns', () => {
@@ -80,7 +83,8 @@ describe('mapTaskToDb (whitelist / anti-mass-assignment)', () => {
       isCollaborative: true, pendingInvites: ['a'], collaboratorValidations: { x: true },
     });
     expect(out).toEqual({
-      name: 'n', description: 'd', priority: 2, category: 'c', deadline: '2026-01-01',
+      name: 'n', description: 'd', priority: 2, category: 'c',
+      due_date: '2026-01-01', deadline: storedDeadlineInstant('2026-01-01'),
       estimated_time: 5, bookmarked: true, completed: true, completed_at: '2026-01-02',
       is_collaborative: true, pending_invites: ['a'], collaborator_validations: { x: true },
     });
@@ -156,5 +160,19 @@ describe('statut et état (mig. 214)', () => {
     const out = mapTaskToDb({ name: 'X' });
     expect('status' in out).toBe(false);
     expect('health' in out).toBe(false);
+  });
+});
+
+describe('échéance : un jour, lu dans la colonne que la base porte (DAT-01)', () => {
+  it('lit due_date quand la base la sert, même si deadline est encore là', () => {
+    expect(mapTaskFromDb({ ...baseRow, due_date: '2026-11-12', deadline: '2026-11-11T15:00:00+00:00' }).deadline)
+      .toBe('2026-11-12');
+    expect(mapTaskFromDb({ ...baseRow, due_date: null, deadline: undefined }).deadline).toBe('');
+  });
+
+  it('avant la mig. 251, convertit l ancienne colonne comme echeance_jour', () => {
+    for (const instant of ['2026-11-11T23:00:00+00:00', '2026-11-12T05:00:00+00:00', '2026-11-11T15:00:00+00:00', '2026-11-12T00:00:00+00:00']) {
+      expect(mapTaskFromDb({ ...baseRow, deadline: instant }).deadline).toBe('2026-11-12');
+    }
   });
 });
