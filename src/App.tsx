@@ -9,10 +9,7 @@ import { installMobileFocusRecovery } from '@/lib/mobileFocus';
 import { shouldRetryMutation, shouldRetryQuery } from '@/lib/query-retry';
 import { useLocale } from '@/i18n/store';
 import { routeSlug } from '@/i18n/routes';
-// Extrait de ce fichier vers `@/lib/lazy-with-retry` pour que les onglets de
-// /entreprise puissent s'en servir aussi. ⚠️ `lazy-namespaces.guard.test.ts`
-// lit les appels `lazyWithRetry` D'ICI : les listes de catalogues ci-dessous
-// restent la source de vérité par route.
+// ⚠️ `lazy-namespaces.guard.test.ts` lit les appels `lazyWithRetry` D'ICI : les listes de catalogues ci-dessous sont la source de vérité par route.
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 
 import { getLastVisitedPage } from '@/modules/ui-states';
@@ -36,27 +33,14 @@ import ShareInviteClaimer from '@/components/ShareInviteClaimer';
 import { releasePrerenderHero } from '@/lib/prerender-hero';
 import BootScreen from '@/components/BootScreen';
 import { isOrgPath } from '@/components/organization/deep-link.helpers';
-// Audit perf — CommandPalette only renders on Ctrl/Cmd+K. Lazy-load
-// it so its imports (framer-motion subset, lucide icons, fuzzy search) don't
-// land in the entry chunk. Suspense fallback is null because the palette
-// itself is invisible until opened.
+// CommandPalette ne rend que sur Ctrl/Cmd+K : lazy, fallback null (invisible tant qu'elle n'est pas ouverte).
 const CommandPalette = lazy(() => import('@/components/CommandPalette'));
 
-// Sonner sort du chemin critique (66,6 ko bruts dans l'entrée, payés par tout
-// visiteur qui arrive sur la landing et repart). Le `<Toaster>` ne peint rien
-// tant qu'aucun toast n'est émis : le monter un tick plus tard ne change rien à
-// l'écran. L'import passe par `loadSonner()`, le MÊME que la façade
-// `@/lib/toast`, donc un seul chunk et une seule instance du store de toasts.
-// ⚠️ Il lui faut son PROPRE `<Suspense>` : suspendre sur la frontière qui
-// enveloppe les routes cacherait la page pendant le chargement.
+// Sonner hors du chemin critique : `<Toaster>` ne peint rien sans toast. Import par `loadSonner()`, le MÊME que la façade `@/lib/toast` (un chunk, une instance).
+// ⚠️ Il lui faut son PROPRE `<Suspense>` : suspendre sur la frontière des routes cacherait la page.
 const Toaster = lazy(() => loadSonner().then((m) => ({ default: m.Toaster })));
 
-/**
- * L'accueil entreprise (`/entreprise/onboarding`) a une DA nuit FIXE : un toast
- * clair (« Équipe créée ») y tombait comme une carte blanche sur la nuit
- * (relevé). Ses toasts sont donc sombres ; partout ailleurs, le
- * réglage d'origine (`system`).
- */
+/** L'accueil entreprise (`/entreprise/onboarding`) a une DA nuit FIXE : ses toasts sont sombres, `system` partout ailleurs. */
 const ThemedToaster = () => {
   const { pathname } = useLocation();
   return (
@@ -72,10 +56,7 @@ const ThemedToaster = () => {
   );
 };
 
-// Lazy load pages for code splitting.
-//
-// Le second argument est la liste des catalogues i18n du SOUS-ARBRE de la page.
-// Régénérer après tout déplacement de composant : `npm run i18n:namespaces`.
+// Pages lazy. Le second argument est la liste des catalogues i18n du SOUS-ARBRE de la page : `npm run i18n:namespaces` après tout déplacement de composant.
 const LandingPage = lazyWithRetry(() => import('@/pages/LandingPage'), ['landing', 'overlays', 'seo']);
 const LoginPage = lazyWithRetry(() => import('@/pages/LoginPage'), ['overlays', 'seo']);
 const SignupPage = lazyWithRetry(() => import('@/pages/SignupPage'), ['overlays', 'seo']);
@@ -87,21 +68,14 @@ const AgendaPage = lazyWithRetry(() => import('@/pages/AgendaPage'), ['agenda', 
 const HabitsPage = lazyWithRetry(() => import('@/pages/HabitsPage'), ['eventModal', 'habits', 'overlays', 'premium', 'tasks', 'tutorials']);
 const OKRPage = lazyWithRetry(() => import('@/pages/OKRPage'), ['eventModal', 'okr', 'org', 'overlays', 'taskModal', 'tasks', 'tutorials']);
 const StatisticsPage = lazyWithRetry(() => import('@/pages/StatisticsPage'), ['dashboard', 'overlays', 'premium', 'statistics']);
-// `tasks` : DataTab (export CSV) et `csv-export.ts` importent le BARREL
-// `@/modules/lists` pour `listKeys`, qui réexporte aussi `useDeleteListWithUndo`
-// (`delete-flow.hooks.ts`), dont le toast d'annulation passe par
-// `translator('tasks')`. Importer un seul nom d'un barrel charge tout son
-// graphe : trouvé par `npm run i18n:namespaces -- --pages`.
+// `tasks` : DataTab et `csv-export.ts` importent le BARREL `@/modules/lists` (`listKeys`), qui charge `delete-flow.hooks.ts` et `translator('tasks')` (`npm run i18n:namespaces -- --pages`).
 const SettingsPage = lazyWithRetry(() => import('@/pages/SettingsPage'), ['csv', 'org', 'overlays', 'settings', 'tasks']);
 const PremiumPage = lazyWithRetry(() => import('@/pages/PremiumPage'), ['overlays', 'premium']);
 const GuidePage = lazyWithRetry(() => import('@/pages/GuidePage'), ['guide', 'seo']);
 const MentionsLegalesPage = lazyWithRetry(() => import('@/pages/MentionsLegalesPage'), ['legal', 'seo']);
 const PolitiqueConfidentialitePage = lazyWithRetry(() => import('@/pages/PolitiqueConfidentialitePage'), ['legal', 'legalPrivacy', 'seo']);
 const CGUPage = lazyWithRetry(() => import('@/pages/CGUPage'), ['legal', 'legalTerms', 'seo']);
-// `tasks` : même mécanisme que `SettingsPage` ci-dessus, un cran plus loin —
-// `usePreviewShareLink` (`@/modules/friends`) importe `listKeys` du barrel
-// `@/modules/lists`, qui traîne `delete-flow.hooks.ts` et son
-// `translator('tasks')`.
+// `tasks` : même mécanisme que `SettingsPage` (`usePreviewShareLink` importe le barrel `@/modules/lists`).
 const InvitePage = lazyWithRetry(() => import('@/pages/InvitePage'), ['invite', 'overlays', 'tasks']);
 const AdminPage = lazyWithRetry(() => import('@/pages/AdminPage'), ['admin', 'overlays']);
 const OrganizationOnboardingPage = lazyWithRetry(() => import('@/pages/OrganizationOnboardingPage'), ['onboarding', 'org', 'overlays', 'portfolio']);
@@ -124,19 +98,11 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 1000 * 60 * 5,    // 5 minutes
       gcTime: 1000 * 60 * 30,      // 30 minutes
-      // Prédicat extrait dans `@/lib/query-retry`, avec ses tests. Il vivait
-      // ici, donc testable par rien, et il était doublement faux : il lisait
-      // `error.message` alors que le code vit dans `.code`, sur des valeurs qui
-      // n'étaient même pas des `Error`. Détail complet dans le module.
+      // Prédicat dans `@/lib/query-retry` (avec ses tests).
       retry: shouldRetryQuery,
       retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 3000),
       refetchOnWindowFocus: false,
-      // `networkMode: 'always'` runs queries regardless of `navigator.onLine`.
-      // The default ('online') pauses queries when the browser thinks it's
-      // offline — and `navigator.onLine` is notoriously unreliable on mobile
-      // Safari (often falsely reports offline after a backgrounding event),
-      // leaving every page stuck on its loading skeleton even though the
-      // network is fine. Faille: TasksPage + HabitsPage stuck loading on iOS.
+      // `networkMode: 'always'` : `navigator.onLine` est peu fiable sur Safari mobile (faux « hors ligne » après un passage en arrière-plan) et laisserait TasksPage/HabitsPage sur leur squelette (faille).
       networkMode: 'always',
     },
     mutations: {
@@ -159,12 +125,7 @@ const PageLoader = () => (
   </div>
 );
 
-// Layout wrapper with Suspense
-// AppErrorBoundary ICI aussi : le Layout est le parent de TOUTES les pages
-// protegees et il est lazy. Sans boundary, un chunk perime ou un throw dans
-// la barre laterale faisait remonter l erreur au-dessus des routes et vidait
-// l ecran. Le fallback est le plein cadre par defaut (pas null) : c est une
-// coquille de page, pas un widget secondaire.
+// AppErrorBoundary ICI aussi : le Layout, lazy, parent de toutes les pages protégées. Fallback plein cadre (pas null) : c'est une coquille de page.
 const LayoutWithSuspense = () => (
   <AppErrorBoundary>
     <Suspense fallback={null}>
@@ -173,11 +134,7 @@ const LayoutWithSuspense = () => (
   </AppErrorBoundary>
 );
 
-// Relève de la COPIE d'une page de contenu, rendue par ses propres
-// composants au build (src/prerender/content-copy.tsx) et peinte avant React
-// dans le calque `#lp-hero`. Frère de la page DANS la même frontière Suspense :
-// il ne se commite qu'avec elle, donc la copie part dans l'image où la page se
-// peint, sans saut. Sans effet sur une page sans copie (connexion, invitation).
+// Copie d'une page de contenu, rendue au build (src/prerender/content-copy.tsx) dans `#lp-hero`. Frère de la page dans la même frontière Suspense : elle ne se commite qu'avec elle. Sans effet sans copie.
 const ReleveCopie: React.FC = () => {
   useLayoutEffect(() => {
     releasePrerenderHero();
@@ -215,22 +172,7 @@ const RESUMABLE_PAGES = ['/dashboard', '/tasks', '/agenda', '/habits', '/okr', '
 const isResumablePage = (path: string) => RESUMABLE_PAGES.includes(path) || isOrgPath(path);
 
 /**
- * Squelette de la landing — le fallback qu'elle mérite.
- *
- * MESURÉ, à 4x de bridage CPU : pendant ~2 s, `/` affichait un
- * écran BLANC avec un spinner, puis la landing sombre apparaissait d'un coup,
- * son animation d'entrée déjà terminée. Le fallback par défaut (`PageLoader`)
- * est un spinner sur le fond de l'APPLICATION, qui suit le thème et se trouve
- * donc être clair, alors que la landing est sombre par construction.
- *
- * Ce squelette ne cherche pas à faire patienter : il occupe exactement la
- * place du hero, dans ses couleurs, pour que l'arrivée du vrai contenu soit
- * une continuité et non un flash. Aucune animation ici — un squelette qui
- * pulse sur une page qui va elle-même s'animer fait deux mouvements
- * concurrents.
- *
- * Il est volontairement écrit en primitives (des `div`) et vit dans le chunk
- * d'entrée : il doit s'afficher AVANT que quoi que ce soit d'autre ne charge.
+ * Squelette de la landing : occupe la place du hero dans ses couleurs (sombres), car le `PageLoader` par défaut suit le thème de l'app. Sans animation, en `div` dans le chunk d'entrée : il s'affiche AVANT tout le reste.
  */
 const LandingSkeleton = () => (
   <div
@@ -279,13 +221,7 @@ const LandingSkeleton = () => (
 );
 
 /**
- * Racine publique — la landing, servie sur deux chemins.
- *
- * `/` sert le parcours perso, `/entreprise-presentation` le parcours
- * entreprise. Les deux rendent le MÊME composant à la même profondeur : React
- * réconcilie par type, donc passer de l'un à l'autre ne remonte pas la page et
- * l'état de la landing (parcours affiché, transition en cours) survit à la
- * navigation. Un utilisateur connecté est redirigé dans l'app, dans les deux cas.
+ * Racine publique : la landing sur deux chemins (`/` perso, `/entreprise-presentation` entreprise). Même composant à la même profondeur : React réconcilie par type, l'état de la landing survit à la navigation. Un connecté est redirigé dans l'app.
  */
 const RootRoute = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -311,14 +247,7 @@ const RootRoute = () => {
 };
 
 /**
- * Abonnement Realtime aux partages de tâches — monté UNE SEULE FOIS ici.
- *
- * Un canal Realtime est une connexion WebSocket : le monter dans un composant
- * de page en ouvrirait une par écran affiché. Au niveau App, il suit la session
- * et se referme proprement au changement d'utilisateur.
- *
- * Composant vide (pas de rendu) : c'est uniquement un point d'ancrage de cycle
- * de vie. Cf. audit archi, point C2.
+ * Abonnement Realtime aux partages de tâches, monté UNE SEULE FOIS ici (un canal = un WebSocket) : il suit la session. Sans rendu, point d'ancrage de cycle de vie (C2).
  */
 const SharedTasksRealtime: React.FC = () => {
   const { user, isDemo } = useAuth();
@@ -327,14 +256,7 @@ const SharedTasksRealtime: React.FC = () => {
 };
 
 /**
- * Boîte de réception d'organisation en temps réel — même rôle et mêmes
- * contraintes que `SharedTasksRealtime` : point d'ancrage de cycle de vie, sans
- * rendu, monté UNE SEULE FOIS (un canal Realtime est un WebSocket).
- *
- * Remplace trois `refetchInterval` de 20 s montés en permanence par `InboxMenu`
- * (invitations, avis de retrait, demande d'adhésion), soit 9 requêtes par
- * minute et par utilisateur connecté avant toute interaction.
- * Cf. `docs/SCALABILITY.md` §3 et mig. 118.
+ * Boîte de réception d'organisation en temps réel : mêmes contraintes que `SharedTasksRealtime`. Remplace trois `refetchInterval` permanents de `InboxMenu` (`docs/SCALABILITY.md` §3, mig. 118).
  */
 const OrgInboxRealtime: React.FC = () => {
   const { user, isDemo } = useAuth();
@@ -346,12 +268,7 @@ const OrgInboxRealtime: React.FC = () => {
 };
 
 /**
- * Demandes d'amis et listes partagées en temps réel — mêmes contraintes que
- * les deux hooks ci-dessus : point d'ancrage sans rendu, monté UNE SEULE FOIS.
- *
- * Remplace les trois DERNIERS `refetchInterval` permanents (15 s ×2, 20 s),
- * soit ~15 requêtes par minute et par utilisateur connecté avant toute
- * interaction. Cf. `docs/SCALABILITY.md` §3 et mig. 120.
+ * Demandes d'amis et listes partagées en temps réel : mêmes contraintes que les hooks ci-dessus. Remplace les derniers `refetchInterval` permanents (`docs/SCALABILITY.md` §3, mig. 120).
  */
 const FriendsInboxRealtime: React.FC = () => {
   const { user, isDemo } = useAuth();
@@ -360,10 +277,7 @@ const FriendsInboxRealtime: React.FC = () => {
 };
 
 const AppRoutes = () => {
-  // Locale servie pour ce montage. `basename` étant figé au montage du routeur,
-  // elle ne change pas sans rechargement complet (cf. src/i18n/bootstrap.ts) —
-  // il n'y a donc jamais de désynchronisation entre le préfixe de l'URL et les
-  // slugs déclarés ici.
+  // Locale servie pour ce montage : `basename` est figé au montage du routeur (src/i18n/bootstrap.ts), préfixe d'URL et slugs restent synchronisés.
   const activeLocale = useLocale();
 
   return (
@@ -442,14 +356,7 @@ const AppRoutes = () => {
 };
 
 /**
- * Mesure d'audience Vercel — montée UNIQUEMENT après acceptation explicite.
- *
- * `<Analytics />` était monté inconditionnellement, alors que le bandeau
- * proposait de refuser : une promesse affichée, non tenue.
- *
- * Le composant réagit au store, donc accepter le monte sans rechargement.
- * Refuser ne le monte jamais : on ne charge pas pour démonter ensuite, car on
- * ne décharge pas du JavaScript déjà évalué.
+ * Mesure d'audience Vercel : montée UNIQUEMENT après acceptation explicite. Elle réagit au store (accepter la monte sans rechargement) ; refuser ne la monte jamais, du JavaScript évalué ne se décharge pas.
  */
 function ConsentedAnalytics() {
   const consent = useCookieConsent();

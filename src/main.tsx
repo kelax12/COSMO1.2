@@ -21,46 +21,19 @@ import { afterFirstPaint } from './lib/after-first-paint';
 import { installFocusHistory } from './lib/focus-history';
 import './index.css';
 
-// ═══════════════════════════════════════════════════════════════════
-// Sentry — CHARGÉ APRÈS LE PREMIER RENDU (arbitrage C-13 · C-14)
-// ═══════════════════════════════════════════════════════════════════
-//
-// 49,3 ko gzip payés par TOUT visiteur, sur le chemin critique, pour un
-// paquet dont on n'a besoin qu'au premier incident. La décision du
-// le sort de là.
-//
-// 🔴 L'ANGLE MORT QUE LA DÉCISION NOMME, ET SA RÉPONSE. « Les erreurs des
-// premières millisecondes ne seraient plus capturées, et c'est exactement la
-// fenêtre du bug de `Layout`. » Deux mesures, posées AVANT
-// tout le reste :
-//
-//   1. `installEarlyHandlers()` — un `window.onerror` et un
-//      `unhandledrejection` minimaux, quelques lignes, aucun paquet ;
-//   2. `src/lib/monitoring.ts` tamponne TOUT appel arrivé avant que le SDK
-//      soit là, et le rejoue ensuite. Rien n'est perdu, seul l'envoi est
-//      retardé.
-//
-// ⚠️ Ces deux lignes doivent rester les PREMIÈRES instructions exécutables du
-//    fichier. Tout ce qui les précède s'exécute sans filet.
+// ═══ Sentry : CHARGÉ APRÈS LE PREMIER RENDU (C-13, C-14) ═══
+// 🔴 Les erreurs des premières millisecondes restent capturées : `installEarlyHandlers()` (`window.onerror` + `unhandledrejection`, aucun paquet) et le tampon de `src/lib/monitoring.ts`, qui rejoue tout appel arrivé avant le SDK.
+// ⚠️ Ces deux lignes doivent rester les PREMIÈRES instructions exécutables du fichier : ce qui les précède s'exécute sans filet.
 installEarlyHandlers();
 
-// M-9 — `dataCollection` (Sentry 11, successeur de `sendDefaultPii: false`)
-// coupe ce que le SDK collecte de lui-même : identité, cookies, corps, requêtes
-// d'URL. Il ne nettoie PAS la PII logée dans error.message, ni les ADRESSES de
-// page (jetons d'invitation, codes OAuth) : `@/lib/sentry-scrub` les retire
-// avant le départ de l'événement (testé là).
+// M-9 : `dataCollection` (Sentry 11) coupe ce que le SDK collecte de lui-même (identité, cookies, corps, requêtes d'URL). Il ne nettoie PAS la PII dans error.message ni les ADRESSES de page (jetons d'invitation, codes OAuth) : `@/lib/sentry-scrub` les retire.
 
 const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
 
 /** Taux d'échantillonnage des transactions (OBS-02), 0,1 par défaut. */
 const tracesSampleRate = parseTracesSampleRate(import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE);
 
-/**
- * L'intégration de mesure de performance : navigation, requêtes (Supabase,
- * fonctions Edge), interactions longues (INP, tâches longues, images
- * d'animation longues). Les noms de route sont paramétrés AVANT la création du
- * span, et nettoyés une seconde fois dans `beforeSendTransaction`.
- */
+/** Mesure de performance (navigation, requêtes, interactions longues). Noms de route paramétrés avant le span, nettoyés dans `beforeSendTransaction`. */
 function tracingIntegration(Sentry: typeof import('./lib/sentry-client')) {
   return Sentry.browserTracingIntegration({
     beforeStartSpan: (options) => ({ ...options, name: parameterizeRoute(options.name) }),
@@ -81,11 +54,7 @@ function enableTracingOnConsent(Sentry: typeof import('./lib/sentry-client')): v
   subscribeConsent(add);
 }
 
-/**
- * Configuration du SDK. Reste ICI, et pas dans `monitoring.ts` : le scrubbing
- * RGPD et l'échantillonnage se relisent au même endroit que le reste de
- * l'amorçage, pas dans un module utilitaire.
- */
+/** Configuration du SDK. Reste ICI (scrubbing RGPD et échantillonnage se relisent avec l'amorçage), pas dans `monitoring.ts`. */
 function initSentry(Sentry: typeof import('./lib/sentry-client')): void {
   Sentry.init({
     dsn: sentryDsn,
@@ -94,29 +63,14 @@ function initSentry(Sentry: typeof import('./lib/sentry-client')): void {
     // VERCEL_GIT_COMMIT_SHA). Lie chaque erreur/transaction au déploiement
     // exact → régressions attribuables à un commit, et rollback ciblé.
     release: __APP_RELEASE__,
-    // ⚠️ COÛT ASSUMÉ DE LA DÉCISION : initialisée après le premier rendu,
-    // `browserTracingIntegration` ne voit qu'une partie du `pageload`. La
-    // transaction de chargement est dégradée. Ça porte sur la MESURE de
-    // performance, pas sur la capture d'erreurs — celle-ci est intégralement
-    // préservée par le tampon de `monitoring.ts`.
-    //
-    // OBS-02 : la mesure de performance est CONDITIONNÉE au consentement
-    // (docs/OBSERVABILITE.md § Mesure de performance). Sans « Accepter », aucune
-    // intégration de traçage : ni transaction, ni en-tête `sentry-trace`. Elle
-    // s'ajoute à chaud si la personne accepte plus tard (`enableTracing`).
+    // ⚠️ Initialisée après le premier rendu : `browserTracingIntegration` ne voit qu'une partie du `pageload` (mesure dégradée, capture d'erreurs intacte via le tampon).
+    // OBS-02 : le traçage est CONDITIONNÉ au consentement (docs/OBSERVABILITE.md § Mesure de performance) : sans « Accepter », ni transaction ni en-tête `sentry-trace` ; ajouté à chaud ensuite (`enableTracing`).
     integrations: tracingEnabled(readConsent()) ? [tracingIntegration(Sentry)] : [],
     tracesSampler: makeTracesSampler(tracesSampleRate, readConsent),
-    // Propage le contexte de trace aux requêtes Supabase (corrèle un appel
-    // PostgREST/RPC lent à la transaction front qui l'a déclenché).
-    // 🔴 JAMAIS `/functions/v1/` : les Edge Functions n'autorisent pas
-    // `baggage`/`sentry-trace` en pré-requête, l'appel meurt avant le POST
-    // (M-32). PostgREST et Auth les acceptent. Garde :
-    // `src/sentry-propagation.guard.test.ts`.
+    // Propage la trace aux requêtes Supabase (corrèle un appel lent à sa transaction front).
+    // 🔴 JAMAIS `/functions/v1/` : les Edge Functions refusent `baggage`/`sentry-trace` en pré-requête (M-32). Garde : `src/sentry-propagation.guard.test.ts`.
     tracePropagationTargets: [/^\//, /supabase\.co\/(?!functions\/v1\/)/],
-    // Sentry 11 : `dataCollection` ABSENT vaut TOUT collecter. Chaque clé est
-    // donc posée à faux, sauf `User-Agent` (filtre des navigateurs anciens). La v10
-    // envoyait aussi `Referer`, qui peut porter un jeton d'invitation : retiré. Garde :
-    // `src/lib/sentry-tracing.test.ts`.
+    // Sentry 11 : `dataCollection` ABSENT = TOUT collecter. Chaque clé est à faux, sauf `User-Agent`. `Referer` retiré (peut porter un jeton d'invitation). Garde : `src/lib/sentry-tracing.test.ts`.
     dataCollection: {
       userInfo: false,
       cookies: false,
@@ -150,15 +104,7 @@ function initSentry(Sentry: typeof import('./lib/sentry-client')): void {
   enableTracingOnConsent(Sentry);
 }
 
-// Mobile debug console — only loaded when the URL contains ?debug=1.
-// Lets us read timing logs on iOS Safari without needing a Mac for remote
-// inspection. Stay loaded for the rest of the session.
-// AUD-17 — `import.meta.env.DEV` : sans ce garde, n'importe qui pouvait faire
-// injecter un <script> tiers (jsdelivr) dans l'app de PRODUCTION avec un simple
-// `?debug=1`. La CSP le bloquait déjà (`script-src 'self' …` n'autorise pas
-// jsdelivr), mais on ne veut pas dépendre d'un header pour ne pas exécuter du
-// code distant : le jour où quelqu'un élargit la CSP, la porte se rouvre. Le
-// bloc est désormais éliminé du bundle prod par le tree-shaking de Vite.
+// Console de debug mobile, chargée sur `?debug=1`. AUD-17 : `import.meta.env.DEV` obligatoire, sinon un `?debug=1` injecterait un <script> tiers dans la PROD (ne pas dépendre de la CSP). Éliminé du bundle prod par tree-shaking.
 if (import.meta.env.DEV && new URLSearchParams(window.location.search).has('debug')) {
   const script = document.createElement('script');
   script.src = 'https://cdn.jsdelivr.net/npm/eruda';
@@ -174,12 +120,7 @@ if (import.meta.env.DEV && new URLSearchParams(window.location.search).has('debu
 // `performance.timeOrigin` is the most precise reference available in browsers.
 performance.mark('cosmo:boot');
 
-// Thème appliqué AVANT le premier paint, pour toutes les pages — publiques
-// incluses. Sans ça, /login /signup /forgot-password /reset-password rendaient
-// toujours en mode clair : les classes de thème n'étaient posées que par
-// useDarkMode, monté uniquement dans l'app authentifiée. La résolution et
-// l'application partagent le même module que le hook (src/lib/theme.ts) pour
-// qu'un flash de thème incorrect reste impossible.
+// Thème appliqué AVANT le premier paint, pages publiques incluses (module partagé avec le hook, src/lib/theme.ts : pas de flash).
 try {
   applyTheme(document.documentElement, resolveInitialTheme());
 } catch { /* localStorage/matchMedia inaccessibles (navigation privée stricte) */ }
@@ -192,36 +133,13 @@ try {
   captureAffiliate();
 } catch { /* l'analytics ne doit jamais empêcher l'app de démarrer */ }
 
-// ──────────────────────────────────────────────────────────────────
-// Amorçage i18n — locale, canonicalisation d'URL et `basename` du routeur.
-//
-// Fait AVANT le premier paint pour deux raisons distinctes :
-//   - `<html lang>` est lu au chargement par les lecteurs d'écran et les
-//     moteurs ; le corriger après coup arrive trop tard.
-//   - `replaceState` doit précéder le montage du routeur, sinon React Router
-//     lit l'ancienne URL et rend une première page pour rien.
-//
-// `basename` est ce qui permet aux 162 `Link`/`navigate` absolus déjà présents
-// dans l'app de se préfixer automatiquement — cf. l'en-tête de
-// src/i18n/bootstrap.ts.
-// ──────────────────────────────────────────────────────────────────
-// ⚠️ `src/boot.ts` l'a DÉJÀ appliqué, avant la première peinture : cet appel
-// part de l'URL canonique et ne réécrit rien. Il reste ici pour lire `basename`
-// et la locale. Pourquoi deux appels : `i18n/apply-bootstrap.ts`.
+// ── Amorçage i18n : locale, canonicalisation d'URL et `basename` du routeur ──
+// Avant le premier paint : `<html lang>` est lu au chargement, et `replaceState` doit précéder le montage du routeur. `basename` préfixe les `Link`/`navigate` absolus (src/i18n/bootstrap.ts).
+// ⚠️ `src/boot.ts` l'a DÉJÀ appliqué : cet appel ne réécrit rien, il lit `basename` et la locale (`i18n/apply-bootstrap.ts`).
 const { basename: routerBasename, locale: activeLocale } = applyRouterBootstrap();
 
-// iOS Safari has a well-known WebKit bug where the *very first* cross-origin
-// fetch made during page load can fail silently with "Load failed" / DOMException
-// after ~10 s. The browser refuses to commit to the new HTTP/2 socket while the
-// page is still parsing. `<link rel="preconnect">` does the DNS + TLS handshake
-// but is not always enough — a real HTTP request needs to land to "amorce" the
-// connection. We fire a tiny HEAD request to a public Supabase endpoint here,
-// before React mounts. By the time `useTasks/useHabits` queries fire, the socket
-// is hot and the bug does not trigger.
-//
-// Refs:
-//   https://github.com/supabase/supabase-js/issues/684
-//   https://bugs.webkit.org/show_bug.cgi?id=171501
+// Bug WebKit iOS : le PREMIER fetch cross-origin du chargement peut échouer (« Load failed ») après ~10 s. Un `preconnect` ne suffit pas : une vraie requête HEAD Supabase part avant le montage de React, socket chaud pour `useTasks/useHabits`.
+// Réfs : https://github.com/supabase/supabase-js/issues/684 · https://bugs.webkit.org/show_bug.cgi?id=171501
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 if (supabaseUrl) {
   const preconnect = document.createElement('link');
@@ -235,21 +153,14 @@ if (supabaseUrl) {
   dnsPrefetch.href = supabaseUrl;
   document.head.appendChild(dnsPrefetch);
 
-  // Real HTTP warmup — fire cheap unauthenticated requests to wake the socket
-  // AND warm up the per-origin HTTP/2 streams. One fetch alone is not enough on
-  // iOS Safari: it accepts the first stream but rejects the next 3-4 parallel
-  // streams with "Load failed" if they fire too close to first paint. We hit
-  // both /auth/v1 and /rest/v1 to amorce both subdomains paths used by the app.
+  // Échauffement par requêtes non authentifiées sur /auth/v1 ET /rest/v1 : iOS Safari rejette les 3-4 flux HTTP/2 parallèles suivants s'ils partent trop près du premier paint.
   fetch(`${supabaseUrl}/auth/v1/health`, { method: 'GET', mode: 'cors', credentials: 'omit' })
     .catch(() => { /* expected to sometimes fail — we don't care */ });
   fetch(`${supabaseUrl}/rest/v1/`, { method: 'GET', mode: 'cors', credentials: 'omit' })
     .catch(() => { /* expected to sometimes fail — we don't care */ });
 }
 
-// Mesure d'audience maison (mig. 222, remplace Veske). APRES l'amorcage i18n,
-// pour ne pas compter deux fois une URL que la canonicalisation reecrit.
-// Le module verifie lui-meme, avant CHAQUE envoi, consentement, page publique
-// et absence de session : detail dans src/lib/traffic.ts.
+// Mesure d'audience maison (mig. 222), APRÈS l'amorçage i18n (une URL réécrite ne se compte pas deux fois). Le module vérifie avant CHAQUE envoi consentement, page publique et absence de session (src/lib/traffic.ts).
 try {
   startTrafficMeasurement({ win: window, doc: document });
 } catch { /* la mesure ne doit jamais empêcher l'app de démarrer */ }
@@ -263,19 +174,11 @@ try { installFocusHistory(); } catch { /* un historique absent degrade la restit
 // par etapes sur la 6.30 avant ce bump (cf. plan de migration).
 function mount(): void {
   const root = createRoot(document.getElementById('root')!);
-  // 🔴 Page prérendue : premier rendu en TRANSITION (TBT mobile de
-  // `/`). Rendu à la priorité par défaut, React le faisait d'un bloc (114 ms en
-  // simulation mobile) ; en transition il rend par tranches et rend la main
-  // entre elles. Le visiteur n'attend rien de ce rendu : la page prérendue est
-  // déjà peinte. La coquille `app.html`, elle, n'a rien à l'écran et rend d'un bloc.
+  // 🔴 Page prérendue : premier rendu en TRANSITION (TBT mobile), par tranches ; la page prérendue est déjà peinte. La coquille `app.html` rend d'un bloc.
   const rendre = (el: ReactNode) =>
     isPrerendered ? startTransition(() => root.render(el)) : root.render(el);
   rendre(
-    // RootErrorBoundary ENGLOBE le routeur et donc tous les providers. Sans
-    // lui, une erreur dans AuthProvider / ActiveOrgProvider / BillingProvider
-    // ou dans le chunk du Layout demontait l app entiere et ne laissait que
-    // le fond du body : ecran noir en theme sombre, page blanche en clair,
-    // et plus aucun bouton pour se deconnecter.
+    // RootErrorBoundary ENGLOBE le routeur et tous les providers : sans lui, une erreur de provider ou du chunk Layout démonte l'app (écran vide, plus de déconnexion).
     <RootErrorBoundary>
       <BrowserRouter basename={routerBasename}>
         <App />
@@ -284,26 +187,8 @@ function mount(): void {
   );
 }
 
-// Catalogues de la langue active chargés AVANT le premier rendu — sinon le
-// repli `fr` s'appliquerait le temps du chargement et l'utilisateur verrait un
-// flash de français avant que sa langue n'apparaisse.
-//
-// En français (cas majoritaire) `loadCatalogs` résout de façon synchrone-
-// équivalente : aucun fichier à chercher, donc un simple tour de microtask —
-// pas de retard mesurable au premier paint. C'est ce qui permet d'attendre
-// inconditionnellement plutôt que de brancher sur la locale.
-//
-// `catch` et non `finally` sur l'échec : on monte l'app quoi qu'il arrive. Une
-// langue dont les catalogues n'ont pas pu être chargés rend en français, ce qui
-// reste infiniment préférable à une page blanche.
-// ── C-116 : laisser PEINDRE le prérendu avant que React ne le remplace ──
-//
-// En français, `loadCatalogs` se résout en une microtask : `mount()` vidait
-// `#root` AVANT la première peinture, et `#seo-fallback` n'était jamais peint.
-// En anglais, le chargement du catalogue laissait passer une frame : `/en/`
-// était la seule page sous 4 s. Seulement sur une page prérendue : la coquille
-// `app.html` n'a rien à montrer et monte tout de suite. Détail dans
-// `lib/after-first-paint.ts`.
+// Catalogues de la langue active chargés AVANT le premier rendu (sinon flash de français). En français `loadCatalogs` se résout en une microtask : on attend sans brancher sur la locale. `catch` et non `finally` : on monte l'app quoi qu'il arrive (repli `fr`).
+// ── C-116 : laisser PEINDRE le prérendu avant que React ne le remplace ── seulement sur une page prérendue ; la coquille `app.html` monte tout de suite (`lib/after-first-paint.ts`).
 const isPrerendered = document.documentElement.hasAttribute('data-prerendered');
 
 Promise.all([loadCatalogs(activeLocale), loadDateLocale(activeLocale)]).catch(() => undefined).then(() => new Promise<void>((resolve) => {
@@ -312,15 +197,9 @@ Promise.all([loadCatalogs(activeLocale), loadDateLocale(activeLocale)]).catch(()
 })).then(() => {
   mount();
 
-  // ── Sentry, APRÈS le premier rendu ────────────────────────────────
-  //
-  // `requestIdleCallback` et pas un `setTimeout(0)` : on veut la première
-  // fenêtre d'inactivité, pas la prochaine tâche — qui tomberait en plein
-  // milieu du travail de montage qu'on cherche justement à ne pas ralentir.
-  // Repli `setTimeout` pour Safari, qui ne l'implémente toujours pas.
-  //
-  // ⚠️ Le tampon de `monitoring.ts` couvre tout l'intervalle : ce délai
-  //    retarde l'ENVOI, il ne perd rien.
+  // ── Sentry, APRÈS le premier rendu ──
+  // `requestIdleCallback` (première inactivité, pas la prochaine tâche), repli `setTimeout` pour Safari.
+  // ⚠️ Le tampon de `monitoring.ts` couvre l'intervalle : ce délai retarde l'ENVOI, il ne perd rien.
   if (sentryDsn) {
     const load = () => { void startMonitoring(initSentry); };
     const idle = (window as Window & {

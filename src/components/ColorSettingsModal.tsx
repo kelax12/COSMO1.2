@@ -40,76 +40,25 @@ type ColorSettingsModalProps = {
 };
 
 /**
- * Plan d'écriture d'un lot de créations.
- *
- * POURQUOI. Un enfant créé dans le MÊME lot que son parent porte un
- * `parentId` en `temp-`, qui ne désigne aucune ligne serveur. Envoyer tout le
- * lot en parallèle (`Promise.all`) enverrait l'enfant avec une référence
- * invalide, puisque son parent n'existe pas encore côté serveur au moment de
- * l'écriture.
- *
- * On crée donc par niveau : `orderByDepth` trie les brouillons (préfixe
- * `temp-`) par profondeur croissante, et lève si le lot contient un cycle
- * plutôt que de boucler indéfiniment. `handleSave` substitue ensuite chaque
- * `parentId` en `temp-` par l'identifiant réel rendu par la création du
- * parent, niveau après niveau.
+ * Plan d'écriture d'un lot de créations. Un enfant du MÊME lot porte un `parentId` en `temp-` sans ligne serveur : on crée par niveau (`orderByDepth`, lève sur cycle) et `handleSave` substitue chaque `temp-` par l'identifiant réel du parent.
  */
 export function planCreations(drafts: readonly Category[]): Category[] {
   return orderByDepth(drafts.filter((c) => c.id.startsWith('temp-')));
 }
 
 /**
- * Ordre d'écriture d'un lot de SUPPRESSIONS (tâche 10, suppression de
- * branche).
- *
- * POURQUOI feuilles-vers-racine. La FK `categories.parent_id` est
- * `ON DELETE NO ACTION` (mig. 143) : la contrainte se vérifie À LA FIN DE
- * CHAQUE INSTRUCTION, et l'app écrit une suppression PAR CATÉGORIE, en
- * requêtes séparées — jamais une suppression groupée où Postgres verrait la
- * branche entière partir dans la MÊME instruction. Supprimer un parent avant
- * ses enfants échoue donc : au moment où l'instruction du parent s'exécute,
- * l'enfant existe toujours et pointe encore dessus.
- *
- * `orderByDepth` trie parent-avant-enfant (profondeur CROISSANTE) — pensé
- * pour les créations, où le parent doit exister avant qu'on écrive l'enfant
- * qui le référence. Pour une suppression c'est l'inverse qu'il faut :
- * l'enfant doit avoir disparu avant qu'on supprime le parent qu'il référence.
- * On réutilise donc `orderByDepth` tel quel — même arbre, même notion de
- * profondeur — et on INVERSE le résultat plutôt que de réécrire un second
- * tri qui finirait par diverger du premier.
+ * Ordre d'écriture d'un lot de SUPPRESSIONS : feuilles vers racine. La FK `categories.parent_id` est `ON DELETE NO ACTION` (mig. 143), vérifiée à la fin de CHAQUE instruction, et l'app supprime par catégorie : un parent avant ses enfants échoue. On INVERSE `orderByDepth` plutôt que d'écrire un second tri.
  */
 export function planDeletions(removed: readonly Category[]): Category[] {
   return [...orderByDepth(removed)].reverse();
 }
 
 /**
- * Contenu de la modale — monté UNIQUEMENT quand elle est ouverte.
- *
- * POURQUOI cette coupure. Cinq écrans montent `<ColorSettingsModal>` en
- * permanence (TasksSummary, EventModal, HabitModal, TaskModal, OKRModalSheet) :
- * tant que les requêtes vivaient au-dessus du `if (!isOpen)`, une lecture des
- * OKR partait depuis les pages Tâches, Agenda et Habitudes, qui n'en affichent
- * aucun, pour une modale que personne n'avait ouverte.
- *
- * Second effet, tout aussi voulu : l'état local meurt à la fermeture. Avant, des
- * suppressions mises en attente puis abandonnées (fermeture sans enregistrer)
- * survivaient à la réouverture, et repartaient à la sauvegarde suivante.
+ * Contenu de la modale, monté UNIQUEMENT à l'ouverture : les requêtes (OKR) ne partent pas des cinq écrans qui montent la modale en permanence, et l'état local (suppressions en attente) meurt à la fermeture.
  */
 /**
- * Ce que la suppression de `targetId` fait à la liste EN COURS D'ÉDITION.
- *
- * POURQUOI une fonction pure, hors du composant. La revue de la suppression
- * de branche l'a relevé : rien n'exerçait ce branchement, et c'est le seul
- * endroit du chantier où se tromper DÉTRUIT des données. Le sortir de l'état
- * React le rend vérifiable sans monter un écran, comme `planCreations`.
- *
- * `promote` : les enfants DIRECTS prennent le parent du supprimé. Leur contenu
- * ne bouge pas — ce ne sont pas eux qui disparaissent. `handleSave` verra ce
- * changement de `parentId` comme n'importe quel « Déplacer vers… » et l'écrira
- * AVANT la suppression du nœud : `ON DELETE NO ACTION` (mig. 143) refuserait
- * sinon de supprimer un parent dont les enfants pointent encore dessus.
- *
- * `deleteBranch` : le nœud ET tous ses descendants partent.
+ * Ce que la suppression de `targetId` fait à la liste EN COURS D'ÉDITION. Fonction pure (vérifiable sans écran) : c'est le seul endroit où se tromper DÉTRUIT des données.
+ * `promote` : les enfants DIRECTS prennent le parent du supprimé ; `handleSave` écrit ce `parentId` AVANT la suppression (mig. 143). `deleteBranch` : le nœud ET ses descendants partent.
  */
 export function applyDeleteToDrafts(
   drafts: readonly Category[],
@@ -150,15 +99,9 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
   // render when categories are already in the React Query cache.
   const [localCategories, setLocalCategories] = useState<Category[]>(categories);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
-  // « Déplacer vers… » (tâche 9) : la modale reste un éditeur par lot, donc la
-  // confirmation ne fait QUE modifier `localCategories` — rien ne part au
-  // serveur avant « Enregistrer ». C'est `handleSave` qui écrit le déplacement,
-  // via `useMoveCategory` (voir plus bas).
+  // « Déplacer vers… » : la confirmation ne modifie QUE `localCategories` ; `handleSave` écrit via `useMoveCategory`.
   const [categoryToMove, setCategoryToMove] = useState<string | null>(null);
-  // R-02 : ou partent les elements d'une categorie retiree, par categorie.
-  // La modale met les suppressions EN ATTENTE jusqu'a l'enregistrement : la
-  // decision de reclassement doit donc etre memorisee avec elles, sinon elle
-  // serait prise puis perdue.
+  // R-02 : où partent les éléments d'une catégorie retirée. Mémorisé avec les suppressions en attente jusqu'à l'enregistrement.
   const [reassignTargets, setReassignTargets] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
@@ -191,11 +134,7 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
   // qui ne sera jamais celui de la ligne creee.
   const reassignOptions = localCategories.filter((c) => !c.id.startsWith('temp-'));
 
-  // Aplatit l'arbre en lignes visibles (ordre d'affichage, profondeur, a-t-il
-  // des enfants), en s'arrêtant sous une catégorie repliée. `AnimatePresence`
-  // a besoin d'une liste À PLAT pour suivre proprement l'entrée/sortie de
-  // chaque ligne : une récursion qui rendrait directement les enfants casserait
-  // ce suivi, chaque niveau devenant un ensemble d'enfants distinct.
+  // Aplatit l'arbre en lignes visibles (ordre, profondeur, enfants), sous une catégorie repliée on s'arrête : `AnimatePresence` exige une liste À PLAT.
   const flattenVisible = (nodes: CategoryNode[], depth: number, out: Array<{ category: Category; depth: number; hasChildren: boolean }>) => {
     for (const node of nodes) {
       const hasChildren = node.children.length > 0;
@@ -271,11 +210,7 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
     if (!categoryToDelete) return;
     const targetId = categoryToDelete;
 
-    // La transition d'état vit dans `applyDeleteToDrafts`, vérifiable sans
-    // monter d'écran. Ici on ne fait que l'appliquer et enregistrer où part le
-    // contenu de chaque identifiant retiré : c'est cette liste complète que
-    // `resolveReassignTargets` suit à l'enregistrement pour ne jamais renvoyer
-    // vers une catégorie emportée par la même branche.
+    // La transition vit dans `applyDeleteToDrafts` ; ici on l'applique et on enregistre où part le contenu de chaque identifiant retiré (`resolveReassignTargets` le suit à l'enregistrement).
     const { next, removedIds } = applyDeleteToDrafts(localCategories, targetId, childrenMode);
     setLocalCategories(next);
     setReassignTargets(prev => {
@@ -287,10 +222,7 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
     setCategoryToDelete(null);
   };
 
-  // « Déplacer vers… » — ne touche QUE l'état local (cf. commentaire sur
-  // `categoryToMove`). La position choisie est la fin de la nouvelle fratrie :
-  // le menu ne propose pas de rang, seulement une destination, exactement
-  // comme `handleAddCategory` place une nouvelle catégorie en dernier.
+  // « Déplacer vers… » : état local seulement ; la position est la fin de la nouvelle fratrie, comme `handleAddCategory`.
   const confirmMoveLocal = (parentId: string | null) => {
     if (!categoryToMove) return;
     setLocalCategories(prev => {
@@ -305,11 +237,7 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
   };
 
   const handleSave = async () => {
-    // Catégorie créée puis jamais nommée : silencieuse, pas de blocage
-    // (demande utilisateur — l'ancien comportement bloquait
-    // « Valider » avec un toast d'erreur tant qu'elle traînait sans nom).
-    // Seule une catégorie EXISTANTE renommée trop court reste bloquante :
-    // là, silencieux effacerait un nom qu'on avait déjà en base.
+    // Catégorie créée jamais nommée : silencieuse, sans blocage. Seule une catégorie EXISTANTE renommée trop court bloque (sinon on effacerait un nom en base).
     const categoriesToSave = localCategories.filter(
       (lc) => !(lc.id.startsWith('temp-') && lc.name.trim().length < 2),
     );
@@ -321,16 +249,9 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
 
     setIsSaving(true);
     try {
-      // R-02 : reaffecter AVANT de supprimer. L'ordre inverse laisserait une
-      // fenetre ou les elements pointent dans le vide, et un echec du
-      // reclassement deviendrait irrattrapable : plus rien ne dirait quels
-      // elements portaient la categorie disparue.
+      // R-02 : réaffecter AVANT de supprimer (sinon des éléments pointent dans le vide et un échec devient irrattrapable).
       const removed = categories.filter(cat => !categoriesToSave.find(lc => lc.id === cat.id));
-      // On peut supprimer DEUX categories d'un coup et designer la seconde comme
-      // destination de la premiere. `resolveReassignTargets` suit la chaine
-      // jusqu'a une categorie qui survit : sans lui, des elements partaient vers
-      // une categorie supprimee une ligne plus bas. Chaque tour relit les taches
-      // de SA categorie (V14.1), donc deja deplacees au tour precedent.
+      // Deux catégories supprimées d'un coup, la seconde destination de la première : `resolveReassignTargets` suit la chaîne jusqu'à une survivante. Chaque tour relit les tâches de SA catégorie (V14.1).
       const finalTargets = resolveReassignTargets(removed.map(c => c.id), reassignTargets);
       let movedTotal = 0;
       for (const cat of removed) {
@@ -353,14 +274,7 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
           return Promise.resolve();
         });
 
-      // « Déplacer vers… » (tâche 9) écrit ici, à l'enregistrement — jamais à
-      // la confirmation du dialogue, qui ne fait que muter `localCategories`.
-      // `useMoveCategory` est LA mutation dédiée au reparentage ET au
-      // réordonnancement : on la distingue de la mise à jour nom/couleur
-      // ci-dessus, qu'elle ne touche jamais, même si les deux ont changé pour
-      // la même catégorie dans le même lot (deux écritures sur des colonnes
-      // disjointes, sans conflit). Ne concerne que les lignes déjà en base :
-      // une création porte déjà son `parentId`/`position` définitifs.
+      // « Déplacer vers… » s'écrit ici, à l'enregistrement, via `useMoveCategory` (reparentage ET réordonnancement, colonnes disjointes de la mise à jour nom/couleur). Lignes déjà en base seulement : une création porte déjà son `parentId`/`position`.
       const movePromises = categoriesToSave
         .filter((lc) => !lc.id.startsWith('temp-'))
         .filter((lc) => {
@@ -369,37 +283,15 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
         })
         .map((lc) => moveCategoryMutation.mutateAsync({ id: lc.id, parentId: lc.parentId, position: lc.position }));
 
-      // Les MOVES doivent être écrits AVANT les suppressions ci-dessous, et
-      // non en parallèle avec elles (contrairement à l'ancien code). Un enfant
-      // « remonté d'un cran » (`confirmDeleteLocal`, choix `promote`) porte un
-      // `movePromises` qui le détache de son ancien parent — celui-là même
-      // qu'on va supprimer. Si la suppression du parent partait EN MÊME TEMPS
-      // que ce déplacement, l'ordre d'arrivée des deux requêtes sur le serveur
-      // n'est pas garanti : la suppression peut arriver alors que l'enfant
-      // pointe ENCORE sur le parent visé, et `ON DELETE NO ACTION` (mig. 143)
-      // la refuse.
+      // Les MOVES AVANT les suppressions, pas en parallèle : un enfant promu (`promote`) doit être détaché de son ancien parent avant que celui-ci soit supprimé (`ON DELETE NO ACTION`, mig. 143).
       await Promise.all([...updatePromises, ...movePromises]);
 
-      // Suppressions : DES FEUILLES VERS LA RACINE, et EN SÉQUENCE — jamais en
-      // parallèle. La FK `categories.parent_id` est `ON DELETE NO ACTION`
-      // (mig. 143) : la contrainte se vérifie À LA FIN DE CHAQUE INSTRUCTION,
-      // et cette boucle écrit une suppression PAR CATÉGORIE, en requêtes
-      // séparées (jamais une suppression groupée où Postgres verrait la
-      // branche entière partir dans la MÊME instruction). Supprimer un parent
-      // avant que ses enfants aient disparu échoue donc — et un envoi en
-      // parallèle (`Promise.all`) ne garantirait pas que les suppressions
-      // arrivent sur le serveur dans l'ordre où elles ont été émises.
-      // `planDeletions` inverse `orderByDepth` (parent-avant-enfant, pensé
-      // pour les créations) pour obtenir enfant-avant-parent.
+      // Suppressions : feuilles vers racine, EN SÉQUENCE (FK `ON DELETE NO ACTION` mig. 143, vérifiée par instruction ; `Promise.all` ne garantit pas l'ordre d'arrivée). `planDeletions` inverse `orderByDepth`.
       for (const cat of planDeletions(removed)) {
         await deleteCategoryMutation.mutateAsync(cat.id);
       }
 
-      // Créations : par niveau, en séquence. Un enfant créé dans le même lot
-      // que son parent porte un `parentId` en `temp-` qui ne désigne encore
-      // aucune ligne serveur ; on substitue donc chaque `temp-` par
-      // l'identifiant réel rendu par la création de son parent, au fur et à
-      // mesure qu'on descend les niveaux.
+      // Créations par niveau, en séquence : chaque `temp-` est substitué par l'identifiant réel du parent en descendant.
       const tempToReal = new Map<string, string>();
       for (const draft of planCreations(categoriesToSave)) {
         const parentId = draft.parentId?.startsWith('temp-')
@@ -419,11 +311,7 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
       if (movedTotal > 0) toast.success(tpOv('deleteCategory.doneReassigned', movedTotal));
       onClose();
     } catch (error) {
-      // Un echec avale en silence laissait l'utilisateur devant une modale qui
-      // ne se ferme pas, sans un mot. La reaffectation ayant lieu AVANT les
-      // suppressions, un echec de reclassement ne supprime rien ; un echec plus
-      // tard peut laisser une partie du lot ecrite. Dans les deux cas la modale
-      // reste ouverte sur l'etat local, donc rejouable.
+      // Un échec laisse la modale ouverte sur l'état local (rejouable) : la réaffectation précède les suppressions, un échec précoce ne supprime rien.
       console.error('Error saving categories:', error);
       toast.error(tCommon('pageError.hint'));
     } finally {

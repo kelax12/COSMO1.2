@@ -21,22 +21,10 @@ import {
   invalidateSecondaryTaskQueries,
 } from './cache-patch';
 
-/**
- * Filet de sécurité si le canal Realtime tombe sans se reconnaître déconnecté.
- * Ce n'est PAS le mécanisme de synchronisation — voir `useSharedTasksRealtime`.
- * Cadence volontairement lente : c'est le levier direct du coût d'egress
- * Supabase (audit archi, C2).
- */
+/** Filet de sécurité si le canal Realtime tombe sans se reconnaître (pas le mécanisme de synchronisation : `useSharedTasksRealtime`). Cadence lente : levier de l'egress Supabase (C2). */
 const COLLAB_POLL_INTERVAL_MS = 5 * 60_000;
 
-// Sélection du repository : le factory est déjà un singleton paramétré par
-// `appModeStore.isDemo`, et `resetRepositories()` le vide à chaque bascule
-// (AuthContext). Le `useMemo(..., [isDemo])` qui vivait ici était donc
-// redondant, et son commentaire était faux : `resetRepositories()` est aussi
-// appelé sur des chemins où `isDemo` NE change pas (déconnexion d'une vraie
-// session), où la mémo rendait alors l'instance que le factory venait de
-// jeter. Six modules (events, lists, categories, friends, team-projects,
-// organizations) font déjà cet appel direct. Audit A-2, item C-06.
+// Le factory est un singleton paramétré par `appModeStore.isDemo`, vidé par `resetRepositories()` (aussi appelé sans changement de `isDemo`) : pas de `useMemo` ici (C-06).
 const useTasksRepository = (): ITasksRepository => getTasksRepository();
 
 // ═══════════════════════════════════════════════════════════════════
@@ -47,12 +35,8 @@ const useTasksRepository = (): ITasksRepository => getTasksRepository();
  * Fetch all tasks
  */
 /**
- * Le JEU DE TRAVAIL : toutes les tâches non terminées, plus celles terminées
- * depuis `RECENT_COMPLETED_DAYS` jours (cf. `working-set.ts`).
- *
- * Ce n'est PAS « toutes les tâches » depuis la V14.1 (PER-01). Un écran qui
- * compte, cherche ou calcule sur l'historique complet passe par sa propre
- * requête : `useTaskArchive`, `useTaskSubset`, `useTaskCount`.
+ * Le JEU DE TRAVAIL : tâches non terminées + terminées depuis `RECENT_COMPLETED_DAYS` jours (`working-set.ts`).
+ * ❌ Pas « toutes les tâches » (PER-01) : l'historique passe par `useTaskArchive`, `useTaskSubset`, `useTaskCount`.
  */
 export const useTasks = (options?: { enabled?: boolean }) => {
   const repository = useTasksRepository();
@@ -61,37 +45,8 @@ export const useTasks = (options?: { enabled?: boolean }) => {
     queryKey: taskKeys.lists(),
     queryFn: () => withTimeout(loadWorkingSet(repository), 10_000),
     enabled: options?.enabled ?? true,
-    // Collaboration sans realtime : les modifications d'un collaborateur, ET
-    // surtout une NOUVELLE tâche qu'un ami vient de partager, ne se propagent
-    // pas d'elles-mêmes (cache React Query, focus-refetch désactivé
-    // globalement). On sonde donc périodiquement.
-    //
-    // ⚠️ Ce sondage est CHER : chaque tick est un `getAll()` complet. L'audit
-    // architecture (point C2) a mesuré la version précédente —
-    // 15 s, déclenchée dès que l'utilisateur avait ≥ 1 AMI — à ≈ 58 Mo/mois
-    // d'egress Supabase PAR UTILISATEUR, pour un événement qui, en pratique,
-    // ne survient que quelques fois par mois. Deux correctifs ici :
-    //
-    //   1. La condition passe de « a un ami » (quasi tout le monde, dès le
-    //      premier ajout) à « a réellement au moins une tâche collaborative »
-    //      — c'est-à-dire une collaboration ACTIVE, pas seulement possible.
-    //   2. L'intervalle passe de 15 s à 60 s. Un partage reçu apparaît en
-    //      moins d'une minute, ce qui est le bon ordre de grandeur pour une
-    //      notification passive ; le focus-refetch ci-dessous couvre le cas
-    //      « je reviens sur l'onglet et je veux voir tout de suite ».
-    //
-    // ➜ Le mécanisme PRINCIPAL est désormais Realtime
-    //   (`useSharedTasksRealtime`, monté dans App.tsx) : un partage reçu
-    //   invalide la liste immédiatement, pour un coût quasi nul.
-    //
-    //   Ce sondage n'est plus qu'un FILET DE SÉCURITÉ, d'où sa cadence lente
-    //   (5 min) : il couvre le cas où le WebSocket est tombé sans se
-    //   reconnecter (proxy d'entreprise, réseau mobile capricieux, onglet
-    //   longuement suspendu). Il ne tourne que si une collaboration est
-    //   réellement active.
-    //
-    //   Coût d'egress ramené de ~58 Mo/mois/utilisateur à quelques centaines
-    //   de Ko — et à zéro pour tout utilisateur sans partage en cours.
+    // Collaboration sans realtime : sondage seulement s'il existe une tâche collaborative ACTIVE.
+    // ⚠️ Cher : chaque tick est un `getAll()` complet (egress, C2). Le mécanisme principal est Realtime (`useSharedTasksRealtime`, App.tsx) ; ceci est un FILET (5 min) pour un WebSocket tombé sans reconnexion.
     refetchInterval: isDemo
       ? false
       : (query) => {
@@ -107,14 +62,7 @@ export const useTasks = (options?: { enabled?: boolean }) => {
 };
 
 /**
- * Boite de reception : taches partagees avec moi et pas encore acceptees.
- *
- * Depuis la mig. 103 ces taches ne sont PLUS dans `useTasks()` — elles n'y
- * entrent qu'apres acceptation. Sans ce hook, il n'y aurait plus aucun moyen
- * de les voir ni de les accepter.
- *
- * Meme cadence que les autres surfaces collaboratives (20 s), et desactive en
- * demo ou le partage cross-compte n'existe pas.
+ * Boite de reception : taches partagees avec moi et pas encore acceptees (absentes de `useTasks()` jusqu'a acceptation, mig. 103). Desactive en demo.
  */
 export const usePendingSharedTasks = () => {
   const repository = useTasksRepository();
@@ -123,10 +71,7 @@ export const usePendingSharedTasks = () => {
     queryKey: taskKeys.pendingShared(),
     queryFn: () => repository.getPendingSharedTasks(),
     enabled: !isDemo,
-    // Plus de sondage : `useSharedTasksRealtime` (App.tsx) écoute déjà
-    // `shared_tasks` dans les deux directions et invalide cette clé. Ce hook
-    // est monté par `InboxMenu`, il sondait donc en permanence — c'était le
-    // dernier `refetchInterval` inconditionnel de l'application.
+    // Pas de sondage : `useSharedTasksRealtime` (App.tsx) invalide cette clé.
     staleTime: 1000 * 30,
     refetchOnWindowFocus: !isDemo,
   });
@@ -144,19 +89,9 @@ export const useTask = (id: string, options?: { enabled?: boolean }) => {
   });
 };
 
-// 🗑️ Supprimés (C-49), aucun consommateur : `useTasksByDate`,
-// `useTodaysTasks`, `useBookmarkedTasks`, `useCompletedTasks`. `useFilteredTasks`
-// a suivi à la V14.1 : son seul appelant, `usePendingTasks`, lit désormais le
-// jeu de travail. `getFiltered` reste une capacité du repository.
+// 🗑️ Supprimés (C-49), sans consommateur : `useTasksByDate`, `useTodaysTasks`, `useBookmarkedTasks`, `useCompletedTasks`, `useFilteredTasks`. `getFiltered` reste une capacité du repository.
 
-/**
- * Tâches non terminées.
- *
- * V14.1 : dérivées du jeu de travail, qui les contient TOUTES (sans plafond).
- * L'ancienne lecture `getFiltered({ completed: false })` n'avait pas de
- * `range` et retombait sur le plafond PostgREST par défaut (1 000 lignes),
- * en plus de doubler la requête du jeu de travail.
- */
+/** Tâches non terminées, dérivées du jeu de travail (qui les contient TOUTES, sans plafond PostgREST, V14.1). */
 const selectPending = (tasks: Task[]) => tasks.filter((t) => !t.completed);
 export const usePendingTasks = () => {
   const query = useTasks();
@@ -236,13 +171,7 @@ export const useLoadAllTasks = () => {
 };
 
 /**
- * Le jeu de travail, COMPLÉTÉ des tâches `ids` qu'il ne contient pas (terminées
- * depuis plus de `RECENT_COMPLETED_DAYS` jours), relues par identifiant.
- *
- * Pour un écran qui part d'identifiants venus d'ailleurs : créneaux de
- * l'agenda (coche verte d'une tâche terminée), arêtes de dépendance. Sans ce
- * complément, une tâche ancienne disparaissait de l'écran sans que rien ne le
- * dise. `ids` doit être mémoïsé par l'appelant.
+ * Le jeu de travail COMPLÉTÉ des tâches `ids` absentes (terminées depuis plus de `RECENT_COMPLETED_DAYS` jours), relues par identifiant : créneaux de l'agenda, arêtes de dépendance. `ids` doit être mémoïsé par l'appelant.
  */
 export const useTasksIncluding = (ids: readonly string[]): Task[] => {
   const { data: working = [] } = useTasks();
@@ -254,12 +183,7 @@ export const useTasksIncluding = (ids: readonly string[]): Task[] => {
   return useMemo(() => mergeTasksById(working, extra ?? []), [working, extra]);
 };
 
-/**
- * Une tâche par son identifiant, où qu'elle soit en cache (jeu de travail,
- * page d'archive), sinon relue par `getById`. Pour une fiche ouverte depuis
- * l'archive : une tâche terminée il y a six mois n'est pas dans le jeu de
- * travail, et la chercher là seulement rendait `undefined`.
- */
+/** Une tâche par identifiant, où qu'elle soit en cache (jeu de travail, archive), sinon relue par `getById`. */
 export const useKnownTask = (id: string | null | undefined) => {
   const queryClient = useQueryClient();
   const { data: working } = useTasks();
@@ -396,22 +320,7 @@ export const useToggleTaskComplete = () => {
   const repository = useTasksRepository();
 
   return useMutation({
-    // Récurrence (#26) — la date de l'occurrence suivante est calculée ICI,
-    // puis transmise au repository qui bascule ET génère dans la MÊME
-    // opération (mig. 086, audit archi H1).
-    //
-    // Pourquoi le calcul reste client : `nextOccurrenceDeadline()` raisonne sur
-    // le JOUR CALENDAIRE vécu par l'utilisateur (`@/lib/deadline`), qui dépend
-    // du fuseau qu'il a réglé. Le serveur ne le connaît pas ; refaire ce calcul
-    // en SQL décalerait les échéances d'un jour pour tout le monde à l'ouest de
-    // Greenwich — c'est exactement ce que faisait le cast `::timestamptz` du
-    // paramètre `DATE`, refermé par la mig. 133.
-    //
-    // Ce qui a changé, c'est la GARANTIE : avant, la création était un
-    // `create()` fire-and-forget dans `onSuccess`, avec un `.catch(() => {})`.
-    // Elle se perdait si l'onglet se fermait ou si le réseau lâchait, et se
-    // dupliquait si l'utilisateur décochait puis recochait. Elle est désormais
-    // atomique (même transaction) et idempotente (index unique serveur).
+    // Récurrence (#26) : la date de l'occurrence suivante est calculée ICI (`nextOccurrenceDeadline()`, jour calendaire du fuseau réglé, `@/lib/deadline`, mig. 133) ; le repository bascule ET génère dans la même opération, atomique et idempotente (mig. 086, H1).
     mutationFn: (id: string) => {
       // Lu AVANT la bascule optimiste ? Non : `onMutate` passe d'abord. La
       // tâche lue ici est donc déjà basculée ; `nextOccurrenceDeadline` ne lit
@@ -429,10 +338,7 @@ export const useToggleTaskComplete = () => {
     onSuccess: ({ task: updatedTask, spawned }) => {
       if (!updatedTask?.completed) return;
 
-      // L'occurrence suivante est déjà PERSISTÉE quand on arrive ici (elle est
-      // venue avec la réponse). On ne fait plus que rafraîchir le cache.
-      // `spawned` est null si la tâche n'est pas récurrente, ou si l'occurrence
-      // existait déjà (rejeu idempotent) — dans les deux cas, rien à ajouter.
+      // L'occurrence suivante est déjà persistée : on ne fait que rafraîchir le cache (`spawned` est null si non récurrente ou déjà créée).
       if (spawned) {
         queryClient.setQueryData<Task[]>(taskKeys.lists(), (old) =>
           old ? [spawned, ...old] : [spawned]
@@ -440,11 +346,7 @@ export const useToggleTaskComplete = () => {
       }
 
       showUndoToast(translator('errors').t('success.taskValidated'), () => {
-        // Mise à jour optimiste immédiate du cache : la tâche redevient
-        // « non complétée » et réapparaît tout de suite dans la liste active
-        // (sans attendre un refresh). L'occurrence générée disparaît en même
-        // temps — c'est le serveur qui la retire réellement, dans la même
-        // transaction que la dé-validation, et seulement si elle est intacte.
+        // Optimiste : la tâche redevient non complétée ; le serveur retire l'occurrence générée si elle est intacte.
         patchTaskCaches(queryClient, (old) =>
           old
             .filter((t) => t.recurrenceParentId !== updatedTask.id)
@@ -479,10 +381,7 @@ export const useToggleTaskComplete = () => {
         }),
       });
 
-      // V14.1 : une tâche décochée DEPUIS L'ARCHIVE (terminée il y a plus de
-      // `RECENT_COMPLETED_DAYS` jours) n'est pas dans le jeu de travail. Elle
-      // y entre, puisqu'elle redevient du travail en cours ; `patchTaskCaches`
-      // la retire de l'archive, qui ne garde que des terminées.
+      // Une tâche décochée DEPUIS L'ARCHIVE entre dans le jeu de travail ; `patchTaskCaches` la retire de l'archive.
       const working = queryClient.getQueryData<Task[]>(taskKeys.lists());
       const original = findTaskInCaches(queryClient, id);
       if (working && original && !working.some((t) => t.id === id)) {
@@ -555,40 +454,15 @@ export const useToggleTaskBookmark = () => {
   });
 };
 
-// ═══════════════════════════════════════════════════════════════════
-// PAGINATION DES TÂCHES (V14.1, constat PER-01 de l'audit)
-//
-// La note qui vivait ici disait : « paginer sans pousser filtres, tri et
-// comptage côté SQL donnerait des compteurs FAUX ». C'est la règle qu'a
-// suivie la V14.1, et elle reste vraie : la pagination ne s'est pas faite en
-// coupant `useTasks()` en pages, mais en séparant ce qui est borné de ce qui
-// ne l'est pas.
-//
-//   • `useTasks()` : le jeu de travail, sans plafond (`working-set.ts`). Les
-//     compteurs par chip, les smart lists et le tri de la page Tâches ne
-//     lisent que des tâches NON terminées, toutes présentes.
-//   • `useTaskArchive` : l'archive « Terminées », en pages serveur (curseur
-//     de clé, filtres poussés en SQL), rendue virtualisée.
-//   • `useTaskCount` : les nombres qui portent sur l'historique, comptés par
-//     le serveur, jamais une longueur de tableau partiel.
-//   • `useTaskSubset` : un sous-ensemble entier borné par nature (fenêtre de
-//     `completed_at`, catégorie, identifiants).
-//
-// ❌ Ne jamais compter, chercher ou calculer une statistique sur `useTasks()`
-// en la prenant pour l'historique complet : elle ne l'est plus.
-// ═══════════════════════════════════════════════════════════════════
+// ═══ PAGINATION DES TÂCHES (PER-01) ═══
+// `useTasks()` : jeu de travail sans plafond. `useTaskArchive` : « Terminées » en pages serveur. `useTaskCount` : nombres d'historique comptés serveur. `useTaskSubset` : sous-ensemble entier borné.
+// ❌ Ne jamais compter, chercher ou calculer une statistique sur `useTasks()` en la prenant pour l'historique complet.
 
 // ═══════════════════════════════════════════════════════════════════
 // DÉPENDANCES (mig. 132)
 // ═══════════════════════════════════════════════════════════════════
 
-/**
- * Tout le graphe de dépendances du compte, en une requête.
- *
- * `enabled` parce que ce hook est monté par le modal de tâche : le charger
- * depuis la page Tâches ferait payer le graphe à des écrans qui ne
- * l'affichent jamais.
- */
+/** Tout le graphe de dépendances du compte, en une requête ; `enabled` car monté par le modal de tâche. */
 export const useTaskDependencies = (options?: { enabled?: boolean }) => {
   const repository = useTasksRepository();
   return useQuery<TaskDependency[]>({
@@ -612,15 +486,7 @@ const dependencyErrorMessage = (error: Error): string => {
 };
 
 /**
- * Le refus le plus courant est un CYCLE, rejeté par le trigger (mig. 132).
- * On veut le DIRE plutôt qu'un « une erreur est survenue » : l'utilisateur
- * peut agir sur un cycle, pas sur une erreur anonyme.
- *
- * 🔴 C-48 — cette intention était contredite par les deux modes. En prod, la
- * phrase anglaise du `RAISE` ne matchait pas `BUSINESS_CODE_RE`, donc le refus
- * retombait sur le message générique ; en démo, elle arrivait telle quelle
- * dans le gabarit français. Les deux passent désormais par un IDENTIFIANT
- * catalogué (`dependency-errors.ts`, mig. 137).
+ * Le refus le plus courant est un CYCLE (trigger, mig. 132) : on le DIT. Les deux modes passent par un IDENTIFIANT catalogué (`dependency-errors.ts`, mig. 137), C-48.
  */
 export const useAddTaskDependency = () => {
   const queryClient = useQueryClient();

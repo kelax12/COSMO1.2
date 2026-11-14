@@ -1,54 +1,10 @@
 // Registre des catalogues de traduction + typage des clés.
 //
-// Les catalogues sont des `.json` (et non des `.ts`) : `prerender/` est du
-// Node brut sans bundler et doit lire exactement les mêmes fichiers. Effet de
-// bord utile : `vitest.config.ts` ne couvre que `src/**/*.{ts,tsx}`, donc les
-// clés de données sont hors des seuils de couverture.
-//
-// Le catalogue `fr` est la SOURCE DE VÉRITÉ : c'est lui qui définit le type des
-// clés et sert de repli. Un catalogue traduit incomplet ne casse pas l'app
-// (repli clé par clé, cf. src/i18n/translate.ts) — `npm run i18n:check` est ce
-// qui empêche l'incomplétude d'atteindre la prod.
-//
-// ─── Ajouter une LANGUE : zéro ligne de code ───
-//
-// Déposer `src/locales/<code>/*.json` et ajouter le code à `SUPPORTED_LOCALES`
-// (src/i18n/locale.ts). Ce module découvre les fichiers tout seul via
-// `import.meta.glob` — il n'y a AUCUNE liste de langues à tenir à jour ici.
-// C'est délibéré : la version précédente listait un `import` statique par paire
-// (locale × namespace), donc ouvrir l'espagnol sur 15 namespaces aurait demandé
-// 15 imports + 15 affectations, avec un oubli silencieux à la clé (le repli `fr`
-// masque un catalogue non enregistré — la page s'affiche, en français).
-//
-// ─── Ajouter un NAMESPACE : deux lignes, au même endroit ───
-//
-// Un `import` du catalogue `fr` + son entrée dans `CatalogShapes`. Ces deux
-// lignes ne sont pas de la redondance : l'import statique `fr` est ce qui rend
-// le repli disponible AVANT tout await (cf. « Chargement » plus bas), et
-// `CatalogShapes` est ce qui donne à `t()` ses clés typées. Aucune des deux ne
-// peut être dérivée du glob, dont le type est `Record<string, unknown>`.
-//
-// ─── Chargement : deux namespaces eager, les 21 autres à la demande ───
-//
-// Le repli `fr` doit être disponible SYNCHRONIQUEMENT, `t()` ne renvoie pas de
-// promesse, donc un namespace absent afficherait sa clé brute. Mais tous les
-// namespaces ne sont pas nécessaires au même moment : seuls `common` et
-// `errors` sont atteignables depuis le SHELL de l'application (mesuré par
-// `scripts/i18n-shell-namespaces.mjs`, verrouillé par
-// `src/i18n/lazy-namespaces.guard.test.ts`). Les 21 autres appartiennent à une
-// page lazy, et sont chargés en même temps QU'ELLE.
-//
-// Ce que ça change, mesuré (docs/PERFORMANCE.md) : le catalogue `fr` pesait
-// 178 ko bruts dans le chunk d'entrée, dont ~140 ko pour des pages que la
-// plupart des sessions n'ouvrent jamais (`org` 50 ko, `landing` 34 ko,
-// `guide` 14 ko…).
-//
-// ⚠️ **Le gate est au niveau de la ROUTE, pas du composant.** `lazyWithRetry`
-// (src/App.tsx) attend les namespaces déclarés AVANT de résoudre le module de
-// page : le `<Suspense>` qui enveloppe déjà chaque route couvre l'attente, donc
-// aucun rendu ne peut avoir lieu avec un catalogue manquant. Charger le
-// namespace DANS le composant produirait exactement le flash de clés brutes que
-// ce découpage doit éviter.
+// Catalogues en `.json` (`prerender/` est du Node brut qui lit les mêmes fichiers). `fr` est la SOURCE DE VÉRITÉ : il type les clés et sert de repli clé par clé (src/i18n/translate.ts) ; `npm run i18n:check` empêche l'incomplétude d'atteindre la prod.
+// Ajouter une LANGUE : déposer `src/locales/<code>/*.json` et ajouter le code à `SUPPORTED_LOCALES` (locale.ts) ; `import.meta.glob` découvre le reste.
+// Ajouter un NAMESPACE : un `import` du catalogue `fr` + son entrée dans `CatalogShapes` (le glob est typé `Record<string, unknown>`).
+// Chargement : `common` et `errors` sont eager (atteignables depuis le shell, `scripts/i18n-shell-namespaces.mjs`, garde `lazy-namespaces.guard.test.ts`) ; les autres arrivent avec leur page lazy.
+// ⚠️ Le gate est au niveau de la ROUTE : `lazyWithRetry` (src/App.tsx) attend les namespaces AVANT de résoudre la page. Charger dans le composant ferait flasher des clés brutes.
 
 import { DEFAULT_LOCALE, isLocale, type Locale } from './locale';
 import { lookup, type CatalogNode } from './translate';
@@ -110,19 +66,8 @@ interface CatalogShapes {
   errors: typeof frErrors;
   /** Guide d'utilisation — sommaire, sections, étapes, encarts. */
   guide: Shape<'guide'>;
-  /**
-   * En-têtes et libellés des exports CSV.
-   *
-   * Namespace À PART, et pas dans `common` : `common` est l'un des DEUX catalogues
-   * du chunk d'entrée, et ces textes ne servent que depuis Réglages → Données ou
-   * l'aperçu d'entreprise (467 o gzip gagnés en le sortant).
-   */
-  /**
-   * Formulaire « Signaler un bug ».
-   *
-   * Namespace À PART pour la même raison que `csv` : `BugReportModal` est `lazy()`,
-   * ses textes ne servent qu'à ceux qui l'ouvrent.
-   */
+  /** En-têtes des exports CSV : namespace à part, `common` est eager. */
+  /** Formulaire « Signaler un bug » : à part, `BugReportModal` est lazy. */
   bugReport: Shape<'bugReport'>;
   csv: Shape<'csv'>;
   /** Modale d'événement — champs, récurrence, planification, calendrier. */
@@ -134,48 +79,21 @@ interface CatalogShapes {
   /** OKR — page, cartes, catégories, modales, check-in hebdo. */
   okr: Shape<'okr'>;
   /**
-   * Surfaces ouvertes À LA DEMANDE : raccourcis clavier, palette de commandes,
-   * boîte de réception, accueil du premier compte, confirmations de
-   * suppression, champ de lien de partage, calendrier de saisie, avertissement
-   * de pagination.
-   *
-   * Namespace À PART pour la même raison que `csv` et `bugReport` : ces sections
-   * vivaient dans `common`, donc chez tout visiteur de la landing, du blog ou
-   * d'une page légale, pour des surfaces qui exigent d'être connecté.
-   *
-   * ⚠️ Ce n'est PAS « tout ce qui est modal ». `shareInvite` reste dans
-   * `common` parce que `ShareInviteClaimer` est monté par le SHELL
-   * (`npm run i18n:namespaces` le nomme) : l'y déplacer rendrait `overlays`
-   * eager, donc annulerait le gain en le déguisant.
+   * Surfaces ouvertes à la demande (raccourcis, palette, boîte de réception, accueil, confirmations, lien de partage, calendrier de saisie, pagination).
+   * ⚠️ Pas « tout ce qui est modal » : `shareInvite` reste dans `common`, `ShareInviteClaimer` est monté par le shell (`npm run i18n:namespaces`).
    */
   overlays: Shape<'overlays'>;
-  /**
-   * Accueil des nouveaux comptes : planétaire du parcours perso
-   * (`FirstRunSetup`) et constellation du parcours entreprise
-   * (`/entreprise/onboarding`, accueil d'un membre). À PART pour ne partir
-   * qu'avec ces écrans : une personne déjà accueillie ne le télécharge jamais.
-   */
+  /** Accueil des nouveaux comptes (`FirstRunSetup`, `/entreprise/onboarding`), à part. */
   onboarding: Shape<'onboarding'>;
   /** Premium — page d'offre, mur de fonctionnalité, modale publicitaire. */
   premium: Shape<'premium'>;
   /** Landing publique + pages marketing (à propos, cas d'usage, blog). */
   landing: Shape<'landing'>;
-  /**
-   * Parcours ENTREPRISE de la landing, chargé avec `EnterpriseTrack` (lazy) :
-   * la moitié du texte de la landing, que le parcours perso n'affiche jamais.
-   * L'aiguillage, le sélecteur et les ancres restent dans `landing`.
-   */
+  /** Parcours entreprise de la landing, chargé avec `EnterpriseTrack` (lazy). */
   landingEnterprise: Shape<'landingEnterprise'>;
   /**
-   * Pages contractuelles : libellés communs (retour, date de mise à jour) et
-   * mentions légales.
-   *
-   * Les CGU et la politique de confidentialité vivent À PART (`legalTerms`,
-   * `legalPrivacy`), chacune chargée par SA page : réunies dans ce catalogue, elles
-   * dépassaient le plafond et chaque page légale téléchargeait les deux autres
-   * documents. ⚠️ Les trois fichiers d'une langue forment UN document au sens
-   * de `npm run check:legal-journal` : leur empreinte est calculée sur leur
-   * réunion, un découpage ne la change donc pas, une modification de texte si.
+   * Pages contractuelles : libellés communs et mentions légales. CGU et confidentialité vivent à part (`legalTerms`, `legalPrivacy`).
+   * ⚠️ Les trois fichiers d'une langue forment UN document pour `npm run check:legal-journal` (empreinte sur leur réunion).
    */
   legal: Shape<'legal'>;
   /** Conditions générales d'utilisation (`/cgu`). */
@@ -184,49 +102,16 @@ interface CatalogShapes {
   legalPrivacy: Shape<'legalPrivacy'>;
   /** Mode entreprise — pyramide, équipes, projets, OKR d'équipe, invitations. */
   org: Shape<'org'>;
-  /**
-   * Portefeuille de projets (M2) : vues, page projet, jalons, modèles.
-   *
-   * Namespace À PART, chargé avec le SEUL onglet Projets (`OrganizationPage`,
-   * `lazyWithRetry(…, ['portfolio'])`) : dans `org`, il serait payé par toute
-   * visite de /entreprise, Aperçu et Pyramide compris.
-   */
+  /** Portefeuille de projets (M2), chargé avec le seul onglet Projets (`OrganizationPage`). */
   portfolio: Shape<'portfolio'>;
-  /**
-   * Surfaces RARES du propriétaire ou du créateur d'une entreprise : écran
-   * Facturation (sièges, historique, contact, mig. 180) et assistant de
-   * démarrage (/entreprise/onboarding?setup=).
-   *
-   * À part de `org`, qui est payé par toute visite de /entreprise. Et UN seul
-   * namespace pour les deux, pas deux : chaque namespace ajoute ses chargeurs
-   * fr/en à la table `import.meta.glob` du chunk d'ENTRÉE, payée par toutes les
-   * pages.
-   */
+  /** Surfaces rares du propriétaire : Facturation (mig. 180) et assistant de démarrage. Un seul namespace : chacun ajoute des chargeurs au glob du chunk d'entrée. */
   orgAccount: Shape<'orgAccount'>;
   /**
-   * Gestes d'ADMINISTRATION du mode entreprise : départ et
-   * suspension, invitations par e-mail, actions en masse, droits, transfert de
-   * propriété, pyramide, revue hebdomadaire, corbeille.
-   *
-   * Namespace À PART, pour la même raison que `portfolio` : chargé par les SEULES
-   * sections et dialogues qui s'en servent (`lazyWithRetry(…, [..., 'orgAdmin'])`
-   * dans `OrganizationPage`), jamais par l'Aperçu.
-   *
-   * La ROUTE /entreprise le charge pour toute visite : il porte donc aussi les
-   * textes que SEUL /entreprise affiche (annuaire, aperçu, notifications,
-   * réglages, facturation, navigation de la section, corbeille…). `org`, chargé
-   * par `Layout`, donc par TOUT compte connecté, ne garde que ce que le reste de
-   * l'app affiche (fiche de tâche d'équipe dans /tasks, invitations, pastilles…).
-   * ❌ Ne rien remettre dans `org` qu'un écran hors /entreprise n'affiche pas :
-   *    `lazy-namespaces.guard.test.ts` dira où chaque section est rendue.
+   * Administration du mode entreprise (départ, invitations, actions en masse, droits, transfert, pyramide, revue, corbeille) et textes que SEUL /entreprise affiche. La ROUTE le charge ; `org` (chargé par `Layout`) ne garde que ce que le reste de l'app affiche.
+   * ❌ Ne rien remettre dans `org` qu'un écran hors /entreprise n'affiche pas : `lazy-namespaces.guard.test.ts` dit où chaque section est rendue.
    */
   orgAdmin: Shape<'orgAdmin'>;
-  /**
-   * Configuration d'entreprise (mig. 195-199) : réglages,
-   * sécurité, champs et statuts, automatisations, intégrations, capacité,
-   * liens secondaires. À part d'`orgAdmin`, que la ROUTE /entreprise charge
-   * pour toute visite : ces écrans le chargent eux-mêmes (`org-config.lazy.ts`).
-   */
+  /** Configuration d'entreprise (mig. 195-199), chargée par ses écrans (`org-config.lazy.ts`). */
   orgConfig: Shape<'orgConfig'>;
   orgGuide: Shape<'orgGuide'>;
   /** Guide perso (boussole du `Layout` desktop), chargé au premier clic avec `PersoGuideHost`. */
@@ -245,11 +130,7 @@ interface CatalogShapes {
   tutorials: Shape<'tutorials'>;
 }
 
-/**
- * Espaces de noms, alignés sur le découpage en chunks de l'app (une page lazy
- * = un namespace). Dérivé de `CatalogShapes` pour qu'ajouter un namespace ne
- * puisse pas oublier de mettre ce type à jour.
- */
+/** Espaces de noms, un par page lazy, dérivés de `CatalogShapes`. */
 export type Namespace = keyof CatalogShapes;
 
 // ──────────────────────────────────────────────────────────────────
@@ -285,16 +166,8 @@ type Registry = Partial<Record<Locale, Partial<Record<Namespace, CatalogNode>>>>
 const registry: Registry = {};
 
 /**
- * Namespaces présents dans le chunk d'entrée.
- *
- * La liste n'est pas un choix de confort : c'est le résultat de
- * `node scripts/i18n-shell-namespaces.mjs`, qui parcourt le graphe d'imports
- * STATIQUES depuis `App.tsx` et `main.tsx`. Tout ce qui rend avant qu'une route
- * soit résolue doit être ici, sous peine d'afficher des clés brutes.
- *
- * **Ne jamais en ajouter un « au cas où ».** `src/i18n/lazy-namespaces.guard.test.ts`
- * échoue si un namespace eager n'est plus atteignable depuis le shell : la
- * liste ne peut donc que refléter la mesure.
+ * Namespaces du chunk d'entrée : résultat de `node scripts/i18n-shell-namespaces.mjs`.
+ * ❌ Jamais « au cas où » : `lazy-namespaces.guard.test.ts` échoue si l'un n'est plus atteignable depuis le shell.
  */
 export const EAGER_NAMESPACES = ['common', 'errors'] as const;
 
@@ -306,18 +179,7 @@ registry[DEFAULT_LOCALE] = {
 };
 
 /**
- * Namespaces réellement existants.
- *
- * Écrit à la main depuis que les catalogues `fr` ne sont plus tous importés
- * statiquement : on ne peut plus le dériver du registre, qui ne contient au
- * démarrage que les deux namespaces eager. `CatalogShapes` reste la source du
- * TYPE, et l'annotation `readonly Namespace[]` fait échouer la compilation si
- * un nom est mal orthographié. Le test de garde vérifie en plus que la liste
- * couvre exactement les fichiers de `src/locales/fr/`.
- *
- * Sert aussi de whitelist au chargement : un fichier `src/locales/en/blog.json`
- * sans équivalent `fr` est ignoré plutôt qu'enregistré sous un namespace
- * fantôme que `t()` ne saurait pas typer.
+ * Namespaces existants, écrits à la main (le registre ne contient au démarrage que les eager). Le test de garde vérifie qu'ils couvrent `src/locales/fr/` ; sert aussi de whitelist au chargement.
  */
 const NAMESPACES: readonly Namespace[] = [
   'admin', 'agenda', 'bugReport', 'common', 'csv', 'dashboard', 'errors', 'eventModal',
@@ -337,22 +199,8 @@ function isNamespace(value: string): value is Namespace {
 // ──────────────────────────────────────────────────────────────────
 
 /**
- * Catalogues à charger paresseusement, toutes les locales, `fr` compris.
- *
- * Le motif DOIT être un littéral : Vite l'analyse statiquement à la
- * compilation, il ne peut pas être construit à partir de `SUPPORTED_LOCALES`
- * ni de `EAGER_NAMESPACES`. C'est sans conséquence, `*` couvre déjà toute
- * locale à venir.
- *
- * Les DEUX exclusions sont les deux namespaces eager, et elles sont là pour une
- * raison mécanique : un fichier à la fois importé statiquement et présent dans
- * un glob dynamique fait émettre à Rollup un avertissement par namespace, et le
- * chargeur ré-enregistrerait un catalogue déjà en mémoire. Elles doivent donc
- * rester alignées sur `EAGER_NAMESPACES`, `catalog.test.ts` le vérifie.
- *
- * ⚠️ `fr` n'est plus exclu en bloc : c'est tout l'objet du découpage. Les 17
- * namespaces de page vivent maintenant dans leur propre chunk, chargé par
- * `ensureNamespaces()` en même temps que la page qui en a besoin.
+ * Catalogues à charger paresseusement, toutes locales.
+ * Le motif DOIT être un littéral (analyse statique Vite). Les deux exclusions sont les namespaces eager (sinon avertissement Rollup) : alignées sur `EAGER_NAMESPACES`, `catalog.test.ts` le vérifie.
  */
 const CATALOG_LOADERS = import.meta.glob(
   // `boot` : écran de secours d'avant React, importé statiquement par
@@ -377,13 +225,7 @@ for (const [path, load] of Object.entries(CATALOG_LOADERS)) {
   if (parsed) LOADERS_BY_KEY.set(`${parsed.locale}/${parsed.namespace}`, load);
 }
 
-/**
- * Chargements en cours ou terminés, par couple locale + namespace.
- *
- * On mémorise la PROMESSE et non un booléen : deux routes qui demandent le même
- * namespace en même temps (une navigation rapide, un préchargement au survol)
- * doivent partager le même chargement, pas en déclencher deux.
- */
+/** Chargements par couple locale + namespace : on mémorise la PROMESSE, deux demandes simultanées partagent un chargement. */
 const loading = new Map<string, Promise<void>>();
 
 /** Charge un couple (locale, namespace), au plus une fois. */
@@ -407,12 +249,8 @@ function loadOne(locale: Locale, namespace: Namespace): Promise<void> {
       registerCatalog(locale, namespace, catalog);
     })
     .catch(() => {
-      // Un catalogue illisible ne doit pas empêcher l'app de démarrer : le
-      // repli `fr` couvre le namespace manquant. Silencieux côté client,
-      // attrapé côté CI par `npm run i18n:check` (JSON invalide = erreur).
-      //
-      // ⚠️ On ne retire PAS l'entrée du cache : réessayer à chaque rendu
-      // transformerait un fichier cassé en boucle de requêtes.
+      // Un catalogue illisible n'empêche pas le démarrage (repli `fr`, `npm run i18n:check` en CI).
+      // ⚠️ On ne retire PAS l'entrée du cache : réessayer à chaque rendu bouclerait en requêtes.
     });
 
   loading.set(key, task);
@@ -420,14 +258,8 @@ function loadOne(locale: Locale, namespace: Namespace): Promise<void> {
 }
 
 /**
- * Garantit que les namespaces demandés sont en mémoire, dans la locale active
- * ET dans `fr` (le repli).
- *
- * ⚠️ **À appeler AVANT le rendu, jamais pendant.** Le point d'appel prévu est
- * `lazyWithRetry` (src/App.tsx) : la promesse est attendue par le `<Suspense>`
- * qui enveloppe déjà chaque route, donc l'utilisateur voit le fallback de
- * chargement habituel, jamais une clé brute. Appeler cette fonction depuis un
- * `useEffect` de composant produirait exactement le flash qu'on veut éviter.
+ * Garantit les namespaces demandés en mémoire, locale active ET `fr`.
+ * ⚠️ À appeler AVANT le rendu (`lazyWithRetry`, src/App.tsx), jamais dans un `useEffect` : flash de clés brutes.
  */
 export function ensureNamespaces(
   namespaces: readonly Namespace[],
@@ -448,13 +280,7 @@ export function ensureNamespaces(
 }
 
 /**
- * Charge les catalogues nécessaires au DÉMARRAGE pour une locale.
- *
- * Ne concerne plus que les namespaces eager : les autres arrivent avec leur
- * page. Résout immédiatement pour `DEFAULT_LOCALE` (déjà en mémoire) et pour
- * toute locale sans fichier, dans ce dernier cas l'app rend intégralement via
- * le repli `fr`, ce qui est exactement le comportement voulu pendant qu'une
- * traduction est en cours d'écriture.
+ * Charge les catalogues du DÉMARRAGE pour une locale (namespaces eager seulement). Résout tout de suite pour `DEFAULT_LOCALE` ou une locale sans fichier : l'app rend alors via le repli `fr`.
  */
 export function loadCatalogs(locale: Locale): Promise<void> {
   if (locale === DEFAULT_LOCALE) return Promise.resolve();
@@ -463,10 +289,7 @@ export function loadCatalogs(locale: Locale): Promise<void> {
   ).then(() => undefined);
 }
 
-/**
- * Chargeurs disponibles, exposé pour les tests de garde, qui vérifient que le
- * glob couvre bien tous les couples (locale, namespace) attendus.
- */
+/** Chargeurs disponibles, exposés aux tests de garde. */
 export function listLoaderKeys(): readonly string[] {
   return [...LOADERS_BY_KEY.keys()];
 }
@@ -481,13 +304,7 @@ export function getFallbackCatalog(namespace: Namespace): CatalogNode | null {
   return registry[DEFAULT_LOCALE]?.[namespace] ?? null;
 }
 
-/**
- * Enregistre un catalogue.
- *
- * Public parce que les tests et un éventuel chargement hors glob (catalogue
- * distant, prévisualisation d'une traduction) doivent pouvoir alimenter le
- * registre sans passer par le disque.
- */
+/** Enregistre un catalogue (tests, chargement hors glob). */
 export function registerCatalog(locale: Locale, namespace: Namespace, catalog: CatalogNode): void {
   const bucket = registry[locale] ?? (registry[locale] = {});
   bucket[namespace] = catalog;
@@ -507,14 +324,8 @@ export function listNamespaces(): readonly Namespace[] {
 // ET son absence pour les deux namespaces eager.
 
 /**
- * Résout une clé avec repli, mais retourne `null` si elle n'existe nulle part
- * — au lieu de la clé elle-même comme `translate()`.
- *
- * Nécessaire partout où « la clé est absente » est une information métier et
- * non un bug d'affichage. Cas type : `normalizeApiError` doit distinguer un
- * code d'erreur whitelisté d'un code inconnu, parce qu'un code inconnu impose
- * de retomber sur le message générique et surtout de NE PAS relayer le message
- * brut du serveur (faille V7/N1).
+ * Résout une clé avec repli, `null` si absente (au lieu de la clé comme `translate()`).
+ * Sert quand l'absence est une information : `normalizeApiError` ne doit PAS relayer le message brut d'un code inconnu (faille V7/N1).
  */
 export function resolveMessage(namespace: Namespace, key: string, locale: Locale): string | null {
   const catalog = getCatalog(locale, namespace);
