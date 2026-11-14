@@ -7,13 +7,18 @@
 // ═══════════════════════════════════════════════════════════════════
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useIsDemo } from '@/lib/app-mode.store';
-import { safeParse } from '@/lib/safe-json';
 import {
   deleteOrgBillingContact,
   getOrgBillingContact,
   getOrgBillingHistory,
   saveOrgBillingContact,
 } from './org-billing-account.repository';
+import {
+  deleteLocalOrgBillingContact,
+  getLocalOrgBillingContact,
+  getLocalOrgBillingHistory,
+  saveLocalOrgBillingContact,
+} from './org-billing.local';
 import type { OrgBillingContact, OrgBillingHistoryEntry } from './org-billing.types';
 
 export const orgBillingAccountKeys = {
@@ -32,33 +37,18 @@ export const useOrgBillingHistory = (orgId: string | undefined, isOwner: boolean
   const isDemo = useIsDemo();
   return useQuery<OrgBillingHistoryEntry[]>({
     queryKey: orgBillingAccountKeys.history(orgId ?? ''),
-    queryFn: () => (isDemo ? Promise.resolve([]) : getOrgBillingHistory(orgId as string)),
+    queryFn: () => (isDemo ? getLocalOrgBillingHistory() : getOrgBillingHistory(orgId as string)),
     enabled: !!orgId && isOwner,
     staleTime: 1000 * 60 * 5,
   });
 };
-
-/**
- * Contact de facturation en DÉMO : `localStorage`, par organisation. Ce n'est
- * pas une donnée Stripe, c'est une préférence : la démo doit pouvoir la
- * montrer enregistrée, sinon le formulaire aurait l'air cassé.
- */
-const demoContactKey = (orgId: string) => `cosmo_demo_org_billing_contact_${orgId}`;
-
-function readDemoContact(orgId: string): OrgBillingContact | null {
-  try {
-    return safeParse<OrgBillingContact>(localStorage.getItem(demoContactKey(orgId)));
-  } catch {
-    return null;
-  }
-}
 
 export const useOrgBillingContact = (orgId: string | undefined, isOwner: boolean) => {
   const isDemo = useIsDemo();
   return useQuery<OrgBillingContact | null>({
     queryKey: orgBillingAccountKeys.contact(orgId ?? ''),
     queryFn: () =>
-      isDemo ? Promise.resolve(readDemoContact(orgId as string)) : getOrgBillingContact(orgId as string),
+      isDemo ? getLocalOrgBillingContact(orgId as string) : getOrgBillingContact(orgId as string),
     enabled: !!orgId && isOwner,
     staleTime: 1000 * 60 * 5,
   });
@@ -71,11 +61,11 @@ export const useSaveOrgBillingContact = (orgId: string, userId: string | undefin
   return useMutation({
     mutationFn: async (input: { name: string | null; email: string } | null) => {
       if (isDemo) {
-        try {
-          if (input) localStorage.setItem(demoContactKey(orgId), JSON.stringify({ orgId, ...input }));
-          else localStorage.removeItem(demoContactKey(orgId));
-        } catch { /* localStorage indisponible : l'écran garde la valeur du cache */ }
-        return input ? { orgId, ...input } : null;
+        if (!input) {
+          await deleteLocalOrgBillingContact(orgId);
+          return null;
+        }
+        return saveLocalOrgBillingContact(orgId, input);
       }
       if (!input) {
         await deleteOrgBillingContact(orgId);

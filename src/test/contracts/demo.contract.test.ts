@@ -19,6 +19,16 @@ import { LocalStorageTeamListsRepository } from '@/modules/team-lists/local.repo
 import { LocalStorageFriendsRepository } from '@/modules/friends/local.repository';
 import { LocalStorageOrganizationsRepository } from '@/modules/organizations/local.repository';
 import { DEMO_ORG_ID, DEMO_USER_ID } from '@/modules/team-projects/local.seed';
+import { orgBillingContract } from './__test__/org-billing.contract';
+import type { OrgBillingScenario } from './__test__/org-billing.contract';
+import { effectiveQuota } from '@/modules/billing/org-billing.logic';
+import {
+  deleteLocalOrgBillingContact,
+  getLocalOrgBillingContact,
+  getLocalOrgBillingHistory,
+  getLocalOrgSubscription,
+  saveLocalOrgBillingContact,
+} from '@/modules/billing/org-billing.local';
 import { tasksContract } from './__test__/tasks.contract';
 import { categoriesContract } from './__test__/categories.contract';
 import { listsContract } from './__test__/lists.contract';
@@ -101,3 +111,43 @@ friendsContract(SIDE, async () => ({
 }));
 organizationsContract(SIDE, async () => ({ repo: new LocalStorageOrganizationsRepository(), userId: DEMO_USER_ID }));
 teamProjectsContract(SIDE, async () => ({ repo: new LocalStorageTeamProjectsRepository(), orgId: DEMO_ORG_ID }));
+
+// Facturation d'organisation : la démo ne simule aucun abonnement ni paiement (`org-billing.local.ts`).
+// Le quota de sièges est la règle TS (`effectiveQuota`) que la base rejoue dans `org_seats_allowed`.
+const demoScenarios = new Map<string, OrgBillingScenario>();
+const NO_STRIPE_IN_DEMO = 'la démo ne simule ni abonnement ni paiement (palier gratuit constant)';
+const NO_ACCESS_CONTROL_IN_DEMO = 'la démo n’a qu’une identité : le refus par rôle est une RLS / un contrôle de RPC';
+orgBillingContract(
+  SIDE,
+  async () => ({
+    port: {
+      getSubscription: () => getLocalOrgSubscription(),
+      getHistory: () => getLocalOrgBillingHistory(),
+      getContact: (orgId) => getLocalOrgBillingContact(orgId),
+      saveContact: (orgId, input) => saveLocalOrgBillingContact(orgId, input),
+      deleteContact: (orgId) => deleteLocalOrgBillingContact(orgId),
+      seatsAllowed: async (orgId) => {
+        const sc = demoScenarios.get(orgId) ?? { members: 1 };
+        const sub = sc.subscription
+          ? { orgId, ...sc.subscription, billingInterval: 'monthly' as const, currentPeriodEnd: null, startedAt: null, cancelAtPeriodEnd: false, discountCode: null }
+          : null;
+        const quota = effectiveQuota(sub);
+        return quota === null || sc.members < quota;
+      },
+    },
+    newOrg: async (scenario = { members: 1 }) => {
+      const id = crypto.randomUUID();
+      demoScenarios.set(id, scenario);
+      return id;
+    },
+  }),
+  {
+    skip: {
+      'un abonnement actif se lit avec son palier, ses sièges et ses valeurs par défaut': NO_STRIPE_IN_DEMO,
+      'périodicité annuelle, résiliation programmée et date de conclusion se lisent': NO_STRIPE_IN_DEMO,
+      'l’historique rend les lignes de l’organisation seule, du plus récent au plus ancien, remboursement négatif': NO_STRIPE_IN_DEMO,
+      'l’historique est refusé à un simple membre et à qui vise une organisation inconnue': NO_ACCESS_CONTROL_IN_DEMO,
+      'un simple membre ne lit ni n’écrit le contact du propriétaire': NO_ACCESS_CONTROL_IN_DEMO,
+    },
+  },
+);

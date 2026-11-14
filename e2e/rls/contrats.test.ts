@@ -47,6 +47,14 @@ import { SupabaseTeamCategoriesRepository } from '@/modules/team-categories/supa
 import { SupabaseTeamListsRepository } from '@/modules/team-lists/supabase.repository';
 import { SupabaseFriendsRepository } from '@/modules/friends/supabase.repository';
 import { SupabaseOrganizationsRepository } from '@/modules/organizations/supabase.repository';
+import { orgBillingContract } from '@/test/contracts/__test__/org-billing.contract';
+import { getOrgSubscription } from '@/modules/billing/org-billing.repository';
+import {
+  deleteOrgBillingContact,
+  getOrgBillingContact,
+  getOrgBillingHistory,
+  saveOrgBillingContact,
+} from '@/modules/billing/org-billing-account.repository';
 import { tasksContract } from '@/test/contracts/__test__/tasks.contract';
 import { categoriesContract } from '@/test/contracts/__test__/categories.contract';
 import { listsContract } from '@/test/contracts/__test__/lists.contract';
@@ -153,3 +161,103 @@ friendsContract(
 );
 organizationsContract(SIDE, async () => ({ repo: new SupabaseOrganizationsRepository(), userId: user.id }));
 teamProjectsContract(SIDE, async () => ({ repo: new SupabaseTeamProjectsRepository(), orgId }));
+
+// Facturation d'organisation (hors Stripe). Le décor passe par service_role ; le
+// contrat lit et écrit sous le JWT du joueur. Le quota de sièges se lit par la
+// RPC `org_seats_allowed`, que la démo rejoue en TS (`effectiveQuota`).
+const billingExtras: TestUser[] = [];
+afterAll(async () => {
+  await deleteTestUsers(...billingExtras);
+});
+function must<T>(r: { data: T | null; error: unknown }): T {
+  if (r.error) throw r.error;
+  return r.data as T;
+}
+const ok = (r: { error: unknown }): void => {
+  if (r.error) throw r.error;
+};
+let billingStamp = 0;
+async function insertOrg(ownerId: string): Promise<string> {
+  const row = must(
+    await admin
+      .from('organizations')
+      .insert({ name: 'Org facturation', owner_id: ownerId, join_code: `fact-${Date.now()}-${billingStamp++}` })
+      .select('id')
+      .single(),
+  );
+  ok(await admin.from('organization_members').insert({ org_id: row.id, user_id: ownerId, role: 'admin' }));
+  return row.id as string;
+}
+orgBillingContract(SIDE, async () => {
+  const flag = must(await admin.from('billing_flags').select('enabled').eq('key', 'enterprise_seat_limit').maybeSingle());
+  if ((flag as { enabled?: boolean } | null)?.enabled !== true) {
+    throw new Error('billing_flags.enterprise_seat_limit doit être armé (mig. 224) pour jouer le quota');
+  }
+  return {
+    port: {
+      getSubscription: (id) => getOrgSubscription(id),
+      getHistory: (id) => getOrgBillingHistory(id),
+      getContact: (id) => getOrgBillingContact(id),
+      saveContact: (id, input) => saveOrgBillingContact(id, input, user.id),
+      deleteContact: (id) => deleteOrgBillingContact(id),
+      seatsAllowed: async (id) => {
+        const { data, error } = await user.client.rpc('org_seats_allowed', { p_org: id });
+        if (error) throw error;
+        return data as boolean;
+      },
+    },
+    newOrg: async (scenario = { members: 1 }) => {
+      const id = await insertOrg(user.id);
+      while (billingExtras.length < scenario.members - 1) billingExtras.push(await createTestUser());
+      const extra = billingExtras.slice(0, scenario.members - 1).map((u) => ({ org_id: id, user_id: u.id, role: 'member' }));
+      if (extra.length) ok(await admin.from('organization_members').insert(extra));
+      if (scenario.subscription) {
+        const s = scenario.subscription;
+        ok(
+          await admin.from('org_subscriptions').insert({
+            org_id: id,
+            tier_key: s.tierKey,
+            max_members: s.maxMembers,
+            status: s.status,
+            billing_interval: s.billingInterval ?? 'monthly',
+            cancel_at_period_end: s.cancelAtPeriodEnd ?? false,
+            started_at: s.startedAt ?? null,
+            purchased_by: user.id,
+          }),
+        );
+      }
+      return id;
+    },
+    seedPayments: async (orgId, rows) => {
+      for (const r of rows) {
+        const stamp = `${Date.now()}_${billingStamp++}`;
+        ok(
+          await admin.from('payment_records').insert({
+            stripe_event_id: `evt_contrat_${stamp}`,
+            event_type: r.eventType,
+            stripe_invoice_id: `in_contrat_${stamp}`,
+            org_id: orgId,
+            amount_cents: r.amountCents,
+            currency: 'eur',
+            occurred_at: new Date(Date.now() - r.daysAgo * 86_400_000).toISOString(),
+            payload: { number: r.number ?? null, billing_reason: r.reason ?? null },
+          }),
+        );
+      }
+    },
+    foreignOrg: async () => {
+      const owner = await createTestUser();
+      billingExtras.push(owner);
+      const id = await insertOrg(owner.id);
+      ok(await admin.from('organization_members').insert({ org_id: id, user_id: user.id, role: 'member' }));
+      ok(await admin.from('org_billing_contacts').insert({ org_id: id, name: null, email: 'proprio@example.com' }));
+      return {
+        orgId: id,
+        contactEmail: async () => {
+          const row = must(await admin.from('org_billing_contacts').select('email').eq('org_id', id).maybeSingle());
+          return (row as { email: string } | null)?.email ?? null;
+        },
+      };
+    },
+  };
+});

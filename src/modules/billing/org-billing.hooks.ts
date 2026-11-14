@@ -16,6 +16,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useIsDemo } from '@/lib/app-mode.store';
 import { getOrgSubscription } from './org-billing.repository';
+import { getLocalOrgSubscription } from './org-billing.local';
 import type { OrgSubscription } from './org-billing.types';
 import { activationPollInterval } from './org-billing.logic';
 import type { OrgTierKey } from './premium-config';
@@ -39,7 +40,7 @@ export const useOrgSubscription = (
   const awaiting = options?.awaitActivation ?? null;
   return useQuery<OrgSubscription | null>({
     queryKey: orgBillingKeys.subscription(orgId ?? ''),
-    queryFn: () => (isDemo ? Promise.resolve(null) : getOrgSubscription(orgId as string)),
+    queryFn: () => (isDemo ? getLocalOrgSubscription() : getOrgSubscription(orgId as string)),
     enabled: !!orgId,
     staleTime: 1000 * 60 * 5,
     // Sondage BORNÉ, seulement pendant l'attente d'activation : 1,5 s, arrêt dès
