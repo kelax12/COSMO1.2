@@ -24,21 +24,23 @@ const VALID_ISO = '2026-01-01T00:00:00.000Z';
 beforeEach(() => supabaseMock.reset());
 
 describe('SupabaseEventsRepository', () => {
-  it('getAll: paginates via range ordered by start_time + id tiebreak', async () => {
+  it('getAll: pages de clé sans plafond (même chemin que l’export), jamais .range', async () => {
     supabaseMock.queueTable('events', { data: [row] });
     const result = await repo.getAll();
-
-    const orders = supabaseMock.callsFor('events').filter((c) => c.method === 'order');
-    expect(orders.map((c) => c.args)).toEqual([
-      ['start_time', { ascending: true }],
-      ['id', { ascending: true }],
-    ]);
-    expect(supabaseMock.argsOf('events', 'range')).toEqual([0, 999]);
+    expect(supabaseMock.argsOf('events', 'limit')).toEqual([1001]);
+    expect(supabaseMock.callsFor('events').some((c) => c.method === 'range')).toBe(false);
     expect(result[0].id).toBe('e1');
   });
 
+  it('countAll: compte exact en tête seule, filtré par user_id', async () => {
+    supabaseMock.queueTable('events', { data: null, count: 12 } as never);
+    expect(await repo.countAll()).toBe(12);
+    expect(supabaseMock.argsOf('events', 'select')).toEqual(['id', { count: 'exact', head: true }]);
+    expect(supabaseMock.argsOf('events', 'eq')).toEqual(['user_id', expect.any(String)]);
+  });
+
   // PER-01 : l'export de portabilité enchaîne les pages de clé jusqu'au bout,
-  // sans le plafond de 5 000 lignes de `getAll()`.
+  // sans plafond.
   it('getAllForExport: enchaîne les pages de clé au-delà de 5 000 lignes, sans plafond', async () => {
     const uuid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
     const page = (n: number, offset: number) =>

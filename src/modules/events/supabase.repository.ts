@@ -9,8 +9,7 @@ import { IEventsRepository } from './repository';
 import { CalendarEvent, CreateEventInput, UpdateEventInput, EventFilters } from './types';
 import { mapEventFromDb, mapEventToDb } from './mappers';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE, assertValidCursor } from '@/lib/pagination.types';
-import { warnIfTruncated } from '@/lib/pagination.warning';
-import { fetchAllByCursor, fetchAllPages, MAX_ROWS, PAGE_SIZE } from '@/lib/fetch-all-pages';
+import { fetchAllByCursor, fetchAllPages, PAGE_SIZE } from '@/lib/fetch-all-pages';
 
 /** Lecture de fenêtre : sans plafond (V14.2), cf. getWindow. */
 const UNCAPPED = Number.POSITIVE_INFINITY;
@@ -34,23 +33,21 @@ export class SupabaseEventsRepository implements IEventsRepository {
   // READ OPERATIONS
   // ═══════════════════════════════════════════════════════════════════
 
+  /** Tout, par pages de clé jusqu'à la dernière, sans plafond (PER-01) : réservé à l'export. */
   async getAll(): Promise<CalendarEvent[]> {
+    return this.getAllForExport();
+  }
+
+  /** Nombre exact d'événements personnels, sans rapatrier les lignes. */
+  async countAll(): Promise<number> {
     if (!supabase) throw new Error('Supabase not configured');
-    const db = supabase;
     const uid = await this.currentUserId();
-    // Auto-pagination : plus de troncature silencieuse au-delà de 500 items.
-    const rows = await fetchAllPages(async (from, to) => {
-      const { data, error } = await db
-        .from('events')
-        .select('*')
-        .eq('user_id', uid)
-        .order('start_time', { ascending: true })
-        .order('id', { ascending: true })
-        .range(from, to);
-      if (error) throw normalizeApiError(error);
-      return data || [];
-    });
-    return warnIfTruncated(rows, MAX_ROWS, 'events').map(mapEventFromDb);
+    const { count, error } = await supabase
+      .from('events')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', uid);
+    if (error) throw normalizeApiError(error);
+    return count ?? 0;
   }
 
   async getPage(params: PaginationParams = {}): Promise<PaginatedResult<CalendarEvent>> {

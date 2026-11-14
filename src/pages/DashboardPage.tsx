@@ -10,7 +10,7 @@ import { useAuth } from '@/modules/auth/AuthContext';
 import { useTasks } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
 import { useKRCompletions } from '@/modules/kr-completions';
-import { useEvents } from '@/modules/events';
+import { useEventsAroundToday } from '@/modules/events';
 // Lazy : DashboardBarChart importe recharts (vendor-charts ~365 kB). Un import
 // statique le ferait retomber dans le chunk de DashboardPage (page post-login)
 // dès que SHOW_REPARTITION_CHART repasserait à true. Lazy = recharts payé
@@ -114,7 +114,7 @@ const DashboardPage: React.FC = () => {
 
   const { data: tasks = [], isLoading: isLoadingTasks } = useTasks();
   const { data: krCompletions = [] } = useKRCompletions();
-  const { data: events = [] } = useEvents();
+  const { data: events = [] } = useEventsAroundToday();
   const { user: authUser } = useAuth();
   const { data: habits = [] } = useHabits();
 

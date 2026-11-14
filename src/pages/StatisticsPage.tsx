@@ -15,7 +15,7 @@ import { useCategories } from '@/modules/categories';
 import { useTasks } from '@/modules/tasks';
 import { usePeriodCompletedTasks } from './statistics/usePeriodCompletedTasks';
 import { useHabits } from '@/modules/habits';
-import { useEvents } from '@/modules/events';
+import { useEventsAroundToday } from '@/modules/events';
 import { useOkrs } from '@/modules/okrs';
 import { useKRCompletions } from '@/modules/kr-completions';
 import { okrTimeForPeriod, parseLocalDate, getLocalDateString } from '@/lib/workTimeCalculator';
@@ -62,7 +62,7 @@ export default function StatisticsPage() {
   // 30 jours en arrière au plus. La période choisie, elle, peut couvrir un an :
   // elle a sa propre requête plus bas (V14.1, PER-01).
   const { data: tasks = [] } = useTasks();
-  const { data: events = [] } = useEvents();
+  const { data: events = [] } = useEventsAroundToday();
   const { data: okrs = [] } = useOkrs();
   // Journal des complétions de KR : SEULE source du temps investi sur les OKR.
   const { data: krCompletions = [] } = useKRCompletions();

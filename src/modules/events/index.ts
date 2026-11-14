@@ -35,7 +35,9 @@ export type { IEventsRepository } from './repository';
 // ═══════════════════════════════════════════════════════════════════
 
 export {
-  useEvents,
+  useEventsAroundToday,
+  useEventsCount,
+  aroundTodayRange,
   useLoadAllEvents,
   useEventsWindow,
   useTaskLinkedEvents,

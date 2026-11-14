@@ -44,6 +44,15 @@ export function eventsContract(side: string, make: () => Promise<EventsContractC
 
     const find = async (id: string): Promise<CalendarEvent | undefined> => (await repo.getAll()).find((e) => e.id === id);
 
+    contractCase(opts, 'countAll compte exactement ce que getAll rend, création comprise', async () => {
+      const before = await repo.countAll();
+      expect(before).toBe((await repo.getAll()).length);
+      const created = await repo.create(input(2079));
+      expect(await repo.countAll()).toBe(before + 1);
+      await repo.delete(created.id);
+      expect(await repo.countAll()).toBe(before);
+    });
+
     contractCase(opts, 'crée puis relit un événement, champ par champ', async () => {
       const created = await repo.create(
         input(2061, { title: 'Relire le contrat', color: '#3B82F6', description: 'Détail', notes: 'Une note' }),

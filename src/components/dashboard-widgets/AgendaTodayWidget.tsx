@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router';
-import { useEvents, expandRecurringEvents } from '@/modules/events';
+import { useEventsAroundToday, expandRecurringEvents } from '@/modules/events';
 import { formatTime } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import { DashboardCardSkeleton } from '@/components/skeletons';
@@ -16,7 +16,7 @@ const DEFAULT_COLOR = '#3B82F6';
 const AgendaTodayWidget = () => {
   const { t, tp } = useT('dashboard');
   const navigate = useNavigate();
-  const { data: events = [], isLoading } = useEvents();
+  const { data: events = [], isLoading } = useEventsAroundToday();
   // Noir : un rendez-vous sans couleur prend le gris clair d'analytics.
   const fallbackColor = useDocumentTheme() === 'noir' ? '#bdbdbd' : DEFAULT_COLOR;
 

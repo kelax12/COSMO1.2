@@ -22,11 +22,33 @@ const invalidateAllEventQueries = (queryClient: ReturnType<typeof useQueryClient
 // READ HOOKS
 // ═══════════════════════════════════════════════════════════════════
 
-export const useEvents = () => {
+/** Demi-largeur de la fenêtre partagée par les écrans hors agenda (jours). */
+export const AROUND_TODAY_DAYS = 366;
+
+/** Bornes ISO de [aujourd'hui - 366 j, aujourd'hui + 366 j], alignées sur le jour local. */
+export function aroundTodayRange(now: Date = new Date()): { startISO: string; endISO: string } {
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - AROUND_TODAY_DAYS);
+  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + AROUND_TODAY_DAYS + 1);
+  end.setMilliseconds(-1);
+  return { startISO: start.toISOString(), endISO: end.toISOString() };
+}
+
+/**
+ * Événements d'un an de part et d'autre d'aujourd'hui (+ tous les récurrents),
+ * pour le tableau de bord, les statistiques (un an max), « aujourd'hui » et la
+ * palette (PER-01). Une seule entrée de cache, clé du jour : tous la partagent.
+ */
+export const useEventsAroundToday = () => {
+  const { startISO, endISO } = aroundTodayRange();
+  return useEventsWindow(startISO, endISO);
+};
+
+/** Nombre exact d'événements, sans les rapatrier (onglet Données). */
+export const useEventsCount = () => {
   const repository = useEventsRepository();
   return useQuery({
-    queryKey: eventsKeys.lists(),
-    queryFn: () => repository.getAll(),
+    queryKey: eventsKeys.count(),
+    queryFn: () => repository.countAll(),
   });
 };
 
@@ -60,7 +82,7 @@ export const useEventsWindow = (startISO: string | null, endISO: string | null) 
 
 /**
  * Événements liés à une tâche, où qu'ils soient dans le temps (V14.2). Pour
- * la barre de tâches de l'agenda, qui chargeait `useEvents()` en entier.
+ * la barre de tâches de l'agenda, qui chargeait tout l'historique.
  * Clé sous lists() : les mutations la patchent comme les fenêtres.
  */
 export const useTaskLinkedEvents = () => {
@@ -273,7 +295,7 @@ export const useDeleteMemberEvent = (userId: string) => {
 // ═══════════════════════════════════════════════════════════════════
 
 export const useUpcomingEvents = (limit = 5) => {
-  const { data: events = [] } = useEvents();
+  const { data: events = [] } = useEventsAroundToday();
   return useMemo(
     () => {
       // `now` est calculé DANS le mémo. Le lire au corps du hook produisait une

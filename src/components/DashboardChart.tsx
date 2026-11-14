@@ -12,7 +12,7 @@ import {
 } from 'recharts';
 import { useChartCompletedTasks } from './useChartCompletedTasks';
 import { useHabits } from '@/modules/habits';
-import { useEvents } from '@/modules/events';
+import { useEventsAroundToday } from '@/modules/events';
 import { useOkrs } from '@/modules/okrs';
 import { useKRCompletions } from '@/modules/kr-completions';
 import { calculateWorkTimeForPeriod } from '@/lib/workTimeCalculator';
@@ -115,7 +115,7 @@ const DashboardChart: React.FC<DashboardChartProps> = ({ viewMode }) => {
   const { t } = useT('dashboard');
   // V14.1 : six mois de terminées, requête dédiée (jeu de travail = 35 j).
   const tasks = useChartCompletedTasks();
-  const { data: events = [] } = useEvents();
+  const { data: events = [] } = useEventsAroundToday();
   const { data: okrs = [] } = useOkrs();
   const { data: habits = [] } = useHabits();
   const { data: krCompletions = [] } = useKRCompletions();

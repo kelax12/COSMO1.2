@@ -63,7 +63,7 @@ export async function fetchAllByCursor<T, C>(
 
 /**
  * ⚠️ PLAFONNÉ à `MAX_ROWS`. Ne sert plus qu'aux lectures pas encore converties
- * (habitudes, OKR, OKR d'équipe, `useEvents()` complet) : la
+ * (habitudes, OKR, OKR d'équipe) : la
  * liste nominative et la raison de chacune vivent dans
  * `docs/PERFORMANCE.md` § « Lectures complètes restantes ». Toute nouvelle
  * lecture passe par `fetchAllByCursor` ou par une page.

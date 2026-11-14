@@ -16,13 +16,16 @@ import type { CreateOptions } from '@/lib/restore-id';
 
 export interface IEventsRepository {
   // Read operations
+  /** Tout, sans plafond : réservé à l'export ; les écrans lisent par fenêtre (`getWindow`). */
   getAll(): Promise<CalendarEvent[]>;
+  /** Nombre exact d'événements personnels (compteur de l'onglet Données). */
+  countAll(): Promise<number>;
   getFiltered(filters: EventFilters): Promise<CalendarEvent[]>;
   getPage(params?: PaginationParams): Promise<PaginatedResult<CalendarEvent>>;
   /**
    * TOUS les événements personnels, pour l'export de portabilité (RGPD
    * art. 20) : pages de clé enchaînées jusqu'à la dernière, SANS plafond
-   * (PER-01). `getAll()`, lu par les écrans, reste plafonné et le signale.
+   * (PER-01). `getAll()` y délègue.
    */
   getAllForExport(): Promise<CalendarEvent[]>;
   /** Événements de la fenêtre [startISO, endISO] + TOUS les récurrents (cf. window.ts). */

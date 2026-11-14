@@ -87,6 +87,10 @@ export class LocalStorageEventsRepository implements IEventsRepository {
     return this.getAll();
   }
 
+  async countAll(): Promise<number> {
+    return this.getEvents().length;
+  }
+
   async getLinkedToTasks(): Promise<CalendarEvent[]> {
     return this.getEvents().filter((e) => !!e.taskId);
   }

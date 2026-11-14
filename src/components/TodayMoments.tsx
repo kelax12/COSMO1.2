@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { AlertTriangle, Check } from 'lucide-react';
 import { formatOverdueSince } from '@/components/task-table/helpers';
-import { useEvents } from '@/modules/events';
+import { useEventsAroundToday } from '@/modules/events';
 import { useHabits } from '@/modules/habits';
 import { useTasks, type Task } from '@/modules/tasks';
 import { useTeamTasks, useUpdateTeamTask } from '@/modules/team-projects';
@@ -45,7 +45,7 @@ const TodayMoments = () => {
   const { t, tp } = useT('dashboard');
   const navigate = useNavigate();
   const { items, isLoading } = useTodayItems();
-  const { data: events = [] } = useEvents();
+  const { data: events = [] } = useEventsAroundToday();
   const { data: categories = [] } = useCategories();
   const categoryColors = useMemo(() => categoryColorSet(categories), [categories]);
   const { data: allTasks = [] } = useTasks();

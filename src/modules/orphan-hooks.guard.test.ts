@@ -125,7 +125,7 @@ describe('modules — aucun hook exporté sans consommateur (C-49)', () => {
 
     // Des hooks connus comme VIVANTS doivent rendre plusieurs consommateurs.
     // Si ce bloc tombe à zéro, c'est la mesure qui est cassée, pas le code.
-    for (const live of ['useTasks', 'useHabits', 'useEvents', 'useOkrs', 'useCreateTask']) {
+    for (const live of ['useTasks', 'useHabits', 'useEventsAroundToday', 'useOkrs', 'useCreateTask']) {
       expect(declarations.has(live), `${live} devrait être déclaré`).toBe(true);
       expect(consumerCount(live), `${live} devrait avoir des consommateurs`).toBeGreaterThan(3);
     }

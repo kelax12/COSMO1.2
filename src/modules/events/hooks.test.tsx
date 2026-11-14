@@ -7,13 +7,15 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // Fake repository — only the methods exercised here.
 const fakeRepo = {
   getAll: vi.fn(),
+  getWindow: vi.fn(),
+  countAll: vi.fn(),
   create: vi.fn(),
 };
 
 vi.mock('@/lib/repository.factory', () => ({ getEventsRepository: () => fakeRepo }));
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn(), warning: vi.fn() } }));
 
-import { useEvents, useCreateEvent } from './hooks';
+import { useEventsAroundToday, useEventsCount, useCreateEvent, aroundTodayRange } from './hooks';
 import { eventsKeys } from './constants';
 import type { CalendarEvent } from './types';
 
@@ -32,17 +34,38 @@ function makeWrapper() {
 
 beforeEach(() => {
   fakeRepo.getAll.mockReset();
+  fakeRepo.getWindow.mockReset();
+  fakeRepo.countAll.mockReset();
   fakeRepo.create.mockReset();
 });
 
-describe('useEvents', () => {
-  it('fetches events from the repository', async () => {
-    fakeRepo.getAll.mockResolvedValue([sampleEvent]);
+describe('useEventsAroundToday', () => {
+  it('lit la fenêtre de +/- 366 jours, jamais la liste complète (PER-01)', async () => {
+    fakeRepo.getWindow.mockResolvedValue([sampleEvent]);
     const { wrapper } = makeWrapper();
-    const { result } = renderHook(() => useEvents(), { wrapper });
+    const { result } = renderHook(() => useEventsAroundToday(), { wrapper });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual([sampleEvent]);
-    expect(fakeRepo.getAll).toHaveBeenCalledTimes(1);
+    const { startISO, endISO } = aroundTodayRange();
+    expect(fakeRepo.getWindow).toHaveBeenCalledWith(startISO, endISO);
+    expect(fakeRepo.getAll).not.toHaveBeenCalled();
+  });
+
+  it('borne la fenêtre au jour local, un an de chaque côté', () => {
+    const { startISO, endISO } = aroundTodayRange(new Date(2026, 5, 15, 14, 30));
+    expect(Date.parse(startISO)).toBe(new Date(2025, 5, 14).getTime());
+    expect(Date.parse(endISO)).toBe(new Date(2027, 5, 17).getTime() - 1);
+  });
+});
+
+describe('useEventsCount', () => {
+  it('compte sans rapatrier les lignes', async () => {
+    fakeRepo.countAll.mockResolvedValue(42);
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useEventsCount(), { wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toBe(42);
+    expect(fakeRepo.getAll).not.toHaveBeenCalled();
   });
 });
 

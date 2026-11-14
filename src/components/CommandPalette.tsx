@@ -30,7 +30,7 @@ import { useAuth } from '@/modules/auth/AuthContext';
 import { PREMIUM_ENFORCED } from '@/modules/billing/premium-config';
 import { useTasks, useTaskArchive } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
-import { useEvents } from '@/modules/events';
+import { useEventsAroundToday } from '@/modules/events';
 import { useOkrs } from '@/modules/okrs';
 import { parseISO } from 'date-fns';
 import { useActiveOrganization } from '@/modules/organizations';
@@ -81,7 +81,7 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
   const navigate = useNavigate();
   const { data: tasks = [] } = useTasks();
   const { data: habits = [] } = useHabits();
-  const { data: events = [] } = useEvents();
+  const { data: events = [] } = useEventsAroundToday();
   const { data: okrs = [] } = useOkrs();
   // Périmètre entreprise : UNE recherche SERVEUR (mig. 191, `search_org`),
   // sous les droits de qui cherche. Projets, membres, équipes et OKR étaient
