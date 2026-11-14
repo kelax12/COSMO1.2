@@ -350,7 +350,7 @@
     },
     "src/components/task-table/list.tsx": {
       "complexity": [57],
-      "max-lines-per-function": [327]
+      "max-lines-per-function": [326]
     },
     "src/components/tutorial/PageTutorial.tsx": {
       "complexity": [28],
@@ -375,7 +375,7 @@
       "complexity": [46]
     },
     "src/modules/tasks/mappers.ts": {
-      "complexity": [22]
+      "complexity": [21]
     },
     "src/modules/team-okrs/local.repository.ts": {
       "complexity": [22]

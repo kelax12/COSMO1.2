@@ -23,7 +23,6 @@ import TaskCategoryIndicator from "@/components/TaskCategoryIndicator";
 import { useCategoryLookup } from "@/modules/categories";
 import { Task, useUpdateTask } from "@/modules/tasks";
 import { DateCalendarPanel, DATE_PANEL_CLASS } from "@/components/ui/date-picker";
-import { deadlineFromDayKey } from "@/lib/deadline";
 import { addDaysToKey, getTimezonePref, todayKeyInTz } from "@/lib/timezone";
 import { Friend } from "@/modules/friends";
 import { TaskCard } from "./TaskCard";
@@ -509,15 +508,14 @@ export const TaskRow = React.memo(({
                       allowClear={false}
                       onSelect={(day) => {
                         if (!day) return;
-                        onSnooze(task.id, deadlineFromDayKey(day, getTimezonePref()));
+                        onSnooze(task.id, day);
                       }}
                     />
                   ) : (
                     <>
                       <DropdownMenuItem
                         onClick={() => {
-                          const pref = getTimezonePref();
-                          onSnooze(task.id, deadlineFromDayKey(addDaysToKey(todayKeyInTz(pref), 1), pref));
+                          onSnooze(task.id, addDaysToKey(todayKeyInTz(getTimezonePref()), 1));
                         }}
                       >
                         {t('snooze.tomorrow')}

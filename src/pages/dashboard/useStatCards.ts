@@ -28,6 +28,7 @@ import type { Habit } from '@/modules/habits';
 import type { KRCompletion } from '@/modules/kr-completions';
 import type { Translator } from '@/i18n/useT';
 import { formatDate } from '@/i18n/format';
+import { deadlineDayKey } from '@/lib/deadline';
 
 import type { ViewMode } from '@/lib/view-mode';
 
@@ -76,7 +77,7 @@ export function useStatCards({ tasks, events, habits, krCompletions, viewMode, t
       // #32 — format « objectif du jour » (x/N) plutôt que compteur brut :
       // quatre zéros le matin sont du renforcement négatif ; « 0/5 » crée une
       // tension de complétion (Zeigarnik) et guide la décision.
-      const dueToday = tasks.filter(t => t.deadline && localDay(t.deadline) === today);
+      const dueToday = tasks.filter(t => t.deadline && deadlineDayKey(t.deadline) === today);
       const doneDueToday = dueToday.filter(t => t.completed).length;
       const completedToday = tasks.filter(t => t.completed && t.completedAt && localDay(t.completedAt) === today).length;
       const habitsDoneToday = habits.filter(h => h.completions[today]).length;

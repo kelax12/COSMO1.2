@@ -6,6 +6,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { Task, Subtask, TaskRecurrence, TaskStatus, TaskHealth } from './types';
 import type { ColumnsExist, DbInsert, DbRow, Verified } from '@/lib/db-contract';
+import { dayKeyFromStoredDeadline, deadlineDayKey, storedDeadlineInstant } from '@/lib/deadline';
 
 /** Supabase DB row type for the `tasks` table (snake_case). */
 export interface TaskRow {
@@ -15,7 +16,8 @@ export interface TaskRow {
   priority: number;
   // Depuis la mig. 145 : NULL en base = aucune categorie.
   category: string | null;
-  deadline: string | null;
+  /** Échéance : un jour (mig. 251). Absente d'une ligne servie avant la migration. */
+  due_date?: string | null;
   estimated_time: number;
   created_at?: string;
   updated_at?: string;
@@ -41,7 +43,7 @@ export interface TaskDbInput {
   description?: string;
   priority?: number;
   category?: string | null;
-  deadline?: string | null;
+  due_date?: string | null;
   estimated_time?: number;
   bookmarked?: boolean;
   completed?: boolean;
@@ -57,7 +59,17 @@ export interface TaskDbInput {
   health?: string | null;
 }
 
-export function mapTaskFromDb(row: TaskRow): Task {
+/**
+ * Ancienne colonne `tasks.deadline` (timestamptz), retirée par la mig. 253 :
+ * hors du contrat de schéma, lue et écrite seulement pendant la bascule.
+ */
+export interface LegacyDeadlineColumn {
+  deadline?: string | null;
+}
+export type TaskRowRead = TaskRow & LegacyDeadlineColumn;
+export type TaskDbWrite = TaskDbInput & LegacyDeadlineColumn;
+
+export function mapTaskFromDb(row: TaskRowRead): Task {
   return {
     id: row.id,
     name: row.name,
@@ -68,7 +80,7 @@ export function mapTaskFromDb(row: TaskRow): Task {
     description: row.description ?? undefined,
     priority: row.priority,
     category: row.category ?? '',
-    deadline: row.deadline ?? '',
+    deadline: row.due_date !== undefined ? (row.due_date ?? '') : dayKeyFromStoredDeadline(row.deadline),
     estimatedTime: row.estimated_time,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -96,8 +108,17 @@ export function mapTaskFromDb(row: TaskRow): Task {
   };
 }
 
-export function mapTaskToDb(input: Partial<Task>): TaskDbInput {
-  const result: TaskDbInput = {};
+/**
+ * Échéance facultative, '' → NULL. Les DEUX colonnes ; le repository retire
+ * celle que la base n'a pas (`deadline-columns.ts`).
+ */
+function deadlineToDb(deadline: string): Pick<TaskDbWrite, 'due_date' | 'deadline'> {
+  const day = deadlineDayKey(deadline);
+  return { due_date: day || null, deadline: day ? storedDeadlineInstant(day) : null };
+}
+
+export function mapTaskToDb(input: Partial<Task>): TaskDbWrite {
+  const result: TaskDbWrite = {};
   if (input.name !== undefined) result.name = input.name;
   if (input.description !== undefined) result.description = input.description;
   if (input.priority !== undefined) result.priority = input.priority;
@@ -109,9 +130,7 @@ export function mapTaskToDb(input: Partial<Task>): TaskDbInput {
   // à vérifier partout — exactement ce que le commentaire d'`impact.ts`
   // interdit.
   if (input.category !== undefined) result.category = input.category === '' ? null : input.category;
-  // Échéance facultative : une chaîne vide signifie « pas de date » → NULL
-  // en base (la colonne deadline est un timestamp, '' n'est pas valide).
-  if (input.deadline !== undefined) result.deadline = input.deadline ? input.deadline : null;
+  if (input.deadline !== undefined) Object.assign(result, deadlineToDb(input.deadline));
   if (input.estimatedTime !== undefined) result.estimated_time = input.estimatedTime;
   if (input.bookmarked !== undefined) result.bookmarked = input.bookmarked;
   if (input.completed !== undefined) result.completed = input.completed;

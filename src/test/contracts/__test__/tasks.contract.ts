@@ -4,7 +4,7 @@ import { describe, expect, beforeAll } from 'vitest';
 import type { ITasksRepository } from '@/modules/tasks/repository';
 import type { CreateTaskInput } from '@/modules/tasks/types';
 import type { TaskQuery } from '@/modules/tasks/task-query';
-import { deadlineDayKey, deadlineFromDayKey } from '@/lib/deadline';
+import { deadlineDayKey } from '@/lib/deadline';
 import { contractCase, dayKey, rejects, unique, type ContractOptions } from './harness';
 
 export interface TasksContractContext {
@@ -15,7 +15,7 @@ const input = (over: Partial<CreateTaskInput> = {}): CreateTaskInput => ({
   name: unique('Contrat tâche'),
   priority: 2,
   category: '',
-  deadline: deadlineFromDayKey(dayKey(3)),
+  deadline: dayKey(3),
   estimatedTime: 45,
   bookmarked: false,
   completed: false,
@@ -148,7 +148,7 @@ export function tasksContract(side: string, make: () => Promise<TasksContractCon
     // sous le CHECK 1 à 5 de la mig. 001, cocher la tâche levait 23514.
     contractCase(opts, 'cocher une tâche récurrente sans priorité engendre la suivante, sans priorité', async () => {
       const created = await repo.create(input({ priority: 0, recurrence: 'daily' }));
-      const res = await repo.toggleComplete(created.id, deadlineFromDayKey(dayKey(4)));
+      const res = await repo.toggleComplete(created.id, dayKey(4));
       expect(res.task.completed).toBe(true);
       expect(res.spawned).not.toBeNull();
       expect([res.spawned!.priority, deadlineDayKey(res.spawned!.deadline)]).toEqual([0, dayKey(4)]);

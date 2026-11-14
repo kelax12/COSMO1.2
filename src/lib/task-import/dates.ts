@@ -2,7 +2,7 @@
 // Import : dates, récurrences et priorités venues d'une autre application
 //
 // Tout ce module rend des JOURS (`YYYY-MM-DD`), jamais des instants : une
-// échéance de tâche est un jour vécu, et c'est `deadlineFromDayKey` qui la
+// échéance de tâche est un jour vécu, et c'est la frontière Supabase (`mapTaskToDb`) qui la
 // convertit à l'écriture (R-01, `src/lib/CLAUDE.md`). ❌ Jamais
 // `new Date('YYYY-MM-DD')` ici : ça parse en UTC.
 //

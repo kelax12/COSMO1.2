@@ -1,27 +1,10 @@
 // ═══════════════════════════════════════════════════════════════════
-// ÉCHÉANCES — un seul chemin entre le jour saisi et la valeur stockée
+// ÉCHÉANCES : une échéance est un JOUR ('YYYY-MM-DD'), jamais un instant
 // ═══════════════════════════════════════════════════════════════════
 //
-// Le produit manipule DEUX représentations d'échéance, et c'est assumé :
-//
-//   - tâche PERSONNELLE : `tasks.deadline` est un `timestamptz`. On y stocke
-//     l'instant vrai de MINUIT, dans le fuseau de la personne.
-//   - tâche d'ÉQUIPE : `team_tasks.deadline` est une `date` ('YYYY-MM-DD'),
-//     donc déjà un jour calendaire, sans fuseau.
-//
-// Ce module est la frontière entre les deux et le reste de l'application. Tout
-// ce qui est en aval raisonne sur des CLÉS DE JOUR ('YYYY-MM-DD'), jamais sur
-// des instants, parce qu'une échéance est un jour et pas une heure.
-//
-// Pourquoi un seul chemin : trois écritures différentes (`save-task`, `snooze`,
-// `TasksPage`) produisaient trois valeurs pour le même jour choisi, et la
-// relecture mêlait jour UTC et instants locaux. Pour tout fuseau à décalage
-// négatif, une tâche du jour même était « En retard » et absente de
-// « Aujourd'hui » (invisible depuis la métropole).
-//
-// ❌ Ne JAMAIS écrire `new Date(jour).toISOString()` pour une échéance.
-// ❌ Ne JAMAIS relire un jour d'échéance par `deadline.slice(0, 10)`.
-//    Les deux décalent la date d'un jour dès qu'on quitte UTC.
+// Dans tout le front, `Task.deadline` et `TeamTask.deadline` sont des clés de
+// jour, '' pour « aucune ». Seules les frontières parlent aux colonnes :
+// repository Supabase des tâches perso, démo, CLI. Règles : src/lib/CLAUDE.md.
 
 import {
   dayKeyInTz,
@@ -32,16 +15,9 @@ import {
   getTimezonePref,
 } from './timezone';
 
-/** Une échéance déjà au format jour n'a pas de fuseau : on la prend telle quelle. */
 const DAY_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-/**
- * Échéance stockée → clé de jour vécue par la personne ('' si absente/invalide).
- *
- * Accepte les deux représentations : un `timestamptz` de tâche personnelle est
- * ramené dans le fuseau retenu ; une `date` de tâche d'équipe est rendue telle
- * quelle, sans conversion, parce qu'elle ne porte aucun instant.
- */
+/** Clé de jour d'une échéance du domaine ('' si absente). Un instant hérité est lu dans le fuseau retenu. */
 export function deadlineDayKey(
   deadline: string | undefined | null,
   pref: TimezonePref = getTimezonePref(),
@@ -51,14 +27,31 @@ export function deadlineDayKey(
   return dayKeyInTz(deadline, pref);
 }
 
+const PARIS_DAY = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit',
+});
+
 /**
- * Jour choisi dans un `<input type="date">` → valeur à stocker pour une tâche
- * PERSONNELLE : l'instant vrai de minuit ce jour-là, dans le fuseau retenu.
+ * Jour d'une valeur de l'ancienne colonne `tasks.deadline` (timestamptz).
+ * Miroir exact de `public.echeance_jour` (mig. 251) : la base et le front
+ * rendent le même jour, avant comme après la migration.
  *
- * Chaîne vide en entrée → chaîne vide en sortie (« pas d'échéance »), qui est
- * la valeur que le modèle utilise déjà pour l'absence.
+ * - Instant au quart d'heure près : c'est un minuit écrit dans le fuseau de
+ *   son auteur (UTC-10 à UTC+13). Le jour est celui de l'instant + 13 h, en UTC.
+ * - Autre instant (anciens reports, imports) : jour vécu à Paris.
  */
-export function deadlineFromDayKey(
+export function dayKeyFromStoredDeadline(instant: string | undefined | null): string {
+  if (!instant) return '';
+  if (DAY_KEY_RE.test(instant)) return instant;
+  const t = new Date(instant);
+  if (Number.isNaN(t.getTime())) return '';
+  const minuteAligned = t.getUTCSeconds() === 0 && t.getUTCMilliseconds() === 0 && t.getUTCMinutes() % 15 === 0;
+  if (minuteAligned) return new Date(t.getTime() + 13 * 3_600_000).toISOString().slice(0, 10);
+  return PARIS_DAY.format(t);
+}
+
+/** Jour → valeur de l'ancienne colonne `tasks.deadline` : minuit dans le fuseau retenu. */
+export function storedDeadlineInstant(
   dayKey: string | undefined | null,
   pref: TimezonePref = getTimezonePref(),
 ): string {
@@ -102,4 +95,15 @@ export function isOverdue(
   if (completed) return false;
   const days = daysUntilDeadline(deadline, pref, now);
   return Number.isFinite(days) && days < 0;
+}
+
+/** Échéance → date LOCALE à midi, pour l'affichage (`new Date('YYYY-MM-DD')` lirait minuit UTC). */
+export function deadlineLocalDate(
+  deadline: string | undefined | null,
+  pref: TimezonePref = getTimezonePref(),
+): Date | null {
+  const key = deadlineDayKey(deadline, pref);
+  if (!key) return null;
+  const [y, m, d] = key.split('-').map(Number);
+  return new Date(y, m - 1, d, 12);
 }

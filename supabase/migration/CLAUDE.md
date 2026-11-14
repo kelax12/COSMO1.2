@@ -58,8 +58,11 @@ compilait, la suite passait.
   rétro-remplies). ✅ `249` (échéance et priorité facultatives sur `tasks`) en prod le 2026-11-13
   (`20261113070529`). Les deux après preuve à 0 ECHEC, relues au catalogue, ledger = fichier.
   `250` (`friend_requests` sans `user_id` comme la prod, et `sender_id` NOT NULL) en prod le 2026-11-13
-  (`20261113083206`).
-  Prochain numéro libre : **`251`**. Journal daté de chaque application (preuves, relectures au catalogue) :
+  (`20261113083206`). `252` (sonde de disponibilité, OBS-02) : autre session, voir son en-tête.
+  `251` (`tasks.due_date`, DAT-01) commitée, **non appliquée** : procédure en tête de
+  `proofs/251.proof.sql`. `253` (retrait de `tasks.deadline`) écrite dans
+  **`supabase/migration-differee/`**, hors de toute base rejouée : à déplacer ici le jour où elle
+  s'applique, après la `251` et sa vérification. Prochain numéro libre : **`254`**. Journal daté de chaque application (preuves, relectures au catalogue) :
   [`docs/archive/SECURITY-journal-migrations-150-223.md`](../../docs/archive/SECURITY-journal-migrations-150-223.md).
 - ✅ **Forme de preuve à reprendre** : un seul bloc `DO` terminé par `RAISE EXCEPTION`
   (`proofs/208-210.proof.sql`). L'annulation n'est pas une instruction qu'on peut oublier, c'est la
