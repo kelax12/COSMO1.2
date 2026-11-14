@@ -78,8 +78,15 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
       krMap.set(kr.okr_id, list);
     }
 
-    // For OKRs with no rows in key_results table, fallback to JSONB
+    // For OKRs with no rows in key_results table, fallback to JSONB.
+    // KR créés ensemble partagent `created_at` : le départage par `id` (uuid)
+    // est aléatoire, l'ordre saisi est celui du JSONB `okrs.key_results`.
     for (const row of okrRows) {
+      const list = krMap.get(row.id);
+      if (list && row.key_results?.length) {
+        const pos = new Map(row.key_results.map((k, i) => [k.id, i]));
+        list.sort((x, y) => (pos.get(x.id) ?? Infinity) - (pos.get(y.id) ?? Infinity));
+      }
       if (!krMap.has(row.id)) {
         krMap.set(row.id, row.key_results || []);
       }

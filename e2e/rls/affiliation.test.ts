@@ -154,7 +154,7 @@ describe('Affiliation — partie 1 : tables et verrous (mig. 236)', () => {
     expect(contacts.data).toEqual([]);
     const [c] = await commissionsOf(pid);
     expect(c.customer_id).toBeNull();
-    expect(c.commission_cents).toBe(717);
+    expect(c.commission_cents).toBe(845); // 2000 - 256 (12,8 %) - 55 frais = 1689 ; 1689 x 50 % = 844,5 -> 845
   });
 });
 
@@ -199,7 +199,7 @@ describe('Affiliation — partie 2 : trigger de commission', () => {
     await deleteTestUsers(b, payer, stranger);
   });
 
-  it('Premium affilié payé 2000 → une commission de 717 (mig. 238)', async () => {
+  it('Premium affilié payé 2000 → une commission de 845 (mig. 238)', async () => {
     const pid = await pay({ event_type: 'invoice.payment_succeeded', amount_cents: 2000, user_id: b.id });
     const rows = await commissionsOf(pid);
     expect(rows).toHaveLength(1);
@@ -208,12 +208,12 @@ describe('Affiliation — partie 2 : trigger de commission', () => {
       customer_id: b.id,
       gross_cents: 2000,
       vat_cents: 0,
-      deduction_bp: 2560,
-      deduction_cents: 512,
+      deduction_bp: 1280,
+      deduction_cents: 256, // 2000 x 12,8 %
       fee_cents: 55,
-      base_cents: 1433,
+      base_cents: 1689, // 2000 - 256 - 55
       rate_bp: 5000,
-      commission_cents: 717,
+      commission_cents: 845, // round(1689 x 50 %)
     });
   });
 
@@ -240,18 +240,18 @@ describe('Affiliation — partie 2 : trigger de commission', () => {
     expect(await commissionsOf(pid)).toHaveLength(0);
   });
 
-  it('charge.refunded de −1000 sans user_id → −359, retrouvé par stripe_invoice_id', async () => {
+  it('charge.refunded de −1000 sans user_id → −423, retrouvé par stripe_invoice_id', async () => {
     const inv = `in_refund_${stamp()}`;
     await pay({ event_type: 'invoice.payment_succeeded', amount_cents: 2000, user_id: b.id, stripe_invoice_id: inv });
     const rid = await pay({ event_type: 'charge.refunded', amount_cents: -1000, user_id: null, stripe_invoice_id: inv });
     const [c] = await commissionsOf(rid);
-    expect(c).toMatchObject({ affiliate_id: aff.id, customer_id: b.id, commission_cents: -359 });
+    expect(c).toMatchObject({ affiliate_id: aff.id, customer_id: b.id, commission_cents: -423 }); // ancienne base -718 (retenue -256) ; retenue a 12,8 % = -128, base -846 ; x 50 % = -423
   });
 
   it('org payée par un affilié → commission ; payée par un non-affilié → rien', async () => {
     const p1 = await pay({ event_type: 'invoice.payment_succeeded', amount_cents: 2000, org_id: orgPaid });
     const [c] = await commissionsOf(p1);
-    expect(c).toMatchObject({ affiliate_id: aff.id, customer_id: payer.id, org_id: orgPaid, commission_cents: 717 });
+    expect(c).toMatchObject({ affiliate_id: aff.id, customer_id: payer.id, org_id: orgPaid, commission_cents: 845 }); // meme calcul que le Premium a 2000
     const p2 = await pay({ event_type: 'invoice.payment_succeeded', amount_cents: 2000, org_id: orgFree });
     expect(await commissionsOf(p2)).toHaveLength(0);
   });
