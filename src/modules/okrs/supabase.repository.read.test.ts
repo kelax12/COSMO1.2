@@ -174,3 +174,27 @@ describe('SupabaseOKRsRepository, delete', () => {
     await expect(repo.delete('okr1')).rejects.toBeTruthy();
   });
 });
+
+describe('SupabaseOKRsRepository, KR par pages (PER-01)', () => {
+  it('au-dela de 1 000 KR, la page suivante est demandee (plus de plafond PostgREST silencieux)', async () => {
+    const page1 = Array.from({ length: 1000 }, (_, i) => ({ ...krRow, id: `kr-${i}` }));
+    supabaseMock.queueTable('okrs', { data: [okrRow] });
+    supabaseMock.queueTable('key_results', { data: page1 });
+    supabaseMock.queueTable('key_results', { data: [{ ...krRow, id: 'kr-1000' }] });
+
+    const okrs = await repo.getAll();
+
+    expect(okrs[0].keyResults).toHaveLength(1001);
+    expect(supabaseMock.argsOf('key_results', 'range', 0)).toEqual([0, 999]);
+    expect(supabaseMock.argsOf('key_results', 'range', 1)).toEqual([1000, 1999]);
+  });
+
+  it('une erreur sur les KR garde le repli JSONB au lieu de lever', async () => {
+    supabaseMock.queueTable('okrs', { data: [{ ...okrRow, key_results: [jsonbKR] }] });
+    supabaseMock.queueTable('key_results', { error: { message: 'boom', code: '42501' } });
+
+    const okrs = await repo.getAll();
+
+    expect(okrs[0].keyResults[0].title).toBe('KR JSONB');
+  });
+});

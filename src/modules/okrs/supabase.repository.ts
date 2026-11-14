@@ -39,16 +39,32 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
   private async fetchKRsForOkrs(okrRows: OKRRow[]): Promise<Map<string, KeyResult[]>> {
     if (!supabase || okrRows.length === 0) return new Map();
 
+    const db = supabase;
     const okrIds = okrRows.map(r => r.id);
-    const { data, error } = await supabase
-      .from('key_results')
-      .select('*')
-      .in('okr_id', okrIds)
-      .order('created_at', { ascending: true });
+    // PER-01 : par pages `.range`. Sans elles, PostgREST plafonne en silence à
+    // son `max-rows` (1 000) et des KR disparaissaient sans erreur ; le plafond
+    // `MAX_ROWS` est signalé par `warnIfTruncated`. Une erreur garde le repli.
+    let data: KRRow[] | null;
+    try {
+      const raw = await fetchAllPages(async (from, to) => {
+        const { data: page, error } = await db
+          .from('key_results')
+          .select('*')
+          .in('okr_id', okrIds)
+          .order('created_at', { ascending: true })
+          .order('id', { ascending: true })
+          .range(from, to);
+        if (error) throw error;
+        return (page || []) as KRRow[];
+      });
+      data = warnIfTruncated(raw, MAX_ROWS, 'key_results');
+    } catch {
+      data = null;
+    }
 
     const krMap = new Map<string, KeyResult[]>();
 
-    if (error || !data || data.length === 0) {
+    if (!data || data.length === 0) {
       // Fallback: use JSONB data from okrs table
       for (const row of okrRows) {
         krMap.set(row.id, row.key_results || []);

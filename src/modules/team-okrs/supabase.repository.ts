@@ -116,6 +116,8 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
       if (krErr) throw normalizeApiError(krErr);
       return (data ?? []) as KrRow[];
     }, 1000, 50000);
+    // PER-01 : le plafond des KR se signale comme celui des objectifs.
+    warnIfTruncated(krRows, 50000, 'team_key_results');
     const krsByOkr = new Map<string, TeamKeyResult[]>();
     for (const kr of krRows) {
       const arr = krsByOkr.get(kr.okr_id) ?? [];
