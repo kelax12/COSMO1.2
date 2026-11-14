@@ -1,42 +1,14 @@
-// ═══════════════════════════════════════════════════════════════════
-// La SURFACE calendrier de l'agenda
-//
-// FRONTIÈRE : ce fichier est le seul de la page à connaître FullCalendar.
-// Il reçoit des événements et des rappels ; il ne connaît ni les mutations,
-// ni les modales, ni le panneau des tâches, ni la revue des créneaux. À
-// l'inverse, `AgendaPage` n'a plus à connaître un seul nom de prop de
-// FullCalendar.
-//
-// Ce qui vit ici et nulle part ailleurs :
-//   • le décalage d'AFFICHAGE du fuseau choisi (`shiftEventsForDisplay`) —
-//     le reste de la page raisonne sur les instants « vrais », et les
-//     rappels retirent le décalage à la frontière ;
-//   • la détection des conflits d'horaire, qui n'existe que pour peindre
-//     un liseré ;
-//   • l'avatar de l'auteur d'un événement créé par quelqu'un d'autre.
-//
-// ⚠️ Les deux calendriers coexistent dans le DOM : le desktop est masqué en
-// CSS sur mobile, pas démonté. C'est pourquoi `AGENDA_CALENDAR_ID` n'est
-// porté que par l'un des deux (deux `id` identiques rendraient le lien
-// d'évitement indéterminé).
-//
-// Extrait (C-09).
-// ═══════════════════════════════════════════════════════════════════
+// La SURFACE calendrier de l'agenda (C-09).
+// FRONTIÈRE : seul fichier de la page à connaître FullCalendar. Il reçoit événements et rappels ; il ignore mutations, modales, panneau des tâches, revue des créneaux.
+// Vit ici : le décalage d'AFFICHAGE du fuseau choisi (`shiftEventsForDisplay`, les rappels retirent le décalage à la frontière), la détection des conflits d'horaire (liseré), l'avatar de l'auteur d'un événement créé par un autre.
+// ⚠️ Les deux calendriers coexistent dans le DOM (desktop masqué en CSS sur mobile) : `AGENDA_CALENDAR_ID` n'est porté que par l'un des deux (deux `id` identiques rendraient le lien d'évitement indéterminé).
 import React from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { DateClickArg, EventReceiveArg, EventResizeDoneArg } from '@fullcalendar/interaction';
 import { DateSelectArg, EventClickArg, EventDropArg, DatesSetArg, EventInput, EventApi } from '@fullcalendar/core';
-// Données de locale FullCalendar. SANS elles, une locale non enregistrée
-// retombe sur les défauts anglais pour `firstDay` : l'agenda français
-// commençait la semaine le DIMANCHE. (Le bug pré-existait — `locale="fr"` sans
-// ces données ne valait pas mieux.)
-//
-// `locales-all` (3,3 kB, dans le chunk lazy `vendor-calendar`) plutôt qu'un
-// import par langue : importer `locales/fr` + `locales/en` + `locales/es`
-// obligerait à éditer ce fichier à chaque nouvelle langue — exactement ce que
-// le reste du socle i18n évite. Ici, toute langue future fonctionne sans code.
+// Données de locale FullCalendar : sans elles `firstDay` retombe sur l'anglais (semaine commençant le DIMANCHE). `locales-all` (3,3 kB, chunk lazy `vendor-calendar`) plutôt qu'un import par langue : toute langue future fonctionne sans code.
 import allCalendarLocales from '@fullcalendar/core/locales-all';
 import { motion, useAnimationControls, useReducedMotion } from 'framer-motion';
 import { format } from 'date-fns';
@@ -54,21 +26,14 @@ import { type MobileView, mobileCalendarStyles, MobileDayStrip } from './MobileA
 import type { MobileZoomOrder } from './useAgendaMobileView';
 import { useFocusableScrollers } from './useFocusableScrollers';
 
-/**
- * Cible du lien d'évitement du panneau des tâches. Portée par le conteneur du
- * calendrier DESKTOP uniquement.
- */
+/** Cible du lien d'évitement du panneau des tâches : conteneur du calendrier DESKTOP uniquement. */
 export const AGENDA_CALENDAR_ID = 'agenda-calendar';
 
 /** Même forme que dans `useAgendaEventDrag` : FullCalendar n'exporte pas ce type. */
 type EventDragArg = { event: EventApi; el?: HTMLElement; jsEvent?: UIEvent | null };
 
 interface AgendaCalendarSectionProps {
-  /**
-   * Événements DÉJÀ mis en forme pour FullCalendar (récurrences dépliées).
-   * La page les calcule parce que le flux d'édition en a besoin aussi : les
-   * recalculer ici ferait deux fois le même dépliage à chaque rendu.
-   */
+  /** Événements DÉJÀ mis en forme pour FullCalendar (récurrences dépliées) : la page les calcule, le flux d'édition en a besoin aussi. */
   calendarEvents: FullCalendarEvent[];
   isMobile: boolean;
   /** Remonte une nouvelle clé pour forcer FullCalendar à se reconstruire. */
@@ -80,11 +45,7 @@ interface AgendaCalendarSectionProps {
   mobileViewMode: MobileView;
   mobileSelectedDate: Date;
   onMobileSelectDate: (date: Date) => void;
-  /**
-   * Ordre de zoom Mois → Jour. Change à chaque bascule ; porte le point touché
-   * en coordonnées viewport, que ce composant — seul à connaître son DOM —
-   * convertit en origine de transformation.
-   */
+  /** Ordre de zoom Mois → Jour : porte le point touché en coordonnées viewport, converti ici en origine de transformation. */
   mobileZoom: MobileZoomOrder | null;
   /** Pas de temps du zoom desktop, et son intervalle d'étiquettes. */
   slotDuration: string;
@@ -101,24 +62,11 @@ interface AgendaCalendarSectionProps {
   onEventReceive: (receiveInfo: EventReceiveArg) => void;
   onDesktopDatesSet: (info: DatesSetArg) => void;
   onMobileDatesSet: (info: DatesSetArg) => void;
-  /**
-   * Pastille « ce créneau attend une décision », rendue par la PAGE.
-   *
-   * C'est un emplacement, pas un rappel : ce fichier place la pastille et ne
-   * sait rien de ce qu'elle ouvre. La frontière du haut de fichier tient donc
-   * toujours, alors qu'un `onReviewClick(eventId)` aurait fait entrer ici la
-   * notion de créneau à passer en revue. Rend `null` pour un événement qui
-   * n'attend rien.
-   */
+  /** Pastille « ce créneau attend une décision », rendue par la PAGE : un emplacement, ce fichier ne sait rien de ce qu'elle ouvre (la frontière du haut tient). `null` pour un événement qui n'attend rien. */
   renderReviewBadge?: (eventId: string) => React.ReactNode;
 }
 
-/**
- * Couleur du titre d'un événement mobile, posé sur l'aplat de sa couleur.
- * Bug rapporté : un bloc blanc sans titre (titre TOUJOURS blanc).
- * AM-5 : le seuil « luminance > 0,6 » laissait encore le blanc à
- * 2,15:1 sur l'orange ; le choix vit dans `textOnColor` (4,5:1).
- */
+/** Couleur du titre d'un événement mobile sur l'aplat de sa couleur : le choix vit dans `textOnColor` (4,5:1, AM-5). */
 const eventTextColor = textOnColor;
 
 /** Repli d'un événement sans couleur : l'accent PLEIN et son texte prévu. */
@@ -167,19 +115,10 @@ const AgendaCalendarSection = ({
     return m;
   }, [orgMembers]);
 
-  // Locale FullCalendar — était figée à `"fr"` sur les DEUX calendriers, donc
-  // les en-têtes de jour et le format d'heure restaient français quelle que
-  // soit la langue de l'app. L'étiquette BCP 47 pilote aussi le PREMIER JOUR
-  // de la semaine (lundi en `fr-FR`, dimanche en `en-US`) : c'est voulu, une
-  // semaine qui commence le mauvais jour est une erreur de localisation à part
-  // entière. `headerToolbar` étant à `false`, aucun `buttonText` n'est à
-  // traduire — les boutons sont les nôtres (`AgendaDesktopHeader`).
+  // Locale FullCalendar suivant la langue de l'app. L'étiquette BCP 47 pilote aussi le PREMIER JOUR de la semaine (lundi en `fr-FR`, dimanche en `en-US`). `headerToolbar` à `false` : aucun `buttonText` à traduire (`AgendaDesktopHeader`).
   const calendarLocale = getIntlTag();
 
-  // Décale les instants dans le fuseau d'affichage choisi (feature « heure
-  // personnalisée »). Le reste de la page raisonne sur les instants « vrais » :
-  // seul le calendrier voit les instants décalés, et ses callbacks retirent le
-  // décalage (fromDisplayISO).
+  // Décale les instants dans le fuseau d'affichage choisi (heure personnalisée) ; seul le calendrier voit les instants décalés, ses callbacks retirent le décalage (fromDisplayISO).
   const allCalendarEvents = shiftEventsForDisplay(calendarEvents, tzPref) as EventInput[];
   // « Maintenant » et heure de scroll dans le fuseau choisi pour rester cohérent
   // avec les événements décalés (l'indicateur d'heure courante suit le fuseau).
@@ -200,17 +139,8 @@ const AgendaCalendarSection = ({
     return ids;
   }, [calendarEvents]);
 
-  // Rendu du contenu d'un événement : titre, avatar de l'auteur si l'événement a
-  // été ajouté par quelqu'un d'autre que moi (mon manager, mode entreprise), et
-  // la colonne d'indicateurs en haut à droite.
-  //
-  // Deux indicateurs empilés, jamais fusionnés :
-  //   • l'icône TÂCHE dit « cet événement est un créneau de travail sur une
-  //     tâche », elle est purement informative et ne se clique pas ;
-  //   • la pastille « ! » dit « ce créneau est terminé et personne n'a dit s'il
-  //     avait servi », elle PORTE une action.
-  // Les confondre ferait d'un état permanent (être lié à une tâche) et d'un état
-  // transitoire (attendre une décision) le même signal.
+  // Contenu d'un événement : titre, avatar de l'auteur s'il n'est pas moi (mode entreprise), indicateurs en haut à droite.
+  // Deux indicateurs jamais fusionnés : l'icône TÂCHE (état permanent, informative, non cliquable) et la pastille « ! » (état transitoire : créneau terminé sans décision, elle PORTE une action).
   const renderEventInner = (
     title: string,
     createdBy: string | undefined,
@@ -219,12 +149,7 @@ const AgendaCalendarSection = ({
     hasTask: boolean,
     needsReview: boolean,
     taskDone: boolean,
-    /**
-     * Mobile : couleur de l'événement en APLAT, texte blanc. La maquette 161
-     * (teinte à 18 %) a été retirée à la demande d'Axel. Le bloc
-     * FullCalendar reste transparent (`cosmo-event-tinted`) : c'est ce contenu
-     * qui porte la couleur, sans avatar (maquette 169).
-     */
+    /** Mobile : couleur en APLAT, texte blanc, sans avatar (maquettes 161 retirée, 169). Le bloc FullCalendar reste transparent (`cosmo-event-tinted`). */
     tint?: string,
   ) => {
     // Maquette 169 : pas d'avatar dans le bloc sur mobile (deux couleurs dans
@@ -290,26 +215,13 @@ const AgendaCalendarSection = ({
 
   const isMonthView = mobileViewMode === 'dayGridMonth';
 
-  // ── Animation de bascule Mois → Jour (MOBILE UNIQUEMENT) ───────────────────
-  //
-  // La grille du jour ENTRE en s'ouvrant depuis la case touchée : on part d'un
-  // agrandissement centré sur le doigt, et on revient à l'échelle 1. L'œil
-  // relie ainsi la case du mois à la journée qui la remplace, au lieu de subir
-  // un remplacement sec.
-  //
-  // Pourquoi des contrôles impératifs plutôt qu'une `key` sur un `motion.div` :
-  // une `key` qui change REMONTE `<FullCalendar>`, or la bascule s'appuie
-  // justement sur `api.changeView` pour ne PAS démonter (cf. le commentaire de
-  // `handleMobileSelectDate`). L'animation ne doit rien coûter à la correction
-  // qu'elle accompagne.
+  // ── Animation de bascule Mois → Jour (MOBILE UNIQUEMENT) ──
+  // La grille du jour s'ouvre depuis la case touchée (agrandissement centré sur le doigt, retour à l'échelle 1). Contrôles impératifs et non une `key` : une `key` REMONTERAIT `<FullCalendar>`, or la bascule s'appuie sur `api.changeView` pour ne PAS démonter (`handleMobileSelectDate`).
   const mobileShellRef = React.useRef<HTMLDivElement>(null);
   const zoomControls = useAnimationControls();
   const reduceMotion = useReducedMotion();
   const zoomToken = mobileZoom?.token ?? 0;
-  // Miroir du point touché. Il n'est lu QUE dans l'effet ci-dessous, déclenché
-  // par le token ; le mettre en dépendance rejouerait l'animation à chaque
-  // nouvel objet identique. Une ref ne peut pas périmer : elle est réassignée
-  // au rendu qui précède l'effet, donc toujours du même passage que le token.
+  // Miroir du point touché, lu QUE dans l'effet déclenché par le token (en dépendance, il rejouerait l'animation). Une ref ne périme pas : réassignée au rendu qui précède l'effet.
   const zoomPointRef = React.useRef(mobileZoom);
   zoomPointRef.current = mobileZoom;
 
@@ -321,11 +233,7 @@ const AgendaCalendarSection = ({
 
   React.useEffect(() => {
     if (!zoomToken) return;
-    // 🔴 Sous `prefers-reduced-motion`, `<MotionConfig reducedMotion="user">`
-    // n'EXÉCUTE PAS les animations de transform mais laisse la valeur de
-    // départ posée : un `set({ scale: 1.6 })` resterait appliqué pour de bon,
-    // et la grille du jour resterait agrandie hors de l'écran. On ne pose donc
-    // aucune clé de transform dans ce cas (cf. src/lib/motion-safe.ts).
+    // 🔴 Sous `prefers-reduced-motion`, `MotionConfig` n'EXÉCUTE pas les transforms mais laisse la valeur de départ posée : aucune clé de transform dans ce cas (src/lib/motion-safe.ts).
     if (reduceMotion) {
       zoomControls.set({ opacity: 1 });
       return;
@@ -381,10 +289,7 @@ const AgendaCalendarSection = ({
           ref={mobileShellRef}
           animate={zoomControls}
           data-tutorial-id="agenda-mobile-calendar"
-          // Pas de `pb` : le conteneur `flex-1` s'arrête déjà pile au-dessus
-          // de la tab bar. L'ancien `pb-64px` (réservé pour dégager le FAB)
-          // volait ~64px à la grille sans raison — le FAB étant `fixed`, il
-          // flotte au-dessus du coin bas-droit sans réduire le calendrier.
+          // Pas de `pb` : le conteneur `flex-1` s'arrête au-dessus de la tab bar, le FAB `fixed` flotte sans réduire le calendrier.
           className="md:hidden mobile-calendar flex-1 overflow-hidden"
         >
           <FullCalendar
@@ -419,11 +324,7 @@ const AgendaCalendarSection = ({
             snapDuration="00:15:00"
             slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
             select={onMobileDateSelect}
-            // 🔴 Indispensable : au doigt, un tap court ne produit AUCUN
-            // `select` (`selectLongPressDelay={250}` exige un appui maintenu).
-            // C'est ce seul rappel qui fait basculer Mois → Jour sur un vrai
-            // téléphone. Ne pas le retirer en croyant `select` suffisant : à la
-            // souris il l'est, au doigt non.
+            // 🔴 Indispensable : au doigt un tap court ne produit AUCUN `select` (`selectLongPressDelay={250}`) ; ce rappel fait basculer Mois → Jour sur téléphone. Ne pas le retirer.
             dateClick={onMobileDateClick}
             eventClick={onEventClick}
             eventDragStart={onEventDragStart}

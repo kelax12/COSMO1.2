@@ -1,8 +1,4 @@
-// ═══════════════════════════════════════════════════════════════════
-// task-table/TaskCard — carte tâche mobile (mémoïsée), extraite de list.tsx.
-// Identité stable au niveau module (évite la recréation de useMotionValue à
-// chaque render parent). Pilotée par props, aucune logique métier.
-// ═══════════════════════════════════════════════════════════════════
+// task-table/TaskCard : carte tâche mobile mémoïsée. Identité stable au niveau module (pas de `useMotionValue` recréé), pilotée par props, aucune logique métier.
 import React, { useState, useEffect, useRef } from "react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { Bookmark, MoreHorizontal, AlertTriangle, Hourglass, CheckCircle2 } from "lucide-react";
@@ -85,10 +81,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   const greenIconOpacity = useTransform(x, [0, 24, 80], [0, 0.6, 1]);
   const grayIconOpacity = useTransform(x, [-80, -24, 0], [1, 0.6, 0]);
 
-  // Hint de geste animé — joue UNE seule fois (par device) sur la 1ʳᵉ carte :
-  // un léger nudge à gauche (révèle « Options ») puis à droite (révèle « Valider »),
-  // façon Things/Todoist. Enseigne le swipe sans bloquer l'interaction (le drag
-  // utilisateur reprend la main à tout moment). Respecte prefers-reduced-motion.
+  // Hint de geste animé : UNE fois par device, sur la 1ʳᵉ carte (nudge gauche « Options » puis droite « Valider »). Le drag reprend la main à tout moment ; respecte prefers-reduced-motion.
   useEffect(() => {
     if (!isFirst || addToListMode) return;
     let alreadyPlayed = false;
@@ -170,11 +163,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
       // la <table> desktop reste dans le DOM en `hidden md:block`, donc un
       // sélecteur `table tbody tr` résout une ligne INVISIBLE sur mobile.
       data-testid="task-card"
-      // ── Fin des cartes (arbitrage d'Axel) ──
-      // La disposition de chaque tâche est INCHANGÉE ; ce qui disparaît, c'est
-      // la carte qui l'entourait. Vingt cartes empilées, c'est vingt bords à
-      // lire avant d'atteindre vingt titres. Un filet d'un pixel sépare aussi
-      // bien et ne dessine rien.
+      // Pas de carte autour de la tâche : un filet d'un pixel sépare aussi bien que des bords (arbitrage d'Axel).
       className="relative border-b border-[rgb(var(--color-border))]"
       layout
       animate={isExiting ? { x: '100%', opacity: 0 } : { x: 0, opacity: 1 }}
@@ -240,57 +229,23 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
       whileTap={addToListMode ? undefined : { scale: 0.98 }}
       transition={{ duration: 0.1 }}
       // Ni bordure ni arrondi : la séparation est le filet du parent.
-      // ⚠️ Le fond reste OPAQUE malgré la disparition de la carte — les calques
-      // vert et gris du swipe sont dessinés DERRIÈRE cette ligne. Un fond
-      // transparent les laisserait voir en permanence.
+      // ⚠️ Le fond reste OPAQUE : les calques vert et gris du swipe sont dessinés DERRIÈRE cette ligne.
       className={`relative flex items-stretch gap-3 px-3 py-2.5 transition-colors ${addToListMode ? 'cursor-default' : 'cursor-pointer'} ${task.completed && !addToListMode ? 'opacity-50' : ''}`}
       onClick={handleCardClick}
       onPointerDown={startLongPress}
       onPointerUp={cancelLongPress}
       onPointerCancel={cancelLongPress}
-      // ═══ C-111 · LE SEUL CHEMIN CLAVIER VERS LES ACTIONS ═══
-      //
-      // 🔴 PIÈGE mesuré dans le navigateur
-      // (viewport 375, mode démo) : les trois chemins vers `TaskActionsSheet`
-      // que la maquette 86 a laissés — appui long, glissement à gauche, menu
-      // de la ligne DESKTOP — sont tous des gestes de POINTEUR, et le
-      // quatrième vit dans `div.hidden md:block`, donc à `0 x 0 px` sur
-      // téléphone. Modifier, supprimer, partager ou planifier une tâche était
-      // donc **inatteignable au clavier** sur mobile : WCAG 2.1.1 (A), le
-      // critère le plus élémentaire du référentiel.
-      //
-      // Cette ligne ne faisait qu'un `preventDefault()` : elle SUPPRIMAIT le
-      // menu du navigateur sans rien offrir à la place. Elle ouvre désormais
-      // la feuille, ce qui donne d'un coup le clic droit ET le clavier — la
-      // touche « menu contextuel » et `Shift+F10` émettent toutes deux un
-      // évènement `contextmenu` sur l'élément focalisé, et la carte porte déjà
-      // `tabIndex={0}`.
-      //
-      // ✅ Elle ne reprend RIEN à la colonne du pouce : aucun pixel n'est
-      // ajouté, donc l'arbitrage de la maquette 86 (« plus de ⋯ au repos »)
-      // tient entier. C'est précisément pour ça que l'interdit écrit plus bas
-      // — ne pas réintroduire le « ⋯ » sans retirer autre chose — n'est pas
-      // enfreint ici.
+      // ═══ C-111 : LE SEUL CHEMIN CLAVIER VERS LES ACTIONS ═══
+      // 🔴 Appui long, glissement et menu desktop (`hidden md:block`) sont des gestes de POINTEUR : sans cette ligne, les actions d'une tâche sont inatteignables au clavier sur mobile (WCAG 2.1.1, A). Elle ouvre la feuille (clic droit ET clavier, la carte porte `tabIndex={0}`).
+      // ✅ Aucun pixel ajouté : l'arbitrage de la maquette 86 (« plus de ⋯ au repos ») tient.
       onContextMenu={(e) => {
         e.preventDefault();
         if (addToListMode) return;
         cancelLongPress();
         setActionsVisible(true);
       }}
-      // ═══ C-118 · SAFARI N'ÉMET PAS `contextmenu` AU CLAVIER ═══
-      //
-      // 🔴 Mesuré sous WebKit (Safari 26.5), carte focalisée à
-      // 375 px : `Shift+F10` puis la touche « Menu » arrivent bien en `keydown`
-      // (`F10` avec `shiftKey`, `ContextMenu`), et AUCUN évènement `contextmenu`
-      // ne suit. La ligne `onContextMenu` ci-dessus ne s'exécute donc jamais :
-      // sous Safari, le chemin clavier de C-111 était mort, et les actions
-      // d'une tâche redevenaient inatteignables au clavier (WCAG 2.1.1, A).
-      // Chromium et Firefox, eux, synthétisent l'évènement, d'où un audit vert
-      // qui ne mesurait qu'un moteur sur deux.
-      //
-      // On ne dépend donc plus de la synthèse : les deux touches sont lues en
-      // `keydown`, et `preventDefault` empêche le menu natif de s'ouvrir par-
-      // dessus la feuille là où le navigateur le synthétise quand même.
+      // ═══ C-118 : SAFARI N'ÉMET PAS `contextmenu` AU CLAVIER ═══
+      // 🔴 `Shift+F10` et `Menu` arrivent en `keydown` sans `contextmenu` : on lit les deux touches en `keydown`, `preventDefault` évite le menu natif là où il est synthétisé quand même.
       // ⚠️ Même garde qu'`onContextMenu` : rien en mode « ajout à une liste ».
       onKeyDown={(e) => {
         if (e.key !== 'ContextMenu' && !(e.key === 'F10' && e.shiftKey)) return;
@@ -399,10 +354,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
             d'Axel, « garder l'absence de barre colorée ». La priorité reste
             dite par sa pilule `P{n}`, plus bas. */}
         <p
-          // `task-title-boost` (index.css) : +1px sur le cran applique, sous
-          // 768 px seulement. Le titre d'une tache est ce qu'on lit en
-          // premier dans la liste ; il gagne un pixel sans deplacer l'echelle
-          // pour tout le reste de l'app.
+          // `task-title-boost` (index.css) : +1px sur le titre sous 768 px seulement, sans déplacer l'échelle du reste de l'app.
           className={`task-title-boost min-w-0 font-medium leading-tight line-clamp-2 ${
             isOverdue ? 'text-body' : 'text-label'
           } ${task.completed ? 'line-through' : ''}`}

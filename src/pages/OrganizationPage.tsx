@@ -43,21 +43,8 @@ import { useIsDemo } from '@/lib/app-mode.store';
 import { joinedSinceWelcome, markMemberWelcomeSeen, readMemberWelcomeSeen } from '@/components/onboarding/enterprise/ent-onboarding';
 import type { KeyOf } from '@/i18n/catalog';
 
-// ── Onglets chargés à la demande ──────────────────────────────────
-//
-// Chaque onglet est un chunk à part : ouvrir l'Aperçu ne doit pas télécharger la
-// pyramide, le kanban ou les graphiques de statistiques.
-//
-// `MyWorkTab` reste EAGER : c'est l'onglet par défaut, un squelette à chaque
-// ouverture coûterait plus que ce qu'il économise. Ses blocs peints sont
-// chargés à part et préchargés (`MyWorkSections`).
-//
-// Second argument à `lazyWithRetry` VIDE par défaut : les catalogues de la page
-// sont déclarés par sa ROUTE (`App.tsx`). Un onglet qui DÉCLARE sa liste devient
-// une frontière que `lazy-namespaces.guard.test.ts` contrôle comme une route
-// (`TAB_GATE_HOSTS`, `scripts/i18n-shell-namespaces.mjs`) : la liste doit alors
-// couvrir TOUT son sous-arbre, `org` compris.
-// `portfolio` n'est payé que par qui ouvre Projets, pas par toute visite.
+// ── Onglets chargés à la demande : un chunk par onglet. `MyWorkTab` reste EAGER (onglet par défaut, ses blocs sont préchargés : `MyWorkSections`).
+// Second argument de `lazyWithRetry` VIDE : les catalogues sont déclarés par la ROUTE (`App.tsx`). Un onglet qui DÉCLARE sa liste devient une frontière contrôlée par `lazy-namespaces.guard.test.ts` (`TAB_GATE_HOSTS`, `scripts/i18n-shell-namespaces.mjs`) et doit couvrir TOUT son sous-arbre, `org` compris. `portfolio` n'est payé que par Projets.
 const TeamProjectsTab = lazyWithRetry(() => import('@/components/organization/TeamProjectsTab'), ['org', 'orgAdmin', 'overlays', 'portfolio', 'tasks']);
 const TeamTasksTab = lazyWithRetry(() => import('@/components/organization/TeamTasksTab'), ['csv', 'eventModal', 'org', 'orgAdmin', 'overlays', 'portfolio', 'tasks']);
 const TeamOKRTab = lazyWithRetry(() => import('@/components/organization/TeamOKRTab'), ['okr', 'org', 'orgAdmin', 'overlays', 'portfolio']);
@@ -73,13 +60,7 @@ const TeamPage = lazyWithRetry(() => import('@/components/organization/TeamPage'
 // Rapports d'activité (mig. 202) : un chunk à part, payé par qui l'ouvre.
 const OrgSettingsSection = lazyWithRetry(() => import('@/components/organization/OrgSettingsSection'), ['csv', 'okr', 'org', 'orgAccount', 'orgAdmin', 'overlays', 'portfolio', 'settings', 'tasks']);
 
-// Feuilles et dialogues : montés derrière un `&&`, donc déjà conditionnels au
-// rendu. Ils ne l'étaient pas au TÉLÉCHARGEMENT.
-// Glossaire et liens profonds (`?task=`…) : UNE entrée paresseuse pour les deux,
-// chargée seulement quand l'un sert (cf. `OrgPageOverlays`).
-// Accueil d'un membre au premier passage : son catalogue `onboarding` ne part
-// qu'avec lui. Bouton flottant du guide (desktop) : inutile au premier rendu,
-// il arrive avec son catalogue.
+// Feuilles et dialogues : conditionnels au rendu ET au téléchargement. Glossaire et liens profonds (`?task=`) : UNE entrée paresseuse (`OrgPageOverlays`). Accueil membre et bouton flottant du guide : leur catalogue part avec eux.
 const OrgGuideFab = lazyWithRetry(() => import('@/components/org-guide/OrgGuideFab'), ['org', 'orgGuide', 'overlays']);
 const OrgWelcomeVideo = lazyWithRetry(() => import('@/components/onboarding/enterprise/OrgWelcomeVideo'), ['onboarding']);
 const OrgPageOverlays = lazyWithRetry(() => import('@/components/organization/OrgPageOverlays'), ['eventModal', 'org', 'orgAccount', 'orgAdmin', 'overlays', 'tasks']);
@@ -87,20 +68,9 @@ const OrgPageOverlays = lazyWithRetry(() => import('@/components/organization/Or
 type OrgTab = OrgSection;
 
 /**
- * Espace entreprise. Chaque section est une ROUTE
- * (`/entreprise/projects`) : le bouton précédent passe d'une section à
- * l'autre et l'onglet du navigateur porte son nom. La navigation vit à
- * droite (`OrgSideNav`) sur desktop, dans un sélecteur (`OrgSectionSwitcher`)
- * sur mobile. Réservé aux membres d'une organisation : un non-membre est
- * redirigé vers le dashboard.
+ * Espace entreprise. Chaque section est une ROUTE (`/entreprise/projects`) ; navigation à droite (`OrgSideNav`) sur desktop, sélecteur (`OrgSectionSwitcher`) sur mobile. Réservé aux membres : un non-membre est redirigé vers le dashboard.
  */
-/**
- * Squelette d'attente d'un onglet dont le chunk est encore en vol.
- *
- * Trois onglets ont déjà un squelette dédié pour leur chargement de DONNÉES :
- * on réutilise le même ici, pour que l'attente du CODE et celle de la donnée
- * se ressemblent au lieu de s'enchaîner en deux formes différentes.
- */
+/** Squelette d'un onglet dont le chunk est en vol : le même que celui du chargement de DONNÉES des trois onglets qui en ont un. */
 const tabFallback = (tab: OrgTab, tOrgAdmin: (key: KeyOf<'orgAdmin'>) => string) => {
   if (tab === 'overview') return <MyWorkSkeleton label={tOrgAdmin('myWork.loading')} />;
   if (tab === 'tasks') return <TeamTasksSkeleton label={tOrgAdmin('page.tasksTabLoading')} />;
@@ -115,10 +85,7 @@ const OrganizationPage = () => {
   const { t } = useT('org');
   const { t: tOrgAdmin, tp: tpOrgAdmin } = useT('orgAdmin');
   const { user } = useAuth();
-  // Section active = segment de chemin. `billing` en fait partie : c'est une
-  // route sans entrée de navigation, où Stripe renvoie après un paiement.
-  // `entityId` : second segment, qui n'existe que pour la page d'une équipe
-  // (`/entreprise/teams/<id>`).
+  // Section active = segment de chemin (`billing` : route sans entrée de navigation, retour Stripe). `entityId` : second segment, page d'une équipe (`/entreprise/teams/<id>`).
   const { section, entityId } = useParams<{ section?: string; entityId?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -130,11 +97,7 @@ const OrganizationPage = () => {
   const isDemo = useIsDemo();
   // Fermé pendant cette visite ; le drapeau, lui, est posé par entreprise.
   const [welcomeClosed, setWelcomeClosed] = useState(false);
-  // Décidé À L'ARRIVÉE, une seule fois : l'accueil membre ne s'ouvre que si l'on
-  // ARRIVE sans paramètre dans l'adresse, quelle que soit la section. Relue à
-  // chaque rendu, la condition l'ouvrirait après coup par-dessus l'écran voulu
-  // (`?tab=settings` réécrit, retour Stripe, `?task=` retiré par `DeepTaskModal`).
-  // Même règle que `FirstRunSetup` : une garde d'entrée se fige à l'entrée.
+  // Décidé À L'ARRIVÉE, une fois : l'accueil membre ne s'ouvre que si l'on ARRIVE sans paramètre d'adresse (relue à chaque rendu, elle s'ouvrirait par-dessus l'écran voulu). Même règle que `FirstRunSetup`.
   const [arrivedBare] = useState(() => searchParams.toString() === '');
   // `?guide=1` (fin de la constellation) : ouvre le guide une seule fois,
   // puis le paramètre quitte l'URL pour qu'un rechargement ne le rouvre pas.
@@ -163,10 +126,7 @@ const OrganizationPage = () => {
     : guidePhase === 'nav' && navMode === 'collapsed' ? 'peek'
     : navMode;
 
-  // Badge nav (reco #7) : on marque « vu » en QUITTANT la page, pas en y
-  // arrivant. Marquer au montage remettait `lastSeen` à `now` avant le premier
-  // rendu, donc les badges d'onglet (Projets / Membres) naissaient toujours à
-  // zéro et la fonctionnalité était morte sans jamais échouer.
+  // Badge nav (reco #7) : « vu » est marqué en QUITTANT la page ; au montage, `lastSeen` repasserait à `now` et les badges naîtraient à zéro.
   useEffect(() => {
     const orgId = myOrg?.id;
     if (!orgId) return;
@@ -191,13 +151,7 @@ const OrganizationPage = () => {
   const { data: teams = [], isLoading: teamsLoading } = useOrgTeams(myOrg?.id);
   const { data: teamMembers = [] } = useOrgTeamMembers(myOrg?.id);
 
-  // Ancienne forme `/entreprise?tab=X` → `/entreprise/X`, les autres
-  // paramètres conservés. ⚠️ À GARDER POUR TOUJOURS : Stripe renvoie sur
-  // `/entreprise?tab=billing&checkout=success`, et les e-mails de
-  // `renewal-notice` déjà envoyés portent `?tab=billing`. Placé avant l'attente
-  // de l'organisation : rien à charger pour réécrire une URL.
-  // Passe par `safeRedirectPath` comme toute destination lue dans l'URL,
-  // même si le chemin vient ici d'une liste fermée (cf. no-open-redirect.test.ts).
+  // `/entreprise?tab=X` → `/entreprise/X`, autres paramètres conservés. ⚠️ À GARDER POUR TOUJOURS : Stripe renvoie sur `?tab=billing&checkout=success`, les e-mails `renewal-notice` portent `?tab=billing`. Avant l'attente de l'organisation. Passe par `safeRedirectPath` (no-open-redirect.test.ts).
   const legacyTarget = safeRedirectPath(legacyOrgTabRedirect(searchParams));
   if (legacyTarget) return <Navigate to={legacyTarget} replace />;
   // Segment inconnu (`/entreprise/xyz`, `/entreprise/overview`) : l'aperçu,
@@ -236,28 +190,17 @@ const OrganizationPage = () => {
     isOwner,
     customRolesAvailable: !rolesUnavailable,
   };
-  // La pyramide dit qui encadre qui, l'équipe qui travaille ensemble (M3) :
-  // un responsable d'équipe regarde les statistiques de SON équipe.
-  // Tant que les équipes chargent, un lien vers `stats` n'est pas renvoyé
-  // à l'aperçu (le droit n'est pas encore connu).
-  // Rapports : droit `report.org` / `report.allTeams`, ou responsable d'une équipe.
+  // La pyramide dit qui encadre qui, l'équipe qui travaille ensemble (M3). Rapports : droit `report.org` / `report.allTeams`, ou responsable d'une équipe ; tant que les équipes chargent, pas de renvoi vers l'aperçu (droit inconnu).
   const canReports = teamsLoading || myPermissions.isLoading
     || canSeeReports(reportAccess(myPermissions.can, teams, teamMembers, user?.id));
   const canStats = teamsLoading || canSeeStats(teams, { members, teamMembers, currentUserId: user?.id, isAdmin });
-  // Un membre qui arrive sur `/entreprise/billing` (lien partagé, ancien
-  // favori) ou sur `stats` sans en avoir le droit ne voit pas un écran vide :
-  // il retombe sur l'aperçu. L'organigramme est masqué pour tous (mig. 229) :
-  // `pyramid` y renvoie aussi.
+  // Sans droit sur `billing` ou `stats`, retombée sur l'aperçu. L'organigramme est masqué pour tous (mig. 229) : `pyramid` y renvoie aussi.
   const tab: OrgTab =
     (urlTab === 'billing' && !isOwner) || urlTab === 'pyramid' || (urlTab === 'stats' && !canStats)
       ? 'overview'
       : urlTab === 'reports' ? 'settings' : urlTab;
 
-  // Entrées de navigation, partagées par le panneau desktop et le sélecteur
-  // mobile. Projets (tâches nouvellement assignées) et Membres (demandes
-  // d'adhésion) ont leur compteur dérivé ; les autres sections comptent leurs
-  // notifications non lues (aucune requête de plus : la boîte de réception les
-  // porte déjà).
+  // Entrées de navigation (panneau desktop et sélecteur mobile). Projets et Membres ont un compteur dérivé ; les autres comptent les notifications non lues de la boîte de réception.
   const sectionBadges = sectionNotificationBadges(orgNotifications);
   const badgeOf = (id: OrgSection): { count: number; items: string[] } => {
     const extra = (id in sectionBadges) ? sectionBadges[id as BadgeSection] : null;
@@ -266,11 +209,7 @@ const OrganizationPage = () => {
     if (id === 'members') return { count: badges.members, items: badges.memberItems };
     return { count: extra?.count ?? 0, items: extraItems };
   };
-  // Effectif au-dessus du quota (baisse de palier, abonnement tombé) : l'espace
-  // se verrouille, seules restent les sections qui permettent d'en sortir
-  // (décision d'Axel). Jamais avant d'avoir lu l'abonnement ET
-  // les membres : pendant le chargement le quota retombe à 5 par défaut, et une
-  // organisation payante verrait le verrou clignoter.
+  // Effectif au-dessus du quota (baisse de palier, abonnement tombé) : l'espace se verrouille, restent les sections qui permettent d'en sortir. Jamais avant d'avoir lu l'abonnement ET les membres (quota par défaut 5, le verrou clignoterait).
   // ⚠️ Verrou d'interface : la base sert toujours les données (pas une frontière).
   const overQuota = !isDemo && ENTERPRISE_BILLING_ENFORCED && !membersPending && !subscriptionPending
     && isOverQuota(members.length, orgSubscription ?? null);
@@ -301,18 +240,8 @@ const OrganizationPage = () => {
     },
   );
 
-  // Quota de sièges RÉELLEMENT bloquant : le gate serveur (`org_seats_allowed`,
-  // mig. 067) ne refuse que si le drapeau `enterprise_seat_limit` est activé en
-  // base. Tant que la facturation est dormante, les portes d'entrée restent
-  // ouvertes — mais le jour où le drapeau passe à true, un clic sur « inviter »
-  // partirait vers un `seat_limit_reached` sans que rien ne l'ait annoncé.
-  //
-  // ⚠️ Le seuil est celui de l'ABONNEMENT, jamais `ORG_FREE_SEATS` en dur : une
-  // organisation qui a payé le palier « Département » a 20 sièges, et un gate
-  // client resté bloqué à 5 rendrait le paiement sans effet visible — on
-  // encaisserait sans rien débloquer. `isQuotaReached` porte exactement la même
-  // règle que `org_seats_allowed()` (dont le repli sans abonnement actif EST
-  // `ORG_FREE_SEATS`), pour que le client annonce ce que le serveur appliquera.
+  // Quota de sièges bloquant : le gate serveur (`org_seats_allowed`, mig. 067) ne refuse que si le drapeau `enterprise_seat_limit` est actif ; le client annonce d'avance ce que le serveur appliquera.
+  // ⚠️ Le seuil est celui de l'ABONNEMENT, jamais `ORG_FREE_SEATS` en dur (palier « Département » = 20 sièges). `isQuotaReached` porte la règle de `org_seats_allowed()`.
   const seatsQuota = effectiveQuota(orgSubscription ?? null);
   // Démo : pas de facturation réelle, la bannière n'appelle aucune action.
   const seatsFull = !isDemo && ENTERPRISE_BILLING_ENFORCED && isQuotaReached(members.length, orgSubscription ?? null);

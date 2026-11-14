@@ -16,36 +16,15 @@ import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
 
 /**
- * Recherche de la page Tâches, ancrée en bas — MOBILE UNIQUEMENT (`md:hidden`).
- *
- * ── Ce qui change, et pourquoi ────────────────────────────────────────
- * La recherche et « + d'options » vivaient dans la rangée de filtres, en HAUT
- * de la page : deux commandes hors de portée du pouce, qui poussaient la
- * liste vers le bas sur l'écran où la place manque le plus. Le modèle est
- * celui de Notes (iOS) : la recherche est la barre du bas, elle ne défile
- * jamais, et un champ vide propose des entrées plutôt qu'un curseur nu.
- *
- * Les cinq suggestions sont EXACTEMENT les pastilles de `TaskQuickFilters`
- * (`md:flex`, donc visibles telles quelles sur desktop) : aucun filtre
- * nouveau, un second chemin vers les mêmes. D'où le store partagé plutôt
- * qu'une copie d'état — cf. `quick-filter.store.ts`.
- *
- * 🔴 Le filtre rapide actif se RETIRE depuis ici. Sur mobile la barre de
- * pastilles est masquée : sans la pilule posée dans la barre ci-dessous, une
- * liste filtrée sur « Retard » n'offrirait plus aucun moyen de revenir à
- * toutes les tâches.
- *
- * Desktop : ce composant est entièrement `md:hidden`, il ne touche à rien.
+ * Recherche de la page Tâches, ancrée en bas, MOBILE UNIQUEMENT (`md:hidden`), modèle Notes (iOS) : barre du bas qui ne défile jamais, un champ vide propose des entrées.
+ * Les cinq suggestions sont EXACTEMENT les pastilles de `TaskQuickFilters` (store partagé, `quick-filter.store.ts`) : aucun filtre nouveau.
+ * 🔴 Le filtre rapide actif se RETIRE depuis ici : la barre de pastilles est masquée sur mobile, sans la pilule il n'y aurait aucun retour à toutes les tâches.
  */
 
 interface Props {
   searchTerm: string;
   onSearchTermChange: (value: string) => void;
-  /**
-   * De quoi proposer les listes en plus des filtres. Groupe en un objet : ces
-   * quatre valeurs ne se comprennent qu'ensemble, et `TasksPage` est a trois
-   * lignes de son plafond de 600.
-   */
+  /** De quoi proposer les listes en plus des filtres : quatre valeurs groupées, elles ne se comprennent qu'ensemble. */
   listPicker: {
     lists: TaskList[];
     selectedListId: string | null;
@@ -53,10 +32,7 @@ interface Props {
     /** « Aujourd'hui » peut etre masquee par la personne : on ne la propose pas. */
     todayHidden: boolean;
   };
-  /**
-   * Le tri, qui vivait dans un `<select>` en haut de page. Meme raison de
-   * grouper que `listPicker` : quatre valeurs qui ne se comprennent qu'ensemble.
-   */
+  /** Le tri : groupé comme `listPicker`. */
   sort: {
     field: string;
     direction: 'asc' | 'desc';
@@ -96,11 +72,7 @@ const ACTIVE_LABEL_KEY: Record<Exclude<QuickFilter, 'none'>, KeyOf<'tasks'>> = {
   collaboration: 'table.quickFilter.collaboration',
 };
 
-/**
- * Montée du viewport visuel, AU-DESSUS de sa valeur au repos, à partir de
- * laquelle on tient un clavier pour ouvert. Relatif, jamais absolu : la valeur
- * au repos vaut 0 sur un émulateur et ~60 à 100 px dans Safari iOS.
- */
+/** Montée du viewport visuel AU-DESSUS de sa valeur au repos à partir de laquelle un clavier est tenu pour ouvert. Relatif, jamais absolu : le repos vaut 0 sur émulateur et ~60 à 100 px dans Safari iOS. */
 const KEYBOARD_LIFT_PX = 80;
 
 const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange, listPicker, sort }) => {
@@ -118,18 +90,8 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange, lis
   // tâche pendant qu'on en coche cinq.
   const selectModeActive = useSelectModeActive();
 
-  // ── Ouvrir DOIT lever le clavier ────────────────────────────────────
-  //
-  // 🔴 Sur iOS, `focus()` n'ouvre le clavier que s'il est appelé PENDANT la
-  // tâche du geste. `useModalA11y` pose le focus dans un `useEffect`, donc
-  // après la peinture, donc dans une autre tâche : le champ était bien
-  // focalisé (curseur visible) et le clavier restait fermé. Il fallait un
-  // second appui pour écrire.
-  //
-  // `flushSync` commite l'ouverture SANS rendre la main au navigateur : le
-  // champ existe déjà quand on le focalise, et on est toujours dans le clic.
-  // `useModalA11y` ne le déplacera pas ensuite, il s'abstient quand le focus
-  // est déjà dans la surface.
+  // ── Ouvrir DOIT lever le clavier ──
+  // 🔴 Sur iOS, `focus()` n'ouvre le clavier que PENDANT la tâche du geste ; `useModalA11y` focalise dans un `useEffect` (autre tâche). `flushSync` commite l'ouverture dans le clic : le champ existe déjà, `useModalA11y` ne le déplace pas (focus déjà dans la surface).
   const openAndFocus = useCallback(() => {
     flushSync(() => setSearchOpen(true));
     inputRef.current?.focus();
@@ -143,20 +105,9 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange, lis
     initialFocusRef: inputRef,
   });
 
-  // ── Ligne de base du viewport visuel ────────────────────────────────
-  //
-  // 🔴 Mesurée À L'OUVERTURE, sur l'appareil, clavier encore fermé. Elle vaut
-  // 0 sur un émulateur et ~60 à 100 px dans Safari iOS, dont la barre d'outils
-  // rogne déjà le viewport visuel. Une première version comparait la mesure
-  // brute à des constantes (« > 60 = clavier ouvert ») : verte ici, fausse sur
-  // un vrai téléphone, où le champ flottait et où replier le clavier ne
-  // refermait plus rien.
-  //
-  // ⚠️ Lue par `measureKeyboardInset()`, PAS dans l'état du hook : celui-ci ne
-  // publie sa première valeur qu'après son effet, donc il vaut encore 0 à
-  // l'instant où l'overlay s'ouvre. Mesuré : ligne de base à 0 au lieu de 90,
-  // donc un repos pris pour un clavier, donc le champ posé 90 px trop haut
-  // dès l'ouverture.
+  // ── Ligne de base du viewport visuel ──
+  // 🔴 Mesurée À L'OUVERTURE, sur l'appareil, clavier fermé (0 sur émulateur, ~60 à 100 px dans Safari iOS) : jamais comparée à des constantes.
+  // ⚠️ Lue par `measureKeyboardInset()`, PAS dans l'état du hook, qui vaut encore 0 à l'ouverture (un repos serait pris pour un clavier).
   const restingInset = useRef(0);
   useEffect(() => {
     if (open) restingInset.current = measureKeyboardInset();
@@ -164,18 +115,9 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange, lis
 
   const keyboardUp = keyboardInset - restingInset.current > KEYBOARD_LIFT_PX;
 
-  // ── Le clavier se referme, la recherche aussi (modèle Notes) ────────
-  //
-  // Le signal est le champ qui PERD LE FOCUS : la touche « OK » de la barre
-  // d'accessoires iOS, comme le repli du clavier, le déclenchent. Le viewport
-  // visuel ne sert plus qu'à placer le champ — le faire arbitrer la fermeture
-  // demandait de savoir à quelle hauteur repose un appareil qu'on n'a pas.
-  //
-  // ⚠️ Un `blur` nu rendrait les suggestions INTOUCHABLES : sur un appui, le
-  // champ perd le focus AVANT que le `click` n'atteigne la ligne. D'où le
-  // garde `pointerInPanel`, posé au `pointerdown` n'importe où dans le
-  // panneau et levé après coup : pendant un appui, le blur ne ferme rien, et
-  // c'est le gestionnaire de la ligne qui décide.
+  // ── Le clavier se referme, la recherche aussi (modèle Notes) ──
+  // Signal : le champ PERD LE FOCUS (touche « OK » iOS, repli du clavier). Le viewport visuel ne sert qu'à placer le champ.
+  // ⚠️ Un `blur` nu rendrait les suggestions INTOUCHABLES (blur avant `click`) : le garde `pointerInPanel`, posé au `pointerdown` dans le panneau et levé après, empêche le blur de fermer pendant un appui.
   const pointerInPanel = useRef(false);
   const handleBlur = (event: React.FocusEvent<HTMLInputElement>) => {
     if (pointerInPanel.current) return;
@@ -186,12 +128,7 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange, lis
     close();
   };
 
-  // 🔴 Le garde se lève sur `window`, jamais sur le panneau. Taper une
-  // suggestion DÉMONTE le panneau depuis le gestionnaire de clic : son
-  // `onPointerUp` n'arrive alors jamais, le garde resterait levé pour de bon,
-  // et le repli du clavier ne refermerait plus rien pour le reste de la
-  // session. Remise à zéro aussi à chaque ouverture, pour ne rien devoir au
-  // cycle de vie d'une surface qui va et vient.
+  // 🔴 Le garde se lève sur `window`, jamais sur le panneau : taper une suggestion DÉMONTE le panneau, son `onPointerUp` n'arriverait jamais et le garde resterait levé. Remis à zéro à chaque ouverture.
   useEffect(() => {
     if (!open) return;
     pointerInPanel.current = false;
@@ -212,13 +149,8 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange, lis
     close();
   };
 
-  // -- Les lignes de la carte : les cinq filtres, puis les listes ------
-  //
-  // Une seule collection, et pas deux boucles : le trait de separation se pose
-  // « sur toutes sauf la derniere », ce qui n'a de sens qu'a l'echelle de la
-  // carte entiere. Les listes rejoignent les filtres ici parce que la barre de
-  // chips s'efface pendant la recherche : sans elles, choisir une liste
-  // demanderait de fermer l'ecran d'abord.
+  // -- Les lignes de la carte : les cinq filtres, puis les listes --
+  // Une seule collection (séparateur sur toutes sauf la dernière) ; les listes sont ici car la barre de chips s'efface pendant la recherche.
   const rows: Row[] = [
     ...SUGGESTIONS.map((suggestion) => ({
       key: suggestion.labelKey,
@@ -245,11 +177,7 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange, lis
 
   const barBottom = 'calc(4rem + env(safe-area-inset-bottom) + 0.5rem)';
 
-  // Champ vide = l'écran du modèle (plein, opaque, suggestions). Dès la
-  // première frappe, le fond s'efface : le modèle remplit cet espace avec ses
-  // résultats, et COSMO ne le peut pas sans remonter toute sa liste de tâches
-  // ici. Plutôt que de chercher à l'aveugle derrière un fond opaque, on rend
-  // la liste à la vue et on ne garde que le champ ancré.
+  // Champ vide = écran plein, opaque, suggestions. Dès la première frappe le fond s'efface : la liste de tâches reste visible, seul le champ ancré demeure.
   const showSuggestions = searchTerm.trim() === '';
 
   if (selectModeActive) return null;
@@ -337,27 +265,14 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange, lis
             key="search-panel"
             ref={panelRef}
             {...dialogProps}
-            // ⚠️ `initial` porte l'opacité ET `y`, jamais `y` seul : sous
-            // `prefers-reduced-motion`, `MotionConfig reducedMotion="user"` ne
-            // joue pas les transforms et la valeur initiale RESTE appliquée.
-            // Une surface `fixed` resterait 16 px trop bas, définitivement.
+            // ⚠️ `initial` porte l'opacité ET `y`, jamais `y` seul : sous `prefers-reduced-motion` la valeur initiale RESTE appliquée (surface `fixed` 16 px trop bas).
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 16 }}
             transition={{ duration: 0.2 }}
             onPointerDownCapture={() => { pointerInPanel.current = true; }}
-            // 🔴 Surface PLEINE et OPAQUE, pas un voile sur la liste. Dans le
-            // modèle, chercher REMPLACE l'écran : la liste de notes disparaît,
-            // le fond est celui de l'app, et rien ne transparaît derrière. Il
-            // n'y a donc plus de « taper à côté pour fermer » : on sort par la
-            // croix, par le repli du clavier, ou par Échap.
-            // `z-50` : le cran PUBLIÉ des modales et feuilles
-            // (`docs/UI-PATTERNS.md`), et rien d'autre. En mode démo, la carte
-            // « Gardez votre organisation » (`z-[190]`) se pose par-dessus,
-            // mais elle se pose par-dessus TOUTES les modales de l'app : c'est
-            // une propriété de ce composant-là, pas un défaut de cet écran, et
-            // inventer un cran de plus pour la contourner rouvrirait ce que la
-            // garde `design-system.guard` a fermé.
+            // 🔴 Surface PLEINE et OPAQUE, pas un voile : chercher REMPLACE l'écran ; on sort par la croix, le repli du clavier ou Échap.
+            // `z-50` : le cran PUBLIÉ des modales (`docs/UI-PATTERNS.md`). La carte démo (`z-[190]`) passe par-dessus toutes les modales ; ne pas inventer un cran (garde `design-system.guard`).
             className={`md:hidden fixed inset-0 z-50 flex flex-col px-gutter ${
               showSuggestions
                 ? 'bg-[rgb(var(--color-background))]'
@@ -367,11 +282,7 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange, lis
             }`}
             style={{
               paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)',
-              // Clavier ouvert : on remonte du hauteur-clavier, PLUS la même
-              // gouttière de 12 px qu'au repos. Le modèle garde cette
-              // respiration au-dessus des touches ; la coller à 0 ne retirait
-              // rien à la barre d'outils de Safari, qui n'appartient pas à la
-              // page et qu'aucune règle CSS n'atteint.
+              // Clavier ouvert : hauteur-clavier PLUS la gouttière de 12 px du repos (la barre d'outils Safari n'appartient pas à la page).
               paddingBottom: keyboardUp
                 ? `calc(${keyboardInset}px + 0.75rem)`
                 : 'calc(env(safe-area-inset-bottom) + 0.75rem)',
@@ -389,11 +300,7 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange, lis
                   <ul>
                     {rows.map((row, index) => {
                       const Icon = row.icon;
-                      // Séparateur EN RETRAIT : il commence à l'aplomb du
-                      // libellé et s'arrête avant le bord droit, jamais bord à
-                      // bord, et jamais sous la dernière ligne. Il est donc
-                      // porté par un conteneur INTÉRIEUR au bouton : posé sur
-                      // le `<li>`, il traverserait aussi la colonne d'icônes.
+                      // Séparateur EN RETRAIT, porté par un conteneur INTÉRIEUR au bouton (sur le `<li>` il traverserait la colonne d'icônes), jamais sous la dernière ligne.
                       const separated = index < rows.length - 1;
                       return (
                         <li key={row.key}>
