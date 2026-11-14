@@ -64,6 +64,20 @@ export function juger(faits, plafonds) {
   return erreurs
 }
 
+const IGNORES_CLAUDE = new Set(['node_modules', '.git', 'dist', 'coverage', '.claude', '.worktrees', 'prive'])
+
+/** Les `CLAUDE.md` du dépôt (racine et dossiers), hors copies et dépendances. */
+function compterClaudeMd(rep) {
+  let n = 0
+  for (const e of existsSync(rep) ? readdirSync(rep) : []) {
+    if (IGNORES_CLAUDE.has(e)) continue
+    const p = join(rep, e)
+    if (statSync(p).isDirectory()) n += compterClaudeMd(p)
+    else if (e === 'CLAUDE.md') n += 1
+  }
+  return n
+}
+
 /** Les faits, calculés depuis les fichiers du dépôt à `racine`. */
 export function calculerFaits(racine = process.cwd()) {
   const edgeDir = join(racine, 'supabase', 'functions')
@@ -83,6 +97,9 @@ export function calculerFaits(racine = process.cwd()) {
   const gardes = Object.keys(pkg.scripts ?? {}).filter((s) => /^(check|i18n|validate):/.test(s))
 
   const adr = fichiers(join(racine, 'docs', 'adr'), /^\d{4}-.*\.md$/)
+  const fonctionsVercel = fichiers(join(racine, 'api'), /^[^_.].*\.ts$/).filter((f) => !/\.test\.ts$/.test(f))
+  const docsDir = join(racine, 'docs')
+  const docsVivantes = fichiers(docsDir, /\.md$/).filter((f) => statSync(join(docsDir, f)).isFile())
 
   const schemaChemin = join(racine, 'supabase', 'schema.sql')
   const schema = existsSync(schemaChemin) ? lireTexte(schemaChemin) : ''
@@ -98,12 +115,26 @@ export function calculerFaits(racine = process.cwd()) {
     namespaces: namespaces.length,
     gardes: gardes.length,
     adr: adr.length,
+    fonctionsVercel: fonctionsVercel.length,
+    claudeMd: compterClaudeMd(racine),
+    docsVivantes: docsVivantes.length,
     tables: compter(schema, /^CREATE TABLE public\./gm),
     tablesRls: compter(schema, /^ALTER TABLE public\.\S+ ENABLE ROW LEVEL SECURITY;/gm),
     policies: compter(schema, /^CREATE POLICY /gm),
     fonctionsSql: compter(schema, /^CREATE FUNCTION public\./gm),
   }
 }
+
+/** Les faits volatils : la commande qui les mesure, jamais leur valeur. */
+export const VOLATILS = [
+  ['Fichiers de test Vitest', '`git ls-files "*.test.ts" "*.test.tsx" "*.test.mjs" \\| wc -l`'],
+  ['Cas de test Vitest', '`npx vitest list \\| wc -l` (lent : toute la collecte)'],
+  ['Specs Playwright', '`git ls-files "e2e/*.spec.ts" \\| wc -l`'],
+  ['Lignes et tokens d\'un doc vivant', '`npm run check:docs -- --mesurer` (tokens ≈ caractères / 4)'],
+  ['Fichiers et valeurs du cliquet de complexité', '`eslint-rules/complexite.baseline.json`'],
+  ['Exceptions du cliquet des docs', '`docs/convention-exceptions.json`'],
+  ['Taille du bundle', '`npm run build && npm run check:bundle`'],
+]
 
 /** Le texte de `docs/FAITS.md`. Déterministe : mêmes faits, mêmes octets. */
 export function rendre(f) {
@@ -120,6 +151,9 @@ export function rendre(f) {
     ['Namespaces i18n', f.namespaces, 'fichiers de `src/locales/fr/`'],
     ['Gardes `check:` / `i18n:` / `validate:`', f.gardes, 'scripts de `package.json`'],
     ['ADR', f.adr, 'fichiers `NNNN-*.md` de `docs/adr/`'],
+    ['Fonctions Vercel', f.fonctionsVercel, 'fichiers `.ts` de `api/` (hors tests et `_*`)'],
+    ['`CLAUDE.md`', f.claudeMd, 'racine et dossiers, hors `node_modules`, `.claude`, `.worktrees`'],
+    ['Docs vivantes de `docs/`', f.docsVivantes, 'fichiers `.md` de `docs/`, hors `archive/` et `adr/`'],
     ['Tables du schéma `public`', f.tables, '`CREATE TABLE public.` dans `supabase/schema.sql`'],
     ['dont sous RLS', f.tablesRls, '`ENABLE ROW LEVEL SECURITY` dans `supabase/schema.sql`'],
     ['Policies RLS', f.policies, '`CREATE POLICY` dans `supabase/schema.sql`'],
@@ -130,12 +164,21 @@ export function rendre(f) {
     '',
     '# Faits chiffrés du dépôt',
     '',
-    'Un chiffre se calcule, il ne se recopie pas. Les autres documents renvoient ici au lieu de le répéter.',
-    "Les chiffres de production (tables vivantes, ledger, taille de base) ne sont pas ici : ils se lisent en base.",
+    '> **Quand lire** : avant d\'écrire un nombre de fonctions, migrations, tables, gardes, tests ou lignes. **Fait foi** : `scripts/generer-faits.mjs`, qui le calcule.',
+    '',
+    '❌ Ne jamais recopier un de ces chiffres ailleurs : y renvoyer. Les chiffres de production (tables vivantes, ledger, taille de base) se lisent en base.',
     '',
     '| Fait | Valeur | Source |',
     '|---|---|---|',
     ...lignes.map(([nom, valeur, source]) => `| ${nom} | **${valeur}** | ${source} |`),
+    '',
+    '## Se mesurent, ne s\'écrivent pas',
+    '',
+    'Ces chiffres bougent à chaque commit : les écrire ici ferait rougir le noyau à chaque test ajouté. Citer la commande.',
+    '',
+    '| Fait | Commande |',
+    '|---|---|',
+    ...VOLATILS.map(([nom, cmd]) => `| ${nom} | ${cmd} |`),
     '',
     'Vérifié dans le noyau CI : `npm run check:faits` échoue si ce fichier diffère de la génération.',
     '',
