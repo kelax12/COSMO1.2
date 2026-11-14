@@ -2,7 +2,7 @@
 
 # Audit NVDA (Windows) et revue humaine WCAG : check-list à jouer d'une traite
 
-Lire pour jouer la séance NVDA, ou en touchant `scripts/check-lecteurs-ecran.mjs`. Ce qui fait foi : le registre ci-dessous et `npm run check:lecteurs-ecran`. Pendant Windows de [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md) (`M-40`, `M-52`) et support de la revue humaine des critères qu'`axe-core` ne voit pas (`M-51`, `ACCESSIBILITY.md` AM-1).
+**Quand lire** : pour jouer la séance NVDA, ou en touchant `scripts/check-lecteurs-ecran.mjs`. **Fait foi** : le registre ci-dessous et `npm run check:lecteurs-ecran`. Pendant Windows de [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md) (`M-40`, `M-52`) et support de la revue humaine des critères qu'`axe-core` ne voit pas (`M-51`, `ACCESSIBILITY.md` AM-1).
 
 **Statut : à jouer, échéance 2027-01-15. Rien n'est coché.** Une seule séance d'environ 75 minutes : la partie B réutilise ce que la partie A fait entendre.
 

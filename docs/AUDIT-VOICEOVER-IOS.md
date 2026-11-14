@@ -2,7 +2,7 @@
 
 # Audit VoiceOver iOS : check-list à jouer d'une traite
 
-Lire pour jouer la séance VoiceOver sur iPhone réel, ou en touchant `scripts/check-lecteurs-ecran.mjs`. Ce qui fait foi : le registre ci-dessous et `npm run check:lecteurs-ecran`. Procédure NVDA et revue WCAG : [`AUDIT-NVDA-WINDOWS.md`](./AUDIT-NVDA-WINDOWS.md).
+**Quand lire** : pour jouer la séance VoiceOver sur iPhone réel, ou en touchant `scripts/check-lecteurs-ecran.mjs`. **Fait foi** : le registre ci-dessous et `npm run check:lecteurs-ecran`. Procédure NVDA et revue WCAG : [`AUDIT-NVDA-WINDOWS.md`](./AUDIT-NVDA-WINDOWS.md).
 
 **Statut : à jouer, échéance 2026-12-15. Rien n'est coché.** Quatrième audit d'accessibilité de `C-24` (issue n° 183), le seul jamais passé ; les trois autres (clavier, modales, `/agenda`) l'ont été sur Chromium desktop.
 

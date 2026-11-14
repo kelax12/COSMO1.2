@@ -1,6 +1,6 @@
 # CLI COSMO
 
-Lire avant tout appel à `npm run cosmo` ou toute modification de `scripts/cosmo/`. Fait foi : `scripts/cosmo/cli.mjs` et `scripts/cosmo/api.mjs`. Mémo court pour ajouter une tâche : [`AGENT-AJOUTER-TACHE.md`](./AGENT-AJOUTER-TACHE.md).
+**Quand lire** : avant tout appel à `npm run cosmo` ou toute modification de `scripts/cosmo/`. **Fait foi** : `scripts/cosmo/cli.mjs` et `scripts/cosmo/api.mjs`. Mémo court pour ajouter une tâche : [`AGENT-AJOUTER-TACHE.md`](./AGENT-AJOUTER-TACHE.md).
 
 Le CLI lit les tâches, habitudes, agenda et OKR du VRAI compte d'Axel (production), et écrit sur les tâches seulement. Session d'Axel, RLS comme dans le navigateur, jamais `service_role`.
 

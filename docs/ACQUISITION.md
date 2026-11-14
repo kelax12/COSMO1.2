@@ -3,7 +3,7 @@
 
 # Acquisition : instrumentation, chiffres, runbook
 
-Lire avant de toucher l'attribution `?ref=`, `demo_devices`, `scripts/check-acquisition.mjs` ou une campagne. Fait foi : le code et la production. Stratégie : [`archive/PLAN-ACQUISITION-30J-2026-08-13.md`](./archive/PLAN-ACQUISITION-30J-2026-08-13.md). Historique des chiffres : [`archive/ACQUISITION-chiffres-et-recits-2026-08-14-au-2026-10-30.md`](./archive/ACQUISITION-chiffres-et-recits-2026-08-14-au-2026-10-30.md). Levier hors dépôt : [`ACQUISITION-BACKLINKS.md`](./ACQUISITION-BACKLINKS.md).
+**Quand lire** : avant de toucher l'attribution `?ref=`, `demo_devices`, `scripts/check-acquisition.mjs` ou une campagne. **Fait foi** : le code et la production. Stratégie : [`archive/PLAN-ACQUISITION-30J-2026-08-13.md`](./archive/PLAN-ACQUISITION-30J-2026-08-13.md). Historique des chiffres : [`archive/ACQUISITION-chiffres-et-recits-2026-08-14-au-2026-10-30.md`](./archive/ACQUISITION-chiffres-et-recits-2026-08-14-au-2026-10-30.md). Levier hors dépôt : [`ACQUISITION-BACKLINKS.md`](./ACQUISITION-BACKLINKS.md).
 
 ## Compteurs
 

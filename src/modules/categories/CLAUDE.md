@@ -1,6 +1,6 @@
 # Catégories perso (`src/modules/categories`)
 
-Lire en touchant `src/modules/categories/**`, `components/category/**`, `pages/okr/useDeleteCategoryFlow.ts`. Versant entreprise : [`../team-categories/CLAUDE.md`](../team-categories/CLAUDE.md).
+**Quand lire** : en touchant `src/modules/categories/**`, `components/category/**`, `pages/okr/useDeleteCategoryFlow.ts`. Versant entreprise : [`../team-categories/CLAUDE.md`](../team-categories/CLAUDE.md). **Fait foi** : le code.
 Règles transversales : [`../CLAUDE.md`](../CLAUDE.md). Migrations : [`supabase/migration/CLAUDE.md`](../../../supabase/migration/CLAUDE.md).
 
 ## Supprimer une catégorie annonce son impact (R-02)

@@ -1,6 +1,6 @@
 # Tests
 
-Lire en touchant `vitest.config.ts`, `*.test.*`, `e2e/**`, `playwright*.config.ts`, `.github/workflows/**`, `prerender/instantanes/**`, ou avant un push sur `main`. Ce qui fait foi : `vitest.config.ts`, `.github/workflows/`, `npm run … --list`.
+**Quand lire** : en touchant `vitest.config.ts`, `*.test.*`, `e2e/**`, `playwright*.config.ts`, `.github/workflows/**`, `prerender/instantanes/**`, ou avant un push sur `main`. **Fait foi** : `vitest.config.ts`, `.github/workflows/`, `npm run … --list`.
 Notes /100 cessées (ADR 0012). Journaux et récits : [`archive/TESTING-journal-des-notes-2026-06-21-au-2026-11-07.md`](./archive/TESTING-journal-des-notes-2026-06-21-au-2026-11-07.md), [`archive/TESTING-e2e-decompte-et-recits-2026-09-05-au-2026-11-01.md`](./archive/TESTING-e2e-decompte-et-recits-2026-09-05-au-2026-11-01.md), [`archive/DOC-FRONT-recits-retires-2026-11-13.md`](./archive/DOC-FRONT-recits-retires-2026-11-13.md).
 
 ## Commandes

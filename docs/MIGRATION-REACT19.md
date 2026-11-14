@@ -1,6 +1,6 @@
 # React 19 et `react-router` 8 : état migré
 
-Lire en touchant `package.json` (majeures de `react`, `react-dom`, `react-router`, `@types/react*`), `src/components/ui/{button,input,dialog}.tsx`, une déclaration `useRef` / `RefObject`, le filtre `chunkFor` de `vite.config.ts`. Ce qui fait foi : `package.json` pour les versions, le code.
+**Quand lire** : en touchant `package.json` (majeures de `react`, `react-dom`, `react-router`, `@types/react*`), `src/components/ui/{button,input,dialog}.tsx`, une déclaration `useRef` / `RefObject`, le filtre `chunkFor` de `vite.config.ts`. **Fait foi** : `package.json` pour les versions, le code.
 `npm run check:study` (`C-108`, `scripts/check-study-freshness.mjs`) échoue si une de ces majeures bouge : relire ce fichier, le corriger ou l'archiver (`docs/archive/**`), PUIS recaler la garde. ❌ Recaler pour faire passer la CI. Les exécutions, mesures et l'étude préalable : [`archive/DOC-FRONT-recits-retires-2026-11-13.md`](./archive/DOC-FRONT-recits-retires-2026-11-13.md), [`archive/MIGRATION-REACT19-etude-2026-09-03-au-2026-09-13.md`](./archive/MIGRATION-REACT19-etude-2026-09-03-au-2026-09-13.md).
 
 ## Règles qui en sortent

@@ -1,6 +1,6 @@
 # Support
 
-Lire avant de répondre à un utilisateur ou de toucher `report-bug`, `check:mail`, `support_reports`. Fait foi : `supabase/functions/report-bug/`, `scripts/check-mail-reception.mjs`.
+**Quand lire** : avant de répondre à un utilisateur ou de toucher `report-bug`, `check:mail`, `support_reports`. **Fait foi** : `supabase/functions/report-bug/`, `scripts/check-mail-reception.mjs`.
 
 Axel répond seul : ni second niveau, ni astreinte, ni rotation.
 

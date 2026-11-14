@@ -33,7 +33,7 @@ function run() {
   const r = spawnSync(process.execPath, [SCRIPT], { cwd: dir, encoding: 'utf8' })
   return { code: r.status, out: `${r.stdout}${r.stderr}` }
 }
-/** Le verdict rouge, et sa sortie qui doit dire pourquoi. */
+const vert = () => { const r = run(); expect(r.code, r.out).toBe(0); return r.out }
 function rouge(...motifs) {
   const r = run()
   expect(r.code, r.out).toBe(1)
@@ -48,17 +48,13 @@ function arbreSain() {
 describe('check-docs-budget · plafonds et pointeurs des CLAUDE.md', () => {
   it('VERT sur un arbre sain (sans ce cas, tous les autres sont vides de sens)', () => {
     arbreSain()
-    const { code, out } = run()
-    expect(code, out).toBe(0)
-    expect(out).toMatch(/2 CLAUDE\.md \+ \d+ doc/)
+    expect(vert()).toMatch(/2 CLAUDE\.md \+ \d+ doc/)
   })
   it('compte REELLEMENT les fichiers : un CLAUDE.md de plus se voit dans le verdict', () => {
     arbreSain()
     put('CLAUDE.md', `${RACINE_SAINE}| E2E | [\`e2e/CLAUDE.md\`](./e2e/CLAUDE.md) |\n`)
     put('e2e/CLAUDE.md', '# E2E\n')
-    const { code, out } = run()
-    expect(code, out).toBe(0)
-    expect(out).toMatch(/3 CLAUDE\.md \+ \d+ doc/)
+    expect(vert()).toMatch(/3 CLAUDE\.md \+ \d+ doc/)
   })
   it('ROUGE quand le CLAUDE.md racine depasse son plafond', () => {
     arbreSain()
@@ -76,7 +72,7 @@ describe('check-docs-budget · plafonds et pointeurs des CLAUDE.md', () => {
     expect(run().code).toBe(1)
     put('src/modules/CLAUDE.md', '# Modules\n')
     put('CLAUDE.md', `${RACINE_SAINE}${'z'.repeat(18_000)}`)
-    expect(run().code).toBe(0)
+    vert()
   })
   it('ROUGE quand un CLAUDE.md de dossier n est cite par AUCUN pointeur du racine', () => {
     arbreSain()
@@ -103,9 +99,7 @@ describe('check-docs-budget · plafonds et pointeurs des CLAUDE.md', () => {
     put('.worktrees/autre/CLAUDE.md', `# Copie\n${'w'.repeat(40_000)}`)
     put('.claude/skills/design/CLAUDE.md', `# Skill\n${'s'.repeat(40_000)}`)
     put('node_modules/paquet/CLAUDE.md', `# Dependance\n${'n'.repeat(40_000)}`)
-    const { code, out } = run()
-    expect(code, out).toBe(0)
-    expect(out).toMatch(/2 CLAUDE\.md \+ \d+ doc/)
+    expect(vert()).toMatch(/2 CLAUDE\.md \+ \d+ doc/)
   })
   it('ROUGE quand un doc VIVANT de `docs/` porte un lien mort', () => {
     arbreSain()
@@ -115,7 +109,7 @@ describe('check-docs-budget · plafonds et pointeurs des CLAUDE.md', () => {
   it('IGNORE les liens morts de `docs/archive/`, qui n est pas maintenu', () => {
     arbreSain()
     put('docs/archive/AUDIT-2026-01-01.md', '# Vieil audit' + NL + NL + '[parti](./DISPARU.md)' + NL)
-    expect(run().code).toBe(0)
+    vert()
   })
   it('ROUGE si le CLAUDE.md racine disparait', () => {
     put('src/modules/CLAUDE.md', '# Modules\n')
@@ -141,7 +135,7 @@ describe('check-docs-budget · notes /100 (ADR 0012)', () => {
     put('docs/TESTING.md', '# Tests' + NL + NL + 'Etat de sante : [INDICATEURS](./INDICATEURS.md).' + NL)
     put('docs/INDICATEURS.md', '# Indicateurs' + NL)
     put('docs/archive/TESTING-journal.md', '## Note de tests : 80 → 94 / 100' + NL)
-    expect(run().code).toBe(0)
+    vert()
   })
 })
 
@@ -156,20 +150,20 @@ describe('check-docs-budget · ancres', () => {
     arbreSain()
     put('docs/TESTING.md', '# Tests' + NL + NL + '## 📋 Tableau de conformité (C-1) : état' + NL + NL + 'Retour : [haut](#-tableau-de-conformité-c-1--état).' + NL)
     put('docs/ARCHITECTURE.md', '# Archi' + NL + NL + 'Voir [le tableau](./TESTING.md#-tableau-de-conformité-c-1--état).' + NL)
-    expect(run().code).toBe(0)
+    vert()
   })
   it('une ancre dans un bloc de code n est pas un titre, et les doublons recoivent -1', () => {
     arbreSain()
     put('docs/TESTING.md', '# Tests' + NL + NL + '```bash' + NL + '# faux-titre' + NL + '```' + NL + NL + '## Suite' + NL + NL + '## Suite' + NL)
     put('docs/ARCHITECTURE.md', '# A' + NL + NL + '[a](./TESTING.md#suite) [b](./TESTING.md#suite-1)' + NL)
-    expect(run().code).toBe(0)
+    vert()
     put('docs/ARCHITECTURE.md', '# A' + NL + NL + '[a](./TESTING.md#faux-titre)' + NL)
     expect(run().code).toBe(1)
   })
   it('IGNORE docs/archive/ : une ancre y est une trace d epoque', () => {
     arbreSain()
     put('docs/archive/X.md', '[a](../TESTING.md#absente)' + NL)
-    expect(run().code).toBe(0)
+    vert()
   })
 })
 
@@ -178,8 +172,7 @@ describe('check-docs-budget · convention des docs (regle 8, ADR 0021)', () => {
     arbreSain()
     putBrut('docs/archive/X-2026-01-02-au-2026-02-03.md', '# Archive' + NL)
     put('docs/SECURITY.md', doc('Recit : [`archive/X-2026-01-02-au-2026-02-03.md`](./archive/X-2026-01-02-au-2026-02-03.md), branche `noyau/2026-01-02`, § Coffre.'))
-    const r = run()
-    expect(r.code, r.out).toBe(0)
+    vert()
   })
   it('ROUGE sur une date AAAA-MM-JJ isolee, dans un CLAUDE.md comme dans docs/', () => {
     arbreSain()
@@ -219,18 +212,28 @@ describe('check-docs-budget · convention des docs (regle 8, ADR 0021)', () => {
     arbreSain()
     putBrut('docs/archive/X.md', 'Mesure du 2026-01-02, `Y.md:3`.' + NL)
     putBrut('docs/adr/0001-x.md', '# ADR' + NL + '- **Date** : 2026-01-02' + NL)
-    expect(run().code).toBe(0)
+    vert()
   })
-  it('un fichier GENERE n est pas juge sur ses dates (mesures datees par construction)', () => {
+  it('un fichier GENERE, un marqueur <!-- --> : leurs dates sont des donnees, pas un recit', () => {
     arbreSain()
     putBrut('docs/INDICATEURS.md', '<!-- GENERE par x -->' + NL + '# Indicateurs' + NL + EN_TETE + NL + 'Mesure le 2026-01-02.' + NL)
-    expect(run().code).toBe(0)
+    put('docs/SECURITY.md', '<!-- echeance: 2026-01-02 -->' + NL + doc('<!-- chantier: relu=2026-01-03 -->'))
+    vert()
+  })
+  it('datesLues : un doc lu par une garde garde ses dates, si le script lecteur le cite vraiment', () => {
+    arbreSain()
+    put('docs/SECURITY.md', doc('| 2026-01-02 | exercice |'))
+    putBrut('scripts/lecteur.mjs', "const FILE = 'docs/SECURITY.md'" + NL)
+    putBrut('docs/convention-exceptions.json', JSON.stringify({ fichiers: {}, datesLues: { 'docs/SECURITY.md': 'scripts/lecteur.mjs' } }))
+    vert()
+    putBrut('scripts/lecteur.mjs', "const FILE = 'docs/AUTRE.md'" + NL)
+    rouge(/datesLues declare docs\/SECURITY\.md lu par scripts\/lecteur\.mjs, qui ne le cite pas/, /1 date/)
   })
   it('CLIQUET : une exception couvre sa mesure, pas un octet de plus', () => {
     arbreSain()
     putBrut('docs/SECURITY.md', '# Securite' + NL + 'Le 2026-01-01 et le 2026-01-02.' + NL)
     exceptions({ 'docs/SECURITY.md': { dates: 2, entete: false } })
-    expect(run().code).toBe(0)
+    vert()
     putBrut('docs/SECURITY.md', '# Securite' + NL + 'Le 2026-01-01, le 2026-01-02 et le 2026-01-03.' + NL)
     rouge(/au-dela de sa mesure d'exception \(2\)/)
   })
@@ -244,7 +247,7 @@ describe('check-docs-budget · convention des docs (regle 8, ADR 0021)', () => {
     arbreSain()
     put('docs/SECURITY.md', doc(lignes(400)))
     exceptions({ 'docs/SECURITY.md': { lignes: 405 } })
-    expect(run().code).toBe(0)
+    vert()
     put('docs/SECURITY.md', doc(lignes(410)))
     rouge(/au-dela de sa mesure d'exception \(405\)/)
     put('docs/SECURITY.md', doc(lignes(10)))

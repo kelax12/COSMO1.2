@@ -37,5 +37,6 @@ trop long ou un doc qu'il faut lire en entier pour savoir s'il concerne la tâch
 - Les sessions qui réécrivent un doc retirent ses entrées d'exception dans la même livraison.
 - Une date reste permise collée à un identifiant (nom de fichier d'archive, branche) : c'est un nom,
   pas un récit.
-- Coût : un doc qui consigne des dates comme donnée (journal légal, échéances lues par une garde) reste
-  en exception tant que ses dates ne vivent pas dans un fichier de données ou une archive.
+- Une date qui est une donnée lue par une garde (journal légal, échéance, exercice) reste permise : dans
+  un marqueur `<!-- … -->`, ou dans un doc déclaré sous `datesLues` de `docs/convention-exceptions.json`
+  avec le script lecteur, que `check:docs` vérifie.

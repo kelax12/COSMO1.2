@@ -1,6 +1,6 @@
 # OKR (`src/modules/okrs`)
 
-Lire en touchant `src/modules/okrs/**`, `kr_completions`, `/statistics`, le graphique « KR réalisés ».
+**Quand lire** : en touchant `src/modules/okrs/**`, `kr_completions`, `/statistics`, le graphique « KR réalisés ». **Fait foi** : le code.
 Règles transversales : [`../CLAUDE.md`](../CLAUDE.md).
 
 ## Journal append-only `kr_completions`

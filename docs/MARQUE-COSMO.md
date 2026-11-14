@@ -1,6 +1,6 @@
 # Marque COSMO : dossier pour un conseil en propriété industrielle
 
-Lire avant tout dépôt de marque, renommage ou rendez-vous avec un CPI. Fait foi : TMview (`https://www.tmdn.org/tmview/`) et les registres d'origine, jamais ce relevé. Ligne d'origine : `a-faire-manuel.md`, M-66 (hors dépôt). Dossier complet (cabinets, prix, brouillons d'e-mail) : [`archive/MARQUE-COSMO-dossier-complet-2026-10-16.md`](./archive/MARQUE-COSMO-dossier-complet-2026-10-16.md).
+**Quand lire** : avant tout dépôt de marque, renommage ou rendez-vous avec un CPI. **Fait foi** : TMview (`https://www.tmdn.org/tmview/`) et les registres d'origine, jamais ce relevé. Ligne d'origine : `a-faire-manuel.md`, M-66 (hors dépôt). Dossier complet (cabinets, prix, brouillons d'e-mail) : [`archive/MARQUE-COSMO-dossier-complet-2026-10-16.md`](./archive/MARQUE-COSMO-dossier-complet-2026-10-16.md).
 
 - 🔴 Ce document n'est PAS un avis juridique : relevé factuel d'un assistant. TMview « n'a aucun effet juridique » ; seul un CPI ou un avocat apprécie un risque de confusion.
 - 🔴 Aucune option n'est tranchée ici : la décision reste à Axel, après consultation.

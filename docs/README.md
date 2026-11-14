@@ -7,7 +7,7 @@
 
 Le lecteur est un agent qui charge le fichier dans son contexte : chaque ligne coûte des tokens (ADR 0021).
 
-1. 🔴 Un fichier décrit l'état courant : ni date, ni historique, ni récit d'incident. Un récit va une fois dans `docs/archive/`, une décision dans `docs/adr/`.
+1. 🔴 Un fichier décrit l'état courant : ni date (sauf donnée lue par une garde : marqueur `<!-- … -->` ou `datesLues` de `docs/convention-exceptions.json`), ni historique, ni récit d'incident. Un récit va une fois dans `docs/archive/`, une décision dans `docs/adr/`.
 2. 🔴 Sous le titre, trois lignes au plus : `**Quand lire**` (chemins ou globs touchés) et `**Fait foi**` (code ou fichier source).
 3. ✅ Une règle par ligne, à l'impératif, avec ❌ ✅ 🔴 ⚠️, et son pourquoi en une proposition ou en renvoi (ADR, archive, `C-xx`, mig. `NNN`).
 4. ✅ Chemins exacts entre accents graves, commandes copiables.

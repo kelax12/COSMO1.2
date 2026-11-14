@@ -1,6 +1,6 @@
 # Mobile-first : patterns et conventions
 
-Lire en touchant `src/pages/**` ou `src/components/**` rendus sous 768 px, `src/components/mobile/**`, `src/index.css`, `src/main.tsx`, un bottom-sheet, `TaskCard`, `TaskFilter`. Ce qui fait foi : `src/design-system.guard.test.ts`, `src/components/mobile/mobile-primitives.test.tsx`, le code.
+**Quand lire** : en touchant `src/pages/**` ou `src/components/**` rendus sous 768 px, `src/components/mobile/**`, `src/index.css`, `src/main.tsx`, un bottom-sheet, `TaskCard`, `TaskFilter`. **Fait foi** : `src/design-system.guard.test.ts`, `src/components/mobile/mobile-primitives.test.tsx`, le code.
 Notes /100 cessées (ADR 0012). Journal et audit DA : [`archive/MOBILE-journal-des-notes-2026-08-14-au-2026-12-15.md`](./archive/MOBILE-journal-des-notes-2026-08-14-au-2026-12-15.md), [`archive/MOBILE-audit-da-2026-08-14.md`](./archive/MOBILE-audit-da-2026-08-14.md), [`archive/DOC-FRONT-recits-retires-2026-11-13.md`](./archive/DOC-FRONT-recits-retires-2026-11-13.md). Règles d'animation et de modale : [`src/components/CLAUDE.md`](../src/components/CLAUDE.md).
 
 ## Breakpoint et layout

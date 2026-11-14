@@ -1,6 +1,6 @@
 # Scalabilité : décisions et runbook
 
-Lire en touchant une policy RLS sur une table qui grossit, un `getAll()`, un `refetchInterval`, `scripts/scalability-*.mjs`, `.github/workflows/scalability-volume.yml`, ou avant de décider pagination, index, plan Postgres, replicas. Ce qui fait foi : les requêtes du runbook (§ 8) rejouées contre la prod en lecture seule, et le code. Les chiffres se REMESURENT, jamais recopiés.
+**Quand lire** : en touchant une policy RLS sur une table qui grossit, un `getAll()`, un `refetchInterval`, `scripts/scalability-*.mjs`, `.github/workflows/scalability-volume.yml`, ou avant de décider pagination, index, plan Postgres, replicas. **Fait foi** : les requêtes du runbook (§ 8) rejouées contre la prod en lecture seule, et le code. Les chiffres se REMESURENT, jamais recopiés.
 Notes /100 cessées (ADR 0012). Mesures, récits et tableaux : [`archive/SCALABILITY-journal-des-notes-2026-08-07-au-2026-11-06.md`](./archive/SCALABILITY-journal-des-notes-2026-08-07-au-2026-11-06.md), [`archive/SCALABILITY-recits-rls-et-sondage-2026-08-14-au-2026-09-05.md`](./archive/SCALABILITY-recits-rls-et-sondage-2026-08-14-au-2026-09-05.md), [`archive/DOC-FRONT-recits-retires-2026-11-13.md`](./archive/DOC-FRONT-recits-retires-2026-11-13.md).
 
 ## 1. Cadrage

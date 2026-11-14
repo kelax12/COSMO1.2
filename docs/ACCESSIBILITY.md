@@ -1,6 +1,6 @@
 # Accessibilité (a11y)
 
-Lire en touchant un composant interactif, une modale, un thème (`src/index.css`), `e2e/a11y-*.spec.ts`, `lighthouserc*.json`. Ce qui fait foi : les specs `e2e/a11y-*`, `src/theme-contrast.guard.test.ts`, `src/components/modal-a11y.guard.test.ts`.
+**Quand lire** : en touchant un composant interactif, une modale, un thème (`src/index.css`), `e2e/a11y-*.spec.ts`, `lighthouserc*.json`. **Fait foi** : les specs `e2e/a11y-*`, `src/theme-contrast.guard.test.ts`, `src/components/modal-a11y.guard.test.ts`.
 Cible : WCAG 2.1 AA (EAA, applicable depuis le 28 juin 2025). Notes /100 cessées (ADR 0012). Journal et récits : [`archive/ACCESSIBILITY-journal-des-notes-2026-08-24-au-2027-01-15.md`](./archive/ACCESSIBILITY-journal-des-notes-2026-08-24-au-2027-01-15.md), [`archive/DOC-FRONT-recits-retires-2026-11-13.md`](./archive/DOC-FRONT-recits-retires-2026-11-13.md).
 
 ## Outillage et gates

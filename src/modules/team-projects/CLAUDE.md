@@ -1,6 +1,6 @@
 # Projets et tâches d'entreprise (`src/modules/team-projects`)
 
-Lire en touchant `src/modules/team-projects/**`. Aucun lien avec le module perso `tasks` : tables `team_*`, types à part.
+**Quand lire** : en touchant `src/modules/team-projects/**`. Aucun lien avec le module perso `tasks` : tables `team_*`, types à part. **Fait foi** : le code.
 Règles transversales : [`../CLAUDE.md`](../CLAUDE.md) ; droits : [`../organizations/CLAUDE.md`](../organizations/CLAUDE.md).
 
 ## Où est quoi

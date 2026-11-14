@@ -1,6 +1,6 @@
 # `src/components/` · onboarding, animations, modales, dates
 
-Lire en touchant `src/components/**`, `src/hooks/use-modal-a11y.ts`, un `motion.*`, une feuille mobile. Détail : [`docs/UI-PATTERNS.md`](../../docs/UI-PATTERNS.md), [`docs/MOBILE.md`](../../docs/MOBILE.md), [`docs/ACCESSIBILITY.md`](../../docs/ACCESSIBILITY.md).
+**Quand lire** : en touchant `src/components/**`, `src/hooks/use-modal-a11y.ts`, un `motion.*`, une feuille mobile. Détail : [`docs/UI-PATTERNS.md`](../../docs/UI-PATTERNS.md), [`docs/MOBILE.md`](../../docs/MOBILE.md), [`docs/ACCESSIBILITY.md`](../../docs/ACCESSIBILITY.md). **Fait foi** : le code.
 Règles transversales : [`CLAUDE.md`](../../CLAUDE.md).
 
 ## Onboarding

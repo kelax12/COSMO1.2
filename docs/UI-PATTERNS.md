@@ -1,6 +1,6 @@
 # Patterns UI
 
-Lire en touchant `src/components/{SmartListMenu,HabitActionsMenu,InboxMenu,EmptyState,EventModal*}`, `src/components/tutorial/**`, `src/components/org-guide/**`, `src/components/onboarding/**`, `src/components/ui/**`, `src/lib/theme.ts`, `src/index.css` (thèmes), un `z-[…]`, `src/modules/lists/**`. Ce qui fait foi : `src/design-system.guard.test.ts` et le code.
+**Quand lire** : en touchant `src/components/{SmartListMenu,HabitActionsMenu,InboxMenu,EmptyState,EventModal*}`, `src/components/tutorial/**`, `src/components/org-guide/**`, `src/components/onboarding/**`, `src/components/ui/**`, `src/lib/theme.ts`, `src/index.css` (thèmes), un `z-[…]`, `src/modules/lists/**`. **Fait foi** : `src/design-system.guard.test.ts` et le code.
 Notes /100 cessées (ADR 0012). Journal et diagnostics : [`archive/UI-PATTERNS-journal-des-notes-2026-07-23-au-2026-11-06.md`](./archive/UI-PATTERNS-journal-des-notes-2026-07-23-au-2026-11-06.md), [`archive/UI-PATTERNS-dette-audit-2026-08-14.md`](./archive/UI-PATTERNS-dette-audit-2026-08-14.md), [`archive/DOC-FRONT-recits-retires-2026-11-13.md`](./archive/DOC-FRONT-recits-retires-2026-11-13.md). Mobile : [`MOBILE.md`](./MOBILE.md) ; règles d'écriture de composants : [`src/components/CLAUDE.md`](../src/components/CLAUDE.md).
 
 ## Dette UI/UX ouverte

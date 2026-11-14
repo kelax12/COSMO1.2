@@ -1,6 +1,6 @@
 # `scripts/` · gardes et outils
 
-Lire en touchant `scripts/**`, `.github/workflows/**`, une garde `check:*`. Classes et outils standards : [`docs/TESTING.md`](../docs/TESTING.md) § « Gardes : classes et outils standards ». Gardes retirées et récits du tri : [`docs/archive/GARDES-retraits-2026-11-08.md`](../docs/archive/GARDES-retraits-2026-11-08.md) et [`docs/archive/GARDES-recits-et-tri-2026-09-03-au-2026-11-08.md`](../docs/archive/GARDES-recits-et-tri-2026-09-03-au-2026-11-08.md).
+**Quand lire** : en touchant `scripts/**`, `.github/workflows/**`, une garde `check:*`. Classes et outils standards : [`docs/TESTING.md`](../docs/TESTING.md) § « Gardes : classes et outils standards ». Gardes retirées et récits du tri : [`docs/archive/GARDES-retraits-2026-11-08.md`](../docs/archive/GARDES-retraits-2026-11-08.md) et [`docs/archive/GARDES-recits-et-tri-2026-09-03-au-2026-11-08.md`](../docs/archive/GARDES-recits-et-tri-2026-09-03-au-2026-11-08.md). **Fait foi** : les scripts de `scripts/` et leurs témoins.
 Règles transversales : [`CLAUDE.md`](../CLAUDE.md).
 
 ## Inventaire : une ligne par commande

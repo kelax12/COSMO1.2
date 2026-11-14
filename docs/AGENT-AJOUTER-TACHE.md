@@ -1,6 +1,6 @@
 # Ajouter une tâche COSMO
 
-Lire avant d'écrire une tâche dans le vrai compte d'Axel. Fait foi : `scripts/cosmo/cli.mjs`. Règles complètes : [`COSMO-CLI.md`](./COSMO-CLI.md).
+**Quand lire** : avant d'écrire une tâche dans le vrai compte d'Axel. **Fait foi** : `scripts/cosmo/cli.mjs`. Règles complètes : [`COSMO-CLI.md`](./COSMO-CLI.md).
 
 ## Commande (forme JSON, à préférer)
 

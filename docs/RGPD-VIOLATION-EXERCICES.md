@@ -1,6 +1,6 @@
 # Exercices à blanc de la violation
 
-Lire avant de dater un exercice ou de toucher `check-exercice-violation`. Fait foi : `scripts/check-exercice-violation.mjs`.
+**Quand lire** : avant de dater un exercice ou de toucher `check-exercice-violation`. **Fait foi** : `scripts/check-exercice-violation.mjs`.
 
 La procédure de violation (art. 33-34, 72 h) est `RGPD-VIOLATION.md`, hors dépôt (`prive/`, checkout principal). Ce fichier ne garde que la date de chaque exercice, lue par la CI.
 

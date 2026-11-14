@@ -1,6 +1,6 @@
 # Catégories d'entreprise (`src/modules/team-categories`)
 
-Lire en touchant `src/modules/team-categories/**`, `components/organization/DeleteTeamCategoryConfirm.tsx`. Versant perso : [`../categories/CLAUDE.md`](../categories/CLAUDE.md).
+**Quand lire** : en touchant `src/modules/team-categories/**`, `components/organization/DeleteTeamCategoryConfirm.tsx`. Versant perso : [`../categories/CLAUDE.md`](../categories/CLAUDE.md). **Fait foi** : le code.
 Règles transversales : [`../CLAUDE.md`](../CLAUDE.md). Droits : [`../organizations/CLAUDE.md`](../organizations/CLAUDE.md).
 
 ## Une seule table (mig. `148`)

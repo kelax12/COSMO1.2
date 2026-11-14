@@ -1,6 +1,6 @@
 # Tâches (`src/modules/tasks`)
 
-Lire en touchant `src/modules/tasks/**`. Échéances : [`src/lib/CLAUDE.md`](../../lib/CLAUDE.md). Lectures paginées : [`docs/PERFORMANCE.md`](../../../docs/PERFORMANCE.md) § « Tâches et agenda : pagination serveur ».
+**Quand lire** : en touchant `src/modules/tasks/**`. Échéances : [`src/lib/CLAUDE.md`](../../lib/CLAUDE.md). Lectures paginées : [`docs/PERFORMANCE.md`](../../../docs/PERFORMANCE.md) § « Tâches et agenda : pagination serveur ». **Fait foi** : le code.
 Règles transversales : [`../CLAUDE.md`](../CLAUDE.md).
 
 ## Récurrence : serveur uniquement

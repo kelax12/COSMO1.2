@@ -1,6 +1,6 @@
 # `src/` · providers, routing, type User
 
-Lire en touchant `src/App.tsx`, `src/main.tsx`, `src/modules/auth/AuthContext.tsx`. Le code fait foi.
+**Quand lire** : en touchant `src/App.tsx`, `src/main.tsx`, `src/modules/auth/AuthContext.tsx`. **Fait foi** : le code.
 Règles transversales : [`CLAUDE.md`](../CLAUDE.md).
 
 ## Providers (`src/App.tsx`)

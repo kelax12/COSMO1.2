@@ -1,6 +1,6 @@
 # `e2e/` · Playwright
 
-Lire en touchant `e2e/**`, `playwright*.config.ts`, `e2e/__screenshots__/**`. Méthode, comptage et checklist avant push : [`docs/TESTING.md`](../docs/TESTING.md) § Playwright.
+**Quand lire** : en touchant `e2e/**`, `playwright*.config.ts`, `e2e/__screenshots__/**`. Méthode, comptage et checklist avant push : [`docs/TESTING.md`](../docs/TESTING.md) § Playwright. **Fait foi** : les specs `e2e/**` et `playwright*.config.ts`.
 Règles transversales : [`CLAUDE.md`](../CLAUDE.md).
 
 ## Lancer et compter

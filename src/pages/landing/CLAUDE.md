@@ -1,6 +1,6 @@
 # Landing · deux parcours, GSAP, shader
 
-Lire en touchant `src/pages/LandingPage.tsx`, `src/pages/landing/**`, `src/components/showcase/**`, `src/lib/gsap.ts`. Perf : [`docs/PERFORMANCE.md`](../../../docs/PERFORMANCE.md).
+**Quand lire** : en touchant `src/pages/LandingPage.tsx`, `src/pages/landing/**`, `src/components/showcase/**`, `src/lib/gsap.ts`. Perf : [`docs/PERFORMANCE.md`](../../../docs/PERFORMANCE.md). **Fait foi** : le code.
 Règles transversales : [`CLAUDE.md`](../../../CLAUDE.md).
 
 ## Deux parcours exclusifs

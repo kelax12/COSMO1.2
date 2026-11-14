@@ -1,6 +1,6 @@
 # Modules · règles transversales
 
-Lire en touchant `src/modules/**`. Carte module → fichiers, tables, RPC : [`docs/MODULES.md`](../../docs/MODULES.md) ; nombre de modules : [`docs/FAITS.md`](../../docs/FAITS.md).
+**Quand lire** : en touchant `src/modules/**`. Carte module → fichiers, tables, RPC : [`docs/MODULES.md`](../../docs/MODULES.md) ; nombre de modules : [`docs/FAITS.md`](../../docs/FAITS.md). **Fait foi** : le code.
 Par module : [billing](billing/CLAUDE.md) · [tasks](tasks/CLAUDE.md) · [habits](habits/CLAUDE.md) · [okrs](okrs/CLAUDE.md) · [categories](categories/CLAUDE.md) · [team-categories](team-categories/CLAUDE.md) · [organizations](organizations/CLAUDE.md) · [team-projects](team-projects/CLAUDE.md).
 
 ## Double mode

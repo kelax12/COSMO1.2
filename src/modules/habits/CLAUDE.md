@@ -1,6 +1,6 @@
 # Habitudes (`src/modules/habits`)
 
-Lire en touchant `src/modules/habits/**`, `get_my_habits`, `streak.ts`. Fuseau et clés de jour gelées : [`src/lib/CLAUDE.md`](../../lib/CLAUDE.md) § Fuseau horaire.
+**Quand lire** : en touchant `src/modules/habits/**`, `get_my_habits`, `streak.ts`. Fuseau et clés de jour gelées : [`src/lib/CLAUDE.md`](../../lib/CLAUDE.md) § Fuseau horaire. **Fait foi** : le code.
 Règles transversales : [`../CLAUDE.md`](../CLAUDE.md).
 
 ## `completions` borné à la lecture (mig. 119)

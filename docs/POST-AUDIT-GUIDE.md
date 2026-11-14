@@ -1,6 +1,6 @@
 # Guide opérationnel : cinq chantiers post-audit
 
-Lire pour réactiver le premium PARTICULIER, rejouer un chantier d'exploitation (index, mot de passe compromis, harnais RLS), ou avant de souscrire les events d'un webhook Stripe. Ce qui fait foi : le code, [`STRIPE-LIVE.md`](./STRIPE-LIVE.md) pour la facturation entreprise, [`DEPLOYMENT.md`](./DEPLOYMENT.md), [`SECURITY.md`](./SECURITY.md).
+**Quand lire** : pour réactiver le premium PARTICULIER, rejouer un chantier d'exploitation (index, mot de passe compromis, harnais RLS), ou avant de souscrire les events d'un webhook Stripe. **Fait foi** : le code, [`STRIPE-LIVE.md`](./STRIPE-LIVE.md) pour la facturation entreprise, [`DEPLOYMENT.md`](./DEPLOYMENT.md), [`SECURITY.md`](./SECURITY.md).
 Garde : `npm run check:peremption-chantiers` (AM-2) exige sous chaque `## Point N` un marqueur `<!-- chantier: actif relu=AAAA-MM-JJ -->` (relecture ≤ 90 jours, sinon relire contre le dépôt puis re-dater, ou déclarer clos) ou `<!-- chantier: clos le=AAAA-MM-JJ -->`, et un plancher de chantiers. ❌ Mettre `relu=` à la date du jour sans avoir relu ; ❌ supprimer un point pour faire passer la garde. Elle prouve qu'une date est écrite, pas que la relecture a eu lieu. Les modes opératoires exécutés (harnais RLS, bascule Stripe) : [`archive/DOC-FRONT-recits-retires-2026-11-13.md`](./archive/DOC-FRONT-recits-retires-2026-11-13.md).
 
 ## Règles communes
@@ -27,7 +27,7 @@ where tablename='share_links' and indexname='idx_share_links_owner_id';
 ## Point 2 : « Leaked Password Protection »
 <!-- chantier: actif relu=2026-10-24 -->
 
-Toujours OUVERT : `scripts/supabase-posture.reference.json` porte `password_hibp_enabled = false` et l'advisor `auth_leaked_password_protection` compte 1. Relire avant le 2027-01-22. C'est un toggle de config Auth (vérification HaveIBeenPwned par k-anonymity, seul un préfixe de hash SHA-1 part), pas du code.
+Toujours OUVERT : `scripts/supabase-posture.reference.json` porte `password_hibp_enabled = false` et l'advisor `auth_leaked_password_protection` compte 1. Relire sous 90 jours après le `relu=` du marqueur (`check:peremption-chantiers`). C'est un toggle de config Auth (vérification HaveIBeenPwned par k-anonymity, seul un préfixe de hash SHA-1 part), pas du code.
 
 1. Dashboard → projet cosmo → Authentication → Sign In / Providers → Password (selon la version : Policies ou Password security) → activer « Prevent use of leaked passwords » ; en passant, longueur minimale ≥ 8 et lettres + chiffres.
 2. Vérifier : `get_advisors(security)` sans `auth_leaked_password_protection` ; inscription avec `password123` sur `/signup` refusée.

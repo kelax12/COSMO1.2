@@ -1,6 +1,6 @@
 # Mode entreprise : fonctionnalités
 
-Lire avant de présenter le mode entreprise ou de répondre à une question commerciale. Fait foi : le code (`src/pages/organization/`, `src/modules/organizations/`) ; en cas de contradiction, le code a raison.
+**Quand lire** : avant de présenter le mode entreprise ou de répondre à une question commerciale. **Fait foi** : le code (`src/pages/organization/`, `src/modules/organizations/`) ; en cas de contradiction, le code a raison.
 
 ## Démarrer
 

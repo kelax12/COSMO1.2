@@ -1,6 +1,6 @@
 # SEO
 
-Lire avant de toucher `prerender/**`, `public/robots.txt`, `public/sitemap.xml`, `vercel.json` (en-têtes `X-Robots-Tag`), `src/locales/*/seo.json`, `src/content/blog/**`, `src/i18n/seo-urls.mjs`, `scripts/capture-entreprise-shots.mjs`. Fait foi : `dist/` après `npm run build`, jamais la lecture de `prerender/`.
+**Quand lire** : avant de toucher `prerender/**`, `public/robots.txt`, `public/sitemap.xml`, `vercel.json` (en-têtes `X-Robots-Tag`), `src/locales/*/seo.json`, `src/content/blog/**`, `src/i18n/seo-urls.mjs`, `scripts/capture-entreprise-shots.mjs`. **Fait foi** : `dist/` après `npm run build`, jamais la lecture de `prerender/`.
 
 Historique mesuré (audit du prérendu, Search Console, bascule de l'anglais, récits) : [`archive/SEO-etat-mesure-et-recits-avant-2026-11-13.md`](./archive/SEO-etat-mesure-et-recits-avant-2026-11-13.md) et [`archive/SEO-journal-des-notes-2026-01-10-au-2026-11-06.md`](./archive/SEO-journal-des-notes-2026-01-10-au-2026-11-06.md). Indicateurs : [`INDICATEURS.md`](./INDICATEURS.md). Chiffres : [`FAITS.md`](./FAITS.md).
 

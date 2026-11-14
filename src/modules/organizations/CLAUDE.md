@@ -1,6 +1,6 @@
 # Organisations (`src/modules/organizations`)
 
-Lire en touchant `src/modules/organizations/**`, `org-*`, `components/organization/**`, `/entreprise/**`. UI : [`docs/UI-PATTERNS.md`](../../../docs/UI-PATTERNS.md) § « Mode entreprise ». Migrations en prod : [`supabase/migration/CLAUDE.md`](../../../supabase/migration/CLAUDE.md).
+**Quand lire** : en touchant `src/modules/organizations/**`, `org-*`, `components/organization/**`, `/entreprise/**`. UI : [`docs/UI-PATTERNS.md`](../../../docs/UI-PATTERNS.md) § « Mode entreprise ». Migrations en prod : [`supabase/migration/CLAUDE.md`](../../../supabase/migration/CLAUDE.md). **Fait foi** : le code.
 Règles transversales : [`../CLAUDE.md`](../CLAUDE.md).
 
 ## Navigation : une route par section

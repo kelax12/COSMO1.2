@@ -1,6 +1,6 @@
 # RGPD : inventaire, droits des personnes, rétention
 
-Lire avant de toucher une table de données personnelles, `delete-account`, `src/lib/csv-export.ts`, une purge `pg_cron` ou la politique de confidentialité. Fait foi : le schéma (`supabase/schema.sql`) et le code. Registre art. 30 : [`RGPD-REGISTRE.md`](./RGPD-REGISTRE.md). Violation : [`RGPD-VIOLATION-EXERCICES.md`](./RGPD-VIOLATION-EXERCICES.md), [`RGPD-VIOLATION-GABARITS.md`](./RGPD-VIOLATION-GABARITS.md). Récits et audits datés : [`archive/RGPD-etat-des-lieux-et-recits-avant-2026-11-13.md`](./archive/RGPD-etat-des-lieux-et-recits-avant-2026-11-13.md) et [`archive/RGPD-journal-des-notes-2026-04-06-au-2026-11-06.md`](./archive/RGPD-journal-des-notes-2026-04-06-au-2026-11-06.md). Indicateurs : [`INDICATEURS.md`](./INDICATEURS.md).
+**Quand lire** : avant de toucher une table de données personnelles, `delete-account`, `src/lib/csv-export.ts`, une purge `pg_cron` ou la politique de confidentialité. **Fait foi** : le schéma (`supabase/schema.sql`) et le code. Registre art. 30 : [`RGPD-REGISTRE.md`](./RGPD-REGISTRE.md). Violation : [`RGPD-VIOLATION-EXERCICES.md`](./RGPD-VIOLATION-EXERCICES.md), [`RGPD-VIOLATION-GABARITS.md`](./RGPD-VIOLATION-GABARITS.md). Récits et audits datés : [`archive/RGPD-etat-des-lieux-et-recits-avant-2026-11-13.md`](./archive/RGPD-etat-des-lieux-et-recits-avant-2026-11-13.md) et [`archive/RGPD-journal-des-notes-2026-04-06-au-2026-11-06.md`](./archive/RGPD-journal-des-notes-2026-04-06-au-2026-11-06.md). Indicateurs : [`INDICATEURS.md`](./INDICATEURS.md).
 
 ## Règle de fond
 

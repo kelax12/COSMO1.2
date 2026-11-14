@@ -1,22 +1,15 @@
 // check-docs-budget.mjs : garde de la documentation vivante (`npm run check:docs`, noyau CI).
-// Convention et pourquoi de chaque regle : `docs/README.md` § Convention, ADR 0012, 0014, 0021.
-//   1-2 plafond d'octets des CLAUDE.md (racine, dossier)   5 liens des docs vivantes
-//   3   chaque CLAUDE.md de dossier cite par le racine      6 aucune note /100 (ADR 0012)
-//   4   liens des CLAUDE.md                                 7 ancres des liens
-//   8   convention (en-tete, dates, numeros de ligne, plafond de lignes), en cliquet
-// ❌ Ne JAMAIS relever un plafond ni ajouter une exception pour faire passer : un depassement
-// dit qu'un contenu doit descendre d'un cran (dossier, docs/, archive), pas que la borne est basse.
-//   node scripts/check-docs-budget.mjs [--list | --mesurer]
+// Regles (pourquoi : `docs/README.md` § Convention, ADR 0012, 0014, 0021) : 1-2 octets des CLAUDE.md, 3 chaque CLAUDE.md
+// de dossier cite par le racine, 4-5 liens, 6 aucune note /100, 7 ancres, 8 convention en cliquet. `[--list | --mesurer]`.
+// ❌ Ne JAMAIS relever un plafond ni ajouter une exception pour faire passer : un contenu doit descendre d'un cran.
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs'
 import { join, dirname, resolve, relative, sep } from 'node:path'
 
 export const ROOT_MAX_BYTES = 24_500
 export const NESTED_MAX_BYTES = 14_000
-/** Un CLAUDE.md se charge seul (~3 000 tokens) ; un doc de docs/ se lit sur declencheur (~6 000). */
-export const PLAFOND_LIGNES_CLAUDE = 150
-export const PLAFOND_LIGNES_DOC = 300
+export const PLAFOND_LIGNES_CLAUDE = 150 // se charge seul : ~3 000 tokens
+export const PLAFOND_LIGNES_DOC = 300 // se lit sur declencheur : ~6 000 tokens
 export const CHEMIN_EXCEPTIONS = 'docs/convention-exceptions.json'
-
 // `.claude` et `.worktrees` portent des copies du depot (autres sessions) : jamais mesurees.
 const IGNORED = new Set(['node_modules', '.git', 'dist', 'coverage', '.next', 'build', '.claude', '.worktrees'])
 
@@ -127,12 +120,12 @@ export function aUnEnTete(texte) {
   return /\*\*Quand lire\*\*/.test(suite) && /\*\*Fait foi\*\*/.test(suite)
 }
 
-/** La mesure d'un fichier. Un fichier GENERE date ses mesures par construction : ses dates ne comptent pas. */
+/** La mesure d'un fichier. Un fichier GENERE, un marqueur `<!-- … -->` lu par une garde : leurs dates sont des donnees. */
 export function mesurerConvention(rel, texte) {
   return {
     plafond: rel.endsWith('CLAUDE.md') ? PLAFOND_LIGNES_CLAUDE : PLAFOND_LIGNES_DOC,
     lignes: texte.replace(/\r\n/g, '\n').replace(/\n$/, '').split('\n').length,
-    dates: texte.startsWith('<!-- GENERE') ? 0 : datesIsolees(texte).length,
+    dates: texte.startsWith('<!-- GENERE') ? 0 : datesIsolees(texte.replace(/<!--[\s\S]*?-->/g, '')).length,
     numerosDeLigne: numerosDeLigne(texte).length,
     entete: aUnEnTete(texte),
   }
@@ -142,10 +135,14 @@ export function mesurerConvention(rel, texte) {
 export function auditConvention(root, fichiers) {
   const errors = []
   const p = join(root, CHEMIN_EXCEPTIONS)
-  const exceptions = existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')).fichiers ?? {} : {}
+  const { fichiers: exceptions = {}, datesLues = {} } = existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')) : {}
   const retirer = (f, cle) => errors.push(`${f} : « ${cle} » n'est plus en defaut. Retirer « ${cle} » de ses exceptions dans ${CHEMIN_EXCEPTIONS}.`)
+  // `datesLues` : un doc dont les dates sont des donnees lues par une garde ; valable si ce script cite le doc.
+  const lues = new Set(Object.keys(datesLues).filter((f) => existsSync(join(root, datesLues[f])) && lire(root, datesLues[f]).includes(f)))
+  for (const f of Object.keys(datesLues)) if (!lues.has(f)) errors.push(`${CHEMIN_EXCEPTIONS} : datesLues declare ${f} lu par ${datesLues[f]}, qui ne le cite pas.`)
   for (const f of fichiers) {
     const m = mesurerConvention(f, lire(root, f))
+    if (lues.has(f)) m.dates = 0
     const ex = exceptions[f] ?? {}
     if (m.lignes > m.plafond && ex.lignes === undefined)
       errors.push(`${f} : ${m.lignes} lignes, au-dela du plafond de ${m.plafond}. Deplacer un recit dans docs/archive/ ou une regle dans le CLAUDE.md de sa zone ; jamais relever la borne.`)

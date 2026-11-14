@@ -1,6 +1,6 @@
 # Journal des documents contractuels
 
-Lire avant de modifier `src/locales/{fr,en}/{legal,legalTerms,legalPrivacy}.json` (CGU, confidentialité, mentions légales). Fait foi : `npm run check:legal-journal` (`scripts/check-legal-journal.mjs`, test `scripts/check-legal-journal.guard.test.mjs`), qui LIT ce fichier : ne pas le déplacer. Obligations et tableau de conformité : [`LEGAL.md`](./LEGAL.md). Journal par nature : une entrée par modification, ajoutée en bas de « Entrées », jamais réécrite.
+**Quand lire** : avant de modifier `src/locales/{fr,en}/{legal,legalTerms,legalPrivacy}.json` (CGU, confidentialité, mentions légales). **Fait foi** : `npm run check:legal-journal` (`scripts/check-legal-journal.mjs`, test `scripts/check-legal-journal.guard.test.mjs`), qui LIT ce fichier : ne pas le déplacer. Obligations et tableau de conformité : [`LEGAL.md`](./LEGAL.md). Journal par nature : une entrée par modification, ajoutée en bas de « Entrées », jamais réécrite.
 
 ## Règles
 

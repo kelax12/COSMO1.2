@@ -1,6 +1,6 @@
 # Performance
 
-Lire en touchant `vite.config.ts` (`chunkFor`), `index.html`, `src/index.css` (polices), un `import` de dépendance lourde, un chemin de lecture Supabase, `src/pages/landing/**`. Ce qui fait foi : `scripts/check-bundle-budget.mjs`, `npm run check:bundle`, le code.
+**Quand lire** : en touchant `vite.config.ts` (`chunkFor`), `index.html`, `src/index.css` (polices), un `import` de dépendance lourde, un chemin de lecture Supabase, `src/pages/landing/**`. **Fait foi** : `scripts/check-bundle-budget.mjs`, `npm run check:bundle`, le code.
 Notes /100 : cessées (ADR 0012, [`INDICATEURS.md`](./INDICATEURS.md)). Journaux et récits : [`archive/PERFORMANCE-journal-des-notes-2026-08-24-au-2026-11-06.md`](./archive/PERFORMANCE-journal-des-notes-2026-08-24-au-2026-11-06.md), [`archive/PERFORMANCE-budget-bundle-recits-2026-05-29-au-2026-10-22.md`](./archive/PERFORMANCE-budget-bundle-recits-2026-05-29-au-2026-10-22.md), [`archive/DOC-FRONT-recits-retires-2026-11-13.md`](./archive/DOC-FRONT-recits-retires-2026-11-13.md).
 
 ## Chunks

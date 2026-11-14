@@ -1,6 +1,6 @@
 # `src/lib/` · toasts, échéances, fuseau horaire
 
-Lire en touchant `src/lib/**`, un `toast`, une échéance (`deadline`), une clé de jour. Le code fait foi.
+**Quand lire** : en touchant `src/lib/**`, un `toast`, une échéance (`deadline`), une clé de jour. **Fait foi** : le code.
 Règles transversales : [`CLAUDE.md`](../../CLAUDE.md).
 
 ## Toasts

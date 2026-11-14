@@ -1,6 +1,6 @@
 # Registre des activités de traitement (art. 30 RGPD)
 
-Lire avant d'ajouter une table de données personnelles, un sous-traitant, un traceur ou de changer une durée de conservation. Fait foi : ce registre (pièce produite à la CNIL ou à un client en due diligence), confronté à la base et au code par `check:retention`, `check:erasure`, `check:subprocessors`. Récits et angles morts datés : [`archive/ANGLES-MORTS-2026-09-16-docs-vivantes.md`](./archive/ANGLES-MORTS-2026-09-16-docs-vivantes.md).
+**Quand lire** : avant d'ajouter une table de données personnelles, un sous-traitant, un traceur ou de changer une durée de conservation. **Fait foi** : ce registre (pièce produite à la CNIL ou à un client en due diligence), confronté à la base et au code par `check:retention`, `check:erasure`, `check:subprocessors`. Récits et angles morts datés : [`archive/ANGLES-MORTS-2026-09-16-docs-vivantes.md`](./archive/ANGLES-MORTS-2026-09-16-docs-vivantes.md).
 
 - 🔴 Mettre à jour à chaque nouveau traitement, nouveau sous-traitant ou changement de durée de conservation : un registre périmé est pire qu'absent, il atteste qu'on savait.
 - ✅ `npm run check:retention` confronte la base aux durées déclarées ; ne prouve pas que le registre soit juste, ni rien sur Sentry ou Stripe.

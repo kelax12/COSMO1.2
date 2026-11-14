@@ -1,6 +1,6 @@
 # Gabarits de la procédure de violation
 
-Lire en cas de violation. Fait foi : l'ordre de `RGPD-VIOLATION.md` (hors dépôt). Pièces à copier hors dépôt (dossier privé) et à remplir dans cet ordre.
+**Quand lire** : en cas de violation. **Fait foi** : l'ordre de `RGPD-VIOLATION.md` (hors dépôt). Pièces à copier hors dépôt (dossier privé) et à remplir dans cet ordre.
 
 - 🔴 Fichier PUBLIC : champs vides seulement. ❌ Jamais un fait de violation réelle : ils vont dans le registre privé.
 - ✅ `npm run check:exercice-violation` exige que chaque titre `##` ci-dessous existe.

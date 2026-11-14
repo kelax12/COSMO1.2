@@ -1,6 +1,6 @@
 # `src/i18n/` · catalogues fr/en, slugs, locales
 
-Lire en touchant `src/i18n/**`, `src/locales/**`, un `t(...)`, un `to=` localisé, une page légale. Détail : [`docs/I18N.md`](../../docs/I18N.md), [`docs/SEO.md`](../../docs/SEO.md).
+**Quand lire** : en touchant `src/i18n/**`, `src/locales/**`, un `t(...)`, un `to=` localisé, une page légale. Détail : [`docs/I18N.md`](../../docs/I18N.md), [`docs/SEO.md`](../../docs/SEO.md). **Fait foi** : le code.
 Règles transversales : [`CLAUDE.md`](../../CLAUDE.md). Nombre de catalogues : [`docs/FAITS.md`](../../docs/FAITS.md).
 
 ```typescript

@@ -1,6 +1,6 @@
 # Backlinks : kit de soumission
 
-Lire avant de soumettre une fiche annuaire ou de toucher `scripts/seo-signals.mjs` ou `scripts/check-acquisition.mjs`. Fait foi : le tableau des annuaires ci-dessous, lu par ces deux scripts. Aucune action ici n'est exécutable par un agent : chaque ligne demande un compte, un formulaire et une validation humaine d'Axel.
+**Quand lire** : avant de soumettre une fiche annuaire ou de toucher `scripts/seo-signals.mjs` ou `scripts/check-acquisition.mjs`. **Fait foi** : le tableau des annuaires ci-dessous, lu par ces deux scripts. Aucune action ici n'est exécutable par un agent : chaque ligne demande un compte, un formulaire et une validation humaine d'Axel.
 
 ## Objectif
 
