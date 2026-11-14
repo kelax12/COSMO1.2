@@ -1,5 +1,11 @@
 export type HabitFrequency = 'daily' | 'weekly' | 'monthly';
 
+/** Un réglage de jours prévus, en vigueur à partir de `from` (`YYYY-MM-DD`). */
+export interface HabitScheduleChange {
+  from: string;
+  days: number[];
+}
+
 export interface Habit {
   id: string;
   name: string;
@@ -21,6 +27,19 @@ export interface Habit {
   completions: Record<string, boolean>;
   createdAt?: string;
   userId?: string;
+
+  // ─── Jours prévus (mig. 254) ───
+  /**
+   * Jours prévus EN VIGUEUR, 0 = dimanche … 6 = samedi (`Date.getDay()`).
+   * Absent ou vide = tous les jours. Ne jamais juger un jour passé avec ce
+   * champ seul : passer par `isHabitScheduledOn` (`schedule.ts`).
+   */
+  scheduledDays?: number[];
+  /**
+   * Historique daté des changements de jours, pour ne pas rejuger le passé.
+   * Chaque entrée vaut à partir de `from` (date MACHINE, inclusive).
+   */
+  scheduleHistory?: HabitScheduleChange[];
 
   // ─── Agrégats calculés SERVEUR sur l'historique COMPLET (mig. 119) ───
   // Absents en mode démo et en local : les helpers retombent alors sur le

@@ -25,3 +25,10 @@ Table commitée, **pas appliquée en prod** : vérifier le ledger avant de l'aff
 
 - 🔴 La carte `completions` ne porte que les jours cochés : décocher RETIRE la clé (`toggleCompletionDay`, `streak.ts`), en démo comme en cache optimiste. Jamais `false`.
 - ⚠️ Transition : `habits.completions` reste exacte (le toggle v2 recopie ; le trigger `habit_completions_mirror` recopie toute autre écriture). Lecteurs restants : CLI agent (`scripts/cosmo/api.mjs`), export CSV, `getPage`, `e2e/real/habits.spec.ts`. ❌ Retirer la colonne avant de les avoir basculés.
+
+## Jours prévus (mig. 254)
+
+`habits.scheduled_days` (0 = dimanche, NULL = tous les jours) et `schedule_history` (changements datés). Un jour non prévu est NEUTRE pour la série ; changer les jours ne rejuge pas le passé.
+
+- 🔴 Un jour se juge par `isHabitScheduledOn(habit, jour)` (`schedule.ts`), jamais par `scheduledDays` seul : même règle, à la lettre, que `habit_day_scheduled` en SQL.
+- ⚠️ Une habitude sans réglage garde le calcul de la 248 (preuve `254`). « Tous les jours » s'écrit NULL / `[]` et se relit ABSENT, démo comprise.

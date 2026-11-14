@@ -1,8 +1,9 @@
 import React, { useState, useRef, useLayoutEffect } from 'react';
 import { Flame, CheckCircle, Circle, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useHabits, useToggleHabitCompletion } from '@/modules/habits';
+import { useHabits, useToggleHabitCompletion, type Habit } from '@/modules/habits';
 import { useT } from '@/i18n/useT';
 import { habitStreak } from '@/modules/habits/streak';
+import { isHabitScheduledOn } from '@/modules/habits/schedule';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/i18n/format';
 
@@ -16,6 +17,25 @@ const colorOptions = [
 
 
 type PeriodType = 'week' | 'month' | '3months' | 'all';
+
+/**
+ * Case d'un jour. Jour non prévu (mig. 254) : grisé, non cochable ; une coche
+ * ancienne reste décochable.
+ */
+const dayCell = (habit: Habit, day: { date: string; isToday: boolean; isFuture: boolean }) => {
+  const done = !!habit.completions[day.date];
+  const unscheduled = !done && !isHabitScheduledOn(habit, day.date);
+  const locked = day.isFuture || unscheduled;
+  const labelKey = done ? ('table.dayCellDone' as const) : unscheduled ? ('schedule.notScheduled' as const) : ('table.dayCell' as const);
+  const style: React.CSSProperties = {
+    backgroundColor: done ? '#2563EB' : unscheduled && !day.isFuture ? 'rgb(var(--color-hover))' : day.isFuture ? 'transparent' : day.isToday ? 'rgba(37, 99, 235, 0.05)' : 'transparent',
+    borderColor: done ? '#2563EB' : unscheduled ? 'transparent' : day.isToday ? '#2563EB' : day.isFuture ? 'transparent' : 'rgb(var(--color-border))',
+    color: done ? 'white' : locked ? 'rgb(var(--color-text-muted) / 0.2)' : 'rgb(var(--color-text-secondary))',
+    cursor: locked ? 'not-allowed' : 'pointer',
+    opacity: unscheduled ? 0.5 : 1,
+  };
+  return { done, unscheduled, locked, labelKey, style };
+};
 
 const HabitTable: React.FC = () => {
   const { t } = useT('habits');
@@ -446,37 +466,22 @@ const HabitTable: React.FC = () => {
                     </div>
                   </td>
                     {days.map((day) => {
-                    const isCompleted = habit.completions[day.date];
-
+                    const cell = dayCell(habit, day);
                     return (
                       <td key={day.date} className="p-1 md:p-2 text-center transition-colors">
-                            <button
+                        <button
                           type="button"
                           role="checkbox"
-                          aria-checked={!!isCompleted}
-                          aria-label={isCompleted ? t('table.dayCellDone', { name: habit.name, date: day.date }) : t('table.dayCell', { name: habit.name, date: day.date })}
-                          onClick={() => handleDayClick(habit.id, day.date)}
-                          disabled={day.isFuture}
+                          aria-checked={cell.done}
+                          aria-label={t(cell.labelKey, { name: habit.name, date: day.date })}
+                          onClick={() => { if (!cell.locked) handleDayClick(habit.id, day.date); }}
+                          disabled={cell.locked}
+                          data-unscheduled={cell.unscheduled || undefined}
                           className="w-11 h-11 md:w-8 md:h-8 rounded-lg border-1.5 md:border-2 transition-all flex items-center justify-center mx-auto"
-                          style={{
-                            backgroundColor: isCompleted ? '#2563EB' : day.isFuture ? 'transparent' : day.isToday ? 'rgba(37, 99, 235, 0.05)' : 'transparent',
-                            borderColor: isCompleted ? '#2563EB' : day.isToday ? '#2563EB' : day.isFuture ? 'transparent' : 'rgb(var(--color-border))',
-                            color: isCompleted ? 'white' : day.isFuture ? 'rgb(var(--color-text-muted) / 0.2)' : 'rgb(var(--color-text-secondary))',
-                            cursor: day.isFuture ? 'not-allowed' : 'pointer',
-                            opacity: 1
-                          }}>
-
-                              {isCompleted ?
-                          <CheckCircle size={14} /> :
-                          day.isFuture ?
-                          <Circle size={12} className="opacity-10" /> :
-
-                          <Circle size={14} className="opacity-30 hover:opacity-100" />
-                            }
-                              </button>
-                            </td>);
-
-
+                          style={cell.style}>
+                          {cell.done ? <CheckCircle size={14} /> : day.isFuture ? <Circle size={12} className="opacity-10" /> : <Circle size={14} className="opacity-30 hover:opacity-100" />}
+                        </button>
+                      </td>);
                     })}
                     <td className="p-3 md:p-4 text-center transition-colors border-l" style={{ borderColor: 'rgb(var(--table-border))' }}>
                       <div className="flex items-center justify-center gap-1">

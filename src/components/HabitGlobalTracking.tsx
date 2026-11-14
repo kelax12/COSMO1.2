@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useHabits } from '@/modules/habits';
+import { useHabits, type Habit } from '@/modules/habits';
+import { isHabitScheduledOn } from '@/modules/habits/schedule';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatDate } from '@/i18n/format';
@@ -29,6 +30,16 @@ const getSuccessColor = (percentage: number): string => {
   if (percentage >= 20) return '#c2410c';
   if (percentage >= 10) return '#dc2626';
   return '#991b1b';
+};
+
+/**
+ * Une habitude compte pour un jour si elle y a été cochée, ou si elle existait
+ * déjà ET que ce jour est prévu (mig. 254 : un jour non prévu ne l'attend pas).
+ */
+const expectedOn = (h: Habit, date: string): boolean => {
+  if (h.completions[date]) return true;
+  const created = h.createdAt ? new Date(h.createdAt).toLocaleDateString('en-CA') : '';
+  return (!created || date >= created) && isHabitScheduledOn(h, date);
 };
 
 const HabitGlobalTracking: React.FC = () => {
@@ -124,8 +135,7 @@ const HabitGlobalTracking: React.FC = () => {
     const active = filtered.filter((h) => {
       // Une habitude compte pour un jour si elle existait déjà, OU si elle a été
       // cochée ce jour-là (un jour passé antérieur à la création reste cochable).
-      const created = h.createdAt ? new Date(h.createdAt).toLocaleDateString('en-CA') : '';
-      return !created || date >= created || h.completions[date];
+      return expectedOn(h, date);
     });
     if (active.length === 0) return 0;
     return Math.round((active.filter((h) => h.completions[date]).length / active.length) * 100);
@@ -279,8 +289,7 @@ const HabitGlobalTracking: React.FC = () => {
                 const active = habits.filter((h) => {
                   // Existe déjà ce jour-là, OU cochée ce jour-là (un jour passé
                   // antérieur à la création reste cochable et doit compter).
-                  const created = h.createdAt ? new Date(h.createdAt).toLocaleDateString('en-CA') : '';
-                  return !created || day.date >= created || h.completions[day.date];
+                  return expectedOn(h, day.date);
                 });
                 if (active.length === 0) {
                   return (

@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router';
 import { Circle, CheckCircle2, Flame, List, LayoutGrid } from 'lucide-react';
 import { useHabits, useToggleHabitCompletion } from '@/modules/habits';
 import { habitStreak } from '@/modules/habits/streak';
+import { isHabitScheduledOn } from '@/modules/habits/schedule';
 import { formatDurationMinutes } from '@/lib/duration';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
@@ -84,10 +85,13 @@ const HabitsWidget = ({ view, onViewChange }: HabitsWidgetProps) => {
         <ul className="divide-y divide-[rgb(var(--color-border))]">
           {habits.map((h) => {
             const isDone = !!h.completions[today];
+            // Jour non prévu (mig. 254) : grisé et non cochable.
+            const off = !isDone && !isHabitScheduledOn(h, today);
             return (
-              <li key={h.id} className="flex items-center gap-2 px-2 rounded-xl hover:bg-[rgb(var(--color-hover))]">
+              <li key={h.id} data-unscheduled={off || undefined} className={`flex items-center gap-2 px-2 rounded-xl hover:bg-[rgb(var(--color-hover))] ${off ? 'opacity-45' : ''}`}>
                 <TouchTarget
-                  onClick={() => toggle.mutate({ id: h.id, date: today })}
+                  disabled={off}
+                  onClick={() => { if (!off) toggle.mutate({ id: h.id, date: today }); }}
                   aria-label={t('habitsWidget.dayCell', { name: h.name, date: formatDate(days[6], { weekday: 'long' }) })}
                   aria-pressed={isDone}
                   className={`-my-1 -ml-1 ${isDone ? 'text-[rgb(var(--color-success))]' : 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-success))]'}`}
@@ -132,16 +136,21 @@ const HabitsWidget = ({ view, onViewChange }: HabitsWidgetProps) => {
                   {days.map((d, i) => {
                     const key = dayKey(d);
                     const isDone = !!h.completions[key];
+                    const off = !isDone && !isHabitScheduledOn(h, key);
                     return (
                       <td key={key} className="text-center">
                         <button
                           type="button"
-                          onClick={() => toggle.mutate({ id: h.id, date: key })}
+                          disabled={off}
+                          data-unscheduled={off || undefined}
+                          onClick={() => { if (!off) toggle.mutate({ id: h.id, date: key }); }}
                           aria-pressed={isDone}
                           aria-label={`${t('habitsWidget.dayCell', { name: h.name, date: formatDate(d, { weekday: 'long', day: 'numeric' }) })} : ${isDone ? t('habitsWidget.done') : t('habitsWidget.notDone')}`}
                           className={`inline-block h-4 w-4 rounded align-middle transition-colors ${
                             isDone
                               ? 'bg-[rgb(var(--color-success))]'
+                              : off
+                                ? 'bg-[rgb(var(--color-hover))] opacity-35 cursor-not-allowed'
                               : i === 6
                                 ? 'border-[1.5px] border-dashed border-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-success)/0.3)]'
                                 : 'bg-[rgb(var(--color-hover))] hover:bg-[rgb(var(--color-success)/0.3)]'

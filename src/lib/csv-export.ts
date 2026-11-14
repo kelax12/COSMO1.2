@@ -188,7 +188,7 @@ export function exportTaskDependenciesCSV(dependencies: TaskDependency[], tasks:
 export function exportHabitsCSV(habits: Habit[]): void {
   // `icon` est un choix de la personne (`Habit.icon`, écrit par `mapToDb`), donc
   // portable au sens de l'article 20 : `npm run check:portability` le vérifie.
-  const headers = cols('id', 'name', 'description', 'frequency', 'durationMin', 'color', 'icon', 'completions', 'createdAt');
+  const headers = cols('id', 'name', 'description', 'frequency', 'durationMin', 'color', 'icon', 'completions', 'createdAt', 'scheduledDays', 'scheduleHistory');
   const rows = habits.map(h => {
     // ⚠️ `completionsTotal` d'abord : depuis la mig. 119, `h.completions` est
     // borné à une fenêtre glissante en mode Supabase. Compter dessus donnerait
@@ -215,6 +215,9 @@ export function exportHabitsCSV(habits: Habit[]): void {
       h.icon,
       completionsCount,
       h.createdAt || '',
+      // Jours prévus (mig. 254), choisis par la personne : 0 = dimanche, vide = tous les jours.
+      (h.scheduledDays ?? []).join(' '),
+      h.scheduleHistory?.length ? JSON.stringify(h.scheduleHistory) : '',
     ];
   });
   download(fileName('habits'), rowsToCSV(headers, rows));

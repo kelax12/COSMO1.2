@@ -30,14 +30,14 @@
       "max-lines-per-function": [258]
     },
     "src/components/HabitGlobalTracking.tsx": {
-      "max-lines-per-function": [294]
+      "max-lines-per-function": [292]
     },
     "src/components/HabitModal.tsx": {
       "complexity": [28],
-      "max-lines-per-function": [322]
+      "max-lines-per-function": [319]
     },
     "src/components/HabitTable.tsx": {
-      "max-lines-per-function": [357]
+      "max-lines-per-function": [347]
     },
     "src/components/InboxMenu.tsx": {
       "complexity": [42],
@@ -71,7 +71,7 @@
       "complexity": [23]
     },
     "src/components/TodayHabits.tsx": {
-      "max-lines-per-function": [213]
+      "max-lines-per-function": [212]
     },
     "src/components/TodayTasks.tsx": {
       "max-lines-per-function": [202]
@@ -101,14 +101,14 @@
     },
     "src/components/onboarding/FirstRunSetup.tsx": {
       "complexity": [47],
-      "max-lines-per-function": [358]
+      "max-lines-per-function": [357]
     },
     "src/components/onboarding/perso/PersoPreview.tsx": {
       "complexity": [39],
       "max-lines-per-function": [267]
     },
     "src/components/onboarding/perso/PersoSteps.tsx": {
-      "max-lines-per-function": [361]
+      "max-lines-per-function": [357]
     },
     "src/components/org-guide/guide-runner.ts": {
       "complexity": [21]

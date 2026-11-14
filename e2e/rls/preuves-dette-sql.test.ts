@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// Preuves des mig. 242, 243, 244, 248 à 251 et 253, rejouées sur la base fraîche du job
+// Preuves des mig. 242, 243, 244, 248 à 251, 253 et 254, rejouées sur la base fraîche du job
 // `rls-integration`.
 //
 // Une preuve de `supabase/proofs/` est un bloc `DO` qui se termine TOUJOURS
@@ -23,19 +23,27 @@ import { connecter } from './catalogue';
 
 // `dossier` : `supabase/migration-differee` pour une migration écrite mais pas
 // encore rejouée (253, retrait de `tasks.deadline`).
-const PREUVES: { preuve: string; migration: string; dossier?: string }[] = [
+// `depassee` : une migration suivante change le TYPE DE RETOUR d'une fonction
+// qu'elle crée ; la rejouer par-dessus lève « cannot change return type ». Son
+// texte reste vérifié, son exécution non : jouée en production avant
+// application (0 ECHEC), et la suivante reprend ses garanties dans SA preuve.
+const PREUVES: { preuve: string; migration: string; dossier?: string; depassee?: string }[] = [
   { preuve: '242.proof.sql', migration: '242_ferme_par_defaut_anon.sql' },
   { preuve: '243.proof.sql', migration: '243_regle_unique_projet_equipe.sql' },
   { preuve: '244.proof.sql', migration: '244_select_permissive_unique.sql' },
   // DAT-02 (V13.3, V13.4) : séries, totaux et temps investi inchangés par le
   // passage de `habits.completions` à `habit_completions`.
-  { preuve: '248.proof.sql', migration: '248_habit_completions.sql' },
+  { preuve: '248.proof.sql', migration: '248_habit_completions.sql',
+    depassee: 'mig. 254 : get_my_habits et toggle_habit_completion_v2 rendent deux colonnes de plus ; '
+      + 'la preuve 254 compare chaque habitude sans jours prévus au calcul de la 248, avant et après.' },
   // Échéance et priorité facultatives (PAR-01, PAR-02), décision du 2026-11-09.
   { preuve: '249.proof.sql', migration: '249_taches_echeance_priorite_facultatives.sql' },
   // `friend_requests` à la forme de la production (divergence FRIENDS-USER-ID).
   { preuve: '250.proof.sql', migration: '250_friend_requests_forme_prod.sql' },
   { preuve: '251.proof.sql', migration: '251_taches_due_date.sql' },
   { preuve: '253.proof.sql', migration: '253_taches_retrait_deadline.sql', dossier: 'supabase/migration-differee' },
+  // Jours prévus des habitudes : séries sur les seuls jours prévus, rien ne bouge sans réglage.
+  { preuve: '254.proof.sql', migration: '254_habit_scheduled_days.sql' },
 ];
 
 const lire = (chemin: string) => readFileSync(join(process.cwd(), chemin), 'utf8').replace(/\r\n/g, '\n');
@@ -45,8 +53,8 @@ afterAll(async () => {
   await db.end();
 });
 
-describe('supabase/proofs : preuves 242 à 244, 248 à 251 et 253 rejouées sur la base fraîche', () => {
-  for (const { preuve, migration, dossier = 'supabase/migration' } of PREUVES) {
+describe('supabase/proofs : preuves 242 à 244, 248 à 251, 253 et 254 rejouées sur la base fraîche', () => {
+  for (const { preuve, migration, dossier = 'supabase/migration', depassee } of PREUVES) {
     it(`${preuve} embarque le texte exact de ${migration}`, () => {
       const texte = lire(`supabase/proofs/${preuve}`);
       const m = texte.match(/EXECUTE \$mig\$\n([\s\S]*?)\n\$mig\$;/);
@@ -56,7 +64,7 @@ describe('supabase/proofs : preuves 242 à 244, 248 à 251 et 253 rejouées sur 
       );
     });
 
-    it(`${preuve} : PREUVE-ANNULEE 0 ECHEC`, async () => {
+    it.skipIf(!!depassee)(`${preuve} : PREUVE-ANNULEE 0 ECHEC${depassee ? ` (non rejouée, dépassée par la ${depassee})` : ''}`, async () => {
       let verdict: string;
       try {
         await db.query(lire(`supabase/proofs/${preuve}`));

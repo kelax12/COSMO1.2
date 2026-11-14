@@ -11,6 +11,42 @@ const baseRow: HabitRow = {
   icon: 'star',
 };
 
+describe('jours prévus (mig. 254)', () => {
+  it('lit scheduled_days et schedule_history', () => {
+    const h = mapHabitFromDb({
+      ...baseRow,
+      scheduled_days: [1, 3, 5],
+      schedule_history: [{ from: '2026-11-13', days: [1, 3, 5] }],
+    });
+    expect(h.scheduledDays).toEqual([1, 3, 5]);
+    expect(h.scheduleHistory).toEqual([{ from: '2026-11-13', days: [1, 3, 5] }]);
+  });
+
+  it('NULL et [] ne posent aucun champ (tous les jours)', () => {
+    const h = mapHabitFromDb({ ...baseRow, scheduled_days: null, schedule_history: [] });
+    expect(h).not.toHaveProperty('scheduledDays');
+    expect(h).not.toHaveProperty('scheduleHistory');
+  });
+
+  it('écrit les jours normalisés ; 7 jours ou vide = NULL', () => {
+    expect(mapHabitToDb({ scheduledDays: [5, 1, 3, 3] }).scheduled_days).toEqual([1, 3, 5]);
+    expect(mapHabitToDb({ scheduledDays: [0, 1, 2, 3, 4, 5, 6] }).scheduled_days).toBeNull();
+    expect(mapHabitToDb({ scheduledDays: [] }).scheduled_days).toBeNull();
+  });
+
+  it("n'émet rien quand les jours ne sont pas fournis", () => {
+    const out = mapHabitToDb({ name: 'x' });
+    expect(out).not.toHaveProperty('scheduled_days');
+    expect(out).not.toHaveProperty('schedule_history');
+  });
+
+  it('écrit l’historique avec des jours normalisés', () => {
+    expect(
+      mapHabitToDb({ scheduleHistory: [{ from: '2026-11-13', days: [5, 1, 1] }] }).schedule_history,
+    ).toEqual([{ from: '2026-11-13', days: [1, 5] }]);
+  });
+});
+
 describe('mapHabitFromDb', () => {
   it('maps snake_case to camelCase', () => {
     const h = mapHabitFromDb({ ...baseRow, completions: { '2026-06-01': true }, created_at: 'c', user_id: 'u' });

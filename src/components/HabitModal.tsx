@@ -6,9 +6,11 @@ import { useInvalidShake } from '@/hooks/use-invalid-shake';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useFavoriteColors } from '@/modules/ui-states';
-import { useCategories } from '@/modules/categories';
+import { useCategories, type Category } from '@/modules/categories';
 import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 import { useCreateHabit, useUpdateHabit, Habit } from '@/modules/habits';
+import { habitCreateInput, habitUpdates, initialHabitForm, type HabitFormData } from '@/components/habits/habit-form';
+import HabitDaysPicker from '@/components/habits/HabitDaysPicker';
 import ColorSettingsModal from './ColorSettingsModal';
 import AddCategoryButton from '@/components/AddCategoryButton';
 import CategoryTreeSelect from '@/components/category/CategoryTreeSelect';
@@ -38,6 +40,28 @@ const timeValueToMinutes = (value: string): number => {
   return h * 60 + m;
 };
 
+/** Bureau : catégorie et jours prévus sur la même ligne (lot 1 des jours prévus). */
+const CategoryDaysRow: React.FC<{
+  categoryId: string;
+  categories: Category[];
+  onCategory: (cat: Category | undefined) => void;
+  days: number[];
+  onDays: (days: number[]) => void;
+}> = ({ categoryId, categories, onCategory, days, onDays }) => (
+  <div className="flex items-center gap-2">
+    <div className="flex-1 min-w-0">
+      <CategoryTreeSelect
+        value={categoryId}
+        categories={categories}
+        onChange={(id) => onCategory(categories.find((c) => c.id === id))}
+      />
+    </div>
+    <div className="shrink-0 max-w-[45%]">
+      <HabitDaysPicker value={days} onChange={onDays} />
+    </div>
+  </div>
+);
+
 const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
   const { t } = useT('habits');
   const { t: tCommon } = useT('common');
@@ -51,11 +75,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
   // catégories partagent une couleur, la couleur seule ne la désigne pas.
   const [categoryId, setCategoryId] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState({
-    name: '',
-    estimatedTime: 30,
-    color: '#3B82F6',
-  });
+  const [formData, setFormData] = useState<HabitFormData>(() => initialHabitForm(null, '#3B82F6'));
   const [isColorSettingsOpen, setIsColorSettingsOpen] = useState(false);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const { register, trigger, clear, isInvalid } = useInvalidShake();
@@ -69,13 +89,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
 
   useEffect(() => {
     if (isOpen) {
-      const initial = habit
-        ? { name: habit.name, estimatedTime: habit.estimatedTime, color: habit.color }
-        : {
-            name: '',
-            estimatedTime: 30,
-            color: categories[0]?.color || favoriteColors[0] || '#3B82F6',
-          };
+      const initial = initialHabitForm(habit, categories[0]?.color || favoriteColors[0] || '#3B82F6');
       setFormData(initial);
       setCategoryId(null);
       initialSnapshotRef.current = JSON.stringify(initial);
@@ -102,12 +116,12 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
     isSubmittingRef.current = true;
     if (isEditing && habit) {
       updateHabitMutation.mutate(
-        { id: habit.id, updates: formData },
+        { id: habit.id, updates: habitUpdates(habit, formData, new Date().toLocaleDateString('en-CA')) },
         { onSuccess: () => onClose(), onSettled: () => { isSubmittingRef.current = false; } }
       );
     } else {
       createHabitMutation.mutate(
-        { name: formData.name, estimatedTime: formData.estimatedTime, color: formData.color, frequency: 'daily', icon: '✓', description: '' },
+        habitCreateInput(formData),
         { onSuccess: () => onClose(), onSettled: () => { isSubmittingRef.current = false; } }
       );
     }
@@ -275,6 +289,12 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                           <option value="__new">{t('modal.newCategory')}</option>
                         </select>
                       </label>
+                      <div className="h-px bg-[rgb(var(--color-border))] ml-4" />
+                      <HabitDaysPicker
+                        variant="row"
+                        value={formData.scheduledDays}
+                        onChange={(days) => setFormData({ ...formData, scheduledDays: days })}
+                      />
                     </div>
                   </div>
                 </div>
@@ -352,14 +372,15 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                         </span>
                         <AddCategoryButton onClick={() => setIsColorSettingsOpen(true)} />
                       </div>
-                      <CategoryTreeSelect
-                        value={selectedCategory?.id ?? ''}
+                      <CategoryDaysRow
+                        categoryId={selectedCategory?.id ?? ''}
                         categories={categories}
-                        onChange={(id) => {
-                          const cat = categories.find((c) => c.id === id);
+                        onCategory={(cat) => {
                           setCategoryId(cat ? cat.id : '__none');
                           setFormData({ ...formData, color: cat ? cat.color : NO_CATEGORY_COLOR });
                         }}
+                        days={formData.scheduledDays}
+                        onDays={(days) => setFormData({ ...formData, scheduledDays: days })}
                       />
                     </div>
                   </form>

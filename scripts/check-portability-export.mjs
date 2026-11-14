@@ -116,7 +116,7 @@ const EXPORTS = {
       color: 'color',
       icon: 'icon',
       completions: 'completions',
-      created_at: 'createdAt',
+      created_at: 'createdAt', scheduled_days: 'scheduledDays', schedule_history: 'scheduleHistory',
     },
     exclu: {
       user_id: 'Identifiant interne du compte.',

@@ -32,6 +32,8 @@
     "health": "Health",
     "bookmarked": "Bookmarked",
     "createdAt": "Created on",
+    "scheduledDays": "Scheduled days (0 = Sunday)",
+    "scheduleHistory": "Scheduled days history",
     "frequency": "Frequency",
     "color": "Color",
     "completions": "Completions",

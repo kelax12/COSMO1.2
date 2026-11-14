@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { bestDayInsight, fragileHabitInsight, momentumInsight, buildInsights } from './stats-insights';
+import { scheduledPeriodStats } from '@/modules/habits/schedule';
 import type { Task } from '@/modules/tasks';
 import type { Habit } from '@/modules/habits';
 
@@ -75,6 +76,19 @@ describe('stats-insights (#34)', () => {
       name: 'Sport',
       missed: 6,
     });
+  });
+
+  it('jours prévus (mig. 254) : un jour non prévu n’est pas un oubli', () => {
+    // Prévue le seul dimanche : rien n'est manqué sur les autres jours.
+    const habit = makeHabit('Sport', {}, { scheduledDays: [0] });
+    expect(fragileHabitInsight([habit], NOW)).toBeNull();
+  });
+
+  it('scheduledPeriodStats : jours prévus et coches sur ces jours seulement', () => {
+    // 2026-07-06 lundi … 2026-07-12 dimanche ; prévue Lun/Mer/Ven.
+    const habit = makeHabit('X', { '2026-07-06': true, '2026-07-07': true }, { scheduledDays: [1, 3, 5] });
+    expect(scheduledPeriodStats(habit, new Date(2026, 6, 6), new Date(2026, 6, 12)))
+      .toEqual({ scheduledDaysCount: 3, scheduledCompletions: 1 });
   });
 
   it('fragileHabitInsight : null sans habitude ou sans oubli notable', () => {

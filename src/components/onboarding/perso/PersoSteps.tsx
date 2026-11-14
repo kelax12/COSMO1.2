@@ -5,6 +5,7 @@ import { EMPHASIS_CLASS, withEmphasis } from '../onboarding-text';
 import { HABIT_MINUTES, MAX_FIRST_TASKS, SLOT_HOURS, type SlotDay } from '../first-run';
 import { PLANETS, PLANET_COLOR, type Planet } from './orrery-geometry';
 import { PLANET_TEXT, type PersoTheme } from './perso-theme';
+import { WEEK_DAY_ORDER, shortWeekDay, weekDayName } from '@/lib/week-days';
 
 // ═══════════════════════════════════════════════════════════════════
 // Le contenu des six écrans de l'accueil perso. Aucun état ici : tout vit
@@ -34,6 +35,8 @@ export interface PersoStepsState {
   createdSlot: string;
   habitDraft: string;
   habitMinutes: number;
+  /** Jours prévus, `Date.getDay()` ; 7 = tous les jours. */
+  habitDays: number[];
   createdHabit: string;
   okrDraft: string;
   krDraft: string;
@@ -50,6 +53,7 @@ export interface PersoStepsActions {
   setSlotHour: (h: number | null) => void;
   setHabitDraft: (v: string) => void;
   setHabitMinutes: (m: number) => void;
+  setHabitDays: (days: number[]) => void;
   setOkrDraft: (v: string) => void;
   setKrDraft: (v: string) => void;
   setTargetDraft: (v: string) => void;
@@ -64,6 +68,35 @@ const Saved = ({ children }: { children: React.ReactNode }) => (
     <Check size={18} className="mt-0.5 shrink-0 text-[#16A34A]" aria-hidden="true" />
     <span className="min-w-0 break-words">{children}</span>
   </p>
+);
+
+/** Ajoute ou retire un jour ; le dernier jour coché reste (au moins un jour). */
+const toggleDay = (days: number[], d: number): number[] =>
+  days.includes(d) ? (days.length === 1 ? days : days.filter((x) => x !== d)) : [...days, d];
+
+interface Chip { key: number; text: string; ariaLabel?: string; on: boolean; onClick: () => void }
+
+/** Rangée de pastilles de l'étape habitude (durée : radio ; jours prévus : cases). */
+const ChipGroup = ({ id, label, role, chips }: { id: string; label: string; role: 'radio' | 'checkbox'; chips: Chip[] }) => (
+  <div className="mt-4">
+    <p className={LABEL} id={id}>{label}</p>
+    <div className="mt-2 flex flex-wrap gap-2" role={role === 'radio' ? 'radiogroup' : 'group'} aria-labelledby={id}>
+      {chips.map((c) => (
+        <button
+          key={c.key}
+          type="button"
+          role={role}
+          aria-checked={c.on}
+          aria-label={c.ariaLabel}
+          onClick={c.onClick}
+          className={`${CHIP} ${role === 'radio' ? 'font-data ' : ''}${c.on ? CHIP_ON : ''}`}
+          style={c.on ? { backgroundColor: PLANET_COLOR.habits } : undefined}
+        >
+          {c.text}
+        </button>
+      ))}
+    </div>
+  </div>
 );
 
 export const PersoStepContent = ({ s, a, recap }: { s: PersoStepsState; a: PersoStepsActions; recap: { planet: Planet; text: string }[] }) => {
@@ -300,24 +333,20 @@ export const PersoStepContent = ({ s, a, recap }: { s: PersoStepsState; a: Perso
                 className={FIELD_INPUT}
               />
             </div>
-            <div className="mt-4">
-              <p className={LABEL} id="habit-minutes-label">{t('perso.habits.durationLabel')}</p>
-              <div className="mt-2 flex flex-wrap gap-2" role="radiogroup" aria-labelledby="habit-minutes-label">
-                {HABIT_MINUTES.map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    role="radio"
-                    aria-checked={s.habitMinutes === m}
-                    onClick={() => a.setHabitMinutes(m)}
-                    className={`${CHIP} font-data ${s.habitMinutes === m ? CHIP_ON : ''}`}
-                    style={s.habitMinutes === m ? { backgroundColor: PLANET_COLOR.habits } : undefined}
-                  >
-                    {t('perso.habits.minutes', { minutes: m })}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <ChipGroup
+              id="habit-minutes-label"
+              label={t('perso.habits.durationLabel')}
+              role="radio"
+              chips={HABIT_MINUTES.map((m) => ({ key: m, text: t('perso.habits.minutes', { minutes: m }), on: s.habitMinutes === m, onClick: () => a.setHabitMinutes(m) }))}
+            />
+            {/* Jours prévus (mig. 254). Tous cochés par défaut ; le dernier
+                jour coché ne se décoche pas (au moins un jour). */}
+            <ChipGroup
+              id="habit-days-label"
+              label={t('perso.habits.daysLabel')}
+              role="checkbox"
+              chips={WEEK_DAY_ORDER.map((d) => ({ key: d, text: shortWeekDay(d), ariaLabel: weekDayName(d), on: s.habitDays.includes(d), onClick: () => a.setHabitDays(toggleDay(s.habitDays, d)) }))}
+            />
             {ideas(
               [t('perso.habits.idea1'), t('perso.habits.idea2'), t('perso.habits.idea3'), t('perso.habits.idea4')],
               (idea) => {

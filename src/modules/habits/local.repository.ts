@@ -6,6 +6,7 @@ import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
 import { makeApiError } from '@/lib/normalizeApiError';
 import { localizedDemoHabits } from './local.seed';
 import { toggleCompletionDay } from './streak';
+import { MAX_SCHEDULE_HISTORY, normalizeScheduledDays } from './schedule';
 
 const STORAGE_KEY = 'cosmo_demo_habits';
 
@@ -19,9 +20,39 @@ function assertFrequency(frequency: unknown): void {
 
 /** Jour réel au format `YYYY-MM-DD` (le 30 février est refusé, comme par le cast `::date`). */
 function assertDayKey(date: string): void {
+  if (!isRealDayKey(date)) throw makeApiError('invalid_input');
+}
+
+/**
+ * Jours prévus rangés comme la base les rend (mig. 254) : mêmes refus que les
+ * CHECK `habits_scheduled_days_check` / `habits_schedule_history_check`, et
+ * « tous les jours » (vide ou 7 jours) relu ABSENT, comme `scheduled_days`
+ * NULL et `schedule_history` '[]' côté Supabase.
+ */
+function applySchedule<T extends Partial<Habit>>(input: T): T {
+  const out: T = { ...input };
+  if (input.scheduledDays !== undefined) {
+    const days = normalizeScheduledDays(input.scheduledDays);
+    if (days.length === 0 || days.length === 7) delete out.scheduledDays;
+    else out.scheduledDays = days;
+  }
+  if (input.scheduleHistory !== undefined) {
+    if (input.scheduleHistory.length > MAX_SCHEDULE_HISTORY) throw makeApiError('invalid_input');
+    const history = input.scheduleHistory.map((e) => {
+      const days = normalizeScheduledDays(e.days);
+      if (days.length === 0 || !isRealDayKey(e.from)) throw makeApiError('invalid_input');
+      return { from: e.from, days };
+    });
+    if (history.length === 0) delete out.scheduleHistory;
+    else out.scheduleHistory = history;
+  }
+  return out;
+}
+
+/** Jour réel au format `YYYY-MM-DD` (le 30 février est refusé, comme par `habit_day_from_key`). */
+function isRealDayKey(date: string): boolean {
   const parsed = new Date(`${date}T00:00:00Z`);
-  const valid = /^\d{4}-\d{2}-\d{2}$/.test(date) && !Number.isNaN(parsed.getTime()) && parsed.toISOString().startsWith(date);
-  if (!valid) throw makeApiError('invalid_input');
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) && !Number.isNaN(parsed.getTime()) && parsed.toISOString().startsWith(date);
 }
 
 export class LocalStorageHabitsRepository implements IHabitsRepository {
@@ -49,7 +80,7 @@ export class LocalStorageHabitsRepository implements IHabitsRepository {
     assertFrequency(input.frequency);
     const habits = this.getHabits();
     const newHabit: Habit = {
-      ...input,
+      ...applySchedule(input),
       // Parite avec le repository Supabase : `restoreId` vient d'un second
       // argument reserve aux « Annuler », jamais du payload (R-08).
       id: options?.restoreId ?? crypto.randomUUID(),
@@ -66,7 +97,9 @@ export class LocalStorageHabitsRepository implements IHabitsRepository {
     const index = habits.findIndex(h => h.id === id);
     if (index === -1) throw makeApiError('not_found');
 
-    const updatedHabit = { ...habits[index], ...updates };
+    // Fusion PUIS rangement : « tous les jours » efface le réglage précédent,
+    // comme le NULL écrit en base par `mapHabitToDb`.
+    const updatedHabit: Habit = applySchedule({ ...habits[index], ...updates });
     habits[index] = updatedHabit;
     this.saveHabits(habits);
     return updatedHabit;
