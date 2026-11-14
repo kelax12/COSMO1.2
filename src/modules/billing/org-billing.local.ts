@@ -7,7 +7,7 @@
 // `org-billing.repository.ts` et `org-billing-account.repository.ts`, et la
 // suite `src/test/contracts/__test__/org-billing.contract.ts` les confronte.
 //
-// 🔴 La règle du contact rejoue le CHECK de la mig. 180
+// Pourquoi : la démo doit refuser le contact que la base refuse ; la règle rejoue le CHECK de la mig. 180
 // (`org_billing_contacts_email_ck`, `org_billing_contacts_name_ck`).
 // ═══════════════════════════════════════════════════════════════════
 import { safeParse } from '@/lib/safe-json';

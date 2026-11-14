@@ -706,8 +706,8 @@ $mig$;
     ko := ko + 1;
     r := r || format('ECHEC base entiere : %s habitude(s) changent', n);
   END IF;
-  SELECT count(*) INTO n FROM public.habits WHERE scheduled_days IS NOT NULL OR schedule_history <> '[]'::jsonb;
-  IF n = 2 THEN r := r || 'ok seules P1 et P2 portent des jours prevus (defauts NULL et [] partout ailleurs)'::text;
+  SELECT count(*) INTO n FROM public.habits WHERE user_id IN (u_a, u_b) AND (scheduled_days IS NOT NULL OR schedule_history <> '[]'::jsonb);
+  IF n = 2 THEN r := r || 'ok parmi les habitudes de la preuve, seules P1 et P2 portent des jours prevus (les autres suites peuvent en laisser ailleurs)'::text;
   ELSE ko := ko + 1; r := r || format('ECHEC %s habitude(s) avec jours prevus, 2 attendues', n); END IF;
 
   -- ── Valeurs en dur ────────────────────────────────────────────────

@@ -131,7 +131,7 @@ Aucune.
 | `get_my_team_project_progress(p_org uuid)` | DEFINER | `""` | - | oui | oui | - |
 | `get_my_team_projects(p_org uuid)` | DEFINER | `""` | - | oui | oui | `src/modules/team-projects/supabase.repository.ts` |
 | `get_my_team_task_dependencies(p_org uuid)` | DEFINER | `""` | - | oui | oui | `src/modules/team-projects/supabase.repository.ts` |
-| `get_my_team_tasks(p_org uuid)` | DEFINER | `""` | - | oui | oui | `src/modules/team-projects/supabase.repository.ts`<br>~`src/modules/organizations/inbox.ts`<br>~`src/modules/team-projects/hooks.ts` |
+| `get_my_team_tasks(p_org uuid)` | DEFINER | `""` | - | oui | oui | `src/modules/team-projects/supabase.repository.ts`<br>~`src/modules/organizations/inbox.ts` |
 | `get_org_billing_history(p_org uuid)` | DEFINER | `""` | - | oui | oui | `src/modules/billing/org-billing-account.repository.ts`<br>~`src/components/organization/OrgBillingHistory.tsx`<br>~`src/modules/billing/org-billing.types.ts` |
 | `get_org_email_invitations(p_org uuid)` | INVOKER | `""` | - | oui | oui | `src/modules/organizations/governance.supabase.repository.ts` |
 | `get_org_member_last_activity(p_org uuid)` | DEFINER | `""` | - | oui | oui | `src/modules/organizations/member-activity.repository.ts`<br>~`src/modules/organizations/member-activity.ts` |
