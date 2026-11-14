@@ -1,124 +1,66 @@
 # `supabase/migration/` · règles du dossier
 
-> ⚠️ **Lire avant tout `supabase db push`, `supabase migration …` ou toute écriture SQL.**
-> État détaillé, ledger, récits datés et migrations non appliquées :
-> [`docs/SECURITY.md`](../../docs/SECURITY.md) § « Base de données ».
-> Findings de sécurité ouverts : `faille.md` (hors dépôt), qui **fait foi**.
+> **Quand lire** : avant d'écrire ou d'appliquer un `supabase/migration/*.sql`, une preuve `supabase/proofs/*`, ou toute écriture SQL en prod.
+> **Fait foi** : le catalogue de production (`pg_get_functiondef`, `information_schema`), mesuré par `npm run check:migration-coverage`. Checklist par règle : [`docs/SECURITY.md`](../../docs/SECURITY.md#avant-tout-commit-qui-touche-supabasemigrationsql).
+> Journal daté des applications : [`docs/archive/SECURITY-journal-migrations-150-223.md`](../../docs/archive/SECURITY-journal-migrations-150-223.md) ; procédure d'application : [`docs/DEPLOYMENT.md`](../../docs/DEPLOYMENT.md) § 2.
 
-## Ce dossier n'est PAS géré par la CLI Supabase
+## Le dossier n'est pas géré par la CLI
 
-- La CLI lit `supabase/**migrations**/` (pluriel). Ici c'est `supabase/**migration**/`
-  (singulier) : un changelog SQL **manuel**, appliqué via le SQL editor ou `apply_migration`.
-- Fichiers numérotés `NNN_feature.sql`, pas des versions horodatées.
-- 🔴 **Ne PAS lancer `supabase db push`** contre ce dossier : la CLI ré-appliquerait les
-  premières migrations et échouerait sur `relation already exists`.
+- Fichiers `NNN_<feature>.sql`, appliqués à la main (SQL editor ou `apply_migration`) ; la CLI lit `supabase/migrations/` (pluriel).
+- 🔴 ❌ Jamais `supabase db push` : la CLI rejouerait les premières migrations (`relation already exists`).
+- ⚠️ Une migration appliquée verbatim par la CLI (`db query`) n'inscrit rien au ledger : insérer la ligne à la main, puis relire.
 
-## Les trois vérités à ne pas confondre
+## Ce qui prouve qu'une migration est en base
 
-| Source | Dit quoi | Ne dit PAS |
+| Source | Dit | Ne dit pas |
 |---|---|---|
 | Le dépôt | ce qu'on a voulu écrire | ce qui s'exécute |
 | Le ledger `schema_migrations` | qu'un NOM est passé | qu'un `CREATE OR REPLACE` a remplacé le corps vivant |
-| Le catalogue (`pg_get_functiondef`, `information_schema`) | **ce qui existe réellement** | |
+| Le catalogue | ce qui existe | |
 
-- 🔴 **Une absence au ledger ne prouve rien, et une présence non plus.** 32 fichiers du dépôt n'ont
-  aucune entrée (migrations précoces, bel et bien appliquées) et 17 entrées n'ont aucun fichier.
-- 🔴 **Une note « ✅ appliquée » sur une fonction SQL ne vaut que si `pg_get_functiondef()` l'a
-  vérifiée APRÈS coup.** C est exactement le défaut de la mig. 144 : ligne au ledger, corps jamais
-  remplacé, création de sous-catégorie cassée en production pendant quatre jours (rejouée par la 147).
-- ✅ `npm run check:migration-coverage` fait ce travail en CI et rend un VERDICT par fichier.
+- 🔴 ❌ Jamais conclure d'un comptage ou d'une présence au ledger : relire l'objet au catalogue (mig. `144` au ledger, corps jamais remplacé, rejouée par la `147`).
+- ❌ Jamais écrire « la migration est faite » d'un commit : citer l'entrée du ledger ET la relecture au catalogue (`C-77` : la `136` commitée, jamais appliquée).
+- ⚠️ Un numéro de ledger se copie depuis la base, jamais depuis une note.
+- ❌ Jamais écrire l'état de tête ici : le lire à la sortie de `check:migration-coverage`.
+- ⚠️ Plusieurs sessions écrivent des migrations : relire le ledger ET `ls supabase/migration` avant de choisir un numéro.
+- Exceptions permanentes : `164`, `181`, `190`-`195`, `197`-`199` en base sans ligne au ledger (décision d'Axel) ; `196` retirée par la `200`. ❌ Jamais réappliquer la `164` (elle retire la branche « membre du projet » de la `190`).
+- ⚠️ `206` (suppression des jalons) s'applique APRÈS le front qui ne les lit plus.
+- Les migrations `000_` formalisent l'existant de prod : no-op en production, elles alignent le dépôt sur la prod, jamais l'inverse.
 
-## 🔴 Commiter n'est pas appliquer, et le dépôt l'a payé dix-sept jours
+## `npm run check:migration-coverage` (`C-79`)
 
-**`C-77`** : la mig. `136` est restée **commitée et dormante du 2026-09-03 au 09-20**. Pendant
-tout ce temps `okrTime` valait **0** sur `/statistics` pour tous les comptes réels, la démo
-affichait juste, et **aucune garde ne pouvait le voir** — le fichier était au dépôt, le produit
-compilait, la suite passait.
+- Quotidien et à chaque push sur `supabase/migration/` (`migration-coverage.yml`, `ci-alert.yml`) ; témoin `scripts/check-migration-coverage.guard.test.mjs`.
+- Un verdict par fichier : AU LEDGER · OBJET EN BASE · OBJET RETIRÉ DEPUIS · SUPPRESSION VÉRIFIÉE · SANS OBJET VÉRIFIABLE · NON APPLIQUÉE · ABSENT DES DEUX (seul rouge). Il liste aussi les PARTIELS (ligne au ledger ne prouve pas un corps remplacé).
+- Les deux sens : une entrée récente du ledger sans fichier rougit (ROB-03) ; `edge-deploy.yml` refuse le lot tant qu'une migration du dépôt manque en prod (CI-05).
+- 🔴 Sans `SUPABASE_DB_URL` : ÉCHEC, jamais un `::warning::` dans un run vert.
+- ❌ Jamais ajouter une entrée à `NON_APPLIQUEES_DELIBEREMENT` ou `SANS_OBJET_VERIFIABLE` pour passer la CI ; une dispense fausse fait échouer la garde.
 
-- ❌ **Ne jamais écrire « la migration est faite » en parlant d'un commit.** Le seul énoncé qui
-  vaut cite une **entrée de ledger** ET une relecture par `pg_get_functiondef` / `information_schema`.
-- ⚠️ **Et citer la bonne entrée** : le numéro publié le 2026-09-20 pour la `136` était
-  `20260920105113`, qui n'existe au ledger d **aucune** migration. Le vrai est `20260920104729`,
-  relu en base le 09-21. Un numéro de ledger se copie depuis la base, jamais depuis une note.
-- ✅ **État au 2026-11-05, relu au ledger de production** : le dépôt va de `000` à `241`, et
-  tout est en prod **sauf `206`** (suppression des jalons : à appliquer APRÈS le front qui ne les
-  lit plus). `164`, `181`, `190`-`195`, `197`-`199` sont en prod **sans** ligne ; `196` est
-  retirée par la `200`. ❌ **Ne jamais réappliquer la `164`** : elle retire la branche « membre du
-  projet » de la `190`. Dernière entrée : `241_billing_history_reason` (`20261105204321`, relue au catalogue : colonne `billing_reason`, DEFINER, `search_path` vide, `anon` sans EXECUTE). ✅ **`242`
-  à `244`** en prod le 2026-11-07, preuve rejouée en prod avant chacune (0 ECHEC), relues au
-  catalogue : `242` (`20261107091512`, `anon` hors des défauts tables et séquences de `postgres`),
-  `243` (`20261107091727`, corps de `can_access_team_project` = fichier, ACL inchangée), `244`
-  (`20261107091936`, une SELECT permissive par table ; la prod n'avait déjà plus les doublons).
-  ✅ `245` (ARC-06, journal des crons) en prod le 2026-11-13 (`20261113070725`, `pg_net` installée).
-  ✅ `246` (sept jobs `cosmo-*` dans pg_cron) en prod le 2026-11-13 (`20261113124319`), secrets Vault posés ;
-  bascule depuis GitHub en cours (`DEPLOYMENT.md` § 2sexies).
-  ✅ `247` (index des 3 FK nées par 230, 233, 237 ; V9.4) en prod le 2026-11-08 (`20261108001203`),
-  relue au catalogue : trois index valides, définition = fichier ; `unindexed_foreign_keys` disparu.
-  ✅ `248` (`habit_completions`, DAT-02) en prod le 2026-11-13 (`20261113070621`, 1 421 lignes
-  rétro-remplies). ✅ `249` (échéance et priorité facultatives sur `tasks`) en prod le 2026-11-13
-  (`20261113070529`). Les deux après preuve à 0 ECHEC, relues au catalogue, ledger = fichier.
-  `250` (`friend_requests` sans `user_id` comme la prod, et `sender_id` NOT NULL) en prod le 2026-11-13
-  (`20261113083206`).
-  Prochain numéro libre : **`251`**. Journal daté de chaque application (preuves, relectures au catalogue) :
-  [`docs/archive/SECURITY-journal-migrations-150-223.md`](../../docs/archive/SECURITY-journal-migrations-150-223.md).
-- ✅ **Forme de preuve à reprendre** : un seul bloc `DO` terminé par `RAISE EXCEPTION`
-  (`proofs/208-210.proof.sql`). L'annulation n'est pas une instruction qu'on peut oublier, c'est la
-  seule issue, et le verdict est le texte de l'exception. ⚠️ En PL/pgSQL `N` et `n`, `OK` et `ok`
-  sont le MÊME identifiant : « duplicate declaration ».
-- ⚠️ **Plusieurs sessions écrivent des migrations en parallèle** : **relire le ledger ET
-  `ls supabase/migration` avant de choisir un numéro**, jamais la fin de ce fichier.
-- ✅ **La preuve AVANT a servi à quelque chose, et c'est l'argument de cette section** : la `150` a
-  été jouée dans une transaction annulée, acteur par acteur, avant d'être appliquée — insertion,
-  catégorie hors énumération refusée (`23514`), non-admin refusé (`42501`), droits effectifs
-  relevés. Puis l'annulation elle-même a été vérifiée : ni table ni fonction laissées derrière.
-  ⚠️ Un `ROLLBACK` qu'on ne contrôle pas est une hypothèse comme une autre.
+## Prouver avant d'appliquer
+
+- ✅ Un seul bloc `DO` terminé par `RAISE EXCEPTION` (`proofs/208-210.proof.sql`) : l'annulation est la seule issue, le verdict est le texte de l'exception.
+- ✅ Acteur par acteur (propriétaire, autre compte, `anon`, non-admin) : une policy est une frontière, cinq vérifications statiques n'exécutent aucun SQL (mig. `143`).
+- ✅ Puis vérifier l'annulation : ni table ni fonction laissées derrière. ⚠️ Un `ROLLBACK` non contrôlé est une hypothèse.
+- ⚠️ En PL/pgSQL, `N` et `n`, `OK` et `ok` sont le même identifiant (« duplicate declaration »).
+- Attendu en prod : `supabase db query --linked -f supabase/proofs/<NNN>.proof.sql` rend `PREUVE-ANNULEE 0 ECHEC |`. Un `ECHEC` : on n'applique pas.
 
 ## Interdits
 
-> Laquelle est gardée, et par quelle règle, laquelle reste **manuelle** : tableau de
-> [`docs/SECURITY.md`](../../docs/SECURITY.md) § « Avant tout commit qui touche `supabase/migration/*.sql` » (AM-4).
-
-- 🔴 **Ne jamais ajouter une colonne, un GRANT ou une policy depuis le dashboard Supabase.** C est
-  ce qui a produit la dérive où le dépôt ne décrivait plus la base qu'il prétend reconstruire.
-- 🔴 **Une migration est appliquée avant le code qui l'appelle** : `edge-deploy.yml` refuse le lot tant qu'une migration du dépôt manque en prod (CI-05), et toute entrée récente du ledger exige son fichier (ROB-03).
-- ❌ **Un correctif appliqué en prod se versionne sous son propre numéro**, jamais par édition d'un
-  fichier déjà appliqué.
-- ⚠️ **Lire le ledger AVANT d'appliquer, pas seulement après.** Ce dépôt a plusieurs sessions
-  actives : l'état de la prod n'est jamais celui qu'on a laissé.
-- 🔴 **Une table nouvelle n'a plus rien pour `anon`** (mig. 242) : sa RLS s'active dans le même
-  fichier, et ce qu'un visiteur doit lire porte son `GRANT … TO anon` explicite.
-- ❌ **Une seule policy PERMISSIVE par rôle et par action** (mig. 049). Élargir le `OR` existant,
-  jamais en recréer une seconde. `npm run check:rls` est la gate.
-- ❌ **Ne jamais faire dépendre un prédicat de policy d'un argument pris dans la ligne** : il est
-  rappelé par ligne et rend l'index inutilisable. Couvre `tasks` (085), `team_tasks` /
-  `team_projects` (113), `team_task_dependencies` (117) et `events` (128).
-- ❌ **Ne jamais appeler `get_subtree` / `has_subordinates` / `org_admin_count` depuis une policy** :
-  `EXECUTE` leur est révoqué à `authenticated` (mig. 100), et une policy s'évalue avec le rôle
-  courant. Utiliser `is_above()` ou `i_have_subordinates()`.
-- ❌ **Une fonction de trigger n'est jamais `SECURITY DEFINER`.** Un trigger `BEFORE` s'exécute
-  avant le `WITH CHECK` de la RLS : en DEFINER ses messages deviennent un oracle sur des lignes non
-  lisibles.
-- 🔴 **`ON DELETE NO ACTION` sur une auto-référence, ni `CASCADE` ni `RESTRICT`.** `RESTRICT` ne voit
-  pas que l'enfant part dans la MÊME requête, et rendait la suppression de compte impossible (RGPD
-  art. 17).
-- 🔴 **Une migration qui crée une dépendance à un chemin de récupération : PARCOURIR ce chemin avant
-  de l'appliquer.** La mig. 131 a rendu `/admin` inaccessible du 2026-08-31 au 09-01, et un seul
-  compte au monde ouvre cette console. Il suffisait d'ouvrir l'écran une fois.
-- ⚠️ **Une migration qui ajoute une colonne écrite par le front s'applique AVANT le déploiement du
-  front** (mig. 113, 146). L inverse casse en usage réel, pas en test.
-- ⚠️ **Se prouver AVANT, en transaction annulée**, acteur par acteur : une policy est une frontière
-  de sécurité, pas un plan d'exécution. Cinq vérifications statiques n'exécutent aucun SQL, et c'est
-  ainsi que la mig. 143 a mis un défaut en production.
+- 🔴 Jamais une colonne, un GRANT ou une policy depuis le Dashboard : le dépôt cesse de décrire la base.
+- 🔴 Une migration part AVANT le code qui l'appelle (mapper qui émet la colonne : mig. `113`, `146`) ; l'inverse casse en usage réel.
+- ❌ Un correctif appliqué se versionne sous son propre numéro, jamais par édition d'un fichier appliqué.
+- ⚠️ Lire le ledger AVANT d'appliquer, pas seulement après.
+- 🔴 Une table nouvelle n'a rien pour `anon` (mig. `242`) : RLS dans le même fichier, `GRANT … TO anon` explicite si un visiteur doit lire.
+- ❌ Une seule policy PERMISSIVE par rôle et action (mig. `049`) : élargir le `OR`. Gate : `npm run check:rls`.
+- ❌ Jamais un prédicat de policy dépendant d'un argument pris dans la ligne : rappelé par ligne, index inutilisable (`tasks` 085, `team_tasks` / `team_projects` 113, `team_task_dependencies` 117, `events` 128).
+- ❌ Jamais `get_subtree` / `has_subordinates` / `org_admin_count` dans une policy (mig. `100`) : `is_above()`, `i_have_subordinates()`.
+- ❌ Jamais une fonction de trigger en `SECURITY DEFINER` (oracle avant `WITH CHECK`).
+- 🔴 Auto-référence : `ON DELETE NO ACTION`, ni `CASCADE` ni `RESTRICT` (`RESTRICT` bloquait la suppression de compte, RGPD art. 17).
+- 🔴 Dépendance à un chemin de récupération : PARCOURIR ce chemin avant d'appliquer (mig. `131`).
 
 ## Le schéma vivant se lit dans le dépôt (MAI-01, API-01, ARC-07)
 
-Trois fichiers **générés** depuis une base vierge où toutes les migrations sont rejouées, et le job
-`contrat-donnees` de `CI noyau` **échoue** s'ils divergent : `supabase/schema.sql` (`pg_dump`),
-`supabase/rpc-inventory.md` (droits `EXECUTE`, DEFINER, `search_path`, appelants du front),
-`src/generated/database.types.ts` (accroché aux mappers par `src/lib/db-contract.ts`).
+Générés depuis une base vierge où tout est rejoué ; le job `contrat-donnees` de `CI noyau` échoue s'ils divergent : `supabase/schema.sql`, `supabase/rpc-inventory.md`, `src/generated/database.types.ts` (accroché aux mappers par `src/lib/db-contract.ts`).
 
-- ✅ **Toute migration** (colonne, fonction, GRANT, policy) **se commit avec les trois régénérés** :
-  `supabase start`, `node scripts/apply-migrations.mjs`, puis `npm run contrat:generer` (Docker requis).
-- ✅ **Sans Docker** : pousser sur `noyau/<nom>`, télécharger l'artefact `contrat-donnees` du run
-  (`gh run download <id> -n contrat-donnees`), copier les trois fichiers, commiter.
-- ❌ Ne jamais éditer ces fichiers à la main, ni monter la CLI épinglée du job sans les régénérer.
+- ✅ Toute migration se commit avec les trois régénérés : `supabase start`, `node scripts/apply-migrations.mjs`, `npm run contrat:generer` (Docker requis).
+- ✅ Sans Docker : pousser sur `noyau/<nom>`, `gh run download <id> -n contrat-donnees`, copier les trois fichiers, commiter.
+- ❌ Jamais les éditer à la main, ni monter la CLI épinglée du job sans les régénérer.

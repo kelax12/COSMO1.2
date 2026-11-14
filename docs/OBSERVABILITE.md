@@ -1,134 +1,65 @@
 # Observabilité de la production
 
-> **Vivant.** Créé le 2026-10-23. Répond à une seule question : **quand la production se trompe,
-> qui le sait, et en combien de temps ?** Le reste du dépôt sait très bien dire si le CODE est
-> juste (tests, gardes, CI) ; ce document porte ce qui se passe une fois le code déployé.
+> **Quand lire** : avant de toucher Sentry (`src/lib/sentry-*.ts`, `src/main.tsx`, `_shared/trace*.ts`), `check:prod-errors`, `detection-violation.yml` ou `cron-journal.yml`.
+> **Fait foi** : la sortie de ces gardes et le tableau de bord Sentry. Question unique : quand la production se trompe, qui le sait et en combien de temps.
+> Relevés datés (premiers runs, diagnostics) : [`archive/OPS-SECURITE-recits-2026-11-13.md`](./archive/OPS-SECURITE-recits-2026-11-13.md).
 
-## Pourquoi un audit à part
+## Signaux et ce qui les lit
 
-**Arbitrage du 2026-10-23.** Les signaux de production étaient éparpillés dans quatre documents
-sans qu'aucun ne les porte : `uptime.yml` dans [`DEPLOYMENT.md`](./DEPLOYMENT.md), Sentry cité dans
-`CLAUDE.md` sans aucune garde, la détection d'une violation dans
-`RGPD-VIOLATION.md` (hors dépôt) AM-2, les journaux Supabase dans aucun. Une surface que
-quatre documents effleurent et qu'aucun ne mesure est exactement la définition d'un angle mort.
-Les ajouter à un audit existant aurait noyé la question sous un autre sujet.
-
-## Ce qui a été lu le 2026-10-23, et comment
-
-| Source | Lu par | Résultat |
-|---|---|---|
-| Sentry (`VITE_SENTRY_DSN`) | **rien** : aucun outil, aucune garde, aucun digest | ❌ inconnu |
-| Erreurs d'exécution Vercel (`api/`) | API Vercel refusée (403) depuis l'agent ; CLI non connecté | ❌ inconnu |
-| Journaux Supabase, 24 h | API Management (`query_logs`), à la main | ✅ **0 réponse 5xx** à la passerelle. ~230 `Warp server error: Thread killed by timeout manager` côté PostgREST, corrélés à l'activité, sans réponse d'erreur au client. 5 appels à `stripe-webhook` **sans signature**, tous refusés. **4 réponses 409** sur `/rest/v1/events`, non expliquées. 10 × 403 `missing sub claim` sur `/auth/v1/user` (jeton anonyme présenté à `getUser`) |
-| Disponibilité | `uptime.yml` (C-104) | ✅ vert |
-
-## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-10-23)
-
-| # | Angle mort | Vérifié le 2026-10-23 | 🔎 État au 2026-10-23 |
+| # | Signal | Lu par | Ce que le vert ne prouve pas |
 |---|---|---|---|
-| AM-1 | 🔴 **Les erreurs Sentry ne sont lues par personne.** Le SDK remonte, le tableau de bord existe, rien ne le relit : une régression vue par cent utilisateurs ne fait échouer aucun job et n'arrive dans aucun digest | `grep -ril sentry .github/workflows` : seul `ci.yml` (build) | 🟡 **OUTILLÉ, NON MESURÉ** au 2026-10-23 · `npm run check:prod-errors` (job planifié `Erreurs de prod`, relié à `ci-alert.yml`) lit les issues nouvelles ou en régression sur 24 h, plafond **0**, échec fermé sans jeton. 🔴 `SENTRY_AUTH_TOKEN` n'est pas posé (`gh secret list`) : le job est ROUGE tant qu'il manque, et ne se ferme qu'au premier run vert. Témoin : `check-prod-errors.guard.test.mjs`, 9 sabotages vus rouges · ✅ **MESURÉ le 2026-10-26** (runs `40321521546` et `40322248378`) : `SENTRY_AUTH_TOKEN` posé, la lecture fonctionne et trouve dès son premier passage COSMO-40, « pagination truncated: kr_completions » (1 utilisateur) : l'historique des résultats clés d'un compte était tronqué à l'affichage. Corrigé : `getAll()` de `kr-completions/supabase.repository.ts` pagine. Le job ne se ferme qu'une fois l'issue résolue dans Sentry |
-| AM-2 | **Les erreurs d'exécution des fonctions Vercel (`api/collect.ts`) ne sont lues par rien.** Le collecteur d'audience peut échouer en silence : l'audience tombe à zéro sans alerte | aucun appel à l'API Vercel dans `scripts/` | 🟡 **OUTILLÉ, NON MESURÉ** au 2026-10-23 · même job : requêtes de production en `error`/`fatal` OU en 5xx, plafond **0** (`collect.ts` répond 204 même quand son écriture échoue : le journal est compté, pas seulement le statut). Point d'accès de la CLI officielle (`vercel logs`), jamais appelé avec `VERCEL_TOKEN` depuis le dépôt : le premier run planifié dit si le jeton y a droit · ✅ **MESURÉ le 2026-10-26** : le premier run a rendu 403 (le jeton Vercel n'avait pas le droit de lire les journaux) ; jeton remplacé avec la portée de l'équipe, la lecture passe (run `40322248378`) |
-| AM-3 | **Les journaux Supabase ne sont lus qu'à la main**, le jour où quelqu'un y pense. Un pic de 5xx, de 409 ou de refus d'authentification ne remonte nulle part | relevé manuel ci-dessus | 🟡 **OUTILLÉ** au 2026-10-23 · même job : `edge_logs` ET `function_edge_logs` (la première ne porte AUCUNE requête `/functions/v1/*`), six familles (5xx, sondes uptime, sondes `edge-smoke`, refus d'auth, webhook Stripe non signé, 4xx métier) et couples chemin/statut, contre `scripts/prod-errors.reference.json` posée sur trois fenêtres de 24 h. Les « 5 appels sans signature » du relevé ci-dessus étaient les sondes de `check:edge-smoke`. Fermé au premier run planifié vert · ✅ **MESURÉ le 2026-10-26** : 3 112 requêtes lues sur 24 h, familles dans leur plafond ; un seul couple nouveau, 2 × 401 sur `/rest/v1/rpc/get_my_tasks`, portant la clé publique seule (aucun jeton utilisateur) : rotation du jeton forcée par `mobileFocus` en double de celle d'auth-js. Corrigé (`getSession()` au lieu de `refreshSession()`) ; à vérifier : le couple doit disparaître de la prochaine fenêtre de 24 h |
-| AM-4 | **Les 4 réponses 409 sur `events` ne sont pas expliquées.** Une collision de clé à l'écriture d'un événement est soit un rejeu client (double envoi), soit une restauration à identifiant forcé (R-08) | `query_logs` | 🟢 **DIAGNOSTIQUÉ ET CORRIGÉ 2026-10-23.** Les 4 réponses sont des **23503 `events_task_id_fkey`** (`postgres_logs`), pas des 23505 : `POST /rest/v1/events` d'un seul utilisateur, 16:59:57 et 17:01:30 le 2026-10-22, **sans `id` dans le corps** (`columns=` ne liste pas `id`), donc ni restauration R-08 ni upsert. Chaque geste est parti **deux fois à 1,3 s** : le `retry: 1` global des mutations rejouait un refus nommé et déterministe. Cause amont, bénigne : un `task_id` désignant une tâche supprimée entre-temps (cache de 5 min, suppression faite ailleurs). Correctif : `shouldRetryMutation` (`src/lib/query-retry.ts`, testé) ne rejoue ni un refus nommé ni un délai dépassé. Reste : le premier échec s'affiche en toast d'erreur, c'est voulu |
-| AM-6 | **Les traitements planifiés de production n'avaient aucun journal** (ARC-06, audit du 2026-11-06). Six appels d'Edge Functions (avis L215-1, alertes de sièges, comptes inactifs, notifications d'entreprise horaires et quotidiennes, webhooks) partaient du cron de GitHub, qui ne garantit ni l'heure ni l'exécution : un passage manqué ne laissait aucune trace | `grep -l "schedule:" .github/workflows/*.yml`, 2026-11-07 : 22 workflows planifiés, dont 5 qui écrivent en production | 🟡 **OUTILLÉ, NON APPLIQUÉ** au 2026-11-07 · mig. `245` (journal `cron_runs`, bail `cron_leases`, `cron_invoke` par pg_net et Vault) et `246` (planifications pg_cron), prouvées sur base vierge par `e2e/rls/cron-journal.test.ts` (un job pg_cron écrit dans le journal). Surveillance : `cron-journal.yml` (`Journal des crons`, relié à `ci-alert.yml`) lit `cron_runs_verdict()` et rougit sur un job `absent` ou en `echec` dans sa fenêtre. Reste sur GitHub exprès : une sonde logée dans pg_cron se tairait avec lui. Témoin : `scripts/check-cron-runs.guard.test.mjs`. Fermé quand les deux migrations sont en prod et la sonde planifiée verte (gestes : [`MISES-EN-SERVICE.md`](./MISES-EN-SERVICE.md) § 2sexies) |
-| AM-5 | **La DÉTECTION d'une violation de données n'est mesurée par rien** (repris de `RGPD-VIOLATION.md` (hors dépôt) AM-2, qui en garde l'énoncé). Le délai de 72 h court depuis la détection ; `BK-1` a été trouvée par un audit, six semaines après | aucune alerte sur un export massif, un pic d'échecs de connexion ou une alerte de secret scanning | 🟡 **OUTILLÉ** au 2026-11-08 (vague 6.1, OBS-01 : « des signaux produits et jamais traités », le premier signal de la PR n° 125 n'ayant été trié par personne) · `detection-violation.yml`, quotidien. Job `detecter` (lecture seule) : alertes de secret scanning ouvertes (`SECURITY_ALERTS_TOKEN`), contenu des artefacts de 26 h, journaux Supabase en agrégats seulement (aucune requête exécutée ne rend un compte ni une IP ; tri à la main par `SQL_TRI`). Mesure d'export en lignes DISTINCTES par forme de requête, plancher 20 000 : la somme des lignes rendues comptait chaque page relue par l'application. Job `alerter` (aucun secret de production) : issue `detection-violation` assignée à Axel, échéance de tri 72 h, une seule ouverte, au plus 3 publications sur 7 jours, puis le salon ops. Revue : la règle des 7 jours de `ci-alert.yml` liste les issues échues, republiées chaque lundi. PR n° 125 fermée, réécrite. Témoin : `detection-violation.guard.test.mjs`. Fermé au premier mois de runs planifiés lus |
-| AM-6 | **Aucune mesure de performance.** On sait si une action échoue, pas laquelle est lente ni pourquoi. Le front n'avait qu'un `tracesSampleRate: 0.1` en dur, branché sans condition, sans nettoyage des noms de span ; les Edge Functions n'avaient aucun traçage (audit externe du 2026-11-06, OBS-02) | `grep -n tracesSampleRate src/main.tsx` et `grep -rl sentry supabase/functions` | 🟡 **OUTILLÉ, NON MESURÉ** au 2026-11-07 · voir § Mesure de performance. Reste à voir : une première transaction dans Sentry, front (après un « Accepter ») et Edge (après la pose de `SENTRY_DSN_EDGE`) |
+| AM-1 | Issues Sentry nouvelles ou en régression, 24 h | `npm run check:prod-errors` (job `Erreurs de prod`, `ci-alert.yml`), plafond 0, échec fermé sans `SENTRY_AUTH_TOKEN` ; le job reste rouge tant que l'issue n'est pas résolue dans Sentry | qu'un utilisateur n'a pas vu d'erreur hors du SDK |
+| AM-2 | Erreurs d'exécution Vercel (`api/collect.ts`) | même job : requêtes `error` / `fatal` ou 5xx, plafond 0 (le collecteur répond 204 même quand son écriture échoue : le journal compte, pas le statut) ; `VERCEL_TOKEN` doit avoir la portée de l'équipe | |
+| AM-3 | Journaux Supabase (`edge_logs` ET `function_edge_logs`) | même job, six familles et couples chemin/statut contre `scripts/prod-errors.reference.json` | ⚠️ `edge_logs` ne porte aucune requête `/functions/v1/*` |
+| AM-4 | Réponses 409 sur `events` | diagnostiqué : rejeu client d'un refus nommé ; `shouldRetryMutation` (`src/lib/query-retry.ts`) ne rejoue ni un refus nommé ni un délai dépassé | |
+| AM-5 | Détection d'une violation de données (délai de 72 h) | `detection-violation.yml`, quotidien ; § Détection | un export qui passerait sous le plancher |
+| AM-6 | Traitements planifiés | `cron-journal.yml` (`Journal des crons`) lit `cron_runs_verdict()`, rouge sur `absent` ou `echec` ; témoin `scripts/check-cron-runs.guard.test.mjs`. Bascule : [`MISES-EN-SERVICE.md`](./MISES-EN-SERVICE.md) § 2sexies | qu'un envoi réel a eu lieu (`ok` = réponse 2xx) |
+| AM-7 | Performance | § Mesure de performance | |
+| | Disponibilité | `uptime.yml` ([`DEPLOYMENT.md`](./DEPLOYMENT.md) § 9) et la sonde pg_cron `cosmo-uptime` (mig. `252`, lignes `sonde-*` du même verdict) | une panne de la base elle-même : seul `absent` la dit |
 
-## Mesure de performance (OBS-02, vague 10.4, 2026-11-07)
+- ⚠️ La sonde des crons reste sur GitHub exprès : logée dans pg_cron, elle se tairait avec lui.
+- Témoin de `check:prod-errors` : `scripts/check-prod-errors.guard.test.mjs`.
 
-> **Vivant.** Répond à AM-6. Code : `src/lib/sentry-tracing.ts` (front), `supabase/functions/_shared/trace.ts`
-> et `trace-core.ts` (Edge). Témoins : `src/lib/sentry-tracing.test.ts`, `src/edge-trace.guard.test.ts`.
+## Détection (AM-5, OBS-01)
+
+- Job `detecter` (lecture seule) : alertes de secret scanning ouvertes (`SECURITY_ALERTS_TOKEN`), contenu des artefacts de 26 h, journaux Supabase en agrégats seulement.
+- ❌ Aucune requête de détection ne rend un compte ni une IP ; le tri nominatif se fait à la main (`SQL_TRI`).
+- Export mesuré en lignes DISTINCTES par forme de requête, plancher 20 000 (la somme comptait chaque page relue).
+- Job `alerter` (aucun secret de production) : issue `detection-violation` assignée à Axel, échéance de tri 72 h, une seule ouverte, au plus 3 publications sur 7 jours, puis le salon ops ; les issues échues sont republiées chaque lundi par `ci-alert.yml`.
+- 🔴 Le tri reste humain : données personnelles et échéance légale. Témoin : `detection-violation.guard.test.mjs`.
+
+## Mesure de performance (AM-7, OBS-02)
+
+Code : `src/lib/sentry-tracing.ts`, `src/lib/sentry-client.ts` (front), `supabase/functions/_shared/trace.ts`, `trace-core.ts` (Edge). Témoins : `src/lib/sentry-tracing.test.ts`, `sentry-client.test.ts`, `src/edge-trace.guard.test.ts`.
 
 ### Front
 
-- **Ce qui est mesuré** : navigations (noms de route paramétrés), requêtes vers Supabase (PostgREST,
-  Auth), interactions lentes (INP), tâches longues et images d'animation longues.
-- **Échantillonnage** : `VITE_SENTRY_TRACES_SAMPLE_RATE`, entre 0 et 1, **0,1 par défaut**. Absent, illisible
-  ou hors de [0, 1] : 0,1 (jamais un plafonnement silencieux à 1). Les erreurs ne sont pas échantillonnées.
-- **Poids** : l'intégration se charge avec `sentry-client`, déjà différé après le premier rendu. Le
-  chunk d'entrée ne grandit que de `sentry-tracing.ts` (texte seul, pas de SDK). Mesuré le 2026-11-07, build avec DSN : `sentry-client`
-  49,4 ko gzip pour 52,0 de plafond (49,3 avant), entrée 69,3 ko pour 70,5, chemin critique 305,3 ko
-  pour 323,0. Aucun plafond de `check:bundle` n'a bougé.
-- **Aucune PII** : `parameterizeRoute` ramène chaque route à un gabarit (`/invite/:token`,
-  `/entreprise/okr/:id`) AVANT la création du span ; `scrubTransaction` (dans `beforeSendTransaction`)
-  retire ensuite la chaîne de requête et le fragment de toute adresse, masque e-mails et UUID, et
-  supprime l'utilisateur, les en-têtes et les cookies. Le test rejoue un évènement rempli d'un e-mail,
-  d'un UUID et d'un jeton et exige qu'aucun ne survive, avec un témoin qui prouve que l'évènement brut
-  les contient.
-- **Sentry 11 (V18.2)** : deux reculs muets écartés dans `init`. `traceLifecycle: 'static'`, parce
-  que le mode diffusé par défaut ignore `beforeSendTransaction`, donc `scrubTransaction`.
-  `dataCollection` posé clé par clé à faux, parce qu'absent il vaut tout collecter ; seul
-  `User-Agent` passe. La v10 envoyait aussi `Referer`, qui peut porter un jeton d'invitation : retiré. Garde :
-  `sentry-tracing.test.ts`. `attachStacktrace: false` garde les groupes d'incidents de la v10.
-  **Poids** : avec l'`init` du SDK, `sentry-client` passait de 49,4 à 53,9 ko gzip (plafond 52,0,
-  non relevé), parce que la v11 ajoute trois intégrations par défaut référencées en dur. `init` est
-  donc écrit dans `sentry-client.ts` : un `BrowserClient` avec la liste explicite des intégrations
-  de la v10, moins `functionToString`, et sans les étiquettes `sentry.javascript.react` et contexte
-  `react`. Mesuré le 2026-11-08 : 51 987 octets, 13 sous le plafond. La prochaine hausse de ce
-  chunk demande un retrait, pas un plafond relevé. Liste figée par `sentry-client.test.ts`.
-  Le passage au mode diffusé (`beforeSendSpan`) reste à faire avant la v12, qui retire
-  `beforeSendTransaction`. Les Edge Functions restent sur `@sentry/deno` 10 : la monter demande un
-  redéploiement (`check:edge`).
-- **Propagation** : inchangée, `PostgREST` et `Auth` seulement, jamais `/functions/v1/`
-  (`sentry-propagation.guard.test.ts`, M-32). Les spans des appels vers les Edge Functions existent
-  côté navigateur, sans en-tête de trace.
+- Mesuré : navigations (routes paramétrées), requêtes PostgREST et Auth, INP, tâches longues, images d'animation longues.
+- Échantillonnage `VITE_SENTRY_TRACES_SAMPLE_RATE` dans [0, 1], défaut 0,1 ; absent, illisible ou hors bornes = 0,1, jamais 1. Les erreurs ne sont pas échantillonnées.
+- L'intégration se charge avec `sentry-client`, différé après le premier rendu ; l'entrée ne porte que `sentry-tracing.ts`.
+- 🔴 Aucune PII : `parameterizeRoute` réduit chaque route à un gabarit AVANT le span ; `scrubTransaction` (`beforeSendTransaction`) retire chaîne de requête et fragment, masque e-mails et UUID, supprime utilisateur, en-têtes, cookies. Le test exige qu'aucun ne survive, témoin à l'appui.
+- 🔴 `traceLifecycle: 'static'` : le mode diffusé ignore `beforeSendTransaction`, donc `scrubTransaction`.
+- 🔴 `dataCollection` posé clé par clé à faux (absent = tout collecter) ; seul `User-Agent` passe, jamais `Referer` (peut porter un jeton d'invitation).
+- `attachStacktrace: false` garde les groupes d'incidents.
+- ❌ `init` écrit dans `sentry-client.ts` : `BrowserClient` avec la liste explicite d'intégrations (figée par `sentry-client.test.ts`). Une hausse du chunk demande un retrait, jamais un plafond relevé (`check:bundle`).
+- ⚠️ À faire avant Sentry 12 (qui retire `beforeSendTransaction`) : passer au mode diffusé avec `beforeSendSpan`.
+- Propagation : `PostgREST` et `Auth` seulement, jamais `/functions/v1/` (`sentry-propagation.guard.test.ts`, M-32).
 
-### DÉCISION : la mesure de performance relève du consentement
+### Consentement
 
-**Décidé le 2026-11-07. Les ERREURS restent hors consentement (T9 du registre, inchangé). La
-PERFORMANCE est conditionnée à « Accepter ».**
-
-Motifs :
-
-1. **La règle du dépôt** : « tout nouveau traceur est conditionné, `null` n'est pas une acceptation »
-   (`CLAUDE.md`). La mesure de performance relie une suite de pages visitées, de requêtes et
-   d'interactions par un identifiant de trace, et propage un en-tête `sentry-trace` aux requêtes
-   Supabase. Ce n'est pas la même chose qu'une trace d'erreur, qui ne part qu'au premier incident.
-2. **La finalité n'est pas strictement nécessaire au service demandé.** Mesurer pour optimiser
-   améliore le produit, mais le service est rendu sans. C'est notre lecture, prudente, de la ligne
-   exigeant le consentement ; elle n'a pas été confrontée à un avis juridique, et le sens de l'erreur
-   possible est le bon (une mesure manquante, jamais un traceur posé sans accord).
-3. **Le coût est assumé** : seules les personnes qui acceptent sont mesurées. Les chiffres de
-   performance décrivent donc ce public, pas tout le trafic. Les Core Web Vitals de tout le trafic
-   restent lus par Lighthouse en CI.
-
-Comment c'est branché (`src/main.tsx`, `useCookieConsent()` n'est pas utilisé : `main.tsx` s'exécute
-avant React, il lit `readConsent()` / `subscribe()` de `cookie-consent.ts`, comme `traffic.ts`) :
-
-- sans « Accepter » : **aucune intégration de traçage**, donc ni transaction ni en-tête `sentry-trace` ;
-- « Accepter » avant l'amorçage de Sentry : l'intégration est dans `init` ;
-- « Accepter » APRÈS : `addIntegration` à chaud, une seule fois ;
-- **retrait** : refuser après avoir accepté recharge la page (RGPD art. 7.3, `CookieBanner`), ce qui
-  retire l'intégration. En défense en profondeur : `tracesSampler` rend 0 dès que le consentement
-  n'est plus `accepted`, et `beforeSendTransaction` jette toute transaction restante ;
-- `ConsentedAnalytics` et `traffic.ts` restent la référence pour les autres traceurs.
+- Les ERREURS partent hors consentement (T9 du registre) ; la PERFORMANCE seulement après « Accepter » (« tout nouveau traceur est conditionné »). Motifs : une trace relie une suite de pages et propage `sentry-trace` ; la finalité n'est pas strictement nécessaire au service ; lecture prudente, non confrontée à un avis juridique. Conséquence : la perf décrit le seul public consentant ; les Core Web Vitals de tout le trafic viennent de Lighthouse en CI.
+- `src/main.tsx` lit `readConsent()` / `subscribe()` de `cookie-consent.ts` (il s'exécute avant React) :
+  - sans « Accepter » : aucune intégration de traçage, ni transaction ni en-tête ;
+  - « Accepter » avant l'amorçage : intégration dans `init` ; après : `addIntegration` une seule fois ;
+  - retrait du consentement : rechargement (RGPD art. 7.3) ; en plus `tracesSampler` rend 0 et `beforeSendTransaction` jette.
+- `ConsentedAnalytics` et `traffic.ts` restent la référence pour tout autre traceur.
 
 ### Edge Functions
 
-- **Neuf fonctions tracées** : `delete-account`, les six `stripe-*` (`stripe-create-checkout`,
-  `stripe-org-checkout`, `stripe-org-portal`, `stripe-org-refund`, `stripe-org-subscription`,
-  `stripe-webhook`), `renewal-notice` et `seat-alert`, par `Deno.serve(withTrace('<slug>', …))`.
-  Les autres fonctions ne le sont pas encore.
-- **Un span par requête**, nommé `<MÉTHODE> <slug>`, avec le code de réponse (≥ 500 marque le span en
-  erreur) et la durée. Une exception qui sort du gestionnaire est capturée puis relancée telle quelle.
-- **Aucune PII, par construction** : ni URL, ni en-tête, ni corps, ni IP, ni identifiant de compte,
-  de client Stripe ou d'organisation en attribut. Le SDK tourne sans intégration par défaut et
-  `sendDefaultPii` faux ; `beforeSend` et `beforeSendTransaction` retirent en plus requête, utilisateur
-  et nom d'hôte, et nettoient e-mails, UUID, JWT, clés et identifiants d'objets Stripe de toutes les
-  chaînes. Ces données ne concernent aucun appareil de visiteur : pas de consentement.
-- **Un secret, et son absence n'est pas une panne** : `SENTRY_DSN_EDGE`. Absent, `withTrace` rend le
-  gestionnaire tel quel et le SDK n'est même pas téléchargé. C'est de l'observabilité, pas une garde.
-  `SENTRY_TRACES_SAMPLE_RATE` (facultatif, 0,1 par défaut) règle l'échantillonnage ; si Axel le pose, il
-  doit aussi figurer dans `.github/secrets-registry.json`.
-  🔴 Le registre porte `SENTRY_DSN_EDGE` : `check:secrets-age` est donc **rouge tant que le secret n'est
-  pas posé** (`supabase secrets set SENTRY_DSN_EDGE=…`). C'est voulu, c'est le rappel.
-- **Déploiement** : par `edge-deploy.yml`, sur un `CI noyau` vert. Un module `_shared/` modifié
-  redéploie toutes les fonctions qui l'importent : ici les neuf.
-- ⚠️ **Non vérifié avant la production** : le SDK `npm:@sentry/deno` n'a jamais tourné dans le runtime
-  Edge de ce projet, aucun test local ne le charge (`trace-core.ts` est testé, pas `trace.ts`). Un échec
-  de chargement est avalé (la fonction répond sans traçage) ; il se voit à l'absence de spans dans
-  Sentry. Premier geste après la pose du secret : provoquer un appel à `stripe-org-portal` et chercher
-  le span `POST stripe-org-portal`.
-
-> ❌ **Ne jamais noter ce document avant la première mesure en CI.** `non-note` est la réponse
-> honnête tant qu'aucune de ces lignes n'est outillée.
+- Tracées par `Deno.serve(withTrace('<slug>', …))` : `delete-account`, les six `stripe-*`, `renewal-notice`, `seat-alert`. Les autres non.
+- Un span par requête (`<MÉTHODE> <slug>`, code, durée ; ≥ 500 = erreur) ; une exception est capturée puis relancée telle quelle.
+- 🔴 Aucune PII par construction : ni URL, en-tête, corps, IP, identifiant de compte, de client Stripe ou d'organisation en attribut ; SDK sans intégration par défaut, `sendDefaultPii` faux ; `beforeSend` et `beforeSendTransaction` nettoient e-mails, UUID, JWT, clés, identifiants Stripe. Pas de consentement : aucun appareil de visiteur.
+- `SENTRY_DSN_EDGE` absent : `withTrace` rend le gestionnaire tel quel, SDK non téléchargé. Observabilité, pas une garde. 🔴 Le registre le porte : `check:secrets-age` reste rouge tant qu'il n'est pas posé (`supabase secrets set SENTRY_DSN_EDGE=…`).
+- `SENTRY_TRACES_SAMPLE_RATE` (facultatif, 0,1) : s'il est posé, l'inscrire au registre des secrets.
+- Un `_shared/` modifié redéploie toutes les fonctions qui l'importent (`edge-deploy.yml`) ; `@sentry/deno` reste en 10, le monter demande un redéploiement (`check:edge`).
+- ⚠️ `npm:@sentry/deno` n'a jamais tourné dans le runtime Edge de ce projet (`trace-core.ts` testé, pas `trace.ts`) ; un échec de chargement est avalé. Premier geste après la pose du secret : appeler `stripe-org-portal` et chercher le span `POST stripe-org-portal`.
