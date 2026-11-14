@@ -212,7 +212,7 @@ if (principal) {
       for (const e of erreursOutillage) console.error(`::error title=Outillage::${e}`)
       process.exit(1)
     }
-    const actuel = existsSync(cible) ? lireTexte(cible) : null
+    const actuel = (() => { try { return lireTexte(cible) } catch { return null } })()
     if (actuel === attendu) {
       console.log('docs/FAITS.md est à jour avec les sources.')
     } else {

@@ -125,7 +125,7 @@ export function mesurerConvention(rel, texte) {
   return {
     plafond: rel.endsWith('CLAUDE.md') ? PLAFOND_LIGNES_CLAUDE : PLAFOND_LIGNES_DOC,
     lignes: texte.replace(/\r\n/g, '\n').replace(/\n$/, '').split('\n').length,
-    dates: texte.startsWith('<!-- GENERE') ? 0 : datesIsolees(texte.replace(/<!--[\s\S]*?-->/g, '')).length,
+    dates: texte.startsWith('<!-- GENERE') ? 0 : datesIsolees(texte.replace(/<!--[\s\S]*?-->/g, '').replace(/<!--/g, '')).length,
     numerosDeLigne: numerosDeLigne(texte).length,
     entete: aUnEnTete(texte),
   }
