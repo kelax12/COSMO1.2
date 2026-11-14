@@ -196,7 +196,7 @@ if (principal) {
   const refChemin = join(racine, ...REFERENCE_OUTILLAGE)
   const mesure = Object.fromEntries(CLES.map((c) => [c, faits[c]]))
   if (process.argv.includes('--recaler')) {
-    const ancien = existsSync(refChemin) ? JSON.parse(lireTexte(refChemin)) : mesure
+    const ancien = (() => { try { return JSON.parse(lireTexte(refChemin)) } catch { return mesure } })()
     const monte = CLES.filter((c) => mesure[c] > ancien[c])
     if (monte.length) {
       console.error(`::error title=Outillage::le plafond ne se relève pas (${monte.join(', ')}). ${REGLE}`)
