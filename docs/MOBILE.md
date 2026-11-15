@@ -186,3 +186,32 @@ if (supabaseUrl) {
 
 - ✅ DevTools responsive 375×812, 393×852, 412×915. Mode démo : 100 tâches seedées sur 12 mois (stress du rendu).
 - ✅ Cibles tactiles : `document.querySelectorAll('button').forEach(b => { const r = b.getBoundingClientRect(); if (r.width < 44 || r.height < 44) console.warn(b); })` ; garde : `e2e/touch-targets.spec.ts`. ❌ Cible < 44 × 44 px sans les décisions de [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) § Cibles tactiles.
+
+### Séance sur téléphone réel (issue n° 184)
+
+Où : `https://thecosmo.app`, mode démo, iPhone (Safari) PUIS Android (Chrome) si possible. Un défaut = une issue, sans correctif pendant la séance. Lecteur d'écran : [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md) et [`AUDIT-NVDA-WINDOWS.md`](./AUDIT-NVDA-WINDOWS.md), pas ici.
+
+**Coque et navigation**
+- [ ] Ouvrir `/` : aucun défilement horizontal, texte lisible sans zoom.
+- [ ] Entrer en démo : la barre d'onglets du bas ne recouvre aucun contenu, y compris avec la barre d'adresse repliée.
+- [ ] « Plus » ouvre la feuille ; glisser vers le bas ou toucher le voile la ferme, le focus revient au bouton.
+- [ ] Tourner en paysage puis revenir : rien ne se coupe, la feuille ouverte reste utilisable.
+
+**Tâches**
+- [ ] Créer une tâche depuis la barre d'ajout rapide : le clavier virtuel ne cache pas le champ ni le bouton d'envoi.
+- [ ] Ouvrir la fiche d'une tâche : les champs bas (description, échéance) restent visibles clavier ouvert.
+- [ ] Appui long sur une carte : la feuille d'actions s'ouvre ; chaque action se touche du premier coup.
+- [ ] Cocher une tâche du pouce : la bonne ligne se coche, pas sa voisine.
+- [ ] Choisir une date dans le sélecteur de la fiche : le calendrier COSMO s'ouvre, hors calendrier système.
+
+**Agenda, habitudes, OKR**
+- [ ] `/agenda` : toucher un créneau ouvre la saisie pré-remplie ; défilement vertical du calendrier sans ouvrir de créneau par erreur.
+- [ ] Une modale d'événement ouverte : Précédent (geste ou bouton) la ferme sans quitter l'écran.
+- [ ] `/habits` : cocher une habitude du jour met à jour la série sans recharger.
+- [ ] `/okr` : ouvrir un objectif, ajouter une progression ; la feuille ne dépasse pas l'écran.
+
+**Entreprise et transverse**
+- [ ] `/entreprise` : le sélecteur de section s'ouvre en feuille ; une tâche d'équipe s'ouvre et se ferme sans perdre le défilement.
+- [ ] Thème noir, puis sombre : aucun texte illisible sur les écrans parcourus.
+- [ ] Texte système agrandi au maximum : aucun libellé de bouton tronqué.
+- [ ] Réseau coupé (mode avion) puis rétabli : l'écran ne reste pas bloqué, un message le dit.
