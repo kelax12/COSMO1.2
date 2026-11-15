@@ -2204,6 +2204,9 @@ isOneToOne: false
               "dernier_code": number,"dernier_debut": string,"dernier_ok": string,"dernier_statut": string,"fenetre": string,"job": string,"verdict": string
             }[]
                            },
+"cron_sonde_alerte":
+{ Args: { "p_now"?: string }; Returns: string
+                           },
 "delete_organization":
 { Args: { "p_org": string }; Returns: undefined
                            },

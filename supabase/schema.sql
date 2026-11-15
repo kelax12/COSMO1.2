@@ -2298,6 +2298,100 @@ $$;
 
 
 --
+-- Name: cron_sonde_alerte(timestamp with time zone); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.cron_sonde_alerte(p_now timestamp with time zone DEFAULT now()) RETURNS text
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_hook     text;
+  v_bad      text;
+  v_etat     text;
+  v_etat_at  timestamptz;
+  v_dernier  text;
+  v_msg      text;
+  v_req      bigint;
+BEGIN
+  SELECT d.decrypted_secret INTO v_hook
+    FROM vault.decrypted_secrets d WHERE d.name = 'cosmo_ops_webhook';
+
+  SELECT left(string_agg(
+           CASE v.verdict
+             WHEN 'absent' THEN format('SILENCE %s : aucun passage depuis plus de %s', v.job, v.fenetre)
+             ELSE format('ECHEC %s : %s', v.job, coalesce(l.detail, 'aucune reponse'))
+           END, E'\n' ORDER BY v.job), 1500)
+    INTO v_bad
+    FROM public.cron_runs_verdict(p_now) v
+    LEFT JOIN LATERAL (
+      SELECT r.detail
+        FROM public.cron_runs r
+       WHERE r.job = v.job AND r.status <> 'started' AND r.started_at <= p_now
+       ORDER BY r.started_at DESC
+       LIMIT 1
+    ) l ON true
+   WHERE v.job LIKE 'sonde-%' AND v.verdict <> 'ok';
+
+  SELECT r.detail, r.started_at INTO v_etat, v_etat_at
+    FROM public.cron_runs r
+   WHERE r.job = 'alerte-sonde-etat' AND r.started_at <= p_now
+   ORDER BY r.started_at DESC
+   LIMIT 1;
+  v_etat := coalesce(v_etat, 'RETABLI');
+
+  SELECT r.status INTO v_dernier
+    FROM public.cron_runs r
+   WHERE r.job = 'alerte-sonde' AND r.started_at <= p_now
+   ORDER BY r.started_at DESC
+   LIMIT 1;
+
+  IF v_bad IS NOT NULL THEN
+    -- Rien à envoyer : déjà signalé, rappel pas dû, dernier envoi parti.
+    IF v_etat = 'ALERTE' AND v_etat_at >= p_now - interval '6 hours'
+       AND coalesce(v_dernier, 'ok') NOT IN ('error', 'timeout', 'lost') THEN
+      RETURN 'rien';
+    END IF;
+    v_msg := E'🚨 [cosmo/sonde-pg-cron] Production degradee :\n' || v_bad;
+  ELSIF v_etat = 'ALERTE' THEN
+    -- Rétablissement : un seul envoi, l'état repasse à RETABLI plus bas.
+    v_msg := E'✅ [cosmo/sonde-pg-cron] Retabli : les trois sondes repondent de nouveau.';
+  ELSE
+    RETURN 'rien';
+  END IF;
+
+  IF coalesce(v_hook, '') = '' THEN
+    INSERT INTO public.cron_runs (job, started_at, finished_at, status, detail)
+    VALUES ('alerte-sonde', p_now, p_now, 'config_missing', 'secret Vault absent : cosmo_ops_webhook');
+    RETURN 'config_missing';
+  END IF;
+
+  v_req := net.http_post(
+    url := v_hook,
+    body := jsonb_build_object('text', v_msg, 'content', v_msg),
+    headers := jsonb_build_object('Content-Type', 'application/json', 'User-Agent', 'cosmo-sonde-pg-cron'),
+    timeout_milliseconds := 10000
+  );
+  INSERT INTO public.cron_runs (job, started_at, request_id) VALUES ('alerte-sonde', p_now, v_req);
+
+  IF v_bad IS NOT NULL THEN
+    -- Nouvelle ligne d'état seulement à l'entrée en panne ou au rappel ; un
+    -- renvoi après un envoi raté garde la ligne d'état déjà posée.
+    IF v_etat <> 'ALERTE' OR v_etat_at < p_now - interval '6 hours' THEN
+      INSERT INTO public.cron_runs (job, started_at, finished_at, status, detail)
+      VALUES ('alerte-sonde-etat', p_now, p_now, 'ok', 'ALERTE');
+    END IF;
+    RETURN 'alerte';
+  END IF;
+
+  INSERT INTO public.cron_runs (job, started_at, finished_at, status, detail)
+  VALUES ('alerte-sonde-etat', p_now, p_now, 'ok', 'RETABLI');
+  RETURN 'retabli';
+END;
+$$;
+
+
+--
 -- Name: delete_organization(uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -19127,6 +19221,13 @@ REVOKE ALL ON FUNCTION public.cron_runs_verdict(p_now timestamp with time zone) 
 
 
 --
+-- Name: FUNCTION cron_sonde_alerte(p_now timestamp with time zone); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.cron_sonde_alerte(p_now timestamp with time zone) FROM PUBLIC;
+
+
+--
 -- Name: FUNCTION delete_organization(p_org uuid); Type: ACL; Schema: public; Owner: -
 --
 
@@ -21762,4 +21863,5 @@ SELECT cron.schedule('cosmo-purge-traffic', '17 0 * * *', 'SELECT public.purge_t
 SELECT cron.schedule('cosmo-purge-webhook-deliveries', '35 4 * * *', 'DELETE FROM public.org_webhook_deliveries WHERE created_at < now() - interval ''7 days'';');
 SELECT cron.schedule('cosmo-renewal-notice', '12 7 * * *', 'SELECT public.cron_invoke(''renewal-notice'');');
 SELECT cron.schedule('cosmo-seat-alert', '14 7 * * *', 'SELECT public.cron_invoke(''seat-alert'');');
+SELECT cron.schedule('cosmo-sonde-alerte', '6-59/5 * * * *', 'SELECT public.cron_sonde_alerte();');
 SELECT cron.schedule('cosmo-uptime', '2-59/5 * * * *', 'SELECT public.cron_probe();');

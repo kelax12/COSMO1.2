@@ -16,7 +16,7 @@ Regenerer : npm run contrat:generer (Docker, supabase start, node scripts/apply-
 
 | Mesure | Nombre |
 |---|---|
-| Fonctions | 251 |
+| Fonctions | 252 |
 | Executables par `anon` | 3 |
 | Executables par `authenticated` | 113 |
 | Executables par `service_role` | 245 |
@@ -91,6 +91,7 @@ Aucune.
 | `cron_run_status(p_http_code integer, p_timed_out boolean)` | INVOKER | `""` | - | - | - | - |
 | `cron_runs_close()` | INVOKER | `""` | - | - | - | - |
 | `cron_runs_verdict(p_now timestamp with time zone)` | INVOKER | `""` | - | - | - | - |
+| `cron_sonde_alerte(p_now timestamp with time zone)` | INVOKER | `""` | - | - | - | - |
 | `delete_organization(p_org uuid)` | DEFINER | `""` | - | oui | oui | `src/modules/organizations/supabase.repository.ts`<br>~`src/components/organization/DeleteOrganizationDialog.tsx`<br>~`src/components/organization/OrgSettingsSection.tsx`<br>~`src/pages/organization/useDeleteOrgFlow.ts` |
 | `delete_team_with_transfer(p_team uuid, p_target uuid, p_archive_projects boolean)` | INVOKER | `""` | - | oui | oui | `src/modules/org-teams/supabase.repository.ts`<br>~`src/modules/org-teams/local.repository.ts`<br>~`src/modules/org-teams/repository.ts` |
 | `drop_muted_org_notification()` (trigger) | INVOKER | `""` | - | - | oui | ~`src/components/organization/OrgNotificationSettingsDialog.tsx` |
