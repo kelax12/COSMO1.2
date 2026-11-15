@@ -1,21 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { Page } from '@playwright/test';
-import { test, expect, loginViaUi, newSession, goto, reload, expectNoErrorToast } from './helpers';
-
-/**
- * L'accueil d'un espace entreprise (vidéo) recouvre l'écran à la première visite.
- * Repéré par sa vidéo, pas par son titre : « Bienvenue chez <entreprise> » change
- * d'une personne à l'autre.
- */
-async function dismissOrgWelcome(page: Page): Promise<void> {
-  const video = page.locator('video[src*="onboarding-entreprise"]');
-  // `isVisible({ timeout })` ignore son delai (il repond tout de suite) : on ATTEND.
-  const shown = await video.first().waitFor({ state: 'visible', timeout: 8_000 }).then(() => true, () => false);
-  if (shown) {
-    await page.getByRole('button', { name: /commencer/i }).first().click({ force: true });
-    await expect(video).toHaveCount(0, { timeout: 15_000 });
-  }
-}
+import { test, expect, loginViaUi, newSession, goto, reload, expectNoErrorToast, dismissOrgWelcome } from './helpers';
 
 /**
  * Parcours 7 · une entreprise de bout en bout : création, invitation d'un

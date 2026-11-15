@@ -233,3 +233,34 @@ export async function seedTask(account: Account, name: string): Promise<string> 
 export function tasksList(page: Page) {
   return page.locator('[data-tutorial-id="tasks-list"]');
 }
+
+/**
+ * L'accueil d'un espace entreprise (video) recouvre l'ecran a la premiere visite.
+ * Repere par sa video, pas par son titre : « Bienvenue chez <entreprise> » change
+ * d'une personne a l'autre.
+ */
+export async function dismissOrgWelcome(page: Page): Promise<void> {
+  const video = page.locator('video[src*="onboarding-entreprise"]');
+  // `isVisible({ timeout })` ignore son delai (il repond tout de suite) : on ATTEND.
+  const shown = await video.first().waitFor({ state: 'visible', timeout: 8_000 }).then(() => true, () => false);
+  if (shown) {
+    await page.getByRole('button', { name: /commencer/i }).first().click({ force: true });
+    await expect(video).toHaveCount(0, { timeout: 15_000 });
+  }
+}
+
+/** Cree une entreprise gratuite par l'interface ; rend son id (relu sous la RLS du compte). */
+export async function createOrgViaUi(page: Page, who: Account, orgName: string): Promise<string> {
+  await loginViaUi(page, who);
+  await goto(page, '/entreprise/onboarding');
+  await page.getByRole('button', { name: /créer une entreprise/i }).click({ timeout: 30_000 });
+  await page.getByLabel("Nom de l'entreprise").fill(orgName);
+  await page.getByRole('button', { name: "Créer l'entreprise" }).click();
+  // Facturation active hors demo : l'effectif est demande, le gratuit suffit ici.
+  await page.getByRole('button', { name: /plus tard, commencer en gratuit/i }).click({ timeout: 30_000 });
+  await expect(page).toHaveURL(/\/entreprise/, { timeout: 30_000 });
+  await dismissOrgWelcome(page);
+  const { data, error } = await who.client.from('organizations').select('id').eq('name', orgName).single();
+  expect(error, error?.message).toBeNull();
+  return data!.id as string;
+}
