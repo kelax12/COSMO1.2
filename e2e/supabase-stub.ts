@@ -333,11 +333,16 @@ function corsHeaders(request: PWRequest): Record<string, string> {
   };
 }
 
+// 🔴 Un tableau porte son total, comme PostgREST (`0-N/total`, `*/0` vide) : `count: 'exact'`
+// lisait `*` en `NaN`, et `NaN ?? 0` reste `NaN` (`FirstRunSetup` ne s'ouvrait plus).
+const contentRange = (body: unknown): string =>
+  !Array.isArray(body) ? '0-0/*' : body.length ? `0-${body.length - 1}/${body.length}` : '*/0';
+
 async function fulfillJson(route: Route, request: PWRequest, body: unknown, status = 200) {
   await route.fulfill({
     status,
     contentType: 'application/json',
-    headers: { ...corsHeaders(request), 'content-range': '0-0/*' },
+    headers: { ...corsHeaders(request), 'content-range': contentRange(body) },
     body: JSON.stringify(body),
   });
 }

@@ -616,7 +616,7 @@ export const CATALOGUE = [
     id: 'architecture-balayage-vide',
     famille: 'detecteur',
     garde: 'src/architecture.guard.test.ts',
-    modifs: [r('src/architecture.guard.test.ts', "const SCAN_ROOTS = ['src'];", "const SCAN_ROOTS = ['src/nexistepas'];")],
+    modifs: [r('src/architecture.guard.test.ts', "const SCAN_ROOTS = ['src', 'prerender'];", "const SCAN_ROOTS = ['src/nexistepas'];")],
     attendu: ['TEMOIN : le balayage voit reellement des fichiers'],
     pourquoi:
       'Un balayage qui ne trouve plus rien rend toutes les gardes d`architecture vertes '
@@ -1303,7 +1303,7 @@ export const CATALOGUE = [
       ['TEMOIN : le detecteur voit un import statique, et epargne un import de type'],
       'Une RÉEXPORTATION crée la même dépendance statique : Sentry reviendrait dans le chunk d`entrée (C-13, C-14).'],
     ['src/monitoring.guard.test.ts', 'mo-porte-sans-sentry', 'produit',
-      r('src/lib/sentry-client.ts', "} from '@sentry/react';", "} from '@sentry/browser';"),
+      r('src/lib/sentry-client.ts', "} from '@sentry/react';\n\nexport {\n  captureException,\n  captureMessage,\n  addBreadcrumb,\n  setUser,\n  browserTracingIntegration,\n  addIntegration,\n} from '@sentry/react';", "} from '@sentry/browser';\n\nexport {\n  captureException,\n  captureMessage,\n  addBreadcrumb,\n  setUser,\n  browserTracingIntegration,\n  addIntegration,\n} from '@sentry/browser';"),
       ['TEMOIN : la porte unique existe encore et importe bien Sentry'],
       'Si la porte unique cesse d`importer Sentry, la garde « personne n`importe Sentry hors de la porte » reste verte en ne protégeant plus rien.'],
     ['src/monitoring.guard.test.ts', 'mo-commentaire-demi-retire', 'detecteur',
