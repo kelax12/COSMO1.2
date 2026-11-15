@@ -21,7 +21,11 @@
 --   05 `friend_requests` : clé du destinataire en SET NULL, triggers aussi
 --      sur UPDATE ; `subscriptions` : `trg_prevent_user_id_change` ;
 --   06 refus : tâche sans propriétaire (23502), objectif à 150 % (23514),
---      changement de propriétaire d'une liste ; un objectif valide passe.
+--      changement de propriétaire d'une liste, événement aux bornes
+--      inversées (23514) ; un objectif valide passe ; un nouveau compte
+--      reçoit ses cinq catégories ;
+--   07 `okrs` en `date`, `end_after_start` sans ligne fautive, trigger
+--      de catégories sur `auth.users`.
 --
 -- Procédure d'application en production (après accord d'Axel) :
 --   1. relire le ledger : aucune entrée `259_` ;
@@ -30,7 +34,7 @@
 --   4. relancer le workflow `Schema prod`.
 --
 -- Passe témoin, jouée SANS la migration (retirer l'`EXECUTE $mig$`) sur la
--- production : `ECHEC 01`, `ECHEC 02`, `ECHEC 03` et `ECHEC 05`.
+-- production : `ECHEC 01` à `ECHEC 03`, `ECHEC 05`, `ECHEC 06e`, `ECHEC 06f` et `ECHEC 07`.
 
 DO $proof$
 DECLARE
@@ -75,7 +79,19 @@ BEGIN
 --   · six index de lecture (mig. 001 à 006) ;
 --   · `trg_prevent_user_id_change` sur `subscriptions` (mig. 011) ;
 --   · triggers de `friend_requests` aussi sur UPDATE (mig. 033) ;
---   · textes de commentaires (version du dépôt, sans tiret long).
+--   · textes de commentaires (version du dépôt, sans tiret long) ;
+--   · `events.end_after_start` (mig. 004). Relu : 3 événements, tous
+--     12:00 → 11:00 le même jour (bornes inversées) ; début et fin sont
+--     échangés, aucune valeur n'est inventée ;
+--   · `okrs.start_date` / `end_date` en `date`, comme le contrat OKR
+--     (`AAAA-MM-JJ`) l'attend : la prod les renvoie aujourd'hui avec une
+--     heure. Relu : les fins sont à 22:00 ou 23:00 UTC, soit minuit à
+--     Paris ; 9 objectifs sur 26 changent de jour selon le fuseau. La
+--     conversion lit donc l'heure de Paris, ce que l'utilisateur voyait ;
+--   · `on_auth_user_created_seed_categories` (mig. 005, entretenu par les
+--     102 et 109) : absent de la production, 32 comptes sur 63 n'y ont
+--     aucune catégorie. Les nouveaux comptes reçoivent les cinq catégories
+--     par défaut ; les comptes existants ne sont pas touchés.
 --
 -- ── B. LE DÉPÔT REJOINT LA PRODUCTION (sans effet en production) ───
 --   · défauts de couleur et de durée tels que la production les sert ;
@@ -88,16 +104,6 @@ BEGIN
 --     `toggle_habit_completion` (sans la variable inutilisée) tels qu'en
 --     production ; `remove_friendship` passe en plus en `search_path = ''`
 --     (SECURITY DEFINER, noms déjà qualifiés), des deux côtés.
---
--- ── HORS DE CETTE MIGRATION (décision d'Axel) ──────────────────────
---   · `events.end_after_start` : 3 événements de production finissent
---     avant de commencer ; la contrainte ne se pose qu'après correction ;
---   · `on_auth_user_created_seed_categories` (auth.users) : présent dans
---     le dépôt, absent de la production ; le poser change l'inscription ;
---   · `okrs.start_date` / `end_date` : `date` dans le dépôt, timestamptz
---     en production (21 objectifs sur 26 portent une heure). Le contrat
---     OKR attend `AAAA-MM-JJ` ; passer la prod en `date` tronque ces
---     heures, passer le dépôt en timestamptz casse le contrat.
 --
 -- Rejouable : chaque instruction est idempotente. Appliquée d'un bloc
 -- (SQL editor ou `apply_migration`, une transaction). Une valeur NULL
@@ -225,6 +231,32 @@ COMMENT ON TABLE public.org_notifications IS 'Notifications d''entreprise (mig. 
 COMMENT ON TABLE public.team_task_activity IS 'Journal append-only des modifications de tâches d''équipe (mig. 094). Écrit UNIQUEMENT par trigger : aucune policy INSERT/UPDATE/DELETE, volontairement.';
 COMMENT ON TABLE public.team_task_labels IS 'Jonction tâche ↔ label (mig. 093). Poser un label est un acte d''édition de la tâche.';
 COMMENT ON TABLE public.team_task_subtasks IS 'Sous-tâches d''une tâche d''équipe (mig. 092). Un seul niveau, pas de récursion. Accès délégué à can_access_team_task.';
+
+-- ── A.6 Événements : bornes dans l'ordre ───────────────────────────
+-- Échange simultané (les deux affectations lisent l'ancienne ligne).
+UPDATE public.events SET start_time = end_time, end_time = start_time WHERE end_time < start_time;
+ALTER TABLE public.events DROP CONSTRAINT IF EXISTS end_after_start;
+ALTER TABLE public.events ADD CONSTRAINT end_after_start CHECK (end_time >= start_time);
+
+-- ── A.7 Objectifs : dates calendaires ──────────────────────────────
+-- Seulement si la colonne porte encore une heure : sur une base où elle
+-- est déjà `date`, rien ne change.
+DO $okrs$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+              WHERE table_schema = 'public' AND table_name = 'okrs'
+                AND column_name = 'start_date' AND data_type = 'timestamp with time zone') THEN
+    ALTER TABLE public.okrs
+      ALTER COLUMN start_date TYPE date USING (start_date AT TIME ZONE 'Europe/Paris')::date,
+      ALTER COLUMN end_date TYPE date USING (end_date AT TIME ZONE 'Europe/Paris')::date;
+  END IF;
+END
+$okrs$;
+
+-- ── A.8 Catégories par défaut des nouveaux comptes ─────────────────
+DROP TRIGGER IF EXISTS on_auth_user_created_seed_categories ON auth.users;
+CREATE TRIGGER on_auth_user_created_seed_categories AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.seed_default_categories();
 
 -- ── B.1 Défauts servis par la production ───────────────────────────
 ALTER TABLE public.categories ALTER COLUMN color SET DEFAULT '#3B82F6'::text;
@@ -389,8 +421,35 @@ $mig$;
   IF liste IS NULL THEN r := r || 'ok 05 friend_requests et subscriptions'::text;
   ELSE ko := ko + 1; r := r || format('ECHEC 05 %s', liste); END IF;
 
+  -- ── 07 Événements, objectifs, inscription ─────────────────────────
+  SELECT string_agg(x, ', ') INTO liste FROM (
+    SELECT 'okrs.' || column_name || ' en ' || data_type AS x FROM information_schema.columns
+     WHERE table_schema = 'public' AND table_name = 'okrs' AND column_name IN ('start_date', 'end_date')
+       AND data_type <> 'date'
+    UNION ALL
+    SELECT 'manque end_after_start' WHERE NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'end_after_start')
+    UNION ALL
+    SELECT format('%s evenement(s) aux bornes inversees', count(*)) FROM public.events
+     WHERE end_time < start_time HAVING count(*) > 0
+    UNION ALL
+    SELECT 'manque on_auth_user_created_seed_categories'
+     WHERE NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgrelid = 'auth.users'::regclass
+       AND tgname = 'on_auth_user_created_seed_categories')
+  ) s;
+  IF liste IS NULL THEN r := r || 'ok 07 okrs en date, end_after_start, trigger de categories'::text;
+  ELSE ko := ko + 1; r := r || format('ECHEC 07 %s', liste); END IF;
+
   -- ── 06 Refus ──────────────────────────────────────────────────────
   INSERT INTO auth.users (id, email) VALUES (P, 'p259@proof.invalid');
+  SELECT count(*) INTO nb FROM public.categories WHERE user_id = P;
+  IF nb = 5 THEN r := r || 'ok 06e nouveau compte : 5 categories par defaut'::text;
+  ELSE ko := ko + 1; r := r || format('ECHEC 06e nouveau compte : %s categorie(s)', nb); END IF;
+  BEGIN
+    INSERT INTO public.events (user_id, title, start_time, end_time)
+      VALUES (P, 'preuve 259', now(), now() - interval '1 hour');
+    ko := ko + 1; r := r || 'ECHEC 06f evenement aux bornes inversees accepte'::text;
+  EXCEPTION WHEN check_violation THEN r := r || 'ok 06f evenement aux bornes inversees refuse (23514)'::text;
+  END;
   BEGIN
     INSERT INTO public.tasks (name, user_id) VALUES ('preuve 259', NULL);
     ko := ko + 1; r := r || 'ECHEC 06a tache sans proprietaire acceptee'::text;
