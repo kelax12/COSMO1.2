@@ -136,7 +136,7 @@ export default defineConfig({
         // Règle : seuil = mesure − 0,25 point, arrondi vers le bas au demi-point
         // (marge de 0,25 à 0,75 point, jamais plus d'un point). Remontée par
         // paliers et interdiction de baisser : `docs/TESTING.md` § Couverture.
-        'src/components/**': { lines: 40, statements: 38.5, functions: 28.5, branches: 34 },
+        'src/components/**': { lines: 47, statements: 45.5, functions: 34.5, branches: 40 },
         'src/pages/**': { lines: 45, statements: 44.5, functions: 35, branches: 33.5 },
         // ── Gates par fichier (code à fort risque) ──
         'src/modules/**/mappers.ts': { lines: 95, functions: 100, statements: 95, branches: 85 },
