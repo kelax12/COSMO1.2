@@ -136,7 +136,9 @@ export default defineConfig({
         // Règle : seuil = mesure − 0,25 point, arrondi vers le bas au demi-point
         // (marge de 0,25 à 0,75 point, jamais plus d'un point). Remontée par
         // paliers et interdiction de baisser : `docs/TESTING.md` § Couverture.
-        'src/components/**': { lines: 35.5, statements: 34.5, functions: 26.5, branches: 31.5 },
+        // B1 (2026-11-15) : CI noyau 43724973240 = 36,23 L / 35,05 S / 26,82 F / 32,11 B ; +5 tests de composants
+        // (ConfirmDiscardDialog, DemoConversionBanner, LocaleToggle, ShareLinkField, NewVersionBanner) = 36,68 / 35,47 / 27,07 / 32,44.
+        'src/components/**': { lines: 36, statements: 35, functions: 26.5, branches: 32 },
         'src/pages/**': { lines: 31.5, statements: 30.5, functions: 24.5, branches: 23.5 },
         // ── Gates par fichier (code à fort risque) ──
         'src/modules/**/mappers.ts': { lines: 95, functions: 100, statements: 95, branches: 85 },
