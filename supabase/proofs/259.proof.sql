@@ -86,9 +86,10 @@ BEGIN
 --   · noms d'index de `friend_requests`, index `idx_shared_tasks_friend` ;
 --   · `friend_requests.receiver_id` en ON DELETE SET NULL (4 demandes y
 --     ont déjà un destinataire supprimé) ;
---   · corps de `remove_friendship` et `toggle_habit_completion` tels
---     qu'en production (même comportement, sans le prédicat doublé ni la
---     variable inutilisée).
+--   · corps de `remove_friendship` (sans le prédicat doublé) et de
+--     `toggle_habit_completion` (sans la variable inutilisée) tels qu'en
+--     production ; `remove_friendship` passe en plus en `search_path = ''`
+--     (SECURITY DEFINER, noms déjà qualifiés), des deux côtés.
 --
 -- ── HORS DE CETTE MIGRATION (décision d'Axel) ──────────────────────
 --   · `events.end_after_start` : 3 événements de production finissent
@@ -257,7 +258,7 @@ ALTER TABLE public.friend_requests ADD CONSTRAINT friend_requests_receiver_id_fk
 -- `CREATE OR REPLACE` garde propriétaire et droits.
 CREATE OR REPLACE FUNCTION public.remove_friendship(p_friend_row_id uuid) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO 'public', 'pg_temp'
+    SET search_path = ''
     AS $$
 DECLARE
   v_caller UUID := auth.uid();
