@@ -11,6 +11,7 @@ import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
 import { makeApiError } from '@/lib/normalizeApiError';
 import type { IEventsRepository } from './repository';
 import { DEMO_EVENTS, seedMemberEvents, KNOWN_DEMO_MEMBER_IDS } from './local.seed';
+import { TASKS_STORAGE_KEY } from '@/modules/tasks/constants';
 
 const MEMBER_EVENTS_STORAGE_KEY = 'cosmo_demo_member_events';
 
@@ -40,6 +41,25 @@ function withDbDefaults(input: CreateEventInput): CreateEventInput {
   };
 }
 
+/**
+ * Identifiants des tâches de la démo, ou `null` tant que ses tâches ne sont pas
+ * semées (aucun lien à vérifier). La base porte `events.task_id REFERENCES tasks
+ * ON DELETE SET NULL` (mig. 004) : un lien vers une tâche absente est refusé à
+ * l'écriture et remis à `null` quand la tâche disparaît.
+ */
+function knownTaskIds(): Set<string> | null {
+  const tasks = safeParseArray<{ id: string }>(safeGetItem(TASKS_STORAGE_KEY));
+  return tasks ? new Set(tasks.map((t) => t.id)) : null;
+}
+
+/** Retire les clés `undefined` : la base ignore un champ absent (`mapEventToDb`), elle ne l'efface pas. */
+function definedOnly<T extends object>(patch: T): Partial<T> {
+  return Object.fromEntries(Object.entries(patch).filter(([, v]) => v !== undefined)) as Partial<T>;
+}
+
+/** Comparaison d'INSTANTS (`timestamptz`), jamais de chaînes : `…+00:00` et `….000Z` désignent le même. */
+const instantOf = (iso: string): number => Date.parse(iso);
+
 const byStartAsc = (a: CalendarEvent, b: CalendarEvent): number =>
   Date.parse(a.start) - Date.parse(b.start) || a.id.localeCompare(b.id);
 
@@ -59,7 +79,13 @@ export class LocalStorageEventsRepository implements IEventsRepository {
       this.saveEvents(DEMO_EVENTS);
       return DEMO_EVENTS;
     }
-    return stored;
+    const known = knownTaskIds();
+    if (!known) return stored;
+    return stored.map((e) => {
+      if (!e.taskId || known.has(e.taskId)) return e;
+      const { taskId: _gone, ...rest } = e;
+      return rest;
+    });
   }
 
   /**
@@ -92,7 +118,7 @@ export class LocalStorageEventsRepository implements IEventsRepository {
   }
 
   async getLinkedToTasks(): Promise<CalendarEvent[]> {
-    return this.getEvents().filter((e) => !!e.taskId);
+    return this.getEvents().filter((e) => !!e.taskId).sort(byStartAsc);
   }
 
   async getWindow(startISO: string, endISO: string): Promise<CalendarEvent[]> {
@@ -126,7 +152,7 @@ export class LocalStorageEventsRepository implements IEventsRepository {
   }
 
   async getWindowForUser(userId: string, startISO: string, endISO: string): Promise<CalendarEvent[]> {
-    return selectEventsInWindow(this.getMemberEvents(userId), startISO, endISO);
+    return selectEventsInWindow(this.getMemberEvents(userId), startISO, endISO).sort(byStartAsc);
   }
 
   async createForUser(userId: string, input: CreateEventInput): Promise<CalendarEvent> {
@@ -148,19 +174,19 @@ export class LocalStorageEventsRepository implements IEventsRepository {
     }
 
     if (filters.startAfter) {
-      events = events.filter(e => e.start >= filters.startAfter!);
+      events = events.filter(e => instantOf(e.start) >= instantOf(filters.startAfter!));
     }
 
     if (filters.startBefore) {
-      events = events.filter(e => e.start <= filters.startBefore!);
+      events = events.filter(e => instantOf(e.start) <= instantOf(filters.startBefore!));
     }
 
     if (filters.endAfter) {
-      events = events.filter(e => e.end >= filters.endAfter!);
+      events = events.filter(e => instantOf(e.end) >= instantOf(filters.endAfter!));
     }
 
     if (filters.endBefore) {
-      events = events.filter(e => e.end <= filters.endBefore!);
+      events = events.filter(e => instantOf(e.end) <= instantOf(filters.endBefore!));
     }
 
     return events;
@@ -172,6 +198,10 @@ export class LocalStorageEventsRepository implements IEventsRepository {
 
   async create(input: CreateEventInput, options?: CreateOptions): Promise<CalendarEvent> {
     const events = this.getEvents();
+    const known = knownTaskIds();
+    if (input.taskId && known && !known.has(input.taskId)) throw makeApiError('invalid_input');
+    // Clé primaire : un identifiant déjà pris est refusé (23505), pas doublé.
+    if (options?.restoreId && events.some((e) => e.id === options.restoreId)) throw makeApiError('invalid_input');
     const newEvent: CalendarEvent = {
       ...withDbDefaults(input),
       // Parite avec le repository Supabase : `restoreId` vient d'un
@@ -191,7 +221,9 @@ export class LocalStorageEventsRepository implements IEventsRepository {
       return this.updateMemberEvent(id, updates);
     }
 
-    const updatedEvent: CalendarEvent = { ...events[index], ...updates };
+    const known = knownTaskIds();
+    if (updates.taskId && known && !known.has(updates.taskId)) throw makeApiError('invalid_input');
+    const updatedEvent: CalendarEvent = { ...events[index], ...definedOnly(updates) };
     assertEvent(updatedEvent);
     events[index] = updatedEvent;
     this.saveEvents(events);
@@ -203,7 +235,7 @@ export class LocalStorageEventsRepository implements IEventsRepository {
     for (const uid of Object.keys(store)) {
       const idx = store[uid].findIndex(e => e.id === id);
       if (idx !== -1) {
-        const updated: CalendarEvent = { ...store[uid][idx], ...updates };
+        const updated: CalendarEvent = { ...store[uid][idx], ...definedOnly(updates) };
         assertEvent(updated);
         store[uid][idx] = updated;
         this.saveMemberStore(store);

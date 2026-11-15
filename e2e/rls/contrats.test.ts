@@ -120,6 +120,7 @@ eventsContract(SIDE, async () => {
   const tasks = new SupabaseTasksRepository();
   return {
     repo: new SupabaseEventsRepository(),
+    deleteTask: (id) => tasks.delete(id),
     // `events.task_id` est une clé étrangère : la tâche liée doit exister.
     newTaskId: async () =>
       (await tasks.create({ name: 'Tâche de l’agenda', priority: 2, category: '', deadline: new Date().toISOString(), estimatedTime: 30, bookmarked: false, completed: false })).id,

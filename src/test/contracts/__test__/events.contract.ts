@@ -19,6 +19,8 @@ export interface EventsContractContext {
   repo: IEventsRepository;
   /** Identifiant d'une tâche existante (la colonne `task_id` est une clé étrangère). */
   newTaskId: () => Promise<string>;
+  /** Supprime une tâche : la base remet `events.task_id` à NULL (mig. 004, ON DELETE SET NULL). */
+  deleteTask: (id: string) => Promise<void>;
 }
 
 const pad = (n: number): string => String(n).padStart(2, '0');
@@ -38,8 +40,9 @@ export function eventsContract(side: string, make: () => Promise<EventsContractC
   describe(`contrat IEventsRepository · ${side}`, () => {
     let repo: IEventsRepository;
     let newTaskId: () => Promise<string>;
+    let deleteTask: (id: string) => Promise<void>;
     beforeAll(async () => {
-      ({ repo, newTaskId } = await make());
+      ({ repo, newTaskId, deleteTask } = await make());
     });
 
     const find = async (id: string): Promise<CalendarEvent | undefined> => (await repo.getAll()).find((e) => e.id === id);
@@ -241,6 +244,79 @@ export function eventsContract(side: string, make: () => Promise<EventsContractC
         cursorDate: first.nextCursorDate ?? undefined,
       });
       expect(second.data[0]?.id).toBe(a.id);
+    });
+
+    // Fuseau horaire : la base compare des instants (`timestamptz`) et rend `…+00:00`,
+    // l'application écrit `….000Z` ; un décalage `+02:00` désigne le même instant.
+    contractCase(opts, 'un événement écrit avec un décalage horaire se relit au même instant', async () => {
+      const created = await repo.create(
+        input(2074, { start: '2074-03-10T12:00:00+02:00', end: '2074-03-10T13:00:00+02:00' }),
+      );
+      const read = await find(created.id);
+      expect([instant(read!.start), instant(read!.end)]).toEqual([instant(at(2074, 3, 10, 10)), instant(at(2074, 3, 10, 11))]);
+    });
+
+    contractCase(opts, 'getWindow et getFiltered comparent des instants, quel que soit le décalage des bornes', async () => {
+      const year = 2075;
+      const e = await repo.create(input(year, { start: at(year, 3, 10, 10), end: at(year, 3, 10, 11) }));
+      // 12:00+02:00 = 10:00Z : l'événement touche exactement la borne de début de la fenêtre.
+      const window = await repo.getWindow(`${year}-03-10T12:00:00+02:00`, `${year}-03-10T14:00:00+02:00`);
+      expect(window.map((x) => x.id)).toContain(e.id);
+      const outside = await repo.getWindow(`${year}-03-10T13:01:00+02:00`, `${year}-03-10T14:00:00+02:00`);
+      expect(outside.map((x) => x.id)).not.toContain(e.id);
+      const filtered = await repo.getFiltered({ startAfter: `${year}-03-10T12:00:00+02:00`, startBefore: `${year}-03-10T12:00:00+02:00` });
+      expect(filtered.map((x) => x.id)).toEqual([e.id]);
+    });
+
+    contractCase(opts, 'getLinkedToTasks ne rend que les événements liés, début croissant', async () => {
+      const taskId = await newTaskId();
+      const late = await repo.create(input(2076, { taskId, start: at(2076, 3, 12, 10), end: at(2076, 3, 12, 11) }));
+      const early = await repo.create(input(2076, { taskId, start: at(2076, 3, 10, 10), end: at(2076, 3, 10, 11) }));
+      const free = await repo.create(input(2076));
+      const ids = (await repo.getLinkedToTasks()).map((e) => e.id);
+      expect(ids).not.toContain(free.id);
+      expect(ids.filter((id) => id === early.id || id === late.id)).toEqual([early.id, late.id]);
+    });
+
+    contractCase(opts, 'une mise à jour sans valeur pour un champ ne l’efface pas', async () => {
+      const created = await repo.create(input(2077, { color: '#3B82F6', description: 'Gardée' }));
+      await repo.update(created.id, { title: 'Autre titre', color: undefined, description: undefined });
+      const read = await find(created.id);
+      expect([read!.title, read!.color, read!.description]).toEqual(['Autre titre', '#3B82F6', 'Gardée']);
+    });
+
+    contractCase(opts, 'un identifiant déjà pris est refusé à la restauration', async () => {
+      const created = await repo.create(input(2078));
+      expect(await rejects(repo.create(input(2078), { restoreId: created.id }))).toBe(true);
+      expect((await repo.getAll()).filter((e) => e.id === created.id)).toHaveLength(1);
+    });
+
+    contractCase(opts, 'lier à une tâche inconnue est refusé, supprimer la tâche détache l’événement', async () => {
+      expect(await rejects(repo.create(input(2080, { taskId: crypto.randomUUID() })))).toBe(true);
+      const taskId = await newTaskId();
+      const linked = await repo.create(input(2080, { taskId }));
+      await deleteTask(taskId);
+      const read = await find(linked.id);
+      expect(read, 'l’événement survit à la tâche').toBeDefined();
+      expect(read!.taskId ?? null).toBeNull();
+      expect((await repo.getLinkedToTasks()).map((e) => e.id)).not.toContain(linked.id);
+    });
+
+    contractCase(opts, 'getPage enchaîne ses pages sans doublon ni trou, du plus tardif au plus ancien', async () => {
+      const year = 2098;
+      const made: CalendarEvent[] = [];
+      for (let d = 1; d <= 5; d++) made.push(await repo.create(input(year, { start: at(year, 5, d, 10), end: at(year, 5, d, 11) })));
+      const seen: string[] = [];
+      let cursor: { id?: string; date?: string } = {};
+      for (let guard = 0; guard < 500; guard++) {
+        const page = await repo.getPage({ limit: 2, cursor: cursor.id, cursorDate: cursor.date });
+        seen.push(...page.data.map((e) => e.id));
+        if (!page.hasMore) break;
+        cursor = { id: page.nextCursor ?? undefined, date: page.nextCursorDate ?? undefined };
+      }
+      expect(new Set(seen).size, 'aucun doublon entre pages').toBe(seen.length);
+      expect(seen.filter((id) => made.some((m) => m.id === id))).toEqual(made.map((m) => m.id).reverse());
+      expect(seen.length).toBe(await repo.countAll());
     });
   });
 }

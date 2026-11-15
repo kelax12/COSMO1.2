@@ -70,6 +70,7 @@ eventsContract(SIDE, async () => {
   const tasks = new LocalStorageTasksRepository();
   return {
     repo: new LocalStorageEventsRepository(),
+    deleteTask: (id) => tasks.delete(id),
     // La démo n'a pas de clé étrangère : un identifiant de tâche suffit, mais on en crée une vraie.
     newTaskId: async () =>
       (await tasks.create({ name: 'Tâche de l’agenda', priority: 2, category: '', deadline: '', estimatedTime: 30, bookmarked: false, completed: false })).id,

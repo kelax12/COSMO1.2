@@ -67,4 +67,17 @@ describe('LocalStorageEventsRepository', () => {
     expect(p2.data.map((e) => e.id)).toEqual(['e1']);
     expect(p2.hasMore).toBe(false);
   });
+
+  // Agenda d'un membre géré (événements d'équipe) : pas de contrat joué sur la base
+  // (il exige une hiérarchie à deux comptes, cf. events.contract.ts), la démo se teste seule.
+  it('createForUser / getWindowForUser : fenêtre par début croissant, auteur = le manager', async () => {
+    const win = ['2090-03-01T00:00:00.000Z', '2090-03-31T00:00:00.000Z'] as const;
+    const late = await repo.createForUser('member-x', { title: 'Tard', start: '2090-03-12T10:00:00.000Z', end: '2090-03-12T11:00:00.000Z' });
+    const early = await repo.createForUser('member-x', { title: 'Tôt', start: '2090-03-10T10:00:00.000Z', end: '2090-03-10T11:00:00.000Z' });
+    expect(late.createdBy).toBe('demo-user');
+    expect((await repo.getWindowForUser('member-x', ...win)).map((e) => e.id)).toEqual([early.id, late.id]);
+    expect((await repo.getWindow(...win)).map((e) => e.id)).not.toContain(early.id);
+    const updated = await repo.update(early.id, { title: 'Tôt 2', color: undefined });
+    expect(updated.title).toBe('Tôt 2');
+  });
 });
