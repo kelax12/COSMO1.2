@@ -4,7 +4,8 @@
 
 import type { TeamList, CreateTeamListInput, UpdateTeamListInput } from './types';
 import { TEAM_LISTS_STORAGE_KEY, TEAM_LIST_TASKS_STORAGE_KEY } from './constants';
-import { safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
+import { safeGetItem, safeParseArray, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
+import { TEAM_TASKS_STORAGE_KEY } from '@/modules/team-projects/constants';
 import { makeApiError } from '@/lib/normalizeApiError';
 import type { ITeamListsRepository } from './repository';
 import { DEMO_LINKS, localizedDemoTeamLists } from './local.seed';
@@ -54,7 +55,8 @@ export class LocalStorageTeamListsRepository implements ITeamListsRepository {
 
   async updateList(listId: string, input: UpdateTeamListInput): Promise<void> {
     const all = this.lists();
-    if (!all.some((l) => l.id === listId)) throw makeApiError('not_found');
+    // Comme l'UPDATE SQL : une liste absente ne lève rien.
+    if (!all.some((l) => l.id === listId)) return;
     writeJsonOrThrow(TEAM_LISTS_STORAGE_KEY, all.map((l) => (l.id === listId ? { ...l, ...input } : l)));
   }
 
@@ -65,6 +67,10 @@ export class LocalStorageTeamListsRepository implements ITeamListsRepository {
   }
 
   async addTask(listId: string, taskId: string): Promise<void> {
+    // Miroir des deux clés étrangères de `team_list_tasks` : liste ET tâche doivent exister.
+    if (!this.lists().some((l) => l.id === listId)) throw makeApiError('not_found');
+    const tasks = safeParseArray<{ id: string }>(safeGetItem(TEAM_TASKS_STORAGE_KEY)) ?? [];
+    if (!tasks.some((t) => t.id === taskId)) throw makeApiError('not_found');
     const links = this.links();
     // Miroir de la PK composite : deux fois la même tâche est un no-op.
     if (links.some((k) => k.listId === listId && k.taskId === taskId)) return;

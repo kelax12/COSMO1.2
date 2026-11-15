@@ -66,7 +66,12 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
   // ═══════════════════════════════════════════════════════════════════
 
   async getAll(): Promise<OKR[]> {
-    return this.getOKRs();
+    return this.newestFirst(this.getOKRs());
+  }
+
+  /** La base trie `created_at DESC` ; la démo ajoute en fin de tableau, donc l'ordre s'inverse. */
+  private newestFirst(okrs: OKR[]): OKR[] {
+    return [...okrs].reverse();
   }
 
   async getById(id: string): Promise<OKR | null> {
@@ -76,7 +81,7 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
 
   async getByCategory(category: string): Promise<OKR[]> {
     const okrs = this.getOKRs();
-    return okrs.filter(o => o.category === category);
+    return this.newestFirst(okrs.filter(o => o.category === category));
   }
 
   async getFiltered(filters: OKRFilters): Promise<OKR[]> {
@@ -98,7 +103,7 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
       okrs = okrs.filter(o => o.endDate <= filters.endBefore!);
     }
 
-    return okrs;
+    return this.newestFirst(okrs);
   }
 
   // ═══════════════════════════════════════════════════════════════════

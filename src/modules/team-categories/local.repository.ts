@@ -4,7 +4,9 @@
 
 import { TeamCategory, CreateTeamCategoryInput, UpdateTeamCategoryInput } from './types';
 import { TEAM_CATEGORIES_STORAGE_KEY } from './constants';
-import { safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
+import { safeGetItem, safeParseArray, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
+import { TEAM_PROJECTS_STORAGE_KEY, TEAM_TASKS_STORAGE_KEY } from '@/modules/team-projects/constants';
+import { TEAM_OKRS_STORAGE_KEY } from '@/modules/team-okrs/constants';
 import { makeApiError } from '@/lib/normalizeApiError';
 import type { ITeamCategoriesRepository } from './repository';
 import { wouldCreateCycle, wouldExceedMaxDepth } from './tree';
@@ -28,6 +30,13 @@ function readOrSeed(): TeamCategory[] {
 // un doublon de fratrie RENDAIT la catégorie existante au lieu d'échouer, et ni
 // la boucle, ni le cycle, ni la profondeur n'étaient gardés.
 
+/** Miroir de `ON DELETE SET NULL` (mig. 111, 148) sur projets, tâches et OKR d'équipe. */
+function detachCategory(storageKey: string, categoryId: string): void {
+  const rows = safeParseArray<{ categoryId?: string | null }>(safeGetItem(storageKey));
+  if (!rows || !rows.some((r) => r.categoryId === categoryId)) return;
+  writeJsonOrThrow(storageKey, rows.map((r) => (r.categoryId === categoryId ? { ...r, categoryId: null } : r)));
+}
+
 /** Les deux index partiels d'unicité par fratrie (org, parent, nom). */
 function assertSiblingNameFree(
   all: readonly TeamCategory[],
@@ -37,7 +46,7 @@ function assertSiblingNameFree(
   selfId: string | null,
 ): void {
   const taken = all.some(
-    (c) => c.id !== selfId && c.orgId === orgId && c.parentId === parentId && c.name.toLowerCase() === name.toLowerCase(),
+    (c) => c.id !== selfId && c.orgId === orgId && c.parentId === parentId && c.name === name,
   );
   if (taken) throw makeApiError('invalid_input');
 }
@@ -61,7 +70,8 @@ export class LocalStorageTeamCategoriesRepository implements ITeamCategoriesRepo
   }
 
   async getCategories(orgId: string): Promise<TeamCategory[]> {
-    return this.getAll().filter((c) => c.orgId === orgId);
+    // Tri de la base : par nom.
+    return this.getAll().filter((c) => c.orgId === orgId).sort((a, b) => a.name.localeCompare(b.name));
   }
 
   async createCategory(orgId: string, input: CreateTeamCategoryInput): Promise<TeamCategory> {
@@ -107,6 +117,12 @@ export class LocalStorageTeamCategoriesRepository implements ITeamCategoriesRepo
   }
 
   async deleteCategory(categoryId: string): Promise<void> {
-    this.save(this.getAll().filter((c) => c.id !== categoryId));
+    const all = this.getAll();
+    // `ON DELETE NO ACTION` sur `parent_id` (mig. 148) : une branche ne part jamais en silence.
+    if (all.some((c) => c.parentId === categoryId)) throw makeApiError('category_has_children');
+    this.save(all.filter((c) => c.id !== categoryId));
+    for (const key of [TEAM_PROJECTS_STORAGE_KEY, TEAM_TASKS_STORAGE_KEY, TEAM_OKRS_STORAGE_KEY]) {
+      detachCategory(key, categoryId);
+    }
   }
 }

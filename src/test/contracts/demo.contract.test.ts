@@ -50,7 +50,11 @@ beforeAll(() => {
 });
 
 tasksContract(SIDE, async () => ({ repo: new LocalStorageTasksRepository() }));
-categoriesContract(SIDE, async () => ({ repo: new LocalStorageCategoriesRepository() }));
+categoriesContract(SIDE, async () => ({
+  repo: new LocalStorageCategoriesRepository(),
+  tasks: new LocalStorageTasksRepository(),
+  okrs: new LocalStorageOKRsRepository(),
+}));
 listsContract(SIDE, async () => ({ repo: new LocalStorageListsRepository() }));
 habitsContract(SIDE, async () => ({
   repo: new LocalStorageHabitsRepository(),
@@ -81,7 +85,7 @@ okrsContract(SIDE, async () => {
     okrs,
     krCompletions,
   );
-  return { okrs, krCompletions, stats };
+  return { okrs, krCompletions, stats, categories: new LocalStorageCategoriesRepository() };
 });
 
 teamTasksContract(SIDE, async () => ({
@@ -94,7 +98,12 @@ teamOkrsContract(SIDE, async () => ({
   orgId: DEMO_ORG_ID,
   userId: DEMO_USER_ID,
 }));
-teamCategoriesContract(SIDE, async () => ({ repo: new LocalStorageTeamCategoriesRepository(), orgId: DEMO_ORG_ID }));
+teamCategoriesContract(SIDE, async () => ({
+  repo: new LocalStorageTeamCategoriesRepository(),
+  orgId: DEMO_ORG_ID,
+  projects: new LocalStorageTeamProjectsRepository(),
+  okrs: new LocalStorageTeamOKRsRepository(),
+}));
 teamListsContract(SIDE, async () => {
   const projects = new LocalStorageTeamProjectsRepository();
   const projectId = (await projects.createProject(DEMO_ORG_ID, { name: 'Projet des listes' })).id;

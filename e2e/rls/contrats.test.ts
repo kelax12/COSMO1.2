@@ -109,7 +109,11 @@ afterAll(async () => {
 // PAR-01 et PAR-02 (priorité 0 et échéance NULL refusées par la mig. 001)
 // sont corrigées par la mig. 249 : plus aucune divergence déclarée ici.
 tasksContract(SIDE, async () => ({ repo: new SupabaseTasksRepository() }));
-categoriesContract(SIDE, async () => ({ repo: new SupabaseCategoriesRepository() }));
+categoriesContract(SIDE, async () => ({
+  repo: new SupabaseCategoriesRepository(),
+  tasks: new SupabaseTasksRepository(),
+  okrs: new SupabaseOKRsRepository(),
+}));
 listsContract(SIDE, async () => ({ repo: new SupabaseListsRepository() }));
 habitsContract(SIDE, async () => ({ repo: new SupabaseHabitsRepository(), stats: new SupabaseStatsRepository() }));
 eventsContract(SIDE, async () => {
@@ -125,6 +129,7 @@ okrsContract(SIDE, async () => ({
   okrs: new SupabaseOKRsRepository(),
   krCompletions: new SupabaseKRCompletionsRepository(),
   stats: new SupabaseStatsRepository(),
+  categories: new SupabaseCategoriesRepository(),
 }));
 
 teamTasksContract(SIDE, async () => ({ repo: new SupabaseTeamProjectsRepository(), orgId, userId: user.id }));
@@ -132,7 +137,12 @@ teamTasksContract(SIDE, async () => ({ repo: new SupabaseTeamProjectsRepository(
 // distinct par KR du lot) : le cas d'ordre pose six KR, donc il ne passerait par
 // hasard qu'une fois sur 720 si la divergence revenait.
 teamOkrsContract(SIDE, async () => ({ repo: new SupabaseTeamOKRsRepository(), orgId, userId: user.id }));
-teamCategoriesContract(SIDE, async () => ({ repo: new SupabaseTeamCategoriesRepository(), orgId }));
+teamCategoriesContract(SIDE, async () => ({
+  repo: new SupabaseTeamCategoriesRepository(),
+  orgId,
+  projects: new SupabaseTeamProjectsRepository(),
+  okrs: new SupabaseTeamOKRsRepository(),
+}));
 teamListsContract(SIDE, async () => {
   const projects = new SupabaseTeamProjectsRepository();
   const projectId = (await projects.createProject(orgId, { name: 'Projet des listes' })).id;

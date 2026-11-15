@@ -55,7 +55,7 @@ describe('LocalStorageListsRepository', () => {
     await expect(repo.update('absent', { name: 'z' })).rejects.toThrow();
     await repo.delete('x');
     expect((await repo.getAll()).some((l) => l.id === 'x')).toBe(false);
-    await expect(repo.delete('absent')).rejects.toThrow();
+    await expect(repo.delete('absent')).resolves.toBeUndefined();
   });
 
   it('addTaskToList est idempotent, removeTaskFromList retire', async () => {

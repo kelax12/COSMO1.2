@@ -2,6 +2,7 @@
 // OKR), démo et Supabase. Cadre et règle des divergences : `./harness.ts`.
 import { describe, expect, beforeAll } from 'vitest';
 import type { IOKRsRepository } from '@/modules/okrs/repository';
+import type { ICategoriesRepository } from '@/modules/categories/repository';
 import type { IKRCompletionsRepository } from '@/modules/kr-completions/repository';
 import type { IStatsRepository } from '@/modules/stats/repository';
 import type { CreateOKRInput, KeyResult } from '@/modules/okrs/types';
@@ -11,6 +12,7 @@ export interface OkrsContractContext {
   okrs: IOKRsRepository;
   krCompletions: IKRCompletionsRepository;
   stats: IStatsRepository;
+  categories: ICategoriesRepository;
 }
 
 const kr = (over: Partial<KeyResult> = {}): KeyResult => ({
@@ -111,6 +113,28 @@ export function okrsContract(side: string, make: () => Promise<OkrsContractConte
       await ctx.okrs.updateKeyResult(created.id, a.id, { currentValue: 2 });
       // C'est exactement la valeur que la production a rendue à 0 pendant dix-sept jours.
       expect((await okrTimeToday()) - before).toBe(50);
+    });
+
+    contractCase(opts, 'getAll rend le plus récent d’abord', async () => {
+      const first = await ctx.okrs.create(okrInput([kr()]));
+      const second = await ctx.okrs.create(okrInput([kr()]));
+      const order = (await ctx.okrs.getAll()).map((o) => o.id).filter((id) => id === first.id || id === second.id);
+      expect(order).toEqual([second.id, first.id]);
+    });
+
+    contractCase(opts, 'le filtre par catégorie ne rend que les OKR de la catégorie, le plus récent d’abord', async () => {
+      const category = await ctx.categories.create({ name: unique('Catégorie OKR') });
+      const other = await ctx.categories.create({ name: unique('Autre catégorie') });
+      const inCat = (c: string) => ({ ...okrInput([kr()]), category: c });
+      const a = await ctx.okrs.create(inCat(category.id));
+      const b = await ctx.okrs.create(inCat(category.id));
+      const elsewhere = await ctx.okrs.create(inCat(other.id));
+      const uncategorised = await ctx.okrs.create(okrInput([kr()]));
+      const expected = [b.id, a.id];
+      expect((await ctx.okrs.getByCategory(category.id)).map((o) => o.id), 'getByCategory').toEqual(expected);
+      expect((await ctx.okrs.getFiltered({ category: category.id })).map((o) => o.id), 'getFiltered').toEqual(expected);
+      const all = (await ctx.okrs.getAll()).map((o) => o.id);
+      expect(all).toEqual(expect.arrayContaining([elsewhere.id, uncategorised.id]));
     });
 
     contractCase(opts, 'supprimer, puis « Annuler » sous l’identifiant d’origine (R-08)', async () => {

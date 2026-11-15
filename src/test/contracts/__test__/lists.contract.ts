@@ -55,5 +55,36 @@ export function listsContract(side: string, make: () => Promise<ListsContractCon
       const restored = await repo.create({ name: created.name, color: 'red' }, { restoreId: created.id });
       expect(restored.id).toBe(created.id);
     });
+
+    contractCase(opts, 'une nouvelle liste se place en dernier, quel que soit son nom', async () => {
+      const tag = unique('Fin');
+      const zeta = await repo.create({ name: `${tag} Zeta`, color: 'blue' });
+      const alpha = await repo.create({ name: `${tag} Alpha`, color: 'blue' });
+      const order = (await repo.getAll()).map((l) => l.id).filter((id) => id === zeta.id || id === alpha.id);
+      expect(order).toEqual([zeta.id, alpha.id]);
+    });
+
+    contractCase(opts, 'getAll trie par position, puis par nom', async () => {
+      const tag = unique('Pos');
+      const c = await repo.create({ name: `${tag} C`, color: 'blue', position: 7000 });
+      const b = await repo.create({ name: `${tag} B`, color: 'blue', position: 6000 });
+      const a = await repo.create({ name: `${tag} A`, color: 'blue', position: 6000 });
+      const order = (await repo.getAll()).map((l) => l.id).filter((id) => [a.id, b.id, c.id].includes(id));
+      expect(order).toEqual([a.id, b.id, c.id]);
+    });
+
+    contractCase(opts, 'une liste intelligente garde son type et sa règle', async () => {
+      const created = await repo.create({ name: unique('Intelligente'), color: 'red', type: 'smart', smartRule: 'overdue' });
+      const read = (await repo.getAll()).find((l) => l.id === created.id);
+      expect(read && [read.type, read.smartRule]).toEqual(['smart', 'overdue']);
+    });
+
+    contractCase(opts, 'supprimer un identifiant inconnu est sans effet (DELETE SQL)', async () => {
+      await repo.delete(crypto.randomUUID());
+    });
+
+    contractCase(opts, 'mettre à jour une liste inconnue est refusé', async () => {
+      expect(await rejects(repo.update(crypto.randomUUID(), { name: 'fantôme' }))).toBe(true);
+    });
   });
 }

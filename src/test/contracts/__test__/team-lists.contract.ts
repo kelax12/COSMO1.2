@@ -2,7 +2,7 @@
 // Supabase. Pendant de `lists.contract.ts`. Cadre : `./harness.ts`.
 import { describe, expect, beforeAll } from 'vitest';
 import type { ITeamListsRepository } from '@/modules/team-lists/repository';
-import { contractCase, unique, type ContractOptions } from './harness';
+import { contractCase, rejects, unique, type ContractOptions } from './harness';
 
 export interface TeamListsContractContext {
   repo: ITeamListsRepository;
@@ -55,6 +55,55 @@ export function teamListsContract(
       const created = await ctx.repo.createList(ctx.orgId, { name: unique('Éphémère'), color: 'red' });
       await ctx.repo.deleteList(created.id);
       expect(await find(created.id)).toBeUndefined();
+    });
+
+    contractCase(opts, 'les listes se relisent dans l’ordre de création (position = fin de barre)', async () => {
+      const tag = unique('Ordre');
+      const first = await ctx.repo.createList(ctx.orgId, { name: `${tag} Zeta`, color: 'blue' });
+      const second = await ctx.repo.createList(ctx.orgId, { name: `${tag} Alpha`, color: 'blue' });
+      const order = (await ctx.repo.getLists(ctx.orgId)).map((l) => l.id).filter((id) => id === first.id || id === second.id);
+      expect(order).toEqual([first.id, second.id]);
+    });
+
+    contractCase(opts, 'repositionner une liste change l’ordre de lecture', async () => {
+      const a = await ctx.repo.createList(ctx.orgId, { name: unique('A'), color: 'blue' });
+      const b = await ctx.repo.createList(ctx.orgId, { name: unique('B'), color: 'blue' });
+      await ctx.repo.updateList(a.id, { position: 9000 });
+      await ctx.repo.updateList(b.id, { position: 8000 });
+      const order = (await ctx.repo.getLists(ctx.orgId)).map((l) => l.id).filter((id) => id === a.id || id === b.id);
+      expect(order).toEqual([b.id, a.id]);
+    });
+
+    contractCase(opts, 'une liste intelligente garde son type et sa règle', async () => {
+      const created = await ctx.repo.createList(ctx.orgId, { name: unique('Intelligente'), color: 'red', type: 'smart', smartRule: 'high-priority' });
+      const read = await find(created.id);
+      expect(read && [read.type, read.smartRule]).toEqual(['smart', 'high-priority']);
+    });
+
+    contractCase(opts, 'le nom est rogné à l’écriture', async () => {
+      const name = unique('Rognée');
+      const created = await ctx.repo.createList(ctx.orgId, { name: `  ${name}  `, color: 'blue' });
+      expect((await find(created.id))?.name).toBe(name);
+    });
+
+    contractCase(opts, 'supprimer une liste emporte ses rangements, sans toucher la tâche', async () => {
+      const list = await ctx.repo.createList(ctx.orgId, { name: unique('Liste'), color: 'blue' });
+      const taskId = await ctx.newTaskId();
+      await ctx.repo.addTask(list.id, taskId);
+      await ctx.repo.deleteList(list.id);
+      const other = await ctx.repo.createList(ctx.orgId, { name: unique('Autre'), color: 'blue' });
+      await ctx.repo.addTask(other.id, taskId);
+      expect((await find(other.id))?.taskIds).toEqual([taskId]);
+    });
+
+    contractCase(opts, 'ranger dans une liste inconnue, ou une tâche inconnue, est refusé (clés étrangères)', async () => {
+      const list = await ctx.repo.createList(ctx.orgId, { name: unique('Liste'), color: 'blue' });
+      expect(await rejects(ctx.repo.addTask(crypto.randomUUID(), await ctx.newTaskId())), 'liste inconnue').toBe(true);
+      expect(await rejects(ctx.repo.addTask(list.id, crypto.randomUUID())), 'tâche inconnue').toBe(true);
+    });
+
+    contractCase(opts, 'mettre à jour une liste inconnue ne lève rien (UPDATE SQL sans ligne)', async () => {
+      await ctx.repo.updateList(crypto.randomUUID(), { name: 'fantôme' });
     });
   });
 }

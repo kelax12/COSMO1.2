@@ -33,6 +33,27 @@ import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
 import { makeApiError } from '@/lib/normalizeApiError';
 import type { ICategoriesRepository } from './repository';
 import { localizedDemoCategories } from './local.seed';
+import { TASKS_STORAGE_KEY } from '@/modules/tasks/constants';
+import { OKRS_STORAGE_KEY } from '@/modules/okrs/constants';
+
+/** Miroir de `ON DELETE SET NULL` (mig. 145) : l'élément reste, il perd seulement son classement. */
+function detachCategory(storageKey: string, categoryId: string): void {
+  const rows = safeParseArray<{ category?: string }>(safeGetItem(storageKey));
+  if (!rows || !rows.some((r) => r.category === categoryId)) return;
+  writeJsonOrThrow(storageKey, rows.map((r) => (r.category === categoryId ? { ...r, category: '' } : r)));
+}
+
+/** Les deux index partiels d'unicité par fratrie (user, parent, nom), mig. 143. Sensibles à la casse, comme la base. */
+function assertSiblingNameFree(
+  all: readonly Category[],
+  parentId: string | null,
+  name: string,
+  selfId: string | null,
+): void {
+  if (all.some((c) => c.id !== selfId && (c.parentId ?? null) === parentId && c.name === name)) {
+    throw makeApiError('invalid_input');
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════════
 // LOCAL STORAGE REPOSITORY IMPLEMENTATION
@@ -86,7 +107,8 @@ export class LocalStorageCategoriesRepository implements ICategoriesRepository {
   // ═══════════════════════════════════════════════════════════════════
 
   async getAll(): Promise<Category[]> {
-    return this.getCategories();
+    // Tri de la base : fratrie (`position`) puis nom.
+    return [...this.getCategories()].sort((a, b) => (a.position ?? 0) - (b.position ?? 0) || a.name.localeCompare(b.name));
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -99,6 +121,7 @@ export class LocalStorageCategoriesRepository implements ICategoriesRepository {
     const parentId = input.parentId ?? null;
 
     this.assertTreeIsValid(id, parentId, categories);
+    assertSiblingNameFree(categories, parentId, input.name, null);
 
     const newCategory: Category = {
       name: input.name,
@@ -125,6 +148,16 @@ export class LocalStorageCategoriesRepository implements ICategoriesRepository {
       this.assertTreeIsValid(id, updates.parentId, categories);
     }
 
+    if (updates.name !== undefined || updates.parentId !== undefined) {
+      const current = categories[index];
+      assertSiblingNameFree(
+        categories,
+        updates.parentId !== undefined ? updates.parentId : (current.parentId ?? null),
+        updates.name ?? current.name,
+        id,
+      );
+    }
+
     const updatedCategory: Category = { ...categories[index], ...updates };
     categories[index] = updatedCategory;
     this.saveCategories(categories);
@@ -140,12 +173,9 @@ export class LocalStorageCategoriesRepository implements ICategoriesRepository {
       throw makeApiError('category_has_children');
     }
 
-    const filtered = categories.filter(c => c.id !== id);
-
-    if (filtered.length === categories.length) {
-      throw makeApiError('not_found');
-    }
-
-    this.saveCategories(filtered);
+    // Idempotent comme le `DELETE` SQL : un identifiant absent ne lève rien.
+    this.saveCategories(categories.filter(c => c.id !== id));
+    detachCategory(TASKS_STORAGE_KEY, id);
+    detachCategory(OKRS_STORAGE_KEY, id);
   }
 }

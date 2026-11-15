@@ -2,12 +2,17 @@
 // démo et Supabase. Pendant de `categories.contract.ts`. Cadre : `./harness.ts`.
 import { describe, expect, beforeAll } from 'vitest';
 import type { ITeamCategoriesRepository } from '@/modules/team-categories/repository';
+import type { ITeamProjectsRepository } from '@/modules/team-projects/repository';
+import type { ITeamOKRsRepository } from '@/modules/team-okrs/repository';
 import { TEAM_CATEGORY_MAX_DEPTH } from '@/modules/team-categories/tree';
-import { contractCase, rejects, unique, type ContractOptions } from './harness';
+import { contractCase, dayKey, rejects, unique, type ContractOptions } from './harness';
 
 export interface TeamCategoriesContractContext {
   repo: ITeamCategoriesRepository;
   orgId: string;
+  /** Projets, tâches et OKR d'équipe du même côté : supprimer une catégorie les DÉTACHE (FK `SET NULL`). */
+  projects: ITeamProjectsRepository;
+  okrs: ITeamOKRsRepository;
 }
 
 export function teamCategoriesContract(
@@ -67,6 +72,52 @@ export function teamCategoriesContract(
       const created = await ctx.repo.createCategory(ctx.orgId, { name: unique('Feuille') });
       await ctx.repo.deleteCategory(created.id);
       expect((await all()).map((c) => c.id)).not.toContain(created.id);
+    });
+
+    contractCase(opts, 'getCategories rend les catégories de l’organisation, par nom', async () => {
+      const tag = unique('Tri');
+      const b = await ctx.repo.createCategory(ctx.orgId, { name: `${tag} Bravo` });
+      const a = await ctx.repo.createCategory(ctx.orgId, { name: `${tag} Alpha` });
+      const order = (await all()).map((c) => c.id).filter((id) => id === a.id || id === b.id);
+      expect(order).toEqual([a.id, b.id]);
+    });
+
+    contractCase(opts, 'un même nom est permis sous deux parents différents, refusé en renommant vers un frère', async () => {
+      const name = unique('Commun');
+      const p1 = await ctx.repo.createCategory(ctx.orgId, { name: unique('Parent un') });
+      const p2 = await ctx.repo.createCategory(ctx.orgId, { name: unique('Parent deux') });
+      await ctx.repo.createCategory(ctx.orgId, { name, parentId: p1.id });
+      const other = await ctx.repo.createCategory(ctx.orgId, { name: unique('Autre'), parentId: p1.id });
+      await ctx.repo.createCategory(ctx.orgId, { name, parentId: p2.id });
+      expect(await rejects(ctx.repo.updateCategory(other.id, { name }))).toBe(true);
+    });
+
+    contractCase(opts, 'remonter une sous-catégorie à la racine : parentId null est une valeur', async () => {
+      const root = await ctx.repo.createCategory(ctx.orgId, { name: unique('Racine') });
+      const child = await ctx.repo.createCategory(ctx.orgId, { name: unique('Enfant'), parentId: root.id });
+      await ctx.repo.updateCategory(child.id, { parentId: null });
+      expect((await all()).find((c) => c.id === child.id)?.parentId).toBeNull();
+    });
+
+    contractCase(opts, 'une catégorie qui a des enfants ne se supprime pas (NO ACTION, mig. 148)', async () => {
+      const root = await ctx.repo.createCategory(ctx.orgId, { name: unique('Racine') });
+      await ctx.repo.createCategory(ctx.orgId, { name: unique('Enfant'), parentId: root.id });
+      expect(await rejects(ctx.repo.deleteCategory(root.id))).toBe(true);
+      expect((await all()).map((c) => c.id)).toContain(root.id);
+    });
+
+    contractCase(opts, 'supprimer une catégorie DÉTACHE ses projets, ses tâches et ses OKR (FK SET NULL)', async () => {
+      const category = await ctx.repo.createCategory(ctx.orgId, { name: unique('À supprimer') });
+      const project = await ctx.projects.createProject(ctx.orgId, { name: unique('Projet classé'), categoryId: category.id });
+      const task = await ctx.projects.createTask(ctx.orgId, { projectId: project.id, name: unique('Tâche classée'), categoryId: category.id });
+      const okr = await ctx.okrs.create(ctx.orgId, {
+        title: unique('Objectif classé'), startDate: dayKey(-5), endDate: dayKey(60),
+        categoryId: category.id, keyResults: [{ title: 'KR', targetValue: 1 }],
+      });
+      await ctx.repo.deleteCategory(category.id);
+      expect((await ctx.projects.getProjects(ctx.orgId)).find((p) => p.id === project.id)?.categoryId ?? null, 'projet').toBeNull();
+      expect((await ctx.projects.getTasks(ctx.orgId, { projectId: project.id })).find((t) => t.id === task.id)?.categoryId ?? null, 'tâche').toBeNull();
+      expect((await ctx.okrs.getAll(ctx.orgId)).find((o) => o.id === okr.id)?.categoryId ?? null, 'OKR').toBeNull();
     });
 
     contractCase(opts, 'mettre à jour une catégorie inconnue est refusé', async () => {

@@ -112,13 +112,8 @@ export class LocalStorageListsRepository implements IListsRepository {
 
   async delete(id: string): Promise<void> {
     const lists = this.getLists();
-    const filtered = lists.filter(l => l.id !== id);
-
-    if (filtered.length === lists.length) {
-      throw makeApiError('not_found');
-    }
-
-    this.saveLists(filtered);
+    // Idempotent comme le `DELETE` SQL : un identifiant absent ne lève rien.
+    this.saveLists(lists.filter(l => l.id !== id));
   }
 
   // ═══════════════════════════════════════════════════════════════════

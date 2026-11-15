@@ -35,11 +35,11 @@ describe('LocalStorageCategoriesRepository', () => {
     await expect(repo.update('absente', { name: 'x' })).rejects.toThrow();
   });
 
-  it('delete supprime / throw sinon', async () => {
+  it('delete supprime, et un identifiant absent est sans effet (DELETE SQL)', async () => {
     await repo.getAll();
     await repo.delete('cat-5');
     expect((await repo.getAll()).some((c) => c.id === 'cat-5')).toBe(false);
-    await expect(repo.delete('absente')).rejects.toThrow();
+    await expect(repo.delete('absente')).resolves.toBeUndefined();
   });
 });
 
