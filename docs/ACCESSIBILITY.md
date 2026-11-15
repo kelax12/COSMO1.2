@@ -62,7 +62,7 @@ Décision d'Axel, pas un oubli : la dispense `color-contrast` de `e2e/a11y-audit
 | Famille | Mesure |
 |---|---|
 | Maison (`useModalA11y`) | au clavier dans un navigateur (`e2e/a11y-keyboard-audit*.spec.ts`), ou en jsdom pour quelques-unes (`TeamBulkAddToListDialog`, `TeamTaskListsField`, `PremiumGateModal`, primitive `BottomSheet` par `mobile-primitives.test.tsx`) ; `PyramidPlacementSheet` non mesurée (aucun point d'entrée depuis la mig. 229) |
-| Radix (`Dialog`, `Sheet`, `AlertDialog`) | le contrat des cinq critères est mesuré sur les trois enveloppes (`components/ui/modal-contract.test.tsx`) et, composant réel monté, sur dix-huit surfaces (`components/modal-a11y.radix-surfaces*.test.tsx`, harnais `modal-a11y.harness.tsx`) ; seule la confirmation de `SettingsPage` n'est pas montée (une page entière à simuler), motif dans la suite ; le `*Title` est vérifié fichier par fichier par la garde |
+| Radix (`Dialog`, `Sheet`, `AlertDialog`) | le contrat des cinq critères est mesuré sur les trois enveloppes (`components/ui/modal-contract.test.tsx`) et, composant réel monté, sur dix-huit surfaces (`components/modal-a11y.radix-surfaces*.test.tsx`, harnais `__test__/modal-a11y-harness.tsx`) ; seule la confirmation de `SettingsPage` n'est pas montée (une page entière à simuler), motif dans la suite ; le `*Title` est vérifié fichier par fichier par la garde |
 | Feuilles `BottomSheet` seules | par la primitive : `ariaLabel` obligatoire par le TYPE |
 
 - ⚠️ Deux niveaux, jamais fondus : « montée elle-même par une mesure » est la plus forte ; les autres partagent un mécanisme mesuré, une régression locale n'y serait vue que par la garde statique.

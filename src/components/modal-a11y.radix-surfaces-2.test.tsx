@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 //
 // FRO-01 · suite de `modal-a11y.radix-surfaces.test.tsx` : les surfaces Radix restantes, montees
-// REELLES, meme harnais (`modal-a11y.harness.tsx`, 4 controles : entree du focus, piege, Echap +
+// REELLES, meme harnais (`__test__/modal-a11y-harness.tsx`, 4 controles : entree du focus, piege, Echap +
 // retour du focus, role / aria-modal / nom). Seuls les hooks de donnees sont simules.
 //
 // Non montee ici : la confirmation `AlertDialog` de `src/pages/SettingsPage.tsx` (voir
@@ -68,7 +68,7 @@ vi.mock('@/modules/team-okrs', async (orig) => ({
   useKRProjects: () => nothing,
 }));
 
-import { measureSurfaces, WithTrigger, type Surface } from './modal-a11y.harness';
+import { measureSurfaces, WithTrigger, type Surface } from './__test__/modal-a11y-harness';
 import AssignMembersDialog from './organization/AssignMembersDialog';
 import TeamTrashDialog from './organization/TeamTrashDialog';
 import { ProjectRolesDialog, ProjectAddDialog } from './organization/ProjectPeopleDialogs';
