@@ -57,8 +57,7 @@ const PROJET_DEFAUT = 'ykeugqfgklejcdbrmawy';
  */
 export const REGLAGES_SURVEILLES = {
   password_hibp_enabled:
-    "Protection contre les mots de passe compromis (HaveIBeenPwned). Désactivée "
-    + 'au 2026-09-20, et c est un advisor WARN à part entière.',
+    "Protection contre les mots de passe compromis (HaveIBeenPwned), réglage du Dashboard.",
   mailer_otp_exp: "Durée de validité d'un code envoyé par e-mail. Un OTP qui vit trop longtemps est un mot de passe.",
   security_update_password_require_reauthentication:
     'Ré-authentification exigée pour changer de mot de passe. Sans elle, une session volée suffit à prendre le compte.',

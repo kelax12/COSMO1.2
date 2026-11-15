@@ -22,9 +22,8 @@
   "_reglages_auth_source": [
     "Posée le 2026-10-08 à partir des valeurs LUES par le run Posture 37773471782",
     "(GET /v1/projects/{ref}/config/auth, même jour), pas inventées.",
-    "🔴 password_hibp_enabled = false est l'état MESURÉ, pas l'état voulu : c'est le même",
-    "trou que l'advisor `auth_leaked_password_protection`. Le passer à true dans le Dashboard",
-    "fera échouer la garde sur un écart, et c'est alors cette valeur qu'on recale.",
+    "password_hibp_enabled est l'état MESURÉ (advisor `auth_leaked_password_protection`).",
+    "Le changer dans le Dashboard fait échouer la garde sur un écart : c'est alors cette valeur qu'on recale.",
     "Se recale ensuite par `--update` (exige SUPABASE_ACCESS_TOKEN)."
   ],
   "securite": {
@@ -46,7 +45,7 @@
     "auth_leaked_password_protection": {
       "niveau": "WARN",
       "compte": 1,
-      "_note": "🔴 La protection contre les mots de passe compromis (HaveIBeenPwned) est DÉSACTIVÉE. Ce n'est pas du code : c'est un interrupteur du Dashboard (Authentication → Attack Protection). Il reste ouvert tant que personne ne le ferme, et cette ligne est ce qui l'empêche d'être oublié."
+      "_note": "Réglage du Dashboard (Authentication, Attack Protection), pas du code : relu à chaque recalage."
     }
   },
   "performance": {
