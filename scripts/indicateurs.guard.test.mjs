@@ -120,7 +120,7 @@ describe('3 · couverture des parcours critiques', () => {
   });
 });
 
-describe('4 · âge maximal des secrets', () => {
+describe('4 · contrôle des secrets (mesure neutre)', () => {
   const registre = { entries: [
     { name: 'A_KEY', store: 'github', kind: 'secret', owner: 'x', criticality: 'high', maxAgeDays: 90, lastRotated: '2026-10-09' },
     { name: 'B_KEY', store: 'vercel', kind: 'secret', owner: 'x', criticality: 'high', maxAgeDays: 180, lastRotated: null },
@@ -138,26 +138,28 @@ describe('4 · âge maximal des secrets', () => {
     ]);
     expect(lignesDAge('rien')).toEqual([]);
   });
-  it('la date vivante l\'emporte sur le registre ; l\'âge maximal est rendu avec son secret', () => {
+  it("ne publie ni âge, ni nom, ni nombre d'échus", () => {
     const r = ageSecrets(registre, { maintenant: MAINTENANT, vivant: [{ id: 'github/A_KEY', age: 40, max: 90 }, { id: 'vercel/B_KEY', age: 100, max: 180 }] });
-    expect(r.valeur).toContain('100 j (B_KEY, échéance 180 j)');
+    const sortie = JSON.stringify(r);
+    expect(sortie).not.toMatch(/A_KEY|B_KEY|[0-9]+ j[ ,)"]|échus/);
     expect(r.alertes).toEqual([]);
   });
-  it('un secret au-delà de son échéance sonne', () => {
+  it('un secret au-delà de son échéance sonne, sans dire lequel', () => {
     const r = ageSecrets(registre, { maintenant: MAINTENANT, vivant: [{ id: 'github/A_KEY', age: 91, max: 90 }, { id: 'vercel/B_KEY', age: 1, max: 180 }] });
-    expect(r.alertes.join('\n')).toContain('github/A_KEY au-delà de son échéance');
+    expect(r.alertes).toHaveLength(1);
+    expect(r.alertes.join(' ')).not.toMatch(/A_KEY|91/);
   });
-  it('date inconnue = échue, sauf si le dernier run de Secrets age est vert', () => {
+  it('date inconnue sonne, sauf si le dernier run de Secrets age est vert', () => {
     const sans = ageSecrets(registre, { maintenant: MAINTENANT });
-    expect(sans.alertes.join('\n')).toContain('1 secret(s) sans date de rotation connue');
-    expect(sans.alertes.join('\n')).not.toContain('B_KEY');
-    expect(sans.details.join('\n')).not.toContain('B_KEY');
-    expect(sans.valeur).toContain('1 sans date de rotation connue');
+    expect(sans.alertes).toHaveLength(1);
+    expect(JSON.stringify(sans)).not.toContain('B_KEY');
     const vert = ageSecrets(registre, { maintenant: MAINTENANT, runSecrets: { conclusion: 'success', created_at: '2026-11-07T06:00:00Z' } });
     expect(vert.alertes).toEqual([]);
     expect(vert.mesureLe).toBe('2026-11-07');
+    expect(vert.valeur).toContain('vert');
     const rouge = ageSecrets(registre, { maintenant: MAINTENANT, runSecrets: { conclusion: 'failure' } });
     expect(rouge.alertes).toHaveLength(1);
+    expect(rouge.valeur).toContain('rouge');
   });
   it('un secret échu au registre sonne même quand Secrets age est vert', () => {
     const vieux = { entries: [{ ...registre.entries[0], lastRotated: '2026-01-01' }] };

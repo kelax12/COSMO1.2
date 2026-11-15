@@ -16,7 +16,7 @@
 //   1. taux de vert de `main` : les N derniers runs conclus du `CI noyau` ;
 //   2. delai de restauration eprouve : dernier `drill-auto` vert, sa duree ;
 //   3. couverture des parcours critiques : liste declaree vs specs presentes ;
-//   4. age maximal des secrets : registre `.github/secrets-registry.json` ;
+//   4. controle des secrets : verdict du run `Secrets age`, registre `.github/secrets-registry.json` ;
 //   5. derive de la production : sondes `Deploy SHA drift`, `Edge deploy
 //      drift` et `Migration coverage` (ledger des migrations) ;
 //   6. incidents ouverts : issues ouvertes `ci-red` et `incident`.
@@ -24,8 +24,8 @@
 // ── SEUILS D'ALERTE (ils sonnent, ils ne se relevent pas) ───────────
 //   · `main` sous 80 % de vert ;
 //   · aucun drill vert depuis 35 jours (meme borne que `restore-drill-fraicheur`) ;
-//   · un secret au-dela de son echeance, ou sans date de rotation connue
-//     (« date inconnue = echue », regle de `check-secrets-age.mjs`) ;
+//   · le controle des echeances de rotation releve un ecart
+//     (regle de `check-secrets-age.mjs`, jamais detaillee ici) ;
 //   · une sonde de derive de production rouge ;
 //   · un audit externe en retard sur sa periodicite semestrielle ;
 //   · un indicateur illisible (API refusee, reponse mal formee) : echec FERME.
@@ -147,7 +147,7 @@ export function drillRestauration(runs, { maintenant = new Date(), source, jours
       etat: 'mesure',
       valeur: 'aucun drill vert',
       mesureLe: jour(maintenant.toISOString()),
-      alertes: [`aucun drill de restauration vert (job ${JOB_DRILL}) sur main : la seule sauvegarde n'est pas éprouvée`],
+      alertes: [`aucun drill de restauration vert (job ${JOB_DRILL}) sur main : restauration non éprouvée`],
       details: [v.message, `Seuil d'alerte : aucun drill vert depuis ${joursMax} jours.`],
     };
   }
@@ -224,7 +224,7 @@ export function lignesDAge(texteJournal) {
 }
 
 /**
- * 4 · Age maximal des secrets. Deux sources, la plus precise gagne :
+ * 4 · Controle des secrets (publie : verdict et nombre d'entrees, rien d'autre). Deux sources, la plus precise gagne :
  *   · `vivant` : les lignes du journal du dernier run de `Secrets age`, qui
  *     detient les jetons GitHub, Supabase et Vercel et lit la date VIVANTE ;
  *   · le registre `.github/secrets-registry.json` (NOMS et dates de rotation
@@ -234,7 +234,7 @@ export function lignesDAge(texteJournal) {
  * ne lit pas n'est alors pas une alerte.
  */
 export function ageSecrets(registre, { maintenant = new Date(), source, contexte = null, vivant = [], runSecrets = null, raisonVivant = null } = {}) {
-  const base = { id: 'age-des-secrets', titre: 'Âge maximal des secrets', source };
+  const base = { id: 'age-des-secrets', titre: 'Contrôle des secrets', source };
   // Seuls les champs LUS ici sont verifies. La forme complete du registre
   // (lecteurs, effet d'une fuite, procedure) est le metier de
   // `check-secrets-age.mjs` : la redoubler ici ferait taire cet indicateur a
@@ -257,34 +257,21 @@ export function ageSecrets(registre, { maintenant = new Date(), source, contexte
   const inconnus = lignes.filter((l) => l.age === null);
   const echus = connus.filter((l) => l.age > l.max);
   const garantiParVert = runSecrets?.conclusion === 'success';
-  const vives = lignes.filter((l) => l.dateVivante).length;
-  const alertes = [
-    ...echus.map((l) => `secret ${l.id} au-delà de son échéance : ${l.age} j pour ${l.max} j`),
-    ...(inconnus.length && !garantiParVert
-      ? [`${inconnus.length} secret(s) sans date de rotation connue, donc échus`]
-      : []),
-  ];
-  const plusVieux = [...connus].sort((a, b) => b.age - a.age)[0];
-  const valeur = [
-    plusVieux ? `${plusVieux.age} j (${plusVieux.nom}, échéance ${plusVieux.max} j)` : `âge ${NON_MESURE}`,
-    inconnus.length ? `${inconnus.length} sans date de rotation connue` : null,
-  ].filter(Boolean).join(' ; ');
+  // Mesure NEUTRE : ni âge, ni nombre d'échus, ni nom de secret. Un dépôt public
+  // ne dit pas où une rotation est en retard ; le détail vit dans le run privé
+  // de `Secrets age` et dans le registre.
+  const ecart = echus.length > 0 || (inconnus.length > 0 && !garantiParVert);
+  const verdict = runSecrets ? (garantiParVert ? 'vert' : 'rouge') : NON_MESURE;
   return {
     ...base,
     etat: 'mesure',
-    valeur,
+    valeur: `contrôle des échéances de rotation : ${verdict}, ${secrets.length} entrées au registre`,
     mesureLe: jour(runSecrets?.created_at) ?? jour(maintenant.toISOString()),
-    alertes,
+    alertes: ecart ? ['contrôle des échéances de rotation : écart relevé, détail dans le run `Secrets age`'] : [],
     details: [
-      `${secrets.length} secrets au registre, ${connus.length} avec un âge connu (${vives} lus à la date vivante, ${connus.length - vives} au registre), ${echus.length} au-delà de leur échéance.`,
-      inconnus.length
-        ? `Âge inconnu${garantiParVert ? ' ici (le dernier run de `Secrets age` est vert : la garde a lu les dates vivantes)' : ' (échus selon la règle de `check-secrets-age`)'} : ${inconnus.length} secret(s), noms au registre, jamais publiés ici.`
-        : 'Aucun âge inconnu.',
-      vives
-        ? 'Les âges à la date vivante viennent du journal du dernier run de `Secrets age`, seul à détenir les jetons GitHub, Supabase et Vercel.'
-        : `🔴 Âge lu au registre seulement${raisonVivant ? ` (journal de \`Secrets age\` : ${raisonVivant})` : ''}. La date vivante n'est lue que par le workflow \`Secrets age\`, qui détient les jetons.`,
+      `${secrets.length} entrées de secret au registre \`.github/secrets-registry.json\` (noms seulement, jamais de valeur).`,
       contexte ?? `Dernier run de \`Secrets age\` sur \`main\` : ${NON_MESURE}.`,
-      `Seuil d'alerte : un secret au-delà de son échéance, ou sans date connue.`,
+      "Seuil d'alerte : le contrôle relève un écart.",
     ],
   };
 }
@@ -443,7 +430,7 @@ export function rendre({ indicateurs, audit, alertes, meta }) {
   l.push('|---|---|');
   l.push(`| Taux de vert de \`main\` | sous ${SEUILS.vertMinPct} % sur les ${SEUILS.fenetreRuns} derniers runs conclus |`);
   l.push(`| Délai de restauration | aucun drill vert depuis ${SEUILS.drillJoursMax} jours |`);
-  l.push('| Âge des secrets | un secret au-delà de son échéance, ou sans date de rotation connue |');
+  l.push('| Contrôle des secrets | le contrôle des échéances de rotation relève un écart |');
   l.push('| Dérive de la production | une des trois sondes rouge |');
   l.push('| Audit externe | échéance semestrielle dépassée |');
   l.push('| Tout indicateur | illisible : « non mesuré » compte comme une alerte (échec fermé) |');
@@ -596,13 +583,13 @@ export function calculer(src, maintenant = new Date()) {
   const i4 = src.registre.ok
     ? ageSecrets(src.registre.valeur, {
         maintenant,
-        source: 'journal du dernier run de `Secrets age` (dates vivantes) et .github/secrets-registry.json',
+        source: 'dernier run de `Secrets age` et .github/secrets-registry.json',
         contexte: contexteRun('Secrets age', src.secrets),
         vivant: src.journalSecrets.ok ? src.journalSecrets.valeur : [],
         raisonVivant: src.journalSecrets.ok ? null : src.journalSecrets.erreur,
         runSecrets: src.secrets.ok ? dernierConclu(src.secrets.valeur) : null,
       })
-    : nonMesure({ id: 'age-des-secrets', titre: 'Âge maximal des secrets', source: '.github/secrets-registry.json' }, src.registre.erreur);
+    : nonMesure({ id: 'age-des-secrets', titre: 'Contrôle des secrets', source: '.github/secrets-registry.json' }, src.registre.erreur);
 
   const i5 = deriveProduction(
     WORKFLOWS.sondes.map((s, k) => ({
