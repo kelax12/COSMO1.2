@@ -145,7 +145,7 @@ Aucune.
 | `get_team_trash(p_org uuid)` | DEFINER | `""` | - | oui | oui | `src/modules/team-projects/supabase.repository.ts`<br>~`src/components/organization/TeamTrashDialog.tsx`<br>~`src/modules/team-projects/types.ts` |
 | `get_work_time_stats(p_ranges jsonb, p_tz text)` | INVOKER | `public` | - | oui | oui | `src/modules/stats/supabase.repository.ts`<br>~`src/modules/stats/repository.ts` |
 | `habit_completions_mirror()` (trigger) | INVOKER | `""` | - | - | oui | - |
-| `habit_day_from_key(p_key text)` | INVOKER | `""` | - | oui | oui | ~`src/modules/habits/local.repository.ts` |
+| `habit_day_from_key(p_key text)` | INVOKER | `""` | - | oui | oui | ~`src/modules/habits/completion-days.ts` |
 | `habit_day_scheduled(p_days smallint[], p_history jsonb, p_d date)` | INVOKER | `""` | - | oui | oui | - |
 | `habit_schedule_history_valid(p_history jsonb)` | INVOKER | `""` | - | oui | oui | - |
 | `handle_new_user_profile()` (trigger) | INVOKER | `""` | - | - | oui | ~`src/lib/attribution.ts` |

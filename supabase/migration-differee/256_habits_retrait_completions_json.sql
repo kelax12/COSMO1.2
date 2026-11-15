@@ -9,9 +9,10 @@
 --      (`getPage`) et recrée une habitude « Annuler » par la colonne ;
 --   2. le CLI agent (`scripts/cosmo/api.mjs`) lit `get_my_habits` et bascule par
 --      `toggle_habit_completion_v2` (la v1, retirée ici, écrivait la colonne) ;
---   3. relecture au catalogue : 0 habitude dont les jours de la table diffèrent
---      des jours `true` de la colonne (requête en tête de la preuve 256) ; la
---      garde ci-dessous le refait et REFUSE sinon ;
+--   3. relecture au catalogue : 0 habitude dont un jour `true` de la colonne
+--      manque dans la table (requête en tête de la preuve 256) ; la garde
+--      ci-dessous le refait et REFUSE sinon. Un jour présent en table et absent
+--      de la colonne est NORMAL : un « Annuler » n'écrit plus que la table ;
 --   4. la preuve 256 rend « PREUVE-ANNULEE 0 ECHEC ».
 -- Rangée dans `supabase/migration-differee/` : aucune base rejouée ne la voit
 -- (la CI teste l'état de transition, celui de la production). Le jour de
@@ -23,7 +24,8 @@
 --
 -- ── CE QUE FAIT CE FICHIER ─────────────────────────────────────────
 --
---   · garde : verrou de `habits`, puis comparaison exacte table / colonne ;
+--   · garde : verrou de `habits`, puis vérification qu'aucun jour de la colonne
+--     ne manque dans la table (inclusion, pas égalité : la table peut avoir plus) ;
 --   · retire le trigger `trg_habit_completions_mirror` et sa fonction ;
 --   · recrée `toggle_habit_completion_v2` SANS la recopie dans la colonne (corps
 --     de la 254, à la lettre, moins ce `UPDATE`) ;
@@ -52,17 +54,16 @@ BEGIN
   ) THEN
     EXECUTE $q$
       SELECT count(*) FROM public.habits h
-       WHERE COALESCE((SELECT array_agg(c.day ORDER BY c.day)
-                         FROM public.habit_completions c
-                        WHERE c.habit_id = h.id AND c.user_id = h.user_id), '{}'::date[])
-          <> COALESCE((SELECT array_agg(d.day ORDER BY d.day)
-                         FROM (SELECT public.habit_day_from_key(e.key) AS day
-                                 FROM jsonb_each(COALESCE(h.completions, '{}'::jsonb)) e
-                                WHERE e.value = 'true'::jsonb) d
-                        WHERE d.day IS NOT NULL), '{}'::date[])
+       WHERE EXISTS (
+         SELECT 1 FROM jsonb_each(COALESCE(h.completions, '{}'::jsonb)) e
+          WHERE e.value = 'true'::jsonb
+            AND public.habit_day_from_key(e.key) IS NOT NULL
+            AND NOT EXISTS (SELECT 1 FROM public.habit_completions c
+                             WHERE c.habit_id = h.id AND c.user_id = h.user_id
+                               AND c.day = public.habit_day_from_key(e.key)))
     $q$ INTO n;
     IF n > 0 THEN
-      RAISE EXCEPTION '256 : % habitude(s) dont les jours de habit_completions different de la colonne completions, rien n''est retire', n;
+      RAISE EXCEPTION '256 : % habitude(s) dont des jours de la colonne completions manquent dans habit_completions, rien n''est retire', n;
     END IF;
   END IF;
 END

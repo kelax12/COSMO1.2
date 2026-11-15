@@ -239,58 +239,38 @@ function mapHabitFromRow(row, dayKey) {
   };
 }
 
-/** Fenêtre demandée à `get_my_habits` : celle de l'application (mig. 119). */
-const HABIT_WINDOW_DAYS = 400;
+const fetchHabitRows = async (client, dayKey) =>
+  unwrap(await client.rpc('get_my_habits', { p_days: 400, p_today: dayKey })) ?? [];
 
-/**
- * Habitudes de l'utilisateur, lues par la RPC bornée `get_my_habits` (mig. 248 :
- * jours cochés lus dans `habit_completions`, jamais dans la colonne JSONB).
- * `p_today` est la date LOCALE de l'appelant : la base est en UTC (mig. 122).
- */
-async function fetchHabitRows(client, dayKey) {
-  return unwrap(await client.rpc('get_my_habits', { p_days: HABIT_WINDOW_DAYS, p_today: dayKey })) ?? [];
-}
-
-/** Habitudes de l'utilisateur, annotées de leur état du jour. */
+/** Habitudes de l'utilisateur, état du jour : `get_my_habits` (table `habit_completions`, mig. 248, jour LOCAL mig. 122), jamais la colonne JSONB. */
 export async function listHabitsToday(client, { now = new Date() } = {}) {
   const dayKey = todayLocal(now);
   const rows = await fetchHabitRows(client, dayKey);
-  return rows
-    .map((row) => mapHabitFromRow(row, dayKey))
-    .sort((a, b) => String(a.name ?? '').localeCompare(String(b.name ?? '')));
+  return rows.map((r) => mapHabitFromRow(r, dayKey)).sort((a, b) => String(a.name).localeCompare(String(b.name)));
 }
 
 /**
  * Marque une habitude comme faite aujourd'hui.
  *
- * Passe par la RPC atomique `toggle_habit_completion_v2` (mig. 023 TOCTOU-1,
- * puis 248 : écrit `habit_completions`) : jamais de SELECT→mutate→UPDATE, qui
- * perdrait les écritures concurrentes. Comme la RPC est un *toggle*, on lit
- * d'abord l'état : sans ce garde, appeler la commande deux fois décocherait
- * l'habitude.
+ * Passe par la RPC atomique `toggle_habit_completion_v2` (TOCTOU-1, table : mig. 248) :
+ * jamais de SELECT→mutate→UPDATE, qui perdrait les écritures concurrentes.
+ * Comme la RPC est un *toggle*, on lit d'abord l'état : sans ce garde, appeler
+ * la commande deux fois décocherait l'habitude.
  */
 export async function markHabitDone(client, habitId, { now = new Date() } = {}) {
   if (!habitId) throw new CosmoValidationError('Identifiant d habitude manquant.');
   const dayKey = todayLocal(now);
 
-  const rows = await fetchHabitRows(client, dayKey);
-  const current = rows.find((row) => row.id === habitId);
+  const current = (await fetchHabitRows(client, dayKey)).find((row) => row.id === habitId);
   if (!current) throw new CosmoNotFoundError(`Habitude introuvable : ${habitId}`);
 
   if ((current.completions || {})[dayKey] === true) {
     return { ...mapHabitFromRow(current, dayKey), alreadyDone: true };
   }
 
-  const data = unwrap(
-    await client.rpc('toggle_habit_completion_v2', {
-      p_habit_id: habitId,
-      p_date: dayKey,
-      p_days: HABIT_WINDOW_DAYS,
-      p_today: dayKey,
-    })
+  const [row] = unwrap(
+    await client.rpc('toggle_habit_completion_v2', { p_habit_id: habitId, p_date: dayKey, p_days: 400, p_today: dayKey })
   );
-  // `RETURNS TABLE` : un tableau d'une ligne (la v1 rendait un objet).
-  const row = Array.isArray(data) ? data[0] : data;
   return { ...mapHabitFromRow(row, dayKey), alreadyDone: false };
 }
 

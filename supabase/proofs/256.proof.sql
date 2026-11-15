@@ -12,16 +12,16 @@
 --
 -- Relecture préalable en production (étape 3 de l'en-tête de la 256) :
 --   SELECT count(*) FROM public.habits h
---    WHERE COALESCE((SELECT array_agg(c.day ORDER BY c.day) FROM public.habit_completions c
---                     WHERE c.habit_id = h.id AND c.user_id = h.user_id), '{}'::date[])
---       <> COALESCE((SELECT array_agg(d.day ORDER BY d.day)
---                      FROM (SELECT public.habit_day_from_key(e.key) AS day
---                              FROM jsonb_each(COALESCE(h.completions, '{}'::jsonb)) e
---                             WHERE e.value = 'true'::jsonb) d
---                     WHERE d.day IS NOT NULL), '{}'::date[]);     -- attendu : 0
+--    WHERE EXISTS (SELECT 1 FROM jsonb_each(COALESCE(h.completions, '{}'::jsonb)) e
+--                   WHERE e.value = 'true'::jsonb
+--                     AND public.habit_day_from_key(e.key) IS NOT NULL
+--                     AND NOT EXISTS (SELECT 1 FROM public.habit_completions c
+--                                      WHERE c.habit_id = h.id AND c.user_id = h.user_id
+--                                        AND c.day = public.habit_day_from_key(e.key)));   -- attendu : 0
 --
 -- Vérifié :
---   · 01 garde : une habitude dont la table et la colonne divergent arrête tout ;
+--   · 01 garde : un jour de la colonne absent de la table arrête tout ; un jour
+--     présent en table et absent de la colonne (« Annuler ») ne bloque rien ;
 --   · 02 catalogue après retrait : plus de colonne, de trigger de recopie, de sa
 --     fonction ni de `toggle_habit_completion` (v1) ; la v2 n'écrit plus la
 --     colonne et lit la table ; `get_my_habits` lit la table ;
@@ -45,6 +45,7 @@ DECLARE
   hA     constant uuid := '00000000-0000-0000-0000-0000000ca256';
   hBad   constant uuid := '00000000-0000-0000-0000-0000000cb256';
   hV     constant uuid := '00000000-0000-0000-0000-0000000cc256';
+  hRest  constant uuid := '00000000-0000-0000-0000-0000000cd256';
   hNew   uuid;
   passe  int;
   nb     int;
@@ -72,11 +73,14 @@ BEGIN
     VALUES (%L, %L, 'Saine', 20, %L::jsonb)$q$, hA, U,
     json_build_object(to_char(t0 - 1, 'YYYY-MM-DD'), true, to_char(t0 - 2, 'YYYY-MM-DD'), true,
                       to_char(t0 - 3, 'YYYY-MM-DD'), false)::text);
-  -- Divergente : la colonne porte un jour que la table n'a pas.
+  -- Divergente : la colonne porte un jour que la table n'a pas (le seul cas refusé).
   EXECUTE format($q$INSERT INTO public.habits (id, user_id, name, completions)
     VALUES (%L, %L, 'Divergente', %L::jsonb)$q$, hBad, U,
     json_build_object(to_char(t0 - 5, 'YYYY-MM-DD'), true)::text);
   DELETE FROM public.habit_completions WHERE habit_id = hBad;
+  -- Restaurée par « Annuler » : jours en table SEULEMENT, colonne vide. Ne doit PAS bloquer la garde.
+  INSERT INTO public.habits (id, user_id, name) VALUES (hRest, U, 'Restauree');
+  INSERT INTO public.habit_completions (habit_id, user_id, day) VALUES (hRest, U, t0 - 9), (hRest, U, t0 - 10);
   -- Habitude de V (pour les refus croisés).
   INSERT INTO public.habits (id, user_id, name) VALUES (hV, V, 'De V');
 
@@ -95,9 +99,10 @@ BEGIN
 --      (`getPage`) et recrée une habitude « Annuler » par la colonne ;
 --   2. le CLI agent (`scripts/cosmo/api.mjs`) lit `get_my_habits` et bascule par
 --      `toggle_habit_completion_v2` (la v1, retirée ici, écrivait la colonne) ;
---   3. relecture au catalogue : 0 habitude dont les jours de la table diffèrent
---      des jours `true` de la colonne (requête en tête de la preuve 256) ; la
---      garde ci-dessous le refait et REFUSE sinon ;
+--   3. relecture au catalogue : 0 habitude dont un jour `true` de la colonne
+--      manque dans la table (requête en tête de la preuve 256) ; la garde
+--      ci-dessous le refait et REFUSE sinon. Un jour présent en table et absent
+--      de la colonne est NORMAL : un « Annuler » n'écrit plus que la table ;
 --   4. la preuve 256 rend « PREUVE-ANNULEE 0 ECHEC ».
 -- Rangée dans `supabase/migration-differee/` : aucune base rejouée ne la voit
 -- (la CI teste l'état de transition, celui de la production). Le jour de
@@ -109,7 +114,8 @@ BEGIN
 --
 -- ── CE QUE FAIT CE FICHIER ─────────────────────────────────────────
 --
---   · garde : verrou de `habits`, puis comparaison exacte table / colonne ;
+--   · garde : verrou de `habits`, puis vérification qu'aucun jour de la colonne
+--     ne manque dans la table (inclusion, pas égalité : la table peut avoir plus) ;
 --   · retire le trigger `trg_habit_completions_mirror` et sa fonction ;
 --   · recrée `toggle_habit_completion_v2` SANS la recopie dans la colonne (corps
 --     de la 254, à la lettre, moins ce `UPDATE`) ;
@@ -138,17 +144,16 @@ BEGIN
   ) THEN
     EXECUTE $q$
       SELECT count(*) FROM public.habits h
-       WHERE COALESCE((SELECT array_agg(c.day ORDER BY c.day)
-                         FROM public.habit_completions c
-                        WHERE c.habit_id = h.id AND c.user_id = h.user_id), '{}'::date[])
-          <> COALESCE((SELECT array_agg(d.day ORDER BY d.day)
-                         FROM (SELECT public.habit_day_from_key(e.key) AS day
-                                 FROM jsonb_each(COALESCE(h.completions, '{}'::jsonb)) e
-                                WHERE e.value = 'true'::jsonb) d
-                        WHERE d.day IS NOT NULL), '{}'::date[])
+       WHERE EXISTS (
+         SELECT 1 FROM jsonb_each(COALESCE(h.completions, '{}'::jsonb)) e
+          WHERE e.value = 'true'::jsonb
+            AND public.habit_day_from_key(e.key) IS NOT NULL
+            AND NOT EXISTS (SELECT 1 FROM public.habit_completions c
+                             WHERE c.habit_id = h.id AND c.user_id = h.user_id
+                               AND c.day = public.habit_day_from_key(e.key)))
     $q$ INTO n;
     IF n > 0 THEN
-      RAISE EXCEPTION '256 : % habitude(s) dont les jours de habit_completions different de la colonne completions, rien n''est retire', n;
+      RAISE EXCEPTION '256 : % habitude(s) dont des jours de la colonne completions manquent dans habit_completions, rien n''est retire', n;
     END IF;
   END IF;
 END
@@ -349,8 +354,8 @@ $mig$;
         ko := ko + 1; r := r || 'ECHEC 01 la garde laisse retirer la colonne malgre une habitude divergente'::text;
       END IF;
     EXCEPTION WHEN OTHERS THEN
-      IF passe = 1 AND SQLERRM LIKE '256 : %different de la colonne%' THEN
-        r := r || 'ok 01 garde : une habitude divergente arrete le retrait'::text;
+      IF passe = 1 AND SQLERRM LIKE '256 : %manquent dans habit_completions%' THEN
+        r := r || 'ok 01 garde : un jour de la colonne absent de la table arrete le retrait'::text;
       ELSE
         ko := ko + 1; r := r || format('ECHEC 01 passe %s (%s %s)', passe, SQLSTATE, SQLERRM);
       END IF;
@@ -373,7 +378,8 @@ $mig$;
   -- ── 03 Données ────────────────────────────────────────────────────
   SELECT count(*) INTO nb FROM public.habit_completions WHERE habit_id = hA AND day IN (t0 - 1, t0 - 2);
   IF nb = 2 AND (SELECT count(*) FROM public.habit_completions WHERE habit_id = hA) = 2
-  THEN r := r || 'ok 03 jours deja en table intacts (2)'::text;
+     AND (SELECT count(*) FROM public.habit_completions WHERE habit_id = hRest) = 2
+  THEN r := r || 'ok 03 jours deja en table intacts (2), dont ceux d une habitude restauree sans colonne (2)'::text;
   ELSE ko := ko + 1; r := r || format('ECHEC 03 %s jour(s)', nb); END IF;
 
   -- ── U, sous RLS ───────────────────────────────────────────────────
