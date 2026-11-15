@@ -9,13 +9,8 @@
 # automatique : un export qu'on lance à la main n'est jamais à jour le jour où
 # on en a besoin.
 #
-# 🔴 PASSÉ EN QUOTIDIEN LE 2026-08-29, et la raison a changé. Tant qu'un plan
-# Pro était prévu, ce dump complétait le PITR et un rythme mensuel suffisait.
-# La décision de RESTER EN PLAN FREE le rend seul de son espèce : le Free
-# n'offre AUCUNE sauvegarde, donc ce fichier est la seule copie qui existe.
-# Un RPO de trente jours n'est pas acceptable pour une copie unique ; à un jour,
-# il vaut ce que Supabase inclut dans son plan Pro, moins la restauration en un
-# clic et moins le point-in-time.
+# Rythme QUOTIDIEN : c'est ce qui fixe le RPO de cet export (un jour). Un rythme
+# mensuel ne tiendrait pas cet objectif.
 #
 # Le coût est mesuré, pas supposé : la base fait 19 Mo dont ~2,5 Mo de données
 # réelles, et `--format=custom` compresse. Un dump quotidien pèse donc une

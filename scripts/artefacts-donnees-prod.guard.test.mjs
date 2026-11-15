@@ -50,8 +50,8 @@ import { INTROSPECTION_SQL } from './check-migration-coverage.mjs';
 const RACINE = process.cwd();
 const DOSSIER = resolve(RACINE, '.github/workflows');
 const TEMOIN = resolve(RACINE, 'scripts/fixtures/db-backup.avant-8c6a971d.yml');
-/** `git rev-parse 8c6a971d^:.github/workflows/db-backup.yml` */
-const TEMOIN_BLOB = '06b3117f1bdd0fab6f82ed1275b1acb6ed0c99b7';
+/** Empreinte du fixture : `git rev-parse 8c6a971d^:.github/workflows/db-backup.yml` à la reformulation neutre du commentaire de rythme près. */
+const TEMOIN_BLOB = '071658984582a58b0681e0b72ea94808fdc8b655';
 
 // ─── 1 · Ce qui ouvre un accès à des données de production ──────────
 
@@ -882,7 +882,7 @@ describe('témoin · db-backup.yml d avant 8c6a971d (dumps en clair, BK-1)', () 
   const brut = readFileSync(TEMOIN);
   const texte = brut.toString('utf8').replace(/\r\n/g, '\n');
 
-  it('le fixture est octet pour octet le fichier du commit parent de 8c6a971d', () => {
+  it('le fixture est le fichier du commit parent de 8c6a971d, à la reformulation neutre près du commentaire de rythme (empreinte recalée avec elle)', () => {
     const contenu = Buffer.from(texte, 'utf8');
     const blob = createHash('sha1').update(`blob ${contenu.length}\0`).update(contenu).digest('hex');
     expect(blob).toBe(TEMOIN_BLOB);

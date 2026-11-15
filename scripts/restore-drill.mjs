@@ -7,8 +7,7 @@
 //
 // 🔴 POURQUOI CE DRILL EXISTE (audit externe du 2026-11-06, ROB-01)
 //
-// Plan Free, pas de PITR : le dump quotidien chiffre est la SEULE copie de la
-// base. Jusqu'ici, rien d'automatique ne le restaurait : `dump-check` lisait
+// Le dump quotidien chiffre est la copie restauree par ce drill. Jusqu'ici, rien d'automatique ne le restaurait : `dump-check` lisait
 // une table des matieres (`pg_restore --list`), pas une ligne, et le vrai
 // drill exigeait un projet jetable, une confirmation tapee et un secret qui
 // n'existe que ce jour-la. Dernier drill reussi : 2026-09-01. Une sauvegarde

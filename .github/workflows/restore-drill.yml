@@ -20,8 +20,7 @@
 #     le jour même, comme avant.
 #
 # 🔴 POURQUOI LE PREMIER EST AUTOMATIQUE (audit externe du 2026-11-06,
-# ROB-01) : plan Free, pas de PITR, et le dump quotidien est la SEULE copie
-# de la base. Le cron trimestriel qui précédait (`dump-check`, C-86) ne
+# ROB-01) : le dump quotidien est la copie restaurée par ce drill. Le cron trimestriel qui précédait (`dump-check`, C-86) ne
 # faisait qu'un `pg_restore --list` : une table des matières, pas une ligne
 # rejouée. Le dernier drill réel datait du 2026-09-01.
 #
