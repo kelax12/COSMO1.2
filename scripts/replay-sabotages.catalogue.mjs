@@ -647,7 +647,7 @@ export const CATALOGUE = [
     famille: 'detecteur',
     garde: 'scripts/check-mail-reception.guard.test.mjs',
     modifs: [r('scripts/check-mail-reception.mjs', "  'src/locales',\n  'src/pages',\n  'src/components',\n  'src/lib/contact.mjs',\n  'index.html',", "  'src/nexistepas',")],
-    attendu: ['TÉMOIN : le balayage du dépôt voit contact@thecosmo.app et l adresse du JSON-LD'],
+    attendu: ['TÉMOIN : le balayage du dépôt voit contact@thecosmo.app dans le JSON-LD de index.html'],
     pourquoi:
       'Un balayage qui ne voit plus les surfaces publiées ne vérifie plus aucune adresse : '
       + 'la réception serait déclarée saine sur zéro adresse mesurée.',
@@ -1461,7 +1461,7 @@ export const CATALOGUE = [
     famille: 'produit',
     garde: 'scripts/artefacts-donnees-prod.guard.test.mjs',
     modifs: [r('scripts/fixtures/db-backup.avant-8c6a971d.yml', '# Export QUOTIDIEN de la base, HORS du fournisseur.', '# Export quotidien de la base, hors du fournisseur.')],
-    attendu: ['le fixture est octet pour octet le fichier du commit parent de 8c6a971d'],
+    attendu: ['le fixture est le fichier du commit parent de 8c6a971d, à la reformulation neutre près du commentaire de rythme (empreinte recalée avec elle)'],
     pourquoi:
       'Le témoin rejoue la garde sur le fichier fautif RÉEL : retouché, il deviendrait un exemple '
       + 'écrit pour passer, et ne prouverait plus que la garde voit BK-1.',
