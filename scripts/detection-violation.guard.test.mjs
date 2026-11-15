@@ -240,6 +240,8 @@ describe('requêtes de journaux · aucun identifiant en sortie', () => {
     expect(s).toMatch(/max\(distinctes\) AS lignes_sujet_max/);
   });
 
+  it('TÉMOIN : lignes_anon exclut la clé secrète serveur, pas `sb_publishable_` (le vrai anonyme)', () =>
+    expect(SQL_JOURNAUX.totaux).toMatch(/AND NOT startsWith\(log_attributes\['request\.sb\.apikey\.apikey\.prefix'\], 'sb_secret_'\)\) AS lignes_anon/));
   it('SQL_TRI (tri à la main) rend le compte, et n est exécutée nulle part dans le module', () => {
     expect(SQL_TRI).toMatch(/SELECT sujet/);
     const source = readFileSync(resolve(process.cwd(), 'scripts/detection-violation.mjs'), 'utf8');

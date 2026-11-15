@@ -8,11 +8,9 @@
 //
 // 🔴 POURQUOI CE FICHIER EXISTE
 //
-// `BK-1` (dumps de la base en clair dans les artefacts d'un dépôt public,
-// 2026-08-29 au 2026-10-13) a été trouvée par un AUDIT, 45 jours après le
-// début de l'exposition, et par aucune garde. Le délai CNIL de 72 h court
-// depuis la prise de connaissance : une violation que rien ne regarde ne
-// déclenche aucun compte à rebours.
+// `BK-1` (dumps en clair dans les artefacts d'un dépôt public, 2026-08-29 au
+// 2026-10-13) a été trouvée par un AUDIT 45 jours après, par aucune garde. Le délai
+// CNIL court depuis la prise de connaissance : rien ne regarde, rien ne court.
 //
 // CE QU'IL LIT, chaque jour :
 //   1 · les alertes de SECRET SCANNING ouvertes (`SECURITY_ALERTS_TOKEN`,
@@ -46,8 +44,7 @@
 //
 // SORTIE : 0 = toutes les sources lues, aucun signal ; 1 = un signal, ou une
 // source illisible. ❌ Jamais de vert sur une source non lue.
-// ⚠️ Un signal n'est PAS une violation : c'est une prise de connaissance
-// POSSIBLE. Le job `alerter` ouvre l'issue (propriétaire, échéance 72 h).
+// ⚠️ Un signal n'est PAS une violation : le job `alerter` ouvre l'issue (propriétaire, échéance 72 h).
 //
 // 🔴 PAS DE SHEBANG : le témoin importe ce module (cf. `scripts/CLAUDE.md`).
 // Témoin : `scripts/detection-violation.guard.test.mjs`.
@@ -94,6 +91,7 @@ const LIGNES = `if(match(log_attributes['response.headers.content_range'], '^[0-
     toInt64OrZero(extract(log_attributes['response.headers.content_range'], '^[0-9]+-([0-9]+)'))
     - toInt64OrZero(extract(log_attributes['response.headers.content_range'], '^([0-9]+)-')) + 1, 0)`;
 const REST = `source = 'edge_logs' AND startsWith(log_attributes['request.path'], '/rest/v1/')`;
+const CLE_SERVEUR = `startsWith(log_attributes['request.sb.apikey.apikey.prefix'], 'sb_secret_')`; // nos Edge Functions : sans charge JWT, elles passaient pour anonymes (issue n° 186)
 
 /** Les requêtes EXÉCUTÉES. Chacune rend une seule ligne d'agrégats : un
  *  compte ou une IP n'apparaît que DANS une sous-requête, jamais en sortie. */
@@ -103,7 +101,7 @@ export const SQL_JOURNAUX = {
   countIf(source = 'edge_logs' AND log_attributes['request.method'] = 'POST'
     AND log_attributes['request.path'] = '/auth/v1/recover') AS reinitialisations,
   sumIf(${LIGNES}, ${REST} AND ${SUJET} = ''
-    AND log_attributes['request.sb.jwt.authorization.payload.role'] != 'service_role') AS lignes_anon,
+    AND log_attributes['request.sb.jwt.authorization.payload.role'] != 'service_role' AND NOT ${CLE_SERVEUR}) AS lignes_anon,
   countIf(source = 'edge_logs') AS requetes_lues
 FROM logs`,
   ip: `SELECT max(n) AS echecs_auth_ip_max FROM (
