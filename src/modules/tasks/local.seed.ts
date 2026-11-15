@@ -10,8 +10,14 @@ import { localizeSeed } from '@/lib/seed-i18n';
 import { addDaysToKey, todayKeyInTz } from '@/lib/timezone';
 
 // Helper pour générer des dates
+// Horloge posée UNE fois, +1 ms par appel : deux tâches « à J-2 » n'ont plus un
+// `createdAt` égal ou inversé selon le tick de la milliseconde où le module se
+// charge, donc le tri à priorité égale (createdAt puis id) est le même à chaque
+// chargement. La tâche déclarée après passe devant (createdAt plus récent).
+const SEED_NOW = Date.now();
+let seedTick = 0;
 const getDate = (daysFromNow: number): string => {
-  const date = new Date();
+  const date = new Date(SEED_NOW + seedTick++);
   date.setDate(date.getDate() + daysFromNow);
   return date.toISOString();
 };
