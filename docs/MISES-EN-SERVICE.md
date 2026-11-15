@@ -94,6 +94,8 @@ DELETE FROM auth.mfa_factors WHERE user_id = '<uid>';
 | `inactive-accounts` (`37 6 * * *`) | `cosmo-inactive-accounts` | `inactive-accounts` | 26 h |
 
 - Secrets Vault (noms fixes) : `cosmo_project_url`, `cosmo_cron_secret` (= `CRON_SECRET` des Edge Functions et d'Actions).
+- Secret Vault facultatif : `cosmo_anon_key` (cle PUBLIQUE du projet, publishable ou anon, jamais la cle de service), lu par `cron_probe()` (mig. `257`) et envoye en `apikey` a `sonde-auth` seule : GoTrue repond 200 au lieu d'un 401 que la sonde fabriquerait 288 fois par jour dans les journaux lus par `check:prod-errors`. Absent : la sonde marche, le 401 revient.
+   `select vault.create_secret('<cle publishable>', 'cosmo_anon_key', 'apikey de sonde-auth (mig. 257)');`
 - Rattrapage d'un passage : `select public.cron_invoke('<job>');` en `postgres`, ou le `workflow_dispatch` d'origine (bail + rejeu idempotent).
 - État courant : les six jobs sont basculés, aucun n'est planifié par GitHub ; `workflow_dispatch` reste sur chacun pour le rattrapage. `JOBS_BASCULES` de `scripts/check-cron-runs.mjs` (source unique de la garde et de la sonde) le dit ; le ledger de prod dit les migrations.
 - 🔴 Bascule job par job : un job entre dans `JOBS_BASCULES` et perd son `schedule:` GitHub dans le même commit, après son premier `ok` dans `cron_runs`. `src/edge-cron-lease.guard.test.ts` refuse l'un sans l'autre.
