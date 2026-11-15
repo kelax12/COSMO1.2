@@ -2104,12 +2104,15 @@ CREATE FUNCTION public.cron_probe() RETURNS integer
     AS $$
 DECLARE
   v_projet text;
+  v_cle    text;
   v_req    bigint;
   v_n      integer := 0;
   s        record;
 BEGIN
   SELECT d.decrypted_secret INTO v_projet
     FROM vault.decrypted_secrets d WHERE d.name = 'cosmo_project_url';
+  SELECT d.decrypted_secret INTO v_cle
+    FROM vault.decrypted_secrets d WHERE d.name = 'cosmo_anon_key';
 
   FOR s IN
     SELECT t.job, t.url FROM (VALUES
@@ -2125,7 +2128,10 @@ BEGIN
     ELSE
       v_req := net.http_get(
         url := s.url,
-        headers := jsonb_build_object('User-Agent', 'cosmo-sonde-pg-cron'),
+        headers := jsonb_build_object('User-Agent', 'cosmo-sonde-pg-cron')
+                   || CASE WHEN s.job = 'sonde-auth' AND coalesce(v_cle, '') <> ''
+                           THEN jsonb_build_object('apikey', v_cle)
+                           ELSE '{}'::jsonb END,
         timeout_milliseconds := 20000
       );
       INSERT INTO public.cron_runs (job, request_id) VALUES (s.job, v_req);
