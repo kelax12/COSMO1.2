@@ -236,8 +236,24 @@ describe('listHabitsToday', () => {
       error: null,
     });
     const habits = await listHabitsToday(client, { now: new Date(2026, 6, 27) });
-    expect(habits[0]).toMatchObject({ id: 'h1', name: 'Sport', doneToday: true });
-    expect(habits[1]).toMatchObject({ id: 'h2', name: 'Lecture', doneToday: false });
+    expect(habits.find((h) => h.id === 'h1')).toMatchObject({ name: 'Sport', doneToday: true });
+    expect(habits.find((h) => h.id === 'h2')).toMatchObject({ name: 'Lecture', doneToday: false });
+  });
+
+  it('lit la RPC bornee get_my_habits avec la date LOCALE, jamais la colonne JSONB (DAT-02)', async () => {
+    const client = makeFakeClient({ data: [], error: null });
+    await listHabitsToday(client, { now: new Date(2026, 6, 27) });
+    expect(client.calls).toContainEqual(['rpc', 'get_my_habits', { p_days: 400, p_today: '2026-07-27' }]);
+    expect(client.calls.some(([m, t]) => m === 'from' && t === 'habits')).toBe(false);
+  });
+
+  it('trie par nom', async () => {
+    const client = makeFakeClient({
+      data: [{ id: 'b', name: 'Zen' }, { id: 'a', name: 'Alpha' }],
+      error: null,
+    });
+    const habits = await listHabitsToday(client, { now: new Date(2026, 6, 27) });
+    expect(habits.map((h) => h.name)).toEqual(['Alpha', 'Zen']);
   });
 
   it('tolere completions absent', async () => {
@@ -248,22 +264,30 @@ describe('listHabitsToday', () => {
 });
 
 describe('markHabitDone', () => {
-  it('appelle la RPC toggle_habit_completion quand l habitude n est pas faite', async () => {
+  it('appelle la RPC toggle_habit_completion_v2 quand l habitude n est pas faite', async () => {
     const client = makeFakeClient({ data: [{ id: 'h1', name: 'Sport', completions: {} }], error: null });
-    await markHabitDone(client, 'h1', { now: new Date(2026, 6, 27) });
+    const result = await markHabitDone(client, 'h1', { now: new Date(2026, 6, 27) });
     expect(client.calls).toContainEqual([
-      'rpc', 'toggle_habit_completion', { p_habit_id: 'h1', p_date: '2026-07-27' },
+      'rpc', 'toggle_habit_completion_v2',
+      { p_habit_id: 'h1', p_date: '2026-07-27', p_days: 400, p_today: '2026-07-27' },
     ]);
+    expect(client.calls.some(([m, name]) => m === 'rpc' && name === 'toggle_habit_completion')).toBe(false);
+    expect(result.alreadyDone).toBe(false);
   });
 
-  it('est idempotent : n appelle PAS la RPC si deja faite (sinon elle decocherait)', async () => {
+  it('est idempotent : n appelle PAS la RPC de bascule si deja faite (sinon elle decocherait)', async () => {
     const client = makeFakeClient({
       data: [{ id: 'h1', name: 'Sport', completions: { '2026-07-27': true } }],
       error: null,
     });
     const result = await markHabitDone(client, 'h1', { now: new Date(2026, 6, 27) });
-    expect(client.calls.some(([m]) => m === 'rpc')).toBe(false);
+    expect(client.calls.some(([m, name]) => m === 'rpc' && name === 'toggle_habit_completion_v2')).toBe(false);
     expect(result.alreadyDone).toBe(true);
+  });
+
+  it('refuse une habitude inconnue', async () => {
+    const client = makeFakeClient({ data: [{ id: 'h9', name: 'Autre', completions: {} }], error: null });
+    await expect(markHabitDone(client, 'h1', { now: new Date(2026, 6, 27) })).rejects.toThrow(CosmoNotFoundError);
   });
 
   it('ne fait jamais de update direct sur completions (TOCTOU-1)', async () => {

@@ -73,7 +73,7 @@ npm run cosmo -- tasks add --input -    # lit le JSON sur stdin
 
 Chacune est couverte par un test dans `scripts/cosmo/*.test.mjs`.
 
-- 🔴 Habitudes : passer par la RPC `toggle_habit_completion`, jamais `SELECT completions` puis `UPDATE` (course entre appareils). La RPC bascule : `markHabitDone` lit l'état avant d'appeler, sinon un second appel décoche.
+- 🔴 Habitudes : lire par `get_my_habits` et écrire par `toggle_habit_completion_v2` (table `habit_completions`, mig. 248), jamais la colonne `habits.completions` ni `SELECT` puis `UPDATE` (course entre appareils). La RPC bascule : `markHabitDone` lit l'état avant d'appeler, sinon un second appel décoche.
 - 🔴 Agenda : la policy RLS de `events` expose aussi l'agenda des membres d'équipe ; `listUpcomingEvents` filtre explicitement sur `user_id`.
 - 🔴 `TASK_COLUMNS` duplique `TASK_LIST_COLUMNS` du repository applicatif ; un test anti-dérive lit la source. Test rouge : corriger `TASK_COLUMNS`, pas le test.
 - ❌ Dates : `toLocaleDateString('en-CA')`, jamais `toISOString().slice(0, 10)` (décale d'un jour en soirée).

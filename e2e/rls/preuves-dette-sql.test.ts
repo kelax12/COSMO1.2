@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// Preuves des mig. 242, 243, 244, 248 à 251, 253 et 254, rejouées sur la base fraîche du job
+// Preuves des mig. 242, 243, 244, 248 à 251, 253, 254 et 256, rejouées sur la base fraîche du job
 // `rls-integration`.
 //
 // Une preuve de `supabase/proofs/` est un bloc `DO` qui se termine TOUJOURS
@@ -22,7 +22,7 @@ import { describe, it, expect, afterAll } from 'vitest';
 import { connecter } from './catalogue';
 
 // `dossier` : `supabase/migration-differee` pour une migration écrite mais pas
-// encore rejouée (253, retrait de `tasks.deadline`).
+// encore rejouée (253, retrait de `tasks.deadline` ; 256, retrait de `habits.completions`).
 // `depassee` : une migration suivante change le TYPE DE RETOUR d'une fonction
 // qu'elle crée ; la rejouer par-dessus lève « cannot change return type ». Son
 // texte reste vérifié, son exécution non : jouée en production avant
@@ -44,6 +44,8 @@ const PREUVES: { preuve: string; migration: string; dossier?: string; depassee?:
   { preuve: '253.proof.sql', migration: '253_taches_retrait_deadline.sql', dossier: 'supabase/migration-differee' },
   // Jours prévus des habitudes : séries sur les seuls jours prévus, rien ne bouge sans réglage.
   { preuve: '254.proof.sql', migration: '254_habit_scheduled_days.sql' },
+  // DAT-02, phase « contract » : retrait de `habits.completions`, après bascule du front et du CLI.
+  { preuve: '256.proof.sql', migration: '256_habits_retrait_completions_json.sql', dossier: 'supabase/migration-differee' },
 ];
 
 const lire = (chemin: string) => readFileSync(join(process.cwd(), chemin), 'utf8').replace(/\r\n/g, '\n');
@@ -53,7 +55,7 @@ afterAll(async () => {
   await db.end();
 });
 
-describe('supabase/proofs : preuves 242 à 244, 248 à 251, 253 et 254 rejouées sur la base fraîche', () => {
+describe('supabase/proofs : preuves 242 à 244, 248 à 251, 253, 254 et 256 rejouées sur la base fraîche', () => {
   for (const { preuve, migration, dossier = 'supabase/migration', depassee } of PREUVES) {
     it(`${preuve} embarque le texte exact de ${migration}`, () => {
       const texte = lire(`supabase/proofs/${preuve}`);

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { supabaseMock } from '@/test/supabase-mock';
 
 vi.mock('@/lib/supabase', async () => {
@@ -82,27 +82,42 @@ describe('SupabaseHabitsRepository', () => {
     expect(habit.completionsWindowDays).toBe(400);
   });
 
-  it('getPage without cursor: never emits a .or() filter', async () => {
-    supabaseMock.queueTable('habits', { data: [row] });
+  // DAT-02 : plus aucune lecture de `habits.completions`. `getPage` passe par la
+  // même RPC bornée que `fetchHabits`, le filtre de curseur se pose AVANT `.select()`.
+  it('getPage without cursor: RPC bornée, jamais .from(habits), jamais de .or()', async () => {
+    supabaseMock.queueRpc('get_my_habits', { data: [row] });
     await repo.getPage({ limit: 10 });
-    expect(supabaseMock.argsOf('habits', 'or')).toBeUndefined();
-    expect(supabaseMock.argsOf('habits', 'limit')).toEqual([11]); // +1 pour hasMore
+    expect(supabaseMock.queries.filter((q) => q.table === 'habits')).toHaveLength(0);
+    expect(supabaseMock.argsOf('get_my_habits', 'or')).toBeUndefined();
+    expect(supabaseMock.argsOf('get_my_habits', 'limit')).toEqual([11]); // +1 pour hasMore
+    const args = supabaseMock.rpcCalls[0].args as { p_days: number; p_today: string };
+    expect(args.p_days).toBe(400);
+    expect(args.p_today).toBe(new Date().toLocaleDateString('en-CA'));
   });
 
   it('getPage with VALID cursor: interpolates only after assertValidCursor passes', async () => {
-    supabaseMock.queueTable('habits', { data: [] });
+    supabaseMock.queueRpc('get_my_habits', { data: [] });
     await repo.getPage({ cursor: VALID_UUID, cursorDate: VALID_ISO });
-    const orArg = supabaseMock.argsOf('habits', 'or')?.[0] as string;
+    const orArg = supabaseMock.argsOf('get_my_habits', 'or')?.[0] as string;
     expect(orArg).toContain(VALID_ISO);
     expect(orArg).toContain(VALID_UUID);
   });
 
   it('getPage with FORGED cursor: rejects (N6/H-1 injection guard) and sends no .or()', async () => {
-    supabaseMock.queueTable('habits', { data: [] });
     await expect(
       repo.getPage({ cursor: 'x,id.gt.0', cursorDate: VALID_ISO }),
     ).rejects.toBeTruthy();
-    expect(supabaseMock.argsOf('habits', 'or')).toBeUndefined();
+    expect(supabaseMock.argsOf('get_my_habits', 'or')).toBeUndefined();
+  });
+
+  it('getPage: hasMore et curseur issus de la ligne en trop', async () => {
+    const rows = [1, 2, 3].map((n) => ({ ...row, id: `h${n}`, created_at: `2026-06-0${n}T00:00:00.000Z` }));
+    supabaseMock.queueRpc('get_my_habits', { data: rows });
+    const page = await repo.getPage({ limit: 2 });
+    expect(page.data.map((h) => h.id)).toEqual(['h1', 'h2']);
+    expect(page.hasMore).toBe(true);
+    expect(page.nextCursor).toBe('h2');
+    expect(page.nextCursorDate).toBe('2026-06-02T00:00:00.000Z');
   });
 
   it('createHabit: user_id injected from auth session, not from input', async () => {
@@ -112,6 +127,71 @@ describe('SupabaseHabitsRepository', () => {
     });
     const inserted = (supabaseMock.argsOf('habits', 'insert')?.[0] as Record<string, unknown>[])[0];
     expect(inserted.user_id).toBe(supabaseMock.user?.id);
+  });
+
+  // 🔴 DAT-02 : la colonne JSONB n'est ni écrite ni relue.
+  it('createHabit: n’écrit jamais `completions` dans habits et ne relit pas la colonne', async () => {
+    supabaseMock.queueTable('habits', { data: row });
+    await repo.createHabit({
+      name: 'Lire', frequency: 'daily', estimatedTime: 30, color: 'blue', icon: 'book',
+      completions: { '2026-06-01': true },
+    });
+    const inserted = (supabaseMock.argsOf('habits', 'insert')?.[0] as Record<string, unknown>[])[0];
+    expect(Object.keys(inserted)).not.toContain('completions');
+    const selected = supabaseMock.argsOf('habits', 'select')?.[0] as string;
+    expect(selected).toBeTruthy();
+    expect(selected.split(',').map((c) => c.trim())).not.toContain('completions');
+  });
+
+  it('createHabit: les jours cochés (restauration) vont dans habit_completions, sous le user_id de la session', async () => {
+    supabaseMock.queueTable('habits', { data: row });
+    supabaseMock.queueTable('habit_completions', { data: null });
+    const created = await repo.createHabit(
+      {
+        name: 'Lire', frequency: 'daily', estimatedTime: 30, color: 'blue', icon: 'book',
+        // `false`, clé invalide et 30 février n'ont pas de ligne.
+        completions: { '2026-06-02': true, '2026-06-01': true, '2026-06-03': false, demain: true, '2026-02-30': true },
+      },
+      { restoreId: VALID_UUID },
+    );
+    const rows = supabaseMock.argsOf('habit_completions', 'insert')?.[0] as Array<Record<string, string>>;
+    expect(rows.map((r) => r.day).sort()).toEqual(['2026-06-01', '2026-06-02']);
+    expect(rows.every((r) => r.habit_id === 'h1' && r.user_id === supabaseMock.user?.id)).toBe(true);
+    expect(created.completions).toEqual({ '2026-06-01': true, '2026-06-02': true });
+  });
+
+  it('createHabit: sans jour coché, aucune écriture dans habit_completions', async () => {
+    supabaseMock.queueTable('habits', { data: row });
+    await repo.createHabit({ name: 'Lire', frequency: 'daily', estimatedTime: 30, color: 'blue', icon: 'book' });
+    expect(supabaseMock.queries.filter((q) => q.table === 'habit_completions')).toHaveLength(0);
+  });
+
+  it('createHabit: 450 jours tiennent en une écriture (paquets de 500)', async () => {
+    const completions = Object.fromEntries(
+      Array.from({ length: 450 }, (_, i) => [new Date(Date.UTC(2025, 0, 1 + i)).toISOString().slice(0, 10), true]),
+    );
+    supabaseMock.queueTable('habits', { data: row });
+    supabaseMock.queueTable('habit_completions', { data: null });
+    await repo.createHabit({ name: 'Lire', frequency: 'daily', estimatedTime: 30, color: 'blue', icon: 'book', completions });
+    const inserts = supabaseMock.queries.filter((q) => q.table === 'habit_completions');
+    expect(inserts).toHaveLength(1);
+    expect((inserts[0].calls.find((c) => c.method === 'insert')?.args[0] as unknown[]).length).toBe(450);
+  });
+
+  it('createHabit: si les jours échouent, l’habitude créée est retirée (pas de demi-restauration)', async () => {
+    supabaseMock.queueTable('habits', { data: row });
+    supabaseMock.queueTable('habit_completions', { data: null, error: { message: 'boom', code: '23503' } });
+    supabaseMock.queueTable('habits', { data: null });
+    await expect(
+      repo.createHabit({
+        name: 'Lire', frequency: 'daily', estimatedTime: 30, color: 'blue', icon: 'book',
+        completions: { '2026-06-01': true },
+      }),
+    ).rejects.toBeTruthy();
+    const habitQueries = supabaseMock.queries.filter((q) => q.table === 'habits');
+    expect(habitQueries).toHaveLength(2);
+    expect(habitQueries[1].calls.map((c) => c.method)).toContain('delete');
+    expect(habitQueries[1].calls.find((c) => c.method === 'eq')?.args).toEqual(['id', 'h1']);
   });
 
   it('createHabit: rejects when not authenticated', async () => {
@@ -176,6 +256,15 @@ describe('SupabaseHabitsRepository — updateHabit', () => {
     expect(Object.keys(patch)).not.toContain('id');
   });
 
+  it('un `completions` dans la mise à jour n’atteint jamais la colonne (DAT-02) ni ne la relit', async () => {
+    supabaseMock.queueTable('habits', { data: row });
+    await repo.updateHabit('h1', { name: 'X', completions: { '2026-06-01': true } });
+    const patch = supabaseMock.argsOf('habits', 'update')?.[0] as Record<string, unknown>;
+    expect(patch).toEqual({ name: 'X' });
+    const selected = supabaseMock.argsOf('habits', 'select')?.[0] as string;
+    expect(selected.split(',').map((c) => c.trim())).not.toContain('completions');
+  });
+
   it('cible l’habitude par son id et rend le modèle mappé', async () => {
     supabaseMock.queueTable('habits', { data: { ...row, estimated_time: 45 } });
     const result = await repo.updateHabit('h1', { estimatedTime: 45 });
@@ -191,5 +280,32 @@ describe('SupabaseHabitsRepository — updateHabit', () => {
       error: { message: 'permission denied', code: '42501' },
     });
     await expect(repo.updateHabit('h1', { name: 'X' })).rejects.toBeTruthy();
+  });
+});
+
+describe('SupabaseHabitsRepository — fuseau (clés gelées, p_today du client)', () => {
+  const original = process.env.TZ;
+  afterEach(() => {
+    vi.useRealTimers();
+    if (original === undefined) delete process.env.TZ;
+    else process.env.TZ = original;
+  });
+
+  // 2026-11-15 20:00 UTC : Auckland est déjà le 16, Los Angeles encore le 15.
+  it('p_today suit le fuseau courant, la clé du jour cochée n’est jamais recalculée', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-15T20:00:00Z'));
+    const seen: string[] = [];
+    for (const tz of ['Pacific/Auckland', 'America/Los_Angeles']) {
+      process.env.TZ = tz;
+      supabaseMock.queueRpc('toggle_habit_completion_v2', { data: [{ ...row, completions: { '2026-11-15': true } }] });
+      const result = await repo.toggleCompletion('h1', '2026-11-15');
+      const call = supabaseMock.rpcCalls[supabaseMock.rpcCalls.length - 1];
+      seen.push((call.args as { p_today: string }).p_today);
+      // La clé envoyée est celle de l'appelant, telle quelle, quel que soit le fuseau.
+      expect((call.args as { p_date: string }).p_date).toBe('2026-11-15');
+      expect(result.completions['2026-11-15']).toBe(true);
+    }
+    expect(seen).toEqual(['2026-11-16', '2026-11-15']);
   });
 });

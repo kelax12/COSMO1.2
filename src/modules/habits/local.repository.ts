@@ -2,13 +2,16 @@ import { IHabitsRepository } from './repository';
 import type { CreateOptions } from '@/lib/restore-id';
 import { Habit, CreateHabitInput, UpdateHabitInput } from './types';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
-import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
+import { safeGetItem, safeParse, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
 import { makeApiError } from '@/lib/normalizeApiError';
 import { localizedDemoHabits } from './local.seed';
 import { toggleCompletionDay } from './streak';
+import { checkedDays, isRealDayKey } from './completion-days';
 import { MAX_SCHEDULE_HISTORY, normalizeScheduledDays } from './schedule';
+import { HABITS_STORAGE_KEY as STORAGE_KEY, HABIT_COMPLETIONS_STORAGE_KEY as COMPLETIONS_KEY } from './constants';
 
-const STORAGE_KEY = 'cosmo_demo_habits';
+/** `{ [habitId]: jours cochés }` : la forme de `habit_completions` (une ligne par jour coché). */
+type CompletionRows = Record<string, string[]>;
 
 // Mêmes refus que la base (contrat de parité V12.2) : CHECK `habits_frequency_check`
 // (mig. 002) et format du jour que la bascule serveur accepte (mig. 121).
@@ -49,13 +52,21 @@ function applySchedule<T extends Partial<Habit>>(input: T): T {
   return out;
 }
 
-/** Jour réel au format `YYYY-MM-DD` (le 30 février est refusé, comme par `habit_day_from_key`). */
-function isRealDayKey(date: string): boolean {
-  const parsed = new Date(`${date}T00:00:00Z`);
-  return /^\d{4}-\d{2}-\d{2}$/.test(date) && !Number.isNaN(parsed.getTime()) && parsed.toISOString().startsWith(date);
-}
+const asMap = (days: readonly string[] | undefined): Record<string, boolean> =>
+  Object.fromEntries([...(days ?? [])].sort().map((day) => [day, true]));
 
 export class LocalStorageHabitsRepository implements IHabitsRepository {
+  /**
+   * Habitudes + jours cochés, lus dans DEUX clés comme la prod les lit dans deux
+   * tables (DAT-02). `Habit.completions` n'est que la carte dérivée des lignes.
+   *
+   * Reprise d'une démo existante : une habitude qui porte encore une carte
+   * `completions` dans `cosmo_demo_habits` (ancien format) voit ses jours cochés
+   * versés dans `cosmo_demo_habit_completions`, puis la carte est retirée de
+   * l'habitude. Les clés à `false` ou qui ne sont pas un jour réel n'ont pas de
+   * ligne, comme dans la table. Idempotent, et sans effet sur la lecture si
+   * l'écriture échoue (quota, navigation privée).
+   */
   private getHabits(): Habit[] {
     const stored = safeParseArray<Habit>(safeGetItem(STORAGE_KEY));
     // Corrompu ou stockage indisponible : on re-seme plutot que de faire
@@ -63,13 +74,42 @@ export class LocalStorageHabitsRepository implements IHabitsRepository {
     if (!stored) {
       const seeded = localizedDemoHabits();
       this.saveHabits(seeded);
-      return seeded;
+      return seeded.map((h) => ({ ...h, completions: asMap(checkedDays(h.completions)) }));
     }
-    return stored;
+
+    const parsed = safeParse<CompletionRows>(safeGetItem(COMPLETIONS_KEY));
+    const rows: CompletionRows = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+
+    let legacy = false;
+    const habits = stored.map((habit) => {
+      const known = Array.isArray(rows[habit.id]) ? rows[habit.id].filter(isRealDayKey) : [];
+      if (habit.completions === undefined) return { ...habit, completions: asMap(known) };
+      legacy = true;
+      return { ...habit, completions: asMap([...new Set([...known, ...checkedDays(habit.completions)])]) };
+    });
+
+    if (legacy) {
+      try {
+        this.saveHabits(habits);
+      } catch {
+        // La démo reste lisible : la reprise sera retentée à la lecture suivante.
+      }
+    }
+    return habits;
   }
 
+  /** Écrit les lignes d'abord, puis les habitudes SANS carte : jamais l'inverse (un crash entre les deux ne perd aucun jour). */
   private saveHabits(habits: Habit[]): void {
-    writeJsonOrThrow(STORAGE_KEY, habits);
+    const rows: CompletionRows = {};
+    for (const habit of habits) {
+      const days = [...new Set(checkedDays(habit.completions))].sort();
+      if (days.length > 0) rows[habit.id] = days;
+    }
+    writeJsonOrThrow(COMPLETIONS_KEY, rows);
+    writeJsonOrThrow(
+      STORAGE_KEY,
+      habits.map(({ completions: _completions, ...habit }) => habit),
+    );
   }
 
   async fetchHabits(): Promise<Habit[]> {
@@ -84,7 +124,7 @@ export class LocalStorageHabitsRepository implements IHabitsRepository {
       // Parite avec le repository Supabase : `restoreId` vient d'un second
       // argument reserve aux « Annuler », jamais du payload (R-08).
       id: options?.restoreId ?? crypto.randomUUID(),
-      completions: input.completions || {},
+      completions: asMap(checkedDays(input.completions)),
       createdAt: new Date().toISOString(),
     };
     this.saveHabits([newHabit, ...habits]);
@@ -99,7 +139,10 @@ export class LocalStorageHabitsRepository implements IHabitsRepository {
 
     // Fusion PUIS rangement : « tous les jours » efface le réglage précédent,
     // comme le NULL écrit en base par `mapHabitToDb`.
-    const updatedHabit: Habit = applySchedule({ ...habits[index], ...updates });
+    // `completions` d'un update est ignoré, comme côté Supabase : un jour ne se
+    // coche que par `toggleCompletion` (l'historique n'est pas une colonne).
+    const { completions: _ignored, ...patch } = updates;
+    const updatedHabit: Habit = applySchedule({ ...habits[index], ...patch });
     habits[index] = updatedHabit;
     this.saveHabits(habits);
     return updatedHabit;

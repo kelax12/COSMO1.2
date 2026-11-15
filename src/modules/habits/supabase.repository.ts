@@ -5,6 +5,7 @@ import { IHabitsRepository } from './repository';
 import type { CreateOptions } from '@/lib/restore-id';
 import { Habit, CreateHabitInput, UpdateHabitInput } from './types';
 import { HabitRow, mapHabitFromDb, mapHabitToDb } from './mappers';
+import { checkedDays } from './completion-days';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE, assertValidCursor } from '@/lib/pagination.types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
 import { fetchAllPages, MAX_ROWS } from '@/lib/fetch-all-pages';
@@ -36,6 +37,18 @@ const HABIT_WINDOW_DAYS = 400;
  * Mesuré, puis corrigé par la mig. 122.
  */
 const localToday = (): string => new Date().toLocaleDateString('en-CA');
+
+/**
+ * Colonnes lues après une écriture directe sur `habits` : TOUTES sauf
+ * `completions`. L'historique vit dans `habit_completions` (mig. 248, DAT-02) ;
+ * la colonne JSONB n'est plus ni lue ni écrite par le client (elle ne subsiste
+ * que comme miroir de transition, retirée par la 256).
+ */
+const HABIT_COLUMNS =
+  'id, name, description, frequency, estimated_time, color, icon, created_at, user_id, scheduled_days, schedule_history';
+
+/** Lignes par INSERT dans `habit_completions` : un « Annuler » rejoue au plus ~400 jours. */
+const COMPLETION_INSERT_CHUNK = 500;
 
 export class SupabaseHabitsRepository implements IHabitsRepository {
   async fetchHabits(): Promise<Habit[]> {
@@ -71,42 +84,33 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
   }
 
   /**
-   * ⚠️ PIÈGE DE PAYLOAD, à lire avant de brancher cette méthode.
+   * Page de la liste, par la même RPC bornée que `fetchHabits` (mig. 119/248) :
+   * `completions` = jours cochés de la fenêtre, agrégats serveur sur tout
+   * l'historique. Jamais `.from('habits')` : la colonne JSONB n'est plus lue.
    *
-   * Elle lit `.from('habits').select('*')`, donc `completions` ENTIER — la
-   * chose exacte que `fetchHabits` ci-dessus évite via `get_my_habits`
-   * (mig. 119, ~280 ko par ouverture pour 20 habitudes à trois ans). Elle ne
-   * renvoie pas non plus les quatre agrégats calculés serveur, donc une série
-   * dérivée d'ici plafonnerait à la fenêtre affichée.
-   *
-   * Aucun appelant aujourd'hui : c'est une capacité d'interface, gardée
-   * volontairement comme sur les autres modules (cf. la note de
-   * `modules/tasks/hooks.ts`, étape 3 de la pagination). La brancher telle
-   * quelle rouvrirait la mig. 119 : il faudra d'abord une RPC paginée bornée.
+   * Aucun appelant aujourd'hui : capacité d'interface (cf. `tasks/hooks.ts`).
    */
   async getPage(params: PaginationParams = {}): Promise<PaginatedResult<Habit>> {
     if (!supabase) throw new Error('Supabase not configured');
 
     const limit = params.limit ?? DEFAULT_PAGE_SIZE;
 
-    let query = supabase
-      .from('habits')
+    // Filtre AVANT `.select()` : sur une RPC, seul le builder de filtres porte `.or()`.
+    let filtered = supabase.rpc('get_my_habits', { p_days: HABIT_WINDOW_DAYS, p_today: localToday() });
+    if (params.cursor && params.cursorDate) {
+      assertValidCursor(params.cursor, params.cursorDate);
+      filtered = filtered.or(
+        `created_at.lt.${params.cursorDate},and(created_at.eq.${params.cursorDate},id.lt.${params.cursor})`
+      );
+    }
+    const { data, error } = await filtered
       .select('*')
       .order('created_at', { ascending: false })
       .order('id', { ascending: false })
       .limit(limit + 1);
-
-    if (params.cursor && params.cursorDate) {
-      assertValidCursor(params.cursor, params.cursorDate);
-      query = query.or(
-        `created_at.lt.${params.cursorDate},and(created_at.eq.${params.cursorDate},id.lt.${params.cursor})`
-      );
-    }
-
-    const { data, error } = await query;
     if (error) throw normalizeApiError(error);
 
-    const rows = data || [];
+    const rows = (data || []) as unknown as HabitRow[];
     const hasMore = rows.length > limit;
     const items = hasMore ? rows.slice(0, limit) : rows;
     const lastItem = items[items.length - 1];
@@ -115,13 +119,16 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
       data: items.map(mapHabitFromDb),
       hasMore,
       nextCursor: hasMore && lastItem ? lastItem.id : null,
-      nextCursorDate: hasMore && lastItem ? lastItem.created_at : null,
+      nextCursorDate: hasMore && lastItem ? lastItem.created_at ?? null : null,
     };
   }
 
   async createHabit(input: CreateHabitInput, options?: CreateOptions): Promise<Habit> {
     const user = await getCurrentUser();
     if (!user) throw makeApiError('not_authenticated');
+    // L'historique ne passe JAMAIS par la colonne `completions` : il s'écrit
+    // dans `habit_completions` plus bas (DAT-02). `mapHabitToDb` ne l'émet pas.
+    //
     // `options.restoreId` ne vient JAMAIS d'un payload de formulaire : c'est un
     // second argument, reserve aux « Annuler » (R-08). La whitelist
     // `mapHabitToDb` et le `user_id` pose depuis la session sont inchanges.
@@ -134,11 +141,28 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
     const { data, error } = await supabase
       .from('habits')
       .insert([dbInput])
-      .select()
+      .select(HABIT_COLUMNS)
       .single();
 
     if (error) throw normalizeApiError(error);
-    return mapHabitFromDb(data);
+
+    const days = checkedDays(input.completions);
+    for (let i = 0; i < days.length; i += COMPLETION_INSERT_CHUNK) {
+      const rows = days
+        .slice(i, i + COMPLETION_INSERT_CHUNK)
+        .map((day) => ({ habit_id: data.id, user_id: user.id, day }));
+      const { error: insertError } = await supabase.from('habit_completions').insert(rows);
+      if (insertError) {
+        // Pas d'habitude à moitié restaurée : on retire celle qu'on vient de créer.
+        await supabase.from('habits').delete().eq('id', data.id);
+        throw normalizeApiError(insertError);
+      }
+    }
+
+    return mapHabitFromDb({
+      ...(data as unknown as HabitRow),
+      completions: Object.fromEntries(days.map((day) => [day, true])),
+    });
   }
 
   async updateHabit(id: string, updates: UpdateHabitInput): Promise<Habit> {
@@ -148,11 +172,13 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
       .from('habits')
       .update(dbUpdates)
       .eq('id', id)
-      .select()
+      .select(HABIT_COLUMNS)
       .single();
 
     if (error) throw normalizeApiError(error);
-    return mapHabitFromDb(data);
+    // Sans `completions` : la ligne rendue n'en porte pas (l'historique est dans
+    // `habit_completions`). Le hook invalide la liste, qui relit la RPC bornée.
+    return mapHabitFromDb(data as unknown as HabitRow);
   }
 
   async deleteHabit(id: string): Promise<void> {

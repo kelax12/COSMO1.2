@@ -74,11 +74,18 @@ describe('mapHabitToDb (whitelist / anti-mass-assignment)', () => {
   it('maps every whitelisted field (full coverage)', () => {
     const out = mapHabitToDb({
       name: 'n', description: 'd', frequency: 'monthly', estimatedTime: 7,
-      color: '#000', icon: 'fire', completions: { '2026-01-01': true },
+      color: '#000', icon: 'fire',
     });
     expect(out).toEqual({
       name: 'n', description: 'd', frequency: 'monthly', estimated_time: 7,
-      color: '#000', icon: 'fire', completions: { '2026-01-01': true },
+      color: '#000', icon: 'fire',
     });
+  });
+
+  // DAT-02 : l'historique vit dans `habit_completions`, jamais dans la colonne.
+  it('n émet jamais `completions` (colonne JSONB retirée du chemin d écriture)', () => {
+    const out = mapHabitToDb({ name: 'n', completions: { '2026-01-01': true } });
+    expect(out).toEqual({ name: 'n' });
+    expect(Object.keys(out)).not.toContain('completions');
   });
 });

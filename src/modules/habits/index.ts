@@ -17,7 +17,7 @@ export {
 } from './schedule';
 
 // Constants
-export { habitKeys, HABITS_STORAGE_KEY } from './constants';
+export { habitKeys, HABITS_STORAGE_KEY, HABIT_COMPLETIONS_STORAGE_KEY } from './constants';
 
 // Repository interface
 export type { IHabitsRepository } from './repository';

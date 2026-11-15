@@ -21,10 +21,13 @@ supabase.rpc('get_my_habits', { p_days: 400 })            // ✅ mig. 119
 
 ## `habit_completions` (mig. 248, DAT-02)
 
-Table commitée, **pas appliquée en prod** : vérifier le ledger avant de l'affirmer (`supabase/migration/CLAUDE.md`). Une ligne par habitude et par jour COCHÉ (date locale, mêmes clés que le JSON) ; `get_my_habits`, `toggle_habit_completion_v2`, `get_work_time_stats` gardent signature et forme.
+Table en production (ledger 248 et 254). Une ligne par habitude et par jour COCHÉ (date locale, mêmes clés que l'ancien JSON). `get_my_habits`, `toggle_habit_completion_v2`, `get_work_time_stats` la lisent ; la forme `Habit.completions` (`Record<string, boolean>`) n'en est que la carte dérivée.
 
-- 🔴 La carte `completions` ne porte que les jours cochés : décocher RETIRE la clé (`toggleCompletionDay`, `streak.ts`), en démo comme en cache optimiste. Jamais `false`.
-- ⚠️ Transition : `habits.completions` reste exacte (le toggle v2 recopie ; le trigger `habit_completions_mirror` recopie toute autre écriture). Lecteurs restants : CLI agent (`scripts/cosmo/api.mjs`), export CSV, `getPage`, `e2e/real/habits.spec.ts`. ❌ Retirer la colonne avant de les avoir basculés.
+- 🔴 Le code ne lit ni n'écrit `habits.completions` : ❌ `.from('habits').select('*')` (colonnes explicites, `HABIT_COLUMNS`), ❌ émettre `completions` dans un INSERT/UPDATE (`mapHabitToDb` ne l'émet plus). Un jour se coche par `toggle_habit_completion_v2` ; un « Annuler » (`createHabit` avec `completions`) écrit ses jours par INSERT dans `habit_completions` (paquets de 500, habitude retirée si l'écriture échoue). Un `completions` passé à `updateHabit` est ignoré, en démo comme en base.
+- 🔴 La carte `completions` ne porte que les jours cochés : décocher RETIRE la clé (`toggleCompletionDay`, `streak.ts`), en démo comme en cache optimiste. Jamais `false`. Règle commune des deux repositories : `completion-days.ts` (`checkedDays`, `isRealDayKey`).
+- ✅ Démo : `cosmo_demo_habit_completions` (`{ [habitId]: ['YYYY-MM-DD'] }`) est le pendant local de la table ; `cosmo_demo_habits` ne porte plus de carte. Une démo existante (ancien format) est reprise à la première lecture, sans perte (lecture seule si le stockage est plein). Supprimer une habitude supprime ses lignes.
+- ✅ Fuseau : la clé d'un jour est gelée à l'écriture ; seul `p_today` suit le fuseau courant. Tests : `local.completions.test.ts`, `supabase.repository.test.ts` § fuseau.
+- ⚠️ Transition : la colonne reste exacte côté base (la v2 la recopie, le trigger `habit_completions_mirror` recopie toute écriture de colonne), sauf pour un « Annuler » qui n'écrit plus que la table. Son retrait est la `256` (`supabase/migration-differee/`, preuve `256.proof.sql`) : ❌ l'appliquer avant sept jours de front livré et avant d'avoir relu la garde de sa tête. Reste à faire ce jour-là : `habit_completions` dans `EXPORTS` de `check-portability-export.mjs`.
 
 ## Jours prévus (mig. 254)
 

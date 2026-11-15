@@ -39,7 +39,6 @@ export interface HabitDbInput {
   estimated_time?: number;
   color?: string;
   icon?: string;
-  completions?: Record<string, boolean>;
   scheduled_days?: number[] | null;
   schedule_history?: HabitScheduleChange[];
   user_id?: string;
@@ -92,14 +91,10 @@ export function mapHabitToDb(input: Partial<Habit>): HabitDbInput {
       days: normalizeScheduledDays(e.days),
     }));
   }
-  // 🔴 `completions` REMPLACE la colonne entière, elle ne la fusionne pas.
-  // Depuis la mig. 119, la map lue par le client est BORNÉE à une fenêtre :
-  // la renvoyer telle quelle DÉTRUIRAIT définitivement tout l'historique
-  // au-delà de la fenêtre. Aucun écran ne le fait aujourd'hui (`HabitModal`
-  // n'envoie que name / estimatedTime / color), et il ne faut pas commencer :
-  // la bascule d'un jour passe par `toggle_habit_completion_v2`, qui écrit
-  // une seule clé de façon atomique.
-  if (input.completions !== undefined) result.completions = input.completions;
+  // 🔴 `completions` n'est JAMAIS émis (DAT-02) : l'historique vit dans
+  // `habit_completions` (mig. 248), écrit par `toggle_habit_completion_v2` et,
+  // pour un « Annuler », par `createHabit`. Écrire la colonne JSONB remplacerait
+  // son contenu (fenêtre bornée, mig. 119) et ne toucherait plus la table lue.
   return result;
 }
 
