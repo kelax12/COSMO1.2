@@ -37,7 +37,7 @@ describe('raisonSensible : la règle', () => {
     ['exports/prospects.csv'],
     ['docs/business-plan/business-plan-cosmo-2026-final.pdf'],
     ['docs/business-plan/notes.md'],
-    ['prive/faille.md'],
+    ['prive/faille.md'], ['prive/prospection.md'],
     ['prive/RGPD-VIOLATION.md'],
     ['Prive/a-faire-manuel.md'],
     ['leads-relance.txt'],

@@ -1804,7 +1804,7 @@ export const CATALOGUE = [
     garde: 'scripts/check-fichiers-sensibles.guard.test.mjs',
     modifs: [r('scripts/check-fichiers-sensibles.mjs', "  ['prive/**', ", "  ['prive-aveugle/**', ")],
     attendu: [
-      'TÉMOIN : refuse prive/faille.md',
+      'TÉMOIN : refuse prive/prospection.md',
       'TÉMOIN : un fichier de `prive/` indexé fait échouer `git commit`',
     ],
     pourquoi:
