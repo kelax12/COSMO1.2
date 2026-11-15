@@ -258,7 +258,7 @@ et 13 du RGPD.
   pages d'identifiants). Sans DPA, la seule option propre est de **retirer Vesk** et de garder
   Vercel Analytics.
 - **Resend** : DPA non archivé.
-- **Vercel** : l'équipe s'appelle « axellongattepro-3874's projects », nom par défaut d'un
+- **Vercel** : l'équipe s'appelle « <nom par défaut> », nom par défaut d'un
   compte personnel, ce qui suggère le plan **Hobby** (non vérifié : l'API ne renvoie pas le
   plan). Or les conditions de Vercel réservent Hobby à un **usage personnel et non
   commercial**, et son DPA ne vise que Pro et Enterprise. Si c'est Hobby : passer en Pro avant

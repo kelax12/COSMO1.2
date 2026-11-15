@@ -1462,7 +1462,7 @@ personne peut donc valider un formulaire dont elle ne voit plus l'intitulé.
 >
 > ✅ **DÉCISION D'AXEL DU 2026-09-12, sur les deux questions que le test posait** :
 > le remboursement se jouera sur **`cosmoentreprise`** (son organisation réelle, 7
-> membres, propriétaire `axellongatte2@gmail.com`) et **non** sur `entreprisetest` ;
+> membres, propriétaire `contact@thecosmo.app`) et **non** sur `entreprisetest` ;
 > et les **deux lignes définitives** que le test écrira dans `payment_records` sont
 > **acceptées en connaissance de cause**. Elles se compensent à zéro, elles seront les
 > deux premières lignes de la vie de ce journal, elles viendront du mode TEST de
