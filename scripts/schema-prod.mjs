@@ -1,31 +1,13 @@
 // ═══════════════════════════════════════════════════════════════════
 // schema-prod.mjs · LE DEPOT REJOUE EGALE-T-IL LA PRODUCTION ? (TST-06, ROB-02)
 //
-// `check:migration-coverage` dit si chaque FICHIER a laisse une trace en
-// prod ; il ne dit pas que la base reconstruite depuis le depot EST la prod
-// (une ligne au ledger ne prouve pas qu'un `CREATE OR REPLACE` a remplace le
-// corps vivant, mig. 144). Ce script compare deux instantanes rendus par le
-// MEME pg_dump (celui du conteneur de la stack locale), au MEME format que
-// `supabase/schema.sql` :
-//   · la base FRAICHE : `supabase start` + `scripts/apply-migrations.mjs` sur
-//     `supabase/migration/`, moins les migrations pas encore en prod ;
-//   · la PRODUCTION, lue en LECTURE SEULE (pg_dump --schema-only, catalogue).
-// Objet par objet : « en prod seulement », « dans le depot seulement »,
-// « different ». Repris de `noyau/migrations-cli` (2026-11-09) pour tourner
-// sur `main` sans la baseline CLI.
-//
-// Deux commandes :
-//   node scripts/schema-prod.mjs en-attente <introspection.json> [--retirer]
-//       Les migrations du depot pas en prod, au sens de la porte Edge
-//       (`enAttenteDeProduction`, meme classeur que `check:migration-coverage`).
-//       Avec `--retirer`, les efface de l'arbre du RUNNER avant le rejeu.
-//   node scripts/schema-prod.mjs comparer
-//       Compare base fraiche (DATABASE_URL, defaut stack locale) et production
-//       (PROD_DB_URL). Sortie 1 au premier ecart.
-//
-// 🔴 AUCUNE ecriture en production : `select` sur le catalogue, pg_dump
-// --schema-only, session `read only`. Aucun artefact : le journal (public)
-// porte la liste des objets en ecart et leurs definitions, masquees.
+// Une ligne au ledger ne prouve pas qu'un corps a ete remplace (mig. 144) : on
+// compare, objet par objet et par le MEME pg_dump, la base FRAICHE (migrations
+// rejouees, moins celles que la prod n'a pas) a la PRODUCTION lue en lecture seule.
+//   en-attente <introspection.json> [--retirer] : migrations pas en prod
+//     (classeur de `check:migration-coverage`), retirees du rejeu du runner ;
+//   comparer : base fraiche (DATABASE_URL) contre prod (PROD_DB_URL), sortie 1 a l'ecart.
+// 🔴 AUCUNE ecriture en production ; journal public, definitions masquees.
 // ⚠️ Pas de shebang : le temoin importe ce module (cf. `scripts/CLAUDE.md`).
 // ═══════════════════════════════════════════════════════════════════
 import { readFileSync, unlinkSync, appendFileSync } from 'node:fs';
@@ -33,26 +15,32 @@ import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 import { lireBase, normaliserDump, rendreComplements, projetId } from './contrat-donnees.mjs';
-import { classer, lireMigrations, enAttenteDeProduction } from './check-migration-coverage.mjs';
+import {
+  classer, lireMigrations, enAttenteDeProduction, objetsCrees, objetsSupprimes, VERDICT, PARTIEL_EN_ATTENTE_DEPUIS,
+} from './check-migration-coverage.mjs';
 
 export const DOSSIER_MIGRATIONS = 'supabase/migration';
 
 /** Les fichiers du depot que la prod n'a pas, lus sur une introspection de `check:migration-coverage`. */
 export function enAttente(fichiers, intro) {
-  return enAttenteDeProduction(classer(fichiers, intro)).map((r) => r.name);
+  const res = classer(fichiers, intro);
+  const attente = new Set(enAttenteDeProduction(res).map((r) => r.name));
+  // Hors ledger, objets crees deja en base, mais une cible de suppression encore la (mig. 206).
+  const sql = new Map(fichiers.map((f) => [f.name, f.sql]));
+  for (const r of res.filter((x) => x.verdict === VERDICT.OBJET && Number.parseInt(x.name, 10) >= PARTIEL_EN_ATTENTE_DEPUIS)) {
+    const [sup, cre] = [objetsSupprimes(sql.get(r.name)), objetsCrees(sql.get(r.name))];
+    if (Object.keys(sup).some((k) => sup[k].some((n) => !cre[k].includes(n) && (intro[k] ?? []).includes(n)))) attente.add(r.name);
+  }
+  return fichiers.map((f) => f.name).filter((n) => attente.has(n));
 }
 
 // ─── Instantanes ────────────────────────────────────────────────────
 
 const LOCAL = /@(127\.0\.0\.1|localhost|\[::1\]|host\.docker\.internal)(:\d+)?\//;
 
-/**
- * Certificat racine PUBLIC de Supabase (pas un secret), cle de verification
- * de la chaine du pooler. Source : documentation officielle Supabase,
- * https://supabase.com/docs/guides/database/connecting-to-postgres#ssl-connections
- * (fichier prod-ca-2021.crt, "Supabase Root 2021 CA", expire le 2031-04-26,
- * SHA-256 80:70:25:AD:50:D4:ED:21:9D:2C:9C:7D:29:9C:00:4F:82:4E:B0:0C:F7:F6:5A:FE:F6:07:D0:7B:72:E6:CA:FA).
- */
+// Racine PUBLIQUE du pooler (prod-ca-2021.crt, expire 2031-04-26), source :
+// https://supabase.com/docs/guides/database/connecting-to-postgres#ssl-connections
+// SHA-256 80:70:25:AD:50:D4:ED:21:9D:2C:9C:7D:29:9C:00:4F:82:4E:B0:0C:F7:F6:5A:FE:F6:07:D0:7B:72:E6:CA:FA
 export const SUPABASE_ROOT_CA = `-----BEGIN CERTIFICATE-----
 MIIDxDCCAqygAwIBAgIUbLxMod62P2ktCiAkxnKJwtE9VPYwDQYJKoZIhvcNAQEL
 BQAwazELMAkGA1UEBhMCVVMxEDAOBgNVBAgMB0RlbHdhcmUxEzARBgNVBAcMCk5l
@@ -79,10 +67,8 @@ o/bKiIz+Fq8=
 `;
 
 /**
- * Client `pg` : en local sans TLS ; vers la prod, TLS VERIFIE contre la racine
- * Supabase embarquee (`rejectUnauthorized: true`). Le `sslmode` de l'URL est
- * retire : `pg-connection-string` le lirait comme `verify-full` avec le magasin
- * de Node (qui ne contient pas cette racine) et ecraserait notre `ca`.
+ * Local sans TLS ; prod en TLS VERIFIE contre la racine embarquee. `sslmode` est retire de l'URL :
+ * `pg-connection-string` le lirait en `verify-full` sur le magasin de Node et ecraserait notre `ca`.
  */
 export function optionsClient(url) {
   if (LOCAL.test(url)) return { connectionString: url };
@@ -117,10 +103,7 @@ async function connecter(url) {
   return client;
 }
 
-/**
- * pg_dump du conteneur local, contre l'URL passee par l'environnement du
- * conteneur (jamais en argument : elle porte le mot de passe).
- */
+/** pg_dump du conteneur local ; l'URL passe par l'environnement, jamais en argument (mot de passe). */
 export function pgDump(conteneur, urlDansConteneur) {
   const variable = 'COSMO_URL_DUMP';
   const r = spawnSync('docker', [
@@ -147,13 +130,7 @@ export async function instantane(url, conteneur, urlDansConteneur = url) {
 
 // ─── Comparaison objet par objet ────────────────────────────────────
 
-/**
- * Decoupe un instantane en objets. pg_dump precede chaque objet de
- *   --
- *   -- Name: tasks; Type: TABLE; Schema: public; Owner: -
- *   --
- * Les complements (une ligne = un objet) sont cles par leur ligne entiere.
- */
+/** Objets d'un instantane, cles par l'en-tete pg_dump `-- Name: x; Type: T; Schema: s;` ; un complement par ligne. */
 export function objets(texte) {
   const carte = new Map();
   const vus = new Map();
@@ -194,34 +171,38 @@ export function objets(texte) {
   return carte;
 }
 
+// Bruit de comparaison, et lui seul (TST-06). FUNCTION : commentaires et blancs hors des
+// chaines (corps poses compactes en prod). TABLE : ordre des colonnes (historique des ALTER).
+const LITTERAL_OU_BRUIT = /('(?:[^']|'')*')|--[^\n]*|\/\*[\s\S]*?\*\/|\s+/g;
+export const sansCommentairesNiBlancs = (t) => String(t).replace(LITTERAL_OU_BRUIT, (m, lit) => lit ?? ' ')
+  .replace(/('(?:[^']|'')*')| {2,}/g, (m, lit) => lit ?? ' ').trim();
+export function normaliserObjet(cle, texte) {
+  if (/^FUNCTION /.test(cle)) return sansCommentairesNiBlancs(texte);
+  const l = String(texte).split('\n');
+  const debut = /^TABLE /.test(cle) ? l.findIndex((x) => /^CREATE TABLE .*\($/.test(x)) : -1;
+  const fin = l.findIndex((x, i) => debut >= 0 && i > debut && /^\)/.test(x));
+  if (fin < 0) return texte;
+  return [...l.slice(0, debut + 1), ...l.slice(debut + 1, fin).map((x) => x.replace(/,$/, '')).sort(), ...l.slice(fin)].join('\n');
+}
+
 /** Ecarts entre la base fraiche et la prod : trois listes de cles, plus les definitions. */
 export function ecarts(fraiche, prod) {
   const a = objets(fraiche);
   const b = objets(prod);
   const seulementProd = [...b.keys()].filter((k) => !a.has(k)).sort();
   const seulementDepot = [...a.keys()].filter((k) => !b.has(k)).sort();
-  const differents = [...a.keys()].filter((k) => b.has(k) && a.get(k) !== b.get(k)).sort();
+  const differents = [...a.keys()].filter((k) => b.has(k) && normaliserObjet(k, a.get(k)) !== normaliserObjet(k, b.get(k))).sort();
   return { seulementProd, seulementDepot, differents, a, b, total: a.size };
 }
 
 /** Lignes propres a chaque cote (multiensemble), dans l'ordre : un diff d'objet lisible. */
 export function diffLignes(depot, prod) {
-  const compte = (lignes) => lignes.reduce((m, l) => m.set(l, (m.get(l) ?? 0) + 1), new Map());
-  const ld = depot.split('\n');
-  const lp = prod.split('\n');
-  const cp = compte(lp);
-  const cd = compte(ld);
-  const moins = [];
-  for (const l of ld) {
-    if ((cp.get(l) ?? 0) > 0) cp.set(l, cp.get(l) - 1);
-    else moins.push(`- ${l}`);
-  }
-  const plus = [];
-  for (const l of lp) {
-    if ((cd.get(l) ?? 0) > 0) cd.set(l, cd.get(l) - 1);
-    else plus.push(`+ ${l}`);
-  }
-  return [...moins, ...plus];
+  const propres = (mes, autres, signe) => {
+    const c = autres.reduce((m, l) => m.set(l, (m.get(l) ?? 0) + 1), new Map());
+    return mes.filter((l) => (c.get(l) > 0 ? (c.set(l, c.get(l) - 1), false) : true)).map((l) => `${signe} ${l}`);
+  };
+  const [ld, lp] = [depot.split('\n'), prod.split('\n')];
+  return [...propres(ld, lp, '-'), ...propres(lp, ld, '+')];
 }
 
 /** Rien de personnel ni de secret ne part au journal, meme si une definition en portait. */
@@ -234,12 +215,7 @@ export function masquer(texte) {
     .replace(/postgres(ql)?:\/\/[^\s'"]+/g, '<url>');
 }
 
-/**
- * Le rapport : la liste des ecarts, puis (`complet`) la definition ENTIERE de
- * chaque objet tel qu'il est en production, entre `<<< prod <cle>` et `>>>`.
- * C'est elle qui se reporte dans la baseline : un diff de lignes ne dit pas
- * l'ordre des colonnes d'une table.
- */
+/** Les ecarts, puis (`complet`) la definition ENTIERE de prod de chaque objet, entre `<<< prod <cle>` et `>>>`. */
 export function rapport(e, { maxLignes = 60, complet = false } = {}) {
   const out = [];
   out.push(`Objets compares : ${e.total} cote depot, ${e.b.size} cote production.`);

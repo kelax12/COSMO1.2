@@ -1,8 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════
-// Témoin de TST-06 : la comparaison du dépôt rejoué à la production (repris
-// de `noyau/migrations-cli`, 2026-11-09), et la liste des migrations retirées
-// du rejeu parce que la prod ne les a pas. Chaque cas refuse un détecteur
-// aveugle : un écart réel doit se voir.
+// Témoin de TST-06 : dépôt rejoué contre production, migrations retirées du
+// rejeu. Chaque cas refuse un détecteur aveugle : un écart réel doit se voir.
 // ═══════════════════════════════════════════════════════════════════
 import { readFileSync } from 'node:fs';
 import { X509Certificate } from 'node:crypto';
@@ -96,6 +94,21 @@ describe('schema-prod : vérification TLS de la production', () => {
   });
 });
 
+describe('schema-prod : bruit normalisé, écart réel conservé', () => {
+  const FN = 'CREATE FUNCTION public.f() RETURNS int LANGUAGE sql AS $$ select 1 $$;';
+  const diff = (a, b) => ecarts(DUMP.replace(FN, () => a), DUMP.replace(FN, () => b)).differents;
+  const cols = (c) => DUMP.replace('    id uuid NOT NULL,\n    user_id uuid NOT NULL\n', c);
+  it('commentaires et mise en page du corps, ordre des colonnes : pas un écart', () => {
+    expect(diff(FN, 'CREATE FUNCTION public.f() RETURNS int\n LANGUAGE sql AS $$\n -- note\n select 1 /* x */\n$$;')).toEqual([]);
+    expect(ecarts(DUMP, cols('    user_id uuid NOT NULL,\n    id uuid NOT NULL\n')).differents).toEqual([]);
+  });
+  it("TÉMOIN : instruction changée, littéral aux espaces ou '--' différents, colonne nullable : écart", () => {
+    expect(diff(FN, FN.replace('select 1', 'select 2'))).toEqual(['FUNCTION public.f()']);
+    expect(diff(FN.replace('select 1', "select 'a  -- b'"), FN.replace('select 1', "select 'a -- b'"))).toEqual(['FUNCTION public.f()']);
+    expect(ecarts(DUMP, cols('    user_id uuid,\n    id uuid NOT NULL\n')).differents).toEqual(['TABLE public.tasks']);
+  });
+});
+
 describe('schema-prod : migrations retirées du rejeu', () => {
   const INTRO = {
     ledger: ['20260101000000_001_socle'],
@@ -110,4 +123,14 @@ describe('schema-prod : migrations retirées du rejeu', () => {
     ], INTRO);
     expect(out).toEqual(['245_cron.sql']);
   });
+
+  it('TÉMOIN : hors ledger, fonction déjà en base mais table à retirer encore là : non appliquée (mig. 206)', () => {
+    const fichiers = [
+      { name: '001_socle.sql', sql: 'CREATE TABLE public.tasks (id uuid);' },
+      { name: '206_retrait.sql', sql: 'CREATE OR REPLACE FUNCTION public.f() RETURNS int AS $$ select 1 $$ LANGUAGE sql;\nDROP TABLE IF EXISTS public.jalons;' },
+    ];
+    expect(enAttente(fichiers, { ...INTRO, tables: ['tasks', 'jalons'], functions: ['f'] })).toEqual(['206_retrait.sql']);
+    expect(enAttente(fichiers, { ...INTRO, tables: ['tasks'], functions: ['f'] })).toEqual([]);
+  });
 });
+

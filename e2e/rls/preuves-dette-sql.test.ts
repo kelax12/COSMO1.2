@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// Preuves des mig. 242, 243, 244, 248 à 251, 253, 254 et 256, rejouées sur la base fraîche du job
+// Preuves des mig. 242, 243, 244, 248 à 251, 253, 254, 256 et 259, rejouées sur la base fraîche du job
 // `rls-integration`.
 //
 // Une preuve de `supabase/proofs/` est un bloc `DO` qui se termine TOUJOURS
@@ -46,6 +46,8 @@ const PREUVES: { preuve: string; migration: string; dossier?: string; depassee?:
   { preuve: '254.proof.sql', migration: '254_habit_scheduled_days.sql' },
   // DAT-02, phase « contract » : retrait de `habits.completions`, après bascule du front et du CLI.
   { preuve: '256.proof.sql', migration: '256_habits_retrait_completions_json.sql', dossier: 'supabase/migration-differee' },
+  // TST-06 : le dépôt rejoué et la production convergent (NOT NULL, horodatages, index).
+  { preuve: '259.proof.sql', migration: '259_depot_egal_prod.sql' },
 ];
 
 const lire = (chemin: string) => readFileSync(join(process.cwd(), chemin), 'utf8').replace(/\r\n/g, '\n');
@@ -55,7 +57,7 @@ afterAll(async () => {
   await db.end();
 });
 
-describe('supabase/proofs : preuves 242 à 244, 248 à 251, 253, 254 et 256 rejouées sur la base fraîche', () => {
+describe('supabase/proofs : preuves 242 à 244, 248 à 251, 253, 254, 256 et 259 rejouées sur la base fraîche', () => {
   for (const { preuve, migration, dossier = 'supabase/migration', depassee } of PREUVES) {
     it(`${preuve} embarque le texte exact de ${migration}`, () => {
       const texte = lire(`supabase/proofs/${preuve}`);
