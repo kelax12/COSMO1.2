@@ -11,6 +11,7 @@ import { TEAM_OKRS_STORAGE_KEY, TEAM_OKR_TRASH_DAYS, TEAM_OKR_TRASH_STORAGE_KEY 
 import { safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
 import { makeApiError } from '@/lib/normalizeApiError';
 import { DEMO_USER_ID, DEMO_OKRS, localizeOkrs } from './local.seed';
+import { normalizeTeamKR, teamKREstimatedTime, teamKRWeight } from './kr-rules';
 
 /** Qui a supprimé, en démo : l'unique utilisateur de démonstration. */
 const DEMO_TRASH_USER_ID = 'demo-user';
@@ -87,23 +88,14 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
       audience: input.audience ?? ((input.teamIds ?? []).length > 0 ? 'teams' : 'org'),
       memberIds: input.audience === 'custom' ? input.memberIds ?? [] : [],
       keyResults: input.keyResults.map((kr) => {
-        const target = kr.targetValue > 0 ? kr.targetValue : 1;
-        const current = Math.max(0, Math.min(kr.currentValue ?? 0, target));
+        const n = normalizeTeamKR(kr);
         return {
+          ...n,
           id: crypto.randomUUID(),
           okrId,
           orgId,
-          title: kr.title,
-          currentValue: current,
-          targetValue: target,
-          unit: kr.unit,
-          assigneeId: kr.assigneeId ?? null,
-          completed: current >= target,
-          completedAt: current >= target ? new Date().toISOString() : null,
-          weight: kr.weight && kr.weight >= 1 ? Math.min(10, Math.round(kr.weight)) : 1,
-          estimatedTime: kr.estimatedTime && kr.estimatedTime > 0 ? Math.round(kr.estimatedTime) : 30,
-          progressMode: kr.progressMode ?? 'manual',
-          contributorIds: kr.contributorIds ?? [],
+          unit: n.unit ?? undefined,
+          completedAt: n.completed ? new Date().toISOString() : null,
         };
       }),
       parentOkrId: input.parentOkrId ?? null,
@@ -191,8 +183,8 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
       if (input.targetValue !== undefined && input.targetValue > 0) kr.targetValue = input.targetValue;
       if (input.unit !== undefined) kr.unit = input.unit;
       if (input.assigneeId !== undefined) kr.assigneeId = input.assigneeId;
-      if (input.weight !== undefined) kr.weight = input.weight >= 1 ? Math.min(10, Math.round(input.weight)) : 1;
-      if (input.estimatedTime !== undefined) kr.estimatedTime = input.estimatedTime > 0 ? Math.round(input.estimatedTime) : 30;
+      if (input.weight !== undefined) kr.weight = teamKRWeight(input.weight);
+      if (input.estimatedTime !== undefined) kr.estimatedTime = teamKREstimatedTime(input.estimatedTime);
       if (input.progressMode !== undefined) kr.progressMode = input.progressMode;
       if (input.contributorIds !== undefined) kr.contributorIds = [...new Set(input.contributorIds)];
       if (input.completed !== undefined) {
@@ -211,25 +203,17 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
     if (!okr) throw makeApiError('not_found');
     const existing = new Map(okr.keyResults.map((k) => [k.id, k]));
     const next: TeamKeyResult[] = krs.slice(0, 10).map((input) => {
-      const target = input.targetValue > 0 ? input.targetValue : 1;
-      const current = Math.max(0, Math.min(input.currentValue ?? 0, target));
+      // Mêmes règles que la production (`kr-rules.ts`) : un champ absent revient
+      // à son défaut et la date d'achèvement suit l'écriture, comme l'UPDATE serveur.
+      const n = normalizeTeamKR(input);
       const prev = input.id ? existing.get(input.id) : undefined;
-      const completed = current >= target;
       return {
+        ...n,
         id: prev?.id ?? crypto.randomUUID(),
         okrId,
         orgId,
-        title: input.title,
-        currentValue: current,
-        targetValue: target,
-        unit: input.unit ?? prev?.unit,
-        assigneeId: input.assigneeId ?? null,
-        completed,
-        completedAt: completed ? (prev?.completed ? prev.completedAt : new Date().toISOString()) : null,
-        weight: input.weight && input.weight >= 1 ? Math.min(10, Math.round(input.weight)) : 1,
-        estimatedTime: input.estimatedTime && input.estimatedTime > 0 ? Math.round(input.estimatedTime) : 30,
-        progressMode: input.progressMode ?? prev?.progressMode ?? 'manual',
-        contributorIds: input.contributorIds ?? prev?.contributorIds ?? [],
+        unit: n.unit ?? undefined,
+        completedAt: n.completed ? new Date().toISOString() : null,
       };
     });
     okr.keyResults = next;

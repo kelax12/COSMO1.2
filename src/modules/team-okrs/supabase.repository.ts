@@ -8,6 +8,7 @@ import { fetchAllPages } from '@/lib/fetch-all-pages';
 import { getCurrentUserId } from '@/lib/auth-user';
 import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { ITeamOKRsRepository } from './repository';
+import { normalizeTeamKR, teamKREstimatedTime, teamKRWeight, type NormalizedTeamKR } from './kr-rules';
 import {
   TeamOKR,
   TeamOKRAudience,
@@ -54,11 +55,21 @@ interface KrRow {
 }
 
 // Coefficient effectif : entier borné [1, 10], défaut 1 (rétrocompat).
-const clampWeight = (w: unknown): number => {
-  const n = Math.round(Number(w));
-  if (!Number.isFinite(n) || n < 1) return 1;
-  return Math.min(n, 10);
-};
+const clampWeight = (w: unknown): number => teamKRWeight(Number(w));
+
+/** Colonnes d'un KR normalisé (`kr-rules.ts`, règles partagées avec la démo). */
+const krFieldsToDb = (n: NormalizedTeamKR) => ({
+  title: n.title,
+  current_value: n.currentValue,
+  target_value: n.targetValue,
+  unit: n.unit,
+  assignee_id: n.assigneeId,
+  weight: n.weight,
+  estimated_time: n.estimatedTime,
+  progress_mode: n.progressMode,
+  contributor_ids: n.contributorIds,
+  completed: n.completed,
+});
 
 const mapKr = (r: KrRow): TeamKeyResult => ({
   id: r.id,
@@ -224,23 +235,13 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
       // l'UUID, c'est-à-dire un ordre aléatoire. Chaque KR reçoit sa milliseconde.
       const batchStart = Date.now();
       const rows = input.keyResults.map((kr, index) => {
-        const target = kr.targetValue > 0 ? kr.targetValue : 1;
-        const current = Math.max(0, Math.min(kr.currentValue ?? 0, target));
+        const fields = krFieldsToDb(normalizeTeamKR(kr));
         return {
+          ...fields,
           id: crypto.randomUUID(),
           okr_id: okrId,
           org_id: orgId,
-          title: kr.title,
-          current_value: current,
-          target_value: target,
-          unit: kr.unit ?? null,
-          assignee_id: kr.assigneeId ?? null,
-          weight: clampWeight(kr.weight),
-          estimated_time: kr.estimatedTime && kr.estimatedTime > 0 ? Math.round(kr.estimatedTime) : 30,
-          progress_mode: kr.progressMode ?? 'manual',
-          contributor_ids: kr.contributorIds ?? [],
-          completed: current >= target,
-          completed_at: current >= target ? new Date().toISOString() : null,
+          completed_at: fields.completed ? new Date().toISOString() : null,
           created_at: new Date(batchStart + index).toISOString(),
         };
       });
@@ -345,8 +346,8 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
     if (input.targetValue !== undefined && input.targetValue > 0) patch.target_value = input.targetValue;
     if (input.unit !== undefined) patch.unit = input.unit || null;
     if (input.assigneeId !== undefined) patch.assignee_id = input.assigneeId;
-    if (input.weight !== undefined) patch.weight = clampWeight(input.weight);
-    if (input.estimatedTime !== undefined) patch.estimated_time = input.estimatedTime > 0 ? Math.round(input.estimatedTime) : 30;
+    if (input.weight !== undefined) patch.weight = teamKRWeight(input.weight);
+    if (input.estimatedTime !== undefined) patch.estimated_time = teamKREstimatedTime(input.estimatedTime);
     if (input.progressMode !== undefined) patch.progress_mode = input.progressMode;
     if (input.contributorIds !== undefined) patch.contributor_ids = input.contributorIds;
     if (input.completed !== undefined) {
@@ -379,21 +380,8 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
 
     // Mises à jour + insertions.
     for (const input of bounded) {
-      const target = input.targetValue > 0 ? input.targetValue : 1;
-      const current = Math.max(0, Math.min(input.currentValue ?? 0, target));
-      const completed = current >= target;
-      const fields = {
-        title: input.title,
-        current_value: current,
-        target_value: target,
-        unit: input.unit ?? null,
-        assignee_id: input.assigneeId ?? null,
-        weight: clampWeight(input.weight),
-        estimated_time: input.estimatedTime && input.estimatedTime > 0 ? Math.round(input.estimatedTime) : 30,
-        progress_mode: input.progressMode ?? 'manual',
-        contributor_ids: input.contributorIds ?? [],
-        completed,
-      };
+      const fields = krFieldsToDb(normalizeTeamKR(input));
+      const { completed } = fields;
       if (input.id && existingIds.has(input.id)) {
         const { error: upErr } = await supabase
           .from('team_key_results')

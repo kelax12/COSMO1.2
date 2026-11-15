@@ -7,6 +7,7 @@ Règles transversales : [`../CLAUDE.md`](../CLAUDE.md).
 
 - 🔴 Quand un KR passe `completed: false → true`, les DEUX repositories insèrent une ligne dans `kr_completions` : `local.repository.ts → updateKeyResult` et `supabase.repository.ts → recordKRCompletion()` (appelé par `updateKeyResult` ET `updateKeyResultViaJsonb`). Sans elle le graphique du Dashboard reste à 0 en prod. ❌ Modifier sans vérifier le graphique, démo ET prod.
 - ❌ Valider un calcul à deux implémentations (cliente, SQL) sur la seule démo.
+- 🔴 La démo rejoue les cascades de la base : supprimer un OKR (`okr_id`) ou retirer un KR à l'édition (`kr_id`, mig. `037`) purge ses lignes (`dropJournal`). Sans elle, « Annuler » doublait le journal. Contrat : `src/test/contracts/__test__/okrs.contract.ts`.
 
 ## Temps OKR (C-77)
 

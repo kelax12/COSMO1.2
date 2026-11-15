@@ -143,6 +143,8 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
     if (updates.title !== undefined) allowed.title = updates.title;
     if (updates.description !== undefined) allowed.description = updates.description;
     if (updates.category !== undefined) allowed.category = updates.category;
+    // Contrat ARC-01 : `mapOkrToDb` écrit `start_date`, la démo l'ignorait.
+    if (updates.startDate !== undefined) allowed.startDate = updates.startDate;
     if (updates.endDate !== undefined) allowed.endDate = updates.endDate;
     if (updates.keyResults !== undefined) allowed.keyResults = updates.keyResults;
     if (updates.completed !== undefined) allowed.completed = updates.completed;
@@ -159,6 +161,11 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
     // donc entre la démo et la prod, sur le même geste. `updateKeyResult` juste
     // en dessous traitait déjà les deux sens : c'est ce chemin-ci qui manquait.
     if (updates.keyResults) {
+      // Un KR retiré emporte son journal : en base, `kr_completions.kr_id`
+      // cascade depuis `key_results` (mig. 037). Contrat ARC-01.
+      const keptIds = new Set(updates.keyResults.map((kr) => kr.id));
+      const removedIds = new Set(previous.keyResults.map((kr) => kr.id).filter((krId) => !keptIds.has(krId)));
+      if (removedIds.size > 0) this.dropJournal((c) => removedIds.has(c.krId));
       for (const kr of updates.keyResults) {
         const prev = previousKRsById.get(kr.id);
         const previousValue = prev?.currentValue ?? 0;
@@ -266,6 +273,18 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
     }
 
     this.saveOKRs(filtered);
+    // En base, `kr_completions.okr_id` cascade depuis `okrs` (mig. 009) : sans
+    // cette purge, « Annuler » (C-01) rejouait le journal par-dessus lui-même
+    // et le doublait. Contrat ARC-01.
+    this.dropJournal((c) => c.okrId === id);
+  }
+
+  /** Retire du journal les lignes visées (miroir des ON DELETE CASCADE). */
+  private dropJournal(match: (c: KRCompletion) => boolean): void {
+    const completions = safeParseArray<KRCompletion>(safeGetItem(KR_COMPLETIONS_STORAGE_KEY));
+    if (!completions) return;
+    const remaining = completions.filter((c) => !match(c));
+    if (remaining.length !== completions.length) writeJsonOrThrow(KR_COMPLETIONS_STORAGE_KEY, remaining);
   }
 
   // ═══════════════════════════════════════════════════════════════════
