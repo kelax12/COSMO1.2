@@ -53,12 +53,10 @@ CREATE TABLE IF NOT EXISTS admin_users (
 ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
 -- Pas de policy : table gérée uniquement en migration / SQL editor.
 
--- Amorçage idempotent : uid résolu par email à l'application de la
--- migration. Si le compte n'existe pas dans cet environnement, insère
--- 0 ligne sans erreur — rejouer l'INSERT à la main le cas échéant.
-INSERT INTO admin_users (user_id)
-SELECT id FROM auth.users WHERE lower(email) = 'axellongatte2@gmail.com'
-ON CONFLICT (user_id) DO NOTHING;
+-- Amorçage : aucune ligne ici. Le premier administrateur s'ajoute à la main
+-- (SQL editor, hors dépôt) : INSERT INTO admin_users (user_id) VALUES (<uid>).
+-- Le fichier ne porte plus l'adresse du compte ; la migration, déjà appliquée,
+-- n'est pas rejouée en production.
 
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS boolean
