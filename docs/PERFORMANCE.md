@@ -31,7 +31,7 @@ Tailles : `npm run build` puis `npm run check:bundle`, jamais recopiées ici. Ce
 - ✅ `lucide-react` et `date-fns/locale/fr` : imports nominaux ; ❌ `import * as`.
 - ✅ Un composant monté globalement dans `App.tsx` qui n'apparaît qu'après un geste : `lazy` + `Suspense`.
 - ✅ `toast` par `@/lib/toast` (jamais `sonner` en direct) : c'est ce qui l'a sorti du chemin critique ([`src/lib/CLAUDE.md`](../src/lib/CLAUDE.md)).
-- ❌ Une clé React Query distincte pour un FILTRE d'une liste déjà chargée : une clé de plus est une requête de plus (souvent deux, le repository hydrate ensuite). Dériver par `useMemo`. Cas réels : `useActiveOkrs`, `useSharesByTask`.
+- ❌ Une clé React Query distincte pour un FILTRE d'une liste déjà chargée : une clé de plus est une requête de plus (souvent deux, le repository hydrate ensuite). Dériver par `useMemo`. Cas réel : `useActiveOkrs`.
 - ❌ Lire une table puis une seconde par `in(...)` bâti sur le premier résultat : deux allers-retours séquentiels. Avec une clé étrangère, la jointure PostgREST (`select=col, autre_table(*)`) fait les deux en une requête, RLS inchangée.
 - ❌ Un prédicat de policy RLS qui appelle une fonction SUR UNE COLONNE (`fn(user_id)`) : appelée par ligne, index inutilisable. Un helper sans argument, périmètre tiré de `auth.uid()` seul, est hissé en InitPlan.
 - ❌ Valider un correctif CLIENT sur un compteur agrégé Postgres (`pg_stat_user_tables`, `pg_stat_statements`) : cumul depuis la création, anciens clients mêlés. Ventiler les `edge_logs` par `request.sb.jwt.authorization.payload.session_id`.

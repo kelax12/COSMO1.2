@@ -303,7 +303,7 @@ Chaque ligne au vert est une promesse tenue publiquement, vérifiable par un cli
 | Ne poser aucun identifiant ni source d'acquisition sans « Accepter » | Tout stockage local non strictement nécessaire passe par `hasConsented()` et s'efface au refus. | Traceur illicite |
 | Faire entrer toute nouvelle donnée saisie dans l'export | Une nouvelle table utilisateur non exportée rend la portabilité fausse (`npm run check:portability`). | Portabilité creuse |
 | Conserver le journal d'encaissement dix ans | Aucune suppression, aucune anonymisation (`row_hash` scelle `user_id`, voir C10). | Perte d'une pièce comptable obligatoire |
-| Laisser retirer le consentement | « Gérer les cookies » atteignable partout où le bandeau peut apparaître ; tout nouveau traceur efface ses traces au retrait (`clearAudienceTraces`). | Consentement non valable |
+| Laisser retirer le consentement | « Gérer les cookies » atteignable partout où le bandeau peut apparaître ; tout nouveau traceur efface ses traces au retrait (`clearAttributionTraces`, `clearDemoMetricsTraces`, `clearDemoEngagementTraces`). | Consentement non valable |
 | Traiter un signalement de contenu | Répondre à `contact@thecosmo.app`, motiver toute restriction, permettre la contestation (CGU 4 bis). | Manquement au DSA, art. 16 et 17 |
 
 ### Envers les clients, dès le premier paiement

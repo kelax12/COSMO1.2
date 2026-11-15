@@ -47,7 +47,7 @@ Règles d'écriture : [`src/components/CLAUDE.md`](../src/components/CLAUDE.md) 
 - ✅ Chaque étape crée à sa validation (une part importante des inscrits ne revenait jamais après leur session d'inscription).
 - 🔴 La garde d'ouverture est un verrou (`latched`) : `useCreateTask` écrit la tâche dans le cache, relue à chaque rendu elle se refermait entre la 1ʳᵉ et la 2ᵉ question. Parcours : `e2e/stubbed/first-run.spec.ts`.
 - 🔴 Un id de résultat clé est un UUID : un `kr-<horodatage>` est refusé par `syncKRsToTable` avant interpolation dans un filtre PostgREST (M-1) → « Impossible de créer l'OKR » à la première minute. Témoin : le `DELETE` sur `key_results`.
-- ❌ L'accueil perso sur `/entreprise` (il s'empilait sur l'accueil entreprise). L'accueil vidéo ne s'ouvre qu'à une ARRIVÉE sur l'Aperçu nu (`arrivedOnOverview`, décidé une fois) : relue à chaque rendu, la garde s'ouvrait après `?tab=settings` réécrit, retour Stripe `?tab=billing` ou `?task=` retiré, et couvrait l'écran visé.
+- ❌ L'accueil perso sur `/entreprise` (il s'empilait sur l'accueil entreprise). L'accueil vidéo ne s'ouvre qu'à une ARRIVÉE sur l'Aperçu nu (`arrivedBare`, décidé une fois) : relue à chaque rendu, la garde s'ouvrait après `?tab=settings` réécrit, retour Stripe `?tab=billing` ou `?task=` retiré, et couvrait l'écran visé.
 - ✅ Tailles de texte : l'échelle du projet (`design-system.guard.test.ts`).
 - ✅ Mesure : mig. `213` (`get_admin_onboarding_funnel`, carte « Accueils » de la console admin) ; si la fonction manque, la carte le dit au lieu d'afficher des zéros.
 - ✅ Le sélecteur de modules n'existe plus (Agenda, Habitudes, OKR, Statistiques visibles par tous) ; `cosmo_onboarding_examples_created` reste LU, jamais écrit.
