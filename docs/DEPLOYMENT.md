@@ -175,4 +175,5 @@ Au passage en Pro (geste d'Axel) : vérifier Database → Backups ; décider du 
 - Échec : issue `uptime-red` (mail), refermée seule au retour du vert.
 - Secret `SUPABASE_URL` ; absent, seule la moitié site est sondée, avec avertissement.
 - 🔴 Ce n'est pas une sonde externe (T-17) : le cron GitHub dérive et saute, et ne voit pas une panne de GitHub. Granularité réelle : « prévenu dans l'heure ».
+- ✅ Les mêmes contrôles tournent toutes les 5 min dans pg_cron (`cosmo-uptime`, mig. `252`, [`MISES-EN-SERVICE.md`](./MISES-EN-SERVICE.md)) ; ⚠️ elle tombe avec la plateforme Supabase : ni l'une ni l'autre n'est une sonde externe.
 - ❌ Jamais un marqueur que la coquille SPA contient déjà (`grep -i cosmo` ne pouvait pas échouer).

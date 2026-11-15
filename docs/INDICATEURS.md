@@ -9,21 +9,21 @@
 > `.github/workflows/indicateurs.yml` le régénère chaque lundi et le pousse sur `main`.
 > Une valeur introuvable s'écrit « non mesuré », avec sa raison : jamais un chiffre de repli.
 
-Régénéré le **2026-11-12 12:33 UTC**, au commit `2a64d97`. Alertes en cours : **2**.
+Régénéré le **2026-11-15 09:54 UTC**, au commit `cef821f`. Alertes en cours : **2**.
 
 | # | Indicateur | Valeur | Mesuré le | Source |
 |---|---|---|---|---|
-| 1 | Taux de vert de main (CI noyau) | 90 % (45 verts sur 50 runs) | 2026-11-11 | API GitHub Actions, [ci-noyau.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/ci-noyau.yml), branche main |
-| 2 | Délai de restauration éprouvé (drill mensuel) | 5 s, dernier vert le 2026-11-09 (il y a 2 j) | 2026-11-09 | API GitHub Actions, [restore-drill.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/restore-drill.yml), job drill-auto |
-| 3 | Présence de specs pour les parcours critiques | 10 sur 10 parcours avec une spec présente (100 %, présence, pas verdict) | 2026-11-12 | scripts/indicateurs.config.json et dossier e2e/ du dépôt |
-| 4 | Âge maximal des secrets | 169 j (SUPABASE_SECRET_KEY, échéance 365 j) ; 13 sans date de rotation connue | 2026-11-09 | journal du dernier run de `Secrets age` (dates vivantes) et .github/secrets-registry.json |
-| 5 | Dérive de la production | 1 sonde(s) rouge(s) sur 3 : Migration coverage | 2026-11-12 | API GitHub Actions, [deploy-sha-drift.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/deploy-sha-drift.yml), [edge-deploy-drift.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/edge-deploy-drift.yml), [migration-coverage.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/migration-coverage.yml) |
-| 6 | Incidents ouverts | 1 (ci-red 1, incident 0) | 2026-11-12 | API GitHub, issues ouvertes [ci-red](https://github.com/kelax12/COSMO1.2/issues?q=is%3Aissue+is%3Aopen+label%3Aci-red) et [incident](https://github.com/kelax12/COSMO1.2/issues?q=is%3Aissue+is%3Aopen+label%3Aincident) |
+| 1 | Taux de vert de main (CI noyau) | 78 % (39 verts sur 50 runs) | 2026-11-15 | API GitHub Actions, [ci-noyau.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/ci-noyau.yml), branche main |
+| 2 | Délai de restauration éprouvé (drill mensuel) | 5 s, dernier vert le 2026-11-09 (il y a 5 j) | 2026-11-09 | API GitHub Actions, [restore-drill.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/restore-drill.yml), job drill-auto |
+| 3 | Présence de specs pour les parcours critiques | 10 sur 10 parcours avec une spec présente (100 %, présence, pas verdict) | 2026-11-15 | scripts/indicateurs.config.json et dossier e2e/ du dépôt |
+| 4 | Âge maximal des secrets | 175 j (SUPABASE_SECRET_KEY, échéance 365 j) ; 2 sans date de rotation connue | 2026-11-14 | journal du dernier run de `Secrets age` (dates vivantes) et .github/secrets-registry.json |
+| 5 | Dérive de la production | 3 sondes sur 3 vertes | 2026-11-15 | API GitHub Actions, [deploy-sha-drift.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/deploy-sha-drift.yml), [edge-deploy-drift.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/edge-deploy-drift.yml), [migration-coverage.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/migration-coverage.yml) |
+| 6 | Incidents ouverts | 1 (ci-red 1, incident 0) | 2026-11-15 | API GitHub, issues ouvertes [ci-red](https://github.com/kelax12/COSMO1.2/issues?q=is%3Aissue+is%3Aopen+label%3Aci-red) et [incident](https://github.com/kelax12/COSMO1.2/issues?q=is%3Aissue+is%3Aopen+label%3Aincident) |
 
 ## Alertes
 
-- 🔴 13 secret(s) sans date de rotation connue, donc échus
-- 🔴 dérive de production : `Migration coverage` rouge (run du 2026-11-11, https://github.com/kelax12/COSMO1.2/actions/runs/43022490082)
+- 🔴 main sous 80 % de vert : 78 % sur les 50 derniers runs du CI noyau
+- 🔴 2 secret(s) sans date de rotation connue, donc échus
 
 Elles ouvrent ou mettent à jour l'issue `ci-red` (via `ci-alert.yml`), la liste de `workflows:` y contenant `Indicateurs`.
 
@@ -31,16 +31,16 @@ Elles ouvrent ou mettent à jour l'issue `ci-red` (via `ci-alert.yml`), la liste
 
 ### 1. Taux de vert de main (CI noyau)
 
-- **Valeur** : 90 % (45 verts sur 50 runs)
-- **Mesuré le** : 2026-11-11
+- **Valeur** : 78 % (39 verts sur 50 runs)
+- **Mesuré le** : 2026-11-15
 - **Source** : API GitHub Actions, [ci-noyau.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/ci-noyau.yml), branche main
-- Fenêtre : les 50 derniers runs conclus du `CI noyau` sur `main` (du 2026-11-06 au 2026-11-11), annulés et sautés exclus.
-- Dernier run : vert, https://github.com/kelax12/COSMO1.2/actions/runs/43100870148.
+- Fenêtre : les 50 derniers runs conclus du `CI noyau` sur `main` (du 2026-11-09 au 2026-11-15), annulés et sautés exclus.
+- Dernier run : vert, https://github.com/kelax12/COSMO1.2/actions/runs/43664024189.
 - Seuil d'alerte : moins de 80 %.
 
 ### 2. Délai de restauration éprouvé (drill mensuel)
 
-- **Valeur** : 5 s, dernier vert le 2026-11-09 (il y a 2 j)
+- **Valeur** : 5 s, dernier vert le 2026-11-09 (il y a 5 j)
 - **Mesuré le** : 2026-11-09
 - **Source** : API GitHub Actions, [restore-drill.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/restore-drill.yml), job drill-auto
 - Durée du job `drill-auto` entier (téléchargement, déchiffrement, restauration, comparaison des comptages) : 43 s.
@@ -52,39 +52,39 @@ Elles ouvrent ou mettent à jour l'issue `ci-red` (via `ci-alert.yml`), la liste
 ### 3. Présence de specs pour les parcours critiques
 
 - **Valeur** : 10 sur 10 parcours avec une spec présente (100 %, présence, pas verdict)
-- **Mesuré le** : 2026-11-12
+- **Mesuré le** : 2026-11-15
 - **Source** : scripts/indicateurs.config.json et dossier e2e/ du dépôt
 - Parcours déclarés dans `scripts/indicateurs.config.json`, chacun avec au moins une spec `e2e/` présente dans le dépôt.
 - Aucun parcours déclaré sans spec.
 - 🔴 Couverture de PRÉSENCE : une spec existe, rien ne dit qu'elle est verte. Les e2e sont joués par `CI etendue`, qui ne bloque pas.
-- Dernier run de `CI etendue` sur `main` : rouge le 2026-11-11, https://github.com/kelax12/COSMO1.2/actions/runs/43100870092.
+- Dernier run de `CI etendue` sur `main` : rouge le 2026-11-15, https://github.com/kelax12/COSMO1.2/actions/runs/43664024226.
 
 ### 4. Âge maximal des secrets
 
-- **Valeur** : 169 j (SUPABASE_SECRET_KEY, échéance 365 j) ; 13 sans date de rotation connue
-- **Mesuré le** : 2026-11-09
+- **Valeur** : 175 j (SUPABASE_SECRET_KEY, échéance 365 j) ; 2 sans date de rotation connue
+- **Mesuré le** : 2026-11-14
 - **Source** : journal du dernier run de `Secrets age` (dates vivantes) et .github/secrets-registry.json
-- 28 secrets au registre, 15 avec un âge connu (15 lus à la date vivante, 0 au registre), 0 au-delà de leur échéance.
-- Âge inconnu (échus selon la règle de `check-secrets-age`) : 13 secret(s), noms au registre, jamais publiés ici.
+- 28 secrets au registre, 26 avec un âge connu (26 lus à la date vivante, 0 au registre), 0 au-delà de leur échéance.
+- Âge inconnu (échus selon la règle de `check-secrets-age`) : 2 secret(s), noms au registre, jamais publiés ici.
 - Les âges à la date vivante viennent du journal du dernier run de `Secrets age`, seul à détenir les jetons GitHub, Supabase et Vercel.
-- Dernier run de `Secrets age` sur `main` : rouge le 2026-11-09, https://github.com/kelax12/COSMO1.2/actions/runs/42652182544.
+- Dernier run de `Secrets age` sur `main` : rouge le 2026-11-14, https://github.com/kelax12/COSMO1.2/actions/runs/43647426959.
 - Seuil d'alerte : un secret au-delà de son échéance, ou sans date connue.
 
 ### 5. Dérive de la production
 
-- **Valeur** : 1 sonde(s) rouge(s) sur 3 : Migration coverage
-- **Mesuré le** : 2026-11-12
+- **Valeur** : 3 sondes sur 3 vertes
+- **Mesuré le** : 2026-11-15
 - **Source** : API GitHub Actions, [deploy-sha-drift.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/deploy-sha-drift.yml), [edge-deploy-drift.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/edge-deploy-drift.yml), [migration-coverage.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/migration-coverage.yml)
-- Deploy SHA drift (le commit servi en production contre le dernier commit vert) : vert le 2026-11-12, https://github.com/kelax12/COSMO1.2/actions/runs/43151397942.
-- Edge deploy drift (le code des Edge Functions deployees contre le depot) : vert le 2026-11-11, https://github.com/kelax12/COSMO1.2/actions/runs/43024616502.
-- Migration coverage (les fichiers de migration contre le ledger de production) : rouge le 2026-11-11, https://github.com/kelax12/COSMO1.2/actions/runs/43022490082.
+- Deploy SHA drift (le commit servi en production contre le dernier commit vert) : vert le 2026-11-15, https://github.com/kelax12/COSMO1.2/actions/runs/43669645790.
+- Edge deploy drift (le code des Edge Functions deployees contre le depot) : vert le 2026-11-14, https://github.com/kelax12/COSMO1.2/actions/runs/43595021707.
+- Migration coverage (les fichiers de migration contre le ledger de production) : vert le 2026-11-14, https://github.com/kelax12/COSMO1.2/actions/runs/43593279652.
 - Dernier run conclu de chaque sonde sur `main`. Les trois tournent sans déclencheur humain.
 - Seuil d'alerte : une sonde rouge.
 
 ### 6. Incidents ouverts
 
 - **Valeur** : 1 (ci-red 1, incident 0)
-- **Mesuré le** : 2026-11-12
+- **Mesuré le** : 2026-11-15
 - **Source** : API GitHub, issues ouvertes [ci-red](https://github.com/kelax12/COSMO1.2/issues?q=is%3Aissue+is%3Aopen+label%3Aci-red) et [incident](https://github.com/kelax12/COSMO1.2/issues?q=is%3Aissue+is%3Aopen+label%3Aincident)
 - Issues `ci-red` ouvertes : #64 CI en echec sur main (run #1478) (ouverte le 2026-10-10).
 - Aucune issue `incident` ouverte.
@@ -93,7 +93,7 @@ Elles ouvrent ou mettent à jour l'issue `ci-red` (via `ci-alert.yml`), la liste
 ## Audit externe semestriel
 
 - Dernier audit externe : **2026-11-06** (rapport de l'audit du 2026-11-06 pour le premier).
-- Prochain au plus tard : **2027-05-06**, dans 175 jours.
+- Prochain au plus tard : **2027-05-06**, dans 172 jours.
 - Après chaque audit, `auditExterne.dernier` de `scripts/indicateurs.config.json` est recalé sur la date de son rapport.
 
 ## Seuils d'alerte
