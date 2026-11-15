@@ -81,11 +81,11 @@ export async function deleteTestUsers(...users: (TestUser | undefined)[]): Promi
   }
 }
 
-/** Insère une tâche minimale possédée par `user` (deadline NOT NULL). */
+/** Insère une tâche minimale possédée par `user` (échéance : `due_date`, DAT-01). */
 export async function insertTask(user: TestUser, name = 'RLS test task') {
   const { data, error } = await user.client
     .from('tasks')
-    .insert({ user_id: user.id, name, deadline: new Date().toISOString() })
+    .insert({ user_id: user.id, name, due_date: new Date().toISOString().slice(0, 10) })
     .select('id')
     .single();
   if (error || !data) throw new Error(`insertTask a échoué : ${error?.message ?? 'no row'}`);

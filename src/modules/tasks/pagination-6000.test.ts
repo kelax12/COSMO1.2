@@ -24,7 +24,6 @@ vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn(), warning: v
 
 import { LocalStorageTasksRepository } from './local.repository';
 import { SupabaseTasksRepository } from './supabase.repository';
-import { setDeadlineColumnsForTests } from './deadline-columns';
 import { loadWorkingSet, workingSetSince } from './working-set';
 import { fetchAllPages, MAX_ROWS } from '@/lib/fetch-all-pages';
 import type { Task } from './types';
@@ -120,7 +119,6 @@ describe('V14.1 · 6 000 tâches côté Supabase (client simulé)', () => {
 
   beforeEach(() => {
     supabaseMock.reset();
-    setDeadlineColumnsForTests({ day: true, instant: true });
   });
 
   it('getAll enchaîne les pages de clé jusqu’à la dernière : 6 000 lignes', async () => {

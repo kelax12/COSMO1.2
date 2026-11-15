@@ -25,10 +25,15 @@ function assertPriorityInRange(priority: number | undefined): void {
   if (!Number.isInteger(priority) || priority < 0 || priority > 5) throw makeApiError('invalid_input');
 }
 
-/** Une échéance de démo est une clé de jour ; un instant d'avant la bascule DAT-01 y est ramené. */
+/**
+ * Une échéance de démo est une clé de jour (le pendant de `tasks.due_date`,
+ * DAT-01). Un instant écrit avant la bascule (`toISOString()` d'un minuit
+ * local) y est ramené, lu dans le fuseau retenu : celui du navigateur qui l'a
+ * écrit. Absente ou nulle → ''.
+ */
 const withDayDeadline = (t: Task): Task => {
   const day = deadlineDayKey(t.deadline);
-  return day === (t.deadline ?? '') ? t : { ...t, deadline: day };
+  return day === t.deadline ? t : { ...t, deadline: day };
 };
 
 export class LocalStorageTasksRepository implements ITasksRepository {
@@ -41,7 +46,12 @@ export class LocalStorageTasksRepository implements ITasksRepository {
       this.saveTasks(seeded);
       return seeded;
     }
-    return stored.map(withDayDeadline);
+    const tasks = stored.map(withDayDeadline);
+    // Reprise DAT-01 : réécrite une fois, le stockage ne garde plus d'instant.
+    if (tasks.some((t, i) => t !== stored[i])) {
+      try { this.saveTasks(tasks); } catch { /* quota : la lecture reste juste */ }
+    }
+    return tasks;
   }
 
   private saveTasks(tasks: Task[]): void {

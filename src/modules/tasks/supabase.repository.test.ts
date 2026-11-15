@@ -1,15 +1,19 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import type { TimezonePref } from '@/lib/timezone';
 import { supabaseMock } from '@/test/supabase-mock';
 
 vi.mock('@/lib/supabase', async () => {
   const { supabaseMock: mock } = await import('@/test/supabase-mock');
   return { supabase: mock.client };
 });
+const tz = vi.hoisted(() => ({ pref: null as TimezonePref | null }));
+vi.mock('@/lib/timezone', async (orig) => {
+  const real = await orig<typeof import('@/lib/timezone')>();
+  return { ...real, getTimezonePref: () => tz.pref ?? real.getTimezonePref() };
+});
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn(), warning: vi.fn() } }));
 
 import { SupabaseTasksRepository } from './supabase.repository';
-import { setDeadlineColumnsForTests } from './deadline-columns';
-import { storedDeadlineInstant } from '@/lib/deadline';
 import type { UpdateTaskInput } from './types';
 
 const repo = new SupabaseTasksRepository();
@@ -20,7 +24,7 @@ const VALID_ISO = '2026-01-01T00:00:00.000Z';
 
 const ownRow = {
   id: 't1', name: 'Ma tâche', priority: 3, category: 'c1',
-  deadline: '2026-06-15T23:59:59.000Z', estimated_time: 30,
+  due_date: '2026-06-15', estimated_time: 30,
   created_at: '2026-06-01T00:00:00.000Z', bookmarked: false, completed: false,
   user_id: '11111111-1111-4111-8111-111111111111', // = mock user par défaut
 };
@@ -28,8 +32,6 @@ const sharedRow = { ...ownRow, id: 't2', name: 'Partagée', user_id: 'owner-uid'
 
 beforeEach(() => {
   supabaseMock.reset();
-  // État de la base entre les mig. 251 et 253 ; les autres en fin de fichier.
-  setDeadlineColumnsForTests({ day: true, instant: true });
 });
 
 describe('SupabaseTasksRepository — lecture', () => {
@@ -160,12 +162,11 @@ describe('SupabaseTasksRepository — écriture', () => {
     expect(payload.name).toBe('New');
   });
 
-  it('update: empty deadline is normalized to NULL on both columns', async () => {
+  it('update: empty deadline is normalized to NULL in due_date, the only column written', async () => {
     supabaseMock.queueTable('tasks', { data: ownRow });
     await repo.update('t1', { deadline: '' });
     const payload = supabaseMock.argsOf('tasks', 'update')?.[0] as Record<string, unknown>;
-    expect(payload.deadline).toBeNull();
-    expect(payload.due_date).toBeNull();
+    expect(payload).toEqual({ due_date: null });
   });
 
   it('toggleComplete / toggleBookmark: atomic RPCs (TOCTOU-3), no read-then-write', async () => {
@@ -191,7 +192,7 @@ describe('SupabaseTasksRepository — écriture', () => {
   // ré-extrait cette création vers un `create()` séparé côté client, on
   // retombe sur la perte silencieuse et les doublons : ce test le bloque.
   it('toggleComplete: transmet la date de la prochaine occurrence à la RPC (récurrence atomique)', async () => {
-    const child = { ...ownRow, id: 't1-next', deadline: '2026-06-22T00:00:00.000Z' };
+    const child = { ...ownRow, id: 't1-next', due_date: '2026-06-22' };
     supabaseMock.queueRpc('toggle_task_complete_v2', {
       data: { task: { ...ownRow, completed: true, recurrence: 'weekly' }, spawned: child },
     });
@@ -199,8 +200,8 @@ describe('SupabaseTasksRepository — écriture', () => {
     const res = await repo.toggleComplete('t1', '2026-06-22');
 
     expect(supabaseMock.rpcCalls).toEqual([
-      // Le jour part en instant de minuit du fuseau retenu (signature mig. 133).
-      { fn: 'toggle_task_complete_v2', args: { p_task_id: 't1', p_next_deadline: storedDeadlineInstant('2026-06-22') } },
+      // Minuit UTC du jour : `echeance_jour` (mig. 251) en rend le même jour.
+      { fn: 'toggle_task_complete_v2', args: { p_task_id: 't1', p_next_deadline: '2026-06-22T00:00:00.000Z' } },
     ]);
     expect(res.spawned?.id).toBe('t1-next');
     // Aucune écriture directe sur la table : tout passe par la transaction RPC.
@@ -346,49 +347,70 @@ describe('SupabaseTasksRepository — partages en attente et suppression', () =>
   });
 });
 
+
 // ═══════════════════════════════════════════════════════════════════
-// Bascule DAT-01 : le front est déployé avant les migrations 251 et 253,
-// il sert les trois états de la base (`deadline-columns.ts`).
+// DAT-01 : `due_date` (jour) est la seule colonne d'échéance lue et écrite.
+// Avant la mig. 253, le trigger de la 251 remplit `deadline` ; après, elle
+// n'existe plus : le même code sert les deux états.
+// Fuseau extrême (UTC+14, UTC-10) : le jour ne glisse plus.
 // ═══════════════════════════════════════════════════════════════════
-describe('SupabaseTasksRepository : échéance avant la mig. 251 (deadline seule)', () => {
-  beforeEach(() => setDeadlineColumnsForTests({ day: false, instant: true }));
-
-  it('lit et filtre l ancienne colonne, en instants du fuseau retenu', async () => {
-    supabaseMock.queueRpc('get_my_tasks', { data: [{ ...ownRow, deadline: '2026-11-11T23:00:00+00:00' }] });
-    const [t] = await repo.listAll({ deadlineFrom: '2026-11-12' });
-    expect(supabaseMock.argsOf('get_my_tasks', 'select')?.[0]).toMatch(/,deadline$/);
-    expect(supabaseMock.argsOf('get_my_tasks', 'gte')).toEqual(['deadline', storedDeadlineInstant('2026-11-12')]);
-    expect(t.deadline).toBe('2026-11-12');
-  });
-
-  it('n écrit jamais due_date, que la base n a pas encore', async () => {
-    supabaseMock.queueTable('tasks', { data: ownRow });
-    await repo.update('t1', { deadline: '2026-11-12' });
-    expect(supabaseMock.argsOf('tasks', 'update')?.[0]).toEqual({ deadline: storedDeadlineInstant('2026-11-12') });
-  });
-});
-
-describe('SupabaseTasksRepository : échéance après la mig. 253 (due_date seule)', () => {
-  beforeEach(() => setDeadlineColumnsForTests({ day: true, instant: false }));
+describe.each([
+  ['UTC+14', 14],
+  ['UTC-10', -10],
+])('SupabaseTasksRepository : échéance en due_date seule (%s)', (_label, offsetHours) => {
+  beforeEach(() => { tz.pref = { mode: 'manual', offsetHours }; });
+  afterEach(() => { tz.pref = null; });
 
   it('lit et filtre la colonne jour, sans conversion', async () => {
-    supabaseMock.queueRpc('get_my_tasks', { data: [{ ...ownRow, deadline: undefined, due_date: '2026-11-12' }] });
+    supabaseMock.queueRpc('get_my_tasks', { data: [{ ...ownRow, due_date: '2026-11-12' }] });
     const [t] = await repo.listAll({ deadlineFrom: '2026-11-12', deadlineTo: '2026-11-30' });
-    expect(supabaseMock.argsOf('get_my_tasks', 'select')?.[0]).toMatch(/,due_date$/);
+    const select = String(supabaseMock.argsOf('get_my_tasks', 'select')?.[0]);
+    expect(select.split(',')).toContain('due_date');
+    expect(select.split(',')).not.toContain('deadline');
     expect(supabaseMock.argsOf('get_my_tasks', 'gte')).toEqual(['due_date', '2026-11-12']);
     expect(supabaseMock.argsOf('get_my_tasks', 'lte')).toEqual(['due_date', '2026-11-30']);
     expect(t.deadline).toBe('2026-11-12');
   });
 
-  it('n écrit plus deadline, retirée de la base', async () => {
+  it('une ligne servie avant la 253 (deadline encore là) se lit par due_date seule', async () => {
+    supabaseMock.queueRpc('get_my_tasks', {
+      data: [{ ...ownRow, due_date: '2026-11-12', deadline: '2026-11-11T23:00:00+00:00' }],
+    });
+    const [t] = await repo.listAll({});
+    expect(t.deadline).toBe('2026-11-12');
+  });
+
+  it('create et update n écrivent que due_date, le jour tel quel', async () => {
+    supabaseMock.queueTable('tasks', { data: { ...ownRow, due_date: '2026-11-12' } });
+    await repo.create({ name: 'X', priority: 3, category: '', deadline: '2026-11-12', estimatedTime: 0, bookmarked: false, completed: false });
+    const insert = (supabaseMock.argsOf('tasks', 'insert')?.[0] as Record<string, unknown>[])[0];
+    expect(insert.due_date).toBe('2026-11-12');
+    expect('deadline' in insert).toBe(false);
+
+    supabaseMock.reset();
     supabaseMock.queueTable('tasks', { data: { ...ownRow, due_date: '2026-11-12' } });
     await repo.update('t1', { deadline: '2026-11-12' });
     expect(supabaseMock.argsOf('tasks', 'update')?.[0]).toEqual({ due_date: '2026-11-12' });
   });
 
-  it('getByDate compare le jour, plus une fenêtre d instants', async () => {
+  it('getByDate et getFiltered comparent des jours', async () => {
     supabaseMock.queueRpc('get_my_tasks', { data: [] });
     await repo.getByDate('2026-11-12');
     expect(supabaseMock.argsOf('get_my_tasks', 'eq')).toEqual(['due_date', '2026-11-12']);
+
+    supabaseMock.reset();
+    supabaseMock.queueRpc('get_my_tasks', { data: [] });
+    await repo.getFiltered({ deadlineAfter: '2026-11-01', deadlineBefore: '2026-11-30' });
+    expect(supabaseMock.argsOf('get_my_tasks', 'gte')).toEqual(['due_date', '2026-11-01']);
+    expect(supabaseMock.argsOf('get_my_tasks', 'lte')).toEqual(['due_date', '2026-11-30']);
+  });
+
+  it('la récurrence passe minuit UTC, que echeance_jour ramène au même jour', async () => {
+    supabaseMock.queueRpc('toggle_task_complete_v2', { data: { task: ownRow, spawned: null } });
+    await repo.toggleComplete('t1', '2026-12-31');
+    const sent = (supabaseMock.rpcCalls[0].args as { p_next_deadline: string }).p_next_deadline;
+    expect(sent).toBe('2026-12-31T00:00:00.000Z');
+    // Miroir de `public.echeance_jour` (mig. 251) : quart d'heure → instant + 13 h, en UTC.
+    expect(new Date(Date.parse(sent) + 13 * 3_600_000).toISOString().slice(0, 10)).toBe('2026-12-31');
   });
 });

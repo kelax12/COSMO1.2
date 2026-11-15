@@ -29,9 +29,9 @@ deadlineLocalDate(task.deadline)            // ✅ Date locale à midi, pour for
 isDueToday(...) / isOverdue(...)            // ✅ comparaisons de jours
 ```
 
-- 🔴 Base : `tasks.due_date date` (mig. `251`) remplace `tasks.deadline timestamptz`, retirée par la `253` (`supabase/migration-differee/`, après vérification). Le front est déployé avant : `tasks/deadline-columns.ts` tient l'état sondé une fois par session, le repository lit, filtre et écrit la forme que la base porte ; le CLI fait de même.
+- 🔴 Base : `tasks.due_date date` (mig. `251`) remplace `tasks.deadline timestamptz`, retirée par la `253` (`supabase/migration-differee/`, après vérification). Le repository, la démo et le CLI ne lisent et n'écrivent que `due_date` (règles : `src/modules/tasks/CLAUDE.md`).
 - 🔴 Ancien instant → jour : `dayKeyFromStoredDeadline` (front, CLI) et `public.echeance_jour` (SQL) sont miroirs. Instant au quart d'heure près = minuit écrit dans le fuseau de son auteur, jour de l'instant + 13 h en UTC (exact de UTC-10 à UTC+13) ; autre instant : jour à Paris. Aucun fuseau n'est stocké par compte.
-- ⚠️ `toggle_task_complete_v2` garde sa signature : le front envoie `storedDeadlineInstant(jour)`, la RPC écrit `due_date = echeance_jour(...)`.
+- ⚠️ `toggle_task_complete_v2` garde sa signature : le front envoie minuit UTC du jour (`nextOccurrenceInstant`), la RPC écrit `due_date = echeance_jour(...)`.
 - ❌ Comparer des INSTANTS pour décider « en retard » : on compare des jours. Invisible depuis la métropole : ne pas conclure de l'avoir vu marcher.
 - ✅ `team_tasks.deadline` reste une `date` et garde son nom : même type que `due_date`, et un renommage toucherait le journal `team_task_activity` (champ `'deadline'` écrit), les agrégats et le contrat sortant des webhooks, sans changer aucun comportement.
 

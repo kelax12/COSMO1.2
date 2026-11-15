@@ -13,9 +13,11 @@
 -- l'application, la DÉPLACER dans `supabase/migration/` dans le même commit
 -- que la relecture du catalogue, puis régénérer le contrat de données.
 --
--- Le front livré avec la 251 sert déjà cet état (`deadline-columns.ts`), et
--- `toggle_task_complete_v2` n'écrit plus que `due_date` depuis la 251 : ce
--- fichier ne recrée rien, il retire.
+-- Le front, la démo et le CLI ne lisent et n'écrivent plus que `due_date`
+-- (DAT-01, tranche code) : ils servent l'état d'avant comme celui d'après ce
+-- fichier. `toggle_task_complete_v2` n'écrit plus que `due_date` depuis la
+-- 251. Seul lecteur serveur de `deadline`, relu au catalogue le 2026-11-15 :
+-- le trigger de bascule, retiré ici. Ce fichier ne recrée rien, il retire.
 --
 -- Rejouable : sans `deadline`, le contrôle ne lit rien et les DROP sont
 -- `IF EXISTS`. Preuve : `supabase/proofs/253.proof.sql`.

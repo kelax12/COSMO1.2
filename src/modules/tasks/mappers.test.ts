@@ -1,14 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { mapTaskFromDb, mapTaskToDb, TaskRowRead } from './mappers';
-import { storedDeadlineInstant } from '@/lib/deadline';
+import { mapTaskFromDb, mapTaskToDb, nextOccurrenceInstant, type TaskRow } from './mappers';
 import type { Task } from './types';
 
-const baseRow: TaskRowRead = {
+const baseRow: TaskRow = {
   id: 't1',
   name: 'Task',
   priority: 3,
   category: 'cat',
-  deadline: '2026-06-07T10:00:00.000Z',
+  due_date: '2026-06-07',
   estimated_time: 30,
 };
 
@@ -31,8 +30,8 @@ describe('mapTaskFromDb', () => {
     expect(t.collaboratorValidations).toEqual({});
   });
 
-  it('maps null deadline to empty string', () => {
-    expect(mapTaskFromDb({ ...baseRow, deadline: null }).deadline).toBe('');
+  it('maps null due_date to empty string', () => {
+    expect(mapTaskFromDb({ ...baseRow, due_date: null }).deadline).toBe('');
   });
 
   it('coerces NULL string columns to undefined/empty (undo re-create passes zod)', () => {
@@ -64,11 +63,9 @@ describe('mapTaskToDb (whitelist / anti-mass-assignment)', () => {
     expect(out).toEqual({ priority: 5 });
   });
 
-  it('converts empty-string deadline to null on BOTH columns, writes the day and its legacy instant', () => {
-    expect(mapTaskToDb({ deadline: '' })).toEqual({ due_date: null, deadline: null });
-    expect(mapTaskToDb({ deadline: '2026-01-01' })).toEqual({
-      due_date: '2026-01-01', deadline: storedDeadlineInstant('2026-01-01'),
-    });
+  it('converts empty-string deadline to null, writes the day in due_date only', () => {
+    expect(mapTaskToDb({ deadline: '' })).toEqual({ due_date: null });
+    expect(mapTaskToDb({ deadline: '2026-01-01' })).toEqual({ due_date: '2026-01-01' });
   });
 
   it('maps camelCase fields to snake_case columns', () => {
@@ -84,7 +81,7 @@ describe('mapTaskToDb (whitelist / anti-mass-assignment)', () => {
     });
     expect(out).toEqual({
       name: 'n', description: 'd', priority: 2, category: 'c',
-      due_date: '2026-01-01', deadline: storedDeadlineInstant('2026-01-01'),
+      due_date: '2026-01-01',
       estimated_time: 5, bookmarked: true, completed: true, completed_at: '2026-01-02',
       is_collaborative: true, pending_invites: ['a'], collaborator_validations: { x: true },
     });
@@ -163,16 +160,23 @@ describe('statut et état (mig. 214)', () => {
   });
 });
 
-describe('échéance : un jour, lu dans la colonne que la base porte (DAT-01)', () => {
-  it('lit due_date quand la base la sert, même si deadline est encore là', () => {
-    expect(mapTaskFromDb({ ...baseRow, due_date: '2026-11-12', deadline: '2026-11-11T15:00:00+00:00' }).deadline)
-      .toBe('2026-11-12');
-    expect(mapTaskFromDb({ ...baseRow, due_date: null, deadline: undefined }).deadline).toBe('');
+describe('échéance : un jour, colonne due_date seule (DAT-01)', () => {
+  it('lit due_date, jamais l ancienne colonne deadline encore servie avant la 253', () => {
+    const legacy = { ...baseRow, due_date: '2026-11-12', deadline: '2026-11-11T15:00:00+00:00' } as TaskRow;
+    expect(mapTaskFromDb(legacy).deadline).toBe('2026-11-12');
+    expect(mapTaskFromDb({ ...baseRow, due_date: null }).deadline).toBe('');
   });
 
-  it('avant la mig. 251, convertit l ancienne colonne comme echeance_jour', () => {
-    for (const instant of ['2026-11-11T23:00:00+00:00', '2026-11-12T05:00:00+00:00', '2026-11-11T15:00:00+00:00', '2026-11-12T00:00:00+00:00']) {
-      expect(mapTaskFromDb({ ...baseRow, deadline: instant }).deadline).toBe('2026-11-12');
+  it('n émet jamais deadline en écriture', () => {
+    expect('deadline' in mapTaskToDb({ deadline: '2026-11-12' })).toBe(false);
+    expect('deadline' in mapTaskToDb({ deadline: '' })).toBe(false);
+  });
+
+  it('nextOccurrenceInstant : minuit UTC du jour, que echeance_jour rend inchangé', () => {
+    for (const day of ['2026-01-01', '2026-03-29', '2026-10-25', '2026-12-31']) {
+      const instant = nextOccurrenceInstant(day);
+      expect(instant).toBe(`${day}T00:00:00.000Z`);
+      expect(new Date(Date.parse(instant) + 13 * 3_600_000).toISOString().slice(0, 10)).toBe(day);
     }
   });
 });

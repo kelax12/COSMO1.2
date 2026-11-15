@@ -26,8 +26,10 @@ Règles transversales : [`../CLAUDE.md`](../CLAUDE.md).
 - ❌ Une mise à jour optimiste par `setQueryData(taskKeys.lists())` seul : `patchTaskCaches` (`cache-patch.ts`), sinon l'archive affiche l'état d'avant.
 - ❌ Un filtre de `TaskQuery` en `.or()` : le curseur de clé l'occupe (`task-query.ts`).
 
-## Échéance : `due_date` (mig. 251), bascule en cours
+## Échéance : `due_date` seule (mig. 251, DAT-01)
 
-- ❌ `deadline` ou `due_date` en dur dans une liste de colonnes : `listColumns(cols)` (`supabase.repository.ts`), `taskColumns(cols)` (CLI). La colonne présente dépend de la migration appliquée (`deadline-columns.ts`, sonde `probeTaskColumn`).
-- ❌ Une écriture d'échéance hors `mapTaskToDb` (les deux colonnes) suivi de `fitDeadlineColumns` (retire celle que la base n'a pas).
-- ⚠️ Le jour de la `253` : retirer `deadline` de `LegacyDeadlineColumn`, des sondes, du CLI et de `scripts/check-portability-export.mjs`, dans le commit qui déplace le fichier.
+- ✅ Prod, démo et CLI lisent, filtrent et écrivent la seule colonne `due_date` (un jour). Avant la `253`, le trigger `trg_tasks_sync_echeance` de la 251 remplit `deadline` ; après, elle n'existe plus : le même code sert les deux états.
+- ❌ Lire ou écrire `tasks.deadline` (colonne SQL) : ni dans `TASK_LIST_COLUMNS`, ni dans `mapTaskToDb`, ni dans le CLI. `Task.deadline` (TypeScript) reste le nom du champ domaine (B6).
+- ❌ Convertir l'échéance en instant pour la base. Seule exception : `p_next_deadline` de `toggle_task_complete_v2` (signature timestamptz), qui reçoit minuit UTC du jour (`nextOccurrenceInstant`, `mappers.ts`), indépendant du fuseau réglé.
+- ✅ Démo : la clé de jour est stockée ; un instant hérité est ramené à son jour à la lecture puis réécrit (`withDayDeadline`, `local.repository.ts`).
+- ⚠️ Le jour de la `253` : retirer `deadline` de `scripts/check-portability-export.mjs` dans le commit qui déplace le fichier (la garde lit les migrations).

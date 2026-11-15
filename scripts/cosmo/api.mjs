@@ -5,34 +5,16 @@
 // C'est cette couche, et elle seule, qu'un futur serveur MCP réutilisera :
 // chaque fonction exportée correspond à un tool.
 import { CosmoApiError, CosmoNotFoundError, CosmoValidationError } from './errors.mjs';
-import { dayKeyFromStoredDeadline, deadlineEndOfDay, deadlineToTimestamp } from './deadline.mjs';
+import { deadlineDayKey } from './deadline.mjs';
 
 /** = TASK_LIST_COLUMNS du repository applicatif (garde anti-dérive : api.test.mjs). */
 export const TASK_COLUMNS =
-  'id,name,priority,category,estimated_time,created_at,updated_at,bookmarked,completed,completed_at,subtasks,kr_id,recurrence,is_collaborative,pending_invites,user_id,status,health';
+  'id,name,priority,category,due_date,estimated_time,created_at,updated_at,bookmarked,completed,completed_at,subtasks,kr_id,recurrence,is_collaborative,pending_invites,user_id,status,health';
 
-// Colonnes d'échéance présentes (DAT-01), comme src/modules/tasks/deadline-columns.ts.
-const columnsByClient = new WeakMap();
-async function columnExists(client, column) {
-  const { error } = await client.from('tasks').select(column).limit(0);
-  return !error ? true : ['42703', 'PGRST204'].includes(error.code ?? '') ? false : null;
-}
-
-export async function deadlineColumns(client) {
-  if (columnsByClient.has(client)) return columnsByClient.get(client);
-  const day = await columnExists(client, 'due_date');
-  const instant = await columnExists(client, 'deadline');
-  if (day === null || instant === null || (!day && !instant)) return { day: !!day, instant: !day };
-  const cols = { day, instant };
-  columnsByClient.set(client, cols);
-  return cols;
-}
-
-export const taskColumns = (cols) => `${TASK_COLUMNS},${cols.day ? 'due_date' : 'deadline'}`;
-const deadlineFields = (day, cols) => ({
-  ...(cols.day ? { due_date: day || null } : {}),
-  ...(cols.instant ? { deadline: day ? deadlineToTimestamp(day) : null } : {}),
-});
+// Échéance : la seule colonne `due_date` (un jour, mig. 251, DAT-01). Avant la
+// mig. 253, le trigger de la 251 tient l'ancienne `deadline` d'accord ; après,
+// elle n'existe plus. Le même code sert les deux états.
+const dueDate = (value) => deadlineDayKey(value) || null;
 
 /** Date locale YYYY-MM-DD (`en-CA`, jamais toISOString qui décale en soirée). */
 export function todayLocal(now = new Date()) {
@@ -51,7 +33,7 @@ function mapTaskFromRow(row) {
     name: row.name,
     priority: row.priority,
     category: row.category ?? '',
-    deadline: row.due_date !== undefined ? (row.due_date ?? '') : dayKeyFromStoredDeadline(row.deadline),
+    deadline: row.due_date ?? '',
     estimatedTime: row.estimated_time,
     bookmarked: row.bookmarked ?? false,
     completed: row.completed ?? false,
@@ -99,15 +81,13 @@ async function resolveCategoryId(client, wanted) {
 
 /** Liste les tâches (la RLS borne à l'utilisateur). `full` : `select('*')`, description comprise. */
 export async function listTasks(client, { completed, category, deadlineBefore, limit, full } = {}) {
-  const cols = await deadlineColumns(client);
-  let query = client.from('tasks').select(full ? '*' : taskColumns(cols));
+  let query = client.from('tasks').select(full ? '*' : TASK_COLUMNS);
   if (completed !== undefined) query = query.eq('completed', completed);
   // Résolu seulement si fourni : sans valeur, la résolution rendrait la catégorie par défaut.
   if (category) query = query.eq('category', await resolveCategoryId(client, category));
-  // Borne haute incluse ; l'ancienne colonne attend un instant.
-  const column = cols.day ? 'due_date' : 'deadline';
-  if (deadlineBefore) query = query.lte(column, cols.day ? deadlineBefore : deadlineEndOfDay(deadlineBefore));
-  query = query.order(column, { ascending: true }).order('priority', { ascending: false });
+  // Borne haute incluse, en jour : aucun fuseau en jeu.
+  if (deadlineBefore) query = query.lte('due_date', deadlineDayKey(deadlineBefore));
+  query = query.order('due_date', { ascending: true }).order('priority', { ascending: false });
   if (limit) query = query.limit(limit);
   const rows = unwrap(await query) ?? [];
   return rows.map(mapTaskFromRow);
@@ -134,12 +114,11 @@ export async function createTask(client, input, { now = new Date(), userId } = {
 
   const category = await resolveCategoryId(client, input.category);
   const deadline = input.deadline === undefined ? todayLocal(now) : input.deadline;
-  const cols = await deadlineColumns(client);
   const row = {
     name,
     priority: input.priority ?? DEFAULT_TASK.priority,
     category,
-    ...deadlineFields(deadline, cols),
+    due_date: dueDate(deadline),
     estimated_time: input.estimatedTime ?? DEFAULT_TASK.estimatedTime,
     bookmarked: false,
     completed: false,
@@ -162,7 +141,7 @@ export async function completeTask(client, taskId, { now = new Date() } = {}) {
       .from('tasks')
       .update({ completed: true, completed_at: now.toISOString() })
       .eq('id', taskId)
-      .select(taskColumns(await deadlineColumns(client)))
+      .select(TASK_COLUMNS)
       .single()
   );
   return mapTaskFromRow(data);
@@ -177,7 +156,7 @@ export async function reopenTask(client, taskId) {
       .from('tasks')
       .update({ completed: false, completed_at: null })
       .eq('id', taskId)
-      .select(taskColumns(await deadlineColumns(client)))
+      .select(TASK_COLUMNS)
       .single()
   );
   return mapTaskFromRow(data);
@@ -189,8 +168,8 @@ const UPDATABLE_FIELDS = {
   description: (v) => ['description', v],
   priority: (v) => ['priority', v],
   category: (v) => ['category', v],
-  // Chaîne vide = « pas d'échéance » → NULL. Colonnes posées dans updateTask.
-  deadline: (v) => ['deadline', v || ''],
+  // Chaîne vide = « pas d'échéance » → NULL.
+  deadline: (v) => ['due_date', dueDate(v)],
   estimatedTime: (v) => ['estimated_time', v],
   bookmarked: (v) => ['bookmarked', v],
   recurrence: (v) => ['recurrence', v],
@@ -214,8 +193,7 @@ export async function updateTask(client, taskId, patch = {}) {
     const mapper = UPDATABLE_FIELDS[key];
     if (!mapper) continue;
     const [column, mapped] = mapper(value);
-    if (column === 'deadline') Object.assign(row, deadlineFields(mapped, await deadlineColumns(client)));
-    else row[column] = mapped;
+    row[column] = mapped;
   }
 
   if (Object.keys(row).length === 0) {
@@ -239,7 +217,7 @@ export async function deleteTask(client, taskId) {
   if (!taskId) throw new CosmoValidationError('Identifiant de tache manquant.');
 
   const existing = unwrap(
-    await client.from('tasks').select(taskColumns(await deadlineColumns(client))).eq('id', taskId)
+    await client.from('tasks').select(TASK_COLUMNS).eq('id', taskId)
   );
   const row = Array.isArray(existing) ? existing[0] : existing;
   if (!row) throw new CosmoNotFoundError(`Tache introuvable : ${taskId}`);

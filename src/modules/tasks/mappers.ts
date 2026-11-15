@@ -6,7 +6,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { Task, Subtask, TaskRecurrence, TaskStatus, TaskHealth } from './types';
 import type { ColumnsExist, DbInsert, DbRow, Verified } from '@/lib/db-contract';
-import { dayKeyFromStoredDeadline, deadlineDayKey, storedDeadlineInstant } from '@/lib/deadline';
+import { deadlineDayKey } from '@/lib/deadline';
 
 /** Supabase DB row type for the `tasks` table (snake_case). */
 export interface TaskRow {
@@ -16,7 +16,7 @@ export interface TaskRow {
   priority: number;
   // Depuis la mig. 145 : NULL en base = aucune categorie.
   category: string | null;
-  /** Échéance : un jour (mig. 251). Absente d'une ligne servie avant la migration. */
+  /** Échéance : un jour (mig. 251), NULL = aucune. Seule colonne d'échéance lue et écrite (DAT-01). */
   due_date?: string | null;
   estimated_time: number;
   created_at?: string;
@@ -59,17 +59,7 @@ export interface TaskDbInput {
   health?: string | null;
 }
 
-/**
- * Ancienne colonne `tasks.deadline` (timestamptz), retirée par la mig. 253 :
- * hors du contrat de schéma, lue et écrite seulement pendant la bascule.
- */
-export interface LegacyDeadlineColumn {
-  deadline?: string | null;
-}
-export type TaskRowRead = TaskRow & LegacyDeadlineColumn;
-export type TaskDbWrite = TaskDbInput & LegacyDeadlineColumn;
-
-export function mapTaskFromDb(row: TaskRowRead): Task {
+export function mapTaskFromDb(row: TaskRow): Task {
   return {
     id: row.id,
     name: row.name,
@@ -80,7 +70,7 @@ export function mapTaskFromDb(row: TaskRowRead): Task {
     description: row.description ?? undefined,
     priority: row.priority,
     category: row.category ?? '',
-    deadline: row.due_date !== undefined ? (row.due_date ?? '') : dayKeyFromStoredDeadline(row.deadline),
+    deadline: row.due_date ?? '',
     estimatedTime: row.estimated_time,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -108,17 +98,22 @@ export function mapTaskFromDb(row: TaskRowRead): Task {
   };
 }
 
-/**
- * Échéance facultative, '' → NULL. Les DEUX colonnes ; le repository retire
- * celle que la base n'a pas (`deadline-columns.ts`).
- */
-function deadlineToDb(deadline: string): Pick<TaskDbWrite, 'due_date' | 'deadline'> {
-  const day = deadlineDayKey(deadline);
-  return { due_date: day || null, deadline: day ? storedDeadlineInstant(day) : null };
+/** Échéance facultative : jour du domaine → colonne `due_date`, '' → NULL. */
+function deadlineToDb(deadline: string): string | null {
+  return deadlineDayKey(deadline) || null;
 }
 
-export function mapTaskToDb(input: Partial<Task>): TaskDbWrite {
-  const result: TaskDbWrite = {};
+/**
+ * Paramètre `p_next_deadline` (timestamptz) de `toggle_task_complete_v2` :
+ * minuit UTC du jour. `echeance_jour` (mig. 251) lit le jour de l'instant
+ * + 13 h en UTC, donc rend ce même jour, quel que soit le fuseau réglé.
+ */
+export function nextOccurrenceInstant(dayKey: string): string {
+  return `${deadlineDayKey(dayKey)}T00:00:00.000Z`;
+}
+
+export function mapTaskToDb(input: Partial<Task>): TaskDbInput {
+  const result: TaskDbInput = {};
   if (input.name !== undefined) result.name = input.name;
   if (input.description !== undefined) result.description = input.description;
   if (input.priority !== undefined) result.priority = input.priority;
@@ -130,7 +125,7 @@ export function mapTaskToDb(input: Partial<Task>): TaskDbWrite {
   // à vérifier partout — exactement ce que le commentaire d'`impact.ts`
   // interdit.
   if (input.category !== undefined) result.category = input.category === '' ? null : input.category;
-  if (input.deadline !== undefined) Object.assign(result, deadlineToDb(input.deadline));
+  if (input.deadline !== undefined) result.due_date = deadlineToDb(input.deadline);
   if (input.estimatedTime !== undefined) result.estimated_time = input.estimatedTime;
   if (input.bookmarked !== undefined) result.bookmarked = input.bookmarked;
   if (input.completed !== undefined) result.completed = input.completed;

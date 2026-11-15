@@ -2,14 +2,13 @@ import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import {
-  TASK_COLUMNS, taskColumns, todayLocal, listTasks,
+  TASK_COLUMNS, todayLocal, listTasks,
   createTask, completeTask, DEFAULT_TASK,
   listHabitsToday, markHabitDone,
   listUpcomingEvents, listOkrs,
   reopenTask, updateTask, deleteTask, getTask,
 } from './api.mjs';
 import { CosmoValidationError } from './errors.mjs';
-import { deadlineToTimestamp } from './deadline.mjs';
 
 /**
  * Faux client Supabase : chaque méthode de chaînage se retourne elle-même,
@@ -90,7 +89,7 @@ describe('listTasks', () => {
     const client = makeFakeClient({ data: [], error: null });
     await listTasks(client, {});
     expect(client.calls).toContainEqual(['from', 'tasks']);
-    expect(client.calls).toContainEqual(['select', `${TASK_COLUMNS},due_date`]);
+    expect(client.calls).toContainEqual(['select', TASK_COLUMNS]);
     expect(client.calls.some(([m, col]) => m === 'order' && col === 'due_date')).toBe(true);
   });
 
@@ -171,10 +170,8 @@ describe('createTask', () => {
       category: PERSO_ID,
       priority: DEFAULT_TASK.priority,
       estimated_time: DEFAULT_TASK.estimatedTime,
-      // Instant vrai de minuit LOCAL, pas la cle de jour nue : celle-ci serait
-      // castee en minuit UTC par Postgres (R-01, 4e chemin d'ecriture).
+      // Le jour local saisi, dans la colonne `date` (DAT-01) : aucun instant.
       due_date: '2026-07-27',
-      deadline: deadlineToTimestamp('2026-07-27'),
       bookmarked: false,
       completed: false,
       recurrence: 'none',
@@ -203,12 +200,12 @@ describe('createTask', () => {
     expect(client.calls.some(([m]) => m === 'insert')).toBe(false);
   });
 
-  it('transforme une echeance vide en NULL (colonne timestamp)', async () => {
+  it('transforme une echeance vide en NULL (colonne due_date seule)', async () => {
     const client = makeFakeClient({ data: { id: 'n1' }, error: null }, CATS);
     await createTask(client, { name: 'X', category: 'Perso', deadline: '' }, { userId: 'u1' });
     const insert = client.calls.find(([m]) => m === 'insert');
-    expect(insert[1].deadline).toBeNull();
     expect(insert[1].due_date).toBeNull();
+    expect('deadline' in insert[1]).toBe(false);
   });
 });
 
@@ -361,8 +358,7 @@ describe('updateTask', () => {
     const client = makeFakeClient({ data: { id: 't1' }, error: null });
     await updateTask(client, 't1', { deadline: '' });
     const update = client.calls.find(([m]) => m === 'update');
-    expect(update[1].deadline).toBeNull();
-    expect(update[1].due_date).toBeNull();
+    expect(update[1]).toEqual({ due_date: null });
   });
 
   it('refuse un patch vide au lieu d envoyer un UPDATE sans effet', async () => {
@@ -407,7 +403,7 @@ describe('description — lisibilite', () => {
   it('listTasks sans full garde la liste allegee', async () => {
     const client = makeFakeClient({ data: [], error: null });
     await listTasks(client, {});
-    expect(client.calls).toContainEqual(['select', `${TASK_COLUMNS},due_date`]);
+    expect(client.calls).toContainEqual(['select', TASK_COLUMNS]);
   });
 
   it('createTask transmet la description telle quelle', async () => {
@@ -441,47 +437,23 @@ describe('deleteTask', () => {
   });
 });
 
-// Bascule DAT-01 : le CLI sert la base avant la mig. 251 (`deadline` seule),
-// entre 251 et 253 (les deux) et après 253 (`due_date` seule).
-function schemaClient(missing, rows = []) {
-  const calls = [];
-  let probe = null;
-  const chain = {
-    select: (col) => { calls.push(['select', col]); probe = col; return chain; },
-    limit: (n) => { calls.push(['limit', n]); if (n !== 0) probe = null; return chain; },
-    eq: (...a) => (calls.push(['eq', ...a]), (probe = null), chain),
-    lte: (...a) => (calls.push(['lte', ...a]), (probe = null), chain),
-    order: (...a) => (calls.push(['order', ...a]), (probe = null), chain),
-    insert: (...a) => (calls.push(['insert', ...a]), chain),
-    update: (...a) => (calls.push(['update', ...a]), chain),
-    single: () => chain,
-    then: (resolve) => {
-      const isProbe = calls.at(-1)?.[0] === 'limit' && calls.at(-1)?.[1] === 0;
-      if (isProbe && missing.includes(probe)) return resolve({ data: null, error: { code: '42703', message: 'x' } });
-      return resolve({ data: isProbe ? [] : rows, error: null });
-    },
-  };
-  return { calls, from: () => chain, rpc: () => chain };
-}
-
-describe('echeance : trois etats de la base (DAT-01)', () => {
-  it('avant la 251 : lit et ecrit la seule colonne deadline', async () => {
-    const client = schemaClient(['due_date'], [{ id: 't1', deadline: '2026-11-11T23:00:00+00:00' }]);
-    const [task] = await listTasks(client, {});
-    expect(client.calls).toContainEqual(['select', taskColumns({ day: false, instant: true })]);
-    expect(task.deadline).toBe('2026-11-12');
-    await updateTask(client, 't1', { deadline: '2026-11-12' });
-    const update = client.calls.find(([m]) => m === 'update');
-    expect(update[1]).toEqual({ deadline: deadlineToTimestamp('2026-11-12') });
-  });
-
-  it('apres la 253 : lit et ecrit la seule colonne due_date', async () => {
-    const client = schemaClient(['deadline'], [{ id: 't1', due_date: '2026-11-12' }]);
+// DAT-01 : `due_date` seule, avant (trigger de la 251) comme apres la 253.
+describe('echeance : colonne due_date seule (DAT-01)', () => {
+  it('lit due_date, jamais deadline, meme si la base la sert encore', async () => {
+    const client = makeFakeClient({ data: [{ id: 't1', due_date: '2026-11-12', deadline: '2026-11-11T15:00:00+00:00' }], error: null });
     const [task] = await listTasks(client, { deadlineBefore: '2026-11-30' });
+    expect(TASK_COLUMNS.split(',')).toContain('due_date');
+    expect(TASK_COLUMNS.split(',')).not.toContain('deadline');
     expect(client.calls).toContainEqual(['lte', 'due_date', '2026-11-30']);
     expect(task.deadline).toBe('2026-11-12');
+  });
+
+  it('ecrit le jour tel quel, et ramene un instant saisi a son jour', async () => {
+    const client = makeFakeClient({ data: { id: 't1' }, error: null });
     await updateTask(client, 't1', { deadline: '2026-11-12' });
-    const update = client.calls.find(([m]) => m === 'update');
-    expect(update[1]).toEqual({ due_date: '2026-11-12' });
+    expect(client.calls.find(([m]) => m === 'update')[1]).toEqual({ due_date: '2026-11-12' });
+    const client2 = makeFakeClient({ data: { id: 't1' }, error: null });
+    await updateTask(client2, 't1', { deadline: '2026-11-11T23:00:00.000Z' });
+    expect(client2.calls.find(([m]) => m === 'update')[1]).toEqual({ due_date: '2026-11-12' });
   });
 });

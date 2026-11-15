@@ -2,7 +2,14 @@
 // Couverture métier (audit P0a) : LocalStorageTasksRepository (démo) —
 // CRUD, filtres (champs canoniques B6 : completed/bookmarked/deadline),
 // toggles, pagination.
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import type { TimezonePref } from '@/lib/timezone';
+
+const tz = vi.hoisted(() => ({ pref: null as TimezonePref | null }));
+vi.mock('@/lib/timezone', async (orig) => {
+  const real = await orig<typeof import('@/lib/timezone')>();
+  return { ...real, getTimezonePref: () => tz.pref ?? real.getTimezonePref() };
+});
 import { LocalStorageTasksRepository } from './local.repository';
 import { dependencyErrorCode, DEPENDENCY_ERRORS } from './dependency-errors';
 
@@ -291,5 +298,45 @@ describe('statut et état (mig. 214)', () => {
     expect(spawned?.health).toBeUndefined();
     const { task: reopened } = await repo.toggleComplete(t.id, null);
     expect(reopened.status).toBe('todo');
+  });
+});
+
+// DAT-01 : la démo garde un JOUR, comme `tasks.due_date`. Fuseaux extrêmes.
+describe('échéance de démo : un jour, reprise des instants hérités', () => {
+  afterEach(() => { tz.pref = null; });
+  const legacy = {
+    id: 'old', name: 'Ancienne', priority: 3, category: '', estimatedTime: 0,
+    bookmarked: false, completed: false, createdAt: '2026-11-01T00:00:00.000Z',
+  };
+
+  it.each([
+    ['UTC+1 (Paris, hiver)', 1, '2026-11-11T23:00:00.000Z'],
+    ['UTC-10', -10, '2026-11-12T10:00:00.000Z'],
+    ['UTC+14', 14, '2026-11-11T10:00:00.000Z'],
+  ])('un minuit local écrit en instant (%s) redevient son jour, réécrit dans le stockage', async (_l, offsetHours, instant) => {
+    tz.pref = { mode: 'manual', offsetHours };
+    localStorage.setItem('cosmo_demo_tasks', JSON.stringify([{ ...legacy, deadline: instant }]));
+    const [t] = await repo.getAll();
+    expect(t.deadline).toBe('2026-11-12');
+    expect(JSON.parse(localStorage.getItem('cosmo_demo_tasks')!)[0].deadline).toBe('2026-11-12');
+    expect((await repo.getByDate('2026-11-12')).map((x) => x.id)).toEqual(['old']);
+  });
+
+  it('une échéance absente devient \'\', sans erreur', async () => {
+    localStorage.setItem('cosmo_demo_tasks', JSON.stringify([{ ...legacy }]));
+    expect((await repo.getAll())[0].deadline).toBe('');
+  });
+
+  it.each([14, -10])('un jour créé reste ce jour en UTC%+d (create, filtre, récurrence)', async (offsetHours) => {
+    tz.pref = { mode: 'manual', offsetHours };
+    await repo.getAll();
+    const t = await repo.create({
+      name: 'Jour', priority: 3, category: '', deadline: '2026-12-31', estimatedTime: 0,
+      bookmarked: false, completed: false, recurrence: 'daily',
+    });
+    expect(t.deadline).toBe('2026-12-31');
+    expect((await repo.getFiltered({ deadlineAfter: '2026-12-31', deadlineBefore: '2026-12-31' })).map((x) => x.id)).toContain(t.id);
+    const { spawned } = await repo.toggleComplete(t.id, '2027-01-01');
+    expect(spawned?.deadline).toBe('2027-01-01');
   });
 });

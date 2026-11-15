@@ -94,7 +94,7 @@ Aucune.
 | `delete_organization(p_org uuid)` | DEFINER | `""` | - | oui | oui | `src/modules/organizations/supabase.repository.ts`<br>~`src/components/organization/DeleteOrganizationDialog.tsx`<br>~`src/components/organization/OrgSettingsSection.tsx`<br>~`src/pages/organization/useDeleteOrgFlow.ts` |
 | `delete_team_with_transfer(p_team uuid, p_target uuid, p_archive_projects boolean)` | INVOKER | `""` | - | oui | oui | `src/modules/org-teams/supabase.repository.ts`<br>~`src/modules/org-teams/local.repository.ts`<br>~`src/modules/org-teams/repository.ts` |
 | `drop_muted_org_notification()` (trigger) | INVOKER | `""` | - | - | oui | ~`src/components/organization/OrgNotificationSettingsDialog.tsx` |
-| `echeance_jour(p_instant timestamp with time zone)` | INVOKER | `""` | - | oui | oui | ~`src/modules/tasks/supabase.repository.ts` |
+| `echeance_jour(p_instant timestamp with time zone)` | INVOKER | `""` | - | oui | oui | ~`src/modules/tasks/mappers.ts`<br>~`src/modules/tasks/supabase.repository.ts` |
 | `enforce_category_tree()` (trigger) | INVOKER | `""` | - | - | oui | ~`src/modules/categories/local.repository.ts`<br>~`src/modules/categories/tree.ts`<br>~`src/modules/team-categories/tree.ts` |
 | `enforce_org_invite_domain()` (trigger) | INVOKER | `""` | - | - | oui | - |
 | `enforce_org_member_role_write()` (trigger) | INVOKER | `""` | - | - | oui | - |
@@ -272,7 +272,7 @@ Aucune.
 | `toggle_habit_completion_v2(p_habit_id uuid, p_date text, p_days integer, p_today date)` | INVOKER | `""` | - | oui | oui | `src/modules/habits/supabase.repository.ts`<br>~`src/modules/habits/mappers.ts` |
 | `toggle_task_bookmark(p_task_id uuid)` | INVOKER | `public, pg_temp` | - | oui | oui | `src/modules/tasks/supabase.repository.ts` |
 | `toggle_task_complete(p_task_id uuid)` | INVOKER | `public, pg_temp` | - | oui | oui | - |
-| `toggle_task_complete_v2(p_task_id uuid, p_next_deadline timestamp with time zone)` | INVOKER | `public, pg_temp` | - | oui | oui | `src/modules/tasks/supabase.repository.ts`<br>~`src/components/task-board/board.helpers.ts`<br>~`src/components/task-board/use-move-task.ts`<br>~`src/modules/tasks/local.repository.ts`<br>~`src/modules/tasks/recurrence.ts`<br>~`src/modules/tasks/status-sync.ts`<br>~`src/modules/tasks/types.ts` |
+| `toggle_task_complete_v2(p_task_id uuid, p_next_deadline timestamp with time zone)` | INVOKER | `public, pg_temp` | - | oui | oui | `src/modules/tasks/supabase.repository.ts`<br>~`src/components/task-board/board.helpers.ts`<br>~`src/components/task-board/use-move-task.ts`<br>~`src/modules/tasks/local.repository.ts`<br>~`src/modules/tasks/mappers.ts`<br>~`src/modules/tasks/recurrence.ts`<br>~`src/modules/tasks/status-sync.ts`<br>~`src/modules/tasks/types.ts` |
 | `touch_last_seen()` | DEFINER | `""` | - | oui | oui | `src/modules/auth/use-last-seen.ts` |
 | `track_hit(p jsonb)` | INVOKER | `""` | - | - | oui | ~`api/collect.ts` |
 | `transfer_org_ownership(p_org uuid, p_new_owner uuid)` | DEFINER | `""` | - | oui | oui | `src/modules/organizations/supabase.repository.ts` |

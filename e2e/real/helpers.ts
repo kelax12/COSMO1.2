@@ -219,7 +219,7 @@ export async function seedTask(account: Account, name: string): Promise<string> 
   const { data, error } = await account.client
     .from('tasks')
     .insert([{
-      name, priority: 3, category: null, deadline: new Date(Date.now() + 86_400_000).toISOString(),
+      name, priority: 3, category: null, due_date: new Date(Date.now() + 86_400_000).toISOString().slice(0, 10),
       estimated_time: 0, bookmarked: false, completed: false, recurrence: 'none',
       is_collaborative: false, pending_invites: [], user_id: account.id,
     }])
