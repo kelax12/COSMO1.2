@@ -82,6 +82,7 @@ DELETE FROM auth.mfa_factors WHERE user_id = '<uid>';
 | `cron_leases` | mig. `245`, `_shared/cron-lease.ts` | un bail par job : deux passages ne travaillent jamais ensemble |
 | jobs `cosmo-*` | mig. `246` | six appels + `cosmo-cron-runs-close` (relevé pg_net toutes les 5 min) |
 | `cosmo-uptime`, `cron_probe()` | mig. `252` | sonde de disponibilité toutes les 5 min (contrôles d'`uptime.yml`), lignes `sonde-site`, `sonde-guide`, `sonde-auth`, fenêtre 20 min |
+| `cosmo-sonde-alerte`, `cron_sonde_alerte()` | mig. `261` | ALERTE de la sonde, depuis la base : poste sur le webhook ops (Vault `cosmo_ops_webhook`) un `SILENCE <sonde>` (verdict `absent`) ou un `ECHEC <sonde>`, un message au rétablissement, un rappel toutes les 6 h, un renvoi tant que l'envoi échoue ; sans GitHub |
 | `Journal des crons` | `cron-journal.yml` → `ci-alert.yml` | rouge sur un job ou une sonde `absent` ou en `echec` dans sa fenêtre |
 
 | Ancien déclencheur GitHub (UTC), retiré | Job pg_cron | `cron_invoke` | Fenêtre |
@@ -101,7 +102,7 @@ DELETE FROM auth.mfa_factors WHERE user_id = '<uid>';
 - 🔴 Bascule job par job : un job entre dans `JOBS_BASCULES` et perd son `schedule:` GitHub dans le même commit, après son premier `ok` dans `cron_runs`. `src/edge-cron-lease.guard.test.ts` refuse l'un sans l'autre.
 - ❌ `renewal-notice` et `seat-alert` partagent un déclencheur : ils basculent ensemble.
 - ✅ Deux ordonnanceurs ensemble sont sûrs (bail) ; un trou ne l'est pas.
-- ⚠️ La sonde pg_cron ne voit pas une panne de la base elle-même (seul `absent` la dit), et l'alerte part par GitHub : `uptime.yml` garde son `schedule:`.
+- ⚠️ La sonde pg_cron ne voit pas une panne de la base elle-même (seul `absent` la dit), : `uptime.yml` (secours, regard extérieur) garde son `schedule:` pour ce cas, l'alerte courante partant de la base (mig. `261`).
 - Preuves rejouées par `e2e/rls/cron-journal.test.ts` sur pile réelle.
 
 Mise en place sur un projet neuf (gestes d'Axel), chaque étape vérifiée avant la suivante :

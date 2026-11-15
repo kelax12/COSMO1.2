@@ -178,4 +178,5 @@ Changement de plan Supabase (geste d'Axel) : voir le registre privé. Le dump et
 - Secret `SUPABASE_URL` ; absent, seule la moitié site est sondée, avec avertissement.
 - 🔴 Ce n'est pas une sonde externe (T-17) : le cron GitHub dérive et saute, et ne voit pas une panne de GitHub. Granularité réelle : « prévenu dans l'heure ».
 - ✅ Les mêmes contrôles tournent toutes les 5 min dans pg_cron (`cosmo-uptime`, mig. `252`, [`MISES-EN-SERVICE.md`](./MISES-EN-SERVICE.md)) ; ⚠️ elle tombe avec la plateforme Supabase : ni l'une ni l'autre n'est une sonde externe.
+- ✅ Source d'alerte principale : `cosmo-sonde-alerte` (mig. `261`), dans la base, sans GitHub ; `uptime.yml` est le SECOURS extérieur (il voit la panne de la plateforme que la base ne voit pas) et reste planifié.
 - ❌ Jamais un marqueur que la coquille SPA contient déjà (`grep -i cosmo` ne pouvait pas échouer).

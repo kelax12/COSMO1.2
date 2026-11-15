@@ -1,4 +1,11 @@
 # ══════════════════════════════════════════════════════════════════
+# 🔴 OBS-02 : ce workflow est le SECOURS, plus la source d'alerte principale.
+# La sonde de reference est `cosmo-uptime` dans pg_cron (mig. 252, toutes les 5
+# min) et son alerte part de la base (mig. 261, `cosmo-sonde-alerte`, webhook
+# Discord, alerte de silence comprise), sans cron GitHub. Celui-ci reste planifie
+# pour la seule panne que la base ne voit pas d'elle-meme : Supabase ou pg_cron
+# a l'arret. Ne pas le retirer tant qu'aucune sonde tierce (T-17) n'existe.
+#
 # Sonde de disponibilite de la production (AM-4 de docs/archive/ROADMAP-60J-2026-08-28-au-10-26.md).
 #
 # POURQUOI : personne n'etait prevenu si `thecosmo.app` ou l'API Supabase

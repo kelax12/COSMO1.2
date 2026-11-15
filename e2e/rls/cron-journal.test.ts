@@ -60,12 +60,13 @@ afterAll(async () => {
   await db.end();
 });
 
-describe('supabase/proofs : preuves 245, 246, 252 et 257 rejouées sur la base fraîche', () => {
+describe('supabase/proofs : preuves 245, 246, 252, 257 et 261 rejouées sur la base fraîche', () => {
   const PREUVES = [
     { preuve: '245.proof.sql', migration: '245_cron_journal.sql' },
     { preuve: '246.proof.sql', migration: '246_cron_planification.sql' },
     { preuve: '252.proof.sql', migration: '252_sonde_disponibilite.sql' },
     { preuve: '257.proof.sql', migration: '257_sonde_auth_apikey.sql' },
+    { preuve: '261.proof.sql', migration: '261_sonde_alerte_pg_cron.sql' },
   ];
   for (const { preuve, migration } of PREUVES) {
     it(`${preuve} embarque le texte exact de ${migration}`, () => {
