@@ -87,6 +87,7 @@ React 19 · TypeScript 6 strict (pas 7 : ADR 0015) · Vite 8 (Rolldown) · React
 
 - 🔴 Commit + push sur `main`. ❌ Pas de branche ni de PR, sauf demande explicite d'Axel dans la session.
 - 🔴 Une session = un worktree = une branche locale. ❌ Jamais deux écrivains dans le même arbre (ni le checkout principal partagé). Le hook `pre-push` refuse une poussée depuis le checkout principal (secours Axel seul : `COSMO_PUSH_CHECKOUT_PRINCIPAL=1`, jamais `--no-verify`). Pousser : `git fetch origin && git rebase origin/main && git push origin HEAD:main`.
+- 🔴 Le hook `pre-push` refuse aussi une poussée vers `main` tant qu'un run `CI noyau` tourne sur `main` : attendre sa fin puis rejouer (`gh run list --workflow ci-noyau.yml --branch main --limit 3`). Secours, Axel seul : `docs/DEPLOYMENT.md` § Hook `pre-push`.
 - ❌ Pas de `npm run test:e2e` en local pour une retouche d'UI : `lint`, `typecheck`, `test:changed` et un coup d'œil au preview. Exceptions : une spec `e2e/` modifiée (ne lancer qu'elle), ou une demande d'Axel.
 - 🔴 Le hook `pre-push` refuse un noyau (`CI noyau`) rouge sur `main`. ❌ Aucun contournement : ni `--no-verify`, ni PR d'office. Réparer : pousser le correctif sur `noyau/<nom>`, puis ce même SHA sur `main` une fois son noyau vert → `docs/DEPLOYMENT.md` § Hook `pre-push`.
 - 🔴 Ne jamais rebaser sur `origin/main` une branche antérieure à la purge d'historique (`.githooks/garde-historique.sh` refuse la poussée) : worktree neuf, puis `git cherry-pick`.

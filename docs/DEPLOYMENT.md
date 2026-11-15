@@ -36,6 +36,7 @@ git push origin --delete noyau/<nom>
 ```
 - Témoin : `scripts/pre-push-main-red.test.mjs`.
 - `.githooks/garde-worktree.sh` refuse toute poussée partant du checkout principal (`--git-dir` égal à `--git-common-dir`) ; secours, Axel seul : `COSMO_PUSH_CHECKOUT_PRINCIPAL=1 git push …`.
+- `.githooks/garde-noyau-en-cours.sh` refuse une poussée vers `main` tant qu'un run `CI noyau` est `queued` ou `in_progress` sur `main` ; `gh` illisible = avertissement et passage ; secours, Axel seul : `COSMO_PUSH_NOYAU_EN_COURS=1 git push …`. Témoin : `sh .githooks/garde-noyau-en-cours.test.sh`.
 - `npm run check:env` (`C-105`) : contrat des `VITE_*` et effet de l'absence de chacune ; vérifie une présence, jamais une valeur. Sa moitié Vercel attend `VERCEL_TOKEN` et `VERCEL_PROJECT_ID` (`M-59`).
 - `scripts/artefacts-retention.guard.test.mjs` : `retention-days` de 1 à 30 sur chaque `upload-artifact` ; ne mesure pas le quota de stockage.
 

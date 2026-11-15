@@ -170,3 +170,9 @@ issue de backlog et toute poussée sur `main`. Le mainteneur les relit à la cl�
 Aucun de ces critères n'est une garde de CI en soi, à l'exception du critère 1 et de ce que le noyau
 joue déjà : ils se contrôlent à la clôture, comme la poussée directe se contrôle par ses gardes et
 non par une revue.
+
+Taux de reprise (PRO-02), fenêtre de 30 jours glissants : `fix` sur `feat`, noyaux rouges sur `main`, commits `fix(noyau)`. Valeur au 2026-11-15 : 154 fix, 147 feat (ratio 1,05), 23 noyaux rouges, 8 `fix(noyau)`.
+
+```bash
+S=$(date -d '30 days ago' +%F); git fetch -q origin; L=$(git log origin/main --since=$S --format=%s); echo "fix=$(echo "$L" | grep -cE '^fix(\(|:)') feat=$(echo "$L" | grep -cE '^feat(\(|:)') fix_noyau=$(echo "$L" | grep -c '^fix(noyau') noyaux_rouges=$(gh run list --workflow ci-noyau.yml --branch main --limit 500 --created ">=$S" --json conclusion --jq '[.[]|select(.conclusion=="failure")]|length')"
+```
