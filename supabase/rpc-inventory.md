@@ -228,7 +228,7 @@ Aucune.
 | `record_support_report(p_category text)` | DEFINER | `""` | - | - | oui | `supabase/functions/report-bug/index.ts` |
 | `regenerate_join_code(p_org uuid)` | DEFINER | `""` | - | oui | oui | `src/modules/organizations/supabase.repository.ts` |
 | `release_member_work(p_org uuid, p_user uuid)` | DEFINER | `""` | - | - | oui | ~`src/modules/organizations/local.repository.ts` |
-| `remove_friendship(p_friend_row_id uuid)` | DEFINER | `public, pg_temp` | - | oui | oui | `src/modules/friends/supabase.repository.ts` |
+| `remove_friendship(p_friend_row_id uuid)` | DEFINER | `""` | - | oui | oui | `src/modules/friends/supabase.repository.ts` |
 | `remove_member(p_org uuid, p_user uuid)` | DEFINER | `""` | - | oui | oui | `src/modules/organizations/supabase.repository.ts` |
 | `remove_task_from_list(p_task_id uuid, p_list_id uuid)` | INVOKER | `public, pg_temp` | - | oui | oui | `src/modules/lists/supabase.repository.ts` |
 | `request_join_organization(p_code text)` | DEFINER | `""` | - | oui | oui | `src/modules/organizations/supabase.repository.ts` |

@@ -46,7 +46,7 @@ CREATE TABLE public.friends (
     user_id uuid NOT NULL,
     name text NOT NULL,
     email text NOT NULL,
-    avatar text,
+    avatar text DEFAULT '👤'::text,
     created_at timestamp with time zone DEFAULT now(),
     friend_user_id uuid
 );
@@ -263,7 +263,7 @@ CREATE TABLE public.lists (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     user_id uuid NOT NULL,
     name text NOT NULL,
-    color text DEFAULT 'blue'::text NOT NULL,
+    color text DEFAULT '#8B5CF6'::text NOT NULL,
     task_ids uuid[] DEFAULT '{}'::uuid[] NOT NULL,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
@@ -4276,7 +4276,7 @@ CREATE TABLE public.tasks (
     priority integer DEFAULT 3 NOT NULL,
     category uuid,
     deadline timestamp with time zone,
-    estimated_time integer DEFAULT 0 NOT NULL,
+    estimated_time integer DEFAULT 30 NOT NULL,
     bookmarked boolean DEFAULT false NOT NULL,
     completed boolean DEFAULT false NOT NULL,
     completed_at timestamp with time zone,
@@ -4284,7 +4284,7 @@ CREATE TABLE public.tasks (
     pending_invites text[] DEFAULT '{}'::text[],
     collaborator_validations jsonb DEFAULT '{}'::jsonb,
     created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
     subtasks jsonb DEFAULT '[]'::jsonb NOT NULL,
     kr_id text,
     recurrence text DEFAULT 'none'::text NOT NULL,
@@ -4640,7 +4640,7 @@ CREATE TABLE public.team_tasks (
 -- Name: COLUMN team_tasks.status; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.team_tasks.status IS 'Statut de flux : todo | in_progress | review | blocked | done. Synchronisé avec `completed` par trigger dans les deux sens (mig. 091) — `completed` reste la colonne lue par le front existant.';
+COMMENT ON COLUMN public.team_tasks.status IS 'Statut de flux : todo | in_progress | review | blocked | done. Synchronisé avec `completed` par trigger dans les deux sens (mig. 091) ; `completed` reste la colonne lue par le front existant.';
 
 
 --
@@ -7569,7 +7569,7 @@ $$;
 
 CREATE FUNCTION public.remove_friendship(p_friend_row_id uuid) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO 'public', 'pg_temp'
+    SET search_path TO ''
     AS $$
 DECLARE
   v_caller UUID := auth.uid();
@@ -7580,17 +7580,12 @@ BEGIN
     RAISE EXCEPTION 'Not authenticated';
   END IF;
 
-  -- Récupère l'email du caller (pour identifier la ligne réciproque) +
-  -- l'email du friend ciblé. Le SELECT est scopé `user_id = v_caller`
-  -- donc le caller ne peut cibler qu'une de ses propres lignes.
   SELECT f.email INTO v_friend_email
   FROM public.friends f
   WHERE f.id = p_friend_row_id
     AND f.user_id = v_caller;
 
   IF v_friend_email IS NULL THEN
-    -- Ligne inexistante ou pas owned par le caller — no-op silencieux
-    -- (idempotent, ne leak pas d'info sur l'existence d'autres lignes).
     RETURN;
   END IF;
 
@@ -7598,7 +7593,6 @@ BEGIN
   FROM auth.users
   WHERE id = v_caller;
 
-  -- Suppression atomique des deux côtés
   DELETE FROM public.friends
   WHERE id = p_friend_row_id
     AND user_id = v_caller;
@@ -7607,10 +7601,6 @@ BEGIN
     DELETE FROM public.friends
     WHERE lower(email) = lower(v_caller_email)
       AND user_id <> v_caller
-      AND lower(email) = lower(v_caller_email)
-      -- Restreint au "vrai" ami réciproque : celui dont l'email caller
-      -- pointe ET dont la ligne est owned par l'user dont l'email matche
-      -- v_friend_email.
       AND user_id IN (
         SELECT id FROM auth.users WHERE lower(email) = lower(v_friend_email)
       );
@@ -9131,8 +9121,8 @@ CREATE TABLE public.habits (
     name text NOT NULL,
     description text,
     frequency text DEFAULT 'daily'::text NOT NULL,
-    estimated_time integer DEFAULT 0 NOT NULL,
-    color text DEFAULT '#3B82F6'::text NOT NULL,
+    estimated_time integer DEFAULT 15 NOT NULL,
+    color text DEFAULT '#10B981'::text NOT NULL,
     icon text DEFAULT '⭐'::text NOT NULL,
     completions jsonb DEFAULT '{}'::jsonb NOT NULL,
     created_at timestamp with time zone DEFAULT now(),
@@ -9169,20 +9159,15 @@ CREATE FUNCTION public.toggle_habit_completion(p_habit_id uuid, p_date text) RET
     AS $_$
 DECLARE
   v_row public.habits;
-  v_current BOOLEAN;
 BEGIN
   IF auth.uid() IS NULL THEN
     RAISE EXCEPTION 'Not authenticated';
   END IF;
 
-  -- Validate date format (YYYY-MM-DD) to avoid jsonb_set key abuse
   IF p_date !~ '^\d{4}-\d{2}-\d{2}$' THEN
     RAISE EXCEPTION 'Invalid date format (expected YYYY-MM-DD)';
   END IF;
 
-  -- Atomic flip via jsonb_set. The READ + WRITE happen in a single
-  -- statement under row-level locking on tasks.id, so a concurrent
-  -- toggle on another tab will serialize behind it.
   UPDATE public.habits
   SET completions = jsonb_set(
     COALESCE(completions, '{}'::jsonb),
@@ -9191,7 +9176,7 @@ BEGIN
     true
   )
   WHERE id = p_habit_id
-    AND user_id = auth.uid()  -- defense-in-depth (RLS already filters)
+    AND user_id = auth.uid()
   RETURNING * INTO v_row;
 
   IF v_row.id IS NULL THEN
@@ -9422,6 +9407,13 @@ BEGIN
   RETURN v_row;
 END;
 $$;
+
+
+--
+-- Name: FUNCTION toggle_task_complete(p_task_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.toggle_task_complete(p_task_id uuid) IS 'DEPRECIEE (2026-08-07) : remplacee par toggle_task_complete_v2, qui genere aussi l''occurrence recurrente dans la meme transaction. Conservee pour un rollback front.';
 
 
 --
@@ -10345,7 +10337,7 @@ CREATE TABLE public.categories (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     user_id uuid NOT NULL,
     name text NOT NULL,
-    color text DEFAULT '#6B7280'::text NOT NULL,
+    color text DEFAULT '#3B82F6'::text NOT NULL,
     created_at timestamp with time zone DEFAULT now(),
     parent_id uuid,
     "position" integer DEFAULT 0 NOT NULL
@@ -10473,7 +10465,7 @@ CREATE TABLE public.events (
     title text NOT NULL,
     start_time timestamp with time zone NOT NULL,
     end_time timestamp with time zone NOT NULL,
-    color text,
+    color text DEFAULT '#3B82F6'::text,
     description text,
     notes text,
     task_id uuid,
@@ -10794,7 +10786,7 @@ ALTER TABLE ONLY public.org_notifications REPLICA IDENTITY FULL;
 -- Name: TABLE org_notifications; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.org_notifications IS 'Notifications d''entreprise (mig. 095). Écrites UNIQUEMENT par trigger — aucune policy INSERT. Le destinataire peut lire, marquer lue et supprimer les siennes.';
+COMMENT ON TABLE public.org_notifications IS 'Notifications d''entreprise (mig. 095). Écrites UNIQUEMENT par trigger : aucune policy INSERT. Le destinataire peut lire, marquer lue et supprimer les siennes.';
 
 
 --
@@ -11685,7 +11677,7 @@ CREATE TABLE public.team_task_activity (
 -- Name: TABLE team_task_activity; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.team_task_activity IS 'Journal append-only des modifications de tâches d''équipe (mig. 094). Écrit UNIQUEMENT par trigger — aucune policy INSERT/UPDATE/DELETE, volontairement.';
+COMMENT ON TABLE public.team_task_activity IS 'Journal append-only des modifications de tâches d''équipe (mig. 094). Écrit UNIQUEMENT par trigger : aucune policy INSERT/UPDATE/DELETE, volontairement.';
 
 
 --
@@ -12941,17 +12933,17 @@ CREATE INDEX idx_events_user_start ON public.events USING btree (user_id, start_
 
 
 --
--- Name: idx_friend_requests_receiver_id; Type: INDEX; Schema: public; Owner: -
+-- Name: idx_friend_requests_receiver; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_friend_requests_receiver_id ON public.friend_requests USING btree (receiver_id);
+CREATE INDEX idx_friend_requests_receiver ON public.friend_requests USING btree (receiver_id);
 
 
 --
--- Name: idx_friend_requests_sender_id; Type: INDEX; Schema: public; Owner: -
+-- Name: idx_friend_requests_sender; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_friend_requests_sender_id ON public.friend_requests USING btree (sender_id);
+CREATE INDEX idx_friend_requests_sender ON public.friend_requests USING btree (sender_id);
 
 
 --
@@ -13533,6 +13525,13 @@ CREATE INDEX idx_shared_lists_friend_id ON public.shared_lists USING btree (frie
 --
 
 CREATE INDEX idx_shared_lists_shared_by ON public.shared_lists USING btree (shared_by);
+
+
+--
+-- Name: idx_shared_tasks_friend; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_shared_tasks_friend ON public.shared_tasks USING btree (friend_id);
 
 
 --
@@ -15111,13 +15110,6 @@ CREATE TRIGGER update_okrs_updated_at BEFORE UPDATE ON public.okrs FOR EACH ROW 
 
 
 --
--- Name: tasks update_tasks_updated_at; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER update_tasks_updated_at BEFORE UPDATE ON public.tasks FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
-
-
---
 -- Name: account_inactivity_notices account_inactivity_notices_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -15258,7 +15250,7 @@ ALTER TABLE ONLY public.events
 --
 
 ALTER TABLE ONLY public.friend_requests
-    ADD CONSTRAINT friend_requests_receiver_id_fkey FOREIGN KEY (receiver_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+    ADD CONSTRAINT friend_requests_receiver_id_fkey FOREIGN KEY (receiver_id) REFERENCES auth.users(id) ON DELETE SET NULL;
 
 
 --
