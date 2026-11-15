@@ -121,7 +121,7 @@ USING ((SELECT auth.uid()) = user_id
 - ✅ Collaboration : Realtime, pas sondage (mig. 089) → [`src/modules/CLAUDE.md`](../src/modules/CLAUDE.md) § Synchronisation.
 - ⚠️ `get_work_time_stats` garde une sémantique IDENTIQUE à `calculateWorkTimeForPeriod` (dates locales inclusives via `p_tz`) : démo et production affichent la même chose.
 
-## Tâches et agenda : pagination serveur (V14.1, V14.2, PER-01)
+## Tâches et agenda : pagination serveur
 
 `useTasks()` n'est pas paginé : une quarantaine d'écrans calculent dessus (compteurs, smart lists, tri, « Aujourd'hui », statistiques) et des pages rendraient des compteurs faux. Ce qui grossit sans limite, ce sont les tâches TERMINÉES. D'où quatre lectures :
 

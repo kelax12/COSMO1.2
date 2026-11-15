@@ -36,7 +36,7 @@ Réglage Auth à relire : état et suivi dans le registre privé. Relire sous 90
 ## Point 3 : décision produit Premium (jetons et mur-pub)
 <!-- chantier: clos le=2026-09-04 -->
 
-Décision d'Axel : le système de jetons et le mur-pub des Habitudes sont supprimés (C-04) ; les Habitudes sont gratuites, la monétisation ne repose que sur l'abonnement. Supprimés : `HabitsAdGate`, `AdModal`, AdSense (script et origines CSP de `vercel.json`), `useDailyAdGate`, `cosmo_adwall_habits`, `addTokens`, les RPC `consume_premium_token` / `credit_premium_token_from_ad` / `bump_win_streak`, les colonnes `premium_tokens` / `win_streak` / `ad_credits_*` de `subscriptions` (mig. `141`).
+Décision d'Axel (C-04, mig. `141`) : les Habitudes sont gratuites, la monétisation ne repose que sur l'abonnement. Ni jetons, ni mur-pub, ni AdSense (script ou origine CSP), ni colonnes `premium_tokens` / `win_streak` / `ad_credits_*` dans `subscriptions`.
 
 - ❌ Réintroduire jetons ou mur-pub (une pub regardée donnait un jeton permanent, donc les statistiques à vie : contournement de paywall en une manipulation).
 - ✅ « Premium » = `plan='premium'` + `status='active'` + période non dépassée. Reste `PREMIUM_ENFORCED` (statistiques premium et route `/premium`).
@@ -53,7 +53,7 @@ Exécuté : `npm run test:rls` (`vitest.integration.config.ts`, `e2e/rls/*.test.
 ## Point 5 : facturation entreprise (Stripe par organisation)
 <!-- chantier: clos le=2026-10-20 -->
 
-Bascule faite : `ENTERPRISE_BILLING_ENFORCED = true` et `billing_flags.enterprise_seat_limit = true` (mig. `224`), Stripe live. Indépendant du premium particulier (aucune table commune). Les règles qui servent encore :
+État : `ENTERPRISE_BILLING_ENFORCED = true` et `billing_flags.enterprise_seat_limit = true` (mig. `224`), Stripe live. Indépendant du premium particulier (aucune table commune). Les règles qui servent encore :
 
 - ✅ Prix : un mensuel et un annuel par palier payant ; l'annuel = mensuel moins la remise `ENTERPRISE_YEARLY_DISCOUNT`, débité à l'année (montant « débit réel », pas l'équivalent mensuel). Grille : `ENTERPRISE_PRICING_TIERS` et `npm run check:stripe-prices`, jamais recopiée ici. Les prix annuels se créent sur les MÊMES produits que les mensuels : le prix annuel d'un palier est « le prix récurrent `year`, actif, du montant exact annoncé, sur le même produit que le mensuel » (`_shared/org-stripe-prices.ts`). Un montant qui ne tombe pas au centime près est refusé : `yearly_unavailable`.
 - ✅ Quota de sièges identique dans les deux périodicités (porté par `max_members` du palier). ❌ Un « palier annuel » distinct côté Stripe.
@@ -74,4 +74,4 @@ HAVING COUNT(m.user_id) > 5
 ORDER BY membres DESC;
 ```
 
-Bascule (rappel, désormais faite) : `UPDATE public.billing_flags SET enabled = true WHERE key = 'enterprise_seat_limit';` puis `ENTERPRISE_BILLING_ENFORCED = true` dans `src/modules/billing/premium-config.ts` et déploiement du front avec les clés Stripe live.
+Bascule (déjà faite, à ne rejouer que sur un projet neuf) : `UPDATE public.billing_flags SET enabled = true WHERE key = 'enterprise_seat_limit';` puis `ENTERPRISE_BILLING_ENFORCED = true` dans `src/modules/billing/premium-config.ts` et déploiement du front avec les clés Stripe live.

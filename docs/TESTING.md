@@ -28,7 +28,7 @@ Config `vitest.config.ts` (séparée de `vite.config.ts`), environnement `node`,
 
 ### Couverture
 
-`vitest.config.ts` fait foi : planchers globaux, seuils par fichier (cliquets, dont le glob `supabase.repository.ts` par nom exact), et planchers par dossier d'écrans `src/components/**` et `src/pages/**` (V15.3, TST-02 : la moyenne masquait des écrans très peu couverts).
+`vitest.config.ts` fait foi : planchers globaux, seuils par fichier (cliquets, dont le glob `supabase.repository.ts` par nom exact), et planchers par dossier d'écrans `src/components/**` et `src/pages/**` (la moyenne globale masque les écrans peu couverts).
 
 - ✅ Pose : seuil = mesure − 0,25 point, arrondi vers le bas au demi-point (marge de 0,25 à 0,75, jamais plus d'un point). Mesure lue sur l'artefact `coverage` du dernier `CI noyau` vert (`gh run download <id> -n coverage`, `coverage-summary.json`), jamais sur un run local (fichiers qui échouent ou ne démarrent pas : sous-mesure).
 - ✅ Remontée par paliers : après une vague de tests d'écrans, si un dossier dépasse son plancher de plus de 1,5 point sur une métrique, remonter CETTE métrique dans le commit qui apporte les tests (un palier = un commit = un dossier).
@@ -43,7 +43,7 @@ Un écran se teste avec ses VRAIS hooks React Query sur les dépôts de démo (`
 - ⚠️ Le dépôt de démo n'a qu'une identité (`demo-user`). Pour un non-administrateur : `demoteDemoUserToMember` ; pour un droit retiré, un membre SANS rôle semé (`user-lucas` porte « Chef de projet », qui écrase toute surcharge).
 - ⚠️ Les événements de démo sont construits à l'import, dans la langue de cet instant : un test d'agenda pose ses événements dans `cosmo_demo_events`.
 
-## Suites de contrat des repositories (V12.2, ARC-01)
+## Suites de contrat des repositories
 
 La démo reste sur `localStorage` ; la parité démo / production se garantit par UNE suite de cas par interface, jouée contre les deux implémentations.
 
@@ -129,7 +129,7 @@ Cinq jobs parallèles, sans `needs:` :
 - ✅ `concurrency` : sur une PR le push suivant annule le run ; sur `main`, un groupe par commit, aucun run annulé. `permissions: contents:read`. Dépendances : `.github/dependabot.yml`.
 - ⚠️ Les runs `CI` de `main` ne s'annulent pas : un rouge peut finir après le vert qui l'a réparé. `scripts/ci-alert-perime.mjs` tait l'issue ET le webhook sur ce seul cas, prouvé par l'API ; ❌ jamais dans le doute (API en panne, contexte vide : l'alerte part).
 
-### Règle des 7 jours (V9.4, TST-05)
+### Règle des 7 jours
 
 Toute garde dont le dernier run sur `main` est rouge depuis plus de 7 jours est **corrigée**, **recalée** par une décision écrite et datée dans `.github/gardes-rouges-decisions.json` (mesure, motif, doc, revue à 30 jours au plus), ou **retirée** avec la même trace. Sinon le job `rouges-anciens` de `ci-alert.yml` (quotidien 07:43 UTC) l'inscrit dans l'issue `ci-red` (la même, pas une seconde) et sort en 1. Il lit TOUS les workflows actifs. Script : `scripts/gardes-rouges-7j.mjs`, témoin `gardes-rouges-7j.guard.test.mjs`. ⚠️ Hors noyau : il lit l'horloge et l'API.
 
@@ -137,11 +137,11 @@ Toute garde dont le dernier run sur `main` est rouge depuis plus de 7 jours est 
 - ✅ `Posture` : [`SECURITY.md`](./SECURITY.md) § AM-5 ; `Secrets age` : [`SECRETS-ET-COFFRE.md`](./SECRETS-ET-COFFRE.md) § Rotation des secrets.
 - ⚠️ « N témoins non rejoués » dans un rapport `Sabotages` n'est pas un rouge : la liste imprimée des témoins jamais vus rouges ne fait pas rougir. Les vraies causes sont des entrées périmées du catalogue (un cas renommé, un échappement déménagé).
 
-### Règles React Compiler différées (V18.2, DEP-01)
+### Règles React Compiler différées
 
 `eslint-plugin-react-hooks` 7 ajoute des règles au preset `recommended` ; les règles qui rougissent sont différées (`off` ou `warn`) dans `eslint.config.js` (`REACT_COMPILER_DIFFEREES`, qui fait foi, avec la mesure). `rules-of-hooks` (erreur) et `exhaustive-deps` (avertissement) restent. Lire d'abord `static-components` et `immutability` (état remis à zéro à chaque rendu). ❌ Une règle tenue à zéro ne rejoint jamais cette liste.
 
-### Instantanés du prérendu (V14.4, COD-04)
+### Instantanés du prérendu
 
 `npm run check:prerender` compare chaque sortie du prérendu (une page par route et par locale, plus `app.html`, `sitemap.xml`, `rss.xml`, `llms.txt`) aux fichiers versionnés de `prerender/instantanes/`. Il lit `dist/` (sans `dist/` il échoue) et joue dans `lint-test-build`, après `npm run build` et `check:bundle` ; un `Build` rouge laisse un `dist/` partiel : l'étape échoue en le disant, elle ne compare jamais un reste.
 
@@ -175,7 +175,7 @@ Puis relire `git diff prerender/instantanes/` : chaque ligne s'explique par le c
 
 ## Gardes : classes et outils standards
 
-Règles, inventaire classé et retraits : [`scripts/CLAUDE.md`](../scripts/CLAUDE.md). Récits et mesures du tri V18.1 : [`archive/GARDES-recits-et-tri-2026-09-03-au-2026-11-08.md`](./archive/GARDES-recits-et-tri-2026-09-03-au-2026-11-08.md).
+Règles, inventaire classé et retraits : [`scripts/CLAUDE.md`](../scripts/CLAUDE.md). Récits et mesures du tri des gardes : [`archive/GARDES-recits-et-tri-2026-09-03-au-2026-11-08.md`](./archive/GARDES-recits-et-tri-2026-09-03-au-2026-11-08.md).
 
 - **NOYAU** : bloquante, juge le commit, dans `ci-noyau.yml`, ne lit ni l'horloge ni le réseau.
 - **PLANIFIÉE** : rapport non bloquant, sur cron, rouge suivi par la règle des 7 jours.

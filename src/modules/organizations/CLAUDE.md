@@ -29,7 +29,7 @@ Règles transversales : [`../CLAUDE.md`](../CLAUDE.md).
 
 Défaut (admin : tout ; membre : `task.create`, `task.editAny`), surchargeable par membre (annuaire, « Modifier les permissions », admin seul).
 
-- 🔴 Plus de « manager » depuis la mig. 229 : un seul grade, administrateur ; le reste passe par les rôles personnalisés ou la fiche. Encadrer quelqu'un n'ouvre AUCUN droit. L'organigramme est masqué (`org-sections.ts`, `hidden`) ; `manager_id` reste en base, dormant. ❌ `is_org_manager` / `isManagerOf` dans un résolveur, une policy ou un écran visible. Portées d'assignation : `self` / `everyone` (CHECK).
+- 🔴 Pas de grade « manager » (mig. 229) : un seul grade, administrateur ; le reste passe par les rôles personnalisés ou la fiche. Encadrer quelqu'un n'ouvre AUCUN droit. L'organigramme est masqué (`org-sections.ts`, `hidden`) ; `manager_id` reste en base, dormant. ❌ `is_org_manager` / `isManagerOf` dans un résolveur, une policy ou un écran visible. Portées d'assignation : `self` / `everyone` (CHECK).
 - ⚠️ Reste hiérarchique, en lecture seule : `can_access_team_project`, `can_access_team_okr`, `my_managed_user_ids`, `get_org_member_last_activity`.
 - ✅ Défaut membre réglable (mig. 232) : `org_settings.member_default_perms` (`NULL` = défaut historique, `[]` = rien), lu par `org_member_default_perm` (dernier cran des quatre résolveurs) et `useOrgMemberDefaults` → `effectivePermissions({ memberDefaults })`.
 - ✅ `org_member_permissions (org_id, user_id)`, booléens NULLables : `NULL` = suit le défaut, `true`/`false` = décision. Sans ligne, comportement d'avant la mig. 115 (déploiement réversible).

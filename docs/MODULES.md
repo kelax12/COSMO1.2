@@ -12,7 +12,7 @@ Partir de `index.ts` (exports publics), puis ([`src/modules/CLAUDE.md`](../src/m
 | Fichier | Rôle |
 |---|---|
 | `types.ts` | Types métier |
-| `repository.ts` | Interface du dépôt et ses types, rien d'exécutable (garde V12.3) |
+| `repository.ts` | Interface du dépôt et ses types, rien d'exécutable |
 | `supabase.repository.ts` | Implémentation prod, frontière `mapToDb` |
 | `local.repository.ts` | Implémentation démo (`localStorage` via `safe-json`) |
 | `local.seed.ts` | Jeu de données démo |

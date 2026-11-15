@@ -10,7 +10,7 @@ Règles transversales : [`../CLAUDE.md`](../CLAUDE.md).
 
 ## Temps OKR (C-77)
 
-- ✅ `get_work_time_stats` alimente `okrTime` (`/statistics`) ; depuis la mig. `136` elle lit `kr_completions`, plus `history`. Temps = Σ minutes estimées du KR par complétion.
+- ✅ `get_work_time_stats` alimente `okrTime` (`/statistics`) ; elle lit `kr_completions` (mig. `136`), jamais `history`. Temps = Σ minutes estimées du KR par complétion.
 - ⚠️ Un KR sans `estimated_time` compte 0 minute : c'est juste. ❌ Relire ce zéro comme une panne : ce qui donne un chiffre est une saisie de durée, pas du code.
 
 ## « Annuler » rend aussi le journal (C-01)

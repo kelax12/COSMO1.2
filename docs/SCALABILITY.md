@@ -34,7 +34,7 @@ Notes /100 cessées (ADR 0012). Mesures, récits et tableaux : [`archive/SCALABI
 
 ## 5. Pagination UI
 
-- ✅ Tranchée : `useTasksInfinite` (zéro consommateur) est supprimé ; `getPage()` reste sur les repositories (capacité d'interface testée sur tous les modules). Pagination serveur des tâches et de l'agenda faite depuis : [`PERFORMANCE.md`](./PERFORMANCE.md) § Tâches et agenda.
+- ✅ Tranchée : `useTasksInfinite` (zéro consommateur) n'existe pas ; `getPage()` reste sur les repositories (capacité d'interface testée sur tous les modules). Pagination serveur des tâches et de l'agenda : [`PERFORMANCE.md`](./PERFORMANCE.md) § Tâches et agenda.
 - ❌ Paginer sans pousser filtres, tri et comptage côté SQL : compteurs par chip et smart lists faux. Ordre : (1) RPC d'agrégats, (2) filtres et tri serveur, (3) pagination.
 - ✅ Le rendu est déjà virtualisé au-delà de 50 items : le goulot est le payload, pas l'affichage.
 
