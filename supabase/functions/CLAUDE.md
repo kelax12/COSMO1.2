@@ -29,6 +29,7 @@
 - ❌ Jamais un membre jugé actif sur `suspended_at` seul : `membershipIsActive` (`_shared/org-membership.ts`), comme `is_org_member` (SV-1).
 - ❌ Jamais l'IP d'appel lue dans la 1re entrée de `x-forwarded-for` : `callerIp` (`_shared/caller-ip.ts`) lit `cf-connecting-ip` (SV-3).
 - ❌ Jamais une fonction planifiée sans `withCronLease` (`_shared/cron-lease.ts`, mig. `245`) : idempotentes en rejeu, pas en concurrence. Garde : `src/edge-cron-lease.guard.test.ts`. Planification : `docs/MISES-EN-SERVICE.md` § 2sexies.
+- 🔴 Une RPC appelée par une fonction est d'abord une migration appliquée en prod (CI-05). Revue : `src/edge-rpc-inventaire.guard.test.ts` (nom absent de `supabase/rpc-inventory.md` = rouge). Déploiement : `edge-deploy.yml` refuse le lot tant qu'une migration du dépôt manque en prod.
 - 🔴 `analytics-admin-login` : connexion admin de l'app `analytics` par le SEUL code TOTP (choix d'Axel), `verify_jwt = false`. ❌ Jamais un plafond qui s'ouvre quand le compteur est illisible (`failClosed`), jamais sans contrôle de l'en-tête `Origin` (`analyticsOrigins`). Garde : `src/analytics-admin-login.guard.test.ts`.
 - ❌ Jamais un e-mail sans plafond de débit (`_shared/rate-limit.ts`, W-4 ; plafond par exécution pour un cron).
 - ⚠️ `delete-account` a deux modes (C-121) : JWT de la personne, ou `x-cron-secret` + compte désigné accepté seulement si `account_inactivity_deletion_due()` (mig. `226`) le confirme. ❌ Jamais retirer cette revérification.
