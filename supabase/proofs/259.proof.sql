@@ -4,7 +4,7 @@
 -- par `RAISE EXCEPTION`. La migration est EMBARQUÉE (texte identique au
 -- fichier, vérifié par `e2e/rls/preuves-dette-sql.test.ts`) : la preuve se
 -- joue AVANT application et s'annule avec elle.
---   supabase db query --linked -f supabase/proofs/259.proof.sql
+--   npm run preuve:preprod -- 259   (préproduction, jamais la prod : CI-04)
 --   → « PREUVE-ANNULEE 0 ECHEC | info avant … | ok 01 … »
 --
 -- La 259 ne touche aucune policy ni aucun GRANT : la frontière RLS est
@@ -29,12 +29,12 @@
 --
 -- Procédure d'application en production (après accord d'Axel) :
 --   1. relire le ledger : aucune entrée `259_` ;
---   2. jouer CETTE preuve : « PREUVE-ANNULEE 0 ECHEC » ;
+--   2. jouer CETTE preuve sur la préprod : « PREUVE-ANNULEE 0 ECHEC » ;
 --   3. appliquer le fichier sous le nom `259_depot_egal_prod` ;
---   4. relancer le workflow `Schema prod`.
+--   4. `npm run preuve:preprod -- 259 --avancer`, puis relancer `Schema prod`.
 --
 -- Passe témoin, jouée SANS la migration (retirer l'`EXECUTE $mig$`) sur la
--- production : `ECHEC 01` à `ECHEC 03`, `ECHEC 05`, `ECHEC 06e`, `ECHEC 06f` et `ECHEC 07`.
+-- préproduction : `ECHEC 01` à `ECHEC 03`, `ECHEC 05`, `ECHEC 06e`, `ECHEC 06f` et `ECHEC 07`.
 
 DO $proof$
 DECLARE
