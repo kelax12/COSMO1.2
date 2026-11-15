@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════
 // Témoins des trois gardes « mesure finale humaine » (posés le 2026-10-24) :
-//   check-lecteurs-ecran · check-exercice-violation · check-peremption-chantiers
+//   check-calendrier (lecteurs, chantiers) · check-exercice-violation
 //
 // Une garde qui n'a jamais été vue rouge ne garde rien. Chaque cas ci-dessous
 // FABRIQUE le défaut dans une copie du dépôt et exige que la garde le refuse,
@@ -10,9 +10,10 @@ import { describe, it, expect } from 'vitest';
 import { mkdtempSync, mkdirSync, copyFileSync, readFileSync, writeFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
-import * as lecteurs from './check-lecteurs-ecran.mjs';
+import * as calendrier from './check-calendrier.mjs';
 import * as exercice from './check-exercice-violation.mjs';
-import * as chantiers from './check-peremption-chantiers.mjs';
+const lecteurs = { ...calendrier, verifier: calendrier.verifierLecteurs };
+const chantiers = { ...calendrier, verifier: calendrier.verifierChantiers };
 
 const RACINE = process.cwd();
 const FICHIERS = [

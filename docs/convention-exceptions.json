@@ -11,8 +11,8 @@
     "docs/MARQUE-COSMO.md": {"dates":26}
   },
   "datesLues": {
-    "docs/AUDIT-NVDA-WINDOWS.md": "scripts/check-lecteurs-ecran.mjs",
-    "docs/AUDIT-VOICEOVER-IOS.md": "scripts/check-lecteurs-ecran.mjs",
+    "docs/AUDIT-NVDA-WINDOWS.md": "scripts/check-calendrier.mjs",
+    "docs/AUDIT-VOICEOVER-IOS.md": "scripts/check-calendrier.mjs",
     "docs/LEGAL.md": "scripts/check-legal-table.mjs",
     "docs/LEGAL-JOURNAL.md": "scripts/check-legal-journal.mjs",
     "docs/RGPD-VIOLATION-EXERCICES.md": "scripts/check-exercice-violation.mjs"
