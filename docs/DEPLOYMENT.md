@@ -52,6 +52,13 @@ Après application :
 2. `get_advisors(security)` : aucun avertissement **nouveau**.
 3. `Migration coverage` (quotidien) range le fichier contre le ledger ET le catalogue ; `ABSENT DES DEUX` = non appliquée.
 
+## 2bis0. Préproduction (CI-04)
+
+- 🔴 Aucune preuve ni requête d'essai ne se joue sur la production, même annulée : `npm run preuve:preprod -- <NNN>` sur un second projet Supabase, région de la prod (eu-west-1).
+- Cible : `SUPABASE_PREPROD_DB_URL` (URI Postgres du projet, avec `?sslmode=require`), seule variable ; secret GitHub du même nom si une CI la lit un jour. Absente, ou contenant la référence de la production : échec (`supabase/proofs/preuve-preprod.mjs`), jamais de repli.
+- L'outil applique les migrations < `NNN` encore absentes de `preprod_outil.ledger`, joue la preuve (verdict attendu `PREUVE-ANNULEE 0 ECHEC |`) ; `--avancer` applique ensuite `NNN`, une fois la migration en prod. Préprod déjà en avance : la recréer (supprimer le projet, en créer un neuf).
+- ✅ Un projet Free suffit (ADR 0009) : la préprod ne porte aucune donnée réelle. Limite Free : 2 projets actifs par organisation, mettre en pause le surnuméraire.
+
 ## 2bis. Déployer les Edge Functions
 
 - ⚠️ Vercel ne déploie PAS les Edge Functions. `.github/workflows/edge-deploy.yml` le fait après un `CI noyau` vert d'un push sur `main`, sur ce SHA, un à la fois.

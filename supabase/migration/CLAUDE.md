@@ -43,7 +43,8 @@
 - ✅ Acteur par acteur (propriétaire, autre compte, `anon`, non-admin) : une policy est une frontière, cinq vérifications statiques n'exécutent aucun SQL (mig. `143`).
 - ✅ Puis vérifier l'annulation : ni table ni fonction laissées derrière. ⚠️ Un `ROLLBACK` non contrôlé est une hypothèse.
 - ⚠️ En PL/pgSQL, `N` et `n`, `OK` et `ok` sont le même identifiant (« duplicate declaration »).
-- Attendu en prod : `supabase db query --linked -f supabase/proofs/<NNN>.proof.sql` rend `PREUVE-ANNULEE 0 ECHEC |`. Un `ECHEC` : on n'applique pas.
+- 🔴 Une preuve se joue sur la PRÉPRODUCTION, jamais sur la production (CI-04) : `npm run preuve:preprod -- <NNN>` (cible `SUPABASE_PREPROD_DB_URL`, refus si absente ou si elle vise la prod ; `docs/DEPLOYMENT.md` § Préproduction). Attendu : `PREUVE-ANNULEE 0 ECHEC |`. Un `ECHEC` : on n'applique pas. ❌ Jamais `supabase db query --linked` ni le MCP pour une preuve.
+- ✅ Après application en prod, `npm run preuve:preprod -- <NNN> --avancer` fait suivre la préprod.
 
 ## Interdits
 

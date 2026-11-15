@@ -20,7 +20,7 @@ dépôt en a payé le prix : une ligne au ledger de Supabase prouve qu'un **nom*
 2. **Elles s'appliquent à la main** en production (éditeur SQL ou `apply_migration`), jamais par un
    `git push`. Pousser sur `main` ne touche jamais la base.
 3. **Une migration se prouve avant d'être appliquée** : un script de preuve (`supabase/proofs/`) la
-   joue sur la base de production dans une transaction qui ne peut que s'annuler, acteur par acteur,
+   joue sur la base de préproduction (CI-04, `npm run preuve:preprod`) dans une transaction qui ne peut que s'annuler, acteur par acteur,
    et rend son verdict par un texte d'exception. La forme à reprendre est un bloc `DO` unique terminé
    par `RAISE EXCEPTION`, de façon que l'annulation soit la seule issue et ne puisse pas s'oublier.
 4. **Après application, on relit le catalogue** (`pg_get_functiondef`, `information_schema`), pas le

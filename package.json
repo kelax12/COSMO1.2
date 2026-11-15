@@ -24,6 +24,7 @@
     "check:migration-coverage": "node scripts/check-migration-coverage.mjs",
     "i18n:check": "node scripts/i18n-check.mjs",
     "cosmo": "node scripts/cosmo/cli.mjs",
+    "preuve:preprod": "node supabase/proofs/preuve-preprod.mjs",
     "cosmo:login": "node scripts/cosmo/login.mjs",
     "test:rls": "vitest run --config vitest.integration.config.ts",
     "test:e2e": "playwright test",

@@ -8,8 +8,8 @@
 #
 # ⚠️ Ce n'est PAS la production : le shim imite ce que la plateforme fournit.
 # Une preuve verte ici dit que la SQL s'exécute et que les règles tiennent
-# entre acteurs ; elle ne remplace ni la relecture du ledger ni la preuve en
-# prod avant application (`supabase/migration/CLAUDE.md`).
+# entre acteurs ; elle ne remplace ni la relecture du ledger ni la preuve sur la
+# préprod avant application (`npm run preuve:preprod`).
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 DB="${PROOF_DB:-proof}"
