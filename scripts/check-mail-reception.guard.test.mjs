@@ -48,10 +48,9 @@ describe('check-mail-reception : les adresses publiées', () => {
     ].join('\n'))).toEqual(['contact@thecosmo.app']);
   });
 
-  it('TÉMOIN : le balayage du dépôt voit contact@thecosmo.app et l adresse du JSON-LD', () => {
+  it('TÉMOIN : le balayage du dépôt voit contact@thecosmo.app dans le JSON-LD de index.html', () => {
     const publiees = adressesPubliees();
-    expect(publiees.get('contact@thecosmo.app')).toEqual(expect.arrayContaining(['src/lib/contact.mjs', 'src/locales/fr/legal.json']));
-    expect([...publiees.keys()].some((a) => a.endsWith('@gmail.com'))).toBe(true);
+    expect(publiees.get('contact@thecosmo.app')).toEqual(expect.arrayContaining(['src/lib/contact.mjs', 'src/locales/fr/legal.json', 'index.html']));
     expect(publiees.has('demo@cosmo.app')).toBe(false);
     expect(publiees.has('votre@email.com')).toBe(false);
   });
