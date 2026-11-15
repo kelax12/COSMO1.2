@@ -1,8 +1,10 @@
 #!/bin/sh
 # 1. .githooks/garde-historique.sh : refuse l'ancien historique (purge du 2026-11-13).
 # 2. Cf. scripts/pre-push-main-red.mjs : refuse de pousser sur un main rouge.
+# 0. .githooks/garde-worktree.sh : refuse une poussee partant du checkout principal (PRO-03).
 # L'entree standard est lue une fois puis rejouee aux deux controles.
 dir=$(dirname "$0")
+sh "$dir/garde-worktree.sh" || exit 1
 entree=$(cat)
 printf '%s\n' "$entree" | sh "$dir/garde-historique.sh" || exit 1
 printf '%s\n' "$entree" | exec node scripts/pre-push-main-red.mjs "$@"
