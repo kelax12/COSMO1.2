@@ -7,6 +7,8 @@
 
 `.github/secrets-registry.json` est le registre UNIQUE : nom, store, `readers`, `maxAgeDays`, `lastRotated`, `leak`, `rotation` (id d'une procédure du bloc `procedures`). `coffre: true` = ne se régénère pas (`BACKUP_PASSPHRASE`).
 
+- Stores : `github`, `supabase-edge`, `vercel`, `supabase-platform` (clé de service injectée, aucune API ne la date), `supabase-vault` (`cosmo_cron_secret`, `cosmo_ops_webhook`, `cosmo_anon_key`, `cosmo_project_url` ; dates dans `lastRotated`, lues par `select name, updated_at from vault.secrets`, jamais la colonne de valeur), `public`.
+- `optionnel: true` : peut être légitimement absent (`DRILL_DB_URL` n'existe que le temps d'un exercice). Absent, il n'est ni réclamé ni daté ; présent, il est mesuré comme les autres. ❌ Jamais pour taire un secret oublié.
 - ❌ Jamais une valeur ni un indice de valeur dans le registre : la garde refuse chaîne de connexion, PEM, préfixe connu, suite opaque (`check-secrets-age.guard.test.mjs`).
 - `npm run check:secrets-age` (workflow `Secrets age`, hebdomadaire, `ci-alert.yml`) échoue sur : secret échu, date inconnue (= échu), secret vivant sans entrée, entrée sans secret, entrée incomplète, jeton de lecture absent.
 - Rouge : faire tourner (lire `rotation` de l'entrée), puis dater `lastRotated` pour les stores que l'API ne date pas.

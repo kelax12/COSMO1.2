@@ -53,7 +53,7 @@ const JOUR = 86_400_000;
 
 // ═══════════════ NOYAU PUR · aucun reseau, aucun disque ═══════════════
 
-export const STORES = ['github', 'supabase-edge', 'vercel', 'supabase-platform', 'public'];
+export const STORES = ['github', 'supabase-edge', 'vercel', 'supabase-platform', 'supabase-vault', 'public'];
 export const CRITICITES = ['critical', 'high', 'medium', 'low'];
 
 /** Valide la forme du registre. Rend une liste d'erreurs (vide = bien forme). */
@@ -66,7 +66,10 @@ export function validerRegistre(registre) {
     const id = `${e.store}/${e.name}`;
     if (vues.has(id)) erreurs.push(`${id} : entree en double`);
     vues.add(id);
-    if (!/^[A-Z][A-Z0-9_]*$/.test(e.name ?? '')) erreurs.push(`${id} : nom invalide`);
+    // Les secrets Vault portent des noms en minuscules (`cosmo_cron_secret`).
+    const motifNom = e.store === 'supabase-vault' ? /^[a-z][a-z0-9_]*$/ : /^[A-Z][A-Z0-9_]*$/;
+    if (!motifNom.test(e.name ?? '')) erreurs.push(`${id} : nom invalide`);
+    if (e.optionnel != null && e.optionnel !== true) erreurs.push(`${id} : \`optionnel\` vaut true ou n'existe pas`);
     if (!STORES.includes(e.store)) erreurs.push(`${id} : store inconnu`);
     if (!['secret', 'config'].includes(e.kind)) erreurs.push(`${id} : kind inconnu`);
     if (!e.owner) erreurs.push(`${id} : proprietaire manquant`);
@@ -171,6 +174,9 @@ export function evaluer({ registre, vivant, exemple, maintenant }) {
   const erreurs = validerRegistre(registre).map((m) => `registre : ${m}`);
   const lignes = [];
 
+  // `optionnel: true` : peut legitimement etre absent (secret d'un exercice, DSN facultatif).
+  // Absent, il n'est ni reclame ni date ; present, il est mesure comme les autres.
+  const optionnels = new Set(registre.entries.filter((e) => e.optionnel === true).map((e) => `${e.store}/${e.name}`));
   for (const store of ['github', 'supabase-edge', 'vercel']) {
     if (!(vivant[store] instanceof Map)) {
       erreurs.push(`${store} : source non lue, rien ne prouve l'etat de ses secrets`);
@@ -183,6 +189,7 @@ export function evaluer({ registre, vivant, exemple, maintenant }) {
       if (!attendus.has(nom)) erreurs.push(`${store}/${nom} : existe sans entree au registre`);
     }
     for (const nom of attendus) {
+      if (optionnels.has(`${store}/${nom}`)) continue;
       if (!vivant[store].has(nom)) erreurs.push(`${store}/${nom} : au registre mais absent de ${store}`);
     }
   }
@@ -192,13 +199,14 @@ export function evaluer({ registre, vivant, exemple, maintenant }) {
     erreurs.push('.env.example : non lu');
   } else {
     for (const nom of exemple) if (!nomsExemple.has(nom)) erreurs.push(`public/${nom} : dans .env.example sans entree au registre`);
-    for (const nom of nomsExemple) if (!exemple.has(nom)) erreurs.push(`public/${nom} : au registre mais absent de .env.example`);
+    for (const nom of nomsExemple) if (!exemple.has(nom) && !optionnels.has(`public/${nom}`)) erreurs.push(`public/${nom} : au registre mais absent de .env.example`);
   }
 
   for (const e of registre.entries) {
     if (e.kind !== 'secret') continue;
     const date = dateEffective(e, vivant[e.store] instanceof Map ? vivant[e.store].get(e.name) : null);
     const id = `${e.store}/${e.name}`;
+    if (e.optionnel === true && !date && vivant[e.store] instanceof Map && !vivant[e.store].has(e.name)) continue;
     if (!date) {
       erreurs.push(`${id} : date de rotation INCONNUE, donc echue (echeance ${e.maxAgeDays} j, ${e.criticality})`);
       lignes.push({ id, age: null, max: e.maxAgeDays });

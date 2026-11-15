@@ -292,3 +292,28 @@ describe('check-secrets-age · que faire (V9.4)', () => {
     expect(r.erreurs).toEqual(['vercel/SUPABASE_SERVICE_ROLE_KEY : 366 j pour une echeance de 365 j (critical), a faire tourner']);
   });
 });
+
+describe('check-secrets-age · optionnel et Vault (SEC-04)', () => {
+  it('un secret optionnel absent n\'est ni reclame ni date', () => {
+    const r = evalue(registre(entree({ optionnel: true })), vivant());
+    expect(r.erreurs).toEqual([]);
+  });
+  it('optionnel mais PRESENT et trop vieux : echoue comme les autres', () => {
+    const r = evalue(registre(entree({ optionnel: true })), vivant({ github: new Map([['A_KEY', il(500)]]) }));
+    expect(r.erreurs.join('\n')).toMatch(/a faire tourner/);
+  });
+  it('sans optionnel, l\'absence reste un ecart', () => {
+    const r = evalue(registre(entree({})), vivant());
+    expect(r.erreurs.join('\n')).toMatch(/au registre mais absent/);
+  });
+  it('un secret Vault est date par lastRotated et echoit au-dela de l\'echeance', () => {
+    const v = entree({ name: 'cosmo_x', store: 'supabase-vault', lastRotated: '2026-01-01' });
+    expect(evalue(registre(v), vivant()).erreurs.join('\n')).toMatch(/cosmo_x : \d+ j pour une echeance/);
+    const ok = entree({ name: 'cosmo_x', store: 'supabase-vault', lastRotated: '2026-10-01' });
+    expect(evalue(registre(ok), vivant()).erreurs).toEqual([]);
+  });
+  it('un nom Vault en majuscules ou un nom GitHub en minuscules est refuse', () => {
+    expect(validerRegistre(registre(entree({ name: 'COSMO_X', store: 'supabase-vault' }))).join()).toMatch(/nom invalide/);
+    expect(validerRegistre(registre(entree({ name: 'cosmo_x' }))).join()).toMatch(/nom invalide/);
+  });
+});
