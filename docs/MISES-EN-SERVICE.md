@@ -5,7 +5,7 @@
 
 ## 2ter. E-mails d'authentification (SMTP de Supabase Auth)
 
-- État courant : SMTP Resend en service sur `send.thecosmo.app` ; confirmations d'inscription **désactivées** (décision d'Axel, finding `G-2`). Activer = une décision, puis étape 7.
+- État courant : SMTP Resend en service sur `send.thecosmo.app` ; réglage des confirmations d'inscription : voir le registre privé. Le changer = une décision, puis étape 7.
 - 🔴 Deux chemins distincts : GoTrue envoie en **SMTP** ; `report-bug`, `renewal-notice` et consorts appellent l'API Resend. Poser `RESEND_API_KEY` ne configure que le second.
 - Avant mise en service : [`archive/DEPLOYMENT-emails-auth-avant-mise-en-service-2026-08-27-au-2026-08-29.md`](./archive/DEPLOYMENT-emails-auth-avant-mise-en-service-2026-08-27-au-2026-08-29.md).
 

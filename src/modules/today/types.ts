@@ -9,7 +9,7 @@
 // 🔴 On ne fusionne PAS les deux tables. Leurs règles de sécurité, cycles de
 // vie et fonctionnalités diffèrent (récurrence serveur d'un côté, triggers de
 // statut de l'autre), et une migration qui les fusionnerait serait
-// irréversible sur une base sans PITR. L'unification est une vue de LECTURE.
+// difficilement réversible. L'unification est une vue de LECTURE.
 // ═══════════════════════════════════════════════════════════════════
 
 /** Origine d'un élément — détermine à qui appartient l'écriture. */

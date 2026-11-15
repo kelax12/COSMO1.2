@@ -16,7 +16,7 @@
 |---|---|
 | Identité | Axel Longatte, 138 avenue Victor Hugo, 75016 Paris (domiciliation Les Tricolores) |
 | Statut | Personne physique. Aucune structure juridique n'est immatriculée à ce jour. |
-| Contact | axellongattepro@gmail.com |
+| Contact | contact@thecosmo.app |
 | Délégué à la protection des données | Non désigné. Non obligatoire : pas de suivi systématique à grande échelle, pas de données sensibles au sens de l'art. 9. |
 
 - ⚠️ À compléter après immatriculation : dénomination, SIREN, adresse de domiciliation, et report dans les mentions légales (ligne A3 de [`LEGAL.md`](./LEGAL.md)).

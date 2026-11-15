@@ -84,7 +84,7 @@ CGU et confidentialité quittent `legal.json` pour `legalTerms.json` et `legalPr
 | `src/locales/fr/{legal,legalTerms,legalPrivacy}.json` | `26976cb9601f5f41` |
 | `src/locales/en/{legal,legalTerms,legalPrivacy}.json` | `c28a46c4cd194d75` |
 
-L'adresse `axellongattepro@gmail.com` devient `contact@thecosmo.app` partout (mentions s1 et contact, confidentialité s1 et exercice des droits, CGU : rétractation 5 bis, modèle de formulaire, données 6, contact) ; c'est l'adresse déjà publiée comme point de contact DSA (CGU 4 bis). Dates portées au 12 octobre 2026. ⚠️ La boîte doit être relevée : une rétractation ou une demande RGPD y fait courir les délais légaux (14 jours, un mois).
+L'ancienne adresse de contact personnelle devient `contact@thecosmo.app` partout (mentions s1 et contact, confidentialité s1 et exercice des droits, CGU : rétractation 5 bis, modèle de formulaire, données 6, contact) ; c'est l'adresse déjà publiée comme point de contact DSA (CGU 4 bis). Dates portées au 12 octobre 2026. ⚠️ La boîte doit être relevée : une rétractation ou une demande RGPD y fait courir les délais légaux (14 jours, un mois).
 
 ### 2026-10-13 · audit juridique avant déploiement · FOND (information) et FORME · aucun préavis
 

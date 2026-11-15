@@ -27,10 +27,10 @@ where tablename='share_links' and indexname='idx_share_links_owner_id';
 ## Point 2 : « Leaked Password Protection »
 <!-- chantier: actif relu=2026-10-24 -->
 
-Toujours OUVERT : `scripts/supabase-posture.reference.json` porte `password_hibp_enabled = false` et l'advisor `auth_leaked_password_protection` compte 1. Relire sous 90 jours après le `relu=` du marqueur (`check:peremption-chantiers`). C'est un toggle de config Auth (vérification HaveIBeenPwned par k-anonymity, seul un préfixe de hash SHA-1 part), pas du code.
+Réglage Auth à relire : état et suivi dans le registre privé. Relire sous 90 jours après le `relu=` du marqueur (`check:peremption-chantiers`). C'est un toggle de config Auth (vérification HaveIBeenPwned par k-anonymity, seul un préfixe de hash SHA-1 part), pas du code.
 
 1. Dashboard → projet cosmo → Authentication → Sign In / Providers → Password (selon la version : Policies ou Password security) → activer « Prevent use of leaked passwords » ; en passant, longueur minimale ≥ 8 et lettres + chiffres.
-2. Vérifier : `get_advisors(security)` sans `auth_leaked_password_protection` ; inscription avec `password123` sur `/signup` refusée.
+2. Vérifier : inscription avec `password123` sur `/signup` refusée.
 3. ⚠️ Ne s'applique qu'aux NOUVEAUX mots de passe (signup, reset). Vérifier que l'erreur GoTrue est captée par `normalizeApiError` (`SignupPage`, `SettingsPage`) et lisible en français ; sinon ajouter le mapping du code d'erreur.
 
 ## Point 3 : décision produit Premium (jetons et mur-pub)

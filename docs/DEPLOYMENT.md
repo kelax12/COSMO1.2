@@ -134,10 +134,10 @@ Contrat complet des `VITE_*` : `scripts/check-env-contract.mjs`.
 
 ## 7. Sauvegarde et reprise
 
-- Plan Free : aucune sauvegarde native, pas de PITR. Seule copie : `db-backup.yml`, quotidien, dump `pg_dump` chiffré `gpg` AES-256 (`BACKUP_PASSPHRASE`), artefact 30 jours, avec manifeste de comptages pris sur le même snapshot.
+- Copie maîtrisée : `db-backup.yml`, quotidien, dump `pg_dump` chiffré `gpg` AES-256 (`BACKUP_PASSPHRASE`), artefact 30 jours, avec manifeste de comptages pris sur le même snapshot.
 - 🔴 Sans `BACKUP_PASSPHRASE` le job échoue ; sans `SUPABASE_DB_URL` (mode session) il avertit.
 - 🔴 Un artefact de dépôt public se télécharge par tout compte GitHub connecté : seul un dump chiffré part (relu par sha256). ❌ Jamais commiter un dump ; une copie longue durée va sur un disque chiffré.
-- ⚠️ RPO 24 h. Le dump couvre la perte du **compte** Supabase, que le PITR ne couvre pas, et inversement.
+- ⚠️ RPO 24 h. Le dump couvre aussi la perte du **compte** Supabase.
 - Copie de `BACKUP_PASSPHRASE` hors GitHub : coffre ([`SECRETS-ET-COFFRE.md`](./SECRETS-ET-COFFRE.md) § Coffre), sans quoi aucune sauvegarde ne se restaure.
 
 Drill automatique (`restore-drill.yml` › `drill-auto`, mensuel ; absence de vert depuis 35 jours = rouge par `restore-drill-fraicheur.yml`) :
@@ -163,7 +163,7 @@ Drill manuel vers un projet jetable (job `drill`, seul à éprouver la plateform
 - 🔴 Avant toute connexion, le workflow refuse : confirmation absente, URL de production (hôte ou utilisateur), chaîne hors mode session.
 - ⚠️ Un contrôle qui ne peut pas échouer ne contrôle rien : extraire un nombre par `grep -E '^[0-9]+$'`, jamais la dernière ligne de `psql`.
 
-Au passage en Pro (geste d'Axel) : vérifier Database → Backups ; décider du PITR ; activer le refus des mots de passe fuités (puis recaler `Posture` avec `_note`) ; rediscuter la confirmation d'e-mail. Le dump et son drill restent.
+Changement de plan Supabase (geste d'Axel) : voir le registre privé. Le dump et son drill restent.
 
 ## 8. Alerting des Edge Functions
 
