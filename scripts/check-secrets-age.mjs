@@ -22,23 +22,8 @@
 //   3. un secret dont l'age depasse son echeance ;
 //   4. un secret dont la date est INCONNUE : date inconnue = echue.
 //
-// ── JETON ABSENT = ECHEC ────────────────────────────────────────────────
-//
-// Chaque source exige son jeton, et son absence sort en 1. Jamais un
-// `::warning::` dans un run vert (regle de CLAUDE.md, violee quatre fois).
-// ❌ Aucun pas de cote « jeton absent donc source sautee ».
-//
-// ── LES VALEURS ─────────────────────────────────────────────────────────
-//
-// Les reponses des API contiennent parfois une valeur ou son empreinte.
-// `lireNoms*` ne garde que { nom, date } et rien d'autre ne sort de la
-// fonction : ni log, ni message d'erreur.
-//
+// Jeton absent = echec (jamais un saut) ; les lecteurs ne gardent que { nom, date }, aucune valeur.
 // Temoin : `scripts/check-secrets-age.guard.test.mjs`.
-//
-// Usage :
-//   GH_TOKEN=… SUPABASE_ACCESS_TOKEN=… VERCEL_TOKEN=… VERCEL_PROJECT_ID=… \
-//     GITHUB_REPOSITORY=kelax12/COSMO1.2 node scripts/check-secrets-age.mjs
 // ═══════════════════════════════════════════════════════════════════
 
 import { readFileSync } from 'node:fs';
@@ -87,10 +72,8 @@ export function validerRegistre(registre) {
 }
 
 // ── V4.3 (SEC-04) : le registre est UNIQUE et COMPLET ────────────────
-// Chaque entree dit qui la lit (`readers`), l'effet d'une fuite (`leak`) et
-// renvoie a une procedure de rotation pas a pas (`rotation`, un id de
-// `procedures`). Les procedures sont des NOMS et des COMMANDES, jamais une
-// valeur ni un indice de valeur.
+// Chaque entree dit qui la lit (`readers`), l'effet d'une fuite (`leak`) et sa procedure de
+// rotation (`rotation`) : des NOMS et des COMMANDES, jamais une valeur.
 
 /** Une valeur ou un indice de valeur : chaine de connexion, cle PEM, longue suite opaque. */
 export const MOTIFS_DE_VALEUR = [
@@ -224,12 +207,7 @@ export function evaluer({ registre, vivant, exemple, maintenant }) {
 /**
  * Les écarts, rangés par GESTE (V9.4, TST-05, 2026-11-07).
  *
- * 🔴 Du 2026-10-26 au 2026-11-07, ce job a rendu 44 lignes d'écart en vrac, et
- * « GH_TOKEN absent » ne disait pas que le secret à créer s'appelle
- * `SECRETS_AUDIT_TOKEN` : rouge depuis sa pose, et personne ne savait quoi
- * faire. Chaque écart tombe ici dans UN geste, et un écart non reconnu tombe
- * dans « à lire », jamais nulle part. Ne change PAS le verdict : `run()` sort
- * en 1 sur la liste brute, ceci ne fait que l'expliquer.
+ * Chaque écart tombe dans UN geste (un écart inconnu dans « à lire »). Ne change PAS le verdict : `run()` sort en 1 sur la liste brute.
  */
 export function quoiFaire(erreurs) {
   const gestes = {
