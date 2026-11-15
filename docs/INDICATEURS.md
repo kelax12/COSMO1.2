@@ -9,11 +9,11 @@
 > `.github/workflows/indicateurs.yml` le régénère chaque lundi et le pousse sur `main`.
 > Une valeur introuvable s'écrit « non mesuré », avec sa raison : jamais un chiffre de repli.
 
-Régénéré le **2026-11-15 18:38 UTC**, au commit `524daad`. Alertes en cours : **1**.
+Régénéré le **2026-11-15 18:56 UTC**, au commit `627de06`. Alertes en cours : **2**.
 
 | # | Indicateur | Valeur | Mesuré le | Source |
 |---|---|---|---|---|
-| 1 | Taux de vert de main (CI noyau) | 80 % (40 verts sur 50 runs) | 2026-11-15 | API GitHub Actions, [ci-noyau.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/ci-noyau.yml), branche main |
+| 1 | Taux de vert de main (CI noyau) | 78 % (39 verts sur 50 runs) | 2026-11-15 | API GitHub Actions, [ci-noyau.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/ci-noyau.yml), branche main |
 | 2 | Délai de restauration éprouvé (drill mensuel) | 5 s, dernier vert le 2026-11-09 (il y a 6 j) | 2026-11-09 | API GitHub Actions, [restore-drill.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/restore-drill.yml), job drill-auto |
 | 3 | Présence de specs pour les parcours critiques | 10 sur 10 parcours avec une spec présente (100 %, présence, pas verdict) | 2026-11-15 | scripts/indicateurs.config.json et dossier e2e/ du dépôt |
 | 4 | Contrôle des secrets | contrôle des échéances de rotation : rouge, 28 entrées au registre | 2026-11-14 | dernier run de `Secrets age` et .github/secrets-registry.json |
@@ -22,6 +22,7 @@ Régénéré le **2026-11-15 18:38 UTC**, au commit `524daad`. Alertes en cours 
 
 ## Alertes
 
+- 🔴 main sous 80 % de vert : 78 % sur les 50 derniers runs du CI noyau
 - 🔴 contrôle des échéances de rotation : écart relevé, détail dans le run `Secrets age`
 
 Elles ouvrent ou mettent à jour l'issue `ci-red` (via `ci-alert.yml`), la liste de `workflows:` y contenant `Indicateurs`.
@@ -30,11 +31,11 @@ Elles ouvrent ou mettent à jour l'issue `ci-red` (via `ci-alert.yml`), la liste
 
 ### 1. Taux de vert de main (CI noyau)
 
-- **Valeur** : 80 % (40 verts sur 50 runs)
+- **Valeur** : 78 % (39 verts sur 50 runs)
 - **Mesuré le** : 2026-11-15
 - **Source** : API GitHub Actions, [ci-noyau.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/ci-noyau.yml), branche main
 - Fenêtre : les 50 derniers runs conclus du `CI noyau` sur `main` (du 2026-11-13 au 2026-11-15), annulés et sautés exclus.
-- Dernier run : vert, https://github.com/kelax12/COSMO1.2/actions/runs/43745615706.
+- Dernier run : rouge, https://github.com/kelax12/COSMO1.2/actions/runs/43748471725.
 - Seuil d'alerte : moins de 80 %.
 
 ### 2. Délai de restauration éprouvé (drill mensuel)
@@ -56,7 +57,7 @@ Elles ouvrent ou mettent à jour l'issue `ci-red` (via `ci-alert.yml`), la liste
 - Parcours déclarés dans `scripts/indicateurs.config.json`, chacun avec au moins une spec `e2e/` présente dans le dépôt.
 - Aucun parcours déclaré sans spec.
 - 🔴 Couverture de PRÉSENCE : une spec existe, rien ne dit qu'elle est verte. Les e2e sont joués par `CI etendue`, qui ne bloque pas.
-- Dernier run de `CI etendue` sur `main` : vert le 2026-11-15, https://github.com/kelax12/COSMO1.2/actions/runs/43743418163.
+- Dernier run de `CI etendue` sur `main` : vert le 2026-11-15, https://github.com/kelax12/COSMO1.2/actions/runs/43745615626.
 
 ### 4. Contrôle des secrets
 
@@ -74,7 +75,7 @@ Elles ouvrent ou mettent à jour l'issue `ci-red` (via `ci-alert.yml`), la liste
 - **Source** : API GitHub Actions, [deploy-sha-drift.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/deploy-sha-drift.yml), [edge-deploy-drift.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/edge-deploy-drift.yml), [migration-coverage.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/migration-coverage.yml)
 - Deploy SHA drift (le commit servi en production contre le dernier commit vert) : vert le 2026-11-15, https://github.com/kelax12/COSMO1.2/actions/runs/43743474005.
 - Edge deploy drift (le code des Edge Functions deployees contre le depot) : vert le 2026-11-15, https://github.com/kelax12/COSMO1.2/actions/runs/43718093253.
-- Migration coverage (les fichiers de migration contre le ledger de production) : vert le 2026-11-15, https://github.com/kelax12/COSMO1.2/actions/runs/43715165059.
+- Migration coverage (les fichiers de migration contre le ledger de production) : vert le 2026-11-15, https://github.com/kelax12/COSMO1.2/actions/runs/43748471693.
 - Dernier run conclu de chaque sonde sur `main`. Les trois tournent sans déclencheur humain.
 - Seuil d'alerte : une sonde rouge.
 
