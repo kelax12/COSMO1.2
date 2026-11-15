@@ -44,7 +44,7 @@ Tailles : `npm run build` puis `npm run check:bundle`, jamais recopiées ici. Ce
 - 🔴 Le build exige `VITE_SENTRY_DSN` : sans elle Vite remplace la variable à la compilation, `if (sentryDsn)` de `main.tsx` devient du code mort et `vendor-sentry` s'effondre ; la garde refuse tout build dont `vendor-sentry` pèse moins de `SENTRY_FLOOR`.
 - ⚠️ Un job qui PÈSE un artefact et un job qui l'EXÉCUTE n'ont pas les mêmes besoins : un faux DSN suffit à peser, mais fait initialiser Sentry vers un hôte inexistant et dégrade `best-practices` dans Lighthouse.
 - ✅ Lighthouse CI (`lighthouserc.json`, `lighthouserc.mobile.json`, job `lighthouse` de `ci.yml`) : LCP, TBT, CLS, accessibilité, SEO sur les routes prérendues (`/`, `/guide`, `/blog`, `/pour-freelances`). Bloquant sur accessibilité, SEO, CLS ; avertissement sur la performance (varie avec le runner). Routes protégées : Playwright.
-- ✅ Outils : `npm run analyze:entry` (qui pèse dans l'entrée), `npm run profile:landing`.
+- ✅ Outils : voir `docs/TESTING.md` (les sondes `analyze:entry` et `profile:landing` sont retirées, MAI-02).
 
 ## Images et polices
 

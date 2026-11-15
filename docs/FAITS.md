@@ -13,9 +13,9 @@
 | Dernière migration | **261** | plus grand préfixe numérique de `supabase/migration/` |
 | Workflows GitHub | **36** | fichiers de `.github/workflows/` |
 | dont planifiés | **24** | workflows portant un `schedule:` |
-| Fichiers de `scripts/` | **179** | fichiers suivis (budget d outillage, `scripts/outillage.reference.json`) |
-| Lignes de `scripts/` | **41814** | lignes des fichiers suivis de `scripts/` |
-| Tests de garde | **115** | fichiers `*.guard.test.*` du dépôt |
+| Fichiers de `scripts/` | **174** | fichiers suivis (budget d outillage, `scripts/outillage.reference.json`) |
+| Lignes de `scripts/` | **41363** | lignes des fichiers suivis de `scripts/` |
+| Tests de garde | **113** | fichiers `*.guard.test.*` du dépôt |
 | Modules applicatifs | **23** | dossiers de `src/modules/` |
 | Namespaces i18n | **34** | fichiers de `src/locales/fr/` |
 | Gardes `check:` / `i18n:` / `validate:` | **45** | scripts de `package.json` |

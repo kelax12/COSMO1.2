@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // Ce qu'une page coute AU REPOS — harnais de l'audit A-8.
 //
-// POURQUOI CET OUTIL, alors que `profile:landing` existe deja. Ce dernier
+// POURQUOI CET OUTIL, alors que `profile:landing` existait. Ce dernier
 // mesure une page pendant qu'elle CHARGE, et attribue le temps par fichier.
 // Or l'attribution par echantillonnage met le style et le paint declenches
 // par une animation sous le fichier de la BIBLIOTHEQUE d'animation : son

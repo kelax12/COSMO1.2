@@ -60,9 +60,7 @@ export default defineConfig({
         'scripts/**/*.{test,spec}.mjs',
         // Outils d'exploration lancés à la main, jamais en CI.
         'scripts/capture-*.mjs',
-        'scripts/profile-landing.mjs',
         'scripts/landing-*-probe.mjs',
-        'scripts/analyze-entry.mjs',
         'scripts/diagnose-rls-state.mjs',
         'scripts/optimize-images.mjs',
       ],

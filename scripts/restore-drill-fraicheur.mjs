@@ -16,7 +16,7 @@
 // ✅ Dans le doute, elle rougit : API en panne, jeton refuse, reponse
 //    illisible = exit 1. Elle ne rend jamais un vert qu'elle n'a pas lu.
 // 🔴 PAS DE SHEBANG (cf. `ops-alert.mjs`) : le temoin importe ce module.
-//    Temoin : `scripts/restore-drill-fraicheur.guard.test.mjs`.
+//    Temoin : `scripts/restore-drill.guard.test.mjs`.
 // ═══════════════════════════════════════════════════════════════════
 
 export const JOURS_MAX = 35;

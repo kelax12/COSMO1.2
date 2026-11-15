@@ -456,7 +456,7 @@ jobs:
       # V15.4 (FRO-02) · aucune référence visuelle ne change sur `main` sans
       # le trailer `Captures-relues: <URL du run>`, et ce run doit exister,
       # venir de `captures-regenerer.yml` et avoir réussi.
-      # Témoin : `check-captures-relues.guard.test.mjs`.
+      # Témoin : `captures-revue.guard.test.mjs`.
       - name: Captures relues (trailer et run cite)
         if: ${{ !cancelled() }}
         env:

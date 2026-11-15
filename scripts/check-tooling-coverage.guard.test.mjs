@@ -72,8 +72,6 @@ describe('témoin — check-tooling-coverage (C-82)', () => {
     // Les sondes jetables et les outils lancés à la main sont hors périmètre :
     // les inclure ferait baisser un plancher pour du code qui n'est pas une
     // garde.
-    expect(attendus).not.toContain('scripts/analyze-entry.mjs');
-    expect(attendus).not.toContain('scripts/profile-landing.mjs');
   });
 
   it('TEMOIN : un shebang pose a blanc EST vu', () => {
@@ -101,8 +99,6 @@ describe('témoin — check-tooling-coverage (C-82)', () => {
     const config = readFileSync(join(RACINE, 'vitest.tooling.config.ts'), 'utf8');
     for (const motif of [
       'scripts/capture-*.mjs',
-      'scripts/profile-landing.mjs',
-      'scripts/analyze-entry.mjs',
       'scripts/diagnose-rls-state.mjs',
       'scripts/optimize-images.mjs',
     ]) {

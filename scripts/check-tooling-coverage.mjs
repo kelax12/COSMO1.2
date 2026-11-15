@@ -120,9 +120,7 @@ const INCLUS = [
 const EXCLUS = [
   /\.(test|spec)\.mjs$/,
   /^scripts\/capture-.*\.mjs$/,
-  /^scripts\/profile-landing\.mjs$/,
   /^scripts\/landing-.*-probe\.mjs$/,
-  /^scripts\/analyze-entry\.mjs$/,
   /^scripts\/diagnose-rls-state\.mjs$/,
   /^scripts\/optimize-images\.mjs$/,
 ];

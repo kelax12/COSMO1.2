@@ -12,7 +12,7 @@
 # reussi sur `main` depuis 35 jours. Son rouge part par `ci-alert.yml` (issue
 # `ci-red` + webhook), comme celui du drill.
 # Logique et temoin : `scripts/restore-drill-fraicheur.mjs` et
-# `scripts/restore-drill-fraicheur.guard.test.mjs`.
+# `scripts/restore-drill.guard.test.mjs`.
 #
 # ⚠️ Volontairement HORS de `restore-drill.yml` : une garde logee dans le
 #    fichier qu'elle surveille se tait le jour ou ce fichier ne tourne plus.

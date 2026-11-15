@@ -55,7 +55,6 @@ La table ne porte que la commande, sa classe et ce qu'elle regarde ; ❌ elle ne
 | `check:fichiers-sensibles` | N | liste UNIQUE (hook, job CI, `fichiers-suivis`) : `prive/**`, documents, exports, dumps, `.env*` | `SEC-01` | `docs/TESTING.md` |
 | `check:captures-relues` | N | trailer `Captures-relues: <run>` sur tout commit touchant les références visuelles | `V15.4` | `e2e/CLAUDE.md` |
 | `check:tooling-coverage` | O | seconde moitié de `test:coverage:tooling`, sur un rapport déjà écrit | `C-82` | `docs/TESTING.md` |
-| `analyze:entry` · `profile:landing` | O | qui pèse dans le chunk d'entrée · profil du fil principal | | `docs/PERFORMANCE.md` |
 | `check:mail` | O | SPF / DKIM / DMARC | | `docs/DEPLOYMENT.md` |
 | `images:check` | O | images non optimisées | | `docs/PERFORMANCE.md` |
 

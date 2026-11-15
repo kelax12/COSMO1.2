@@ -37,7 +37,7 @@
 //    c'est le job CI `fichiers-sensibles` de `ci-noyau.yml` qui la rejoue sur
 //    chaque poussée, et il ne se saute pas depuis le poste.
 //
-// Témoin : `scripts/check-captures-relues.guard.test.mjs`.
+// Témoin : `scripts/captures-revue.guard.test.mjs`.
 // ═══════════════════════════════════════════════════════════════════
 
 import { execFileSync } from 'node:child_process';
