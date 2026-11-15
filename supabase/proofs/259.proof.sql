@@ -17,7 +17,7 @@
 --      triggers, un seul trigger de mise à jour sur `tasks` ;
 --   03 index : les six index de lecture, les noms de production de
 --      `friend_requests`, `idx_shared_tasks_friend` ;
---   04 `okrs` : dates en timestamptz, `okrs_progress_check` ;
+--   04 `okrs_progress_check` ;
 --   05 `friend_requests` : clé du destinataire en SET NULL, triggers aussi
 --      sur UPDATE ; `subscriptions` : `trg_prevent_user_id_change` ;
 --   06 refus : tâche sans propriétaire (23502), objectif à 150 % (23514),
@@ -79,8 +79,6 @@ BEGIN
 --
 -- ── B. LE DÉPÔT REJOINT LA PRODUCTION (sans effet en production) ───
 --   · défauts de couleur et de durée tels que la production les sert ;
---   · `okrs.start_date` / `end_date` en timestamptz (21 objectifs sur 26
---     portent une heure : revenir à `date` les tronquerait) ;
 --   · `tasks.updated_at` NOT NULL, un seul trigger de mise à jour
 --     (`trg_tasks_updated_at`) ;
 --   · noms d'index de `friend_requests`, index `idx_shared_tasks_friend` ;
@@ -95,7 +93,11 @@ BEGIN
 --   · `events.end_after_start` : 3 événements de production finissent
 --     avant de commencer ; la contrainte ne se pose qu'après correction ;
 --   · `on_auth_user_created_seed_categories` (auth.users) : présent dans
---     le dépôt, absent de la production ; le poser change l'inscription.
+--     le dépôt, absent de la production ; le poser change l'inscription ;
+--   · `okrs.start_date` / `end_date` : `date` dans le dépôt, timestamptz
+--     en production (21 objectifs sur 26 portent une heure). Le contrat
+--     OKR attend `AAAA-MM-JJ` ; passer la prod en `date` tronque ces
+--     heures, passer le dépôt en timestamptz casse le contrat.
 --
 -- Rejouable : chaque instruction est idempotente. Appliquée d'un bloc
 -- (SQL editor ou `apply_migration`, une transaction). Une valeur NULL
@@ -234,12 +236,7 @@ ALTER TABLE public.habits
 ALTER TABLE public.lists      ALTER COLUMN color SET DEFAULT '#8B5CF6'::text;
 ALTER TABLE public.tasks      ALTER COLUMN estimated_time SET DEFAULT 30;
 
--- ── B.2 Types et horodatage de `tasks` ─────────────────────────────
--- Même type en production : aucune réécriture.
-ALTER TABLE public.okrs
-  ALTER COLUMN start_date TYPE timestamp with time zone,
-  ALTER COLUMN end_date TYPE timestamp with time zone;
-
+-- ── B.2 Horodatage de `tasks` ───────────────────────────────────────
 ALTER TABLE public.tasks ALTER COLUMN updated_at SET NOT NULL;
 DROP TRIGGER IF EXISTS update_tasks_updated_at ON public.tasks;
 
@@ -372,13 +369,9 @@ $mig$;
   ELSE ko := ko + 1; r := r || format('ECHEC 03 %s', liste); END IF;
 
   -- ── 04 okrs ───────────────────────────────────────────────────────
-  SELECT count(*) INTO nb FROM information_schema.columns
-   WHERE table_schema = 'public' AND table_name = 'okrs' AND column_name IN ('start_date', 'end_date')
-     AND data_type = 'timestamp with time zone';
-  IF nb = 2 AND EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'okrs_progress_check') THEN
-    r := r || 'ok 04 okrs : timestamptz et okrs_progress_check'::text;
-  ELSE ko := ko + 1; r := r || format('ECHEC 04 okrs : %s date(s) timestamptz, check %s', nb,
-    EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'okrs_progress_check')); END IF;
+  IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'okrs_progress_check') THEN
+    r := r || 'ok 04 okrs_progress_check'::text;
+  ELSE ko := ko + 1; r := r || 'ECHEC 04 okrs_progress_check absente'::text; END IF;
 
   -- ── 05 friend_requests, subscriptions ─────────────────────────────
   SELECT string_agg(x, ', ') INTO liste FROM (

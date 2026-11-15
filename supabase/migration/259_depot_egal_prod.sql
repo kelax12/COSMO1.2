@@ -29,8 +29,6 @@
 --
 -- ── B. LE DÉPÔT REJOINT LA PRODUCTION (sans effet en production) ───
 --   · défauts de couleur et de durée tels que la production les sert ;
---   · `okrs.start_date` / `end_date` en timestamptz (21 objectifs sur 26
---     portent une heure : revenir à `date` les tronquerait) ;
 --   · `tasks.updated_at` NOT NULL, un seul trigger de mise à jour
 --     (`trg_tasks_updated_at`) ;
 --   · noms d'index de `friend_requests`, index `idx_shared_tasks_friend` ;
@@ -45,7 +43,11 @@
 --   · `events.end_after_start` : 3 événements de production finissent
 --     avant de commencer ; la contrainte ne se pose qu'après correction ;
 --   · `on_auth_user_created_seed_categories` (auth.users) : présent dans
---     le dépôt, absent de la production ; le poser change l'inscription.
+--     le dépôt, absent de la production ; le poser change l'inscription ;
+--   · `okrs.start_date` / `end_date` : `date` dans le dépôt, timestamptz
+--     en production (21 objectifs sur 26 portent une heure). Le contrat
+--     OKR attend `AAAA-MM-JJ` ; passer la prod en `date` tronque ces
+--     heures, passer le dépôt en timestamptz casse le contrat.
 --
 -- Rejouable : chaque instruction est idempotente. Appliquée d'un bloc
 -- (SQL editor ou `apply_migration`, une transaction). Une valeur NULL
@@ -184,12 +186,7 @@ ALTER TABLE public.habits
 ALTER TABLE public.lists      ALTER COLUMN color SET DEFAULT '#8B5CF6'::text;
 ALTER TABLE public.tasks      ALTER COLUMN estimated_time SET DEFAULT 30;
 
--- ── B.2 Types et horodatage de `tasks` ─────────────────────────────
--- Même type en production : aucune réécriture.
-ALTER TABLE public.okrs
-  ALTER COLUMN start_date TYPE timestamp with time zone,
-  ALTER COLUMN end_date TYPE timestamp with time zone;
-
+-- ── B.2 Horodatage de `tasks` ───────────────────────────────────────
 ALTER TABLE public.tasks ALTER COLUMN updated_at SET NOT NULL;
 DROP TRIGGER IF EXISTS update_tasks_updated_at ON public.tasks;
 
