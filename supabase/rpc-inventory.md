@@ -16,12 +16,12 @@ Regenerer : npm run contrat:generer (Docker, supabase start, node scripts/apply-
 
 | Mesure | Nombre |
 |---|---|
-| Fonctions | 252 |
+| Fonctions | 253 |
 | Executables par `anon` | 3 |
-| Executables par `authenticated` | 113 |
-| Executables par `service_role` | 245 |
+| Executables par `authenticated` | 114 |
+| Executables par `service_role` | 246 |
 | Droit accorde a `PUBLIC` | 0 |
-| SECURITY DEFINER | 157 |
+| SECURITY DEFINER | 158 |
 | SECURITY DEFINER sans `search_path` fige | 0 |
 | SECURITY DEFINER executables par `anon` | 2 |
 
@@ -258,6 +258,7 @@ Aucune.
 | `sync_profile_email()` (trigger) | DEFINER | `""` | - | - | oui | - |
 | `sync_task_status()` (trigger) | INVOKER | `""` | - | - | oui | ~`src/modules/tasks/status-sync.ts`<br>~`src/modules/tasks/types.ts` |
 | `sync_team_task_status()` (trigger) | INVOKER | `""` | - | - | oui | ~`src/modules/team-projects/local.repository.ts` |
+| `task_dependency_would_cycle(p_task_id uuid, p_depends_on_id uuid)` | DEFINER | `""` | - | oui | oui | - |
 | `tasks_sync_echeance()` (trigger) | INVOKER | `""` | - | - | oui | - |
 | `team_automation_before_write()` (trigger) | INVOKER | `""` | - | - | oui | - |
 | `team_okr_trash_guard()` (trigger) | INVOKER | `""` | - | - | oui | - |

@@ -2773,6 +2773,9 @@ isOneToOne: false
 "shares_org_with":
 { Args: { "p_target": string }; Returns: boolean
                            },
+"task_dependency_would_cycle":
+{ Args: { "p_depends_on_id": string,"p_task_id": string }; Returns: boolean
+                           },
 "team_project_dependency_would_cycle":
 { Args: { "p_depends_on": string,"p_project": string }; Returns: boolean
                            },

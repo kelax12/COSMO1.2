@@ -7020,17 +7020,7 @@ CREATE FUNCTION public.prevent_task_dependency_cycle() RETURNS trigger
     SET search_path TO ''
     AS $$
 BEGIN
-  IF EXISTS (
-    WITH RECURSIVE upstream(id, depth) AS (
-      SELECT NEW.depends_on_id, 0
-      UNION ALL
-      SELECT d.depends_on_id, u.depth + 1
-        FROM public.task_dependencies d
-        JOIN upstream u ON d.task_id = u.id
-       WHERE u.depth < 200
-    )
-    SELECT 1 FROM upstream WHERE id = NEW.task_id
-  ) THEN
+  IF public.task_dependency_would_cycle(NEW.task_id, NEW.depends_on_id) THEN
     RAISE EXCEPTION 'dependency_cycle';
   END IF;
   RETURN NEW;
@@ -8761,6 +8751,63 @@ BEGIN
   RETURN NEW;
 END;
 $$;
+
+
+--
+-- Name: task_dependency_would_cycle(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.task_dependency_would_cycle(p_task_id uuid, p_depends_on_id uuid) RETURNS boolean
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_uid   uuid := auth.uid();
+  v_owner uuid;
+BEGIN
+  IF v_uid IS NULL THEN
+    RETURN false;
+  END IF;
+
+  SELECT t.user_id INTO v_owner FROM public.tasks t WHERE t.id = p_task_id;
+  IF v_owner IS NULL THEN
+    RETURN false;
+  END IF;
+
+  -- L'appelant doit voir LES DEUX tâches, et elles doivent avoir le même
+  -- propriétaire ; sinon on ne lit rien (le trigger de validation refusera).
+  IF (SELECT count(*) FROM public.tasks t
+       WHERE t.id IN (p_task_id, p_depends_on_id)
+         AND t.user_id = v_owner
+         AND (t.user_id = v_uid
+              OR EXISTS (SELECT 1 FROM public.shared_tasks st
+                          WHERE st.task_id = t.id
+                            AND st.friend_id = v_uid
+                            AND st.accepted_at IS NOT NULL))) < 2 THEN
+    RETURN false;
+  END IF;
+
+  RETURN EXISTS (
+    WITH RECURSIVE upstream(id, depth) AS (
+      SELECT p_depends_on_id, 0
+      UNION ALL
+      SELECT d.depends_on_id, u.depth + 1
+        FROM public.task_dependencies d
+        JOIN upstream u ON d.task_id = u.id
+       WHERE d.user_id = v_owner
+         AND u.depth < 200
+    )
+    SELECT 1 FROM upstream WHERE id = p_task_id
+  );
+END;
+$$;
+
+
+--
+-- Name: FUNCTION task_dependency_would_cycle(p_task_id uuid, p_depends_on_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.task_dependency_would_cycle(p_task_id uuid, p_depends_on_id uuid) IS 'Anti-cycle des dependances perso (mig. 262). DEFINER pour voir les aretes du proprietaire hors RLS ; ne repond que si l''appelant voit les deux taches. Appelee par le trigger INVOKER prevent_task_dependency_cycle.';
 
 
 --
@@ -11351,7 +11398,7 @@ CREATE TABLE public.task_dependencies (
 -- Name: TABLE task_dependencies; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.task_dependencies IS 'Dependances entre taches personnelles (bloque / bloquee par). Perimetre strictement limite au proprietaire : contrairement a team_task_dependencies (mig. 108), la policy ne delegue PAS a tasks — le OR de la mig. 049 est non indexable, et une tache personnelle peut etre partagee.';
+COMMENT ON TABLE public.task_dependencies IS 'Dependances entre taches personnelles (bloque / bloquee par). Proprietaire, ou collaborateur ayant un partage accepte sur les DEUX taches (ecriture : role editor), mig. 262. user_id = proprietaire, redérive par trigger.';
 
 
 --
@@ -17900,21 +17947,33 @@ ALTER TABLE public.task_dependencies ENABLE ROW LEVEL SECURITY;
 -- Name: task_dependencies task_dependencies_delete; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY task_dependencies_delete ON public.task_dependencies FOR DELETE TO authenticated USING ((( SELECT auth.uid() AS uid) = user_id));
+CREATE POLICY task_dependencies_delete ON public.task_dependencies FOR DELETE TO authenticated USING (((( SELECT auth.uid() AS uid) = user_id) OR ((task_id = ANY (ARRAY( SELECT st.task_id
+   FROM public.shared_tasks st
+  WHERE ((st.friend_id = ( SELECT auth.uid() AS uid)) AND (st.accepted_at IS NOT NULL) AND (st.role = 'editor'::text))))) AND (depends_on_id = ANY (ARRAY( SELECT st.task_id
+   FROM public.shared_tasks st
+  WHERE ((st.friend_id = ( SELECT auth.uid() AS uid)) AND (st.accepted_at IS NOT NULL) AND (st.role = 'editor'::text))))))));
 
 
 --
 -- Name: task_dependencies task_dependencies_insert; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY task_dependencies_insert ON public.task_dependencies FOR INSERT TO authenticated WITH CHECK ((( SELECT auth.uid() AS uid) = user_id));
+CREATE POLICY task_dependencies_insert ON public.task_dependencies FOR INSERT TO authenticated WITH CHECK (((( SELECT auth.uid() AS uid) = user_id) OR ((task_id = ANY (ARRAY( SELECT st.task_id
+   FROM public.shared_tasks st
+  WHERE ((st.friend_id = ( SELECT auth.uid() AS uid)) AND (st.accepted_at IS NOT NULL) AND (st.role = 'editor'::text))))) AND (depends_on_id = ANY (ARRAY( SELECT st.task_id
+   FROM public.shared_tasks st
+  WHERE ((st.friend_id = ( SELECT auth.uid() AS uid)) AND (st.accepted_at IS NOT NULL) AND (st.role = 'editor'::text))))))));
 
 
 --
 -- Name: task_dependencies task_dependencies_select; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY task_dependencies_select ON public.task_dependencies FOR SELECT TO authenticated USING ((( SELECT auth.uid() AS uid) = user_id));
+CREATE POLICY task_dependencies_select ON public.task_dependencies FOR SELECT TO authenticated USING (((( SELECT auth.uid() AS uid) = user_id) OR ((task_id = ANY (ARRAY( SELECT st.task_id
+   FROM public.shared_tasks st
+  WHERE ((st.friend_id = ( SELECT auth.uid() AS uid)) AND (st.accepted_at IS NOT NULL))))) AND (depends_on_id = ANY (ARRAY( SELECT st.task_id
+   FROM public.shared_tasks st
+  WHERE ((st.friend_id = ( SELECT auth.uid() AS uid)) AND (st.accepted_at IS NOT NULL))))))));
 
 
 --
@@ -20699,6 +20758,15 @@ GRANT ALL ON FUNCTION public.sync_task_status() TO service_role;
 
 REVOKE ALL ON FUNCTION public.sync_team_task_status() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.sync_team_task_status() TO service_role;
+
+
+--
+-- Name: FUNCTION task_dependency_would_cycle(p_task_id uuid, p_depends_on_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.task_dependency_would_cycle(p_task_id uuid, p_depends_on_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.task_dependency_would_cycle(p_task_id uuid, p_depends_on_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.task_dependency_would_cycle(p_task_id uuid, p_depends_on_id uuid) TO service_role;
 
 
 --
