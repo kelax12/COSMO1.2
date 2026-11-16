@@ -6,6 +6,7 @@
 import { Lock } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { useT } from '@/i18n/useT';
+import { useTeamTaskDependencies, useTeamTasks, type TeamTask } from '@/modules/team-projects';
 
 export interface Blocker {
   id: string;
@@ -56,6 +57,18 @@ const BlockedLock = ({ blockers }: { blockers: Blocker[] }) => {
       </PopoverContent>
     </Popover>
   );
+};
+
+/** Cadenas d'une tâche d'équipe : monté seulement si elle est bloquée, le graphe d'équipe n'est lu que là. */
+export const TeamBlockedLock = ({ task }: { task: TeamTask }) => {
+  const { data: deps = [] } = useTeamTaskDependencies(task.orgId);
+  const { data: orgTasks = [] } = useTeamTasks(task.orgId);
+  const blockers = deps
+    .filter((d) => d.taskId === task.id)
+    .map((d) => orgTasks.find((x) => x.id === d.dependsOnId))
+    .filter((x): x is TeamTask => !!x)
+    .map((x) => ({ id: x.id, name: x.name, completed: x.completed }));
+  return <BlockedLock blockers={blockers} />;
 };
 
 export default BlockedLock;

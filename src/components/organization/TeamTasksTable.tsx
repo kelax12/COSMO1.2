@@ -87,7 +87,7 @@ const TeamTasksTable = ({
 
   return (
     <div ref={tableRef} data-guide-id="tasks-list" className="table-container shadow-sm overflow-x-auto">
-      <table className="data-table data-table--plain w-full" style={{ minWidth: `${560 + columns.length * 110}px` }} aria-label={pf.t('taskTable.tableAria')} aria-rowcount={lines.length}>
+      <table className="data-table data-table--plain data-table--compact w-full" style={{ minWidth: `${560 + columns.length * 110}px` }} aria-label={pf.t('taskTable.tableAria')} aria-rowcount={lines.length}>
         <thead>
           <tr>
             <th className={th} style={{ width: '40px' }}><span className="sr-only">{t('projects.tasksTabColComplete')}</span></th>
@@ -146,7 +146,7 @@ const TeamTasksTable = ({
                 unreadComments={unreadCommentsByTask.get(task.id) ?? 0}
                 selectMode={selectMode}
                 selected={selectedIds.has(task.id)}
-                blocked={blockedTaskIds.has(task.id)}
+                blocked={blockedTaskIds.has(task.id) && !task.completed}
                 handlers={handlers}
               />
             );

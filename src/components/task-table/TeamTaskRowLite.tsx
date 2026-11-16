@@ -9,8 +9,8 @@
 import React from 'react';
 import { Link } from 'react-router';
 import { UsersRound, ArrowUpRight } from 'lucide-react';
-import { useTeamTaskDependencies, useTeamTasks, type TeamProject, type TeamProjectHealth, type TeamTask } from '@/modules/team-projects';
-import BlockedLock from './BlockedLock';
+import type { TeamProject, TeamProjectHealth, TeamTask } from '@/modules/team-projects';
+import { TeamBlockedLock } from './BlockedLock';
 import { isTaskOverdue, projectColor, taskDisplayStatus } from '@/components/organization/team-projects.helpers';
 import { formatDeadlineSmart, formatDuration } from './helpers';
 import { useT } from '@/i18n/useT';
@@ -25,18 +25,6 @@ interface TeamTaskRowLiteProps {
   /** Pourquoi modifier cette tâche est refusé (miroir de `team_tasks_update`). */
   editReason?: string;
 }
-
-/** Monté seulement pour une tâche bloquée : le graphe d'équipe n'est lu que là. */
-const TeamBlockedLock = ({ task }: { task: TeamTask }) => {
-  const { data: deps = [] } = useTeamTaskDependencies(task.orgId);
-  const { data: orgTasks = [] } = useTeamTasks(task.orgId);
-  const blockers = deps
-    .filter((d) => d.taskId === task.id)
-    .map((d) => orgTasks.find((x) => x.id === d.dependsOnId))
-    .filter((x): x is TeamTask => !!x)
-    .map((x) => ({ id: x.id, name: x.name, completed: x.completed }));
-  return <BlockedLock blockers={blockers} />;
-};
 
 export const TeamTaskRowLite = React.memo(({ task, project, onToggleComplete, onEdit, onSetHealth, editReason }: TeamTaskRowLiteProps) => {
   const { t } = useT('tasks');

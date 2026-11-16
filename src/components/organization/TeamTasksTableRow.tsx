@@ -25,6 +25,7 @@ import {
   PRIORITY_META, priorityLabelOf,
 } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
+import { TeamBlockedLock } from '@/components/task-table/BlockedLock';
 import TaskSelectCheckbox from './TaskSelectCheckbox';
 import type { TaskColumnId } from './team-tasks-table.helpers';
 
@@ -62,6 +63,7 @@ interface TeamTasksTableRowProps {
   selectMode: boolean;
   selected: boolean;
   /** Bloquée par une dépendance non terminée : le statut affiché devient « Bloquée ». */
+  /** Bloquée par une tâche non terminée, et elle-même pas terminée (calculé par le tableau). */
   blocked: boolean;
   handlers: TeamTasksRowHandlers;
   /** Index pour la mesure du virtualiseur. */
@@ -153,8 +155,8 @@ const TeamTasksTableRow = forwardRef<HTMLTableRowElement, TeamTasksTableRowProps
   const editReason = handlers.editReason(task);
   const deleteReason = handlers.deleteReason(task);
   const show = (c: TaskColumnId) => columns.includes(c);
-  const display = blocked && !task.completed ? STATUS_META.blocked : taskDisplayStatus(task);
-  const custom = !(blocked && !task.completed) && task.customStatusId ? projectStatuses.find((s) => s.id === task.customStatusId) : undefined;
+  const display = blocked ? STATUS_META.blocked : taskDisplayStatus(task);
+  const custom = !blocked && task.customStatusId ? projectStatuses.find((s) => s.id === task.customStatusId) : undefined;
 
   return (
     <tr
@@ -204,7 +206,7 @@ const TeamTasksTableRow = forwardRef<HTMLTableRowElement, TeamTasksTableRowProps
       <td className={`font-medium px-2 py-1 text-base ${task.completed ? 'line-through' : ''}`}
           style={{ color: task.completed ? 'rgb(var(--color-text-muted))' : 'rgb(var(--color-text-primary))' }}>
         <div className="flex items-center gap-2 min-w-0">
-          <span className="truncate" title={task.name}>{task.name}</span>
+          <span className="truncate" title={task.name}>{task.name}</span>{blocked && <TeamBlockedLock task={task} />}
           {/* Commentaires non lus (mig. 109). */}
           {unreadComments > 0 && (
             <span
