@@ -6,9 +6,18 @@
 -- DEUX fois : la première avec une habitude dont la table et la colonne
 -- divergent (la garde doit refuser et ne rien retirer), la seconde sur des
 -- données saines.
---   supabase db query --linked -f supabase/proofs/256.proof.sql
+--   npm run preuve:preprod -- 256   (preproduction, jamais la prod : CI-04)
+--   → « PREUVE-ANNULEE 0 ECHEC | info avant … | ok 01 … »
 --
--- Se joue sur une base où la 254 est passée (CI, puis production).
+-- Procedure d'application (jamais avant : la date ou le front sur habit_completions seule a sept jours de production) :
+--   1. relire le ledger et le catalogue de production (requetes ci-dessous) ;
+--   2. npm run preuve:preprod -- 256 : 0 ECHEC ;
+--   3. avec l'accord d'Axel, appliquer le fichier de migration-differee tel quel ;
+--   4. relire le catalogue, inserer la ligne du ledger, deplacer le fichier dans
+--      supabase/migration/, regenerer le contrat de donnees, commiter ;
+--   5. npm run preuve:preprod -- 256 --avancer.
+--
+-- Se joue sur une base où la 254 est passée (CI, puis préproduction).
 --
 -- Relecture préalable en production (étape 3 de l'en-tête de la 256) :
 --   SELECT count(*) FROM public.habits h

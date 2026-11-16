@@ -5,9 +5,18 @@
 -- EMBARQUÉE, texte vérifié par `e2e/rls/preuves-dette-sql.test.ts`, et jouée
 -- DEUX fois : la première avec une ligne incohérente (la garde doit refuser
 -- et ne rien retirer), la seconde sur des données saines.
---   supabase db query --linked -f supabase/proofs/253.proof.sql
+--   npm run preuve:preprod -- 253   (preproduction, jamais la prod : CI-04)
+--   → « PREUVE-ANNULEE 0 ECHEC | info avant … | ok 01 … »
 --
--- Se joue sur une base où la 251 est passée (CI, puis production après la 251).
+-- Procedure d'application (jamais avant : 2026-11-21 (sept jours apres la 251)) :
+--   1. relire le ledger et le catalogue de production (requetes ci-dessous) ;
+--   2. npm run preuve:preprod -- 253 : 0 ECHEC ;
+--   3. avec l'accord d'Axel, appliquer le fichier de migration-differee tel quel ;
+--   4. relire le catalogue, inserer la ligne du ledger, deplacer le fichier dans
+--      supabase/migration/, regenerer le contrat de donnees, commiter ;
+--   5. npm run preuve:preprod -- 253 --avancer.
+--
+-- Se joue sur une base où la 251 est passée (CI, puis préproduction).
 --
 -- Relecture préalable en production (étape 2 de l'en-tête de la 253) :
 --   SELECT count(*) FILTER (WHERE (deadline IS NULL) <> (due_date IS NULL)) AS une_seule,
