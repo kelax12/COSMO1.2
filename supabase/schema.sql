@@ -8765,7 +8765,10 @@ DECLARE
   v_uid   uuid := auth.uid();
   v_owner uuid;
 BEGIN
-  IF v_uid IS NULL THEN
+  -- Hors trigger (appel RPC direct), on ne répond rien : la fonction n'est pas
+  -- un oracle autonome sur le graphe du propriétaire. Seul un INSERT réel, qui
+  -- exige déjà le rôle editor sur les deux tâches, en lit le résultat.
+  IF v_uid IS NULL OR pg_trigger_depth() < 1 THEN
     RETURN false;
   END IF;
 
