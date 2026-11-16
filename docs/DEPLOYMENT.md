@@ -145,7 +145,7 @@ Contrat complet des `VITE_*` : `scripts/check-env-contract.mjs`.
 Drill automatique (`restore-drill.yml` › `drill-auto`, mensuel ; absence de vert depuis 35 jours = rouge par `restore-drill-fraicheur.yml`) :
 - Prouve : déchiffrement, restauration sur Postgres 17 jetable (`PGHOST=localhost` imposé) et sa durée, comptage identique au manifeste pour chaque table de `public` et `auth.users`, même nombre de policies et de tables sous RLS, isolation effective sous `authenticated`, aucune erreur de `pg_restore` avalée (liste fermée des extensions Supabase absentes).
 - Ne prouve pas : pg_cron, pg_net, Vault, pg_graphql ; restauration sur la plateforme Supabase ; Edge Functions, secrets, Storage, réglages du Dashboard ; un parcours applicatif ; le RTO d'un sinistre ; que les comptages de la prod sont justes.
-- Témoin : *Run workflow* case *temoin* (altère `public.tasks` d'une unité dans le manifeste) : le drill doit rougir. Témoins de code : `scripts/restore-drill.guard.test.mjs`, `scripts/restore-drill-fraicheur.guard.test.mjs`.
+- Témoin : *Run workflow* case *temoin* (altère `public.tasks` d'une unité dans le manifeste) : le drill doit rougir. Témoin de code (drill et garde de fraîcheur) : `scripts/restore-drill.guard.test.mjs`.
 - ❌ Aucun `upload-artifact` dans `restore-drill.yml`, clair effacé en fin de job, une erreur de `COPY` n'imprime que sa table : le journal est public.
 
 Restauration réelle (sinistre) :

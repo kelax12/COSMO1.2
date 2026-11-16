@@ -1,6 +1,6 @@
 // check-docs-budget.mjs : garde de la documentation vivante (`npm run check:docs`, noyau CI).
 // Regles (pourquoi : `docs/README.md` § Convention, ADR 0012, 0014, 0021) : 1-2 octets des CLAUDE.md, 3 chaque CLAUDE.md
-// de dossier cite par le racine, 4-5 liens, 6 aucune note /100, 7 ancres, 8 convention en cliquet. `[--list | --mesurer]`.
+// de dossier cite par le racine, 4-5 liens, 6 aucune note /100, 7 ancres, 8 convention en cliquet, 9 chemins et `f()` cites existent. `[--list | --mesurer]`.
 // ❌ Ne JAMAIS relever un plafond ni ajouter une exception pour faire passer : un contenu doit descendre d'un cran.
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs'
 import { join, dirname, resolve, relative, sep } from 'node:path'
@@ -23,23 +23,15 @@ export const REGLES_NOTES = [
 const posix = (p) => p.split(sep).join('/')
 const lire = (root, rel) => readFileSync(join(root, rel), 'utf8')
 
-/** Tous les CLAUDE.md du depot, chemins POSIX relatifs a `root`. */
-export function findClaudeFiles(root) {
-  const out = []
-  ;(function walk(dir) {
-    let entries = []
-    try { entries = readdirSync(dir) } catch { return }
-    for (const e of entries) {
-      if (IGNORED.has(e)) continue
-      const p = join(dir, e)
-      let st
-      try { st = statSync(p) } catch { continue }
-      if (st.isDirectory()) walk(p)
-      else if (e === 'CLAUDE.md') out.push(posix(relative(root, p)))
-    }
-  })(root)
-  return out.sort()
+/** Les fichiers de `dir` (hors `IGNORED`) dont le nom passe `garde`, chemins absolus. */
+function parcourir(dir, garde) {
+  try {
+    return readdirSync(dir, { withFileTypes: true }).flatMap((e) => IGNORED.has(e.name) ? [] : e.isDirectory() ? parcourir(join(dir, e.name), garde) : garde(e.name) ? [join(dir, e.name)] : [])
+  } catch { return [] }
 }
+
+/** Tous les CLAUDE.md du depot, chemins POSIX relatifs a `root`. */
+export const findClaudeFiles = (root) => parcourir(root, (n) => n === 'CLAUDE.md').map((p) => posix(relative(root, p))).sort()
 
 /** Les docs vivants : `docs/*.md` (ni `archive/` ni `adr/`) et `a-faire-code.md`. */
 export function findLivingDocs(root) {
@@ -166,6 +158,33 @@ export function auditConvention(root, fichiers) {
   return errors
 }
 
+// Regle 9. Exclusion unique, motivee : `nomDeFonction` est l'exemple fictif de docs/README.md § Convention.
+export const SOURCES_CODE = ['src', 'scripts', 'supabase', 'api', 'e2e', 'prerender']
+const CHEMIN_CITE = /^((?:src|scripts|supabase|api|e2e|docs|prerender)\/[\w./@-]*\w)(?::\d+)?$/
+const EXCLUS_SYMBOLES = new Set(['nomDeFonction'])
+/** Chemins et `f()` cites entre accents graves, hors blocs de code. Un motif (`*`, `<`, `[`, `{`) n'est pas un chemin. */
+export function citations(texte) {
+  const [chemins, symboles] = [new Set(), new Set()]
+  for (const [, c] of texte.replace(/\r\n/g, '\n').split(/^\s*```.*$/m).filter((_, i) => i % 2 === 0).join('\n').matchAll(/`([^`\n]+)`/g)) {
+    const m = CHEMIN_CITE.exec(c.trim()) ?? /^([A-Za-z_$][\w$]*)\(\)$/.exec(c.trim())
+    if (m) (m[1].includes('/') ? chemins : EXCLUS_SYMBOLES.has(m[1]) ? new Set() : symboles).add(m[1])
+  }
+  return { chemins, symboles }
+}
+
+const corpusCode = (root) => SOURCES_CODE.flatMap((d) => parcourir(join(root, d), (n) => /\.(?:[cm]?[jt]sx?|sql|json|yml)$/.test(n))).map((p) => readFileSync(p, 'utf8')).join('\n')
+
+export function auditSymboles(root, fichiers) {
+  const errors = []
+  let corpus
+  for (const f of fichiers) {
+    const { chemins, symboles } = citations(lire(root, f))
+    for (const c of chemins) if (!existsSync(join(root, c))) errors.push(`${f} cite \`${c}\`, qui n'existe pas. Corriger la doc, pas recreer le code.`)
+    for (const s of symboles) if (!new RegExp(`(?<![\\w$])${s.replace(/\$/g, '\\$')}(?![\\w$])`).test(corpus ??= corpusCode(root))) errors.push(`${f} cite \`${s}()\`, introuvable dans le code. Corriger la doc.`)
+  }
+  return errors
+}
+
 export function audit(root = process.cwd()) {
   const errors = []
   const rows = []
@@ -199,6 +218,7 @@ export function audit(root = process.cwd()) {
       if (!cache.get(l.cible).has(l.ancre)) errors.push(`${f} pointe vers ${l.href}, dont l'ancre n'existe pas dans ${l.cible}.`)
     }
   errors.push(...auditConvention(root, [...new Set([...docs, ...files])].sort())) // 8
+  errors.push(...auditSymboles(root, [...new Set([...docs, ...files])].sort())) // 9
   return { errors, rows, files }
 }
 
@@ -206,8 +226,7 @@ const isMain = process.argv[1] && import.meta.url.endsWith(posix(process.argv[1]
 if (isMain) {
   const root = process.cwd()
   if (process.argv.includes('--mesurer')) {
-    for (const f of [...findLivingDocs(root), ...findClaudeFiles(root)].sort())
-      console.log(JSON.stringify({ f, ...mesurerConvention(f, lire(root, f)) }))
+    for (const f of [...findLivingDocs(root), ...findClaudeFiles(root)].sort()) console.log(JSON.stringify({ f, ...mesurerConvention(f, lire(root, f)) }))
     process.exit(0)
   }
   const { errors, rows } = audit(root)

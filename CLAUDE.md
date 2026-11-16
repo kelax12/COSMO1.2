@@ -111,7 +111,7 @@ React 19 · TypeScript 6 strict (pas 7 : ADR 0015) · Vite 8 (Rolldown) · React
 
 ## Garde-fous transversaux (pourquoi de chaque ligne : `docs/SECURITY.md` § Garde-fous transversaux)
 
-- ❌ Importer `src/context/TaskContext` (supprimé) · recréer un contexte global qui agrège plusieurs modules · importer `useAuth` depuis `@/modules/user`.
+- ❌ Importer `TaskContext` (supprimé) · recréer un contexte global qui agrège plusieurs modules · importer `useAuth` depuis `@/modules/user`.
 - ❌ Appeler `repository.getFriends()` depuis un hook : l'interface expose `getAll()` (B3).
 - ❌ Modifier `recordKRCompletion()` sans vérifier le graphique dashboard, en démo ET en prod.
 - ❌ `kr.currentValue / kr.targetValue` sans garde `targetValue > 0` (B17).

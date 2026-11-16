@@ -39,6 +39,8 @@ function rouge(...motifs) {
   expect(r.code, r.out).toBe(1)
   for (const m of motifs) expect(r.out).toMatch(m)
 }
+/** Un cas qui part de l'arbre sain. */
+const cas = (nom, f) => it(nom, () => { arbreSain(); f() })
 function arbreSain() {
   put('docs/TESTING.md', '# Tests\n')
   put('CLAUDE.md', RACINE_SAINE)
@@ -46,68 +48,56 @@ function arbreSain() {
 }
 
 describe('check-docs-budget · plafonds et pointeurs des CLAUDE.md', () => {
-  it('VERT sur un arbre sain (sans ce cas, tous les autres sont vides de sens)', () => {
-    arbreSain()
+  cas('VERT sur un arbre sain (sans ce cas, tous les autres sont vides de sens)', () => {
     expect(vert()).toMatch(/2 CLAUDE\.md \+ \d+ doc/)
   })
-  it('compte REELLEMENT les fichiers : un CLAUDE.md de plus se voit dans le verdict', () => {
-    arbreSain()
+  cas('compte REELLEMENT les fichiers : un CLAUDE.md de plus se voit dans le verdict', () => {
     put('CLAUDE.md', `${RACINE_SAINE}| E2E | [\`e2e/CLAUDE.md\`](./e2e/CLAUDE.md) |\n`)
     put('e2e/CLAUDE.md', '# E2E\n')
     expect(vert()).toMatch(/3 CLAUDE\.md \+ \d+ doc/)
   })
-  it('ROUGE quand le CLAUDE.md racine depasse son plafond', () => {
-    arbreSain()
+  cas('ROUGE quand le CLAUDE.md racine depasse son plafond', () => {
     put('CLAUDE.md', `${RACINE_SAINE}${'x'.repeat(30_000)}`)
     rouge(/CLAUDE\.md pese \d+ o, au-dela du plafond/, /jamais relever la borne/)
   })
-  it('ROUGE quand un CLAUDE.md de DOSSIER depasse son plafond', () => {
-    arbreSain()
+  cas('ROUGE quand un CLAUDE.md de DOSSIER depasse son plafond', () => {
     put('src/modules/CLAUDE.md', `# Modules\n${'y'.repeat(20_000)}`)
     rouge(/src\/modules\/CLAUDE\.md pese/)
   })
-  it('le plafond de DOSSIER est plus bas que celui du racine', () => {
-    arbreSain()
+  cas('le plafond de DOSSIER est plus bas que celui du racine', () => {
     put('src/modules/CLAUDE.md', `# Modules\n${'z'.repeat(18_000)}`)
     expect(run().code).toBe(1)
     put('src/modules/CLAUDE.md', '# Modules\n')
     put('CLAUDE.md', `${RACINE_SAINE}${'z'.repeat(18_000)}`)
     vert()
   })
-  it('ROUGE quand un CLAUDE.md de dossier n est cite par AUCUN pointeur du racine', () => {
-    arbreSain()
+  cas('ROUGE quand un CLAUDE.md de dossier n est cite par AUCUN pointeur du racine', () => {
     put('src/lib/CLAUDE.md', '# Lib\n\nUne regle que personne ne trouvera.\n')
     rouge(/src\/lib\/CLAUDE\.md n est cite par aucun pointeur/, /invisible depuis toute autre zone/)
   })
-  it('ROUGE quand le racine pointe vers un CLAUDE.md qui n existe pas', () => {
-    arbreSain()
+  cas('ROUGE quand le racine pointe vers un CLAUDE.md qui n existe pas', () => {
     put('CLAUDE.md', `${RACINE_SAINE}| Parti | [\`src/disparu/CLAUDE.md\`](./src/disparu/CLAUDE.md) |\n`)
     rouge(/pointe vers \.\/src\/disparu\/CLAUDE\.md, qui n existe pas/)
   })
-  it('ROUGE quand un CLAUDE.md de dossier cite un docs/ qui n existe pas', () => {
-    arbreSain()
+  cas('ROUGE quand un CLAUDE.md de dossier cite un docs/ qui n existe pas', () => {
     put('src/modules/CLAUDE.md', '# Modules\n\nVoir [`docs/ABSENT.md`](../../docs/ABSENT.md).\n')
     rouge(/docs\/ABSENT\.md, qui n existe pas/)
   })
-  it('resout les liens depuis le dossier du fichier, pas depuis la racine', () => {
-    arbreSain()
+  cas('resout les liens depuis le dossier du fichier, pas depuis la racine', () => {
     put('src/modules/CLAUDE.md', '# Modules\n\nVoir [`docs/TESTING.md`](./docs/TESTING.md).\n')
     rouge(/qui n existe pas/)
   })
-  it('ignore les copies du depot (worktrees, skills, dependances)', () => {
-    arbreSain()
+  cas('ignore les copies du depot (worktrees, skills, dependances)', () => {
     put('.worktrees/autre/CLAUDE.md', `# Copie\n${'w'.repeat(40_000)}`)
     put('.claude/skills/design/CLAUDE.md', `# Skill\n${'s'.repeat(40_000)}`)
     put('node_modules/paquet/CLAUDE.md', `# Dependance\n${'n'.repeat(40_000)}`)
     expect(vert()).toMatch(/2 CLAUDE\.md \+ \d+ doc/)
   })
-  it('ROUGE quand un doc VIVANT de `docs/` porte un lien mort', () => {
-    arbreSain()
+  cas('ROUGE quand un doc VIVANT de `docs/` porte un lien mort', () => {
     put('docs/SECURITY.md', '# Securite' + NL + NL + 'Voir [`a-faire-code.md`](./a-faire-code.md).' + NL)
     rouge(/docs\/SECURITY\.md pointe vers \.\/a-faire-code\.md/)
   })
-  it('IGNORE les liens morts de `docs/archive/`, qui n est pas maintenu', () => {
-    arbreSain()
+  cas('IGNORE les liens morts de `docs/archive/`, qui n est pas maintenu', () => {
     put('docs/archive/AUDIT-2026-01-01.md', '# Vieil audit' + NL + NL + '[parti](./DISPARU.md)' + NL)
     vert()
   })
@@ -118,20 +108,17 @@ describe('check-docs-budget · plafonds et pointeurs des CLAUDE.md', () => {
 })
 
 describe('check-docs-budget · notes /100 (ADR 0012)', () => {
-  it('ROUGE sur le marqueur note-audit de l ancienne garde C-109', () => {
-    arbreSain()
+  cas('ROUGE sur le marqueur note-audit de l ancienne garde C-109', () => {
     put('docs/TESTING.md', '<!-- note-audit: note=94 -->' + NL + '# Tests' + NL)
     rouge(/note-audit/)
   })
-  it('ROUGE sur la phrase « Note d audit » et sur l en-tete de journal de notes', () => {
-    arbreSain()
+  cas('ROUGE sur la phrase « Note d audit » et sur l en-tete de journal de notes', () => {
     put('docs/TESTING.md', "> **Note d'audit** : x" + NL + '# Tests' + NL)
     expect(run().code).toBe(1)
     put('docs/TESTING.md', '# Tests' + NL + NL + '## Note de tests : 80 → 83 → **94 / 100**' + NL)
     rouge(/en-tete/)
   })
-  it('VERT sur un doc qui renvoie vers INDICATEURS.md, et IGNORE docs/archive/', () => {
-    arbreSain()
+  cas('VERT sur un doc qui renvoie vers INDICATEURS.md, et IGNORE docs/archive/', () => {
     put('docs/TESTING.md', '# Tests' + NL + NL + 'Etat de sante : [INDICATEURS](./INDICATEURS.md).' + NL)
     put('docs/INDICATEURS.md', '# Indicateurs' + NL)
     put('docs/archive/TESTING-journal.md', '## Note de tests : 80 → 94 / 100' + NL)
@@ -140,42 +127,36 @@ describe('check-docs-budget · notes /100 (ADR 0012)', () => {
 })
 
 describe('check-docs-budget · ancres', () => {
-  it('ROUGE quand un lien vise une ancre qui n existe plus (section deplacee en archive)', () => {
-    arbreSain()
+  cas('ROUGE quand un lien vise une ancre qui n existe plus (section deplacee en archive)', () => {
     put('docs/TESTING.md', '# Tests' + NL + NL + '## Boucle locale' + NL)
     put('docs/ARCHITECTURE.md', '# Archi' + NL + NL + 'Voir [la boucle](./TESTING.md#journal-des-notes).' + NL)
     rouge(/journal-des-notes/, /ancre/)
   })
-  it('VERT quand l ancre existe, emoji et ponctuation compris, et sur les liens internes #x', () => {
-    arbreSain()
+  cas('VERT quand l ancre existe, emoji et ponctuation compris, et sur les liens internes #x', () => {
     put('docs/TESTING.md', '# Tests' + NL + NL + '## 📋 Tableau de conformité (C-1) : état' + NL + NL + 'Retour : [haut](#-tableau-de-conformité-c-1--état).' + NL)
     put('docs/ARCHITECTURE.md', '# Archi' + NL + NL + 'Voir [le tableau](./TESTING.md#-tableau-de-conformité-c-1--état).' + NL)
     vert()
   })
-  it('une ancre dans un bloc de code n est pas un titre, et les doublons recoivent -1', () => {
-    arbreSain()
+  cas('une ancre dans un bloc de code n est pas un titre, et les doublons recoivent -1', () => {
     put('docs/TESTING.md', '# Tests' + NL + NL + '```bash' + NL + '# faux-titre' + NL + '```' + NL + NL + '## Suite' + NL + NL + '## Suite' + NL)
     put('docs/ARCHITECTURE.md', '# A' + NL + NL + '[a](./TESTING.md#suite) [b](./TESTING.md#suite-1)' + NL)
     vert()
     put('docs/ARCHITECTURE.md', '# A' + NL + NL + '[a](./TESTING.md#faux-titre)' + NL)
     expect(run().code).toBe(1)
   })
-  it('IGNORE docs/archive/ : une ancre y est une trace d epoque', () => {
-    arbreSain()
+  cas('IGNORE docs/archive/ : une ancre y est une trace d epoque', () => {
     put('docs/archive/X.md', '[a](../TESTING.md#absente)' + NL)
     vert()
   })
 })
 
 describe('check-docs-budget · convention des docs (regle 8, ADR 0021)', () => {
-  it('VERT sur un doc conforme : en-tete, date collee a un identifiant, ancre de section', () => {
-    arbreSain()
+  cas('VERT sur un doc conforme : en-tete, date collee a un identifiant, ancre de section', () => {
     putBrut('docs/archive/X-2026-01-02-au-2026-02-03.md', '# Archive' + NL)
     put('docs/SECURITY.md', doc('Recit : [`archive/X-2026-01-02-au-2026-02-03.md`](./archive/X-2026-01-02-au-2026-02-03.md), branche `noyau/2026-01-02`, § Coffre.'))
     vert()
   })
-  it('ROUGE sur une date AAAA-MM-JJ isolee, dans un CLAUDE.md comme dans docs/', () => {
-    arbreSain()
+  cas('ROUGE sur une date AAAA-MM-JJ isolee, dans un CLAUDE.md comme dans docs/', () => {
     put('docs/SECURITY.md', doc('Corrige le 2026-11-08.'))
     rouge(/docs\/SECURITY\.md : 1 date\(s\) AAAA-MM-JJ isolee/)
     put('docs/SECURITY.md', doc('Rien.'))
@@ -189,15 +170,13 @@ describe('check-docs-budget · convention des docs (regle 8, ADR 0021)', () => {
       rouge(/numero\(s\) de ligne/)
     }
   })
-  it('ROUGE sans en-tete « Quand lire / Fait foi », ou relegue sous la troisieme ligne', () => {
-    arbreSain()
+  cas('ROUGE sans en-tete « Quand lire / Fait foi », ou relegue sous la troisieme ligne', () => {
     putBrut('docs/SECURITY.md', '# Securite' + NL + NL + 'Regles.' + NL)
     rouge(/docs\/SECURITY\.md : pas d'en-tete/)
     putBrut('docs/SECURITY.md', '# Securite' + NL + 'a' + NL + 'b' + NL + 'c' + NL + EN_TETE + NL)
     rouge(/pas d'en-tete/)
   })
-  it('ROUGE au-dela du plafond de lignes, plus bas pour un CLAUDE.md que pour un doc', () => {
-    arbreSain()
+  cas('ROUGE au-dela du plafond de lignes, plus bas pour un CLAUDE.md que pour un doc', () => {
     put('docs/SECURITY.md', doc(lignes(200)))
     put('src/modules/CLAUDE.md', '# Modules' + NL + lignes(200) + NL)
     const r = run()
@@ -208,20 +187,17 @@ describe('check-docs-budget · convention des docs (regle 8, ADR 0021)', () => {
     put('docs/SECURITY.md', doc(lignes(320)))
     rouge(/docs\/SECURITY\.md : 32\d lignes, au-dela du plafond de 300/)
   })
-  it('ne juge ni docs/archive/ ni docs/adr/, dates et longueur comprises', () => {
-    arbreSain()
+  cas('ne juge ni docs/archive/ ni docs/adr/, dates et longueur comprises', () => {
     putBrut('docs/archive/X.md', 'Mesure du 2026-01-02, `Y.md:3`.' + NL)
     putBrut('docs/adr/0001-x.md', '# ADR' + NL + '- **Date** : 2026-01-02' + NL)
     vert()
   })
-  it('un fichier GENERE, un marqueur <!-- --> : leurs dates sont des donnees, pas un recit', () => {
-    arbreSain()
+  cas('un fichier GENERE, un marqueur <!-- --> : leurs dates sont des donnees, pas un recit', () => {
     putBrut('docs/INDICATEURS.md', '<!-- GENERE par x -->' + NL + '# Indicateurs' + NL + EN_TETE + NL + 'Mesure le 2026-01-02.' + NL)
     put('docs/SECURITY.md', '<!-- echeance: 2026-01-02 -->' + NL + doc('<!-- chantier: relu=2026-01-03 -->'))
     vert()
   })
-  it('datesLues : un doc lu par une garde garde ses dates, si le script lecteur le cite vraiment', () => {
-    arbreSain()
+  cas('datesLues : un doc lu par une garde garde ses dates, si le script lecteur le cite vraiment', () => {
     put('docs/SECURITY.md', doc('| 2026-01-02 | exercice |'))
     putBrut('scripts/lecteur.mjs', "const FILE = 'docs/SECURITY.md'" + NL)
     putBrut('docs/convention-exceptions.json', JSON.stringify({ fichiers: {}, datesLues: { 'docs/SECURITY.md': 'scripts/lecteur.mjs' } }))
@@ -229,22 +205,19 @@ describe('check-docs-budget · convention des docs (regle 8, ADR 0021)', () => {
     putBrut('scripts/lecteur.mjs', "const FILE = 'docs/AUTRE.md'" + NL)
     rouge(/datesLues declare docs\/SECURITY\.md lu par scripts\/lecteur\.mjs, qui ne le cite pas/, /1 date/)
   })
-  it('CLIQUET : une exception couvre sa mesure, pas un octet de plus', () => {
-    arbreSain()
+  cas('CLIQUET : une exception couvre sa mesure, pas un octet de plus', () => {
     putBrut('docs/SECURITY.md', '# Securite' + NL + 'Le 2026-01-01 et le 2026-01-02.' + NL)
     exceptions({ 'docs/SECURITY.md': { dates: 2, entete: false } })
     vert()
     putBrut('docs/SECURITY.md', '# Securite' + NL + 'Le 2026-01-01, le 2026-01-02 et le 2026-01-03.' + NL)
     rouge(/au-dela de sa mesure d'exception \(2\)/)
   })
-  it('CLIQUET : une exception devenue inutile doit etre retiree (la liste ne fait que baisser)', () => {
-    arbreSain()
+  cas('CLIQUET : une exception devenue inutile doit etre retiree (la liste ne fait que baisser)', () => {
     put('docs/SECURITY.md', doc('Conforme.'))
     exceptions({ 'docs/SECURITY.md': { dates: 3, entete: false } })
     rouge(/Retirer « dates »/, /Retirer « entete »/)
   })
-  it('CLIQUET : une exception de lignes ne remonte pas, et se retire sous le plafond', () => {
-    arbreSain()
+  cas('CLIQUET : une exception de lignes ne remonte pas, et se retire sous le plafond', () => {
     put('docs/SECURITY.md', doc(lignes(400)))
     exceptions({ 'docs/SECURITY.md': { lignes: 405 } })
     vert()
@@ -253,9 +226,17 @@ describe('check-docs-budget · convention des docs (regle 8, ADR 0021)', () => {
     put('docs/SECURITY.md', doc(lignes(10)))
     rouge(/Retirer « lignes »/)
   })
-  it('CLIQUET : une exception pour un fichier qui n est plus un doc vivant est refusee', () => {
-    arbreSain()
+  cas('CLIQUET : une exception pour un fichier qui n est plus un doc vivant est refusee', () => {
     exceptions({ 'docs/DISPARU.md': { entete: false } })
     rouge(/cite docs\/DISPARU\.md, qui n'est plus un doc vivant/)
+  })
+})
+
+describe('check-docs-budget · chemins et symboles cites (regle 9)', () => {
+  cas('ROUGE : fichier ou `f()` cites introuvables ; VERT une fois presents ; motif et bloc de code ignores', () => {
+    put('docs/A.md', '# A\n\n`src/lib/absent.ts:12` `fantome()` `src/**/*.ts` `nomDeFonction()`\n\n```\n`src/nulle.ts` `autre()`\n```\n')
+    rouge(/docs\/A\.md cite `src\/lib\/absent\.ts`, qui n'existe pas/, /cite `fantome\(\)`, introuvable/)
+    putBrut('src/lib/absent.ts', 'export const fantome = () => 1\n')
+    vert()
   })
 })
