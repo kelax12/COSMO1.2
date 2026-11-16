@@ -61,7 +61,7 @@
       "max-lines-per-function": [211]
     },
     "src/components/TaskSidebar.tsx": {
-      "max-lines-per-function": [405]
+      "max-lines-per-function": [403]
     },
     "src/components/TaskTable.tsx": {
       "complexity": [37],
