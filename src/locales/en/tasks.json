@@ -390,6 +390,9 @@
     "listNamePlaceholder": "List name..."
   },
   "dependencies": {
+    "addBlocker": "Add a blocking task",
+    "addBlocked": "Add a blocked task",
+    "noBlocked": "No task waits on this one.",
     "title": "Dependencies",
     "blockedBy": "Blocked by",
     "blocks": "Blocks",
@@ -474,8 +477,7 @@
   "snooze": {
     "menu": "Postpone",
     "tomorrow": "Tomorrow",
-    "weekend": "This weekend",
-    "nextWeek": "Next week",
+    "nextWeek": "In a week",
     "today": "Today",
     "chooseDate": "Pick a date"
   },
@@ -488,6 +490,9 @@
     "placeholder": "Search"
   },
   "board": {
+    "blockedBy": "Blocked by",
+    "blockedByNone": "No blocking task recorded.",
+    "blockedLockAria": "Blocked task: see what blocks it",
     "view": {
       "label": "View",
       "list": "List",

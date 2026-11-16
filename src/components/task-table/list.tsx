@@ -458,7 +458,7 @@ export const TaskRow = React.memo(({
           </span>
         )}
       </td>
-      <td className={`${addToListMode ? 'px-0' : 'px-2'} py-4 whitespace-nowrap text-base font-medium`}>
+      <td className={`${addToListMode ? 'px-0' : 'px-2'} py-4 whitespace-nowrap text-base font-medium text-center`}>
         {activeQuickFilter === 'completed'
           // `<time>` : une date relative à aujourd'hui (« dimanche », « 8 octobre »),
           // que la garde visuelle masque (`MASQUES`, e2e/visual-regression.spec.ts).

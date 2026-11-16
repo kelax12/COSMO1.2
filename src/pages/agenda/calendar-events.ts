@@ -3,7 +3,10 @@
 // Comportement déplacé verbatim depuis AgendaPage.tsx.
 import { expandRecurringEvents, type CalendarEvent } from '@/modules/events';
 import { toDisplayISO, type TimezonePref } from '@/lib/timezone';
-import { NO_CATEGORY_COLOR, displayCategoryColor, textOnCategoryColor } from '@/lib/category-colors';
+import { NO_CATEGORY_COLOR, displayCategoryColor } from '@/lib/category-colors';
+
+/** Titre d'un événement : toujours blanc (choix d'Axel, 2026-11-16), même si le contraste passe sous 4,5:1 sur les teintes claires. */
+export const EVENT_TEXT_COLOR = '#ffffff';
 
 // Durée par défaut (minutes) d'un événement créé en glissant une tâche depuis la
 // sidebar. Une tâche sans durée estimée a `estimatedTime = 0` (défaut du
@@ -107,7 +110,7 @@ export function buildCalendarEvents(
     end: event.end,
     backgroundColor: color,
     borderColor: color,
-    textColor: textOnCategoryColor(color),
+    textColor: EVENT_TEXT_COLOR,
     editable: !event.id.includes('::'),
     extendedProps: {
       notes: event.notes,
@@ -196,7 +199,7 @@ export function resolveDraggedTaskEventData(
     duration: { minutes: taskEventDurationMinutes(taskData.estimatedTime) },
     backgroundColor: catColor,
     borderColor: catColor,
-    textColor: textOnCategoryColor(catColor),
+    textColor: EVENT_TEXT_COLOR,
     extendedProps: {
       taskId: isTeamTask ? undefined : taskData.id,
       isTeamTask,

@@ -414,6 +414,9 @@
     "listNamePlaceholder": "Nom de la liste..."
   },
   "dependencies": {
+    "addBlocker": "Ajouter une tâche bloquante",
+    "addBlocked": "Ajouter une tâche bloquée",
+    "noBlocked": "Aucune tâche n'attend celle-ci.",
     "title": "Dépendances",
     "blockedBy": "Bloquée par",
     "blocks": "Bloque",
@@ -502,8 +505,7 @@
   "snooze": {
     "menu": "Reporter",
     "tomorrow": "Demain",
-    "weekend": "Ce week-end",
-    "nextWeek": "Semaine prochaine",
+    "nextWeek": "Dans une semaine",
     "today": "Aujourd'hui",
     "chooseDate": "Choisir"
   },
@@ -516,6 +518,9 @@
     "placeholder": "Rechercher"
   },
   "board": {
+    "blockedBy": "Bloquée par",
+    "blockedByNone": "Aucune tâche bloquante enregistrée.",
+    "blockedLockAria": "Tâche bloquée : voir ce qui la bloque",
     "view": {
       "label": "Affichage",
       "list": "Liste",

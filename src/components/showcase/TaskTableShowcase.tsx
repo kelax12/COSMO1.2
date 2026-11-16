@@ -132,7 +132,7 @@ const MENU_LIGNE = [
 const ITEM_H = 32;
 const MENU_L = 212;
 const MENU_HAUTEUR = 8 + (MENU_LIGNE.length + 1) * ITEM_H + 9; // + « Supprimer » + séparateur
-const REPORTS = ['Demain', 'Ce week-end', 'Semaine prochaine'] as const;
+const REPORTS = ['Demain', 'Dans une semaine'] as const;
 
 // ─── Jetons de couleur, relevés sur les thèmes réels de l'app ────
 interface Pastille { fond: string; texte: string; bord: string }

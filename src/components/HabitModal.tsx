@@ -166,7 +166,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
               ref={sheetRef}
               {...sheetDragProps}
               {...sheetMotion}
-              className="w-full sm:max-w-lg sm:rounded-2xl rounded-t-[28px] shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl flex flex-col max-h-[88vh]"
+              className="w-full sm:max-w-[35.2rem] sm:rounded-2xl rounded-t-[28px] shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl flex flex-col max-h-[88vh]"
               style={{
                 backgroundColor: 'rgb(var(--color-surface))',
                 paddingBottom: isMobile ? 0 : 'env(safe-area-inset-bottom)',
@@ -330,7 +330,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                           type="text"
                           value={formData.name}
                           onChange={(e) => { setFormData({ ...formData, name: e.target.value }); clear('name'); }}
-                          className={`w-full px-[0.875425rem] h-[2.407419rem] border rounded-lg focus:outline-none focus:ring-2 transition-colors text-[0.765997rem] ${
+                          className={`w-full px-[0.875425rem] h-[2.648161rem] border rounded-lg focus:outline-none focus:ring-2 transition-colors font-sans text-sm ${
                             isInvalid('name') ? 'border-red-500 focus:ring-red-500/40' : 'focus:ring-[rgb(var(--color-accent))] focus:border-[rgb(var(--color-accent))]'
                           }`}
                           style={{
@@ -350,7 +350,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                           type="number"
                           value={formData.estimatedTime}
                           onChange={(e) => setFormData({ ...formData, estimatedTime: Number(e.target.value) })}
-                          className="w-full px-[0.875425rem] h-[2.407419rem] border rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] focus:border-[rgb(var(--color-accent))] transition-colors text-[0.765997rem]"
+                          className="w-full px-[0.875425rem] h-[2.648161rem] border rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] focus:border-[rgb(var(--color-accent))] transition-colors font-sans text-sm"
                           style={{
                             backgroundColor: 'rgb(var(--color-surface))',
                             color: 'rgb(var(--color-text-primary))',

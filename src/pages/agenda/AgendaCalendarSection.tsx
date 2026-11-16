@@ -18,10 +18,9 @@ import { getDateLocale, getIntlTag } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import { useOrgMembers, useActiveOrganization } from '@/modules/organizations';
 import { useAuth } from '@/modules/auth/AuthContext';
-import { getInitialScrollTime, shiftEventsForDisplay, type FullCalendarEvent } from './calendar-events';
+import { EVENT_TEXT_COLOR, getInitialScrollTime, shiftEventsForDisplay, type FullCalendarEvent } from './calendar-events';
 import { dayCellNameFromContent } from '@/lib/fullcalendar-a11y';
 import { useTimezonePref, displayNow } from '@/lib/timezone';
-import { textOnColor } from '@/lib/category-colors';
 import { type MobileView, mobileCalendarStyles, MobileDayStrip } from './MobileAgenda';
 import type { MobileZoomOrder } from './useAgendaMobileView';
 import { useFocusableScrollers } from './useFocusableScrollers';
@@ -66,8 +65,8 @@ interface AgendaCalendarSectionProps {
   renderReviewBadge?: (eventId: string) => React.ReactNode;
 }
 
-/** Couleur du titre d'un événement mobile sur l'aplat de sa couleur : le choix vit dans `textOnColor` (4,5:1, AM-5). */
-const eventTextColor = textOnColor;
+/** Titre d'un événement mobile : blanc, comme sur le bureau (`EVENT_TEXT_COLOR`). */
+const eventTextColor = (_color: string) => EVENT_TEXT_COLOR;
 
 /** Repli d'un événement sans couleur : l'accent PLEIN et son texte prévu. */
 const FALLBACK_EVENT_BG = 'rgb(var(--color-accent-solid))';

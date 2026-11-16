@@ -156,7 +156,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
   createListMutation, deleteListMutation,
   clearListFilter, handleListSelect, startSelectingTasks, confirmAddTasksToList, cancelSelectingTasks,
   startEditList, cancelEditList, submitEditList, handleToggleDefault, handleReorderLists, commitReorderLists,
-  handleCreateSmartList, startChipLongPress, cancelChipLongPress, openListActions, compactTop = false,
+  handleCreateSmartList, startChipLongPress, cancelChipLongPress, openListActions, compactTop = true,
   onShareList,
 }) => {
   const { t, tp } = useT('tasks');

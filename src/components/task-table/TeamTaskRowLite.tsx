@@ -9,7 +9,8 @@
 import React from 'react';
 import { Link } from 'react-router';
 import { UsersRound, ArrowUpRight } from 'lucide-react';
-import type { TeamProject, TeamProjectHealth, TeamTask } from '@/modules/team-projects';
+import { useTeamTaskDependencies, useTeamTasks, type TeamProject, type TeamProjectHealth, type TeamTask } from '@/modules/team-projects';
+import BlockedLock from './BlockedLock';
 import { isTaskOverdue, projectColor, taskDisplayStatus } from '@/components/organization/team-projects.helpers';
 import { formatDeadlineSmart, formatDuration } from './helpers';
 import { useT } from '@/i18n/useT';
@@ -25,12 +26,25 @@ interface TeamTaskRowLiteProps {
   editReason?: string;
 }
 
+/** Monté seulement pour une tâche bloquée : le graphe d'équipe n'est lu que là. */
+const TeamBlockedLock = ({ task }: { task: TeamTask }) => {
+  const { data: deps = [] } = useTeamTaskDependencies(task.orgId);
+  const { data: orgTasks = [] } = useTeamTasks(task.orgId);
+  const blockers = deps
+    .filter((d) => d.taskId === task.id)
+    .map((d) => orgTasks.find((x) => x.id === d.dependsOnId))
+    .filter((x): x is TeamTask => !!x)
+    .map((x) => ({ id: x.id, name: x.name, completed: x.completed }));
+  return <BlockedLock blockers={blockers} />;
+};
+
 export const TeamTaskRowLite = React.memo(({ task, project, onToggleComplete, onEdit, onSetHealth, editReason }: TeamTaskRowLiteProps) => {
   const { t } = useT('tasks');
   const { t: tOrg } = useT('org');
   const overdue = isTaskOverdue(task);
   const color = project ? projectColor(project.color) : projectColor('blue');
   const status = taskDisplayStatus(task);
+  const isBlocked = task.status === 'blocked' && !task.completed;
 
   return (
     <tr
@@ -72,10 +86,14 @@ export const TeamTaskRowLite = React.memo(({ task, project, onToggleComplete, on
           <span className="inline-flex items-center gap-1 text-caption font-semibold px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 shrink-0">
             <UsersRound size={10} aria-hidden="true" /> {t('team.badge')}
           </span>
-          <span className="inline-flex items-center gap-1.5 text-caption shrink-0" style={{ color: 'rgb(var(--color-text-muted))' }}>
-            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${status.dot}`} aria-hidden="true" />
-            {tOrg(status.labelKey as Parameters<typeof tOrg>[0])}
-          </span>
+          {isBlocked ? (
+            <TeamBlockedLock task={task} />
+          ) : (
+            <span className="inline-flex items-center gap-1.5 text-caption shrink-0" style={{ color: 'rgb(var(--color-text-muted))' }}>
+              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${status.dot}`} aria-hidden="true" />
+              {tOrg(status.labelKey as Parameters<typeof tOrg>[0])}
+            </span>
+          )}
         </div>
       </td>
       <td className="px-1 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
@@ -98,7 +116,7 @@ export const TeamTaskRowLite = React.memo(({ task, project, onToggleComplete, on
           {task.priority}
         </span>
       </td>
-      <td className="px-2 py-4 whitespace-nowrap text-base font-medium">
+      <td className="text-center px-2 py-4 whitespace-nowrap text-base font-medium">
         {task.deadline
           ? <span className={overdue ? 'text-[rgb(var(--color-danger-text))] font-semibold' : ''}>{formatDeadlineSmart(task.deadline)}</span>
           : <span className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>{t('card.noDeadline')}</span>}

@@ -76,7 +76,7 @@ const TaskTableDesktop = ({
               {arrow('priority')}
             </th>
             <th
-              className="cursor-pointer px-2 py-3"
+              className="cursor-pointer text-center px-2 py-3"
               onClick={() => sortBy('deadline')}
               style={{ width: '100px' }}
             >

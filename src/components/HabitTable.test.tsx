@@ -99,8 +99,8 @@ describe('HabitTable', () => {
     expect(screen.getAllByRole('checkbox')).toHaveLength(30);
     fireEvent.click(periodButtons[2]);
     expect(screen.getAllByRole('checkbox').length).toBeGreaterThanOrEqual(40);
-    // Période « tout » : plus de boutons précédent / suivant.
+    // Période « tout » : plus de boutons précédent / suivant (3 périodes + le nom de l'habitude, qui ouvre l'édition).
     const buttonsWithoutCells = screen.getAllByRole('button');
-    expect(buttonsWithoutCells).toHaveLength(3);
+    expect(buttonsWithoutCells).toHaveLength(4);
   });
 });

@@ -6,6 +6,7 @@ import { habitStreak } from '@/modules/habits/streak';
 import { isHabitScheduledOn } from '@/modules/habits/schedule';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/i18n/format';
+import HabitModal from './HabitModal';
 
 const colorOptions = [
 { value: 'blue', color: '#3B82F6' },
@@ -35,6 +36,24 @@ const dayCell = (habit: Habit, day: { date: string; isToday: boolean; isFuture: 
     opacity: unscheduled ? 0.5 : 1,
   };
   return { done, unscheduled, locked, labelKey, style };
+};
+
+/** Nom d'une habitude en vue tableau : un clic ouvre sa modale d'édition (montée à l'ouverture seulement). */
+const HabitNameButton = ({ habit }: { habit: Habit }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="block max-w-full text-left font-medium truncate text-caption md:text-sm leading-tight rounded hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+        style={{ color: 'rgb(var(--color-text-primary))' }}
+      >
+        {habit.name}
+      </button>
+      {open && <HabitModal isOpen onClose={() => setOpen(false)} habit={habit} />}
+    </>
+  );
 };
 
 const HabitTable: React.FC = () => {
@@ -458,7 +477,7 @@ const HabitTable: React.FC = () => {
                         style={{ backgroundColor: habit.color.startsWith('#') ? habit.color : (colorOptions.find((c) => c.value === habit.color)?.color ?? '#3B82F6') }} />
 
                       <div className="min-w-0">
-                        <div className="font-medium truncate text-caption md:text-sm leading-tight" style={{ color: 'rgb(var(--color-text-primary))' }}>{habit.name}</div>
+                        <HabitNameButton habit={habit} />
                         <div className="hidden md:flex text-xs items-center gap-2 mt-0.5" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                           <span>{habit.estimatedTime} min</span>
                         </div>

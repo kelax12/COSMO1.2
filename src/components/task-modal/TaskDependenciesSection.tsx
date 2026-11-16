@@ -1,5 +1,6 @@
 import { Suspense, useMemo, useState } from 'react';
-import { AlertTriangle, Link2, Plus, X } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Link2, Lock, Plus, X } from 'lucide-react';
+import type { DependencyDirection } from '@/lib/dependency-graph';
 import {
   useRemoveTaskDependency,
   useTaskDependencies,
@@ -56,6 +57,8 @@ const TaskDependenciesSection = ({ taskId, readOnly = false, alwaysOpen = false 
   const [openState, setOpen] = useState(false);
   const open = alwaysOpen || openState;
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerDirection, setPickerDirection] = useState<DependencyDirection>('blockedBy');
+  const openPicker = (direction: DependencyDirection) => { setPickerDirection(direction); setPickerOpen(true); };
 
   const { data: dependencies = [] } = useTaskDependencies();
   const removeDependency = useRemoveTaskDependency();
@@ -107,19 +110,18 @@ const TaskDependenciesSection = ({ taskId, readOnly = false, alwaysOpen = false 
 
   const unfinishedBlockers = blockedBy.filter((x) => !x.completed).length;
 
-  const row = (item: Task, direction: 'blockedBy' | 'blocks') => (
-    <li key={`${direction}-${item.id}`} className="flex items-center gap-2 py-1">
+  const row = (item: Task, direction: DependencyDirection) => (
+    <li
+      key={`${direction}-${item.id}`}
+      className="flex items-center gap-2 min-h-11 pl-3 pr-1 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]"
+    >
       <span
-        className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-          item.completed ? 'bg-emerald-500' : 'bg-[rgb(var(--color-text-muted))]'
-        }`}
+        className={`w-2 h-2 rounded-full shrink-0 ${item.completed ? 'bg-emerald-500' : 'bg-[rgb(var(--color-text-muted))]'}`}
         aria-hidden="true"
       />
       <span
-        className={`text-xs flex-1 truncate ${
-          item.completed
-            ? 'text-[rgb(var(--color-text-muted))] line-through'
-            : 'text-[rgb(var(--color-text-primary))]'
+        className={`flex-1 min-w-0 truncate text-sm ${
+          item.completed ? 'text-[rgb(var(--color-text-muted))] line-through' : 'text-[rgb(var(--color-text-primary))]'
         }`}
       >
         {item.name}
@@ -135,13 +137,43 @@ const TaskDependenciesSection = ({ taskId, readOnly = false, alwaysOpen = false 
             )
           }
           aria-label={t('dependencies.remove')}
-          className="shrink-0 text-[rgb(var(--color-text-muted))] hover:text-red-500 transition-colors"
+          className="shrink-0 w-9 h-9 rounded-md inline-flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-[rgb(var(--color-hover))] transition-colors"
         >
-          <X size={12} aria-hidden="true" />
+          <X size={14} aria-hidden="true" />
         </button>
       )}
     </li>
   );
+
+  // Deux colonnes, comme la fiche entreprise (`TeamTaskDependencyColumns`) :
+  // chaque « + » ouvre le sélecteur déjà orienté, qui sait aussi CRÉER la tâche.
+  const column = (direction: DependencyDirection, items: Task[]) => {
+    const blocking = direction === 'blockedBy';
+    const Icon = blocking ? Lock : ArrowRight;
+    return (
+      <section aria-label={blocking ? t('dependencies.blockedBy') : t('dependencies.blocks')} className="min-w-0">
+        <h4 className="flex items-center gap-1.5 mb-2 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
+          <Icon size={12} aria-hidden="true" />
+          {blocking ? t('dependencies.blockedBy') : t('dependencies.blocks')}
+          <span className="tabular-nums">· {items.length}</span>
+        </h4>
+        {items.length === 0 ? (
+          <p className="text-xs text-[rgb(var(--color-text-muted))] py-2">{blocking ? t('dependencies.none') : t('dependencies.noBlocked')}</p>
+        ) : (
+          <ul className="space-y-1.5">{items.map((x) => row(x, direction))}</ul>
+        )}
+        {!locked && (
+          <button
+            type="button"
+            onClick={() => openPicker(direction)}
+            className="mt-2 inline-flex items-center gap-1 min-h-9 px-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+          >
+            <Plus size={13} aria-hidden="true" /> {blocking ? t('dependencies.addBlocker') : t('dependencies.addBlocked')}
+          </button>
+        )}
+      </section>
+    );
+  };
 
   return (
     <div className={alwaysOpen ? '' : 'pt-3 border-t border-[rgb(var(--color-border))]'}>
@@ -168,54 +200,12 @@ const TaskDependenciesSection = ({ taskId, readOnly = false, alwaysOpen = false 
           </span>
         )}
       </button>
-      {alwaysOpen && !locked && (
-        <button
-          type="button"
-          onClick={() => setPickerOpen(true)}
-          className="shrink-0 inline-flex items-center gap-1 text-xs font-semibold text-blue-500 hover:text-blue-600 transition-colors"
-        >
-          <Plus size={12} aria-hidden="true" /> {t('dependencies.add')}
-        </button>
-      )}
       </div>
 
       {open && (
-        <div className="mt-2 space-y-3">
-          <div>
-            <p className="text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-0.5">
-              {t('dependencies.blockedBy')}
-            </p>
-            {blockedBy.length === 0 ? (
-              <p className="text-xs text-[rgb(var(--color-text-muted))]">
-                {t('dependencies.none')}
-              </p>
-            ) : (
-              <ul>{blockedBy.map((x) => row(x, 'blockedBy'))}</ul>
-            )}
-          </div>
-
-          {blocks.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-0.5">
-                {t('dependencies.blocks')}
-              </p>
-              <ul>{blocks.map((x) => row(x, 'blocks'))}</ul>
-            </div>
-          )}
-
-          {/* Toujours proposé, même quand il n'y a aucune autre tâche : la
-              popup sait en créer une, et un bouton qui disparaît quand il n'y
-              a « rien à choisir » supprime précisément le chemin dont on a
-              besoin ce jour-là. */}
-          {!locked && !alwaysOpen && (
-            <button
-              type="button"
-              onClick={() => setPickerOpen(true)}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-blue-500 hover:text-blue-600 transition-colors"
-            >
-              <Plus size={12} aria-hidden="true" /> {t('dependencies.add')}
-            </button>
-          )}
+        <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {column('blockedBy', blockedBy)}
+          {column('blocks', blocks)}
         </div>
       )}
 
@@ -227,6 +217,7 @@ const TaskDependenciesSection = ({ taskId, readOnly = false, alwaysOpen = false 
             task={task}
             tasks={sameAccountTasks}
             dependencies={dependencies}
+            initialDirection={pickerDirection}
           />
         </Suspense>
       )}

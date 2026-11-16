@@ -32,6 +32,8 @@ interface TaskDependencyPickerProps {
   /** Toutes mes tâches. */
   tasks: Task[];
   dependencies: TaskDependency[];
+  /** Sens ouvert d'emblée : le « + » de chaque colonne oriente le sélecteur. */
+  initialDirection?: DependencyDirection;
 }
 
 type Mode = 'pick' | 'create';
@@ -67,13 +69,13 @@ const TaskDependencyPicker = ({
   onClose,
   task,
   tasks,
-  dependencies,
+  dependencies, initialDirection = 'blockedBy',
 }: TaskDependencyPickerProps) => {
   const { t, tp } = useT('tasks');
   const { data: categories = [] } = useCategories();
 
   const [mode, setMode] = useState<Mode>('pick');
-  const [direction, setDirection] = useState<DependencyDirection>('blockedBy');
+  const [direction, setDirection] = useState<DependencyDirection>(initialDirection);
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<string[]>([]);
   const [newName, setNewName] = useState('');
@@ -94,7 +96,7 @@ const TaskDependencyPicker = ({
     setOpenedAt(open);
     if (open) {
       setMode('pick');
-      setDirection('blockedBy');
+      setDirection(initialDirection);
       setQuery('');
       setSelected([]);
       setNewName('');

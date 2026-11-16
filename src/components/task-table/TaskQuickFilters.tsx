@@ -155,7 +155,7 @@ const TaskQuickFilters: React.FC<Props> = ({
           <div
             role="group"
             aria-label={t('table.quickFilter.scopeAria')}
-            className="inline-flex items-center rounded-lg border border-[rgb(var(--color-border))] p-0.5"
+            className="ml-auto inline-flex items-center rounded-lg border border-[rgb(var(--color-border))] p-0.5"
           >
             {(['all', 'perso', 'entreprise'] as const).map((value) => (
               <button
@@ -174,7 +174,7 @@ const TaskQuickFilters: React.FC<Props> = ({
             ))}
           </div>
         )}
-        {trailing && <div className="ml-auto">{trailing}</div>}
+        {trailing && <div className={orgId ? "" : "ml-auto"}>{trailing}</div>}
       </div>
     </div>
   );

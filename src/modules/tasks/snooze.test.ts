@@ -22,31 +22,15 @@ describe('getSnoozeOptions', () => {
   ];
 
   it.each(ZONES)(
-    '%s : mercredi → demain jeudi, week-end samedi, semaine prochaine lundi',
+    '%s : mercredi → demain jeudi, dans une semaine mercredi suivant',
     (_l, offset) => {
       const pref = manual(offset);
-      const [tomorrow, weekend, nextWeek] = getSnoozeOptions(wednesday, pref);
-      expect(dayOf(tomorrow.deadline, pref)).toBe('2026-07-02');
-      expect(dayOf(weekend.deadline, pref)).toBe('2026-07-04');
-      expect(dayOf(nextWeek.deadline, pref)).toBe('2026-07-06');
+      const options = getSnoozeOptions(wednesday, pref);
+      expect(options.map((o) => o.id)).toEqual(['tomorrow', 'next-week']);
+      expect(dayOf(options[0].deadline, pref)).toBe('2026-07-02');
+      expect(dayOf(options[1].deadline, pref)).toBe('2026-07-08');
     },
   );
-
-  it("samedi → week-end = samedi suivant (jamais aujourd'hui)", () => {
-    const pref = manual(-4);
-    const saturday = new Date('2026-07-04T12:00:00.000Z');
-    const [tomorrow, weekend, nextWeek] = getSnoozeOptions(saturday, pref);
-    expect(dayOf(tomorrow.deadline, pref)).toBe('2026-07-05');
-    expect(dayOf(weekend.deadline, pref)).toBe('2026-07-11');
-    expect(dayOf(nextWeek.deadline, pref)).toBe('2026-07-06');
-  });
-
-  it('lundi → semaine prochaine = lundi suivant', () => {
-    const pref = manual(2);
-    const monday = new Date('2026-07-06T12:00:00.000Z');
-    const [, , nextWeek] = getSnoozeOptions(monday, pref);
-    expect(dayOf(nextWeek.deadline, pref)).toBe('2026-07-13');
-  });
 
   it("rend le JOUR du fuseau retenu (DAT-01), jamais un instant", () => {
     // Régression R-01 : le jour est celui du fuseau choisi (UTC-4), et c'est
