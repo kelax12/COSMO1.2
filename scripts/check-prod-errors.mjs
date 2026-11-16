@@ -76,11 +76,11 @@ export const PAGES_MAX_VERCEL = 20;
 export const FAMILLES = ['5xx', 'sonde_uptime', 'sonde_edge', 'refus_auth', 'webhook_non_signe', '4xx_metier'];
 
 /**
- * Les 401 que la sonde `uptime.yml` provoque EXPRÈS : sans `apikey`, la
- * passerelle répond 401, et c'est sa preuve de vie (deux fois par heure,
- * relances comprises). Ils forment leur propre famille : comptés avec les
- * refus d'authentification, ils en feraient plus de 90 % et noieraient un
- * vrai pic de mots de passe refusés.
+ * Les 401 d'un appel ANONYME à `/auth/v1/health` et `/rest/v1/` (sans `apikey`,
+ * la passerelle répond 401 : preuve de vie). Famille à part : avec les refus
+ * d'authentification, ils noieraient un vrai pic de mots de passe refusés.
+ * ⚠️ L'émetteur n'est PAS distingué (`uptime.yml`, sonde pg_cron avant la 257,
+ * préchauffage de `src/main.tsx`, `smoke-prod.yml`) : `_notes.sonde_uptime`.
  */
 export const SONDES_UPTIME = new Set(['/auth/v1/health 401', '/rest/v1/ 401']);
 
