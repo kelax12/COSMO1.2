@@ -6,6 +6,7 @@ import { habitStreak } from '@/modules/habits/streak';
 import { isHabitScheduledOn } from '@/modules/habits/schedule';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/i18n/format';
+import { createPortal } from 'react-dom';
 import HabitModal from './HabitModal';
 
 const colorOptions = [
@@ -38,7 +39,10 @@ const dayCell = (habit: Habit, day: { date: string; isToday: boolean; isFuture: 
   return { done, unscheduled, locked, labelKey, style };
 };
 
-/** Nom d'une habitude en vue tableau : un clic ouvre sa modale d'édition (montée à l'ouverture seulement). */
+/**
+ * Nom d'une habitude en vue tableau : un clic ouvre sa modale d'édition (montée à l'ouverture seulement).
+ * Portail vers `body` : rendue dans la cellule collante, la colonne sticky des autres lignes passait par-dessus.
+ */
 const HabitNameButton = ({ habit }: { habit: Habit }) => {
   const [open, setOpen] = useState(false);
   return (
@@ -51,7 +55,7 @@ const HabitNameButton = ({ habit }: { habit: Habit }) => {
       >
         {habit.name}
       </button>
-      {open && <HabitModal isOpen onClose={() => setOpen(false)} habit={habit} />}
+      {open && createPortal(<HabitModal isOpen onClose={() => setOpen(false)} habit={habit} />, document.body)}
     </>
   );
 };
