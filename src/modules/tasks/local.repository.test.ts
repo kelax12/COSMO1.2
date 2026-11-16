@@ -220,6 +220,16 @@ describe('dépendances', () => {
     expect(dependencyErrorCode(err)).toBe(DEPENDENCY_ERRORS.taskMissing);
   });
 
+  it('lie deux tâches partagées par le MÊME ami (mig. 262), refuse entre comptes', async () => {
+    await repo.getAll();
+    await repo.addDependency('shared-001', 't011'); // Marie → Marie
+    expect(await repo.getDependencies()).toContainEqual({ taskId: 'shared-001', dependsOnId: 't011' });
+    const autreAmi = await repo.addDependency('t011', 't012').catch((e) => e); // Marie / Jean
+    expect(dependencyErrorCode(autreAmi)).toBe(DEPENDENCY_ERRORS.crossAccount);
+    const versMoi = await repo.addDependency('t011', 't013').catch((e) => e); // Marie / moi
+    expect(dependencyErrorCode(versMoi)).toBe(DEPENDENCY_ERRORS.crossAccount);
+  });
+
   it('refuse un cycle INDIRECT, comme le trigger', async () => {
     await repo.getAll();
     // t013 ← t002 ← t003 : rendre t013 dépendante de t003 referme la boucle.

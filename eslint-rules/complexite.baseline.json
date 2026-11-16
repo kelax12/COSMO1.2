@@ -319,9 +319,6 @@
       "complexity": [54],
       "max-lines-per-function": [431]
     },
-    "src/components/task-modal/TaskDependenciesSection.tsx": {
-      "complexity": [21]
-    },
     "src/components/task-modal/TaskDependencyPicker.tsx": {
       "max-lines-per-function": [414]
     },

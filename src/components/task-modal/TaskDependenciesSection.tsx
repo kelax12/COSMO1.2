@@ -25,10 +25,9 @@ interface TaskDependenciesSectionProps {
    */
   taskId: string;
   /**
-   * Lecture seule — une tâche partagée dont je ne suis pas propriétaire.
-   * Le graphe personnel appartient à son propriétaire (mig. 132), donc en
-   * pratique la section n'est même pas montée dans ce cas ; la prop existe
-   * pour que l'appelant puisse afficher sans risquer un 403.
+   * Lecture seule, à la main de l'appelant. Une tâche partagée n'est PAS
+   * verrouillée d'office : son collaborateur peut la lier aux autres tâches
+   * que le même propriétaire lui a partagées (mig. 262).
    */
   readOnly?: boolean;
   /**
@@ -71,21 +70,24 @@ const TaskDependenciesSection = ({ taskId, readOnly = false, alwaysOpen = false 
 
   const byId = useMemo(() => new Map(allTasks.map((x) => [x.id, x])), [allTasks]);
   const task = byId.get(taskId);
-  // `useTasks` rend aussi les tâches qu'un ami m'a partagées : elles vivent
-  // dans SON compte, et le trigger de la mig. 137 refuse une arête entre deux
-  // comptes (`dependency_cross_account`). On ne propose donc que les tâches du
-  // même propriétaire que la tâche ouverte.
+  // Le trigger de la mig. 137 refuse une arête entre deux comptes
+  // (`dependency_cross_account`) : on ne propose que les tâches du même
+  // propriétaire que la tâche ouverte. Pour une tâche qu'un ami m'a partagée,
+  // ce sont les autres tâches que CE MÊME ami m'a partagées (mig. 262) : je ne
+  // vois rien d'autre de son compte. Sans `userId` (démo), le nom du partageur
+  // tient lieu de propriétaire.
   const sameAccountTasks = useMemo(
     () =>
       task
         ? allTasks.filter((x) =>
-            x.userId && task.userId ? x.userId === task.userId : !x.sharedBy === !task.sharedBy,
+            x.userId && task.userId ? x.userId === task.userId : (x.sharedBy ?? null) === (task.sharedBy ?? null),
           )
         : [],
     [allTasks, task],
   );
-  // Une tâche partagée par un ami : son graphe appartient à son propriétaire.
-  const locked = readOnly || !!task?.sharedBy;
+  // Une tâche partagée reste modifiable par son collaborateur (mig. 262 : arête
+  // permise quand il a un partage accepté sur les deux tâches).
+  const locked = readOnly;
 
   const blockedBy = useMemo(
     () =>

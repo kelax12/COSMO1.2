@@ -366,8 +366,16 @@ export class LocalStorageTasksRepository implements ITasksRepository {
       throw makeDependencyError(DEPENDENCY_ERRORS.cycle);
     }
     const tasks = this.getTasks();
-    if (!tasks.some(t => t.id === taskId) || !tasks.some(t => t.id === dependsOnId)) {
+    const blocked = tasks.find(t => t.id === taskId);
+    const blocking = tasks.find(t => t.id === dependsOnId);
+    if (!blocked || !blocking) {
       throw makeDependencyError(DEPENDENCY_ERRORS.taskMissing);
+    }
+    // Parité `validate_task_dependency` (mig. 137) : une arête reste dans un
+    // compte. En démo, le propriétaire d'une tâche reçue est son partageur
+    // (`sharedBy`) ; deux tâches du même ami se lient (mig. 262).
+    if ((blocked.sharedBy ?? null) !== (blocking.sharedBy ?? null)) {
+      throw makeDependencyError(DEPENDENCY_ERRORS.crossAccount);
     }
     const edges = this.getDependencyEdges();
     if (edges.some(d => d.taskId === taskId && d.dependsOnId === dependsOnId)) return;
