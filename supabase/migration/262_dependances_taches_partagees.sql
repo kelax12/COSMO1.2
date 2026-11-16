@@ -37,8 +37,8 @@
 --   · ne répond QUE si l'appelant voit les deux tâches (propriétaire ou partage
 --     accepté), sinon rend `false` sans lire le graphe ;
 --   · ne parcourt que les arêtes du propriétaire de la tâche bloquée.
--- Fuite résiduelle assumée : un bit (« un chemin existe ») entre deux tâches que
--- l'appelant voit déjà. Préférée à un graphe cyclique en base.
+-- Appel direct (hors trigger) : rend toujours false. Fuite résiduelle assumée,
+-- au seul INSERT editor : un bit (« un chemin existe »). Préférée à un cycle.
 -- Le trigger reste SECURITY INVOKER, REVOKE pour anon et authenticated.
 --
 -- Idempotente (CREATE OR REPLACE / DROP POLICY IF EXISTS).
@@ -59,7 +59,10 @@ DECLARE
   v_uid   uuid := auth.uid();
   v_owner uuid;
 BEGIN
-  IF v_uid IS NULL THEN
+  -- Hors trigger (appel RPC direct), on ne répond rien : la fonction n'est pas
+  -- un oracle autonome sur le graphe du propriétaire. Seul un INSERT réel, qui
+  -- exige déjà le rôle editor sur les deux tâches, en lit le résultat.
+  IF v_uid IS NULL OR pg_trigger_depth() < 1 THEN
     RETURN false;
   END IF;
 

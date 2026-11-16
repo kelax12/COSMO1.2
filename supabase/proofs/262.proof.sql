@@ -65,8 +65,8 @@ BEGIN
 --   · ne répond QUE si l'appelant voit les deux tâches (propriétaire ou partage
 --     accepté), sinon rend `false` sans lire le graphe ;
 --   · ne parcourt que les arêtes du propriétaire de la tâche bloquée.
--- Fuite résiduelle assumée : un bit (« un chemin existe ») entre deux tâches que
--- l'appelant voit déjà. Préférée à un graphe cyclique en base.
+-- Appel direct (hors trigger) : rend toujours false. Fuite résiduelle assumée,
+-- au seul INSERT editor : un bit (« un chemin existe »). Préférée à un cycle.
 -- Le trigger reste SECURITY INVOKER, REVOKE pour anon et authenticated.
 --
 -- Idempotente (CREATE OR REPLACE / DROP POLICY IF EXISTS).
@@ -86,7 +86,10 @@ DECLARE
   v_uid   uuid := auth.uid();
   v_owner uuid;
 BEGIN
-  IF v_uid IS NULL THEN
+  -- Hors trigger (appel RPC direct), on ne répond rien : la fonction n'est pas
+  -- un oracle autonome sur le graphe du propriétaire. Seul un INSERT réel, qui
+  -- exige déjà le rôle editor sur les deux tâches, en lit le résultat.
+  IF v_uid IS NULL OR pg_trigger_depth() < 1 THEN
     RETURN false;
   END IF;
 
@@ -275,9 +278,9 @@ $mig$;
     ko := ko + 1; r := r || 'ECHEC viewer ecrit'::text;
   EXCEPTION WHEN OTHERS THEN r := r || 'ok viewer ne cree pas'::text; END;
 
-  IF public.task_dependency_would_cycle(t_b, t_p) THEN
-    ko := ko + 1; r := r || 'ECHEC would_cycle repond sur tache invisible'::text;
-  ELSE r := r || 'ok would_cycle muet hors perimetre'::text; END IF;
+  IF public.task_dependency_would_cycle(t_b, t_a) THEN
+    ko := ko + 1; r := r || 'ECHEC would_cycle repond hors trigger'::text;
+  ELSE r := r || 'ok would_cycle muet hors trigger'::text; END IF;
 
   DELETE FROM public.task_dependencies WHERE task_id = t_a AND depends_on_id = t_p;
   GET DIAGNOSTICS nb = ROW_COUNT;
