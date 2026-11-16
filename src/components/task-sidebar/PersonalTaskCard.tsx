@@ -7,7 +7,7 @@
 // `TaskContextMenu`, monté une seule fois par TaskSidebar via portal), ni la
 // modale d'édition — il ne fait que déclencher leur ouverture via les props.
 import React from 'react';
-import { Bookmark, CheckCircle2, Clock, MoreHorizontal } from 'lucide-react';
+import { Bookmark, CalendarDays, CheckCircle2, Clock, MoreHorizontal } from 'lucide-react';
 import type { Task } from '@/modules/tasks';
 import type { Friend } from '@/modules/friends';
 import CollaboratorAvatars from '../CollaboratorAvatars';
@@ -20,7 +20,6 @@ interface PersonalTaskCardProps {
   isPlaced: boolean;
   isFirst: boolean;
   categoryColor: string;
-  categoryLabel: string;
   priorityClassName: string;
   collaboratorIds: string[];
   friends: Friend[];
@@ -34,11 +33,13 @@ interface PersonalTaskCardProps {
 }
 
 const PersonalTaskCard: React.FC<PersonalTaskCardProps> = ({
-  task, isPlaced, isFirst, categoryColor, categoryLabel, priorityClassName,
+  task, isPlaced, isFirst, categoryColor, priorityClassName,
   collaboratorIds, friends, formatDuration, onOpen, onOpenContextMenu,
   onDragStart, onLongPressStart, onPressMove, onPressEnd,
 }) => {
   const { t } = useT('agenda');
+  const deadlineDate = task.deadline ? formatDate(deadlineLocalDate(task.deadline) ?? new Date()) : '';
+  const deadlineText = t('sidebar.deadline', { date: deadlineDate });
 
   return (
     <div
@@ -51,13 +52,12 @@ const PersonalTaskCard: React.FC<PersonalTaskCardProps> = ({
         const y = Math.min(e.clientY, window.innerHeight - 200);
         onOpenContextMenu(Math.max(8, x), Math.max(8, y));
       }}
-      className={`external-event rounded-lg p-3 border group select-none ${
+      className={`external-event rounded-lg py-3 pr-3 pl-5 border group select-none ${
         isPlaced ? 'opacity-50 cursor-not-allowed' : 'cursor-move hover:shadow-md'
       }`}
       style={{
         backgroundColor: isPlaced ? 'rgb(var(--color-hover))' : 'rgb(var(--color-surface))',
         borderColor: 'rgb(var(--color-border))',
-        borderLeft: `4px solid ${categoryColor}`,
         position: 'relative',
         // pan-y : permet le scroll vertical tactile de la liste sans capturer
         // le geste comme une sélection/drag (bug scroll mobile).
@@ -80,39 +80,47 @@ const PersonalTaskCard: React.FC<PersonalTaskCardProps> = ({
         </div>
       )}
 
-      <div className="flex items-center justify-between mb-2">
+      {/* Barre colorée interne (couleur de la catégorie), à la place de la bordure gauche. */}
+      <span
+        aria-hidden="true"
+        className="absolute left-2 top-2.5 bottom-2.5 w-1 rounded-full pointer-events-none"
+        style={{ backgroundColor: categoryColor }}
+      />
+
+      <div className="flex items-center justify-between gap-2 mb-2">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: categoryColor }} />
           <span className={`font-medium text-sm truncate ${isPlaced ? 'line-through' : ''}`} style={{ color: 'rgb(var(--color-text-primary))' }}>{task.name}</span>
           {task.bookmarked && (
             <Bookmark size={14} className="favorite-icon filled shrink-0" />
           )}
         </div>
-        <div className="flex flex-col items-end gap-1">
+        {collaboratorIds.length > 0 && (
+          <CollaboratorAvatars collaboratorIds={collaboratorIds} friends={friends} size="sm" />
+        )}
+      </div>
+
+      <div className="flex items-center gap-1.5 text-xs" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+        <span
+          className="flex items-center gap-1 px-1.5 py-0.5 rounded-md border whitespace-nowrap"
+          style={{ borderColor: 'rgb(var(--color-border))' }}
+          title={task.deadline ? deadlineText : undefined}
+        >
+          <CalendarDays size={12} aria-hidden="true" />
+          {task.deadline ? deadlineDate : t('sidebar.noDeadline')}
+        </span>
+        <span
+          className="flex items-center gap-1 px-1.5 py-0.5 rounded-md border whitespace-nowrap"
+          style={{ borderColor: 'rgb(var(--color-border))' }}
+        >
+          <Clock size={12} aria-hidden="true" />
+          {formatDuration(task.estimatedTime)}
+        </span>
+        <div className="ml-auto flex items-center gap-1.5 shrink-0">
           {task.priority > 0 && (
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${priorityClassName}`}>
+            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${priorityClassName}`}>
               P{task.priority}
             </span>
           )}
-          {collaboratorIds.length > 0 && (
-            <CollaboratorAvatars collaboratorIds={collaboratorIds} friends={friends} size="sm" />
-          )}
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-        <div className="flex items-center gap-1">
-          <Clock size={12} />
-          <span>{formatDuration(task.estimatedTime)}</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs px-2 py-1 rounded border" style={{
-            backgroundColor: 'rgb(var(--color-surface))',
-            borderColor: 'rgb(var(--color-border))',
-            color: 'rgb(var(--color-text-secondary))',
-          }}>
-            {categoryLabel}
-          </span>
           {/* Point d'entrée VISIBLE vers le menu d'options (= long-press / clic droit).
               Toujours visible sur mobile, au survol sur desktop. */}
           <button
@@ -132,12 +140,6 @@ const PersonalTaskCard: React.FC<PersonalTaskCardProps> = ({
             <MoreHorizontal size={16} />
           </button>
         </div>
-      </div>
-
-      <div className="mt-2 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-        {task.deadline
-          ? t('sidebar.deadline', { date: formatDate(deadlineLocalDate(task.deadline) ?? new Date()) })
-          : t('sidebar.noDeadline')}
       </div>
 
       {/* Drag indicator — masqué par défaut (n'occupe aucune place) et

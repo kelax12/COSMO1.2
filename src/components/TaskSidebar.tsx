@@ -16,7 +16,7 @@ import { useTaskLinkedEvents, useDeleteEvent, useRestoreEvent } from '@/modules/
 import { useCategories, buildTree } from '@/modules/categories';
 import type { Category, CategoryNode } from '@/modules/categories';
 
-import { useColorSettings, usePriorityRange } from '@/modules/ui-states';
+import { usePriorityRange } from '@/modules/ui-states';
 import { useFriends, useCollaboratorsByTask } from '@/modules/friends';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useT } from '@/i18n/useT';
@@ -76,7 +76,6 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
   };
   flattenCategoryOptions(buildTree(categories), 0);
 
-  const { colorSettings } = useColorSettings();
   const { priorityRange } = usePriorityRange();
   const { data: friends = [] } = useFriends();
   const { user } = useAuth();
@@ -437,7 +436,6 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
                 isPlaced={isPlaced}
                 isFirst={idx === 0}
                 categoryColor={getCategoryColor(task.category)}
-                categoryLabel={colorSettings[task.category] || t('sidebar.uncategorized')}
                 priorityClassName={getPriorityColor(task.priority)}
                 collaboratorIds={collaboratorsByTask.get(task.id) ?? []}
                 friends={friends}
