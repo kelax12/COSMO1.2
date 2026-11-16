@@ -78,7 +78,7 @@ describe('TaskSidebar · liste', () => {
     const alpha = within(cardOf('Alpha rapport'));
     expect(alpha.getByText('P3')).toBeTruthy();
     expect(alpha.getByText('1 h 30')).toBeTruthy();
-    expect(alpha.getByText(agenda.t('sidebar.deadline', { date: '12/11/2026' }))).toBeTruthy();
+    expect(alpha.getByTitle(agenda.t('sidebar.deadline', { date: '12/11/2026' }))).toBeTruthy();
 
     const charlie = within(cardOf('Charlie plan'));
     expect(charlie.queryByText(/^P\d/)).toBeNull();
@@ -249,7 +249,7 @@ describe('TaskSidebar · ÉCHÉANCE (vague 13)', () => {
     resetDemoWorld([makeTask({ id: 'x', name: 'Échéance du jour', dueDay: '2026-11-20' })]);
     renderApp(<TaskSidebar />, { route: '/agenda' });
     await waitFor(() => expect(names()).toEqual(['Échéance du jour']));
-    expect(within(cardOf('Échéance du jour')).getByText(agenda.t('sidebar.deadline', { date: '20/11/2026' }))).toBeTruthy();
+    expect(within(cardOf('Échéance du jour')).getByTitle(agenda.t('sidebar.deadline', { date: '20/11/2026' }))).toBeTruthy();
   });
 
   // Bug corrigé par DAT-01 : la carte formatait `new Date(task.deadline)`, jour de
@@ -268,7 +268,7 @@ describe('TaskSidebar · ÉCHÉANCE (vague 13)', () => {
       renderApp(<TaskSidebar />, { route: '/agenda' });
       await waitFor(() => expect(names()).toEqual(['Échéance du fuseau']));
       const [y, m, d] = day.split('-');
-      expect(within(cardOf('Échéance du fuseau')).getByText(agenda.t('sidebar.deadline', { date: `${d}/${m}/${y}` }))).toBeTruthy();
+      expect(within(cardOf('Échéance du fuseau')).getByTitle(agenda.t('sidebar.deadline', { date: `${d}/${m}/${y}` }))).toBeTruthy();
     } finally {
       act(() => result.current.setMode('default'));
       act(() => result.current.setOffsetHours(0));
