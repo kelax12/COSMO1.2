@@ -62,14 +62,15 @@ function extraire(track) {
   for (let el = racine.firstElementChild; el && el !== main; el = el.nextElementSibling) avant.push(el);
   const parcours = main.querySelector('#track > div:last-child');
   const hero = parcours.querySelector('section');
-  // Perso : le bandeau qui défile sous le hero est dans le premier écran.
-  const suite = track === 'perso' ? [hero.nextElementSibling] : [];
+  // Le bandeau qui défilait sous le hero perso a été retiré : plus rien après le hero.
+  const suite = [];
 
   // Ce que l'app fait ENTRER : présent dans la mise en page, invisible dans la copie.
   const aMasquer = [];
   if (track === 'perso') {
     const tuile = hero.querySelector('button[aria-pressed], button[aria-label*="ause"], button[aria-label*="ecture"]');
-    aMasquer.push(tuile?.parentElement, ...hero.querySelectorAll('.hero-chip, .hero-link, .hero-dock-settle'));
+    // Les cinq tuiles du hero entrent à l'ouverture (`HeroIconScatter`).
+    aMasquer.push(tuile?.parentElement, ...hero.querySelectorAll('.hero-chip, .hero-link, .hero-dock-settle, .hero-scatter'));
   }
   // Entreprise : RIEN de masqué. La pile garde son image : même URL que celle
   // de React (aucun octet perdu), et le plus grand élément du hero. Masquée,
