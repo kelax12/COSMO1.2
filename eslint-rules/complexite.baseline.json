@@ -283,7 +283,7 @@
       "max-lines-per-function": [416]
     },
     "src/components/organization/TeamTasksTableRow.tsx": {
-      "complexity": [39],
+      "complexity": [38],
       "max-lines-per-function": [233]
     },
     "src/components/organization/TeamsSection.tsx": {
@@ -318,9 +318,6 @@
     "src/components/task-modal/DesktopDetailsStep.tsx": {
       "complexity": [54],
       "max-lines-per-function": [431]
-    },
-    "src/components/task-modal/TaskDependenciesSection.tsx": {
-      "complexity": [21]
     },
     "src/components/task-modal/TaskDependencyPicker.tsx": {
       "max-lines-per-function": [414]
