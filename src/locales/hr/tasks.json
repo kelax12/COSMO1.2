@@ -448,7 +448,10 @@
     "backToList": "Natrag na popis",
     "createdAndLinked": "Zadatak je izrađen i povezan",
     "close": "Zatvori",
-    "cancel": "Odustani"
+    "cancel": "Odustani",
+    "addBlocker": "Dodaj zadatak koji blokira",
+    "addBlocked": "Dodaj blokirani zadatak",
+    "noBlocked": "Nijedan zadatak ne čeka ovaj."
   },
   "subtasks": {
     "label": "Podzadaci",
@@ -502,8 +505,7 @@
   "snooze": {
     "menu": "Odgodi",
     "tomorrow": "Sutra",
-    "weekend": "Ovaj vikend",
-    "nextWeek": "Sljedeći tjedan",
+    "nextWeek": "Za tjedan dana",
     "today": "Danas",
     "chooseDate": "Odaberite datum"
   },
@@ -558,6 +560,9 @@
       "label": "Stupci",
       "status": "Status",
       "health": "Stanje"
-    }
+    },
+    "blockedBy": "Blokira ga",
+    "blockedByNone": "Nema zabilježenih zadataka koji blokiraju.",
+    "blockedLockAria": "Blokirani zadatak: pogledajte što ga blokira"
   }
 }
