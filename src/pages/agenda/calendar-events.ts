@@ -5,7 +5,7 @@ import { expandRecurringEvents, type CalendarEvent } from '@/modules/events';
 import { toDisplayISO, type TimezonePref } from '@/lib/timezone';
 import { NO_CATEGORY_COLOR, displayCategoryColor } from '@/lib/category-colors';
 
-/** Titre d'un événement : toujours blanc (choix d'Axel, 2026-11-16), même si le contraste passe sous 4,5:1 sur les teintes claires. */
+/** Titre d'un événement : toujours blanc (choix d'Axel), même si le contraste passe sous 4,5:1 sur les teintes claires. */
 export const EVENT_TEXT_COLOR = '#ffffff';
 
 // Durée par défaut (minutes) d'un événement créé en glissant une tâche depuis la

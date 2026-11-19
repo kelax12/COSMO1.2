@@ -2,7 +2,7 @@
  * Neutralise le balisage d'une valeur SAISIE PAR UN UTILISATEUR avant de
  * l'interpoler dans une phrase passée à `RichText`.
  *
- * 🔴 POURQUOI (audit de sécurité du 2026-09-30). `RichText` interprète `[x](url)`
+ * Pourquoi : `RichText` interprète `[x](url)`
  * et `**x**` dans TOUTE la chaîne, interpolations comprises. Le nom d'une tâche
  * partagée s'affiche chez le destinataire d'un lien de partage
  * (`ShareInviteClaimer`) : une tâche nommée `[Réclamez votre prime](https://…)`

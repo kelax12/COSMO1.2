@@ -90,7 +90,7 @@ describe('RichText — schémas refusés', () => {
 });
 
 describe('richTextLiteral : une valeur saisie ne devient jamais du balisage', () => {
-  // Audit de sécurité du 2026-09-30 : le nom d'une tâche partagée, interpolé
+  // Le nom d'une tâche partagée, interpolé
   // dans une phrase rendue par RichText, devenait un lien cliquable chez le
   // destinataire du lien de partage.
   it('un nom en forme de lien reste du texte', () => {
