@@ -35,6 +35,7 @@ export type LocalizedArticle = Omit<BlogArticle, 'locales'> &
   };
 
 export declare const ARTICLES: BlogArticle[];
+export declare function registerArticleLocale(locale: Locale, blocks: Record<string, BlogArticleContent>): void;
 export declare const hasLocale: (article: BlogArticle, locale: Locale) => boolean;
 export declare const articleLocales: (article: BlogArticle) => Locale[];
 /** STRICT : `undefined` si l'article n'est pas écrit dans cette langue. */

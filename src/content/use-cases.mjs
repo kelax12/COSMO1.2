@@ -76,35 +76,6 @@ export const USE_CASES = [
 <h2>Why free?</h2>
 <p>Cosmo's main features are free, with no limit on projects or clients. For someone self-employed that is one expense line fewer, and the <a href="/en/">demo can be tried without creating an account</a>, with 12 months of realistic data so you can judge it in two minutes. If you are starting from a system split across three tools, the article on <a href="/en/blog/gestion-du-temps-efficace">effective time management</a> describes the order in which to consolidate them without breaking everything.</p>`,
       },
-      hr: {
-        audience: "freelancere",
-        title: "Aplikacija za produktivnost osmišljena za freelancere",
-        metaTitle: "Aplikacija za produktivnost freelancera: zadaci i ciljevi",
-        description: "Freelanceri: vodite klijente, rokove, traženje novih klijenata i kvartalne ciljeve u jednoj besplatnoj aplikaciji. Ugrađeni time-blocking, demo bez registracije.",
-        lead: "Raditi kao freelancer znači nositi sve uloge odjednom: izradu, traženje klijenata, administraciju, strategiju. Alat za organizaciju mora to pratiti, a da vas ne košta još jednu pretplatu.",
-        html: `
-<h2>Problem organiziranog freelancera</h2>
-<p>Vjerojatno već imate neki sustav: popis obaveza za isporuke, kalendar za sastanke s klijentima, možda tablicu za ciljeve prihoda i napuštenu odluku da ćete „redovitije“ tražiti klijente. Četiri alata, nikakav pregled cjeline, a traženje klijenata, jedino jamstvo posla za tri mjeseca, uvijek dolazi nakon današnje hitnoće.</p>
-<h2>Što Cosmo konkretno mijenja</h2>
-<ul>
-<li><strong>Jedna kategorija po klijentu.</strong> Svaki zadatak nosi boju svog klijenta, a statistika vam zatim pokazuje kamo vam vrijeme stvarno odlazi. To je često iznenađenje i temelj za bolje određivanje cijena.</li>
-<li><strong>Time-blocking štiti izradu.</strong> Povucite zadatke u kalendar kako biste rezervirali blokove rada koji se naplaćuje i saznali što zaista stane u tjedan prije nego što pristanete na sljedeći projekt.</li>
-<li><strong>Traženje klijenata postaje navika, a ne odluka.</strong> „3 kontakta tjedno“, praćeno toplinskom kartom i nizom: redovitost koja puni prodajni lijevak gradi se kao navika treninga.</li>
-<li><strong>Kvartalni OKR-ovi za vođenje posla.</strong> „Doseći X ponavljajućeg prihoda“, „potpisati 2 klijenta u novom segmentu“: vaši ciljevi kao vlasnika posla stoje uz vaše zadatke kao izvođača, a napredak se računa sam.</li>
-</ul>
-<h2>Tipičan tjedan organiziran u Cosmu</h2>
-<p>U ponedjeljak ujutro dovoljno je petnaest minuta: pregledate isporuke za taj tjedan, dodijelite im prioritet od 1 do 5, a zatim ih povučete u kalendar. Taj posljednji korak je najvažniji jer vam, prije nego što se obvežete klijentu, kaže drži li tjedan zaista. Petak s isporukom koji već ima jedanaest sati blokiranog rada neće progutati „malu hitnu izmjenu“ a da nešto drugo ne pukne.</p>
-<p>Tijekom tjedna dolazni zahtjevi postaju datirani zadaci umjesto poruka koje držite u glavi. U petak pregled traje četvrt sata: što je isporučeno, kamo je otišlo vrijeme po klijentu i gdje su vaši kvartalni ciljevi. To je i trenutak kada vas <a href="/hr/blog/tableau-de-bord-productivite">čitanje nadzorne ploče</a> spašava od otkrića na kraju kvartala da traženja klijenata nikad nije bilo.</p>
-
-<h2>Zamka fiksne cijene</h2>
-<p>Većina freelancera podcjenjuje projekte s fiksnom cijenom, ne zbog manjka iskustva nego zbog manjka podataka: bez mjerenja stvarno utrošenog vremena cijenu određujete po dojmu, a dojam sustavno zaboravlja prepiske, pozive za dogovor opsega i dorade. Jedna kategorija po klijentu i nekoliko tjedana time-blockinga dovoljni su da otkriju razliku između naplaćenog i proživljenog vremena. Često su upravo ti podaci opravdanje za prvo pravo povećanje cijene, a čitaju se u statistici, ne u ručno vođenoj tablici.</p>
-
-<h2>A strana „vlasnika posla“?</h2>
-<p>To je dio koji prvi otpada kad se izrada prelije, iako odlučuje kako će vaš posao izgledati za šest mjeseci. Dvije konkretne poluge: <strong>navika traženja klijenata</strong> („3 kontakta tjedno“) praćena toplinskom kartom umjesto dobrom voljom i <a href="/hr/blog/methode-okr-exemples">kvartalni OKR-ovi</a> koji crno na bijelo zapisuju što ciljate: ponavljajući prihod, diversifikaciju, prelazak na zahtjevnije klijente. Sama činjenica da su vidljivi na istom zaslonu kao današnji zadaci mijenja način na koji odlučujete.</p>
-
-<h2>Zašto besplatno?</h2>
-<p>Glavne funkcije Cosma su besplatne, bez ograničenja broja projekata ili klijenata. Za samostalnog radnika to je jedna stavka troška manje, a <a href="/hr/">demo se isprobava bez izrade računa</a>, s 12 mjeseci realističnih podataka, pa ga možete procijeniti za dvije minute. Ako polazite od sustava razbacanog po tri alata, članak o <a href="/hr/blog/gestion-du-temps-efficace">učinkovitom upravljanju vremenom</a> opisuje redoslijed kojim ih objediniti a da ništa ne razbijete.</p>`,
-      },
     },
   },
   {
@@ -172,36 +143,6 @@ export const USE_CASES = [
 <h2>Genuinely free, genuinely frictionless</h2>
 <p>No credit card, no 14-day trial: the main features are free, full stop. Cosmo runs in your phone's browser as well as on a library computer, with nothing to install. <a href="/en/">Try the demo without signing up</a>, two minutes is enough to see whether the system speaks to you.</p>`,
       },
-      hr: {
-        audience: "studente",
-        title: "Besplatna aplikacija za produktivnost za studente",
-        metaTitle: "Aplikacija za produktivnost za studente: učenje i rokovi",
-        description: "Studenti: organizirajte predavanja, učenje i rokove uz time-blocking i izgradite radne navike koje traju. 100 % besplatno, bez kartice.",
-        lead: "Između predavanja, ispita, grupnih projekata i studentskog posla problem nije manjak motivacije, nego nepostojanje sustava. A studentski budžet nema mjesta za pretplatu na alat za produktivnost.",
-        html: `
-<h2>Tipičan semestar bez sustava</h2>
-<p>Sve je u redu do sredine listopada. Onda se rokovi nagomilaju, učenje se sabije u zadnjih deset dana, a svaki se ispit sprema na brzinu. Problem nije ni inteligencija ni volja: semestar je četveromjesečni projekt koji se vodi bez plana.</p>
-<h2>Cosmo sustav za semestar</h2>
-<ul>
-<li><strong>Jedna kategorija po kolegiju.</strong> Svaki kolegij ima svoju boju, a rokovi (seminari, prezentacije, ispiti) postaju datirani zadaci s prioritetom od 1 do 5. Nema više stalnog mentalnog podsjetnika.</li>
-<li><strong>Time-blocking čini učenje stvarnim.</strong> „Učiti makroekonomiju“ ne postoji dok ne postane termin od 2 sata u utorak u 14 h. Povucite zadatke učenja u kalendar: tjedan se popunjava, a kašnjenje postaje vidljivo prije nego što postane kritično.</li>
-<li><strong>Navike nose dugoročno.</strong> Trideset minuta engleskog, ponavljanje bilježaka isti dan, 3 treninga: toplinska karta od 26 tjedana, točno trajanje semestra, pokazuje vašu redovitost bolje od svake dobre namjere.</li>
-<li><strong>Jedan OKR po semestru.</strong> „Uspješno završiti semestar“, s mjerljivim ključnim rezultatima (ciljani prosjek, nula popravnih, rad predan ranije): u 6. tjednu znate jeste li na dobrom putu, a ne u 15.</li>
-</ul>
-<h2>Organizirati tjedan predavanja</h2>
-<p>U nedjelju navečer, deset minuta: popišete što se ovaj tjedan mora pomaknuti (zadaća, poglavlje za ponavljanje, grupni izvještaj), odredite datume, a zatim smjestite termine rada u kalendar između predavanja. Cilj nije lijep raspored, nego da odmah shvatite da vam je ostalo šest slobodnih sati, a ne petnaest. Bolje je to znati u nedjelju nego u četvrtak navečer.</p>
-<p>Ostatak tjedna samo označavate. Na kraju gledate dvije stvari: što je napravljeno i što ste planirali, a niste napravili. Taj drugi broj je poučniji jer vas za tri ili četiri tjedna nauči koliko sati samostalnog učenja zaista izdržite. Svako daljnje planiranje od tada postaje realno.</p>
-
-<h2>Pripremiti ispit bez učenja svega u zadnji čas</h2>
-<p>Učenje u zadnji čas ne uspijeva iz mehaničkog razloga: pamćenju trebaju razmaknuta ponavljanja, a ne jedna duga sesija. Konkretno, ispit za pet tjedana priprema se tako da već sada smjestite kratke, ponavljajuće termine učenja, jedan predmet po terminu: upravo tome služi <a href="/hr/blog/time-blocking-guide">time-blocking</a>. Razlika u odnosu na „učit ću redovito“ je u tome što termin postoji u kalendaru i brani se od drugih zahtjeva, dok namjera ne postoji nigdje.</p>
-<p>Za grupne projekte dijeljenje zadataka izbjegava razgovor u chatu u kojem nitko ne zna tko što radi: jedan zadatak, jedna odgovorna osoba, jedan rok vidljiv svima. Besplatno je i nikoga ne tjera da otvara račun na još jednom alatu.</p>
-
-<h2>Navike koje čine razliku tijekom semestra</h2>
-<p>Semestar je četveromjesečni projekt, a ponovljena ponašanja pobjeđuju nagle zalete. Ponoviti bilješke isti dan nakon predavanja, trideset minuta stranog jezika, dva ili tri treninga: te rutine više utječu na konačni prosjek nego tjedan štrebanja. Toplinska karta od 26 tjedana, točno trajanje semestra, pokazuje vašu stvarnu redovitost, a <a href="/hr/blog/suivi-des-habitudes">stopa izvršenja</a> vam u 4. tjednu kaže je li navika bila preambiciozna, dok je još ima vremena smanjiti.</p>
-
-<h2>Zaista besplatno, zaista bez prepreka</h2>
-<p>Bez kartice, bez probnog razdoblja od 14 dana: glavne funkcije su besplatne i točka. Cosmo radi u pregledniku vašeg mobitela kao i na računalu u knjižnici, bez instalacije. <a href="/hr/">Isprobajte demo bez registracije</a>, dvije minute dovoljne su da vidite odgovara li vam sustav.</p>`,
-      },
     },
   },
   {
@@ -268,36 +209,6 @@ export const USE_CASES = [
 
 <h2>Start with yourself</h2>
 <p>The best argument for spreading a method to your team is to embody it for a quarter. <a href="/en/">Try the demo without signing up</a>, set your quarterly OKRs in 15 minutes, and judge on your own results, for free. Once the method is proven and you want to bring everybody on board, <a href="/en/for-teams">company mode</a> takes over: org chart, team projects and steering statistics.</p>`,
-      },
-      hr: {
-        audience: "menadžere",
-        title: "Aplikacija za produktivnost za menadžere i voditelje timova",
-        metaTitle: "Aplikacija za produktivnost menadžera: OKR i prioriteti",
-        description: "Menadžeri: vodite svoje OKR-ove, zaštitite vrijeme za dubinski rad između sastanaka i pratite zadatke podijeljene s timom. Besplatno.",
-        lead: "Paradoks menadžera: što vas ljudi više trebaju, manje vremena ostaje za posao koji opravdava ulogu, a to su strategija, odluke i ljudi. Vratiti to vrijeme pitanje je alata koliko i discipline.",
-        html: `
-<h2>Kalendar menadžera je bojno polje</h2>
-<p>Sastanci koje zakazuju drugi, neprestani zahtjevi i na kraju tjedna pitanje: „što sam zapravo pomaknuo?“. Godišnji ciljevi tima pak žive na slajdu koji se pregledava dvaput godišnje. To nije osobni neuspjeh, nego ono što se događa kad važno nema alat kojim bi se suprotstavilo hitnom.</p>
-<h2>Što Cosmo donosi menadžeru</h2>
-<ul>
-<li><strong>OKR-ovi izlaze iz prezentacije.</strong> Kvartalni ciljevi i mjerljivi ključni rezultati, automatski izračunat napredak, grafikon napretka na nadzornoj ploči: ponedjeljni pregled OKR-ova priprema se za 5 minuta, sa stvarnim brojkama.</li>
-<li><strong>Time-blocking brani vaš dubinski rad.</strong> Blokirajte termine za razmišljanje prije nego što sastanci progutaju tjedan, jer je kalendar već zauzet vašim prioritetima vaša najbolja obrana.</li>
-<li><strong>Dijeljenje zadataka bez složenog aparata.</strong> Podijelite zadatak s kolegom kao Čitatelj ili Urednik, pratite napredak s nadzorne ploče, raspravljajte u kontekstu zadatka, bez uvođenja još jednog alata za upravljanje projektima.</li>
-<li><strong>Statistika otkriva vaš stvarni tjedan.</strong> Vrijeme po kategoriji (sastanci, razgovori jedan na jedan, izrada, strategija): podatak koji nedostaje u svakom razgovoru o opterećenju.</li>
-</ul>
-<h2>Vratiti kontrolu nad svojim tjednom</h2>
-<p>Kalendar menadžera puni se sam od sebe: ako vi u njega ništa ne stavite, stavit će drugi. Protumjera je jednostavna i nepopularna: prvo blokirajte termine rada u kojima vas nitko ne smije prekidati, prije nego što se tjedan popuni, i tretirajte ih kao prave sastanke. Dva zaštićena bloka od po dva sata vrijede više od deset namjera razbacanih između sastanaka.</p>
-<p>Druga poluga je tjedni pregled: dvadeset minuta u petak da pogledate što se pomaknulo, kamo je otišlo vrijeme po kategoriji i gdje su ciljevi. Kratko je, a spašava vas od dolaska na kvartalni pregled s rekonstrukcijom priče po sjećanju. <a href="/hr/blog/tableau-de-bord-productivite">Nadzorna ploča</a> daje brojke bez ponovnog unosa.</p>
-
-<h2>Održati OKR-ove živima između pregleda</h2>
-<p>Problem s OKR-ovima u tvrtkama gotovo nikad nije njihova formulacija, nego to što se napišu na početku kvartala i ponovno otvore dan prije pregleda. U međuvremenu se svakodnevne odluke donose bez njih, a odstupanje se otkrije prekasno da bi se ispravilo.</p>
-<p>Rješenje traži samo jedno: ciljevi moraju biti vidljivi na istom mjestu kao zadaci. Kad se napredak svakog ključnog rezultata ažurira usput i prikazuje na nadzornoj ploči, ponedjeljni pregled priprema se za pet minuta sa stvarnim brojkama, a cilj koji skreće uoči se na pola puta, dok je još moguće birati između ubrzanja i izričitog odustajanja. Ako je metoda nova vašem timu, članak <a href="/hr/blog/okr-vs-smart-vs-kpi">OKR, SMART ili KPI</a> pojašnjava što svaki okvir može, a što ne može.</p>
-
-<h2>Vidjeti što ste delegirali, bez nadziranja</h2>
-<p>Dijeljenje zadataka u ulozi Čitatelja ili Urednika daje potrebnu vidljivost, a da alat ne postane uređaj za nadzor: vidite napredak onoga što je izričito podijeljeno, a ne aktivnost svih. Ta razlika je važna jer se alat doživljen kao nadzor popunjava što je manje moguće i brzo prestaje biti pouzdan. Ta je suradnja u Cosmu besplatna, pa ne morate opravdavati licence da biste metodu testirali jedan kvartal.</p>
-
-<h2>Počnite od sebe</h2>
-<p>Najbolji argument za širenje metode u timu jest utjeloviti je jedan kvartal. <a href="/hr/">Isprobajte demo bez registracije</a>, postavite kvartalne OKR-ove za 15 minuta i procijenite po vlastitim rezultatima, besplatno. Kad je metoda potvrđena i želite uključiti sve, <a href="/hr/za-timove">način rada za tvrtke</a> preuzima: organigram, timski projekti i statistika za upravljanje.</p>`,
       },
     },
   },
@@ -368,40 +279,14 @@ export const USE_CASES = [
 <p>A team of fewer than five people uses company mode for free, with no crippled features and no trial period to watch: the org chart, projects, OKRs and statistics are all included. That is enough for a founding team, a department or a first pilot project to judge on the evidence before bringing the rest of the company on board.</p>
 <p><a href="/en/">The demo can be tried without creating an account</a>: a fictional organisation of six people, with its projects, goals and org chart already filled in, so you can form a view in two minutes. If you are the only manager for now, the <a href="/en/for-managers">for managers</a> page describes the same product from an individual point of view.</p>`,
       },
-      hr: {
-        audience: "timove",
-        title: "Aplikacija za upravljanje timom za mala poduzeća i studije",
-        metaTitle: "Aplikacija za upravljanje timom: projekti, OKR i vođenje",
-        description: "Automatski organigram, timski projekti, ponderirani OKR-ovi i statistika za vođenje u jednoj aplikaciji. Besplatno do 5 osoba, demo bez registracije.",
-        lead: "U većini timova posao živi u jednom alatu, a vođenje u drugom: zadaci s jedne strane, tablica ciljeva i zaboravljeni organigram s druge. Cosmo spaja oboje, bez nametanja šestomjesečnog uvođenja.",
-        html: `
-<h2>Dva alata, dvije istine</h2>
-<p>Scenarij je gotovo uvijek isti. Svatko vodi svoje zadatke u svom kutu: osobna aplikacija, bilježnica, popis u alatu za poruke. Tim pak ima alat za upravljanje projektima u koji se upisuje ono što treba podijeliti. Rezultat: nitko nema cijeli dan na jednom zaslonu, a voditelj rekonstruira stanje stvari pitajući petero ljudi.</p>
-<p>Trošak tog dvostrukog unosa ne vidi se u budžetu, ali plaća se svaki dan: zaboravljeni zadaci jer su bili u drugom alatu, tjedni sastanak koji služi prikupljanju informacija umjesto odlučivanju i kvartalni ciljevi koji žive na slajdu pregledavanom dvaput godišnje.</p>
-<h2>Što Cosmo donosi timu</h2>
-<ul>
-<li><strong>Organigram koji se crta sam.</strong> Svaka osoba pri dolasku se povezuje s nadređenim i struktura se gradi sama. Nema kadrovskog obrasca za ispunjavanje ni tablice za ažuriranje, a upravo ta struktura zatim određuje tko što vidi.</li>
-<li><strong>Timski zadaci stižu na osobni popis svakoga.</strong> Zadatak dodijeljen s timske ploče pojavljuje se izravno na osobnom popisu dotične osobe. Jedna aplikacija za otvoriti ujutro, ne dvije.</li>
-<li><strong>Timski OKR-ovi koji ne lažu.</strong> Svaki ključni rezultat ima svoju težinu: tri dostignuta laka cilja više ne prikazuju kvartal uspješnim kad se četvrti, jedini koji je bio važan, nije pomaknuo.</li>
-<li><strong>Vođenje bez pripreme izvještaja.</strong> Opterećenje po osobi, stopa izvršenja, tjedna brzina, kašnjenja, napredak ciljeva: brojke su stalno tu i izvoze se kad ih treba predstaviti drugdje.</li>
-</ul>
-<h2>Organigram napokon nešto radi</h2>
-<p>U većini alata organigram je slika: lijepa na intranetu, bez utjecaja na stvarni rad. Ovdje je središnji mehanizam. Povezivanje osobe s nadređenim daje tom nadređenom ono što mu treba da je podrži (opterećenje osobe, njezine zadatke u kašnjenju, njezin raspored) i ništa više. Srednji menadžer vidi svoj opseg, nikad susjedov, a da nijedno dopuštenje nije ručno podešeno.</p>
-<p>Uz tu hijerarhijsku liniju, međufunkcijski timovi okupljaju ljude po projektu ili području, neovisno o tome tko kome odgovara. To voditelju projekta omogućuje da vodi posao s ljudima koji nisu u njegovu timu, bez dupliciranja organizacije ili otvaranja radnog prostora za svaki odjel.</p>
-<h2>Vidjeti raspored tima bez pitanja</h2>
-<p>„Jesi li slobodan u četvrtak?“ i dalje je jedno od najskupljih pitanja radnog tjedna, osobito na daljinu. Voditelj izravno pristupa kalendaru svog tima i smješta ono što treba smjestiti, bez dopisivanja. Sadržaj događaja označenih kao osobni ostaje privatan: prikazuje se samo termin. Ta granica nije sitnica, jer se alat doživljen kao nadzor popunjava minimalno i vrlo brzo prestaje biti pouzdan.</p>
-<h2>Ponedjeljni pregled, pripremljen prije sastanka</h2>
-<p>Vođeni pregled prolazi kroz protekli tjedan (što se pomaknulo, što je skliznulo, tko je preopterećen) i završava odlukama koje treba donijeti, a ne tablicom koju treba tumačiti. Tri minute nasamo pred zaslonom zamjenjuju dobar dio pola sata provedenog u prikupljanju informacija na sastanku. Vraćeno vrijeme ne nestaje: vraća se razgovoru zbog kojeg je sastanak uopće postojao.</p>
-<p>Za ciljeve vrijedi isto načelo kao za zadatke: opstaju samo ako su vidljivi na istom mjestu kao svakodnevni rad. Ako je metoda nova vašem timu, članak <a href="/hr/blog/okr-vs-smart-vs-kpi">OKR, SMART ili KPI</a> pojašnjava što svaki okvir može, a <a href="/hr/blog/template-okr-gratuit">besplatni OKR predložak</a> daje osnovu za prilagodbu.</p>
-<h2>Pratiti tim bez nadziranja</h2>
-<p>Granica između onoga što se dijeli i onoga što ostaje privatno ugrađena je u proizvod, a ne prepuštena dobroj volji pojedinca. Projekti povezani s jednim timom ostaju nevidljivi ostalima, sadržaj osobnih kalendara nikad ne izlazi na vidjelo, a svaka osoba koja se pridružuje organizaciji prije potvrde vidi što će organizacija moći pratiti od njezina rada. Odvajanje se provodi na razini samih podataka: ne skriva prikaz, nego se odbija pristup.</p>
-<h2>Besplatno do pet osoba</h2>
-<p>Tim od manje od pet osoba koristi način rada za tvrtke besplatno, bez okrnjenih funkcija i bez probnog razdoblja koje treba pratiti: organigram, projekti, OKR-ovi i statistika su uključeni. To je dovoljno da osnivački tim, odjel ili prvi pilot-projekt procijene na djelu prije uključivanja ostatka tvrtke.</p>
-<p><a href="/hr/">Demo se isprobava bez izrade računa</a>: izmišljena organizacija od šest osoba, s već ispunjenim projektima, ciljevima i organigramom, da steknete dojam za dvije minute. Ako ste zasad jedini voditelj, stranica <a href="/hr/za-menadzere">za menadžere</a> opisuje isti proizvod s pojedinačnog gledišta.</p>`,
-      },
     },
   },
 ];
 
 /** Fiche d'un cas d'usage par son identifiant de route (jamais par slug). */
+/** Ajoute une langue chargée à part (`src/content/load-locale.mjs`), par routeId. */
+export function registerUseCaseLocale(locale, blocks) {
+  for (const u of USE_CASES) if (blocks[u.routeId]) u.locales[locale] = blocks[u.routeId];
+}
+
 export const getUseCase = (routeId) => USE_CASES.find((u) => u.routeId === routeId);

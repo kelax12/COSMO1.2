@@ -7,7 +7,8 @@ import { loadSonner } from '@/lib/toast';
 import { MotionConfig } from 'framer-motion';
 import { installMobileFocusRecovery } from '@/lib/mobileFocus';
 import { shouldRetryMutation, shouldRetryQuery } from '@/lib/query-retry';
-import { useLocale } from '@/i18n/store';
+import { localeStore, useLocale } from '@/i18n/store';
+import { loadContentLocale } from '@/content/load-locale.mjs';
 import { routeSlug } from '@/i18n/routes';
 // ⚠️ `lazy-namespaces.guard.test.ts` lit les appels `lazyWithRetry` D'ICI : les listes de catalogues ci-dessous sont la source de vérité par route.
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
@@ -82,10 +83,13 @@ const OrganizationOnboardingPage = lazyWithRetry(() => import('@/pages/Organizat
 const OrganizationPage = lazyWithRetry(() => import('@/pages/OrganizationPage'), ['csv', 'eventModal', 'okr', 'org', 'orgAdmin', 'orgGuide', 'overlays', 'portfolio', 'tasks']);
 const ClaimOrgInvitePage = lazyWithRetry(() => import('@/pages/ClaimOrgInvitePage'), ['org', 'overlays']);
 const NotFoundPage = lazyWithRetry(() => import('@/pages/NotFoundPage'), ['seo']);
-const BlogIndexPage = lazyWithRetry(() => import('@/pages/BlogIndexPage'), ['landing', 'seo']);
-const BlogArticlePage = lazyWithRetry(() => import('@/pages/BlogArticlePage'), ['landing', 'seo']);
+/** Page éditoriale : attend aussi le contenu de la langue chargé à part (croate). */
+const withContentLocale = <T,>(page: Promise<T>): Promise<T> =>
+  Promise.all([page, loadContentLocale(localeStore.locale)]).then(([m]) => m);
+const BlogIndexPage = lazyWithRetry(() => withContentLocale(import('@/pages/BlogIndexPage')), ['landing', 'seo']);
+const BlogArticlePage = lazyWithRetry(() => withContentLocale(import('@/pages/BlogArticlePage')), ['landing', 'seo']);
 const AProposPage = lazyWithRetry(() => import('@/pages/AProposPage'), ['landing', 'seo']);
-const UseCasePage = lazyWithRetry(() => import('@/pages/UseCasePage'), ['landing', 'seo']);
+const UseCasePage = lazyWithRetry(() => withContentLocale(import('@/pages/UseCasePage')), ['landing', 'seo']);
 
 // Lazy load Layout. Il enveloppe TOUTES les routes protégées : son `org` est
 // donc chargé une seule fois pour toute la session connectée, et les pages

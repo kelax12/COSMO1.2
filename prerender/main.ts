@@ -13,6 +13,8 @@
 //
 // Exécuté par Node directement sur le TypeScript (suppression native des types) :
 // node prerender/main.ts. Découpage : docs/SEO.md § Prérendu.
+// En premier : enregistre le contenu éditorial chargé à part (croate).
+import '../src/content/all-locales.mjs';
 import { verifierLocalesIndexables } from './chrome.ts';
 import { enrichLlms, writeRss } from './feeds.ts';
 import { generateHome, generateRoutes } from './generate.ts';

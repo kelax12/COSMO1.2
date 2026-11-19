@@ -25,4 +25,5 @@ export interface UseCase {
 }
 
 export declare const USE_CASES: UseCase[];
+export declare function registerUseCaseLocale(locale: Locale, blocks: Record<string, UseCaseContent>): void;
 export declare const getUseCase: (routeId: string) => UseCase | undefined;

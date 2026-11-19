@@ -48,6 +48,11 @@ export const ARTICLES = [
   cosmoVsTodoist,
 ];
 
+/** Ajoute une langue chargée à part (`src/content/load-locale.mjs`), par slug. */
+export function registerArticleLocale(locale, blocks) {
+  for (const a of ARTICLES) if (blocks[a.slug]) a.locales[locale] = blocks[a.slug];
+}
+
 /** `true` si l'article est réellement écrit dans cette langue. */
 export const hasLocale = (article, locale) => Boolean(article?.locales?.[locale]);
 

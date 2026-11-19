@@ -20,6 +20,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { ensureNamespaces, type Namespace } from '@/i18n/catalog';
 import { loadDateLocale } from '@/i18n/format';
+import { loadContentLocale } from '@/content/load-locale.mjs';
 import { localeStore } from '@/i18n/store';
 import { DEFAULT_LOCALE, type Locale } from '@/i18n/locale';
 import { PrerenderCopyContext } from '@/lib/prerender-copy-context';
@@ -59,7 +60,7 @@ export async function renderContentCopy(page: string, url: string, locale: Local
   const def = PAGES[page];
   if (!def) throw new Error(`content-copy: page inconnue « ${page} »`);
   localeStore.setLocale(locale, { persist: false });
-  await Promise.all([ensureNamespaces(def.namespaces, locale), loadDateLocale(locale)]);
+  await Promise.all([ensureNamespaces(def.namespaces, locale), loadDateLocale(locale), loadContentLocale(locale)]);
   const basename = locale === DEFAULT_LOCALE ? '/' : `/${locale}`;
   const entry = basename === '/' ? url : `${basename}${url}`;
   return renderToStaticMarkup(
