@@ -60,18 +60,6 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
       const mm = gsap.matchMedia();
 
       mm.add('(prefers-reduced-motion: no-preference)', () => {
-        // Marquee infini : la piste contient 2 copies identiques,
-        // xPercent -50 = boucle parfaitement seamless. En pause hors écran.
-        const marqueeTrack = rootRef.current?.querySelector('.marquee-track');
-        if (marqueeTrack) {
-          const marqueeLoop = gsap.to(marqueeTrack, {
-            xPercent: -50,
-            ease: 'none',
-            duration: 30,
-            repeat: -1,
-          });
-          pauseWhenOffscreen(marqueeTrack.parentElement ?? marqueeTrack, [marqueeLoop]);
-        }
 
       });
     },
@@ -336,36 +324,6 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
 
         </div>
       </section>
-
-      {/* ── Marquee infini : les modules défilent en continu (GSAP) ── */}
-      <div
-        className="relative overflow-hidden border-y border-slate-200 bg-slate-50 py-3.5"
-        aria-hidden="true"
-      >
-        {/* Fondu latéral pour une entrée/sortie douce des mots */}
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-slate-50 to-transparent z-10" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-slate-50 to-transparent z-10" />
-        <div className="marquee-track flex w-max whitespace-nowrap text-sm font-mono uppercase tracking-[0.25em] text-slate-500">
-          {[0, 1].map((copy) => (
-            <div key={copy} className="flex items-center gap-10 pr-10">
-              {[
-                t('marquee.tasks'),
-                t('marquee.agenda'),
-                t('marquee.timeBlocking'),
-                t('marquee.okr'),
-                t('marquee.habits'),
-                t('marquee.stats'),
-                t('marquee.demo'),
-              ].map((word) => (
-                <span key={word} className="flex items-center gap-10">
-                  <span>{word}</span>
-                  <span className="text-blue-500/70">✦</span>
-                </span>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* Tout ce qui suit le bandeau est monté au premier geste du visiteur :
           le monter avec le hero coûtait une tâche d'une seconde à CPU ×4

@@ -29,15 +29,6 @@
     "showcasePause": "Pause the product showcase",
     "showcasePlay": "Play the product showcase"
   },
-  "marquee": {
-    "tasks": "Tasks",
-    "agenda": "Calendar",
-    "timeBlocking": "Time-blocking",
-    "okr": "OKRs",
-    "habits": "Habits",
-    "stats": "Statistics",
-    "demo": "Free demo mode"
-  },
   "cta": {
     "line1": "Start with the demo.",
     "line2": "The account can wait.",

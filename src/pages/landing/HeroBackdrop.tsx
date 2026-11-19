@@ -30,18 +30,8 @@ const HeroBackdrop: React.FC<Props> = ({ gridRef, auroraRef }) => (
           ⚠️ Le contenu reste au-dessus sans rien changer : il est `relative` et vient
           APRÈS dans l'arbre, donc il se peint après à la même étape. */}
       <div className="absolute inset-0 z-0" aria-hidden="true">
-        {/* Grille fine type Linear/Vercel, fondue — couche parallax lente (GSAP) */}
-        <div
-          ref={gridRef}
-          className="absolute inset-0 opacity-[0.55]"
-          style={{
-            backgroundImage:
-              'linear-gradient(to right, rgba(15,23,42,0.055) 1px, transparent 1px), linear-gradient(to bottom, rgba(15,23,42,0.055) 1px, transparent 1px)',
-            backgroundSize: '56px 56px',
-            maskImage: 'radial-gradient(ellipse 80% 70% at 60% 35%, #000 50%, transparent 100%)',
-            WebkitMaskImage: 'radial-gradient(ellipse 80% 70% at 60% 35%, #000 50%, transparent 100%)',
-          }}
-        />
+        {/* Grille retiree (refonte 2026-11-19) : calque vide garde pour le parallax GSAP. */}
+        <div ref={gridRef} className="absolute inset-0" />
 
         {/* Couche parallax moyenne (GSAP) : halo + aurores. Les loops
             d'opacité/scale restent en Framer sur les enfants ; GSAP ne

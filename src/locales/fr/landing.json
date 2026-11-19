@@ -29,15 +29,6 @@
     "showcasePause": "Mettre en pause le défilement de la démonstration",
     "showcasePlay": "Lancer le défilement de la démonstration"
   },
-  "marquee": {
-    "tasks": "Tâches",
-    "agenda": "Agenda",
-    "timeBlocking": "Time-blocking",
-    "okr": "OKR",
-    "habits": "Habitudes",
-    "stats": "Statistiques",
-    "demo": "Mode démo gratuit"
-  },
   "cta": {
     "line1": "Commencez par la démo.",
     "line2": "Le compte peut attendre.",
