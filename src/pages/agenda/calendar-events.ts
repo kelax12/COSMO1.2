@@ -3,7 +3,7 @@
 // Comportement déplacé verbatim depuis AgendaPage.tsx.
 import { expandRecurringEvents, type CalendarEvent } from '@/modules/events';
 import { toDisplayISO, type TimezonePref } from '@/lib/timezone';
-import { NO_CATEGORY_COLOR, displayCategoryColor } from '@/lib/category-colors';
+import { NO_CATEGORY_COLOR, darkenForWhiteText, displayCategoryColor } from '@/lib/category-colors';
 
 /** Titre d'un événement : toujours blanc (choix d'Axel), même si le contraste passe sous 4,5:1 sur les teintes claires. */
 export const EVENT_TEXT_COLOR = '#ffffff';
@@ -108,8 +108,9 @@ export function buildCalendarEvents(
     title: event.title,
     start: event.start,
     end: event.end,
-    backgroundColor: color,
-    borderColor: color,
+    // Titre blanc (choix produit) : fond assombri pour tenir 4,5:1 (AM-5).
+    backgroundColor: darkenForWhiteText(color),
+    borderColor: darkenForWhiteText(color),
     textColor: EVENT_TEXT_COLOR,
     editable: !event.id.includes('::'),
     extendedProps: {

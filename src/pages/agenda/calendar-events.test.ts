@@ -45,9 +45,9 @@ describe('buildCalendarEvents', () => {
     expect(out).toMatchObject({
       id: 'e1',
       title: 'Réunion',
-      backgroundColor: '#3B82F6',
-      borderColor: '#3B82F6',
-      // AM-5 : le blanc ne rend que 3,68:1 sur #3B82F6 ; texte sombre, 4,82:1.
+      // AM-5 : le blanc ne rend que 3,68:1 sur #3B82F6 ; le titre reste blanc, le fond s'assombrit (4,5:1).
+      backgroundColor: '#3473db',
+      borderColor: '#3473db',
       textColor: '#ffffff',
       editable: true,
     });

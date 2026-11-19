@@ -85,3 +85,29 @@ export const textOnColor = (color: string): string => {
 /** Couleur de texte lisible sur un fond de catégorie (cf. `textOnColor`). */
 export const textOnCategoryColor = (color: string | null | undefined): string =>
   textOnColor(color || NO_CATEGORY_COLOR);
+
+/**
+ * Fond d'un bloc d'événement qui porte un titre BLANC (choix produit) : la
+ * teinte de la catégorie, assombrie vers le noir juste ce qu'il faut pour que
+ * le blanc tienne 4,5:1 (WCAG 1.4.3, AM-5). Une teinte qui tient déjà, ou un
+ * hex non lisible (`rgb(var(...))`), est rendue telle quelle. Ne sert qu'à
+ * l'AFFICHAGE : la couleur stockée de l'événement reste celle de la catégorie.
+ */
+export const darkenForWhiteText = (color: string): string => {
+  const m = /^#([0-9a-f]{6})$/i.exec(color.trim());
+  if (!m) return color;
+  const n = parseInt(m[1], 16);
+  const channels = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  const hex = (k: number) =>
+    '#' + channels.map((c) => Math.round(c * k).toString(16).padStart(2, '0')).join('');
+  if (1.05 / ((luminance(color) ?? 0) + 0.05) >= 4.5) return color;
+  // Recherche du facteur le plus clair qui tient (la luminance décroît avec k).
+  let lo = 0;
+  let hi = 1;
+  for (let i = 0; i < 12; i++) {
+    const mid = (lo + hi) / 2;
+    if (1.05 / ((luminance(hex(mid)) ?? 0) + 0.05) >= 4.5) lo = mid;
+    else hi = mid;
+  }
+  return hex(lo);
+};
