@@ -51,6 +51,8 @@ const PREUVES: { preuve: string; migration: string; dossier?: string; depassee?:
   // `org_settings.locale` admet le croate (`hr`).
   { preuve: '263.proof.sql', migration: '263_org_settings_locale_hr.sql' },
   { preuve: '264.proof.sql', migration: '264_avatars_sans_listage.sql' },
+  // Tâche créée par une habitude les jours prévus : réservation du jour, RLS propriétaire.
+  { preuve: '265.proof.sql', migration: '265_habit_auto_tasks.sql' },
 ];
 
 const lire = (chemin: string) => readFileSync(join(process.cwd(), chemin), 'utf8').replace(/\r\n/g, '\n');
@@ -60,7 +62,7 @@ afterAll(async () => {
   await db.end();
 });
 
-describe('supabase/proofs : preuves 242 à 244, 248 à 251, 253, 254, 256, 259, 263 et 264 rejouées sur la base fraîche', () => {
+describe('supabase/proofs : preuves 242 à 244, 248 à 251, 253, 254, 256, 259, 263, 264 et 265 rejouées sur la base fraîche', () => {
   for (const { preuve, migration, dossier = 'supabase/migration', depassee } of PREUVES) {
     it(`${preuve} embarque le texte exact de ${migration}`, () => {
       const texte = lire(`supabase/proofs/${preuve}`);

@@ -39,7 +39,7 @@ import OfflineBanner from './OfflineBanner';
 import DemoBridgePrompt from './DemoBridgePrompt';
 import GlobalNavShortcuts from './GlobalNavShortcuts';
 import InviteOrJoinModal from './organization/InviteOrJoinModal';
-import DeadlineReminder from './DeadlineReminder';
+import DailyRunners from './DailyRunners';
 import SyncStatusIndicator from './SyncStatusIndicator';
 import SkipLink, { MAIN_CONTENT_ID } from './SkipLink';
 import PersoGuideFab from './perso-guide/PersoGuideFab';
@@ -352,8 +352,8 @@ const NavItems = () =>
       )}
       {/* Raccourcis « g puis lettre » (#44) */}
       <GlobalNavShortcuts />
-      {/* Rappel deadlines du jour à l'ouverture (#30) — headless, 1×/jour */}
-      <DeadlineReminder />
+      {/* Rappel des échéances (#30) et tâches des habitudes (mig. 265), headless */}
+      <DailyRunners />
       <InviteOrJoinModal open={inviteOpen} onOpenChange={setInviteOpen} />
       {/* Signalement de bug — monté ici, donc disponible depuis la sidebar
           desktop ET la feuille « Plus » du mobile, sur toutes les pages. */}

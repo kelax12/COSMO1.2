@@ -32,6 +32,7 @@
   },
   "modal": {
     "newCategory": "Nova kategorija",
+    "autoTask": "Automatski stvori zadatak na zakazane dane",
     "namePlaceholder": "Naziv navike",
     "descriptionPlaceholder": "npr. Čitati 30 minuta...",
     "duration": "Trajanje",

@@ -32,6 +32,7 @@
   },
   "modal": {
     "newCategory": "Nouvelle catégorie",
+    "autoTask": "Créer automatiquement une tâche les jours concernés",
     "namePlaceholder": "Nom de l'habitude",
     "descriptionPlaceholder": "Ex: Lire 30 minutes...",
     "duration": "Durée",

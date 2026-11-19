@@ -9,6 +9,7 @@ import { useFavoriteColors } from '@/modules/ui-states';
 import { useCategories, type Category } from '@/modules/categories';
 import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 import { useCreateHabit, useUpdateHabit, Habit } from '@/modules/habits';
+import { useHabitAutoTask, HabitAutoTaskCheckbox } from '@/components/habits/use-habit-auto-task';
 import { habitCreateInput, habitUpdates, initialHabitForm, type HabitFormData } from '@/components/habits/habit-form';
 import HabitDaysPicker from '@/components/habits/HabitDaysPicker';
 import ColorSettingsModal from './ColorSettingsModal';
@@ -69,6 +70,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
   const createHabitMutation = useCreateHabit();
   const updateHabitMutation = useUpdateHabit();
   const isEditing = !!habit;
+  const autoTask = useHabitAutoTask(isOpen, habit);
   const isMobile = useIsMobile();
   // Maquette 329 : la catégorie se choisit par identifiant ; plusieurs
   // catégories partagent une couleur, la couleur seule ne la désigne pas.
@@ -90,20 +92,21 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
     if (isOpen) {
       const initial = initialHabitForm(habit, categories[0]?.color || favoriteColors[0] || '#3B82F6');
       setFormData(initial);
-      setCategoryId(null);
+      setCategoryId(autoTask.savedCategory);
       initialSnapshotRef.current = JSON.stringify(initial);
     }
   }, [isOpen, habit, categories, favoriteColors]);
 
-  const isDirty = initialSnapshotRef.current !== '' && JSON.stringify(formData) !== initialSnapshotRef.current;
+  const isDirty = autoTask.withDirty(initialSnapshotRef.current !== '' && JSON.stringify(formData) !== initialSnapshotRef.current);
   const guardedClose = () => {
     if (isDirty) { setShowDiscardConfirm(true); return; }
     onClose();
   };
-  const confirmDiscardClose = () => {
-    setShowDiscardConfirm(false);
-    onClose();
-  };
+  const confirmDiscardClose = () => { setShowDiscardConfirm(false); onClose(); };
+
+  // `'__none'` : « Sans catégorie » choisi explicitement (couleur grise).
+  const noCategory = categoryId === '__none' || (!categoryId && formData.color === NO_CATEGORY_COLOR);
+  const selectedCategory = noCategory ? undefined : (categories.find((c) => c.id === categoryId) ?? categories.find((c) => c.color === formData.color));
 
   const doSave = () => {
     if (!formData.name.trim()) {
@@ -116,12 +119,12 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
     if (isEditing && habit) {
       updateHabitMutation.mutate(
         { id: habit.id, updates: habitUpdates(habit, formData, new Date().toLocaleDateString('en-CA')) },
-        { onSuccess: () => onClose(), onSettled: () => { isSubmittingRef.current = false; } }
+        { onSuccess: () => { autoTask.save(habit.id, selectedCategory?.id); onClose(); }, onSettled: () => { isSubmittingRef.current = false; } }
       );
     } else {
       createHabitMutation.mutate(
         habitCreateInput(formData),
-        { onSuccess: () => onClose(), onSettled: () => { isSubmittingRef.current = false; } }
+        { onSuccess: (created) => { autoTask.save(created.id, selectedCategory?.id); onClose(); }, onSettled: () => { isSubmittingRef.current = false; } }
       );
     }
   };
@@ -144,9 +147,6 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
     label: isEditing ? t('modal.editHabit') : t('modal.createHabit'),
   });
 
-  // `'__none'` : « Sans catégorie » choisi explicitement (couleur grise).
-  const noCategory = categoryId === '__none' || (!categoryId && formData.color === NO_CATEGORY_COLOR);
-  const selectedCategory = noCategory ? undefined : (categories.find((c) => c.id === categoryId) ?? categories.find((c) => c.color === formData.color));
 
   return (
     <>
@@ -294,6 +294,8 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                         value={formData.scheduledDays}
                         onChange={(days) => setFormData({ ...formData, scheduledDays: days })}
                       />
+                      <div className="h-px bg-[rgb(var(--color-border))] ml-4" />
+                      <HabitAutoTaskCheckbox checked={autoTask.checked} onChange={autoTask.setChecked} className="gap-3 px-4 min-h-11 text-[15px]" />
                     </div>
                   </div>
                 </div>
@@ -380,6 +382,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                         days={formData.scheduledDays}
                         onDays={(days) => setFormData({ ...formData, scheduledDays: days })}
                       />
+                      <HabitAutoTaskCheckbox checked={autoTask.checked} onChange={autoTask.setChecked} className="mt-3 gap-2 text-sm" />
                     </div>
                   </form>
 

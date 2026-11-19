@@ -34,7 +34,7 @@
     },
     "src/components/HabitModal.tsx": {
       "complexity": [28],
-      "max-lines-per-function": [319]
+      "max-lines-per-function": [318]
     },
     "src/components/HabitTable.tsx": {
       "max-lines-per-function": [347]

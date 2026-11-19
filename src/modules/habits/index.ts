@@ -37,6 +37,11 @@ export {
   useToggleHabitCompletion,
 } from './hooks';
 
+// Tâche créée chaque jour prévu (mig. 265).
+export { useHabitAutoTasks, useSetHabitAutoTask, habitAutoTaskKeys } from './auto-task.hooks';
+export type { HabitAutoTask } from './auto-task.repository';
+export { dueAutoTasks, autoTaskInput } from './auto-task';
+
 // Restauration (« Annuler ») — impose l'identifiant d'origine, cf. R-08.
 export { useRestoreHabit } from './restore.hooks';
 
