@@ -460,8 +460,7 @@
       "max-lines-per-function": [247]
     },
     "src/pages/tasks/TaskListsBar.tsx": {
-      "complexity": [26],
-      "max-lines-per-function": [389]
+      "max-lines-per-function": [340]
     }
   }
 }
