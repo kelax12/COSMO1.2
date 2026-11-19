@@ -359,10 +359,10 @@ const LandingPage: React.FC = () => {
                 className={`group relative inline-flex items-center justify-center overflow-hidden px-4 py-2 min-h-touch xl:px-5 rounded-xl font-semibold transition-[box-shadow,color,background-color] duration-300 text-sm whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
                   isEnterprise
                     ? 'bg-cyan-400 text-[#04141A] shadow-lg shadow-cyan-500/25 hover:bg-cyan-300 hover:shadow-cyan-400/50 focus-visible:ring-cyan-300 focus-visible:ring-offset-slate-900'
-                    : 'bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-500 focus-visible:ring-offset-white'
+                    : 'bg-blue-600 text-white hover:bg-blue-700 [&>[data-reflet]]:hidden focus-visible:ring-blue-500 focus-visible:ring-offset-white'
                 }`}
               >
-                {isEnterprise && <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700" aria-hidden="true" />}
+                <span data-reflet className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700" aria-hidden="true" />
                 {/* Les deux libellés occupent la MÊME cellule de grille : la
                     largeur est réservée par le plus long, la barre ne saute
                     pas à la bascule. Le fondu ne porte que sur l'opacité. */}
