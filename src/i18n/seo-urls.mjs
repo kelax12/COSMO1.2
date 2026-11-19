@@ -39,7 +39,7 @@ export const SITE_ORIGIN = 'https://thecosmo.app';
 export const DEFAULT_LOCALE = 'fr';
 
 /** Locales réellement indexables. Voir l'en-tête pour la distinction. */
-export const INDEXABLE_LOCALES = ['fr', 'en'];
+export const INDEXABLE_LOCALES = ['fr', 'en', 'hr'];
 
 /** Étiquettes BCP 47 — miroir de `BCP47_TAG` dans src/i18n/locale.ts. */
 export const BCP47_TAG = { fr: 'fr-FR', en: 'en-US', es: 'es-ES', hr: 'hr-HR' };

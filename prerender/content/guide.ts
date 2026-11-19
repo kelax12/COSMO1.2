@@ -33,4 +33,19 @@ export const GUIDE_CONTENT: LocaleContent = {
         <h2>Statistics</h2>
         <p>Time invested per category, how it evolves over the chosen period, comparison between modules. This is the page to open at the end of a week or a month: it answers "where did my time go?" with numbers rather than an impression, and that is often where the next adjustment gets decided.</p>
         <p><a href="/en/">Back to the home page</a> · <a href="/en/signup">Create a free account</a> · <a href="/en/blog">The blog</a></p>`,
+  hr: `<h1>Vodič za korištenje Cosma</h1>
+        <p>Ovaj vodič pokriva šest područja Cosma, redom kojim ih u praksi otkrivate. Za sve vam treba petnaestak minuta, ali ništa vas ne tjera da sve postavite prvog dana: sami zadaci dovoljni su za koristan početak.</p>
+        <h2>Prvi koraci</h2>
+        <p>Postoje dva ulaza. <strong>Demo način</strong> otvara cijelu aplikaciju bez registracije, unaprijed ispunjenu s 12 mjeseci podataka: to je pravi način za istraživanje bez ikakvog postavljanja. <strong>Besplatni račun</strong> izrađuje se za trideset sekundi, putem e-pošte ili Googlea, i tada vas podaci prate s uređaja na uređaj.</p>
+        <h2>Zadaci</h2>
+        <p>Temelj. Zadatak ima naziv, opis, prioritet od 1 do 5, kategoriju u boji, rok i jedan ili više popisa. Filtri se kombiniraju kako bi izdvojili ono što je važno sada, a popisi služe za trajna grupiranja (klijent, projekt, kolegij). Ponavljajući zadatak automatski se obnavlja kad ga označite, a podzadaci razlažu ono što je preveliko da bi se započelo. Dijeljenje ide putem e-pošte, u ulozi Čitatelja ili Urednika, besplatno.</p>
+        <h2>Navike</h2>
+        <p>Izradite naviku, odredite joj trajanje i označavajte je iz dana u dan. Pauza (godišnji odmor, bolest) čuva vaš niz. Toplinska karta od 26 tjedana pokazuje stvarnu redovitost, niz broji uzastopne dane, a stopa izvršenja smješta tekuće razdoblje u kontekst. Savjet koji sve mijenja: na početku najviše dvije ili tri navike, pa dodajte nove za mjesec dana. Popis od petnaest navika gotovo uvijek završi odustajanjem od svih.</p>
+        <h2>Kalendar</h2>
+        <p>Kalendar prima obične događaje, ali njegova vrijednost je drugdje: povucite zadatak s bočne ploče u termin i događaj se stvara te ostaje povezan sa zadatkom. To je <a href="/hr/blog/time-blocking-guide">time-blocking</a> i upravo on pretvara popis namjera u realan tjedan. Dnevni, tjedni i mjesečni prikaz, a ponavljajućim događajima upravlja se iz istog obrasca.</p>
+        <h2>OKR</h2>
+        <p>Jedan kvalitativni cilj, 2 do 5 brojčanih ključnih rezultata. Ažurirate trenutnu vrijednost ključnog rezultata, Cosmo ponovno izračunava napredak cilja i bilježi svako izvršenje u vašu povijest, a upravo taj trag hrani grafikon na nadzornoj ploči. Ako tek počinjete s metodom, članak <a href="/hr/blog/methode-okr-exemples">metoda OKR i 15 primjera</a> daje formulacije spremne za prilagodbu.</p>
+        <h2>Statistika</h2>
+        <p>Uloženo vrijeme po kategoriji, kretanje kroz odabrano razdoblje, usporedba modula. To je stranica koju otvarate na kraju tjedna ili mjeseca: na pitanje „kamo mi je otišlo vrijeme?“ odgovara brojkama umjesto dojmom, i često se upravo tamo odlučuje sljedeća prilagodba.</p>
+        <p><a href="/hr/">Natrag na početnu</a> · <a href="/hr/signup">Izradite besplatni račun</a> · <a href="/hr/blog">Blog</a></p>`,
 };

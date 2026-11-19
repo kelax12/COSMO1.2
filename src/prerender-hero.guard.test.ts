@@ -63,7 +63,7 @@ describe('copie du hero : fraîcheur de la capture', () => {
   ];
   for (const [track, fichier, locale] of CAPTURES) {
     it(`${fichier} : porte les textes du hero de son catalogue, et rien qui rejouerait une entrée`, () => {
-      const html = read(`scripts/landing-hero/${fichier}.html`);
+      const html = read(`prerender/landing-hero/${fichier}.html`);
       const { catalogue, chemin, cles } = TEXTES[track];
       let noeud = JSON.parse(read(`src/locales/${locale}/${catalogue}.json`)) as Record<string, unknown>;
       for (const k of chemin) noeud = noeud[k] as Record<string, unknown>;
@@ -81,7 +81,7 @@ describe('copie du hero : fraîcheur de la capture', () => {
 
   it('entreprise : la pile garde son image (masquée, React la peignait plus grande et reprenait le LCP à 6,4 s)', () => {
     for (const fichier of LOCALES.flatMap((l) => [`entreprise-${l}`, `entreprise-${l}-mobile`])) {
-      const html = read(`scripts/landing-hero/${fichier}.html`);
+      const html = read(`prerender/landing-hero/${fichier}.html`);
       expect(html, fichier).toMatch(/<img[^>]*\ssrc="\/[^"]+"[^>]*loading="eager"|<img[^>]*loading="eager"[^>]*\ssrc="\/[^"]+"/);
     }
   });

@@ -45,4 +45,25 @@ export const ABOUT_CONTENT: LocaleContent = {
         <h2>Write to us</h2>
         <p>The project is developed by an independent team, in France. A question, a bug, a feature idea, a press request: write to contact@thecosmo.app, because user feedback genuinely steers the roadmap.</p>
         <p><a href="/en/">Home</a> · <a href="/en/signup">Create a free account</a> · <a href="/en/blog">Blog</a> · <a href="/en/guide">User guide</a></p>`,
+  hr: `<h1>O Cosmu</h1>
+        <p>Cosmo je francuska aplikacija za produktivnost, besplatna i sve u jednom: zadaci, navike, kalendar s time-blockingom i OKR-ovi povezani u jedinstven ekosustav. Neovisan proizvod, razvijen u Francuskoj.</p>
+
+        <h2>Zašto Cosmo postoji</h2>
+        <p>Većina organiziranih ljudi koristi tri ili četiri alata: upravitelj zadataka, praćenje navika, kalendar i tablicu za godišnje ciljeve koju otvore dvaput godišnje. Svaki dobro radi svoj posao, nijedan ne vidi cjelinu. Rezultat: dugoročni ciljevi nemaju nikakvu težinu pred hitnošću dana jer nisu zapisani nigdje gdje gledate svako jutro.</p>
+        <p>Cosmo je nastao iz tog zapažanja. Spojiti sva četiri alata u jedan proizvod nije stvar praktičnosti: upravo to omogućuje da se kvartalni cilj razloži na konkretne zadatke, da zadatak dobije pravi termin u kalendaru i da statistika pokaže razliku između onoga što ciljate i onoga što radite. Nijedna od tih veza nije moguća kad podaci žive u četiri odvojene aplikacije.</p>
+
+        <h2>Naša načela</h2>
+        <ul>
+          <li><strong>Besplatno za ono bitno.</strong> Zadaci, navike, kalendar, OKR-ovi, statistika i dijeljenje zadataka su besplatni, bez kartice i bez vremenski ograničenog probnog razdoblja. Posebno će suradnja ostati besplatna: aplikacija za organizaciju koja naplaćuje pozivanje drugih lišava se jedine stvari zbog koje je korisna u skupini.</li>
+          <li><strong>Upotrebljivo za dvije minute.</strong> Demo način otvara cijelu aplikaciju, unaprijed ispunjenu s 12 mjeseci realističnih podataka, bez računa i bez e-pošte. Alat za organizaciju procjenjuje se ispunjen, a ne pred praznim zaslonom.</li>
+          <li><strong>Prvo mobitel.</strong> Cosmo se najprije osmišljava za mobitel koji držite jednom rukom, a zatim se proširuje na zaslon računala, ne obrnuto. Bez instalacije: sve radi u pregledniku.</li>
+          <li><strong>Vaši podaci pripadaju vama.</strong> Pohrana na Supabaseu s Row Level Securityjem: svaki je redak odvojen za svog vlasnika na razini baze podataka, ne samo u sučelju. U demo načinu ništa ne napušta vaš preglednik. Brisanje računa je trajno i potpuno, na zahtjev iz postavki.</li>
+        </ul>
+
+        <h2>Cosmo, The Cosmo App ili thecosmo?</h2>
+        <p>Sva tri naziva označavaju istu aplikaciju: Cosmo, dostupan na adresi thecosmo.app. Traže nas i kao „Cosmo app“, „The Cosmo“ ili „thecosmo app“, i to smo uvijek mi. Nekoliko drugih nepovezanih proizvoda nosi ime „Cosmo“ (njemačka radijska postaja, razne mobilne aplikacije): Cosmo je web-aplikacija za produktivnost, bez preuzimanja, a njegova jedina službena stranica je thecosmo.app.</p>
+
+        <h2>Pišite nam</h2>
+        <p>Projekt razvija neovisan tim u Francuskoj. Pitanje, greška, ideja za funkciju, upit medija: pišite na contact@thecosmo.app, jer povratne informacije korisnika zaista usmjeravaju plan razvoja.</p>
+        <p><a href="/hr/">Početna</a> · <a href="/hr/signup">Izradite besplatni račun</a> · <a href="/hr/blog">Blog</a> · <a href="/hr/guide">Vodič za korištenje</a></p>`,
 };

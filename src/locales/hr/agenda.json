@@ -16,11 +16,11 @@
     "day": "Dan",
     "week": "Tjedan",
     "month": "Mjesec",
-    "twoDays": "2 D"
+    "twoDays": "2 dana"
   },
   "event": {
     "uncategorized": "Bez kategorije",
-    "addedBy": "Dodao/la {{name}}",
+    "addedBy": "Dodaje: {{name}}",
     "occurrenceDeleted": "Pojavljivanje je izbrisano",
     "eventDeleted": "Događaj je izbrisan",
     "copySuffix": "(kopija)",
@@ -28,7 +28,7 @@
     "taskDone": "Zadatak je dovršen"
   },
   "quickCreate": {
-    "aria": "Brzo stvaranje događaja",
+    "aria": "Brza izrada događaja",
     "titlePlaceholder": "Naslov događaja",
     "categoryPlaceholder": "Kategorija",
     "addCategory": "Dodaj kategoriju",

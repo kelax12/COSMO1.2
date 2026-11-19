@@ -8,7 +8,7 @@
 //   npm run capture:landing-hero                     # autre terminal
 //   npm run build                                    # le prérendu relit la capture
 //
-// Écrit `scripts/landing-hero/<track>-<locale>.html` : le balisage RÉEL rendu
+// Écrit `prerender/landing-hero/<track>-<locale>.html` : le balisage RÉEL rendu
 // par React (header, rangée mobile, hero, bandeau), classes comprises, figé dans
 // son état final (`prefers-reduced-motion: reduce`, donc aucune entrée en
 // cours). `prerender/copies.ts` l'injecte dans `#lp-hero` avec la CSS extraite par
@@ -38,6 +38,8 @@ const PAGES = [
   { track: 'perso', locale: 'en', path: '/en/' },
   { track: 'entreprise', locale: 'fr', path: '/entreprise-presentation/', mobile: true },
   { track: 'entreprise', locale: 'en', path: '/en/for-companies/', mobile: true },
+  { track: 'perso', locale: 'hr', path: '/hr/' },
+  { track: 'entreprise', locale: 'hr', path: '/hr/za-tvrtke/', mobile: true },
 ];
 // Le hero entreprise se rend AUTREMENT sous 768 px (`useIsMobile` : pile
 // simple, pas de shader). Seconde capture à 412 px, `<track>-<locale>-mobile.html`,
@@ -106,7 +108,7 @@ function extraire(track) {
 }
 
 const browser = await chromium.launch();
-mkdirSync(join(ROOT, 'scripts', 'landing-hero'), { recursive: true });
+mkdirSync(join(ROOT, 'prerender', 'landing-hero'), { recursive: true });
 for (const { track, locale, path, mobile } of PAGES) {
   for (const vue of mobile ? ['bureau', 'mobile'] : ['bureau']) {
     const { width, height, suffixe } = VUES[vue];
@@ -122,7 +124,7 @@ for (const { track, locale, path, mobile } of PAGES) {
     await page.waitForSelector('main h1');
     await page.waitForTimeout(2500);
     const fragment = await page.evaluate(extraire, track);
-    const fichier = join(ROOT, 'scripts', 'landing-hero', `${track}-${locale}${suffixe}.html`);
+    const fichier = join(ROOT, 'prerender', 'landing-hero', `${track}-${locale}${suffixe}.html`);
     writeFileSync(fichier, `${fragment}\n`, 'utf8');
     console.log(`${track}-${locale}${suffixe} : ${fragment.length} caractères → ${fichier}`);
     await ctx.close();

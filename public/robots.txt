@@ -29,6 +29,19 @@ Disallow: /en/entreprise$
 Disallow: /en/entreprise/
 Disallow: /en/admin
 
+# Mêmes routes sous le préfixe croate, indexable comme `en`.
+Disallow: /hr/dashboard
+Disallow: /hr/tasks
+Disallow: /hr/agenda
+Disallow: /hr/habits
+Disallow: /hr/okr
+Disallow: /hr/statistics
+Disallow: /hr/settings
+Disallow: /hr/premium
+Disallow: /hr/entreprise$
+Disallow: /hr/entreprise/
+Disallow: /hr/admin
+
 # ⚠️ `/entreprise` porte un `$` (fin d'URL) et une seconde règle pour son
 # sous-arbre, au lieu du préfixe nu `/entreprise`. `Disallow:` matche par
 # PRÉFIXE : `/entreprise` bloquait donc aussi `/entreprise-presentation`, la

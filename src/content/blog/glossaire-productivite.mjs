@@ -141,5 +141,66 @@ export const article = {
 <p>All of these concepts live in one place in <a href="/en/">Cosmo</a>: OKRs with progress computed for you, time-blocking by drag and drop, priorities to apply Eisenhower, and habits with heatmaps and streaks. <a href="/en/signup">Free</a>, with an instant demo and no sign-up.</p>
 `,
     },
+    hr: {
+      title: "Pojmovnik produktivnosti: 20 pojmova napokon jasno objašnjenih",
+      metaTitle: "Pojmovnik produktivnosti: OKR, time-blocking, deep work",
+      description: "OKR, time-blocking, deep work, habit stacking, Parkinsonov zakon i drugi. 20 pojmova produktivnosti jasno definiranih, uz ono čemu svaki stvarno služi.",
+      readingMinutes: 8,
+      html: `
+<p class="lead">Kultura produktivnosti voli svoj žargon. Evo 20 pojmova na koje ćete posvuda naići, objašnjenih jednostavno i bez mistike, svaki s onim što stvarno vrijedi zapamtiti.</p>
+<figure><img src="/screenshots/dashboard.webp" srcset="/screenshots/dashboard-800.webp 800w, /screenshots/dashboard.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="Nadzorna ploča u Cosmu: današnji zadaci, događaji iz kalendara, ključni rezultati i navike na jednom zaslonu." /><figcaption>Nadzorna ploča u Cosmu: današnji zadaci, događaji iz kalendara, ključni rezultati i navike na jednom zaslonu. Snimka zaslona demo načina rada, primjeri podataka.</figcaption></figure>
+
+<h2 id="objectifs">Ciljevi i mjerenje</h2>
+<h3>OKR (Objectives &amp; Key Results)</h3>
+<p>Sustav ciljeva u kratkim ciklusima: jedna kvalitativna ambicija, dokazana s 2 do 5 brojčanih rezultata. Popularizirao ga je Intel, a zatim Google. Zdrava razina ostvarenja je oko 70 %. → <a href="/hr/blog/methode-okr-exemples">Cijeli vodič s 15 primjera</a>.</p>
+<h3>Ključni rezultat</h3>
+<p>Brojčani dokaz cilja: početna vrijednost, ciljana vrijednost, rok. Mjeri ishod („5 dogovorenih razgovora“), nikad aktivnost („50 poslanih prijava“).</p>
+<h3>SMART cilj</h3>
+<p>Okvir za formuliranje: specifičan, mjerljiv, ostvariv, realističan, vremenski određen. Koristan za zapisivanje cilja, ali sam po sebi nedovoljan za odluku o tome što je važno. → <a href="/hr/blog/okr-vs-smart-vs-kpi">OKR, SMART i KPI</a>.</p>
+<h3>KPI (ključni pokazatelj uspješnosti)</h3>
+<p>Mjera koja se neprestano prati kako bi se znalo u kakvom je stanju neka aktivnost. Toplomjer, a ne akcijski plan.</p>
+<h3>North star metric</h3>
+<p>Jedna jedina mjera koja treba sažeti vrijednost koju proizvod donosi (za Airbnb: rezervirana noćenja). Korisna ideja, pod uvjetom da je ne mijenjate svaki mjesec.</p>
+
+<h2 id="temps">Upravljanje vremenom</h2>
+<h3>Time-blocking</h3>
+<p>Rezerviranje termina u kalendaru za zadatke umjesto rada kako stvari dolaze. Zadatak postaje sastanak. → <a href="/hr/blog/time-blocking-guide">Cijeli vodič</a>.</p>
+<h3>Time-boxing</h3>
+<p>Time-blocking s čvrstim krajem: kad termin istekne, stajete, gotovo ili ne. Pravi alat protiv perfekcionizma i protiv zadataka bez prirodnog kraja.</p>
+<h3>Task batching</h3>
+<p>Grupiranje zadataka iste vrste (e-pošta, računi, pozivi) u jedan blok kako bi se uklonile promjene konteksta.</p>
+<h3>Deep work</h3>
+<p>Pojam Cala Newporta: potpuno usredotočen rad na kognitivno zahtjevnom zadatku, bez prekida. Najrjeđi i najproduktivniji resurs radnog dana.</p>
+<h3>Promjena konteksta (context switching)</h3>
+<p>Kognitivna cijena prelaska s jednog zadatka na drugi. Nakon prekida potrebno je u prosjeku 23 minute za povratak pune koncentracije (Gloria Mark, UC Irvine).</p>
+<h3>Tehnika Pomodoro</h3>
+<p>Rad u intervalima od 25 minuta odvojenima kratkim pauzama. Učinkovita za pokretanje kad nedostaje motivacije, manje prikladna za prave sesije dubokog rada, koje rascjepkava.</p>
+<h3>Parkinsonov zakon</h3>
+<p>„Posao se širi tako da ispuni vrijeme predviđeno za njegovo dovršenje.“ Praktična posljedica: dajte zadatku manje vremena i on će se sažeti. To je djelatni sastojak time-boxinga.</p>
+
+<h2 id="priorisation">Određivanje prioriteta</h2>
+<h3>Eisenhowerova matrica</h3>
+<p>Razvrstavanje zadataka po dvije osi (hitno, važno) u 4 kvadranta: učini, planiraj, delegiraj, obriši. → <a href="/hr/blog/matrice-eisenhower">Vodič s primjerima</a>.</p>
+<h3>MIT (Most Important Task)</h3>
+<p>Zadatak, ili dva do tri zadatka, koji bi dan učinili uspješnim i da ništa drugo ne obavite. Bira se ujutro, prije e-pošte.</p>
+<h3>Eat the frog („pojedi žabu“)</h3>
+<p>Najneugodniji zadatak obavite prvi, dok je snaga volje najveća. Slobodno se pripisuje Marku Twainu, a popularizirao ga je Brian Tracy.</p>
+
+<h2 id="habitudes">Navike</h2>
+<h3>Niz (streak)</h3>
+<p>Broj uzastopnih dana u kojima je navika održana. Snažan motivator, pod uvjetom da znate kako jedan izolirani propust ništa ne kvari. → <a href="/hr/blog/combien-de-temps-prendre-habitude">Koliko traje stvaranje navike?</a></p>
+<h3>Habit stacking</h3>
+<p>Vezanje nove navike uz postojeću rutinu: „nakon [postojeće navike] radim [novu naviku]“. Okidač iz konteksta bolji je od apstraktnog doba dana.</p>
+<h3>Toplinska karta navika</h3>
+<p>Kalendarska mreža u kojoj svaki održani dan oboji jedno polje, u duhu GitHubovog grafa doprinosa. Na prvi pogled pokazuje dosljednost i njezine praznine.</p>
+<h3>Pravilo dvaju dana</h3>
+<p>Nikad ne propustite naviku dva dana zaredom. Temelji se na istraživanjima: izolirani propust nema mjerljiv učinak, naviku ubija ponovljeni propust.</p>
+<h3>Pravilo 21 dana (mit)</h3>
+<p>Ideja da se navika stvara za 21 dan pogrešno je tumačenje zapažanja Maxwella Maltza. Znanost (Lally, 2009.): medijan od 66 dana, u rasponu od 18 do 254.</p>
+
+<h2 id="pratique">Od pojmovnika do prakse</h2>
+<p>Svi ti pojmovi žive na jednom mjestu u <a href="/hr/">Cosmu</a>: OKR-ovi s automatski izračunatim napretkom, time-blocking povlačenjem i ispuštanjem, prioriteti za primjenu Eisenhowerove matrice te navike s toplinskim kartama i nizovima. <a href="/hr/signup">Besplatno</a>, s trenutačnim demom bez registracije.</p>
+`,
+    },
   },
 };

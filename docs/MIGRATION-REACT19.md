@@ -12,7 +12,7 @@
 - ❌ Recopier un composant shadcn amont sans vérifier sa cible React (un `ref` jamais attaché).
 - 🔴 Un filtre `manualChunks` / `chunkFor` se termine par `/` (`node_modules/react/`, `react-dom/`, `scheduler/`) : sans `/`, `react-day-picker`, `react-redux`, `react-remove-scroll`, `react-is`… tombent dans `vendor-react` avec leurs dépendances et partent dans le chemin critique (un faux « surcoût React 19 »). Chunks lazy nommés : `vendor-daypicker`, `vendor-scroll-lock`. Mesure : `npm run check:bundle` avec `VITE_SENTRY_DSN` posée. ❌ Relever un plafond ([`PERFORMANCE.md`](./PERFORMANCE.md)).
 - ⚠️ Un `npm install <paquets>` naïf remonte `@radix-ui/react-dialog` et duplique des primitives Radix : reconstruire le lockfile en ne retirant que les entrées des paquets montés.
-- ⚠️ Les copies prérendues du hero (`scripts/landing-hero/*.html`) se recapturent avec une `locale` explicite (sans elle Playwright parle `en-US` et `perso-fr.html` reçoit la landing anglaise).
+- ⚠️ Les copies prérendues du hero (`prerender/landing-hero/*.html`) se recapturent avec une `locale` explicite (sans elle Playwright parle `en-US` et `perso-fr.html` reçoit la landing anglaise).
 - ⚠️ Les références visuelles viennent du runner GitHub : un A/B local contre une copie jetable de `main` tranche, pas la comparaison aux références suivies. ❌ Les régénérer en local ([`e2e/CLAUDE.md`](../e2e/CLAUDE.md)).
 
 ## Reste à faire

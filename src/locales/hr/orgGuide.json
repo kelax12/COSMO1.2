@@ -26,16 +26,16 @@
       "admin": "Administrator",
       "manager": "Upravljanje timom",
       "owner": "Vlasnik",
-      "task_create": "Stvaranje zadataka",
+      "task_create": "Izrada zadataka",
       "task_editAny": "Uređivanje svih zadataka",
       "task_deleteAny": "Brisanje svih zadataka",
-      "project_create": "Stvaranje projekata",
+      "project_create": "Izrada projekata",
       "project_edit": "Uređivanje projekata",
       "project_delete": "Brisanje projekata",
-      "okr_create": "Stvaranje OKR-ova",
+      "okr_create": "Izrada OKR-ova",
       "okr_delete": "Brisanje OKR-ova",
       "category_manage": "Upravljanje kategorijama",
-      "team_create": "Stvaranje timova",
+      "team_create": "Izrada timova",
       "member_invite": "Pozivanje članova",
       "report_org": "Izvješća tvrtke",
       "report_allTeams": "Izvješća svih timova",
@@ -71,17 +71,17 @@
   "actions": {
     "project": {
       "create": {
-        "label": "Stvorite projekt",
+        "label": "Izradite projekt",
         "synonyms": "novi projekt, radni tok, mapa, inicijativa",
         "b1": "Naziv projekta, vidljiv cijeloj publici koju odaberete.",
         "b2": "Tim vlasnik određuje tko vodi projekt i upravlja njime.",
         "b3": "Rok se prikazuje na vremenskoj crti i pokreće upozorenja o kašnjenju."
       },
       "fromTemplate": {
-        "label": "Stvorite projekt iz predloška",
+        "label": "Izradite projekt iz predloška",
         "synonyms": "predložak, unaprijed postavljeno, dupliciranje, nacrt, standardni projekt",
         "b1": "Odaberite predložak najbliži projektu koji želite pokrenuti.",
-        "b2": "Zadaci iz predloška dodaju se ovdje; neke možete ukloniti prije stvaranja."
+        "b2": "Zadaci iz predloška dodaju se ovdje; neke možete ukloniti prije izrade."
       },
       "audience": {
         "label": "Upravljajte vidljivošću projekta",
@@ -92,7 +92,7 @@
     },
     "task": {
       "create": {
-        "label": "Stvorite timski zadatak",
+        "label": "Izradite timski zadatak",
         "synonyms": "novi zadatak, tiket, obaveza, radnja, todo",
         "b1": "Naslov u nekoliko riječi kaže što treba učiniti.",
         "b2": "Projekt povezuje zadatak s njegovim kontekstom i publikom.",
@@ -113,7 +113,7 @@
     },
     "list": {
       "create": {
-        "label": "Stvorite popis zadataka",
+        "label": "Izradite popis zadataka",
         "synonyms": "popis, grupa, filtar, prikaz, ploča",
         "b1": "Naziv popisa u nekoliko riječi kaže što grupira.",
         "b2": "Boja izdvaja popis na traci; jedan klik prelazi na sljedeću."
@@ -129,7 +129,7 @@
     },
     "team": {
       "create": {
-        "label": "Stvorite tim",
+        "label": "Izradite tim",
         "synonyms": "novi tim, grupa, odjel, ekipa, jedinica",
         "b1": "Naziv tima prikazuje se svugdje gdje se tim spominje.",
         "b2": "Označite početne članove; kruna označava voditelja, koji upravlja timom."
@@ -180,7 +180,7 @@
     },
     "role": {
       "create": {
-        "label": "Stvorite prilagođenu ulogu",
+        "label": "Izradite prilagođenu ulogu",
         "synonyms": "uloga, dopuštenja, prava, profil, prilagođeno",
         "b1": "Dajte ulozi naziv koji će razumjeti cijeli tim.",
         "b2": "Matrica prava navodi što uloga omogućuje.",
@@ -230,7 +230,7 @@
     },
     "okr": {
       "create": {
-        "label": "Stvorite OKR tvrtke",
+        "label": "Izradite OKR tvrtke",
         "synonyms": "OKR, cilj, ključni rezultat, svrha, ambicija",
         "b1": "Cilj u jednoj rečenici kaže kamo tvrtka želi ići.",
         "b2": "Ključni rezultati konkretno mjere je li cilj postignut.",

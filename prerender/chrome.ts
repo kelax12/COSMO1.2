@@ -59,6 +59,21 @@ const UI: Partial<Record<Locale, UiChrome>> = {
     guide: 'User guide',
     rss: 'RSS feed',
   },
+  hr: {
+    blogTitle: 'Cosmo blog',
+    blogIntro: (n) =>
+      `Praktični vodiči o metodi OKR, praćenju navika, blokiranju vremena i osobnoj produktivnosti. Članaka: ${n}, napisanih da budu korisni bez instaliranja ičega.`,
+    readArticle: 'Pročitajte članak',
+    readingTime: (n) => `${n} min čitanja`,
+    readNext: 'Pročitajte i ovo',
+    allArticles: '← Svi članci',
+    tryFree: 'Isprobajte Cosmo besplatno',
+    home: 'Početna',
+    blog: 'Blog',
+    signup: 'Otvorite besplatan račun',
+    guide: 'Korisnički vodič',
+    rss: 'RSS feed',
+  },
 };
 
 type FooterKey =
@@ -100,6 +115,21 @@ const FOOTER_LABELS: Partial<Record<Locale, Record<FooterKey, string>>> = {
     legalNotice: 'Legal notice',
     privacy: 'Privacy',
     terms: 'Terms',
+  },
+  hr: {
+    guide: 'Korisnički vodič',
+    enterprise: 'Cosmo za tvrtke',
+    blog: 'Blog',
+    freelancers: 'Za freelancere',
+    students: 'Za studente',
+    managers: 'Za menadžere',
+    teams: 'Za timove',
+    about: 'O nama',
+    signup: 'Besplatna registracija',
+    login: 'Prijava',
+    legalNotice: 'Pravne napomene',
+    privacy: 'Privatnost',
+    terms: 'Uvjeti korištenja',
   },
 };
 

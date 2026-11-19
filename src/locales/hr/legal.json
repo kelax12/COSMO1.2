@@ -3,13 +3,13 @@
   "updated": "Posljednje ažuriranje: {{date}}",
   "notice": {
     "seoTitle": "Pravne napomene – Cosmo aplikacija",
-    "seoDescription": "Pravne napomene aplikacije za produktivnost Cosmo: izdavač, pružatelj hostinga, intelektualno vlasništvo i odgovornosti.",
+    "seoDescription": "Pravne napomene aplikacije za produktivnost Cosmo: izdavatelj, pružatelj hostinga, intelektualno vlasništvo i odgovornosti.",
     "title": "Pravne napomene",
     "updatedAt": "25. listopada 2026.",
     "s1": {
-      "title": "1. Izdavač stranice",
+      "title": "1. Izdavatelj stranice",
       "intro": "Web-stranicu i aplikaciju **Cosmo** izdaje:",
-      "li1": "**Izdavač:** Axel Longatte, samostalni poduzetnik (entrepreneur individuel, EI), posluje pod nazivom COSMO",
+      "li1": "**Izdavatelj:** Axel Longatte, samostalni poduzetnik (entrepreneur individuel, EI), posluje pod nazivom COSMO",
       "liRegistration": "**Upis:** francuski Nacionalni registar poduzeća (RNE) od 20. listopada 2026., SIREN 131 769 317, SIRET 131 769 317 00010, APE šifra 62.01Z",
       "liVat": "**PDV:** PDV se ne obračunava, članak 293 B francuskog Općeg poreznog zakonika",
       "liAddress": "**Adresa:** 138 avenue Victor Hugo, 75116 Paris, Francuska (adresu sjedišta osigurava Les Tricolores)",
@@ -25,19 +25,19 @@
     },
     "s3": {
       "title": "3. Intelektualno vlasništvo",
-      "p1": "Sav urednički sadržaj na Cosmu (tekstovi, grafike, logotipi, ikone, slike, zvukovi) pripada izdavaču, Axelu Longatteu, ili njegovim partnerima i zaštićen je pravom intelektualnog vlasništva. Podaci koje unosite u Cosmo ostaju vaši (odjeljak 6 uvjeta korištenja).",
-      "p2": "Zabranjeno je svako umnožavanje, prikazivanje, mijenjanje, objavljivanje ili prilagođavanje cijelog ili dijela ovog sadržaja, bilo kojim sredstvom ili postupkom, bez prethodnog pisanog dopuštenja izdavača.",
+      "p1": "Sav urednički sadržaj na Cosmu (tekstovi, grafike, logotipi, ikone, slike, zvukovi) pripada izdavatelju, Axelu Longatteu, ili njegovim partnerima i zaštićen je pravom intelektualnog vlasništva. Podaci koje unosite u Cosmo ostaju vaši (članak 6. općih uvjeta korištenja).",
+      "p2": "Zabranjeno je svako umnožavanje, prikazivanje, mijenjanje, objavljivanje ili prilagođavanje cijelog ili dijela ovog sadržaja, bilo kojim sredstvom ili postupkom, bez prethodnog pisanog dopuštenja izdavatelja.",
       "p3": "Cosmo se oslanja na komponente otvorenog koda. Njihov popis i tekst licenci dostupni su u [ovoj datoteci](https://thecosmo.app/third-party-notices.txt), koja se ponovno generira pri svakom izdanju."
     },
     "s4": {
       "title": "4. Odgovornost",
-      "p1": "Izdavač nastoji da informacije objavljene na stranici i u aplikaciji budu točne i ažurne, ali ne može jamčiti njihovu potpunost.",
-      "p2": "Odgovornost izdavača prema korisnicima usluge uređena je odjeljkom 9 uvjeta korištenja. Ništa u ovim napomenama dodatno je ne ograničava, a prava koja imate po zakonu, osobito kao potrošač, ostaju netaknuta."
+      "p1": "Izdavatelj nastoji da informacije objavljene na stranici i u aplikaciji budu točne i ažurne, ali ne može jamčiti njihovu potpunost.",
+      "p2": "Odgovornost izdavatelja prema korisnicima usluge uređena je člankom 9. općih uvjeta korištenja. Ništa u ovim napomenama dodatno je ne ograničava, a prava koja imate po zakonu, osobito kao potrošač, ostaju netaknuta."
     },
     "s5": {
       "title": "5. Mjerodavno pravo",
       "p1": "Na ove pravne napomene primjenjuje se francusko pravo. Ako ste potrošač, zadržavate pravo pokrenuti postupak pred sudovima mjesta u kojem živite.",
-      "p2": "**Potrošački medijator**: Société Médiation Professionnelle, [www.mediateur-consommation-smp.fr](https://www.mediateur-consommation-smp.fr), Alteritae, 5 rue Salvaing, 12000 Rodez, Francuska. Kako podnijeti spor: odjeljak 12 bis [Uvjeta korištenja](/cgu)."
+      "p2": "**Potrošački medijator**: Société Médiation Professionnelle, [www.mediateur-consommation-smp.fr](https://www.mediateur-consommation-smp.fr), Alteritae, 5 rue Salvaing, 12000 Rodez. Uvjeti podnošenja: članak 12 bis [Uvjeta korištenja](/cgu)."
     },
     "s6": {
       "title": "6. Jezik ovog dokumenta",

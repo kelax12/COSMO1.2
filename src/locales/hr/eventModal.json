@@ -41,7 +41,7 @@
     "recurrenceShortNone": "Ništa",
     "recurrenceShortDaily": "Dan",
     "recurrenceShortWeekly": "Tj.",
-    "recurrenceShortCustom": "Prilag."
+    "recurrenceShortCustom": "Vlastito"
   },
   "endBeforeStart": "⚠️ Kraj prije početka",
   "headerAdd": "Dodaj događaj",

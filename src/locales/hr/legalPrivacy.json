@@ -49,7 +49,7 @@
       "li1": "**Izvršenju ugovora** za sve podatke potrebne za funkcioniranje usluge",
       "li2": "**Legitimnom interesu** za sigurnost i kontinuitet aplikacije te za internu statistiku korištenja (dani prijave), koja služi samo poboljšanju usluge",
       "li3": "**Privoli** za mjerenje posjećenosti (Vercel Analytics), podrijetlo vaše registracije, brojanje isprobavanja dema i svako pohranjivanje informacija na vaš uređaj koje nije nužno potrebno za uslugu. Ništa se ne pohranjuje niti učitava dok ne prihvatite, a odbijanje nikad ništa ne pohranjuje. Taj izbor možete promijeniti u bilo kojem trenutku",
-      "note": "Cosmo je namijenjen osobama starijima od 15 godina. Ispod te dobi mjerenje posjećenosti može se prihvatiti samo uz zajedničku suglasnost nositelja roditeljske skrbi (članak 45. francuskog Zakona o informatici i slobodama)."
+      "note": "Cosmo je namijenjen osobama od najmanje 15 godina. Ispod te dobi mjerenje posjećenosti može se prihvatiti samo uz zajedničku suglasnost nositelja roditeljske skrbi (članak 45. francuskog Zakona o informatici i slobodama)."
     },
     "s6": {
       "title": "6. Razdoblje čuvanja",
@@ -79,13 +79,13 @@
       "li10": "**GitHub**: čuvanje dnevnih sigurnosnih kopija baze, šifriranih prije pohrane. GitHub nema ključ za dešifriranje"
     },
     "s7bis": {
-      "title": "7.a Prijenosi izvan Europske unije",
+      "title": "7 bis. Prijenosi izvan Europske unije",
       "p1": "Vaša je baza podataka smještena u Irskoj, unutar Europske unije.",
       "p2": "Međutim, nekoliko pružatelja usluga su društva osnovana izvan Unije ili mogu pristupati podacima izvana: **Vercel**, **Sentry**, **Resend**, **Cloudflare**, **Stripe**, **Google** (prijava putem Googlea), **GitHub** (šifrirane sigurnosne kopije) te **Supabase Inc.**, čiji timovi mogu pristupati infrastrukturi radi održavanja i podrške. Podaci koje obrađuju u naše ime stoga mogu biti preneseni izvan Unije. Ti su prijenosi uređeni odlukom Europske komisije o primjerenosti u vezi s Okvirom za privatnost podataka EU-a i SAD-a, kad mu je pružatelj pristupio, ili u protivnom standardnim ugovornim klauzulama Komisije (članci 45. i 46. GDPR-a).",
       "p3": "Primjerak primjenjivih zaštitnih mjera možete zatražiti na adresi navedenoj u nastavku."
     },
     "s7ter": {
-      "title": "7.b Izravni marketing prema poslovnim subjektima",
+      "title": "7 ter. Izravni marketing prema poslovnim subjektima",
       "p1": "Cosmo može e-poštom kontaktirati poslovne subjekte kako bi im predstavio svoju ponudu za tvrtke. Ovaj se odjeljak odnosi na tako kontaktirane osobe, koje nisu nužno korisnici Cosma.",
       "li1": "**Obrađeni podaci:** poslovna e-adresa, ime, tvrtka, funkcija, izvor kontakta (stranica tvrtke, imenik ili poslovna mreža), povijest naše komunikacije i primljeni odgovori",
       "li2": "**Svrha:** predstaviti vam Cosmo i pratiti našu komunikaciju. Poruke se odnose isključivo na vašu poslovnu djelatnost",
@@ -105,7 +105,7 @@
       "li6": "**Pravo na ograničenje**: ograničiti obradu u određenim slučajevima",
       "p1": "Prenosivost se ostvaruje izravno u **Postavke, kartica Moji podaci**: izvoz obuhvaća vaše zadatke, navike, događaje, OKR-ove, kategorije, popise i profil, u formatu CSV.",
       "p2": "Za sva ostala prava: [contact@thecosmo.app](mailto:contact@thecosmo.app). Odgovaramo u roku od **mjesec dana** od primitka vašeg zahtjeva, u skladu s člankom 12. GDPR-a. Taj se rok može produljiti za dva mjeseca u slučaju složenog zahtjeva, o čemu vas obavještavamo u roku od mjesec dana.",
-      "p3": "Možete se obratiti i francuskom nadzornom tijelu **CNIL**: [www.cnil.fr](https://www.cnil.fr)",
+      "p3": "Možete se obratiti i **CNIL-u**: [www.cnil.fr](https://www.cnil.fr)",
       "li7": "**Upute za slučaj smrti**: odrediti upute o čuvanju, brisanju i priopćavanju vaših podataka nakon vaše smrti (članak 85. francuskog Zakona o informatici i slobodama)"
     },
     "s9": {
@@ -131,7 +131,7 @@
     },
     "s12": {
       "title": "12. Jezik ovog dokumenta",
-      "p1": "Ovaj je dokument dostupan na francuskom i engleskom jeziku. **U slučaju neslaganja između verzija, prednost ima francuska verzija**: to je izvorna verzija. Ovaj hrvatski prijevod služi samo za informaciju."
+      "p1": "Ovaj je dokument dostupan na francuskom i engleskom jeziku. **U slučaju neslaganja između verzija, prednost ima francuska verzija**: to je izvorna verzija."
     }
   }
 }

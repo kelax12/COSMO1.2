@@ -93,7 +93,7 @@
     "dueDate": "Kraj",
     "color": "Boja",
     "description": "Opis (neobavezno)",
-    "atomicHint": "Projekt i njegovi zadaci stvaraju se zajedno: ako jedno ne uspije, ništa se ne stvara."
+    "atomicHint": "Projekt i njegovi zadaci izrađuju se zajedno: ako jedno ne uspije, ništa se ne izrađuje."
   },
   "bulk": {
     "reassigned_one": "{{count}} zadatak ponovno dodijeljen",
@@ -151,7 +151,7 @@
     "aria": "Kanban po izvršitelju",
     "assignTo": "Dodijelite zadatak: {{name}}",
     "addUnassigned": "Dodajte nedodijeljeni zadatak",
-    "assignOrCreate": "Dodijelite ili stvorite zadatak",
+    "assignOrCreate": "Dodijelite ili izradite zadatak",
     "dropHere": "Ispustite zadatak ovdje",
     "alsoAssigned": "Dodijeljeno i: {{names}}",
     "overdueBadge": "{{count}} kasni",
@@ -195,7 +195,7 @@
     "filterTeam": "Filtrirajte po timu",
     "allTeams": "Svi timovi",
     "orgNoTeam": "Tvrtka (bez tima)",
-    "createTeamOption": "+ Stvorite tim",
+    "createTeamOption": "+ Izradite tim",
     "statusAria": "Filtrirajte po stanju",
     "statusOpen": "Otvoreno",
     "statusOverdue": "Kasni",
@@ -210,7 +210,7 @@
     "declare": "Prijavi",
     "update": "Ažuriraj",
     "none": "Još nije prijavljeno. Stanje govori hoće li projekt izdržati; napredak govori samo što je obavljeno.",
-    "updatedBy": "Prijavio/la {{name}}, {{date}}",
+    "updatedBy": "Prijava: {{name}}, {{date}}",
     "someone": "bivši član",
     "noteLabel": "Bilješka o stanju projekta",
     "notePlaceholder": "Zašto? Što bi ga deblokiralo?",
@@ -325,7 +325,7 @@
       "duration": "Trajanje (min)",
       "assignees": "Izvršitelji",
       "category": "Kategorija",
-      "createdAt": "Stvoreno"
+      "createdAt": "Izrađeno"
     },
     "priorityAria": "Promijenite prioritet zadatka {{name}}",
     "deadlineAria": "Promijenite rok zadatka {{name}}"

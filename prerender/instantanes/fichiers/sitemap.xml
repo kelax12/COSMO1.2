@@ -25,6 +25,7 @@
     <loc>https://thecosmo.app/</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/" />
     <lastmod>2026-08-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
@@ -33,6 +34,16 @@
     <loc>https://thecosmo.app/en/</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/" />
+    <lastmod>2026-08-17</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://thecosmo.app/hr/</loc>
+    <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/" />
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/" />
     <lastmod>2026-08-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
@@ -41,6 +52,7 @@
     <loc>https://thecosmo.app/guide</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/guide" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/guide" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/guide" />
     <lastmod>2026-10-12</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -49,6 +61,16 @@
     <loc>https://thecosmo.app/en/guide</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/guide" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/guide" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/guide" />
+    <lastmod>2026-10-12</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://thecosmo.app/hr/guide</loc>
+    <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/guide" />
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/guide" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/guide" />
     <lastmod>2026-10-12</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -57,6 +79,7 @@
     <loc>https://thecosmo.app/entreprise-presentation</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/entreprise-presentation" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/for-companies" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/za-tvrtke" />
     <lastmod>2026-10-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
@@ -65,6 +88,16 @@
     <loc>https://thecosmo.app/en/for-companies</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/entreprise-presentation" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/for-companies" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/za-tvrtke" />
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://thecosmo.app/hr/za-tvrtke</loc>
+    <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/entreprise-presentation" />
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/for-companies" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/za-tvrtke" />
     <lastmod>2026-10-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
@@ -73,6 +106,7 @@
     <loc>https://thecosmo.app/a-propos</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/a-propos" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/about" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/o-nama" />
     <lastmod>2026-08-03</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
@@ -81,6 +115,16 @@
     <loc>https://thecosmo.app/en/about</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/a-propos" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/about" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/o-nama" />
+    <lastmod>2026-08-03</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://thecosmo.app/hr/o-nama</loc>
+    <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/a-propos" />
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/about" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/o-nama" />
     <lastmod>2026-08-03</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
@@ -89,6 +133,7 @@
     <loc>https://thecosmo.app/blog</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog" />
     <lastmod>2026-10-13</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -97,6 +142,16 @@
     <loc>https://thecosmo.app/en/blog</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog" />
+    <lastmod>2026-10-13</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://thecosmo.app/hr/blog</loc>
+    <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog" />
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog" />
     <lastmod>2026-10-13</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -105,6 +160,7 @@
     <loc>https://thecosmo.app/blog/tableau-de-bord-productivite</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/tableau-de-bord-productivite" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/tableau-de-bord-productivite" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/tableau-de-bord-productivite" />
     <lastmod>2026-08-12</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -113,6 +169,16 @@
     <loc>https://thecosmo.app/en/blog/tableau-de-bord-productivite</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/tableau-de-bord-productivite" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/tableau-de-bord-productivite" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/tableau-de-bord-productivite" />
+    <lastmod>2026-08-12</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://thecosmo.app/hr/blog/tableau-de-bord-productivite</loc>
+    <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/tableau-de-bord-productivite" />
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/tableau-de-bord-productivite" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/tableau-de-bord-productivite" />
     <lastmod>2026-08-12</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -121,6 +187,7 @@
     <loc>https://thecosmo.app/blog/gestion-du-temps-efficace</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/gestion-du-temps-efficace" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/gestion-du-temps-efficace" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/gestion-du-temps-efficace" />
     <lastmod>2026-08-12</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -129,6 +196,16 @@
     <loc>https://thecosmo.app/en/blog/gestion-du-temps-efficace</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/gestion-du-temps-efficace" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/gestion-du-temps-efficace" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/gestion-du-temps-efficace" />
+    <lastmod>2026-08-12</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://thecosmo.app/hr/blog/gestion-du-temps-efficace</loc>
+    <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/gestion-du-temps-efficace" />
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/gestion-du-temps-efficace" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/gestion-du-temps-efficace" />
     <lastmod>2026-08-12</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -137,6 +214,7 @@
     <loc>https://thecosmo.app/blog/suivi-des-habitudes</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/suivi-des-habitudes" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/suivi-des-habitudes" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/suivi-des-habitudes" />
     <lastmod>2026-08-12</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -145,6 +223,16 @@
     <loc>https://thecosmo.app/en/blog/suivi-des-habitudes</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/suivi-des-habitudes" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/suivi-des-habitudes" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/suivi-des-habitudes" />
+    <lastmod>2026-08-12</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://thecosmo.app/hr/blog/suivi-des-habitudes</loc>
+    <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/suivi-des-habitudes" />
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/suivi-des-habitudes" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/suivi-des-habitudes" />
     <lastmod>2026-08-12</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -153,6 +241,7 @@
     <loc>https://thecosmo.app/blog/matrice-eisenhower</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/matrice-eisenhower" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/matrice-eisenhower" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/matrice-eisenhower" />
     <lastmod>2026-07-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -161,6 +250,16 @@
     <loc>https://thecosmo.app/en/blog/matrice-eisenhower</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/matrice-eisenhower" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/matrice-eisenhower" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/matrice-eisenhower" />
+    <lastmod>2026-07-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://thecosmo.app/hr/blog/matrice-eisenhower</loc>
+    <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/matrice-eisenhower" />
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/matrice-eisenhower" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/matrice-eisenhower" />
     <lastmod>2026-07-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -169,6 +268,7 @@
     <loc>https://thecosmo.app/blog/okr-vs-smart-vs-kpi</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/okr-vs-smart-vs-kpi" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/okr-vs-smart-vs-kpi" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/okr-vs-smart-vs-kpi" />
     <lastmod>2026-07-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -177,6 +277,16 @@
     <loc>https://thecosmo.app/en/blog/okr-vs-smart-vs-kpi</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/okr-vs-smart-vs-kpi" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/okr-vs-smart-vs-kpi" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/okr-vs-smart-vs-kpi" />
+    <lastmod>2026-07-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://thecosmo.app/hr/blog/okr-vs-smart-vs-kpi</loc>
+    <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/okr-vs-smart-vs-kpi" />
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/okr-vs-smart-vs-kpi" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/okr-vs-smart-vs-kpi" />
     <lastmod>2026-07-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -185,6 +295,7 @@
     <loc>https://thecosmo.app/blog/glossaire-productivite</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/glossaire-productivite" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/glossaire-productivite" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/glossaire-productivite" />
     <lastmod>2026-07-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -193,6 +304,16 @@
     <loc>https://thecosmo.app/en/blog/glossaire-productivite</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/glossaire-productivite" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/glossaire-productivite" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/glossaire-productivite" />
+    <lastmod>2026-07-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://thecosmo.app/hr/blog/glossaire-productivite</loc>
+    <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/glossaire-productivite" />
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/glossaire-productivite" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/glossaire-productivite" />
     <lastmod>2026-07-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -201,6 +322,7 @@
     <loc>https://thecosmo.app/blog/template-okr-gratuit</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/template-okr-gratuit" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/template-okr-gratuit" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/template-okr-gratuit" />
     <lastmod>2026-08-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -209,6 +331,16 @@
     <loc>https://thecosmo.app/en/blog/template-okr-gratuit</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/template-okr-gratuit" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/template-okr-gratuit" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/template-okr-gratuit" />
+    <lastmod>2026-08-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://thecosmo.app/hr/blog/template-okr-gratuit</loc>
+    <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/template-okr-gratuit" />
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/template-okr-gratuit" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/template-okr-gratuit" />
     <lastmod>2026-08-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -217,6 +349,7 @@
     <loc>https://thecosmo.app/blog/time-blocking-guide</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/time-blocking-guide" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/time-blocking-guide" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/time-blocking-guide" />
     <lastmod>2026-07-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -225,6 +358,16 @@
     <loc>https://thecosmo.app/en/blog/time-blocking-guide</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/time-blocking-guide" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/time-blocking-guide" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/time-blocking-guide" />
+    <lastmod>2026-07-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://thecosmo.app/hr/blog/time-blocking-guide</loc>
+    <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/time-blocking-guide" />
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/time-blocking-guide" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/time-blocking-guide" />
     <lastmod>2026-07-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -233,6 +376,7 @@
     <loc>https://thecosmo.app/blog/combien-de-temps-prendre-habitude</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/combien-de-temps-prendre-habitude" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/combien-de-temps-prendre-habitude" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/combien-de-temps-prendre-habitude" />
     <lastmod>2026-07-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -241,6 +385,16 @@
     <loc>https://thecosmo.app/en/blog/combien-de-temps-prendre-habitude</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/combien-de-temps-prendre-habitude" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/combien-de-temps-prendre-habitude" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/combien-de-temps-prendre-habitude" />
+    <lastmod>2026-07-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://thecosmo.app/hr/blog/combien-de-temps-prendre-habitude</loc>
+    <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/combien-de-temps-prendre-habitude" />
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/combien-de-temps-prendre-habitude" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/combien-de-temps-prendre-habitude" />
     <lastmod>2026-07-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -249,6 +403,7 @@
     <loc>https://thecosmo.app/blog/methode-okr-exemples</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/methode-okr-exemples" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/methode-okr-exemples" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/methode-okr-exemples" />
     <lastmod>2026-07-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -257,6 +412,16 @@
     <loc>https://thecosmo.app/en/blog/methode-okr-exemples</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/methode-okr-exemples" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/methode-okr-exemples" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/methode-okr-exemples" />
+    <lastmod>2026-07-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://thecosmo.app/hr/blog/methode-okr-exemples</loc>
+    <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/methode-okr-exemples" />
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/methode-okr-exemples" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/methode-okr-exemples" />
     <lastmod>2026-07-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -265,6 +430,7 @@
     <loc>https://thecosmo.app/blog/cosmo-vs-todoist</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/cosmo-vs-todoist" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/cosmo-vs-todoist" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/cosmo-vs-todoist" />
     <lastmod>2026-10-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -273,6 +439,16 @@
     <loc>https://thecosmo.app/en/blog/cosmo-vs-todoist</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/cosmo-vs-todoist" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/cosmo-vs-todoist" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/cosmo-vs-todoist" />
+    <lastmod>2026-10-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://thecosmo.app/hr/blog/cosmo-vs-todoist</loc>
+    <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/blog/cosmo-vs-todoist" />
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/blog/cosmo-vs-todoist" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/blog/cosmo-vs-todoist" />
     <lastmod>2026-10-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -281,6 +457,7 @@
     <loc>https://thecosmo.app/pour-freelances</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/pour-freelances" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/for-freelancers" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/za-freelancere" />
     <lastmod>2026-08-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -289,6 +466,16 @@
     <loc>https://thecosmo.app/en/for-freelancers</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/pour-freelances" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/for-freelancers" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/za-freelancere" />
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://thecosmo.app/hr/za-freelancere</loc>
+    <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/pour-freelances" />
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/for-freelancers" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/za-freelancere" />
     <lastmod>2026-08-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -297,6 +484,7 @@
     <loc>https://thecosmo.app/pour-etudiants</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/pour-etudiants" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/for-students" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/za-studente" />
     <lastmod>2026-08-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -305,6 +493,16 @@
     <loc>https://thecosmo.app/en/for-students</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/pour-etudiants" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/for-students" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/za-studente" />
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://thecosmo.app/hr/za-studente</loc>
+    <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/pour-etudiants" />
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/for-students" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/za-studente" />
     <lastmod>2026-08-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -313,6 +511,7 @@
     <loc>https://thecosmo.app/pour-managers</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/pour-managers" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/for-managers" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/za-menadzere" />
     <lastmod>2026-08-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -321,6 +520,16 @@
     <loc>https://thecosmo.app/en/for-managers</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/pour-managers" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/for-managers" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/za-menadzere" />
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://thecosmo.app/hr/za-menadzere</loc>
+    <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/pour-managers" />
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/for-managers" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/za-menadzere" />
     <lastmod>2026-08-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -329,6 +538,7 @@
     <loc>https://thecosmo.app/pour-equipes</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/pour-equipes" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/for-teams" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/za-timove" />
     <lastmod>2026-08-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -337,6 +547,16 @@
     <loc>https://thecosmo.app/en/for-teams</loc>
     <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/pour-equipes" />
     <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/for-teams" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/za-timove" />
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://thecosmo.app/hr/za-timove</loc>
+    <xhtml:link rel="alternate" hreflang="fr-FR" href="https://thecosmo.app/pour-equipes" />
+    <xhtml:link rel="alternate" hreflang="en-US" href="https://thecosmo.app/en/for-teams" />
+    <xhtml:link rel="alternate" hreflang="hr-HR" href="https://thecosmo.app/hr/za-timove" />
     <lastmod>2026-08-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>

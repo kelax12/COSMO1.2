@@ -9,6 +9,9 @@ export const SIGNUP_CONTENT: LocaleContent = {
   en: `<h1>Create a free Cosmo account</h1>
         <p>Sign up free to manage your tasks, habits, calendar and OKRs in a single application. You can also sign in with Google.</p>
         <p><a href="/en/">Home</a> · <a href="/en/login">I already have an account</a></p>`,
+  hr: `<h1>Izradite besplatni Cosmo račun</h1>
+        <p>Registrirajte se besplatno i vodite svoje zadatke, navike, kalendar i OKR-ove u jednoj aplikaciji. Prijava je moguća i putem Googlea.</p>
+        <p><a href="/hr/">Početna</a> · <a href="/hr/login">Već imam račun</a></p>`,
 };
 
 export const LOGIN_CONTENT: LocaleContent = {
@@ -18,6 +21,9 @@ export const LOGIN_CONTENT: LocaleContent = {
   en: `<h1>Sign in to Cosmo</h1>
         <p>Sign in to find your tasks, habits, calendar and OKR goals again.</p>
         <p><a href="/en/">Home</a> · <a href="/en/signup">Create a free account</a></p>`,
+  hr: `<h1>Prijava u Cosmo</h1>
+        <p>Prijavite se i pronađite svoje zadatke, navike, kalendar i OKR ciljeve.</p>
+        <p><a href="/hr/">Početna</a> · <a href="/hr/signup">Izradite besplatni račun</a></p>`,
 };
 
 export const TERMS_CONTENT: LocaleContent = {
@@ -27,6 +33,8 @@ export const TERMS_CONTENT: LocaleContent = {
   // langue le disant. Ce bloc est un resume indexable, pas le contrat.
   en: `<h1>Terms of Service</h1>
         <p>Terms of service for the Cosmo application. The French version prevails. <a href="/en/">Back to the home page</a></p>`,
+  hr: `<h1>Uvjeti korištenja</h1>
+        <p>Opći uvjeti korištenja aplikacije Cosmo. Mjerodavna je francuska verzija. <a href="/hr/">Natrag na početnu stranicu</a></p>`,
 };
 
 export const LEGAL_NOTICE_CONTENT: LocaleContent = {
@@ -34,6 +42,8 @@ export const LEGAL_NOTICE_CONTENT: LocaleContent = {
         <p>Mentions légales de l'application Cosmo. <a href="/">Retour à l'accueil</a></p>`,
   en: `<h1>Legal notice</h1>
         <p>Legal notice for the Cosmo application. The French version prevails. <a href="/en/">Back to the home page</a></p>`,
+  hr: `<h1>Pravne napomene</h1>
+        <p>Pravne napomene aplikacije Cosmo. Mjerodavna je francuska verzija. <a href="/hr/">Natrag na početnu stranicu</a></p>`,
 };
 
 export const PRIVACY_CONTENT: LocaleContent = {
@@ -41,4 +51,6 @@ export const PRIVACY_CONTENT: LocaleContent = {
         <p>Politique de confidentialité de l'application Cosmo. <a href="/">Retour à l'accueil</a></p>`,
   en: `<h1>Privacy policy</h1>
         <p>Privacy policy for the Cosmo application. The French version prevails. <a href="/en/">Back to the home page</a></p>`,
+  hr: `<h1>Pravila privatnosti</h1>
+        <p>Pravila privatnosti aplikacije Cosmo. Mjerodavna je francuska verzija. <a href="/hr/">Natrag na početnu stranicu</a></p>`,
 };

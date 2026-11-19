@@ -139,5 +139,65 @@ export const article = {
 <p>No, and this is the most toxic myth in the field. Lally's study shows that an isolated miss has no measurable effect. The only rule: never miss twice in a row.</p>
 `,
     },
+    hr: {
+      title: "Koliko zaista treba da se stvori navika? (što kaže znanost)",
+      metaTitle: "Koliko treba za stvaranje navike? Pravi odgovor",
+      description: "21 dan? 66 dana? Pravi odgovor znanosti nijansiraniji je i korisniji. Što pokazuje ključno istraživanje i kako ga primijeniti u praksi.",
+      readingMinutes: 7,
+      faq: [
+        ["Dakle, 21, 30, 66 ili 90 dana za stvaranje navike?", "Medijan od 66 dana prema ključnom istraživanju (Lally, 2009), uz stvaran raspon od 18 do 254 dana, ovisno o navici i osobi."],
+        ["Koliko navika započeti istovremeno?", "Najviše dvije ili tri. Svaka navika u nastajanju troši pažnju."],
+        ["Ako se niz prekine, je li sve izgubljeno?", "Ne: jedan izolirani propust nema mjerljiv učinak na stvaranje navike. Pravilo glasi: nikad ne propustiti dva puta zaredom."],
+      ],
+      html: `
+<p class="lead">„Potrebno je 21 dan da se stvori navika.“ Taj broj ste pročitali posvuda, a netočan je. Istraživanja daju odgovor koji se lošije prodaje, ali je mnogo korisniji: <strong>u prosjeku 66 dana, uz goleme razlike ovisno o navici i osobi (od 18 do 254 dana)</strong>. Kad shvatite zašto, potpuno se mijenja način na koji pristupate navikama, a iznad svega to objašnjava zašto nikad niste bili „loši u tome“: samo ste imali pogrešan broj u glavi.</p>
+<figure><img src="/screenshots/habitudes.webp" srcset="/screenshots/habitudes-800.webp 800w, /screenshots/habitudes.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="Praćenje navika u Cosmu: tjedna tablica označenih navika s nizom uzastopnih dana za svaku." /><figcaption>Praćenje navika u Cosmu: tjedna tablica označenih navika s nizom uzastopnih dana za svaku. Snimka zaslona demo načina rada, izmišljeni podaci.</figcaption></figure>
+
+<h2 id="mythe">Odakle mit o 21 danu?</h2>
+<p>Iz pogrešnog tumačenja. Šezdesetih godina prošlog stoljeća estetski kirurg Maxwell Maltz primijetio je da se njegovi pacijenti <em>„najmanje oko 21 dan“</em> privikavaju na svoje novo lice. Njegova knjiga <em>Psycho-Cybernetics</em> prodana je u milijunima primjeraka, nijansa se usput izgubila, pa je „najmanje 21 dan“ postalo „potreban je 21 dan“. Nijedno istraživanje nikad nije potvrdilo taj broj za stvaranje navika.</p>
+
+<h2 id="etude">Što kaže pravo istraživanje: od 18 do 254 dana</h2>
+<p>Znanstvena referenca je istraživanje <strong>Phillippe Lally</strong> (University College London, 2009.), objavljeno u časopisu <em>European Journal of Social Psychology</em>. 96 sudionika odabralo je novu svakodnevnu naviku (popiti čašu vode uz ručak, trčati 15 minuta, pojesti voćku…) i svaki dan bilježilo koliko im se ponašanje čini automatskim.</p>
+<p>Rezultati:</p>
+<ul>
+<li><strong>medijan od 66 dana</strong> do dosezanja platoa automatizma;</li>
+<li>stvaran raspon od <strong>18 do 254 dana</strong>, ovisno o navici i osobi;</li>
+<li>što je navika složenija, to dulje traje: čaša vode postaje automatska za nekoliko tjedana, a 50 trbušnjaka prije jutarnje kave može potrajati mjesecima;</li>
+<li>i najvažnije otkriće: <strong>propuštanje jednog izoliranog dana nije imalo mjerljiv učinak</strong> na stvaranje navike.</li>
+</ul>
+
+<h2 id="consequences">4 praktične posljedice</h2>
+<h3>1. Prestanite se ocjenjivati 21. dana</h3>
+<p>Ako vam navika nakon tri tjedna još uvijek zahtijeva trud, jednostavno ste… prosječni. Osjećaj automatizma dolazi mnogo kasnije nego što obećava popularna kultura. Jedini pravi neuspjeh je odustati jer ste mislili da bi već trebalo biti lako.</p>
+<h3>2. Jedan propušten dan ništa ne kvari, dva da</h3>
+<p>Znanost je jasna: izolirani propust je neutralan. Iz toga slijedi operativno pravilo: <strong>„nikad dva puta zaredom“</strong>. Propustite ponedjeljak ako vas život natjera, a utorak čuvajte kao da vam niz ovisi o njemu, jer se upravo tu sve odlučuje.</p>
+<h3>3. Težina predviđa trajanje: počnite smiješno malo</h3>
+<p>Budući da složenost produljuje vrijeme do automatizma, racionalna strategija je svesti naviku na minimalnu verziju: 5 minuta trčanja, 1 stranica čitanja, 10 riječi vokabulara, ista logika kao u <a href="/hr/za-studente">studentskim rutinama učenja</a>. Najprije automatizirate <em>okidač</em> (trčanje svako jutro), a <em>dozu</em> povećavate poslije. Obrnuto, snažan početak, maksimizira i težinu i vrijeme potrebno do automatizma.</p>
+<h3>4. Okidač je važniji od motivacije</h3>
+<p>U istraživanju Lally navika je uvijek bila vezana uz točno određen kontekst („nakon ručka“, „nakon kave“). To je načelo <em>habit stackinga</em>: novu naviku nadovežite na postojeću rutinu, a ne na apstraktno doba dana. „Kad stavim šalicu u sudoper, obujem tenisice za trčanje“ uvjerljivo pobjeđuje „trčati u 7 sati“.</p>
+
+<h2 id="phases">3 faze (i gdje puca)</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Faza</th><th>Okvirno razdoblje</th><th>Što se događa</th><th>Rizik</th></tr></thead>
+<tbody>
+<tr><td>Polijetanje</td><td>1. i 2. tjedan</td><td>Visoka motivacija, velik trud, nevidljivi rezultati</td><td>Prejak početak i iscrpljenost</td></tr>
+<tr><td>Prelazak pustinje</td><td>3. do 8. tjedan</td><td>Novost je nestala, automatizam još nije stigao</td><td>Ovdje odustaje 80 % ljudi</td></tr>
+<tr><td>Automatizacija</td><td>Od 2 do 3 mjeseca</td><td>Ponašanje se pokreće samo; propustiti ga postaje neugodno</td><td>Misliti da ste „stigli“ i ukinuti praćenje</td></tr>
+</tbody>
+</table></div>
+<p>Prelazak pustinje točno je trenutak kada <strong>vizualno praćenje</strong> postaje presudno: kad osjećaja napretka nema, zamjenjuje ga vidljiv dokaz prijeđenog puta.</p>
+
+<h2 id="mesurer">Učinite ustrajnost vidljivom</h2>
+<p>To je cijelo načelo praćenja navika u <a href="/hr/">Cosmu</a>: svaka navika prikazuje <strong>toplinsku kartu od 26 tjedana</strong> (u stilu GitHuba) na kojoj svaki označeni dan oboji jedno polje, uz vaš trenutačni <strong>niz</strong> i postotak izvršenja. Lanac zelenih polja pokazuje upravo ono što vam prelazak pustinje skriva: napredujete. A budući da je propuštanje izoliranog dana znanstveno bezazleno, važan je trend kroz 26 tjedana, a ne savršenstvo. O tome koje pokazatelje pratiti, a koji obeshrabruju umjesto da pomažu, jasan stav donosi članak o <a href="/hr/blog/suivi-des-habitudes">praćenju navika</a>. Stvorite prve dvije ili tri navike <a href="/hr/signup">besplatno</a> ili isprobajte demo bez registracije s već unesenim navikama.</p>
+
+<h2 id="faq">Česta pitanja</h2>
+<h3>Dakle, 21, 30, 66 ili 90 dana?</h3>
+<p>Medijan je 66 dana, a raspon od 18 do 254. Zapamtite radije: „otprilike 2 do 3 mjeseca, dulje ako je navika ambiciozna“ i postavite sustav tako da izdrži toliko, a ne tri tjedna.</p>
+<h3>Koliko navika započeti istovremeno?</h3>
+<p>Najviše dvije ili tri. Svaka navika u nastajanju troši pažnju; započeti šest najsigurniji je način da ne zadržite nijednu.</p>
+<h3>Ako se niz prekine, je li sve izgubljeno?</h3>
+<p>Ne, to je najštetniji mit u ovom području. Istraživanje Lally pokazuje da izolirani propust nema mjerljiv učinak. Jedino pravilo: nikad ne propustiti dva puta zaredom.</p>
+`,
+    },
   },
 };

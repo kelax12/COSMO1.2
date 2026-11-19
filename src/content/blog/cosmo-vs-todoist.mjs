@@ -164,5 +164,77 @@ export const article = {
 <p>Todoist is an excellent tool, and if your need stops at tasks, keep it. But if your system looks like "a to-do list plus a habit app plus a calendar plus a goals spreadsheet", then the real question is not which to-do list is best: it is how to stop paying the friction between four tools. That is precisely Cosmo's bet, and you can check it in two minutes, <a href="/en/signup">free and with no credit card</a>.</p>
 `,
     },
+    hr: {
+      title: "Cosmo ili Todoist: koji odabrati u 2026.?",
+      metaTitle: "Cosmo ili Todoist (2026.): iskrena i potpuna usporedba",
+      description: "Todoist je izvrstan upravitelj zadataka. Cosmo dodaje navike, kalendar za time-blocking i OKR-ove u besplatnoj aplikaciji. Iskrena usporedba, točku po točku.",
+      readingMinutes: 7,
+      html: `
+<p class="lead">Todoist je vjerojatno najdotjeraniji upravitelj zadataka na tržištu: 18 godina postojanja, izvorne aplikacije posvuda, izvanredan unos prirodnim jezikom. Zašto ga onda uopće uspoređivati? Zato što pitanje nije „koja je lista obaveza najbolja?“, nego „<strong>što vašem sustavu zapravo treba?</strong>“. Ako odgovor uključuje praćenje navika, time-blocking ili mjerljive ciljeve, usporedba postaje zanimljiva. Iskrena usporedba, točku po točku.</p>
+<figure><img src="/screenshots/taches.webp" srcset="/screenshots/taches-800.webp 800w, /screenshots/taches.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="Upravljanje zadacima u Cosmu: liste za brzi pristup, filtri po prioritetu i kategoriji, označeni zakašnjeli zadaci." /><figcaption>Upravljanje zadacima u Cosmu: liste za brzi pristup, filtri po prioritetu i kategoriji, označeni zakašnjeli zadaci. Snimka zaslona demo načina rada, primjeri podataka.</figcaption></figure>
+
+<h2 id="resume">Presuda u 30 sekundi</h2>
+<ul>
+<li><strong>Odaberite Todoist</strong> ako želite upravljati samo zadacima, uz izvorne aplikacije (Windows, macOS, mobitel), integracije s cijelim vašim ekosustavom (Gmail, Slack, kalendari) i iznimno brz unos.</li>
+<li><strong>Odaberite Cosmo</strong> ako želite povezati zadatke, <strong>navike</strong>, <strong>kalendar za time-blocking</strong> i <strong>OKR-ove</strong> u jednom besplatnom alatu, umjesto da žonglirate s tri ili četiri aplikacije.</li>
+</ul>
+
+<h2 id="tableau">Usporedba jedan uz drugi</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Kriterij</th><th>Todoist</th><th>Cosmo</th></tr></thead>
+<tbody>
+<tr><td>Upravljanje zadacima</td><td>Izvrsno, referenca na tržištu</td><td>Potpuno: prioriteti od 1 do 5, kategorije, liste, filtri</td></tr>
+<tr><td>Unos prirodnim jezikom</td><td>Da, izvanredan („sutra u 14 h“)</td><td>Ne, strukturirani obrazac</td></tr>
+<tr><td>Praćenje navika</td><td>Nije izvorno, zaobilazi se ponavljajućim zadacima</td><td>Izvorno: toplinska karta od 26 tjedana, nizovi, postotak izvršenja</td></tr>
+<tr><td>Kalendar i time-blocking</td><td>Prikaz kalendara (plaćeno), bez pravog time-blockinga</td><td>Izvorno: povucite zadatak u kalendar i povezani događaj se stvara</td></tr>
+<tr><td>OKR-ovi i ciljevi</td><td>Nema</td><td>Izvorno, s automatski izračunatim napretkom</td></tr>
+<tr><td>Statistika</td><td>Karma, bodovanje u obliku igre</td><td>Kroz sve module: vrijeme uloženo u zadatke, navike, kalendar, OKR-ove</td></tr>
+<tr><td>Suradnja</td><td>Da, zrela (zajednički projekti)</td><td>Dijeljenje zadataka s ulogama Preglednik i Urednik</td></tr>
+<tr><td>Izvorne aplikacije</td><td>Windows, macOS, iOS, Android, proširenja</td><td>Web-aplikacija prilagođena mobitelu, ništa za instalirati</td></tr>
+<tr><td>Integracije s drugim alatima</td><td>Vrlo mnogo (kalendari, Slack, e-pošta)</td><td>Zasad nijedna</td></tr>
+<tr><td>Cijena</td><td>Ograničena besplatna razina (5 projekata), Pro oko 4 do 5 € mjesečno</td><td>Besplatno, glavne funkcije bez ograničenja</td></tr>
+<tr><td>Isprobavanje bez računa</td><td>Ne</td><td>Da, trenutačni demo s ispunjenim podacima, bez registracije</td></tr>
+</tbody>
+</table></div>
+<p><em>Usporedba napisana 18. srpnja 2026., revidirana 13. listopada 2026., na temelju javnih stranica Todoista (funkcije i cijene). Todoistovi paketi se mijenjaju: provjerite ih na todoist.com prije odluke.</em></p>
+
+<h2 id="todoist-fort">Gdje je Todoist i dalje ispred</h2>
+<p>Budimo izravni: u <strong>čistom upravljanju zadacima</strong> Todoist ima 18 godina prednosti i to se vidi.</p>
+<ul>
+<li><strong>Unos prirodnim jezikom.</strong> Upišete „Izvještaj svaki ponedjeljak u 9 h #Posao“ i ponavljanje, vrijeme i projekt sami se popune. Najbolje na tržištu.</li>
+<li><strong>Izvorne aplikacije.</strong> Prečaci na razini sustava, widget, unos s bilo kojeg mjesta: ako dnevno zapisujete 30 zadataka, ta udobnost je važna.</li>
+<li><strong>Ekosustav.</strong> Todoist se povezuje s Gmailom, Outlookom, Slackom i vašim kalendarom. Za osobnu upotrebu Cosmo zasad ne nudi integracije s drugim alatima; samo prostor za tvrtke može slati događaje zadataka u Slack ili na web-servis.</li>
+<li><strong>Zrelost suradnje.</strong> Todoistovi zajednički projekti dokazani su u vođenju cijelog tima.</li>
+</ul>
+
+<h2 id="cosmo-fort">Gdje Cosmo mijenja pravila</h2>
+<p>Todoistovo ograničenje nije u onome što radi, nego u onome što ne radi. Potpun osobni sustav počiva na četiri stupa, a Todoist pokriva jedan.</p>
+<ul>
+<li><strong>Navike su izvorne.</strong> U Todoistu je navika ponavljajući zadatak koji vas grize kad zakasni. U Cosmu je to zaseban objekt: toplinska karta od 26 tjedana u stilu GitHuba, nizovi, postotak izvršenja. Dosljednost se gradi vizualno.</li>
+<li><strong>Time-blocking je stvaran.</strong> Povučete zadatak u termin u kalendaru i događaj se stvara, povezan sa zadatkom. Planiranje dana traje dvije minute, bez vanjske sinkronizacije.</li>
+<li><strong>OKR-ovi daju smjer.</strong> Lista obaveza kaže vam što učiniti danas, ali nikad ne kaže idete li prema onome što je važno. OKR-ovi u Cosmu povezuju svakodnevne radnje s mjerljivim ciljevima (<a href="/hr/blog/methode-okr-exemples">pogledajte naš vodič kroz OKR metodu s 15 primjera</a>).</li>
+<li><strong>Cijena.</strong> Glavne funkcije Cosma besplatne su i bez ograničenja broja projekata. Besplatni Todoist ograničen je na 5 projekata, a prikaz kalendara se plaća.</li>
+<li><strong>Isprobavanje bez trenja.</strong> <a href="/hr/">Cosmo demo</a> otvara se bez računa, ispunjen s 12 mjeseci realističnih podataka, pa ga u dvije minute možete procijeniti pod opterećenjem.</li>
+</ul>
+
+<h2 id="profils">Koji alat za koji profil?</h2>
+<h3>Zapisujete jako mnogo zadataka, posvuda, stalno</h3>
+<p><strong>Todoist.</strong> Munjeviti unos i izvorne aplikacije stvoreni su upravo za to.</p>
+<h3>Uz upravljanje zadacima želite graditi i navike</h3>
+<p><strong>Cosmo.</strong> To je strukturna razlika: navike su ovdje stup, a ne zaobilazno rješenje.</p>
+<h3>Dane planirate time-blockingom</h3>
+<p><strong>Cosmo</strong>, osim ako vam već odgovara tijek rada Todoist plus Google kalendar.</p>
+<h3>Postavljate tromjesečne ciljeve, osobne ili poslovne</h3>
+<p><strong>Cosmo.</strong> Todoist taj element jednostavno nema.</p>
+<h3>Cijeli tim mora surađivati na projektima</h3>
+<p><strong>Todoist</strong> za intenzivnu suradnju i integracije. Cosmo je dovoljan za dijeljenje zadataka između dvije ili tri osobe, a ide dalje čim su u igri zajednički ciljevi, kao što pokazuje stranica <a href="/hr/za-timove">Cosmo za timove</a>.</p>
+
+<h2 id="migration">Prelazak s Todoista na Cosmo</h2>
+<p>Automatski uvoz zasad ne postoji, ali to je prilika za čišćenje: prenesite samo zadatke koji su stvarno aktivni (rijetko više od 20), ponovno stvorite projekte kao obojene kategorije, a zatim dodajte ono što Todoist nije nosio: dvije ili tri navike i prvi tromjesečni OKR. <a href="/hr/guide">Korisnički vodič</a> pokriva cijelo postavljanje u deset minuta. Ako radite za sebe, stranica <a href="/hr/za-freelancere">Cosmo za freelancere</a> pokazuje isti tijek primijenjen na portfelj klijenata.</p>
+
+<h2 id="conclusion">Zaključak</h2>
+<p>Todoist je izvrstan alat i, ako vam potrebe završavaju na zadacima, zadržite ga. No ako vaš sustav izgleda kao „lista obaveza plus aplikacija za navike plus kalendar plus tablica s ciljevima“, pravo pitanje nije koja je lista obaveza najbolja, nego kako prestati plaćati trenje između četiri alata. Upravo je to Cosmova oklada, a provjeriti je možete u dvije minute, <a href="/hr/signup">besplatno i bez kreditne kartice</a>.</p>
+`,
+    },
   },
 };

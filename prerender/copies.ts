@@ -58,12 +58,12 @@ function poserCalque(page: string, css: string, calque: string): string {
  * même URL dans les deux (premier écran de la pile).
  */
 export function injectHeroCopy(page: string, locale: Locale, track: string): string {
-  const file = join(ROOT, 'scripts', 'landing-hero', `${track}-${locale}.html`);
+  const file = join(ROOT, 'prerender', 'landing-hero', `${track}-${locale}.html`);
   if (!existsSync(file)) {
     throw new Error(`prerender: ${file} absent, lancer npm run capture:landing-hero (cf. son en-tête)`);
   }
   let fragment = readFileSync(file, 'utf8').trim();
-  const mobileFile = join(ROOT, 'scripts', 'landing-hero', `${track}-${locale}-mobile.html`);
+  const mobileFile = join(ROOT, 'prerender', 'landing-hero', `${track}-${locale}-mobile.html`);
   const mediaVues = '#lp-hero>.lp-vue-mobile{display:none}@media (max-width:767px){#lp-hero>.lp-vue-bureau{display:none}#lp-hero>.lp-vue-mobile{display:block}}';
   let css: string;
   if (existsSync(mobileFile)) {

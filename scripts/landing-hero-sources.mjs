@@ -2,7 +2,7 @@
 // Copie du hero de la landing : les sources dont elle est l'instantané
 // ═══════════════════════════════════════════════════════════════════
 //
-// `scripts/landing-hero/<locale>.html` est une CAPTURE du rendu React, pas un
+// `prerender/landing-hero/<locale>.html` est une CAPTURE du rendu React, pas un
 // rendu au build (Vercel n'a pas de navigateur). Elle se périme donc en
 // silence : un header ou un hero modifié sans nouvelle capture, et la relève
 // copie → landing refait un saut sous les yeux du visiteur, exactement le
@@ -45,7 +45,7 @@ export const HERO_SOURCES = [
   'src/locales/en/landingEnterprise.json',
 ];
 
-export const SOURCES_MANIFEST = 'scripts/landing-hero/sources.json';
+export const SOURCES_MANIFEST = 'prerender/landing-hero/sources.json';
 
 /** Le texte d'une source sans ses commentaires (JSON : tel quel). */
 export function sansCommentaires(text, path) {

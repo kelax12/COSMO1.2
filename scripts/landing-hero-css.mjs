@@ -5,7 +5,7 @@
 // 2026-10-16 · Le prérendu de `/` peignait un mur de texte SEO (C-116)
 // pendant le chargement, puis la landing le remplaçait : deux pages
 // différentes, l'une après l'autre. Il peint désormais une COPIE du haut de
-// la landing (`scripts/landing-hero/<locale>.html`, capturée par
+// la landing (`prerender/landing-hero/<locale>.html`, capturée par
 // `capture-landing-hero.mjs`), avec les MÊMES classes Tailwind que le JSX.
 //
 // Ce module sort de la CSS buildée les seules règles dont la copie a besoin,

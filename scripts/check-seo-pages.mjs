@@ -41,6 +41,7 @@
 
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
+import { INDEXABLE_LOCALES } from '../src/i18n/seo-urls.mjs';
 
 const RACINE = process.cwd();
 const DIST = join(RACINE, 'dist');
@@ -48,16 +49,9 @@ const DIST = join(RACINE, 'dist');
 /**
  * Les pages prérendues DÉLIBÉRÉMENT absentes du sitemap, avec leur raison.
  *
- * Les clés sont des chemins SANS préfixe de locale.
- *
- * 🔴 LES SLUGS ANGLAIS SONT DÉCLARÉS À PART, et ce n'est pas une redite. Ce
- * dépôt traduit ses slugs (`src/i18n/route-slugs.json`) : `/mentions-legales`
- * devient `/en/legal-notice`, pas `/en/mentions-legales`. Une dispense écrite
- * pour le seul slug français ne couvre donc PAS la page anglaise — mesuré ici
- * le 2026-09-20, la garde a rendu trois orphelines (`/en/legal-notice/`,
- * `/en/privacy-policy/`, `/en/terms/`) que la liste croyait couvrir.
- * ❌ Ne jamais dériver ces clés par « même chemin, autre préfixe » : ce n'est
- *    pas ainsi que ce site construit ses URLs.
+ * Clés SANS préfixe de locale. 🔴 Chaque slug traduit est déclaré à part
+ * (`route-slugs.json` : `/mentions-legales` devient `/en/legal-notice`) ;
+ * ❌ jamais dériver une clé par « même chemin, autre préfixe ».
  */
 const HORS_SITEMAP = {
   '/login': "Écran de connexion : aucun contenu à indexer, et une page d'auth "
@@ -74,10 +68,12 @@ const HORS_SITEMAP = {
   '/terms': 'Version anglaise de `/cgu`, même décision.',
   '/legal-notice': 'Version anglaise de `/mentions-legales`, même décision.',
   '/privacy-policy': 'Version anglaise de `/politique-confidentialite`, même décision.',
+  '/uvjeti-koristenja': 'Version croate de `/cgu`, même décision.',
+  '/pravne-napomene': 'Version croate de `/mentions-legales`, même décision.',
+  '/pravila-privatnosti': 'Version croate de `/politique-confidentialite`, même décision.',
 };
 
-/** Les locales servies, dans l'ordre où le prérendu les écrit. */
-const LOCALES = ['fr', 'en'];
+const LOCALES = INDEXABLE_LOCALES;
 
 // ── Lecture du build ───────────────────────────────────────────────
 
@@ -181,9 +177,7 @@ if (estLanceDirectement) {
     erreurs.push(
       `${orphelines.length} page(s) PRÉRENDUE(S) absente(s) du sitemap et non déclarée(s) :\n`
         + orphelines.map((p) => `      ${p}`).join('\n')
-        + "\n    Soit elles doivent y entrer, soit elles entrent dans HORS_SITEMAP AVEC\n"
-        + "    une raison. Le 2026-09-14, il a fallu répondre à la main à cette\n"
-        + '    question pour dix pages.',
+        + "\n    Soit elles doivent y entrer, soit elles entrent dans HORS_SITEMAP AVEC une raison.",
     );
   }
 

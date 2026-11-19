@@ -67,7 +67,7 @@
     "empty": {
       "title": "Spremni ciljati više?",
       "description": "Postavite cilj i njegove ključne rezultate kako biste pratili napredak.",
-      "action": "Stvorite svoj prvi cilj"
+      "action": "Izradite svoj prvi cilj"
     }
   },
   "todayTasks": {
@@ -84,8 +84,8 @@
     "restored": "Zadatak vraćen",
     "empty": {
       "noneTitle": "Još nema zadataka",
-      "noneDescription": "Stvorite prvi zadatak za početak. Cosmo će ga dodati u vaš raspored.",
-      "noneAction": "Stvori moj prvi zadatak",
+      "noneDescription": "Izradite prvi zadatak za početak. Cosmo će ga dodati u vaš raspored.",
+      "noneAction": "Izradi moj prvi zadatak",
       "clearTitle": "Sve je pod kontrolom",
       "clearDescription": "Hitni zadaci su obavljeni. Dobar trenutak da odmaknete s ostalim.",
       "clearAction": "Pogledaj sve moje zadatke"
@@ -237,7 +237,7 @@
       "open_other": "{{count}} otvorenih zadataka",
       "empty": "Na ovom popisu nema otvorenih zadataka.",
       "noLists": "Još nema popisa.",
-      "create": "Stvorite popis"
+      "create": "Izradite popis"
     },
     "team": {
       "open_one": "{{count}} otvoren zadatak",

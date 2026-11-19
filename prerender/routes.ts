@@ -13,7 +13,7 @@ import { fromCatalog } from './config.ts';
 import { ABOUT_CONTENT } from './content/about.ts';
 import { ENTREPRISE_CONTENT } from './content/entreprise.ts';
 import { GUIDE_CONTENT } from './content/guide.ts';
-import { HOME_EN, HOME_FR } from './content/home.ts';
+import { HOME_EN, HOME_FR, HOME_HR } from './content/home.ts';
 import {
   LEGAL_NOTICE_CONTENT,
   LOGIN_CONTENT,
@@ -30,7 +30,7 @@ export const HOME_ROUTE: Route = {
   path: '/',
   heroTrack: 'perso',
   meta: fromCatalog('root'),
-  content: { fr: HOME_FR, en: HOME_EN },
+  content: { fr: HOME_FR, en: HOME_EN, hr: HOME_HR },
 };
 
 export const ROUTES: Route[] = [

@@ -147,5 +147,69 @@ export const article = {
 <p>Do not catch up. Pick things up at the next review as though nothing had happened. Organisation systems do not die of a bad week, they die of the attempt to compensate for the bad week.</p>
 `,
     },
+    hr: {
+      title: "Učinkovito upravljanje vremenom: 7 načela koja traju",
+      metaTitle: "Upravljanje vremenom: 7 načela koja stvarno funkcioniraju",
+      description: "7 načela upravljanja vremenom koja prežive naporan tjedan, bez složene metode: odabir prioriteta, termini u kalendaru, radne cjeline, tjedni pregled.",
+      readingMinutes: 9,
+      faq: [
+        ["Koja je najučinkovitija metoda upravljanja vremenom?", "Ona koju ćete zadržati tri mjeseca. U praksi najbolje drži ova kombinacija: jedna lista, izričit odabir prioriteta i rezervirani termini u kalendaru za ono što je stvarno važno."],
+        ["Kako upravljati vremenom kad je sve hitno?", "Ne može sve biti hitno: to je gotovo uvijek simptom odluke koja nije donesena. Razvrstajte po dvije osi (hitno i važno), riješite 1. kvadrant, a prije svega rezervirajte termin za 2. kvadrant, jer upravo on stvara hitnoće sljedećeg tjedna."],
+        ["Koliko treba da se vide rezultati?", "Dva do tri tjedna da osjetite razliku u mentalnom opterećenju, šest do osam da sustav drži bez svjesnog napora. Prije toga sustav procjenjujete u razdoblju uvođenja."],
+      ],
+      html: `
+<p class="lead">Oko upravljanja vremenom postoji nesporazum: predstavlja se kao problem tehnike, a prije svega je problem odabira. Nijedna metoda ne može šezdeset sati posla smjestiti u tjedan od trideset pet sati. Dobra metoda umjesto toga čini vidljivim ono što ne stane, dovoljno rano da odlučite čega se odreći. Evo sedam načela koja prežive naporan tjedan, od najstrukturnijeg do najdetaljnijeg.</p>
+<figure><img src="/screenshots/agenda.webp" srcset="/screenshots/agenda-800.webp 800w, /screenshots/agenda.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="Kalendar u Cosmu u tjednom prikazu: zadaci koji čekaju planiranje nalaze se lijevo i povlače se u vremenski termin." /><figcaption>Kalendar u Cosmu u tjednom prikazu: zadaci koji čekaju planiranje nalaze se lijevo i povlače se u vremenski termin. Snimka zaslona demo načina rada, primjeri podataka.</figcaption></figure>
+
+<h2 id="arbitrage">1. Prihvatite da upravljati vremenom znači odricati se</h2>
+<p>To je načelo iz kojeg proizlaze sva ostala i jedino koje je stvarno teško. Tjedan ima ograničen broj korisnih sati, kod većine ljudi između trideset i četrdeset kad se pošteno prebroje. Svaka metoda koja obećava „učiniti više“ bez da išta uklanja samo odgađa trenutak u kojem otkrijete da nije stalo.</p>
+<p>Praktična posljedica: svaki put kad prihvatite nešto novo, imenujte što to istiskuje. Ne u glavi, nego na listi. Obveza preuzeta bez utvrđene protuvrijednosti bit će ispunjena na račun nečega što niste odabrali.</p>
+
+<h2 id="liste-unique">2. Jedna lista, a ne četiri</h2>
+<p>Zadaci u bilježnici, drugi u nepročitanoj e-pošti, treći u porukama koje šaljete sami sebi: mentalno opterećenje ne dolazi od količine posla, nego od nesigurnosti o tome što ste zaboravili. Dok lista nije jedna, dio vaše pažnje ostaje zauzet nadzorom ostalih.</p>
+<p>Objedinjavanje je važnije od izbora alata. Jedna lista na papiru bolja je od tri savršene aplikacije. Ako vas izbor alata ipak koči, <a href="/hr/blog/cosmo-vs-todoist">usporedba Cosma i Todoista</a> navodi kriterije koji su stvarno bitni.</p>
+
+<h2 id="arbitrer">3. Odlučujte izričito, a ne po osjećaju</h2>
+<p>Bez zapisanog kriterija „određivanje prioriteta“ svodi se na rješavanje onoga što najglasnije viče. Za svaki zadatak dovoljna su dva pitanja: <strong>je li hitan?</strong> i <strong>je li važan?</strong> To je <a href="/hr/blog/matrice-eisenhower">Eisenhowerova matrica</a>, a njezina vrijednost nije u samom razvrstavanju, nego u tome što vas tjera na pitanje „važno u odnosu na što?“.</p>
+<p>Tu izričiti ciljevi postaju korisni: bez njih sve izgleda važno i odabir više ništa ne filtrira. Dva do četiri cilja za tromjesečje dovoljna su da riješite 80 % slučajeva.</p>
+
+<h2 id="creneaux">4. Ono što nema termin, ne postoji</h2>
+<p>Važan, ali ne hitan zadatak uvijek će izgubiti od hitnoće, beskonačno, kakva god bila vaša disciplina. Jedina zaštita koja djeluje je fizička: dajte mu mjesto u kalendaru, ravnopravno sa sastankom s nekim drugim.</p>
+<p>To je načelo <a href="/hr/blog/time-blocking-guide">time-blockinga</a>, a njegova sporedna korist vrijedi koliko i glavna: smještanjem zadataka u termine odmah otkrivate što ne stane u tjedan, prije nego što se obvežete, a ne poslije.</p>
+
+<h2 id="unite">5. Radite u cjelinama, a ne neprekidno</h2>
+<p>Usredotočena pažnja mjeri se u blokovima od dvadeset do devedeset minuta, ovisno o osobi i zadatku, a ne u danima. Dvije konkretne posljedice:</p>
+<ul>
+<li><strong>Grupirajte ono što je iste vrste.</strong> E-pošta u dva bloka dnevno umjesto neprestano, pozivi jedan za drugim, administracija u jednom potezu. Svaka promjena konteksta stoji nekoliko minuta ponovnog zagrijavanja, nevidljiv trošak koji je, kad se zbroji, golem.</li>
+<li><strong>Zaštitite početak bloka.</strong> Prve minute određuju ostatak: znati točno čime početi vrijedi više od deset minuta viška. Zato se zadaci isplati dijeliti dok prvi korak ne postane očit.</li>
+</ul>
+
+<h2 id="frottement">6. Smanjite trenje umjesto da se oslanjate na volju</h2>
+<p>Snaga volje je promjenjiv resurs, trenje je stalno. Ako zadatak zahtijeva otvaranje tri alata i traženje lozinke prije početka, bit će odgođen, ne iz lijenosti, nego zbog cijene ulaska. Obrnuto, ono što je odmah pri ruci, bude obavljeno.</p>
+<p>Isto vrijedi i za sam sustav: metoda koja traži petnaest minuta dnevnog održavanja bit će napuštena u tri tjedna, kakva god bila njezina teorijska kvaliteta. Pravo pitanje nije „koja je metoda najbolja?“, nego „koju ću i dalje koristiti za tri mjeseca?“.</p>
+
+<h2 id="revue">7. Tjedni pregled, kratak i neupitan</h2>
+<p>To je načelo koje se najčešće napušta, a ujedno ono koje drži sva ostala. Petnaest do dvadeset minuta na kraju tjedna:</p>
+<ol>
+<li>Što je završeno i, prije svega, što je bilo planirano, a nije obavljeno, jer to govori o vašoj stvarnoj procjeni.</li>
+<li>Kamo je otišlo vrijeme, po širim kategorijama. To je često iznenađenje tjedna.</li>
+<li>Gdje su dugoročni ciljevi, kao smjer kretanja, a ne kao točan postotak.</li>
+<li><strong>Jedna jedina</strong> prilagodba za sljedeći tjedan. Jedna, ne pet: upravo to pregled čini održivim.</li>
+</ol>
+<p>Bez tog termina sustav organizacije za nekoliko tjedana skrene s puta, a nitko to ne primijeti, jer ništa u običnom tjednu ne tjera da podignete pogled.</p>
+
+<h2 id="pratique">Kako uvesti 7 načela</h2>
+<p>Nijedno od ovih načela ne zahtijeva poseban alat, ali sva zahtijevaju da podaci budu na jednom mjestu. Zbog toga je hrpa aplikacija skupa: tjedni pregled pretvara se u skupljanje podataka, pa se preskače. <a href="/hr/za-freelancere">Freelanceri</a> to osjećaju jače od drugih, jer nitko drugi neće držati okvir umjesto njih. A ako vam neki ovdje korišten pojam nije poznat, <a href="/hr/blog/glossaire-productivite">pojmovnik produktivnosti</a> definira ih sve.</p>
+<p><a href="/hr/">Cosmo</a> je nastao upravo s tim ograničenjem na umu: jedna lista s prioritetima i kategorijama, kalendar u koji povlačite zadatke za time-blocking, navike za ono što treba postati automatsko, <a href="/hr/blog/methode-okr-exemples">OKR-ovi</a> koji određuju što „važno“ znači ovog tromjesečja i <a href="/hr/blog/tableau-de-bord-productivite">nadzorna ploča</a> koja omogućuje petkov pregled u petnaest minuta, bez ponovnog unosa. <a href="/hr/signup">Besplatno</a>, s demom koji se otvara bez registracije.</p>
+
+<h2 id="faq">Česta pitanja</h2>
+<h3>Kojim načelom početi?</h3>
+<p>Drugim: sve objedinite u jednu listu. Ne traži nikakvu metodu i donosi najbrže olakšanje. Ostala se dodaju poslije, jedno tjedno.</p>
+<h3>Treba li isplanirati svaku minutu dana?</h3>
+<p>Ne, i to je kontraproduktivno. Rezervirajte dva ili tri bloka koji su stvarno važni, a ostatak ostavite slobodnim: dan isplaniran do 100 % ne preživi prvo iznenađenje, a onda se napušta cijeli plan.</p>
+<h3>Što kad tjedan potpuno izmakne kontroli?</h3>
+<p>Ne nadoknađujte. Nastavite na sljedećem pregledu kao da se ništa nije dogodilo. Sustavi organizacije ne umiru od lošeg tjedna, nego od pokušaja da se loš tjedan nadoknadi.</p>
+`,
+    },
   },
 };

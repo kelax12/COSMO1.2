@@ -89,6 +89,9 @@ const DISPENSES = [
   '/en/terms/',
   '/en/legal-notice/',
   '/en/privacy-policy/',
+  '/hr/uvjeti-koristenja/',
+  '/hr/pravne-napomene/',
+  '/hr/pravila-privatnosti/',
 ];
 
 /** Un site sain : 12 articles bilingues au sitemap + les pages dispensées. */
@@ -170,7 +173,7 @@ describe('témoin — garde SEO (C-98)', () => {
   it('un site sain passe', () => {
     avec(siteSain(), ({ code, sortie }) => {
       expect(sortie).toContain('Sitemap et prérendu se correspondent');
-      expect(sortie).toMatch(/pages prérendues\s+: 20/);
+      expect(sortie).toMatch(/pages prérendues\s+: 23/);
       expect(code).toBe(0);
     });
   });

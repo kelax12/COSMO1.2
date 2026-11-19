@@ -74,4 +74,39 @@ export const ENTREPRISE_CONTENT: LocaleContent = {
         <p>One plan for the whole organisation, whatever the number of projects, rather than a per-person price: free up to 5 members, 70 € a month from 5 to 10 members, 150 € from 10 to 20, 350 € from 20 to 50, 700 € from 50 to 100, and 1000 € beyond 100. The plan adjusts itself as the organisation grows and comes back down if headcount falls. No commitment, cancellable at any time, no credit card to start.</p>` : ''}
 
         <p><a href="/en/">Cosmo for me</a> · <a href="/en/signup">Create my organisation</a> · <a href="/en/guide">User guide</a></p>`,
+  hr: `<h1>Cosmo za tvrtke: vaš organigram je vaš pokretač izvršenja</h1>
+        <p>U Cosmu za tvrtke opseg svakoga proizlazi iz vašeg organigrama: što vidi, što mu se dodjeljuje, što se mjeri. Svaki suradnik pritom zadržava osobni Cosmo koji već koristi, pa ne morate uvoditi još jedan alat. Postavljanje traje pet koraka.</p>
+
+        <h2>1. korak: pozovite svoj tim i grupirajte ga</h2>
+        <p>Svatko se pridružuje organizaciji s Cosmo računom koji već ima, pozvan e-poštom, kodom organizacije, poveznicom ili iz vaših kontakata, i dolazi izravno pod svog nadređenog i u svoje timove. Izrađujete onoliko timova koliko treba, a ista osoba može pripadati u više njih. Povezanost prema zadanim postavkama određuje što svatko vidi i može raditi: voditelj vidi cijelo svoje podstablo, a da nijedno pravo ne treba označiti. Kad je potrebno, prava prilagođavate člana po člana, a promjena povezanosti dovoljna je za reorganizaciju.</p>
+        <p>Organigram je zaslon s kojeg pratite svaku osobu: otvaranje njezine kartice prikazuje tekuće zadatke, opterećenje, kalendar i doprinos. Voditelj može stvarati, premještati i mijenjati događaje u kalendaru osoba koje mu odgovaraju; ono što su one označile kao osobno ostaje privatno, prikazuje se samo termin. Dvije sestrinske grane organigrama međusobno su odvojene, a pravilo se provodi u bazi podataka, ne samo skriva u sučelju.</p>
+        <p><img src="/screenshots/entreprise/pyramide.webp" width="1600" height="667" loading="lazy" decoding="async" alt="Kartica Organigram u Cosmu za tvrtke: svaki član povezan sa svojim nadređenim, s otvorenim zadacima i kašnjenjima" /></p>
+
+        <h2>2. korak: pratite izvršenje, ne samo rokove</h2>
+        <p>Svaki zadatak ima status (za napraviti, u tijeku, na pregledu, blokiran, završen) i može blokirati drugi. Plan izračunava kritični put, lanac zadataka u kojem i najmanje kašnjenje pomiče isporuku. Kartica Zadaci okuplja zadatke svih projekata u vašem opsegu, s predlošcima filtara, dijeljenim popisima, sortiranjem i grupiranjem, kao popis ili kanban.</p>
+        <p><img src="/screenshots/entreprise/taches-tableau.webp" width="1600" height="1000" loading="lazy" decoding="async" alt="Kartica Zadaci u Cosmu za tvrtke u prikazu Ploča: jedan stupac po statusu, od za napraviti do završeno, s označenim kašnjenjima" /></p>
+
+        <h2>3. korak: izradite projekte i dodijelite ih na željenoj razini</h2>
+        <p>Projekt pripada timu i okuplja njegove zadatke. Dodjeljujete ih jednoj ili više osoba, bilo gdje u svom opsegu, a svaka ih pronalazi u vlastitom Cosmu uz svoje osobne zadatke. Tri prikaza: popis za detalje, plan za praćenje nadolazećih rokova i kritičnog puta, portfelj za usporedbu statusa, voditelja i napretka svih projekata. Podzadaci, komentari s spominjanjima i povijest izmjena nalaze se u svakom zadatku.</p>
+        <p><img src="/screenshots/entreprise/projets.webp" width="1600" height="1000" loading="lazy" decoding="async" alt="Kartica Projekti u Cosmu za tvrtke u prikazu Popis: timski projekti sa zadacima, rokovima, statusima i dodijeljenim osobama" /></p>
+        <p><img src="/screenshots/entreprise/projets-portefeuille.webp" width="1600" height="1000" loading="lazy" decoding="async" alt="Kartica Projekti u prikazu Portfelj: svaki projekt s voditeljem, statusom, napretkom i onim što ga blokira" /></p>
+
+        <h2>4. korak: postavite ciljeve na svim razinama</h2>
+        <p>Cilj organizacije razlaže se u timske OKR-ove, a svaki OKR u brojčane ključne rezultate s nositeljem. Cilj može biti vidljiv cijeloj tvrtki, nekim timovima ili samo odabranim osobama. Svaki postignuti ključni rezultat bilježi se na datum kada je postignut, u dnevniku koji se naknadno ne može prepraviti.</p>
+        <p><img src="/screenshots/entreprise/okr.webp" width="1600" height="1000" loading="lazy" decoding="async" alt="Kartica OKR u Cosmu za tvrtke: ciljevi i njihovi brojčani ključni rezultati s nositeljem i napretkom" /></p>
+
+        <h2>5. korak: pratite napredak svakoga</h2>
+        <p>Izvještaji o aktivnosti odgovaraju na pitanje ponedjeljka ujutro: što je napredovalo i zahvaljujući kome. Svake noći Cosmo bilježi što su tvrtka i svaki tim napravili (završeni zadaci, projekti i OKR-ovi koji su napredovali, održani događaji), čitljivo po danu, tjednu ili mjesecu, s pojedinostima po osobi. Pregled otvara svaki dan: zadaci za odobriti, spominjanja, osobe koje blokirate, vaše opterećenje u tjednu, kalendar i ključni rezultati.</p>
+        <p><img src="/screenshots/entreprise/rapports.webp" width="1600" height="1000" loading="lazy" decoding="async" alt="Izvještaji o aktivnosti u Cosmu za tvrtke: završeni zadaci, projekti i OKR-ovi koji su napredovali te tko je što napravio" /></p>
+        <p><img src="/screenshots/entreprise/apercu.webp" width="1600" height="1000" loading="lazy" decoding="async" alt="Pregled u Cosmu za tvrtke: zadaci za odobriti, spominjanja, tjedno opterećenje, kalendar i ključni rezultati" /></p>
+
+        <h2>Dvadeset dodatnih funkcija</h2>
+        <p>Uloge i dopuštenja podesivi član po član, uloge po projektu (voditelj, suradnik, čitatelj), stranica za svaki tim s opterećenjem svakog člana, timski događaji, pomoćnik za početak. Predlošci projekata, ovisnosti između projekata, skupne radnje, popisi i predlošci filtara dijeljeni poveznicom, pretraga po cijeloj tvrtki. Automatizacije, slanje u Slack ili potpisani webhookovi, potpuni izvoz u CSV, obavijesti podesive po vrsti, ključni rezultati tvrtke vidljivi u vašim osobnim OKR-ovima. Revizijski dnevnik koji se čuva godinu dana, potvrđene domene, vremenski ograničen pristup, pomoćnik za odlazak i suspenziju, koš za smeće od trideset dana za zadatke i ciljeve.</p>
+
+        <h2>Sigurnost, povjerljivost i reverzibilnost</h2>
+        <p>Svaka je tablica zaštićena pravilima pristupa koja se provjeravaju na poslužitelju: krivotvoreni zahtjev iz preglednika ne donosi ništa više od legitimnog. Voditelj vidi rad u svom opsegu, nikad osobne zadatke, navike ili kalendar svojih suradnika. Brisanje računa stvarno se izvršava na poslužitelju, pristanak na ulazak u organizaciju je izričit, a podaci se ne preprodaju. Prijenos vlasništva, odlazak člana uz predaju njegova rada i brisanje organizacije nalaze se u sučelju, a ne u zahtjevu za podršku.</p>
+        ${PRIX_VISIBLES ? `<h2>Cijene</h2>
+        <p>Jedan paket za cijelu organizaciju, bez obzira na broj projekata, a ne cijena po osobi: besplatno do 5 članova, 70 € mjesečno od 5 do 10 članova, 150 € od 10 do 20, 350 € od 20 do 50, 700 € od 50 do 100 i 1000 € iznad 100. Paket se sam prilagođava kad organizacija raste i spušta se ako se broj članova smanji. Bez obveze, otkazivo u bilo kojem trenutku, bez kartice za početak.</p>` : ''}
+
+        <p><a href="/hr/">Cosmo za mene</a> · <a href="/hr/signup">Izradi moju organizaciju</a> · <a href="/hr/guide">Vodič za korištenje</a></p>`,
 };

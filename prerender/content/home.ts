@@ -79,3 +79,37 @@ export const HOME_EN = `<h1>Cosmo, a task, habit and OKR manager</h1>
         <h2>And for an organisation?</h2>
         <p>Cosmo also exists in company mode: your management pyramid structures the projects, the OKRs and the team statistics, and everyone's scope follows from the real hierarchy rather than from shares made by hand. Each colleague keeps the personal Cosmo described above. It is free up to 5 members, <a href="/en/for-companies">discover Cosmo for companies</a>.</p>
         <p><a href="/en/signup">Create a free account</a> · <a href="/en/guide">User guide</a> · <a href="/en/blog">The Cosmo blog</a></p>`;
+
+export const HOME_HR = `<h1>Cosmo, upravitelj zadataka, navika i OKR-ova</h1>
+        <p>Cosmo je besplatna aplikacija za produktivnost koja spaja četiri obično odvojena alata: upravljanje zadacima, praćenje navika, kalendar s time-blockingom i metodu OKR (Objectives &amp; Key Results). Polazna ideja je jednostavna: današnji zadaci, rutine i dugoročni ciljevi opisuju isti život, pa nema razloga da žive u tri aplikacije koje ne znaju jedna za drugu.</p>
+        <p>Sve radi u pregledniku, na računalu i na mobitelu, bez instalacije. Možete <a href="/hr/">isprobati demo bez izrade računa</a>: otvara se unaprijed ispunjen s 12 mjeseci realističnih podataka (100 zadataka, 100 navika, oko 150 događaja u kalendaru i 8 OKR-ova), dovoljno da proizvod procijenite ispunjen, a ne pred praznim zaslonom.</p>
+
+        <h2>Upravljati zadacima bez utapanja</h2>
+        <p>Svaki zadatak ima prioritet od 1 do 5, kategoriju u boji, rok i, ako treba, popis. Filtri kombiniraju te kriterije kako bi odgovorili na jedino pitanje koje je važno ujutro: što radim sada? Ponavljajući zadaci automatski se obnavljaju nakon označavanja, podzadaci razlažu ono što je preveliko, a pretraga odmah pronalazi bilo koju stavku. Zadaci se mogu dijeliti i s drugim korisnicima, za čitanje ili uređivanje, a ta je suradnja besplatna i ostat će besplatna.</p>
+
+        <h2>Pratiti navike i vidjeti svoju redovitost</h2>
+        <p>Navika se određuje učestalošću: dnevno, tjedno ili određenim danima. Vi označavate, Cosmo mjeri. Toplinska karta od 26 tjedana, u duhu GitHubova grafa doprinosa, čini redovitost vidljivom na prvi pogled, mnogo bolje od izoliranog broja. Niz broji vaše uzastopne dane, a stopa izvršenja uspoređuje tekuće razdoblje s prethodnima. Pravilo koje funkcionira: počnite s dvije ili tri navike, ne s petnaest.</p>
+
+        <h2>Time-blocking, da plan postane stvaran</h2>
+        <p>Zadatak bez termina ostaje namjera. Kalendar u Cosmu podržava povlačenje i ispuštanje s ploče zadataka: ispustite „napisati ponudu“ u utorak u 14 h, događaj se stvara i ostaje povezan sa zadatkom. Dnevni, tjedni i mjesečni prikaz, uz ponavljajuće događaje. Smisao time-blockinga nije kozmetički: suočava vaš popis s jedinim zaista ograničenim resursom, satima dostupnima u tjednu.</p>
+
+        <h2>Voditi ciljeve metodom OKR</h2>
+        <p><a href="/hr/blog/methode-okr-exemples">Metoda OKR</a>, koju su popularizirali Intel, a zatim Google, strukturira ambiciozan cilj u 2 do 5 mjerljivih ključnih rezultata. Cosmo izračunava napredak svakog ključnog rezultata i cijelog cilja te arhivira svako izvršenje kako bi izgradio vašu povijest. Ono što većina OKR alata ne radi: ovdje vaši kvartalni ciljevi stoje uz svakodnevne zadatke, pa postaje vidljiva razlika između onoga što ciljate i onoga na što stvarno trošite dane.</p>
+
+        <h2>Kako to izgleda</h2>
+        <p>Tri zaslona aplikacije, u demo načinu:</p>
+
+        <p>
+          <img src="/screenshots/dashboard.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Nadzorna ploča Cosma: izvršeni zadaci, događaji u kalendaru, postignuti ključni rezultati i današnje navike na jednom zaslonu" />
+          <img src="/screenshots/taches.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Upravitelj zadataka u Cosmu: popisi za brzi pristup, filtri po prioritetu i kategoriji, označeni zadaci u kašnjenju" />
+          <img src="/screenshots/habitudes.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Praćenje navika u Cosmu: tjedna tablica označenih navika s nizom uzastopnih dana za svaku" />
+        </p>
+
+        <h2>Nadzorna ploča koja povezuje sva četiri</h2>
+        <p>Nadzorna ploča okuplja današnji napredak, navike za označiti, sljedeće događaje i krivulju postignutih ključnih rezultata. Stranica Statistika ide dalje: uloženo vrijeme po kategoriji, kretanje kroz razdoblje, usporedba modula. To je nadzorna ploča produktivnosti koja nedostaje kad svaki alat poznaje samo četvrtinu vaše aktivnosti.</p>
+
+        <h2>Koliko košta?</h2>
+        <p>Glavne funkcije (zadaci, navike, kalendar, OKR-ovi, statistika, dijeljenje) su besplatne, bez kartice i bez vremenski ograničenog probnog razdoblja. Vaši podaci pohranjeni su na Supabaseu s Row Level Securityjem: nitko osim vas im ne pristupa. U demo načinu ništa ne napušta vaš preglednik.</p>
+        <h2>A za organizaciju?</h2>
+        <p>Cosmo postoji i u načinu rada za tvrtke: vaša upravljačka piramida strukturira projekte, OKR-ove i statistiku tima, a opseg svakoga proizlazi iz stvarne hijerarhije umjesto iz ručnih dijeljenja. Svaki suradnik zadržava gore opisani osobni Cosmo. Besplatno je do 5 članova, <a href="/hr/za-tvrtke">upoznajte Cosmo za tvrtke</a>.</p>
+        <p><a href="/hr/signup">Izradite besplatni račun</a> · <a href="/hr/guide">Vodič za korištenje</a> · <a href="/hr/blog">Cosmo blog</a></p>`;

@@ -185,5 +185,88 @@ export const article = {
 <p>Nothing requires it. Many people only benefit from one or two chosen blocks (exercise, a personal project), and the rest of their free time stays free.</p>
 `,
     },
+    hr: {
+      title: "Time-blocking: potpuni vodič za povratak kontrole nad vašim danima",
+      metaTitle: "Time-blocking: potpuni vodič (metoda i primjeri)",
+      description: "Time-blocking znači rezervirati termine za zadatke umjesto da vam se dan samo događa. Metoda korak po korak, varijante, pogreške koje treba izbjeći i primjeri.",
+      readingMinutes: 8,
+      faq: [
+        ["Koliko treba da se naviknete na time-blocking?", "Računajte na dva tjedna uhodavanja: prvi uglavnom služi da otkrijete kako podcjenjujete trajanje zadataka."],
+        ["Funkcionira li time-blocking u poslu punom nepredviđenih situacija?", "Da, ako obrnete logiku: blokirajte samo 2 do 3 zaštićena sata dnevno, a ostatak ostavite otvorenim."],
+        ["Treba li time-blocking primjenjivati i vikendom?", "Ništa vas na to ne obvezuje. Mnogima koristi samo za jedan ili dva odabrana bloka, a ostatak slobodnog vremena ostaje slobodan."],
+      ],
+      html: `
+<p class="lead">Popis zadataka kaže što trebate napraviti. Nikad ne kaže <em>kada</em>. Upravo zato vaš popis stalno raste: bez termina u kalendaru zadatak ostaje samo želja. <strong>Time-blocking</strong> ispravlja taj strukturni nedostatak tako da svakoj važnoj stvari dodijeli vremenski termin. Cal Newport, autor knjige <em>Deep Work</em>, procjenjuje da tjedan od 40 sati organiziran blokovima daje jednako koliko i tjedan od 60 sati vođen stihijski. Evo kako početi, konkretno.</p>
+<figure><img src="/screenshots/agenda.webp" srcset="/screenshots/agenda-800.webp 800w, /screenshots/agenda.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="Kalendar u Cosmu u tjednom prikazu: zadaci za planiranje navedeni su lijevo i povlače se u termin." /><figcaption>Kalendar u Cosmu u tjednom prikazu: zadaci za planiranje navedeni su lijevo i povlače se u termin. Snimka demo načina, izmišljeni podaci.</figcaption></figure>
+
+<h2 id="definition">Što je točno time-blocking?</h2>
+<p>Time-blocking (ili „blokiranje vremena“) znači <strong>podijeliti dan na namjenske blokove</strong>: svaki blok rezerviran je za određeni zadatak ili vrstu posla, kao sastanak koji dogovarate sami sa sobom. Umjesto popisa od 20 zadataka zbog kojeg se osjećate krivima, imate plan: od 9 do 10.30 klijentski predmet, od 10.30 do 11 e-pošta, od 11 do 12 priprema sastanka.</p>
+<p>Promjena razmišljanja jednostavna je, ali duboka: više ne odlučujete <em>tijekom</em> dana (kad vam je volja najslabija), nego <em>prije</em> njega (dok još imate pregled).</p>
+
+<h2 id="pourquoi">Zašto djeluje: 4 mehanizma</h2>
+<ul>
+<li><strong>Parkinsonov zakon pod kontrolom.</strong> Posao se širi kako bi ispunio raspoloživo vrijeme. Blok od 90 minuta nameće ograničenje koje usmjerava trud.</li>
+<li><strong>Kraj cijene promjene konteksta.</strong> Svaki prekid u prosjeku košta 23 minute ponovnog fokusiranja (istraživanje Glorije Mark, UC Irvine). Blokovi štite razdoblja dubinskog rada.</li>
+<li><strong>Prisilni realizam.</strong> Kad zadatke smjestite u kalendar, odmah vidite da dan ima samo 6 do 7 korisnih sati. Prestajete planirati 14 sati posla u 8.</li>
+<li><strong>Odluka je već donesena.</strong> U 9 sati pitanje više nije „čime da počnem?“: kalendar je već odgovorio. Odugovlačenje gubi svoje omiljeno igralište, a to je izbor.</li>
+</ul>
+
+<h2 id="methode">Metoda korak po korak</h2>
+<h3>1. Popišite, a zatim procijenite</h3>
+<p>Krenite od popisa zadataka i svakome dodijelite realno trajanje. Iskustveno pravilo: prva procjena × 1,5. Podcjenjivanje je pogreška broj 1 kod početnika.</p>
+<h3>2. Najprije blokirajte dubinski rad</h3>
+<p>Postavite svoja 1 ili 2 bloka intenzivne koncentracije (90 do 120 minuta) u sate kad vam je energija najveća, kod većine ljudi ujutro. To su blokovi o kojima se ne pregovara: sve ostalo slaže se oko njih.</p>
+<h3>3. Grupirajte male zadatke</h3>
+<p>E-pošta, poruke, administrativni zadaci: grupirajte ih u 1 ili 2 bloka „batchinga“ od po 30 minuta. Neprestano provjeravanje pretinca e-pošte smrt je time-blockinga.</p>
+<h3>4. Ostavite prazan prostor</h3>
+<p>Neka 20 do 30 % dana ostane neblokirano. Nepredviđene stvari doći će, a ako nemaju kamo, progutat će vam blokove dubinskog rada. Blok „rezerve“ kasno poslijepodne upija sve što se prelije.</p>
+<h3>5. Preraspodijelite bez grižnje savjesti</h3>
+<p>Propušteni blok ne nadoknađuje se „jačim trudom“: premješta se, kao što premještate sastanak. Pregled od 5 minuta na kraju dana (što otpada, što se pomiče?) dio je metode. Time-blocking je, uostalom, samo jedno od sedam načela <a href="/hr/blog/gestion-du-temps-efficace">učinkovitog upravljanja vremenom</a>: ono koje ostalih šest čini primjenjivima.</p>
+
+<h2 id="variantes">3 korisne varijante</h2>
+<h3>Task batching</h3>
+<p>Grupiranje zadataka iste vrste u jedan blok (svi računi, svi pozivi). Cijenu promjene konteksta svodi gotovo na nulu.</p>
+<h3>Day theming</h3>
+<p>Svakom danu dodijelite temu: ponedjeljak proizvod, utorak klijenti, srijeda sadržaj… Idealno za osnivače i <a href="/hr/za-freelancere">freelancere</a> koji nose više uloga.</p>
+<h3>Time-boxing</h3>
+<p>Inačica „ugovora“: blok ima čvrst kraj i kad vrijeme istekne, stajete, bilo gotovo ili ne. Savršeno za zadatke bez prirodnog kraja (praćenje novosti, dotjerivanje, istraživanje).</p>
+
+<h2 id="exemple">Primjer: realističan dan organiziran blokovima</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Termin</th><th>Blok</th><th>Vrsta</th></tr></thead>
+<tbody>
+<tr><td>8.30 – 9.00</td><td>Pregled plana + samo hitna e-pošta</td><td>Batching</td></tr>
+<tr><td>9.00 – 10.45</td><td>Dubinski rad: prioritetni predmet</td><td>Deep work</td></tr>
+<tr><td>10.45 – 11.00</td><td>Prava stanka (bez zaslona)</td><td>Oporavak</td></tr>
+<tr><td>11.00 – 12.30</td><td>Sastanci / pozivi</td><td>Suradnja</td></tr>
+<tr><td>13.30 – 14.00</td><td>E-pošta + poruke (batch br. 2)</td><td>Batching</td></tr>
+<tr><td>14.00 – 15.30</td><td>Dubinski rad br. 2 ili srednje zahtjevni zadaci</td><td>Deep work</td></tr>
+<tr><td>15.30 – 16.30</td><td>Rezerva: nepredviđeno i prelijevanja</td><td>Buffer</td></tr>
+<tr><td>16.30 – 17.00</td><td>Zatvaranje: pregled dana + plan za sutra</td><td>Ritual</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="erreurs">5 pogrešaka zbog kojih ljudi odustaju</h2>
+<ol>
+<li><strong>Blokirati 100 % dana.</strong> Prva nepredviđena situacija ruši cijeli plan, a frustracija dovodi do odustajanja od metode za tjedan dana. Ciljajte na 70 do 80 %.</li>
+<li><strong>Presitni blokovi.</strong> Planiranje u odsječcima od 15 minuta pretvara metodu u zatvor. Korisna granulacija: od 30 minuta do 2 sata.</li>
+<li><strong>Zanemarivanje vlastite energije.</strong> Blok dubinskog rada u 15.30 nakon obilnog ručka čista je fikcija. Zahtjevne blokove uskladite sa stvarnim vrhuncima energije.</li>
+<li><strong>Nikad ne revidirati.</strong> Jutarnji plan je pretpostavka. Bez 5 minuta preraspodjele navečer razlika između plana i stvarnosti postaje obeshrabrujuća.</li>
+<li><strong>Kalendar i popis zadataka kao dva odvojena svijeta.</strong> Ako vam zadaci žive u jednom alatu, a termini u drugom, prepisivanje ubije rutinu za petnaest dana.</li>
+</ol>
+
+<h2 id="outils">Koji alat za time-blocking?</h2>
+<p>Papir, Google Kalendar, sve funkcionira dok god je trenje malo. Upravo je to slaba točka para „popis zadataka + zaseban kalendar“: svaki zadatak prepisivati u kalendar, dvaput dnevno, svaki dan. Ako vas muči baš to, naša <a href="/hr/blog/cosmo-vs-todoist">usporedba Cosma i Todoista</a> tome posvećuje glavni dio.</p>
+<p>U <a href="/hr/">Cosmu</a> je time-blocking ugrađen: zadaci se prikazuju u ploči uz kalendar, a <strong>povlačenje zadatka na termin stvara povezani događaj</strong> (s trajanjem, kategorijom i bojom). Završen zadatak ažurira statistiku uloženog vremena, a ako pridonosi nekom <a href="/hr/blog/methode-okr-exemples">OKR-u</a>, napredak se ažurira i ondje. Planiranje dana traje dvije minute, <a href="/hr/signup">besplatno</a>, a demo možete isprobati bez registracije.</p>
+
+<h2 id="faq">Česta pitanja</h2>
+<h3>Koliko treba da se naviknete?</h3>
+<p>Računajte na dva tjedna uhodavanja: prvi uglavnom služi da otkrijete kako podcjenjujete trajanje zadataka. To je normalno i već je to dobitak.</p>
+<h3>Funkcionira li time-blocking u poslu punom nepredviđenih situacija?</h3>
+<p>Da, ako obrnete logiku: blokirajte samo 2 do 3 zaštićena sata dnevno (životni minimum dubinskog rada), a ostatak ostavite otvorenim. Čak i djelomično, dobitak je stvaran.</p>
+<h3>Treba li time-blocking primjenjivati i vikendom?</h3>
+<p>Ništa vas na to ne obvezuje. Mnogima koristi samo za jedan ili dva odabrana bloka (sport, osobni projekt), a ostatak slobodnog vremena ostaje slobodan.</p>
+`,
+    },
   },
 };
