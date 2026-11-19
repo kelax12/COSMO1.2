@@ -10,7 +10,7 @@
 //   final est l'etat par defaut, donc sous mouvement reduit les tuiles sont
 //   simplement posees. Aucune boucle : rien a mettre en pause (C-69).
 import React from 'react';
-import { BarChart3, CalendarDays, ListChecks, Repeat, Target, type LucideIcon } from 'lucide-react';
+import { BarChart2, Calendar, CheckSquare, Repeat, Target, type LucideIcon } from 'lucide-react';
 
 interface Tuile {
   cle: string;
@@ -26,12 +26,14 @@ interface Tuile {
 
 // Ordre du tableau = ordre d'arrivee. Emplacements : 1 = gauche basse,
 // 2 = gauche haute, 3 = centre, 4 = droite haute, 5 = droite basse.
+// Couleurs et icones = celles des pages de l'app (barre laterale, `Layout.tsx` :
+// taches #3b82f6, agenda #ef4444, OKR #22c55e, habitudes #eab308, stats #8b5cf6).
 const TUILES: Tuile[] = [
-  { cle: 'tasks', Icone: ListChecks, degrade: 'bg-blue-600', x: -35, y: 250, r: -38 },
-  { cle: 'agenda', Icone: CalendarDays, degrade: 'bg-violet-600', x: -18, y: 110, r: -20 },
-  { cle: 'okr', Icone: Target, degrade: 'bg-fuchsia-600', x: 0, y: 90, r: 0 },
-  { cle: 'habits', Icone: Repeat, degrade: 'bg-cyan-600', x: 18, y: 110, r: 20 },
-  { cle: 'stats', Icone: BarChart3, degrade: 'bg-indigo-600', x: 35, y: 250, r: 38 },
+  { cle: 'tasks', Icone: CheckSquare, degrade: 'bg-blue-500', x: -35, y: 250, r: -38 },
+  { cle: 'agenda', Icone: Calendar, degrade: 'bg-red-500', x: -18, y: 110, r: -20 },
+  { cle: 'okr', Icone: Target, degrade: 'bg-green-500', x: 0, y: 90, r: 0 },
+  { cle: 'habits', Icone: Repeat, degrade: 'bg-yellow-500', x: 18, y: 110, r: 20 },
+  { cle: 'stats', Icone: BarChart2, degrade: 'bg-violet-500', x: 35, y: 250, r: 38 },
 ];
 
 const DEPART = TUILES[2];
