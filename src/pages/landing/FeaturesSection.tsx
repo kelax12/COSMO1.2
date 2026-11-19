@@ -5,7 +5,7 @@
 // layout empilé classique (Framer whileInView), comme avant.
 import React, { Suspense, lazy, useEffect, useRef } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { CheckCircle, Calendar, Target, Repeat, ArrowRight, BarChart2 } from 'lucide-react';
+import { Check, CheckSquare, Calendar, Target, Repeat, ArrowRight, BarChart2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { gsap, ScrollTrigger, useGSAP } from '@/lib/gsap';
 import TaskTableShowcase from '@/components/showcase/TaskTableShowcase';
@@ -61,10 +61,8 @@ interface Feature {
   id: FeatureId;
   path: string;
   icon: LucideIcon;
-  /** classes tailwind du gradient d'accent (icône, puces, CTA) */
-  gradient: string;
-  shadow: string;
-  glow: string;
+  /** Aplat d'accent (icône, puces, CTA) : la couleur de la page dans l'app (`Layout.tsx`). */
+  fond: string;
   accentText: string;
   Desktop: React.ComponentType;
   Mobile: React.ComponentType;
@@ -84,10 +82,8 @@ const FEATURES: Feature[] = [
   {
     id: 'tasks',
     path: '/tasks',
-    icon: CheckCircle,
-    gradient: 'from-blue-600 to-cyan-500',
-    shadow: 'shadow-blue-500/30',
-    glow: 'from-blue-500/15 to-cyan-500/15',
+    icon: CheckSquare,
+    fond: 'bg-blue-500',
     accentText: 'from-blue-600 to-cyan-600',
     Desktop: TaskTableShowcase,
     Mobile: TaskCardMobileShowcase,
@@ -96,9 +92,7 @@ const FEATURES: Feature[] = [
     id: 'agenda',
     path: '/agenda',
     icon: Calendar,
-    gradient: 'from-red-500 to-rose-500',
-    shadow: 'shadow-red-500/30',
-    glow: 'from-red-500/15 to-rose-500/15',
+    fond: 'bg-red-500',
     accentText: 'from-red-600 to-rose-600',
     Desktop: AgendaShowcase,
     Mobile: AgendaMobileShowcase,
@@ -111,9 +105,7 @@ const FEATURES: Feature[] = [
     id: 'okr',
     path: '/okr',
     icon: Target,
-    gradient: 'from-green-500 to-emerald-500',
-    shadow: 'shadow-green-500/30',
-    glow: 'from-green-500/15 to-emerald-500/15',
+    fond: 'bg-green-500',
     accentText: 'from-green-600 to-emerald-600',
     Desktop: OKRCardShowcase,
     Mobile: OKRMobileShowcase,
@@ -122,9 +114,7 @@ const FEATURES: Feature[] = [
     id: 'habits',
     path: '/habits',
     icon: Repeat,
-    gradient: 'from-yellow-500 to-amber-500',
-    shadow: 'shadow-yellow-500/30',
-    glow: 'from-yellow-500/15 to-amber-500/15',
+    fond: 'bg-yellow-500',
     accentText: 'from-yellow-600 to-amber-600',
     Desktop: HabitHeatmapShowcase,
     Mobile: HabitMobileShowcase,
@@ -134,9 +124,7 @@ const FEATURES: Feature[] = [
     id: 'stats',
     path: '/statistics',
     icon: BarChart2,
-    gradient: 'from-violet-500 to-purple-600',
-    shadow: 'shadow-violet-500/30',
-    glow: 'from-violet-500/15 to-purple-600/15',
+    fond: 'bg-violet-500',
     accentText: 'from-violet-600 to-purple-600',
     Desktop: () => (
       <WhenVisible fallback={<ShowcaseSkeleton />}>
@@ -165,7 +153,7 @@ const FeatureCopy: React.FC<{ feature: Feature; onCta: () => void }> = ({ featur
   const key = (suffix: string) => `features.${feature.id}.${suffix}` as Parameters<typeof t>[0];
   return (
     <div className="space-y-6">
-      <div className={`inline-flex items-center justify-center w-14 h-14 bg-gradient-to-r ${feature.gradient} rounded-2xl shadow-lg ${feature.shadow}`}>
+      <div className={`inline-flex items-center justify-center w-14 h-14 ${feature.fond} rounded-2xl`}>
         <Icon size={28} className="text-white" />
       </div>
       <h3 className="text-3xl lg:text-4xl font-bold text-slate-900 leading-tight">
@@ -179,8 +167,8 @@ const FeatureCopy: React.FC<{ feature: Feature; onCta: () => void }> = ({ featur
       <div className="space-y-3">
         {(['b1', 'b2', 'b3', 'b4'] as const).map((b, i) => (
           <div key={i} className="flex items-center gap-3">
-            <div className={`w-5 h-5 bg-gradient-to-r ${feature.gradient} rounded-full flex items-center justify-center flex-shrink-0`}>
-              <CheckCircle size={11} className="text-white" />
+            <div className={`w-5 h-5 ${feature.fond} rounded-full flex items-center justify-center flex-shrink-0`}>
+              <Check size={12} strokeWidth={3} className="text-white" />
             </div>
             <span className="text-slate-700 font-medium text-sm">{t(key(b))}</span>
           </div>
@@ -188,7 +176,7 @@ const FeatureCopy: React.FC<{ feature: Feature; onCta: () => void }> = ({ featur
       </div>
       <button
         onClick={onCta}
-        className={`group bg-gradient-to-r ${feature.gradient} text-white px-8 py-4 rounded-xl font-semibold shadow-sm hover:shadow-lg ${feature.shadow} transition-all duration-300 hover:scale-105 transform flex items-center gap-2`}
+        className={`group ${feature.fond} text-white px-8 py-4 rounded-xl font-semibold transition-[filter] duration-300 hover:brightness-95 flex items-center gap-2`}
       >
         {t(key('cta'))} <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
       </button>
@@ -324,7 +312,6 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isMobile, handleFeatu
                       transition={{ type: 'spring', stiffness: 55, damping: 13, mass: 0.9 }}
                       className="relative"
                     >
-                      <div className={`absolute -inset-3 bg-gradient-to-r ${feature.glow} rounded-3xl blur-2xl`} />
                       <div className="relative">
                         {/* Parcours perso BLANC : les vitrines passent en clair.
                             Sans ce fournisseur elles restent sombres, comme sur
@@ -380,7 +367,6 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isMobile, handleFeatu
                       style={{ perspective: 1200, ...(feature.basisMaquette ? { flex: `0 0 ${feature.basisMaquette}` } : {}) }}
                     >
                       <div className="feature-mockup relative">
-                        <div className={`absolute -inset-3 bg-gradient-to-r ${feature.glow} rounded-3xl blur-2xl`} />
                         <div className="relative">
                           <ShowcaseTheme theme="light">
                             <Showcase />
