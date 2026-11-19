@@ -5,7 +5,7 @@ import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useMagnetic } from '@/lib/hooks/use-magnetic';
 import { useT } from '@/i18n/useT';
 import { pauseWhenOffscreen } from './pause-offscreen';
-import HeroModuleDock, { DELAI_ARRIMAGE_MS } from './HeroModuleDock';
+import { DELAI_ARRIMAGE_MS } from './HeroModuleDock';
 import HeroAppIcon from './HeroAppIcon';
 import { setModuleActif } from './hero-module-actif';
 import BelowFold from './BelowFold';
@@ -197,14 +197,6 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
         <HeroBackdrop gridRef={gridLayerRef} auroraRef={auroraLayerRef} />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Les quatre puces : rangee centree sous le sommaire jusqu'a `xl`,
-              flottantes de part et d'autre du titre au-dela. Posees ICI et pas
-              dans le bloc de texte : leurs positions sont en POURCENTAGE
-              (`xl:left-[1%]`, `xl:right-[4%]`, cf. hero-modules.ts), donc leur
-              ancetre positionne doit etre la pleine largeur, pas la colonne de
-              lecture. */}
-          <HeroModuleDock />
-
           {/* La colonne de lecture est plus large que le texte n'en a besoin,
               et c'est le titre qui fixe sa largeur : `max-w-4xl` est la valeur
               a laquelle les deux phrases du H1 tiennent chacune sur UNE ligne,
