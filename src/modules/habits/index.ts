@@ -38,7 +38,7 @@ export {
 } from './hooks';
 
 // Tâche créée chaque jour prévu (mig. 265).
-export { useHabitAutoTasks, useSetHabitAutoTask, habitAutoTaskKeys } from './auto-task.hooks';
+export { useHabitAutoTasks, useHabitAutoTask, habitAutoTaskKeys } from './auto-task.hooks';
 export type { HabitAutoTask } from './auto-task.repository';
 export { dueAutoTasks, autoTaskInput } from './auto-task';
 

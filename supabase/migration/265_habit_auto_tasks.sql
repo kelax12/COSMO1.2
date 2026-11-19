@@ -62,3 +62,9 @@ DROP POLICY IF EXISTS "habit_auto_tasks_delete" ON public.habit_auto_tasks;
 CREATE POLICY "habit_auto_tasks_delete" ON public.habit_auto_tasks
   FOR DELETE TO authenticated
   USING ((SELECT auth.uid()) = user_id);
+
+-- Une ligne ne change jamais de compte (checklist mass-assignment V1).
+DROP TRIGGER IF EXISTS trg_habit_auto_tasks_user_id_immutable ON public.habit_auto_tasks;
+CREATE TRIGGER trg_habit_auto_tasks_user_id_immutable
+  BEFORE UPDATE ON public.habit_auto_tasks
+  FOR EACH ROW EXECUTE FUNCTION public.prevent_user_id_change();

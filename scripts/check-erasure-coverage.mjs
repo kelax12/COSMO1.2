@@ -128,6 +128,9 @@ const DECISIONS = {
   // cascade vers `auth.users`, ET la clé composée `(habit_id, user_id)` part
   // avec l'habitude, que `delete-account` purge explicitement.
   habit_completions: { decision: 'cascade' },
+  // Option « tâche créée chaque jour prévu » (mig. 265), décidé le 2026-11-19 :
+  // même forme que `habit_completions`, elle part avec l'habitude et le compte.
+  habit_auto_tasks: { decision: 'cascade' },
 
   // ── Conservées, par obligation légale ───────────────────────────
   payment_records: {

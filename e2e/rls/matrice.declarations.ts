@@ -96,6 +96,8 @@ export const DECLARATIONS: Record<string, Declaration> = {
   habits: proprietaire(),
   // Mig. 248 (DAT-02) : jours cochés, clé composée vers `habits (id, user_id)`.
   habit_completions: proprietaire(),
+  // Mig. 265 : option « tâche créée chaque jour prévu », clé composée vers `habits`.
+  habit_auto_tasks: proprietaire(),
   key_results: proprietaire(),
   kr_completions: proprietaire(),
   lists: partagee('listes partagées entre amis', 'propriétaire et destinataires de shared_lists'),

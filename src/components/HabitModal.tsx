@@ -8,8 +8,8 @@ import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useFavoriteColors } from '@/modules/ui-states';
 import { useCategories, type Category } from '@/modules/categories';
 import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
-import { useCreateHabit, useUpdateHabit, Habit } from '@/modules/habits';
-import { useHabitAutoTask, HabitAutoTaskCheckbox } from '@/components/habits/use-habit-auto-task';
+import { useCreateHabit, useUpdateHabit, useHabitAutoTask, Habit } from '@/modules/habits';
+import { HabitAutoTaskCheckbox } from '@/components/habits/use-habit-auto-task';
 import { habitCreateInput, habitUpdates, initialHabitForm, type HabitFormData } from '@/components/habits/habit-form';
 import HabitDaysPicker from '@/components/habits/HabitDaysPicker';
 import ColorSettingsModal from './ColorSettingsModal';
@@ -295,7 +295,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                         onChange={(days) => setFormData({ ...formData, scheduledDays: days })}
                       />
                       <div className="h-px bg-[rgb(var(--color-border))] ml-4" />
-                      <HabitAutoTaskCheckbox checked={autoTask.checked} onChange={autoTask.setChecked} className="gap-3 px-4 min-h-11 text-[15px]" />
+                      <HabitAutoTaskCheckbox checked={autoTask.checked} onChange={autoTask.setChecked} label={t('modal.autoTask')} className="gap-3 px-4 min-h-11 text-[15px]" />
                     </div>
                   </div>
                 </div>
@@ -382,7 +382,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                         days={formData.scheduledDays}
                         onDays={(days) => setFormData({ ...formData, scheduledDays: days })}
                       />
-                      <HabitAutoTaskCheckbox checked={autoTask.checked} onChange={autoTask.setChecked} className="mt-3 gap-2 text-sm" />
+                      <HabitAutoTaskCheckbox checked={autoTask.checked} onChange={autoTask.setChecked} label={t('modal.autoTask')} className="mt-3 gap-2 text-sm" />
                     </div>
                   </form>
 
