@@ -1,0 +1,370 @@
+{
+  "customColor": "Prilagođena boja",
+  "noCategory": "Bez kategorije",
+  "listActions": {
+    "removeDefault": "Uklonite iz favorita",
+    "setDefault": "Prikvači kao zadano"
+  },
+  "language": {
+    "label": "Jezik",
+    "description": "Jezik sučelja",
+    "sectionSubtitle": "Odaberite jezik na kojem se aplikacija prikazuje.",
+    "reloadNotice": "Stranica se ponovno učitava kako bi se jezik primijenio posvuda, uključujući datume i formate brojeva."
+  },
+  "nav": {
+    "demoCreateAccount": "Demo način · stvorite račun",
+    "objectivesAria": "Ciljevi (OKR)",
+    "objectives": "Ciljevi",
+    "dashboard": "Početna",
+    "tasks": "Zadaci",
+    "agenda": "Kalendar",
+    "okr": "OKR",
+    "habits": "Navike",
+    "statistics": "Statistika",
+    "enterprise": "Tvrtka",
+    "premium": "Premium",
+    "settings": "Postavke",
+    "admin": "Admin",
+    "persoGuide": "Otvorite vodič",
+    "more": "Više",
+    "moreOptions": "Više opcija",
+    "sectionOther": "OSTALO",
+    "mobileNavLabel": "Mobilna navigacija",
+    "documentTitle": "{{page}} – Cosmo",
+    "createTask": "Stvorite zadatak",
+    "skipToContent": "Prijeđite na glavni sadržaj",
+    "goToSettings": "Idite na postavke",
+    "logout": "Odjava",
+    "premiumActive": "Aktivno",
+    "userFallback": "Korisnik",
+    "sidebar": {
+      "showLabels": "Prikaži oznake ( [ )",
+      "hideLabels": "Sakrij oznake ( [ )",
+      "toggleTitle": "Sklopi/proširi ( [ )",
+      "expand": "Proširite bočnu traku",
+      "collapse": "Sklopite bočnu traku"
+    },
+    "search": {
+      "ariaLabel": "Pretraživanje ({{shortcut}})",
+      "title": "Pretraživanje ({{shortcut}})"
+    },
+    "badge": {
+      "pendingRequest_one": "{{count}} zahtjev na čekanju",
+      "pendingRequest_few": "{{count}} zahtjeva na čekanju",
+      "pendingRequest_other": "{{count}} zahtjeva na čekanju",
+      "taskDueToday_one": "{{count}} zadatak s rokom danas",
+      "taskDueToday_few": "{{count}} zadatka s rokom danas",
+      "taskDueToday_other": "{{count}} zadataka s rokom danas",
+      "orgNotification_one": "{{count}} obavijest tvrtke",
+      "orgNotification_few": "{{count}} obavijesti tvrtke",
+      "orgNotification_other": "{{count}} obavijesti tvrtke",
+      "orgJoinRequest_one": "{{count}} zahtjev za pridruživanje za pregled",
+      "orgJoinRequest_few": "{{count}} zahtjeva za pridruživanje za pregled",
+      "orgJoinRequest_other": "{{count}} zahtjeva za pridruživanje za pregled",
+      "orgNews": "Nova aktivnost u prostoru tvrtke"
+    },
+    "descriptions": {
+      "okr": "Ciljevi i ključni rezultati",
+      "habits": "Dnevno praćenje",
+      "statistics": "Praćenje napretka",
+      "premium": "Otključajte sve značajke",
+      "settings": "Račun i postavke",
+      "enterprise": "Tim i suradnja",
+      "bugReport": "Pomozite nam popraviti Cosmo"
+    },
+    "bugReport": "Prijavite grešku",
+    "seePremium": "Pogledajte Premium",
+    "sheetGoTo": "Idi na",
+    "sheetOther": "Ostalo"
+  },
+  "actions": {
+    "all": "Sve",
+    "cancel": "Odustani",
+    "delete": "Izbriši",
+    "edit": "Uredi",
+    "remove": "Ukloni",
+    "add": "Dodaj",
+    "confirm": "Gotovo",
+    "close": "Zatvori",
+    "duplicate": "Dupliciraj",
+    "changeColor": "Promijeni boju",
+    "newList": "Novi popis",
+    "createCategory": "Stvorite kategoriju",
+    "undo": "Poništi",
+    "save": "Spremi",
+    "refuse": "Odbij"
+  },
+  "auth": {
+    "legalConsentTermsShort": "uvjete",
+    "legalConsentShort": "Stvaranjem računa prihvaćate {{terms}} i potvrđujete da ste pročitali {{privacy}}.",
+    "legalConsentLogin": "Novi ste u Cosmu? Nastavak putem Googlea stvara vaš račun: time prihvaćate {{terms}} i potvrđujete da ste pročitali {{privacy}}.",
+    "createAccountTitle": "Stvorite račun",
+    "signInTitle": "Prijava",
+    "modalAria": "Prijava ili registracija",
+    "loginSubtitle": "Prijavite se na svoj račun",
+    "registerSubtitle": "Stvorite besplatan račun",
+    "orEmail": "ili nastavite e-poštom",
+    "accountBusiness": "Tvrtka",
+    "accountBusinessDesc": "Tim i suradnja",
+    "forgotPassword": "Zaboravili ste lozinku?",
+    "sendResetLink": "Pošalji poveznicu",
+    "sendingEllipsis": "Slanje...",
+    "minChars": "Najmanje {{count}} znakova",
+    "signingInSlow": "Prijava… poslužitelju treba neko vrijeme",
+    "signIn": "Prijava",
+    "createAccount": "Stvori moj račun",
+    "tryDemo": "Isprobajte demo bez računa",
+    "noAccount": "Nemate račun?",
+    "haveAccount": "Već imate račun?",
+    "createOne": "Stvorite račun",
+    "backHome": "Natrag na početnu stranicu Cosma",
+    "backToLogin": "Natrag na prijavu",
+    "confirmTitle": "Provjerite pretinac e-pošte",
+    "confirmBody": "Vaš je račun stvoren. Otvorite poveznicu koju smo upravo poslali na {{email}} kako biste ga aktivirali.",
+    "confirmSpam": "Ništa nakon nekoliko minuta? Pogledajte mapu neželjene pošte.",
+    "passwordTooShort": "Lozinka mora imati najmanje {{count}} znakova.",
+    "serverTimeout": "Poslužitelj ne odgovara. Pokušajte ponovno za trenutak.",
+    "badCredentials": "Pogrešna e-pošta ili lozinka. Provjerite podatke i pokušajte ponovno.",
+    "loginError": "Pogreška pri prijavi. Pokušajte ponovno.",
+    "registerError": "Došlo je do pogreške pri stvaranju računa. Pokušajte ponovno.",
+    "genericError": "Došlo je do pogreške. Pokušajte ponovno.",
+    "forgotTitle": "Zaboravljena lozinka",
+    "emailSentTitle": "E-pošta poslana",
+    "sendFailed": "Slanje nije uspjelo. Pokušajte ponovno za trenutak.",
+    "resetTitle": "Nova lozinka",
+    "resetLinkInvalid": "Ova poveznica nije valjana ili je istekla.",
+    "resetFailed": "Lozinku nije moguće ažurirati. Poveznica je možda istekla. Zatražite novu.",
+    "welcomeBack": "Dobro došli natrag!",
+    "joinCosmo": "Pridružite se Cosmu",
+    "redirecting": "Preusmjeravanje...",
+    "continueGoogle": "Nastavite s Googleom",
+    "email": "E-pošta",
+    "password": "Lozinka",
+    "fullName": "Ime i prezime",
+    "yourNamePlaceholder": "Vaše ime",
+    "oauthFailed": "Ta prijava nije uspjela.",
+    "oauthRedirectLostTitle": "Prijavljeni ste, ali vaše odredište je izgubljeno.",
+    "oauthRedirectLostBody": "Završili ste na početnoj stranici umjesto na traženoj stranici. Ponovno otvorite poveznicu pozivnice kako biste nastavili gdje ste stali.",
+    "resetIntro": "Odaberite novu lozinku za svoj račun.",
+    "confirmPassword": "Potvrdite lozinku",
+    "showPassword": "Prikaži lozinku",
+    "hidePassword": "Sakrij lozinku",
+    "savePassword": "Spremi lozinku",
+    "savingEllipsis": "Spremanje...",
+    "passwordMismatch": "Lozinke se ne podudaraju.",
+    "requestAgain": "Zatražite novu poveznicu",
+    "backToSignIn": "Natrag na prijavu",
+    "forgotIntro": "Unesite e-poštu i poslat ćemo vam poveznicu za odabir nove lozinke.",
+    "resetSentBefore": "Ako postoji račun za",
+    "resetSentAfter": "primit ćete poveznicu za odabir nove lozinke. Provjerite i mapu neželjene pošte.",
+    "supabaseMissing": "Supabase nije konfiguriran. Provjerite varijable okruženja.",
+    "invalidEmail": "Unesite valjanu adresu e-pošte.",
+    "reservedEmail": "Ova je adresa rezervirana. Odaberite drugu adresu.",
+    "googleFailed": "Prijava putem Googlea nije uspjela.",
+    "defaultUserName": "Korisnik",
+    "accountType": "Vrsta računa",
+    "accountPersonal": "Pojedinac",
+    "accountPersonalDesc": "Osobna upotreba",
+    "registerGeneric": "Registraciju nije bilo moguće dovršiti. Provjerite podatke i pokušajte ponovno.",
+    "loginGeneric": "Neispravna e-pošta ili lozinka.",
+    "tooManyAttempts": "Previše pokušaja. Pokušajte ponovno za nekoliko minuta.",
+    "weakPassword": "Lozinka je preslaba. Odaberite dužu i raznolikiju.",
+    "invalidEmailAddress": "Ova adresa e-pošte nije valjana.",
+    "captchaFailed": "Provjera protiv robota nije uspjela. Pokušajte ponovno.",
+    "legalConsent": "Stvaranjem računa, uključujući putem Googlea, prihvaćate {{terms}} i potvrđujete da ste pročitali {{privacy}}.",
+    "legalConsentTerms": "uvjete korištenja",
+    "legalConsentPrivacy": "pravila o privatnosti"
+  },
+  "cookies": {
+    "banner": "Obavijest o kolačićima",
+    "title": "Kolačići",
+    "noTracking": "Bez oglašavanja, bez profiliranja",
+    "body": "Cosmo mjeri promet na svojim javnim stranicama i odakle dolaze registracije. Ako prihvatite, na vašem se uređaju sprema nasumični identifikator koji povezuje stranice jednog posjeta, a kanal koji vas je doveo (poveznica kampanje, demo) pridružuje se vašem računu ako ga stvorite.",
+    "ifYouRefuse": "Ako odbijete, ništa od toga se ne sprema ni šalje: koristi se samo ono što je nužno za uslugu (sesija, postavke).",
+    "learnMore": "Pročitajte naša pravila o privatnosti",
+    "decline": "Odbij",
+    "accept": "Prihvati",
+    "manage": "Upravljanje kolačićima"
+  },
+  "theme": {
+    "label": "Tema sučelja",
+    "title": "Tema: {{name}}, kliknite za promjenu",
+    "aria": "Trenutačna tema: {{name}}. Kliknite za promjenu.",
+    "light": "Svijetla",
+    "dark": "Tamna",
+    "grey": "Siva",
+    "black": "Crna"
+  },
+  "errorBoundary": {
+    "title": "Nešto je pošlo po zlu",
+    "body": "Osvježite stranicu. Ako se problem nastavi, obratite se podršci.",
+    "refresh": "Osvježite stranicu"
+  },
+  "pageError": {
+    "hint": "Provjerite internetsku vezu, a zatim pokušajte ponovno.",
+    "retry": "Pokušaj ponovno",
+    "title": "Nije moguće učitati {{subject}}",
+    "subjectAgenda": "vaš kalendar",
+    "subjectOkr": "vaše OKR-ove"
+  },
+  "demoBanner": {
+    "aria": "Demo način",
+    "label": "Demo način",
+    "text": ": primjeri podataka, lokalno na ovom uređaju. ",
+    "createAccount": "Stvorite račun",
+    "rest": " kako biste počeli sa svojim stvarnim podacima, sinkroniziranima posvuda.",
+    "hide": "Sakrijte demo traku"
+  },
+  "demoBridge": {
+    "short": "Demo: ništa se ne čuva",
+    "aria": "Stvorite račun COSMO",
+    "title": "Zadržite svoje postavke",
+    "text": "Upravo ste izgradili pravi sustav. Stvorite račun da ga imate na svim uređajima, besplatno je.",
+    "disclaimer": "Podaci iz ovog dema ne prenose se: vaš račun kreće od nule.",
+    "cta": "Stvori moj račun",
+    "later": "Kasnije",
+    "dismiss": "Sakrijte ovaj prijedlog"
+  },
+  "notFound": {
+    "title": "Stranica nije pronađena",
+    "body": "Ova stranica ne postoji ili je premještena. Provjerite adresu ili se vratite na početnu.",
+    "home": "Natrag na početnu",
+    "guide": "Pogledajte vodič"
+  },
+  "shareInvite": {
+    "alreadyCollab": "Već surađujete na „{{name}}“.",
+    "expired": "Ova poveznica pozivnice je istekla. Zatražite novu.",
+    "invalid": "Ova poveznica pozivnice nije valjana ili je opozvana.",
+    "accepted": "Zadatak „{{name}}“ prihvaćen!",
+    "refused": "Pozivnica odbijena.",
+    "sharedWithYou": "Zadatak podijeljen s vama",
+    "proposes": "**{{name}}** želi surađivati s vama na **„{{task}}“**.",
+    "accept": "Prihvatite zadatak",
+    "ownLink": "Ova poveznica pozivnice vodi na vaš vlastiti zadatak.",
+    "unverified": "Nismo mogli provjeriti ovu poveznicu pozivnice. Pokušajte ponovno za trenutak."
+  },
+  "discard": {
+    "body": "Nespremljene promjene bit će izgubljene.",
+    "title": "Odbaciti promjene?",
+    "keepEditing": "Nastavi uređivati"
+  },
+  "loading": "Učitavanje...",
+  "tasksSummary": {
+    "showSide": "Prikaži sa strane",
+    "showBottom": "Prikaži na dnu"
+  },
+  "tutorial": {
+    "skip": "Preskočite vodič",
+    "skipShort": "Preskoči",
+    "done": "Gotovo",
+    "next": "Dalje",
+    "previous": "← Natrag"
+  },
+  "collaborator": {
+    "sent": "Poslano",
+    "requestSent": "⏳ Zahtjev za prijateljstvo poslan",
+    "awaiting": "Čeka prihvaćanje",
+    "generic": "Suradnik",
+    "removeAria": "Ukloni",
+    "addAria": "Dodaj",
+    "removeNamedAria": "Uklonite {{name}}",
+    "addNamedAria": "Dodajte {{name}}"
+  },
+  "orgTier": {
+    "free": "Besplatno",
+    "t10": "Tim",
+    "t20": "Odjel",
+    "t50": "Poslovno",
+    "t100": "Poduzeće",
+    "tmax": "Neograničeno"
+  },
+  "appVersion": {
+    "available": "Dostupna je nova verzija COSMO-a.",
+    "reload": "Ponovno učitaj",
+    "dismiss": "Kasnije"
+  },
+  "colorLegend": {
+    "edit": "Uredite legendu boja"
+  },
+  "loadingLabel": {
+    "tasks": "Učitavanje zadataka",
+    "habits": "Učitavanje navika",
+    "okrs": "Učitavanje OKR-ova"
+  },
+  "description": {
+    "expand": "Proširite opis",
+    "collapse": "Zatvorite i vratite se na obrazac",
+    "expandedTitle": "Opis"
+  },
+  "rootError": {
+    "title": "COSMO se nije mogao pokrenuti",
+    "signOut": "Odjava",
+    "body": "Pogreška je prekinula aplikaciju tijekom učitavanja. Ponovno učitajte stranicu. Ako se problem nastavi, odjavite se kako biste krenuli s čistom sesijom.",
+    "reload": "Ponovno učitaj"
+  },
+  "period": {
+    "day": "Dan",
+    "week": "Tjedan",
+    "month": "Mjesec",
+    "quarter": "Tromjesečje",
+    "year": "Godina"
+  },
+  "priority": {
+    "p1": "P1 Najviši",
+    "p2": "P2 Visok",
+    "p3": "P3 Srednji",
+    "p4": "P4 Nizak",
+    "p5": "P5 Najniži",
+    "dotP1": "P1 · Kritičan",
+    "dotP2": "P2 · Visok",
+    "dotP3": "P3 · Normalan",
+    "dotP4": "P4 · Nizak",
+    "dotP5": "P5 · Najniži"
+  },
+  "summary": {
+    "openTasks": "Otvoreni zadaci: {{count}}",
+    "todayLoad": "≈ {{load}} planirano danas"
+  },
+  "weekday": {
+    "0": "Nedjelja",
+    "1": "Ponedjeljak",
+    "2": "Utorak",
+    "3": "Srijeda",
+    "4": "Četvrtak",
+    "5": "Petak",
+    "6": "Subota"
+  },
+  "deadlineReminder": {
+    "dueToday_one": "{{count}} zadatak s rokom danas",
+    "dueToday_few": "{{count}} zadatka s rokom danas",
+    "dueToday_other": "{{count}} zadataka s rokom danas",
+    "overdue": "{{count}} kasni",
+    "description": "Dodirnite za prikaz zadataka",
+    "action": "Prikaži"
+  },
+  "relativeDay": {
+    "today": "Danas",
+    "tomorrow": "Sutra",
+    "yesterday": "Jučer",
+    "daysAgo": "prije {{count}} d",
+    "overdueBy_one": "{{count}} d kašnjenja",
+    "overdueBy_few": "{{count}} d kašnjenja",
+    "overdueBy_other": "{{count}} d kašnjenja"
+  },
+  "offline": {
+    "label": "Izvan mreže",
+    "text": " · možete nastaviti pregledavati, ali promjene se neće spremati dok se mreža ne vrati.",
+    "back": "Ponovno na mreži"
+  },
+  "sync": {
+    "offline": "Izvan mreže",
+    "syncing": "Sinkronizacija…",
+    "synced": "Sinkronizirano",
+    "savedLocal": "Spremljeno (lokalno)"
+  },
+  "showcase": {
+    "pause": "Pauzirajte animaciju",
+    "play": "Pokrenite animaciju",
+    "habitsTable": "Primjer praćenja navika"
+  }
+}

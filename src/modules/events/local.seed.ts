@@ -6,7 +6,7 @@
 // démo (`local.repository.ts`) l'ensemence au premier accès.
 
 import { CalendarEvent } from './types';
-import { isEnglishSeed, localizeSeed } from '@/lib/seed-i18n';
+import { localizeSeed, seedText } from '@/lib/seed-i18n';
 
 // ═══════════════════════════════════════════════════════════════════
 // DEMO DATA
@@ -22,23 +22,21 @@ const eventDate = (daysFromNow: number, h: number, m = 0): string => {
 
 // Génère les réunions d'équipe hebdomadaires — 62 semaines passées (>14 mois)
 const weeklyMeetings = (): CalendarEvent[] => {
-  const en = isEnglishSeed();
   return Array.from({ length: 62 }, (_, i) => {
     const week = 62 - i;
     return {
       id: `event-mtg-${week}`,
-      title: en ? 'Team meeting' : "Réunion d'équipe",
+      title: seedText({ fr: "Réunion d'équipe", en: 'Team meeting' }),
       start: eventDate(-week * 7, 10, 0),
       end:   eventDate(-week * 7, 11, 0),
       color: '#3B82F6',
-      description: en ? 'Weekly sync with the team' : "Point hebdomadaire avec l'équipe",
+      description: seedText({ fr: "Point hebdomadaire avec l'équipe", en: 'Weekly sync with the team' }),
     };
   });
 };
 
 // Génère les rétrospectives mensuelles — 14 mois passés
 const monthlyRetros = (): CalendarEvent[] => {
-  const en = isEnglishSeed();
   return Array.from({ length: 14 }, (_, i) => {
     const month = 14 - i;
     const d = new Date();
@@ -48,27 +46,26 @@ const monthlyRetros = (): CalendarEvent[] => {
     const e = new Date(d); e.setHours(16, 0, 0, 0);
     return {
       id: `event-retro-${month}`,
-      title: en ? 'Monthly retrospective' : 'Rétrospective mensuelle',
+      title: seedText({ fr: 'Rétrospective mensuelle', en: 'Monthly retrospective' }),
       start: d.toISOString(),
       end: e.toISOString(),
       color: '#F97316',
-      description: en ? 'Review of the month and planning ahead' : 'Bilan du mois et planification suivante',
+      description: seedText({ fr: 'Bilan du mois et planification suivante', en: 'Review of the month and planning ahead' }),
     };
   });
 };
 
 // Génère les 1:1 manager bimensuels — 28 occurrences passées
 const biweekly1on1 = (): CalendarEvent[] => {
-  const en = isEnglishSeed();
   return Array.from({ length: 28 }, (_, i) => {
     const weeks = 28 - i;
     return {
       id: `event-1on1-${weeks}`,
-      title: en ? '1:1 with manager' : '1:1 avec le manager',
+      title: seedText({ fr: '1:1 avec le manager', en: '1:1 with manager' }),
       start: eventDate(-weeks * 14 + 2, 9, 0),
       end:   eventDate(-weeks * 14 + 2, 9, 30),
       color: '#10B981',
-      description: en ? 'Individual check-in + feedback' : 'Point individuel + feedback',
+      description: seedText({ fr: 'Point individuel + feedback', en: 'Individual check-in + feedback' }),
     };
   });
 };
@@ -131,7 +128,7 @@ const ONE_TIME_EVENTS_EN: Record<string, Partial<CalendarEvent>> = {
 };
 
 export const DEMO_EVENTS: CalendarEvent[] = [
-  ...localizeSeed(ONE_TIME_EVENTS, ONE_TIME_EVENTS_EN),
+  ...localizeSeed(ONE_TIME_EVENTS, { en: ONE_TIME_EVENTS_EN }),
   ...weeklyMeetings(),
   ...monthlyRetros(),
   ...biweekly1on1(),

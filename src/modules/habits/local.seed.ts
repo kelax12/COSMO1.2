@@ -92,4 +92,4 @@ export const DEMO_HABITS_EN: Record<string, Partial<Habit>> = {
 };
 
 /** Le seed dans la langue de l'interface (overlay anglais par id, cf. src/lib/seed-i18n.ts). */
-export const localizedDemoHabits = () => localizeSeed(DEMO_HABITS, DEMO_HABITS_EN);
+export const localizedDemoHabits = () => localizeSeed(DEMO_HABITS, { en: DEMO_HABITS_EN });

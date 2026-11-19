@@ -6,8 +6,7 @@
 // démo (`local.repository.ts`) l'ensemence au premier accès.
 
 import { KRCompletion } from './types';
-import { isEnglishSeed } from '@/lib/seed-i18n';
-import { demoOkrTitlesEn } from '@/modules/okrs/local.seed';
+import { localizedDemoOkrTitles } from '@/modules/okrs/local.seed';
 
 // ═══════════════════════════════════════════════════════════════════
 // DEMO DATA — Seeds matching the completed KRs in OKR demo data
@@ -42,20 +41,19 @@ export function createDemoCompletions(): KRCompletion[] {
 }
 
 /**
- * Overlay anglais du journal de démo — cf. `src/lib/seed-i18n.ts`.
+ * Overlay du journal de démo dans la locale active — cf. `src/lib/seed-i18n.ts`.
  *
  * Ces onze titres s'affichaient en FRANÇAIS dans le graphique « KR réalisés »
  * du tableau de bord d'un visiteur anglophone : ce module était le seul seed de
  * démo à n'être branché sur aucun overlay. Trouvé par le motif
  * (9) d'`i18n:scan`, qui regarde enfin les valeurs de propriété.
  *
- * Les titres ne sont pas réécrits ici : ils sont REPRIS de `DEMO_OKRS_EN` par
+ * Les titres ne sont pas réécrits ici : ils sont REPRIS de l'overlay des OKR par
  * (okrId, krId), pour qu'un libellé n'ait jamais deux traductions.
  */
 function localizeCompletions(items: KRCompletion[]): KRCompletion[] {
-  if (!isEnglishSeed()) return items;
   return items.map((c) => {
-    const en = demoOkrTitlesEn(c.okrId, c.krId);
-    return en ? { ...c, krTitle: en.krTitle, okrTitle: en.okrTitle } : c;
+    const titles = localizedDemoOkrTitles(c.okrId, c.krId);
+    return titles ? { ...c, krTitle: titles.krTitle, okrTitle: titles.okrTitle } : c;
   });
 }

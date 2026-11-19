@@ -1,0 +1,30 @@
+{
+  "title": "Prijavi pogrešku",
+  "close": "Zatvori",
+  "intro": "Recite nam što nije u redu. Vašu poruku primamo izravno, zajedno sa stranicom i preglednikom s kojih je poslana.",
+  "fields": {
+    "title": "Naslov",
+    "description": "Opis",
+    "attachment": "Privitak (neobavezno)"
+  },
+  "placeholders": {
+    "title": "U jednoj rečenici, što se dogodilo?",
+    "description": "Što ste radili, što ste očekivali, što se dogodilo umjesto toga."
+  },
+  "chooseFile": "Odaberite datoteku",
+  "removeFile": "Ukloni privitak",
+  "attachmentHint": "Snimka zaslona, PDF ili zapisnik, najviše {{max}} MB",
+  "submit": "Pošalji",
+  "sending": "Slanje...",
+  "done": "Zatvori",
+  "successTitle": "Poruka je poslana, hvala!",
+  "successBody": "Vaša prijava je stigla do nas. Hvala što ste odvojili vrijeme da nam pomognete popraviti Cosmo: pogledat ćemo je što prije.",
+  "toastSuccess": "Prijava je poslana. Hvala!",
+  "toastError": "Slanje nije uspjelo.",
+  "fallback": "Automatsko slanje nije uspjelo. Pišite nam izravno na",
+  "errors": {
+    "title": "Naslov mora imati između {{min}} i {{max}} znakova.",
+    "description": "Opis mora imati između {{min}} i {{max}} znakova.",
+    "attachment": "Privitak je odbijen: slika, PDF ili tekst, najviše {{max}} MB."
+  }
+}

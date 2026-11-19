@@ -11,7 +11,7 @@ import { INDEXABLE_LOCALES, localizePath } from '../src/i18n/seo-urls.mjs';
 import { requis } from './types.ts';
 
 /** Libellé de la racine dans le fil d'Ariane, par locale. */
-export const HOME_LABEL: Record<Locale, string> = { fr: 'Accueil', en: 'Home', es: 'Inicio' };
+export const HOME_LABEL: Record<Locale, string> = { fr: 'Accueil', en: 'Home', es: 'Inicio', hr: 'Početna' };
 
 export interface UiChrome {
   blogTitle: string;

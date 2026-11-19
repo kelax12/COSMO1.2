@@ -42,10 +42,10 @@ export const DEFAULT_LOCALE = 'fr';
 export const INDEXABLE_LOCALES = ['fr', 'en'];
 
 /** Étiquettes BCP 47 — miroir de `BCP47_TAG` dans src/i18n/locale.ts. */
-export const BCP47_TAG = { fr: 'fr-FR', en: 'en-US', es: 'es-ES' };
+export const BCP47_TAG = { fr: 'fr-FR', en: 'en-US', es: 'es-ES', hr: 'hr-HR' };
 
 /** Valeurs `og:locale` — miroir de `OG_LOCALE` dans src/i18n/locale.ts. */
-export const OG_LOCALE = { fr: 'fr_FR', en: 'en_US', es: 'es_ES' };
+export const OG_LOCALE = { fr: 'fr_FR', en: 'en_US', es: 'es_ES', hr: 'hr_HR' };
 
 export const ROUTE_SLUGS = JSON.parse(
   readFileSync(join(HERE, 'route-slugs.json'), 'utf8')

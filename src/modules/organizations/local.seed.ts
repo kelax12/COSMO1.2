@@ -82,4 +82,4 @@ export const DEMO_ORGS_EN: Record<string, Partial<Organization>> = {
 };
 
 /** Le seed dans la langue de l'interface (overlay anglais par id, cf. src/lib/seed-i18n.ts). */
-export const localizedDemoOrgs = () => localizeSeed(DEMO_ORGS, DEMO_ORGS_EN);
+export const localizedDemoOrgs = () => localizeSeed(DEMO_ORGS, { en: DEMO_ORGS_EN });

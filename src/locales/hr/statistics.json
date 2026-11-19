@@ -1,0 +1,109 @@
+{
+  "delta": {
+    "up": "+{{pct}}% u odnosu na prethodno razdoblje",
+    "down": "−{{pct}}% u odnosu na prethodno razdoblje",
+    "same": "Isto kao u prethodnom razdoblju",
+    "noBase": "Nema prethodnog razdoblja za usporedbu"
+  },
+  "page": {
+    "title": "Statistika",
+    "subtitle": "Analizirajte svoju produktivnost i učinak",
+    "analyse": "Analiziraj:",
+    "seeDetail": "Prikaži detalje",
+    "calendar": "Kalendar"
+  },
+  "sections": {
+    "all": "Pregled",
+    "tasks": "Zadaci",
+    "agenda": "Kalendar",
+    "okr": "OKR-ovi",
+    "habits": "Navike"
+  },
+  "periods": {
+    "day": "Dan",
+    "week": "Tjedan",
+    "month": "Mjesec",
+    "year": "Godina"
+  },
+  "summary": {
+    "today": "Danas",
+    "days7": "7 dana",
+    "days30": "30 dana",
+    "days365": "365 dana"
+  },
+  "chart": {
+    "eventsDuration": "Ukupno trajanje događaja",
+    "timeInvested": "Uloženo vrijeme",
+    "averageAndTotal": "Prosjek: {{average}} · Ukupno: {{total}}",
+    "goal": "Cilj",
+    "minutes": "min",
+    "timeSeries": "Vrijeme (min)",
+    "weekRange": "{{start}} do {{end}}",
+    "goalValueAria": "Cilj, u minutama"
+  },
+  "gate": {
+    "title": "Detaljna analitika",
+    "description": "Otključajte grafikone i naprednu statistiku s Premium računom.",
+    "cta": "Otključaj: oglas ili pretplata",
+    "featureName": "detaljnu analitiku"
+  },
+  "details": {
+    "noTaskDone": "Nijedan zadatak nije dovršen u ovom razdoblju.",
+    "avgPriority": "Prosj. {{value}}",
+    "globalTimeSplit": "Ukupna raspodjela vremena",
+    "total": "Ukupno",
+    "byColor": "Raspodjela po boji",
+    "byPriority": "Raspodjela po prioritetu",
+    "priority": "Prioritet {{level}}",
+    "byCategory": "Raspodjela po kategoriji",
+    "eventsByWorkTime": "Događaji prema radnom vremenu",
+    "noEvent": "Nema događaja",
+    "totalObjectives": "Ukupno ciljeva",
+    "workedObjectives": "Ciljevi na kojima se radilo",
+    "totalRealTime": "Ukupno stvarno vrijeme",
+    "progressByOkr": "Napredak po OKR-u",
+    "progressBefore": "Dosegnuto prije razdoblja",
+    "progressGained": "Ostvareno tijekom razdoblja",
+    "progressBarAria_one": "Napredak {{total}}%, od čega je {{gained}} bod ostvaren tijekom razdoblja.",
+    "progressBarAria_few": "Napredak {{total}}%, od čega su {{gained}} boda ostvarena tijekom razdoblja.",
+    "progressBarAria_other": "Napredak {{total}}%, od čega je {{gained}} bodova ostvareno tijekom razdoblja.",
+    "noEffort": "Još nema zabilježenog truda.",
+    "byHabit": "Raspodjela po navikama {{period}}",
+    "noHabit": "Nijedna navika nije izvršena ni aktivna u ovom razdoblju.",
+    "periodDay": "danas",
+    "periodWeek": "(7 d)",
+    "periodMonth": "(30 d)",
+    "periodYear": "(365 d)",
+    "taskCount_one": "{{count}} zadatak",
+    "taskCount_few": "{{count}} zadatka",
+    "taskCount_other": "{{count}} zadataka"
+  },
+  "heatmap": {
+    "less": "Manje",
+    "more": "Više",
+    "title": "Kalendar izvršenja"
+  },
+  "periodDescription": {
+    "day": "danas",
+    "week": "posljednjih 7 dana",
+    "month": "posljednjih 30 dana",
+    "year": "posljednjih 365 dana"
+  },
+  "overview": {
+    "showAll": "Sve"
+  },
+  "breakdown": {
+    "tasks": "Zadaci",
+    "agenda": "Kalendar",
+    "habits": "Navike",
+    "okr": "OKR-ovi"
+  },
+  "insights": {
+    "bestDay": "Vaš najbolji dan: {{day}} ({{share}}% vaših zadataka dovršenih u 30 dana).",
+    "fragileHabit": "Najkrhkija navika: „{{name}}“, propuštena {{missed}} puta ovaj tjedan.",
+    "momentumFirst": "Dovršeno zadataka ovaj tjedan: {{count}}.",
+    "momentumUp": "Uzlazni trend: {{count}} dovršenih zadataka ovaj tjedan (+{{delta}}% u odnosu na prošli tjedan).",
+    "momentumDown": "Silazni trend: {{count}} dovršenih zadataka ovaj tjedan ({{delta}}% u odnosu na prošli tjedan).",
+    "momentumStable": "Ujednačen tempo: {{count}} dovršenih zadataka ovaj tjedan."
+  }
+}

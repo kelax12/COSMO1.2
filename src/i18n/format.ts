@@ -17,11 +17,9 @@ import { BCP47_TAG, DEFAULT_LOCALE, type Locale } from './locale';
 import { localeStore } from './store';
 
 /**
- * Seules les locales SERVIES (`SUPPORTED_LOCALES`) ont leur locale `date-fns`.
- *
- * `es` n'y est pas : ce module est dans le chemin critique (`vendor-utils`), et
- * l'espagnol n'est ni servi ni traduit. Ouvrir `es` = l'ajouter ici, avec
- * `SUPPORTED_LOCALES`.
+ * Locales `date-fns` déjà chargées. Seul le français (locale par défaut) est
+ * importé statiquement : ce module est dans le chemin critique
+ * (`vendor-utils`). Les autres arrivent par `loadDateLocale`.
  * Une locale absente retombe sur la locale par défaut.
  */
 const DATE_LOCALES: Partial<Record<Locale, DateFnsLocale>> = {
@@ -29,18 +27,29 @@ const DATE_LOCALES: Partial<Record<Locale, DateFnsLocale>> = {
 };
 
 /**
- * Charge la locale `date-fns` d'une langue servie, AVANT le premier rendu
+ * Chargeurs paresseux, un par locale non statique. Chaque `import()` reste
+ * littéral pour que Vite en fasse un chunk séparé, hors de `vendor-utils`.
+ * `es` n'en a pas : ni servi ni traduit, il retombe sur le français.
+ * Ajouter une langue = une ligne ici, sans aucune condition ailleurs.
+ */
+const DATE_LOCALE_LOADERS: Partial<Record<Locale, () => Promise<DateFnsLocale>>> = {
+  en: () => import('date-fns/locale/en-US').then(({ enUS }) => enUS),
+  hr: () => import('date-fns/locale/hr').then(({ hr }) => hr),
+};
+
+/**
+ * Charge la locale `date-fns` d'une langue, AVANT le premier rendu
  * (`main.tsx`, comme les catalogues). Une locale qui change exige un
  * rechargement complet (`switchLocale`) : cet appel au démarrage suffit.
  *
- * `en-US` n'est pas importée statiquement (AM-6 de docs/PERFORMANCE.md) :
- * `vendor-utils` est dans le chemin critique. Tant qu'elle n'est pas chargée,
- * `getDateLocale('en')` rend le français.
+ * Seul le français est statique (AM-6 de docs/PERFORMANCE.md). Tant qu'une
+ * autre locale n'est pas chargée, `getDateLocale` rend le français.
  */
 export function loadDateLocale(locale: Locale): Promise<void> {
-  if (locale !== 'en' || DATE_LOCALES.en) return Promise.resolve();
-  return import('date-fns/locale/en-US').then(({ enUS }) => {
-    DATE_LOCALES.en = enUS;
+  const loader = DATE_LOCALE_LOADERS[locale];
+  if (!loader || DATE_LOCALES[locale]) return Promise.resolve();
+  return loader().then((dateLocale) => {
+    DATE_LOCALES[locale] = dateLocale;
   });
 }
 

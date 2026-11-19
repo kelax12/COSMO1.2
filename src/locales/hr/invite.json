@@ -1,0 +1,25 @@
+{
+  "backHome": "Natrag na početnu",
+  "loading": "Otvaranje pozivnice…",
+  "someone": "Netko",
+  "heading": "{{name}} vas poziva na suradnju",
+  "onTask": "na „{{task}}“",
+  "benefits": {
+    "title": "S COSMO-om možete:",
+    "collaborate": "Zajedno pratiti ovaj zadatak, u stvarnom vremenu",
+    "organize": "Imati zadatke, kalendar i navike na jednom mjestu",
+    "free": "Započeti besplatno, bez kreditne kartice"
+  },
+  "cta": "Izradi moj besplatni račun",
+  "hasAccount": "Već imam račun",
+  "invalid": {
+    "title": "Nevažeća poveznica",
+    "text": "Ova poveznica za pozivnicu nije valjana. Provjerite jeste li je kopirali u cijelosti.",
+    "cta": "Upoznajte COSMO"
+  },
+  "expired": {
+    "title": "Poveznica je istekla",
+    "text": "Ova poveznica za pozivnicu je istekla. Zatražite novu od osobe koja vam ju je poslala.",
+    "cta": "Upoznajte COSMO"
+  }
+}

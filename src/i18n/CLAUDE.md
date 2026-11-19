@@ -10,7 +10,7 @@ const { t, tp } = useT('org');   // tp = pluriel ; clé plate dans le namespace
 
 ## Catalogues
 
-- ✅ Catalogues JSON maison par namespace, `src/locales/{fr,en}/*.json`, pas d'i18next. `fr` est la référence : le moteur retombe sur lui clé par clé.
+- ✅ Catalogues JSON maison par namespace, `src/locales/{fr,en,hr}/*.json`, pas d'i18next. `fr` est la référence : le moteur retombe sur lui clé par clé.
 - ❌ Conclure d'un `npm run i18n:check` vert que l'anglais est traduit : il compare les clés, jamais le contenu. `i18n:identical` (cliquet 0) ferme les copies du français ; `i18n:pages` (C-99) compare le corps des pages prérendues, les pluriels et les dates.
 - 🔴 Les quatre gates ne mesurent pas la QUALITÉ : une traduction fausse mais différente les passe. Relire l'anglais est un geste humain (`M-50`).
 - ❌ Concaténer des fragments traduits : une clé = une phrase complète.
@@ -25,7 +25,7 @@ const { t, tp } = useT('org');   // tp = pluriel ; clé plate dans le namespace
 
 ## Locales : servie ≠ indexable
 
-- ⚠️ `SUPPORTED_LOCALES` (`src/i18n/locale.ts`) ouvre une langue aux utilisateurs ; `INDEXABLE_LOCALES` (`src/i18n/seo-urls.mjs`) l'ouvre à Google. Valeurs : `fr` + `en`. `es` figure dans `route-slugs.json` sans être servie : c'est le mécanisme prévu.
+- ⚠️ `SUPPORTED_LOCALES` (`src/i18n/locale.ts`) ouvre une langue aux utilisateurs ; `INDEXABLE_LOCALES` (`src/i18n/seo-urls.mjs`) l'ouvre à Google. Servies : `fr`, `en`, `hr` ; indexables : `fr`, `en` (`hr` en `noindex` dans `vercel.json`). `es` figure dans `route-slugs.json` sans être servie : c'est le mécanisme prévu.
 - ❌ Ajouter une locale à `INDEXABLE_LOCALES` avant d'avoir traduit le CORPS des pages (duplicate content).
 - 🔴 `src/i18n/seo-urls.mjs`, `prerender/` et `vercel.json` se commitent ENSEMBLE : le `noindex` retiré sans locale dans `INDEXABLE_LOCALES` fait indexer `/en` sans `hreflang` ni sitemap. `npm run i18n:check` refuse cet état.
 - ⚠️ Ouvrir une locale expose les routes applicatives sous son préfixe : `Disallow:` est un préfixe, `/dashboard` ne couvre pas `/en/dashboard`. Procédure : `docs/SEO.md`.

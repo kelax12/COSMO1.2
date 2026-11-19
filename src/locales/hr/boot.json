@@ -1,0 +1,8 @@
+{
+  "rescue": {
+    "title": "Cosmo se ne može pokrenuti.",
+    "body": "Ponovno učitajte stranicu: Cosmo najprije ponovno preuzima svoje datoteke. Ako se to ponovi, poništite sesiju spremljenu u ovom pregledniku: morat ćete se ponovno prijaviti, a vaši podaci ostaju na vašem računu.",
+    "reload": "Ponovno učitaj",
+    "reset": "Poništi sesiju"
+  }
+}

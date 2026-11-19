@@ -6,7 +6,7 @@
 // dépôt de démo voisin l'ensemence au premier accès.
 
 import { TeamOKR } from './types';
-import { isEnglishSeed } from '@/lib/seed-i18n';
+import { seedOverlay } from '@/lib/seed-i18n';
 
 const DEMO_ORG_ID = 'org-demo-1';
 export const DEMO_USER_ID = 'demo-user';
@@ -153,9 +153,10 @@ const DEMO_OKRS_EN: Record<string, {
 };
 
 export function localizeOkrs(okrs: TeamOKR[]): TeamOKR[] {
-  if (!isEnglishSeed()) return okrs;
+  const overlay = seedOverlay({ en: DEMO_OKRS_EN });
+  if (!overlay) return okrs;
   return okrs.map((okr) => {
-    const patch = DEMO_OKRS_EN[okr.id];
+    const patch = overlay[okr.id];
     if (!patch) return okr;
     return {
       ...okr,

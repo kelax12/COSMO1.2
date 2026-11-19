@@ -12,87 +12,21 @@
 // code. Heuristique volontairement large : mieux vaut un faux positif qu'une
 // chaîne oubliée, le bruit est trié après coup par `looksLikeCode`.
 //
-// ── LE CLIQUET, ET POURQUOI IL EXISTE ──────────────────────────────
+// ── LE CLIQUET ─────────────────────────────────────────────────────
 //
-// Ce script ne faisait PAS échouer la CI, et c'est précisément ce qui a laissé
-// la dette grossir jusqu'à 334 chaînes dans 76 fichiers sans que rien ne
-// l'annonce. `i18n:check`, la seule gate bloquante, compare les CLÉS des deux
-// catalogues : une chaîne jamais externalisée n'a pas de clé, donc elle lui est
-// invisible par construction.
+// `i18n:check` compare les CLÉS : une chaîne jamais externalisée lui est
+// invisible. Ce script échoue au-dessus de `MAX_STRINGS`, à **ZÉRO**.
+// 🔴 Ne jamais relever ce seuil pour faire passer la CI.
 //
-// Le script échoue au-dessus de `MAX_STRINGS`, aujourd'hui à **ZÉRO** : plus
-// une seule chaîne d'interface en dur dans `src/`.
-//
-// 🔴 Le réflexe à ne pas avoir : relever ce seuil pour faire passer la CI. Même
-// règle que le cliquet d'architecture, pour la même raison — il ne tourne que
-// dans un sens, et c'est ce qui le rend utile.
-//
-// ── 🔴 UN SEUIL NE PROUVE QUE CE QUE LA MESURE COUVRE ───────────────
-//
-// Le point important de ce fichier n'est pas son chiffre, c'est que ce chiffre
-// a menti DEUX FOIS, de la même façon, à un mois d'intervalle.
-//
-// **Première fois.** Le cliquet est posé à 4, en concluant « aucune chaîne
-// d'interface n'est plus en dur ». C'était faux, et le gate le certifiait :
-// quatre formes entières passaient sous le radar, chacune retrouvée à la main
-// dans le produit —
-//
-//   1. texte JSX contenant une interpolation (« Aujourd'hui · {x} min ») : le
-//      motif refusait `{` et `}` pour éviter de capturer du code ;
-//   2. texte JSX sur PLUSIEURS lignes — le paragraphe de `RootErrorBoundary` ;
-//   3. propriété d'objet `label:` (par opposition à l'attribut JSX `label=`) —
-//      les libellés de récurrence, de période, de priorité, de report ;
-//   4. valeur par DÉFAUT d'une prop — `saveLabel = 'Créer'`.
-//
-// Les quatre sont couvertes. Le seuil est alors monté à 25, honnêtement, le
-// temps de résorber ce que la mesure élargie révélait — puis redescendu à ZÉRO
-// une fois l'extraction faite.
-//
-// **Seconde fois (revue du 2026-09-02, point 7).** Seuil à ZÉRO, CI verte, et
-// il restait 22 chaînes d'interface en dur. Dont les CINQ SECTIONS DE LA
-// LANDING, rendues intégralement en français à un visiteur anglophone, alors
-// que leurs quarante clés traduites dormaient dans `landing.json` sans un seul
-// consommateur. Quatre angles morts cette fois —
-//
-//   a. les MESSAGES rendus par du code : `return '…'`, `throw new Error('…')`,
-//      `return { error: '…' }`. Aucun motif ne regardait ces formes, or c'est
-//      là que vivaient les six chaînes d'`AuthContext` et les cinq de
-//      `friends/supabase.repository`, toutes remontées à l'écran ;
-//   b. le français SANS ACCENT ET SANS MOT-OUTIL de la liste : « Aujourd'hui »,
-//      « Demain », « Lundi prochain », « Pas de date » ;
-//   c. le corps d'une chaîne excluait les TROIS guillemets à la fois, donc une
-//      apostrophe dans une chaîne à guillemets doubles rendait la valeur
-//      incapturable — « Aujourd'hui » en faisait partie (cf. `QUOTED`) ;
-//   d. le filtre « identifiant seul » jetait « Demain » : un mot français isolé
-//      ressemble à un identifiant (cf. `looksLikeCode`).
-//
-// ⚠️ Les deux DERNIERS ne sont pas venus d'une relecture du code de la mesure,
-// mais d'un test : on a soumis au scan les chaînes qu'il était censé voir. Les
-// deux premiers avaient été corrigés en croyant le travail fini. C'est la
-// leçon, et elle vaut au-delà de ce script : **avant de conclure « plus rien en
-// dur », soumettre la chose à la mesure, pas relire la mesure.**
-//
-// **Troisième fois (revue du 2026-09-08).** `scripts/i18n-scan.guard.test.mjs`
-// existait déjà, non suivi par git, écrit par une session précédente puis
-// jamais exécuté contre un scanner corrigé : 5 de ses 7 témoins échouaient.
-// Quatre angles morts de plus, tous du même type — une chaîne française vraie,
-// à un endroit qu'aucun motif ne regardait —
-//
-//   e. les DEUX branches d'un ternaire, en attribut JSX (`aria-label={cond ?
-//      'Masquer…' : 'Afficher…'}`) ou comme enfant JSX (`{done ? 'Terminée' :
-//      'Aucune échéance'}`) : le `?` ou le `:` n'est ni un espace ni une
-//      accolade, donc les motifs (1) et (2) ne s'arrêtaient jamais dessus, et
-//      le filtre anti-code (`CODE_QUOTING`) rejetait le fragment JSX entier
-//      dès qu'il contenait `: '` ;
-//   f. le vocabulaire fermé ne contenait toujours pas certains verbes
-//      d'interface sans accent (« Masquer », « Sauvegarder ») ;
-//   g. un message passé en ARGUMENT à une fonction quelconque (`setError('Le
-//      nom est obligatoire')`) : le motif (5) ne regardait que `return` /
-//      `throw new Error(` / les clés `error:` `message:` `description:`
-//      `reason:` — pas un appel de fonction arbitraire ;
-//   h. les éléments d'un TABLEAU de libellés (`['Nom du membre', 'Tâches
-//      terminées']`) : aucun motif ne regardait une chaîne entre `[`/`,` et
-//      `,`/`]`.
+// 🔴 Un seuil ne prouve que ce que la mesure couvre. Formes couvertes, chacune
+// un ancien angle mort (témoins : `i18n-scan.guard.test.mjs`) : texte JSX
+// interpolé ou multiligne ; propriété `label:` ; valeur par défaut de prop ;
+// messages rendus par du code (`return '…'`, `throw new Error('…')`,
+// `{ error: '…' }`, argument de fonction) ; français sans accent ni mot-outil ;
+// apostrophe dans une chaîne à guillemets doubles (`QUOTED`) ; mot isolé
+// (`looksLikeCode`) ; branches d'un ternaire ; éléments d'un tableau.
+// ✅ Avant de conclure « plus rien en dur » : soumettre des chaînes à la
+// mesure, pas relire la mesure.
 //
 // ── CE QUE LE SCAN NE VOIT VOLONTAIREMENT PAS ──────────────────────
 //
@@ -100,7 +34,7 @@
 //
 //   - les COMMENTAIRES de code — ce dépôt commente en français ;
 //   - les SEEDS de démonstration, dont le français est la forme de référence,
-//     recouverte en anglais par `localizeSeed` / `isEnglishSeed` ;
+//     recouverte par locale par `localizeSeed` / `seedOverlay` / `seedText` ;
 //   - la SYNTAXE quick-add (`src/lib/quick-add-examples.ts`, marqueur
 //     `QUICK_ADD_FR_ONLY_SYNTAX`) : `parseQuickAdd` ne reconnaît que des
 //     mots-clés français, donc l'exemple affiché N'EST PAS un texte à
@@ -114,19 +48,11 @@ import { join } from 'node:path';
 
 const SKIP = /(__test__|showcase|\.test\.|\.spec\.)/;
 
-// ── Les seeds de demonstration ne sont PAS une dette ──────────────
-//
-// `localizeSeed` traduit les donnees de demo par recouvrement, keye par id
-// (src/i18n/seed.ts) : le francais y est la forme de reference, pas un oubli.
-// Les compter gonflait le rapport de ~50 chaines qu'aucune extraction ne doit
-// jamais toucher.
-//
-// La detection porte sur l'USAGE des helpers de recouvrement, jamais sur le nom
-// du fichier : un seed qui cesserait d'etre traduit redeviendrait visible, ce
-// qui est exactement le signal qu'on veut. `isEnglishSeed` compte au meme titre
-// que `localizeSeed` — c'est la forme que prennent les seeds a structure
-// imbriquee (les OKR, dont le recouvrement ne peut pas etre generique).
-const isSeedFile = (source) => /localizeSeed|isEnglishSeed|SEED_I18N/.test(source);
+// Seeds de démo : le français est la forme de référence, recouverte par
+// `localizeSeed` / `seedOverlay` / `seedText` (src/i18n/seed.ts) ou, pour le
+// journal des KR, par `localizedDemoOkrTitles`. Détection par l'USAGE du
+// recouvrement, jamais par le nom : un seed non traduit redevient visible.
+const isSeedFile = (source) => /localizeSeed|seedOverlay|seedText|SEED_I18N|localizedDemoOkrTitles/.test(source);
 
 // Meme logique que `isSeedFile`, pour la syntaxe quick-add
 // (src/lib/quick-add-examples.ts) : un exemple qui cesserait de porter ce
@@ -150,32 +76,14 @@ function walk(d, out = []) {
 // contenait pas d'autre accent (« Toutes les tâches », « Tâches de… »).
 const ACC = '[éèêëàâäçùûüôöîïœÉÈÊËÀÂÄÇÙÛÔÖÎÏŒ]';
 
-// ── L'angle mort de l'accent (2026-08-08) ──
-//
-// Ne chercher QUE des voyelles accentuées rendait invisible tout le français
-// qui n'en porte pas : « Ajouter un collaborateur », « Voir son agenda »,
-// « Retirer de l'entreprise », « Annuler », « Jour / Semaine / Mois »… Le mode
-// entreprise était déclaré « propre » sur cette base alors qu'il restait ~50
-// chaînes en dur — constaté en lisant l'écran, pas le rapport.
-//
-// D'où ce second signal : un mot-outil français fréquent, qui n'existe pas en
-// anglais et n'apparaît quasiment jamais dans du code. On garde une liste
-// FERMÉE plutôt qu'un dictionnaire : chaque mot ajouté doit être un mot dont
-// la présence prouve à elle seule qu'on lit une phrase française.
-//
-// 🔴 Elargie le 2026-09-02 (point 7 de la revue). « Aujourd'hui », « Demain »,
-// « Lundi prochain » et « Pas de date » n'ont NI accent NI mot-outil de la
-// liste d'origine : les presets des DEUX pickers du produit etaient donc
-// invisibles pour ce scan, qui certifiait « zero chaine en dur » pendant
-// qu'ils s'affichaient en francais a un anglophone.
+// Second signal, pour le français SANS accent (« Ajouter », « Demain ») : une
+// liste FERMÉE de mots-outils et verbes d'interface qui n'existent pas en
+// anglais ; chaque mot ajouté doit prouver à lui seul une phrase française.
 const FR_STOPWORD =
   "\\b(?:le|la|les|un|une|des|du|au|aux|dans|sur|sous|avec|sans|pour|par|vous|votre|vos|son|sa|ses|cette|qui|que|tout|tous|toute|plus|moins|aucun|aucune|ajouter|retirer|supprimer|modifier|annuler|valider|placer|choisir|voir|entreprise|collaborateur|membre|membres|equipe|agenda|jour|semaine|mois|nom|liste|projet|projets|tache|taches" +
   "|aujourd|demain|hier|prochain|prochaine|pas|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche" +
-  // Vocabulaire des MESSAGES d'erreur, qui vivent dans des `return` et des
-  // `throw` — formes que les motifs ne regardaient pas non plus.
+  // Vocabulaire des messages d'erreur (`return`, `throw`).
   "|erreur|utilisateur|veuillez|survenue|connexion|compte|champ|obligatoire|introuvable|saisir|reserve" +
-  // Angle mort f (2026-09-08) : verbes d'interface sans accent, absents de
-  // la liste alors qu'ils n'existent pas en anglais sous cette forme.
   "|masquer|sauvegarder)\\b";
 
 /** Une chaîne « française » : accent OU mot-outil français. */
@@ -226,11 +134,6 @@ const PATTERNS = [
   // (5) MESSAGES rendus par du CODE et non par du JSX : `return '…'`,
   // `return \`…\``, `throw new Error('…')`, `return { error: '…' }`.
   //
-  // 🔴 Aucun des quatre motifs precedents ne regardait ces formes, par
-  // construction : le gate certifiait donc un etat qu'il ne mesurait pas
-  // (revue du 2026-09-02, point 7). C'est la que vivaient les six chaines de
-  // `AuthContext` et les cinq de `friends/supabase.repository`, toutes
-  // remontees a l'ecran.
   [new RegExp(`(?:return|new Error\\(|(?<![A-Za-z])(?:error|message|description|reason)\\s*:)\\s*\\{?\\s*${QUOTED(FR)}`, 'gi'), 2],
   // (6) Les DEUX branches d'un ternaire — `cond ? '…' : '…'` — que ce soit
   // dans un attribut JSX ou comme enfant JSX. Ni (1) ni (2) ne s'arrêtent sur
@@ -290,17 +193,8 @@ const PATTERNS = [
   [new RegExp(`[\\[,]\\s*${QUOTED(FR)}(?=\\s*[,\\]])`, 'gi'), 2, true],
   // (9) Valeur d'une propriete d'objet, QUEL QUE SOIT le nom de la propriete.
   //
-  // Angle mort i (2026-09-12), QUATRIEME fois que ce cliquet certifie ZERO
-  // pendant que le produit parle francais. Les motifs (4) et (5) ne regardent
-  // qu'une liste FERMEE de noms (`label` `title` `name` ... `error` `message`
-  // `description` `reason`) et le motif (7) veut la chaine en PREMIER jeton de
-  // l'appel : une accolade suffit donc a le perdre. La forme
-  //
-  //     setErrors({ general: 'Erreur lors de la suppression. Veuillez...' })
-  //
-  // n'etait vue par AUCUN des huit motifs, et c'est sous cette forme que les
-  // trois messages d'erreur de la modale de tache sont restes en dur, affiches
-  // a l'ecran, pendant que le scan rendait 0.
+  // Les motifs (4), (5) et (7) ne voient pas `setErrors({ general: '…' })` :
+  // nom de propriété hors liste, chaîne pas en premier jeton.
   //
   // Elargir le NOM de la propriete impose de restreindre la VALEUR, sinon
   // toute la configuration technique du depot entre dans le rapport. D'ou le

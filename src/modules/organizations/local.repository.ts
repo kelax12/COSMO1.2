@@ -22,7 +22,7 @@ import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, Updat
 import { readDemoNotifications } from './notifications';
 import { ORGS_STORAGE_KEY, ORG_MEMBERS_STORAGE_KEY, ORG_JOIN_REQUESTS_STORAGE_KEY, ORG_INVITE_LINKS_STORAGE_KEY, ORG_MEMBER_PERMISSIONS_STORAGE_KEY } from './constants';
 import type { OrgMemberPermissions, SetOrgPermissionsInput } from './permissions';
-import { isEnglishSeed } from '@/lib/seed-i18n';
+import { seedText } from '@/lib/seed-i18n';
 import { readJsonArray, safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
 import { TEAM_PROJECTS_STORAGE_KEY, TEAM_TASKS_STORAGE_KEY } from '@/modules/team-projects/constants';
 import type { TeamProject, TeamTask } from '@/modules/team-projects/types';
@@ -56,6 +56,9 @@ function releaseMemberWork(orgId: string, userId: string): void {
 // 10 caractères (~49,5 bits) tirés par rejet des octets >= 248 : comme 256
 // n'est pas multiple de 31, un simple `% 31` rendrait les lettres A..H
 // ~12,5 % plus probables (biais modulo, CWE-331).
+/** Nom affiché du compte démo dans l'organisation (« Vous » n'est pas un nom propre). */
+const YOU_LABEL = { fr: 'Vous', en: 'You' } as const;
+
 const JOIN_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // 31 symboles
 
 export const generateDemoJoinCode = (): string => {
@@ -97,11 +100,10 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
 
   private getMembersArray(): OrgMember[] {
     // `OrgMember` n'a pas de champ `id` (clé composite orgId+userId) :
-    // localizeSeed ne s'applique pas telle quelle, d'où ce patch ad hoc sur
-    // le seul champ concerné (« Vous » n'est pas un nom propre).
-    const seed = isEnglishSeed()
-      ? DEMO_MEMBERS.map((m) => (m.displayName === 'Vous' ? { ...m, displayName: 'You' } : m))
-      : DEMO_MEMBERS;
+    // localizeSeed ne s'applique pas telle quelle, d'où ce patch sur le seul
+    // champ concerné, choisi par seedText.
+    const you = seedText(YOU_LABEL);
+    const seed = DEMO_MEMBERS.map((m) => (m.displayName === YOU_LABEL.fr ? { ...m, displayName: you } : m));
     return readOrSeed<OrgMember[]>(ORG_MEMBERS_STORAGE_KEY, seed);
   }
 
@@ -182,7 +184,7 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
       userId: DEMO_USER_ID,
       role: 'admin',
       joinedAt: new Date().toISOString(),
-      displayName: isEnglishSeed() ? 'You' : 'Vous',
+      displayName: seedText(YOU_LABEL),
       email: 'demo@cosmo.app',
     });
     writeJsonOrThrow(ORG_MEMBERS_STORAGE_KEY, members);

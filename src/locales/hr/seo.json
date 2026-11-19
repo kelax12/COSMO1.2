@@ -1,0 +1,55 @@
+{
+  "root": {
+    "title": "Cosmo: zadaci, navike i OKR u jednoj besplatnoj aplikaciji",
+    "description": "Zadaci, navike, kalendar i OKR zajedno u jednoj besplatnoj aplikaciji. Isprobajte demo bez registracije, s unaprijed učitanih 12 mjeseci podataka."
+  },
+  "guide": {
+    "title": "Cosmo vodič – zadaci, navike, OKR i kalendar",
+    "description": "Naučite koristiti Cosmo: zadaci, navike s toplinskom kartom, kalendar za blokiranje vremena i praćenje OKR-ova. Potpuni vodič.",
+    "articleDescription": "Potpuni vodič za korištenje Cosma: upravljanje zadacima, praćenje navika s toplinskom kartom, kalendar za blokiranje vremena i OKR metoda."
+  },
+  "signup": {
+    "title": "Besplatna registracija – Cosmo, aplikacija za zadatke i OKR",
+    "description": "Izradite besplatni Cosmo račun. Upravljajte zadacima, navikama, kalendarom i OKR ciljevima. Dostupna prijava putem Googlea."
+  },
+  "login": {
+    "title": "Prijava – Cosmo, aplikacija za produktivnost",
+    "description": "Prijavite se u Cosmo i nastavite sa zadacima, navikama, kalendarom i OKR-ovima. Brz pristup e-poštom i lozinkom ili putem Googlea."
+  },
+  "about": {
+    "title": "O Cosmu: besplatna, neovisna aplikacija za produktivnost",
+    "description": "Zašto Cosmo postoji: besplatna, neovisna aplikacija za produktivnost koja okuplja zadatke, navike, kalendar i OKR u jedan ekosustav."
+  },
+  "enterprisePresentation": {
+    "title": "Cosmo za tvrtke: vaš organigram kao pokretač izvršenja",
+    "description": "Timski projekti, OKR i izvješća o aktivnostima strukturirani prema vašoj hijerarhiji. Besplatno do 5 članova, bez kreditne kartice. Svaki član tima zadržava svoj osobni Cosmo."
+  },
+  "blog": {
+    "title": "Cosmo blog: produktivnost, OKR, navike i blokiranje vremena",
+    "description": "Praktični vodiči o OKR metodi, praćenju navika, blokiranju vremena i osobnoj produktivnosti. Od tima Cosma."
+  },
+  "terms": {
+    "title": "Uvjeti korištenja – Cosmo aplikacija",
+    "description": "Uvjeti korištenja Cosma, aplikacije za upravljanje zadacima, navikama i OKR-ovima. Besplatan pristup, pravila korištenja i odgovornosti."
+  },
+  "legalNotice": {
+    "title": "Pravne napomene – izdavač i pružatelj hostinga Cosma",
+    "description": "Pravne napomene aplikacije za produktivnost Cosmo: izdavač, pružatelj hostinga, intelektualno vlasništvo i odgovornost."
+  },
+  "privacy": {
+    "title": "Pravila privatnosti – Cosmo aplikacija",
+    "description": "Pravila privatnosti Cosma: prikupljeni podaci, sigurna pohrana na Supabaseu, Row Level Security, prava iz GDPR-a i kontakt."
+  },
+  "forgotPassword": {
+    "title": "Zaboravljena lozinka – Cosmo",
+    "description": "Ponovno postavite lozinku svog Cosmo računa."
+  },
+  "resetPassword": {
+    "title": "Nova lozinka – Cosmo",
+    "description": "Odaberite novu lozinku za svoj Cosmo račun."
+  },
+  "notFound": {
+    "title": "Stranica nije pronađena – Cosmo",
+    "description": "Ova stranica ne postoji ili je premještena."
+  }
+}

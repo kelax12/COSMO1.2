@@ -1,0 +1,260 @@
+{
+  "greeting": "Pozdrav, ",
+  "userFallback": "Korisnik",
+  "summary": {
+    "allDone": "Sve je gotovo 🎉 Za danas nema više ništa.",
+    "noTaskLeft": "danas nema preostalih zadataka",
+    "taskLeft_one": "{{count}} zadatak danas",
+    "taskLeft_few": "{{count}} zadatka danas",
+    "taskLeft_other": "{{count}} zadataka danas",
+    "nextEvent": "„{{title}}“ u {{time}}",
+    "habitLeft_one": "Preostala je {{count}} navika",
+    "habitLeft_few": "Preostale su {{count}} navike",
+    "habitLeft_other": "Preostalo je {{count}} navika"
+  },
+  "checkin": {
+    "title": "Vaš tjedan čeka",
+    "subtitle": "Osvrnite se na svoje ciljeve, dovoljne su dvije minute.",
+    "cta": "Provjera",
+    "dismiss": "Preskočite ovotjednu provjeru"
+  },
+  "viewMode": {
+    "day": "Dan",
+    "week": "Tjedan",
+    "month": "Mjesec"
+  },
+  "stats": {
+    "tasksToday": "Zadaci s rokom danas",
+    "tasksCompleted": "Završeni zadaci",
+    "agenda": "Kalendar",
+    "krCompleted": "Postignuti KR-ovi",
+    "habits": "Navike",
+    "trendLabel": "{{label}}, nedavni trend"
+  },
+  "chart": {
+    "series": {
+      "tasks": "Zadaci",
+      "events": "Kalendar",
+      "okrs": "OKR",
+      "habits": "Navike"
+    },
+    "period": {
+      "day": "Zadnjih 7 dana",
+      "week": "Zadnja 4 tjedna",
+      "month": "Zadnjih 6 mjeseci"
+    },
+    "today": "Danas",
+    "yesterday": "Jučer",
+    "weekAbbr": "T{{number}}",
+    "timeBreakdown": "Raspodjela vremena"
+  },
+  "sections": {
+    "priorityTasks": "Prioritetni zadaci",
+    "collaborativeTasks": "Dijeljeni zadaci",
+    "activeOkrs": "Aktivni OKR-ovi",
+    "todayHabits": "Današnje navike",
+    "today": "Danas"
+  },
+  "okrs": {
+    "activeGoal_one": "{{count}} aktivan cilj",
+    "activeGoal_few": "{{count}} aktivna cilja",
+    "activeGoal_other": "{{count}} aktivnih ciljeva",
+    "keyResult_one": "{{count}} ključni rezultat",
+    "keyResult_few": "{{count}} ključna rezultata",
+    "keyResult_other": "{{count}} ključnih rezultata",
+    "deadline": "Rok: {{date}}",
+    "timeProgress": "{{current}} / {{target}} min",
+    "empty": {
+      "title": "Spremni ciljati više?",
+      "description": "Postavite cilj i njegove ključne rezultate kako biste pratili napredak.",
+      "action": "Stvorite svoj prvi cilj"
+    }
+  },
+  "todayTasks": {
+    "summary_one": "{{count}} zadatak • {{duration}}",
+    "summary_few": "{{count}} zadatka • {{duration}}",
+    "summary_other": "{{count}} zadataka • {{duration}}",
+    "priority": "Prioritet {{level}}",
+    "noDeadline": "Bez roka",
+    "markDone": "Označite „{{name}}“ kao završeno",
+    "markUndone": "Označite „{{name}}“ kao nezavršeno",
+    "convertToEvent": "Pretvori u događaj",
+    "addToList": "Dodaj na popis",
+    "deleted": "Zadatak izbrisan",
+    "restored": "Zadatak vraćen",
+    "empty": {
+      "noneTitle": "Još nema zadataka",
+      "noneDescription": "Stvorite prvi zadatak za početak. Cosmo će ga dodati u vaš raspored.",
+      "noneAction": "Stvori moj prvi zadatak",
+      "clearTitle": "Sve je pod kontrolom",
+      "clearDescription": "Hitni zadaci su obavljeni. Dobar trenutak da odmaknete s ostalim.",
+      "clearAction": "Pogledaj sve moje zadatke"
+    },
+    "deleteDialog": {
+      "title": "Izbriši zadatak",
+      "body": "Jeste li sigurni da želite izbrisati ovaj zadatak? Ovo se ne može poništiti.",
+      "cancel": "Odustani",
+      "confirm": "Izbriši"
+    },
+    "collaboratorsTitle": "Suradnici",
+    "deleteTitle": "Izbriši",
+    "bookmark": "Označi"
+  },
+  "collaborative": {
+    "shared_one": "{{count}} dijeljeni zadatak",
+    "shared_few": "{{count}} dijeljena zadatka",
+    "shared_other": "{{count}} dijeljenih zadataka",
+    "sharedBy": "Dijeli: {{name}}",
+    "me": "Ja",
+    "modified": "izmijenjeno {{when}}",
+    "addToAgenda": "Dodaj u kalendar",
+    "addToList": "Dodaj na popis",
+    "validated": "Odobreno",
+    "notValidated": "Nije odobreno",
+    "collaboratorStatus": "{{name}} - {{status}}",
+    "emptyTitle": "Nema dijeljenih zadataka",
+    "emptyDescription": "Počnite dijeliti zadatke sa svojim timom"
+  },
+  "habits": {
+    "allDone": "Sve je gotovo 🎉 {{done}}/{{total}} obavljeno",
+    "progress": "{{done}}/{{total}} obavljeno • {{duration}}",
+    "create": "+ Nova navika",
+    "empty": "Nema navika za danas",
+    "streak_one": "{{count}} dan",
+    "streak_few": "{{count}} dana",
+    "streak_other": "{{count}} dana",
+    "doneCount_one": "{{count}} obavljena",
+    "doneCount_few": "{{count}} obavljene",
+    "doneCount_other": "{{count}} obavljeno",
+    "showLess": "Prikaži manje",
+    "showMore_one": "Prikaži više (još {{count}})",
+    "showMore_few": "Prikaži više (još {{count}})",
+    "showMore_other": "Prikaži više (još {{count}})"
+  },
+  "today": {
+    "loading": "Učitavanje…",
+    "empty": "Danas nema rokova, ni osobnih ni timskih.",
+    "summary_one": "{{count}} zadatak danas",
+    "summary_few": "{{count}} zadatka danas",
+    "summary_other": "{{count}} zadataka danas",
+    "overdue_one": "{{count}} kasni",
+    "overdue_few": "{{count}} kasne",
+    "overdue_other": "{{count}} kasni",
+    "markDone": "Označite „{{name}}“ kao završeno",
+    "markUndone": "Označite „{{name}}“ kao nezavršeno",
+    "completedToast": "„{{name}}“ završeno",
+    "sourcePersonal": "Osobno",
+    "sourceTeam": "Tim",
+    "overdueBanner_one": "{{count}} zadatak kasni",
+    "overdueBanner_few": "{{count}} zadatka kasne",
+    "overdueBanner_other": "{{count}} zadataka kasni",
+    "replanAll": "Premjesti sve na danas",
+    "plannedCount_one": "{{count}} planirani zadatak",
+    "plannedCount_few": "{{count}} planirana zadatka",
+    "plannedCount_other": "{{count}} planiranih zadataka",
+    "nothingPlanned": "Danas ništa drugo nije planirano.",
+    "schedule": "Zakaži"
+  },
+  "collab": {
+    "removeShare": "Izbriši"
+  },
+  "todayHabits": {
+    "heading": "Današnje navike",
+    "loading": "Učitavanje…"
+  },
+  "moments": {
+    "morning": "Jutros",
+    "afternoon": "Poslijepodne",
+    "evening": "Večeras"
+  },
+  "dayClosed": {
+    "title": "Sve je obavljeno.",
+    "tasks_one": "{{count}} zadatak",
+    "tasks_few": "{{count}} zadatka",
+    "tasks_other": "{{count}} zadataka",
+    "habits_one": "{{count}} navika",
+    "habits_few": "{{count}} navike",
+    "habits_other": "{{count}} navika",
+    "events_one": "{{count}} događaj",
+    "events_few": "{{count}} događaja",
+    "events_other": "{{count}} događaja",
+    "at": "Dan zaključen u {{time}}."
+  },
+  "widgets": {
+    "names": {
+      "stats": "Statistika",
+      "today": "Danas",
+      "priorityTasks": "Prioritetni zadaci",
+      "collaborativeTasks": "Dijeljeni zadaci",
+      "okrs": "Aktivni OKR-ovi",
+      "habits": "Današnje navike",
+      "agenda": "Današnji kalendar",
+      "taskList": "Popis zadataka",
+      "teamTasks": "Moji timski zadaci",
+      "review": "Za pregled"
+    },
+    "desc": {
+      "stats": "Zadaci, događaji, navike i ključni rezultati za razdoblje.",
+      "today": "Vaši osobni i timski zadaci za danas, zajedno.",
+      "priorityTasks": "Zadaci koje treba obaviti prve.",
+      "collaborativeTasks": "Zadaci dijeljeni s prijateljima.",
+      "okrs": "Napredak prema vašim ciljevima.",
+      "habits": "Navike za označiti danas.",
+      "agenda": "Današnji događaji, redom.",
+      "taskList": "Jedan od vaših popisa, po izboru. Može se dodati više puta.",
+      "teamTasks": "Zadaci tvrtke dodijeljeni vama.",
+      "review": "Zadaci koje su kolege završili i čekaju vaš pregled."
+    },
+    "groups": {
+      "perso": "Osobni widgeti",
+      "pro": "Poslovni widgeti"
+    }
+  },
+  "okrWidget": {
+    "choose": "Prikazani cilj",
+    "noKeyResult": "Nema ključnih rezultata za ovaj cilj."
+  },
+  "habitsWidget": {
+    "viewList": "Prikaz popisa",
+    "viewWeek": "Tjedni prikaz",
+    "dayCell": "{{name}}, {{date}}",
+    "done": "obavljeno",
+    "notDone": "nije obavljeno"
+  },
+  "dw": {
+    "agenda": {
+      "count_one": "{{count}} događaj",
+      "count_few": "{{count}} događaja",
+      "count_other": "{{count}} događaja",
+      "empty": "Danas nema događaja.",
+      "next": "Sljedeće",
+      "open": "Otvori kalendar"
+    },
+    "list": {
+      "choose": "Prikazani popis",
+      "open_one": "{{count}} otvoren zadatak",
+      "open_few": "{{count}} otvorena zadatka",
+      "open_other": "{{count}} otvorenih zadataka",
+      "empty": "Na ovom popisu nema otvorenih zadataka.",
+      "noLists": "Još nema popisa.",
+      "create": "Stvorite popis"
+    },
+    "team": {
+      "open_one": "{{count}} otvoren zadatak",
+      "open_few": "{{count}} otvorena zadatka",
+      "open_other": "{{count}} otvorenih zadataka",
+      "empty": "Nema otvorenih timskih zadataka.",
+      "seeAll": "Prikaži sve"
+    },
+    "review": {
+      "count_one": "{{count}} zadatak za pregled",
+      "count_few": "{{count}} zadatka za pregled",
+      "count_other": "{{count}} zadataka za pregled",
+      "empty": "Nema ničega za pregled.",
+      "approve": "Odobri",
+      "sendBack": "Vrati",
+      "approveName": "Odobrite „{{name}}“",
+      "sendBackName": "Vratite „{{name}}“"
+    }
+  }
+}

@@ -10,20 +10,20 @@
 //   - `SUPPORTED_LOCALES` : les locales réellement exposées aux utilisateurs.
 // Ouvrir une langue = l'ajouter à `SUPPORTED_LOCALES` (et rien d'autre).
 
-export type Locale = 'fr' | 'en' | 'es';
+export type Locale = 'fr' | 'en' | 'es' | 'hr';
 
 /** Domaine du type — toute locale pour laquelle un catalogue peut exister. */
-export const ALL_LOCALES: readonly Locale[] = ['fr', 'en', 'es'];
+export const ALL_LOCALES: readonly Locale[] = ['fr', 'en', 'es', 'hr'];
 
 /**
  * Locales réellement servies. La locale par défaut est TOUJOURS la première et
  * n'est jamais préfixée dans l'URL (cf. src/i18n/routes.ts).
  *
- * `fr` + `en`. `vercel.json` ne pose de `noindex` sur l'anglais que pour les
+ * `fr`, `en` et `hr`. `vercel.json` ne pose de `noindex` sur l'anglais que pour les
  * trois pages légales (`/en/(terms|legal-notice|privacy-policy)`) et sur les
- * pages d'invitation et de mot de passe. `es` n'est pas servi.
+ * pages d'invitation et de mot de passe. `hr` est servi mais pas indexable (`noindex` sur `/hr/` dans `vercel.json`) ; `es` n'est pas servi.
  */
-export const SUPPORTED_LOCALES: readonly Locale[] = ['fr', 'en'];
+export const SUPPORTED_LOCALES: readonly Locale[] = ['fr', 'en', 'hr'];
 
 export const DEFAULT_LOCALE: Locale = 'fr';
 
@@ -34,6 +34,7 @@ export const BCP47_TAG: Record<Locale, string> = {
   fr: 'fr-FR',
   en: 'en-US',
   es: 'es-ES',
+  hr: 'hr-HR',
 };
 
 /** Valeur de `og:locale` (Open Graph attend le séparateur `_`). */
@@ -41,6 +42,7 @@ export const OG_LOCALE: Record<Locale, string> = {
   fr: 'fr_FR',
   en: 'en_US',
   es: 'es_ES',
+  hr: 'hr_HR',
 };
 
 /** Nom de la langue dans la langue elle-même (sélecteur de langue). */
@@ -48,6 +50,7 @@ export const LOCALE_LABEL: Record<Locale, string> = {
   fr: 'Français',
   en: 'English',
   es: 'Español',
+  hr: 'Hrvatski',
 };
 
 /** `true` si la valeur est une locale connue (catalogue existant). */
@@ -150,7 +153,7 @@ export function localeFromPathname(pathname: string): Locale | null {
 
 /**
  * Pose la locale sur `<html>` : `lang` (a11y, moteurs, synthèse vocale) et
- * `dir`. Les trois locales sont LTR ; `dir` est écrit explicitement pour que
+ * `dir`. Toutes les locales sont LTR ; `dir` est écrit explicitement pour que
  * l'ajout d'une langue RTL n'ait qu'un seul endroit à changer.
  */
 export function applyLocale(root: HTMLElement, locale: Locale): void {

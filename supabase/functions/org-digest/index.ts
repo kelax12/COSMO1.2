@@ -21,7 +21,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from '../_shared/alert.ts'
-import { describeRow, digestFooter, digestSeeAll, digestSubject, type DigestLocale } from '../_shared/org-digest-text.ts'
+import { describeRow, digestFooter, digestSeeAll, digestSubject, toDigestLocale, type DigestLocale } from '../_shared/org-digest-text.ts'
 import { withCronLease } from '../_shared/cron-lease.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'https://thecosmo.app'
@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
       if (orgIds.length > 0) {
         const { data: settings } = await admin.from('org_settings').select('org_id, locale, timezone').in('org_id', orgIds)
         for (const s of (settings ?? []) as { org_id: string; locale: string; timezone: string }[]) {
-          orgPrefs.set(s.org_id, { locale: s.locale === 'en' ? 'en' : 'fr', timezone: s.timezone || 'Europe/Paris' })
+          orgPrefs.set(s.org_id, { locale: toDigestLocale(s.locale), timezone: s.timezone || 'Europe/Paris' })
         }
       }
 

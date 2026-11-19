@@ -21,7 +21,7 @@ import { MemoryRouter, Route, Routes } from 'react-router';
 import { ensureNamespaces, type Namespace } from '@/i18n/catalog';
 import { loadDateLocale } from '@/i18n/format';
 import { localeStore } from '@/i18n/store';
-import type { Locale } from '@/i18n/locale';
+import { DEFAULT_LOCALE, type Locale } from '@/i18n/locale';
 import { PrerenderCopyContext } from '@/lib/prerender-copy-context';
 import { routeSlug } from '@/i18n/routes';
 import AProposPage from '@/pages/AProposPage';
@@ -60,7 +60,7 @@ export async function renderContentCopy(page: string, url: string, locale: Local
   if (!def) throw new Error(`content-copy: page inconnue « ${page} »`);
   localeStore.setLocale(locale, { persist: false });
   await Promise.all([ensureNamespaces(def.namespaces, locale), loadDateLocale(locale)]);
-  const basename = locale === 'fr' ? '/' : `/${locale}`;
+  const basename = locale === DEFAULT_LOCALE ? '/' : `/${locale}`;
   const entry = basename === '/' ? url : `${basename}${url}`;
   return renderToStaticMarkup(
     <PrerenderCopyContext.Provider value>

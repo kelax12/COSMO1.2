@@ -4,6 +4,7 @@
 
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
 import { useLocale } from '@/i18n/store';
+import type { Locale } from '@/i18n/locale';
 import { ColorSettings, PriorityRange, TaskSortPref, TaskSortPrefs } from './types';
 import {
   FAVORITE_COLORS_KEY,
@@ -189,12 +190,17 @@ if (typeof window !== 'undefined') {
 // COLOR SETTINGS HOOK
 // ═══════════════════════════════════════════════════════════════════
 
+/** Réglages par locale traduite ; une locale absente garde le français. */
+const COLOR_SETTINGS_BY_LOCALE: Partial<Record<Locale, ColorSettings>> = {
+  en: DEFAULT_COLOR_SETTINGS_EN,
+};
+
 export const useColorSettings = () => {
   // For now, color settings are static and derived from categories
   // In the future, this could be dynamic based on user preferences
   const locale = useLocale();
   const colorSettings = useMemo<ColorSettings>(
-    () => (locale === 'en' ? DEFAULT_COLOR_SETTINGS_EN : DEFAULT_COLOR_SETTINGS),
+    () => COLOR_SETTINGS_BY_LOCALE[locale] ?? DEFAULT_COLOR_SETTINGS,
     [locale]
   );
 

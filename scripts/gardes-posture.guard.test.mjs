@@ -682,6 +682,38 @@ describe('témoin — pages et pluriels i18n (C-99)', () => {
       rmSync(tmp, { recursive: true, force: true });
     }
   });
+
+  it('chaque dossier hors `fr` est une locale traduite, sans liste en dur', async () => {
+    const { localesTraduites } = await import('./check-i18n-pages.mjs');
+    const tmp = mkdtempSync(join(tmpdir(), 'i18n-'));
+    try {
+      for (const l of ['fr', 'en', 'hr']) mkdirSync(join(tmp, l));
+      writeFileSync(join(tmp, 'note.json'), '{}');
+      expect(localesTraduites(tmp)).toEqual(['en', 'hr']);
+      expect(localesTraduites(join(tmp, 'absent'))).toEqual([]);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('les pluriels suivent `Intl.PluralRules` de CHAQUE locale traduite', async () => {
+    const { verifierPluriels } = await import('./check-i18n-pages.mjs');
+    const fr = { 'ns.x_one': 'a', 'ns.x_many': 'b', 'ns.x_other': 'c' };
+    expect(verifierPluriels({ fr, hr: { 'ns.x_one': 'a', 'ns.x_few': 'b', 'ns.x_other': 'c' } }))
+      .toEqual({ manquants: [], morts: [] });
+    expect(verifierPluriels({ fr, hr: { 'ns.x_one': 'a', 'ns.x_many': 'b', 'ns.x_other': 'c' } })).toEqual({
+      manquants: ['ns.x_few : absent de `hr`'],
+      morts: ["ns.x_many : `hr` n'a pas la catégorie `many`"],
+    });
+    expect(verifierPluriels({ fr, en: { 'ns.x_one': 'a', 'ns.x_few': 'b', 'ns.x_other': 'c' } }).morts)
+      .toEqual(["ns.x_few : `en` n'a pas la catégorie `few`"]);
+    const deux = verifierPluriels({ fr, en: { 'ns.x_other': 'c' }, hr: { 'ns.x_other': 'c' } });
+    expect(deux.manquants).toEqual([
+      'ns.x_one : absent de `en`',
+      'ns.x_one : absent de `hr`',
+      'ns.x_few : absent de `hr`',
+    ]);
+  });
 });
 
 // ═══════════════════════════════════════════════════════════════════

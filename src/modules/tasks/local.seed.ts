@@ -126,4 +126,4 @@ export const DEMO_TASKS_EN: Record<string, Partial<Task>> = {
 };
 
 /** Le seed dans la langue de l'interface (overlay anglais par id, cf. src/lib/seed-i18n.ts). */
-export const localizedDemoTasks = () => localizeSeed(DEMO_TASKS, DEMO_TASKS_EN);
+export const localizedDemoTasks = () => localizeSeed(DEMO_TASKS, { en: DEMO_TASKS_EN });

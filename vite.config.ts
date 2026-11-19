@@ -82,6 +82,10 @@ const stripDateFnsLocaleParsers = () => {
   };
 };
 
+// Locales date-fns chargées par `import()` dans `DATE_LOCALE_LOADERS`
+// (src/i18n/format.ts) : hors de `vendor-utils`, chacune dans son chunk.
+const LAZY_DATE_FNS_LOCALE = /node_modules\/date-fns\/locale\/(en-US|hr)[/.]/;
+
 const APP_RELEASE = (process.env.VERCEL_GIT_COMMIT_SHA ?? '').slice(0, 7) || 'dev';
 
 export default defineConfig(({ mode }) => ({
@@ -311,7 +315,9 @@ function chunkFor(id: string): string | null | undefined {
   // les visiteurs anglais s'en servent, `loadDateLocale()` (src/i18n/format.ts)
   // la charge avant le montage. Gardée ici, elle partait chez TOUT visiteur
   // dans ce chunk du chemin critique, revenu à 4,8 % de son plafond.
-  if (id.includes('node_modules/date-fns/locale/en-US')) return undefined;
+  // Même règle pour toute locale chargée par `DATE_LOCALE_LOADERS` (`hr`) :
+  // la liste ci-dessous doit rester celle de ce tableau.
+  if (LAZY_DATE_FNS_LOCALE.test(id)) return undefined;
   // Sortis de `vendor-react` (cf. plus haut) : le calendrier et le
   // verrou de défilement des modales Radix ont chacun leur chunk lazy.
   // Laissés à Rollup, le second gonflait les barils `index-*` et faisait

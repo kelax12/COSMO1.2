@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight, Volume2, X } from 'lucide-react';
 import { useT } from '@/i18n/useT';
+import type { Locale } from '@/i18n/locale';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 import { EMPHASIS_CLASS, withEmphasis } from '../onboarding-text';
 
@@ -10,6 +11,12 @@ export const ORG_WELCOME_VIDEO = {
   poster: '/videos/onboarding-entreprise-v2-poster.webp',
   captionsFr: '/videos/onboarding-entreprise-v2.fr.vtt',
 } as const;
+
+/**
+ * Langue parlée dans la vidéo. Les sous-titres s'affichent d'office pour tout
+ * spectateur d'une autre langue, quelle qu'elle soit.
+ */
+const ORG_WELCOME_VIDEO_LOCALE: Locale = 'fr';
 
 // Habillage sur les jetons du thème choisi (Clair, Sombre, Gris, Noir), pas sur
 // la DA nuit figée qu'avait l'ancien accueil entreprise : le lecteur s'ouvre
@@ -139,10 +146,10 @@ const OrgWelcomeVideo = ({ orgName, onClose }: OrgWelcomeVideoProps) => {
             >
               <track
                 kind="subtitles"
-                srcLang="fr"
+                srcLang={ORG_WELCOME_VIDEO_LOCALE}
                 label={t('ent.video.captionsLabel')}
                 src={ORG_WELCOME_VIDEO.captionsFr}
-                default={locale !== 'fr'}
+                default={locale !== ORG_WELCOME_VIDEO_LOCALE}
               />
             </video>
             {mutedFallback && (

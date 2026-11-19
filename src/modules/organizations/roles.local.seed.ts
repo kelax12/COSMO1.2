@@ -26,8 +26,10 @@ export const seedRoles = (): OrgCustomRole[] => {
     },
   ];
   return localizeSeed(base, {
-    'role-demo-lead': { name: 'Project lead' },
-    'role-demo-intern': { name: 'Intern' },
+    en: {
+      'role-demo-lead': { name: 'Project lead' },
+      'role-demo-intern': { name: 'Intern' },
+    },
   });
 };
 

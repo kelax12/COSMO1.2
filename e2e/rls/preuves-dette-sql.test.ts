@@ -48,6 +48,8 @@ const PREUVES: { preuve: string; migration: string; dossier?: string; depassee?:
   { preuve: '256.proof.sql', migration: '256_habits_retrait_completions_json.sql', dossier: 'supabase/migration-differee' },
   // TST-06 : le dépôt rejoué et la production convergent (NOT NULL, horodatages, index).
   { preuve: '259.proof.sql', migration: '259_depot_egal_prod.sql' },
+  // `org_settings.locale` admet le croate (`hr`).
+  { preuve: '263.proof.sql', migration: '263_org_settings_locale_hr.sql' },
 ];
 
 const lire = (chemin: string) => readFileSync(join(process.cwd(), chemin), 'utf8').replace(/\r\n/g, '\n');
@@ -57,7 +59,7 @@ afterAll(async () => {
   await db.end();
 });
 
-describe('supabase/proofs : preuves 242 à 244, 248 à 251, 253, 254, 256 et 259 rejouées sur la base fraîche', () => {
+describe('supabase/proofs : preuves 242 à 244, 248 à 251, 253, 254, 256, 259 et 263 rejouées sur la base fraîche', () => {
   for (const { preuve, migration, dossier = 'supabase/migration', depassee } of PREUVES) {
     it(`${preuve} embarque le texte exact de ${migration}`, () => {
       const texte = lire(`supabase/proofs/${preuve}`);
@@ -86,7 +88,7 @@ describe('supabase/proofs : preuves 242 à 244, 248 à 251, 253, 254, 256 et 259
     const { rows } = await db.query<{ table_242: string | null; comptes: string; orgs: string }>(
       `SELECT to_regclass('public.preuve_242_ferme')::text AS table_242,
               (SELECT count(*)::text FROM auth.users WHERE email LIKE ANY (ARRAY['%24_@proof.invalid', '%25_@proof.invalid'])) AS comptes,
-              (SELECT count(*)::text FROM public.organizations WHERE join_code LIKE 'PRF243%') AS orgs`,
+              (SELECT count(*)::text FROM public.organizations WHERE join_code LIKE ANY (ARRAY['PRF243%', 'PRF263%'])) AS orgs`,
     );
     expect(rows[0]).toEqual({ table_242: null, comptes: '0', orgs: '0' });
   });

@@ -1,45 +1,31 @@
 // ═══════════════════════════════════════════════════════════════════
-// i18n-identical.mjs — cliquet sur les valeurs `en` restées en français
+// i18n-identical.mjs — cliquet sur les valeurs traduites restées en français
 //
-// 🔴 POURQUOI CE FICHIER EXISTE
+// Le moteur retombe clé par clé sur `fr` : une valeur jamais traduite
+// s'affiche en français, jamais comme clé brute, et `i18n:check` (clés seules)
+// ne la voit pas. Ce script compte, pour CHAQUE locale de `src/locales/` hors
+// `fr`, les valeurs IDENTIQUES au fr non déclarées dans
+// `scripts/i18n-identical-allowlist.<locale>.json` (une par langue : « Description »
+// est légitime en anglais, pas en croate).
 //
-// Le moteur retombe clé par clé sur `fr` (catalogue de référence) : une valeur
-// `en` jamais traduite ne s'affiche donc JAMAIS comme une clé brute. Elle
-// s'affiche en français, dans une interface anglaise, et rien ne le signale.
-// `i18n:check` ne voit que les CLÉS, jamais leur contenu : c'est exactement
-// l'angle mort qui a laissé l'item C-21 ouvrir du 2026-08-14 au 2026-09-08 sur
-// un chiffre que personne n'avait remesuré.
-//
-// Ce script compte les couples (fr, en) dont la valeur est IDENTIQUE et qui ne
-// sont pas déclarés légitimes dans `i18n-identical-allowlist.json`.
-//
-// ⚠️ Une identité n'est pas forcément un défaut : « Description », « OKR »,
-// « {{count}} min » ou « Cosmo » sont identiques et le resteront. La liste des
-// légitimes existe pour que le prochain audit ne refasse pas le tri à la main.
-//
-// L'allowlist est VÉRIFIÉE, pas crue :
-//   · une entrée dont la clé a disparu échoue (reliquat) ;
-//   · une entrée dont les valeurs ne sont plus identiques échoue (elle a été
-//     traduite : la déclaration n'a plus d'objet) ;
-//   · une entrée dont la valeur `fr` a changé depuis sa déclaration échoue.
-//     C'est le point le plus important : sans la valeur épinglée, renommer un
-//     libellé ferait hériter en silence de la dispense accordée à l'ancien.
+// L'allowlist est VÉRIFIÉE : clé disparue, valeurs devenues différentes, ou
+// valeur `fr` changée depuis l'épinglage font échouer (sans valeur épinglée,
+// un libellé renommé hériterait en silence de la dispense).
 //
 // Usage :  node scripts/i18n-identical.mjs [--list]
-// Sortie : 1 si le cliquet est dépassé OU si l'allowlist est périmée, 0 sinon.
+// Sortie : 1 si le cliquet est dépassé OU si une allowlist est périmée, dans
+// n'importe quelle locale, 0 sinon.
 // ═══════════════════════════════════════════════════════════════════
 import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 const LOCALES_DIR = 'src/locales';
 const REFERENCE = 'fr';
-const TARGET = 'en';
-const ALLOWLIST = 'scripts/i18n-identical-allowlist.json';
 
-// Cliquet : voir l'en-tête de ce fichier avant de toucher à ce nombre.
-// ❌ Ne JAMAIS le relever pour faire passer la CI. Une identité nouvelle est
-//    soit une traduction manquante (on traduit), soit une légitime (on la
-//    DÉCLARE, avec sa catégorie et sa valeur).
+/** Allowlist propre à une locale traduite. */
+const allowlistPath = (locale) => `scripts/i18n-identical-allowlist.${locale}.json`;
+
+// ❌ Ne JAMAIS relever : on traduit, ou on DÉCLARE (catégorie + valeur).
 const MAX_UNDECLARED = 0;
 
 /** Aplatit un catalogue JSON en `Map<'a.b.c', 'valeur'>`. */
@@ -58,99 +44,116 @@ function flatten(node, prefix = '', out = new Map()) {
 const read = (locale, file) =>
   flatten(JSON.parse(readFileSync(join(LOCALES_DIR, locale, file), 'utf8')));
 
-// ──────────────────────────────────────────────────────────────────
-// 1. Allowlist
-// ──────────────────────────────────────────────────────────────────
-let allow = { categories: {}, entrees: {} };
-if (existsSync(ALLOWLIST)) {
-  allow = JSON.parse(readFileSync(ALLOWLIST, 'utf8'));
-}
-const categories = allow.categories ?? {};
-const declared = new Map(Object.entries(allow.entrees ?? {}));
+/** Les locales traduites : chaque dossier de catalogues hors la référence. */
+const targets = readdirSync(LOCALES_DIR, { withFileTypes: true })
+  .filter((d) => d.isDirectory() && d.name !== REFERENCE)
+  .map((d) => d.name)
+  .sort();
 
-// ──────────────────────────────────────────────────────────────────
-// 2. Mesure
-// ──────────────────────────────────────────────────────────────────
 const files = readdirSync(join(LOCALES_DIR, REFERENCE)).filter((f) => f.endsWith('.json'));
-
-const identical = new Map();  // 'ns.cle' -> valeur
-const perNamespace = [];
-let comparable = 0;
-
-for (const file of files) {
-  const ns = file.replace(/\.json$/, '');
-  if (!existsSync(join(LOCALES_DIR, TARGET, file))) continue;
-  const fr = read(REFERENCE, file);
-  const en = read(TARGET, file);
-  let pairs = 0;
-  let same = 0;
-  for (const [key, value] of fr) {
-    if (!en.has(key)) continue;      // parité des clés : c'est le travail d'i18n:check
-    pairs++;
-    if (en.get(key) !== value) continue;
-    same++;
-    identical.set(`${ns}.${key}`, value);
-  }
-  comparable += pairs;
-  perNamespace.push({ ns, pairs, same });
-}
-
-// ──────────────────────────────────────────────────────────────────
-// 3. Allowlist périmée
-// ──────────────────────────────────────────────────────────────────
-const stale = [];
-for (const [id, entry] of declared) {
-  if (!categories[entry?.categorie]) {
-    stale.push([id, `catégorie inconnue : ${JSON.stringify(entry?.categorie)}`]);
-    continue;
-  }
-  if (!identical.has(id)) {
-    stale.push([id, 'la clé n\'existe plus, ou les deux valeurs diffèrent désormais']);
-    continue;
-  }
-  const pinned = entry.valeur;
-  const actual = identical.get(id);
-  if (pinned !== actual) {
-    stale.push([id, `valeur épinglée ${JSON.stringify(pinned)} ≠ ${JSON.stringify(actual)}`]);
-  }
-}
-
-// ──────────────────────────────────────────────────────────────────
-// 4. Rapport
-// ──────────────────────────────────────────────────────────────────
-const undeclared = [...identical].filter(([id]) => !declared.has(id));
 const LIST = process.argv.includes('--list');
 
-console.log(
-  `COUPLES COMPARABLES: ${comparable} | IDENTIQUES: ${identical.size} ` +
-  `(${((identical.size / comparable) * 100).toFixed(1)}%) | ` +
-  `DÉCLARÉES LÉGITIMES: ${identical.size - undeclared.length} | NON DÉCLARÉES: ${undeclared.length}`,
-);
+const staleAll = [];
+const undeclaredAll = [];
 
-const undeclaredByNs = new Map();
-for (const [id] of undeclared) {
-  const ns = id.slice(0, id.indexOf('.'));
-  undeclaredByNs.set(ns, (undeclaredByNs.get(ns) ?? 0) + 1);
-}
+for (const target of targets) {
+  // ────────────────────────────────────────────────────────────────
+  // 1. Allowlist de la locale
+  // ────────────────────────────────────────────────────────────────
+  const allowlist = allowlistPath(target);
+  let allow = { categories: {}, entrees: {} };
+  if (existsSync(allowlist)) {
+    allow = JSON.parse(readFileSync(allowlist, 'utf8'));
+  }
+  const categories = allow.categories ?? {};
+  const declared = new Map(Object.entries(allow.entrees ?? {}));
 
-for (const { ns, pairs, same } of perNamespace.sort((a, b) => b.same - a.same)) {
-  if (same === 0) continue;
-  const nd = undeclaredByNs.get(ns) ?? 0;
+  // ────────────────────────────────────────────────────────────────
+  // 2. Mesure
+  // ────────────────────────────────────────────────────────────────
+  const identical = new Map();  // 'ns.cle' -> valeur
+  const perNamespace = [];
+  let comparable = 0;
+
+  for (const file of files) {
+    const ns = file.replace(/\.json$/, '');
+    if (!existsSync(join(LOCALES_DIR, target, file))) continue;
+    const fr = read(REFERENCE, file);
+    const translated = read(target, file);
+    let pairs = 0;
+    let same = 0;
+    for (const [key, value] of fr) {
+      if (!translated.has(key)) continue;      // parité des clés : c'est le travail d'i18n:check
+      pairs++;
+      if (translated.get(key) !== value) continue;
+      same++;
+      identical.set(`${ns}.${key}`, value);
+    }
+    comparable += pairs;
+    perNamespace.push({ ns, pairs, same });
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // 3. Allowlist périmée
+  // ────────────────────────────────────────────────────────────────
+  for (const [id, entry] of declared) {
+    if (!categories[entry?.categorie]) {
+      staleAll.push([target, id, `catégorie inconnue : ${JSON.stringify(entry?.categorie)}`]);
+      continue;
+    }
+    if (!identical.has(id)) {
+      staleAll.push([target, id, 'la clé n\'existe plus, ou les deux valeurs diffèrent désormais']);
+      continue;
+    }
+    const pinned = entry.valeur;
+    const actual = identical.get(id);
+    if (pinned !== actual) {
+      staleAll.push([target, id, `valeur épinglée ${JSON.stringify(pinned)} ≠ ${JSON.stringify(actual)}`]);
+    }
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // 4. Rapport de la locale
+  // ────────────────────────────────────────────────────────────────
+  const undeclared = [...identical].filter(([id]) => !declared.has(id));
+  for (const [id, value] of undeclared) undeclaredAll.push([target, id, value]);
+
+  const ratio = comparable > 0 ? ((identical.size / comparable) * 100).toFixed(1) : '0.0';
   console.log(
-    `${String(same).padStart(4)} / ${String(pairs).padEnd(5)} ` +
-    `${((same / pairs) * 100).toFixed(1).padStart(5)}%  ${ns}` +
-    (nd ? `  ← ${nd} NON DÉCLARÉE(S)` : ''),
+    `[${target}] COUPLES COMPARABLES: ${comparable} | IDENTIQUES: ${identical.size} ` +
+    `(${ratio}%) | ` +
+    `DÉCLARÉES LÉGITIMES: ${identical.size - undeclared.length} | NON DÉCLARÉES: ${undeclared.length}`,
   );
+
+  const undeclaredByNs = new Map();
+  for (const [id] of undeclared) {
+    const ns = id.slice(0, id.indexOf('.'));
+    undeclaredByNs.set(ns, (undeclaredByNs.get(ns) ?? 0) + 1);
+  }
+
+  for (const { ns, pairs, same } of perNamespace.sort((a, b) => b.same - a.same)) {
+    if (same === 0) continue;
+    const nd = undeclaredByNs.get(ns) ?? 0;
+    console.log(
+      `${String(same).padStart(4)} / ${String(pairs).padEnd(5)} ` +
+      `${((same / pairs) * 100).toFixed(1).padStart(5)}%  ${ns}` +
+      (nd ? `  ← ${nd} NON DÉCLARÉE(S)` : ''),
+    );
+  }
+
+  if (undeclared.length && LIST) {
+    console.log(`\nNon déclarées (${target}) :`);
+    for (const [id, value] of undeclared) console.log('       ·', id, '=', JSON.stringify(value));
+  }
 }
 
-if (undeclared.length && LIST) {
-  console.log('\nNon déclarées :');
-  for (const [id, value] of undeclared) console.log('       ·', id, '=', JSON.stringify(value));
+if (targets.length === 0) {
+  console.log('Aucune locale traduite dans src/locales : rien à comparer.');
 }
 
-if (stale.length) {
-  console.error(`\n✖ Allowlist périmée : ${stale.length} entrée(s).`);
-  for (const [id, why] of stale) console.error(`       · ${id} : ${why}`);
+if (staleAll.length) {
+  console.error(`\n✖ Allowlist périmée : ${staleAll.length} entrée(s).`);
+  for (const [target, id, why] of staleAll) console.error(`       · [${target}] ${id} : ${why}`);
   console.error(
     'Retirer l\'entrée si la clé a été traduite ou supprimée ; ré-épingler la valeur\n' +
     'si le libellé français a changé — et REDÉCIDER à cette occasion, car une\n' +
@@ -159,21 +162,23 @@ if (stale.length) {
   process.exit(1);
 }
 
-if (undeclared.length > MAX_UNDECLARED) {
+if (undeclaredAll.length > MAX_UNDECLARED) {
+  const parLocale = [...new Set(undeclaredAll.map(([t]) => t))];
   console.error(
-    `\ni18n-identical : ${undeclared.length} identité(s) non déclarée(s) > ${MAX_UNDECLARED} autorisée(s).\n` +
+    `\ni18n-identical : ${undeclaredAll.length} identité(s) non déclarée(s) > ${MAX_UNDECLARED} autorisée(s) ` +
+    `(${parLocale.join(', ')}).\n` +
     '`npm run i18n:identical -- --list` dit LESQUELLES.\n' +
-    'Traduire la valeur `en`, ou la déclarer légitime dans\n' +
-    `${ALLOWLIST} (catégorie + valeur épinglée).\n` +
+    'Traduire la valeur, ou la déclarer légitime dans\n' +
+    `${parLocale.map(allowlistPath).join(', ')} (catégorie + valeur épinglée).\n` +
     'Ne PAS relever le seuil : le moteur retombe sur le français, donc rien\n' +
     'à l\'écran ne dira jamais qu\'une valeur n\'a pas été traduite.',
   );
   process.exit(1);
 }
 
-if (undeclared.length < MAX_UNDECLARED) {
+if (undeclaredAll.length < MAX_UNDECLARED) {
   console.log(
-    `\n✅ ${MAX_UNDECLARED - undeclared.length} identité(s) de moins que le seuil. ` +
-    `Baisser MAX_UNDECLARED à ${undeclared.length} dans scripts/i18n-identical.mjs.`,
+    `\n✅ ${MAX_UNDECLARED - undeclaredAll.length} identité(s) de moins que le seuil. ` +
+    `Baisser MAX_UNDECLARED à ${undeclaredAll.length} dans scripts/i18n-identical.mjs.`,
   );
 }

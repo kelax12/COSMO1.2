@@ -6,7 +6,7 @@
 // démo (`local.repository.ts`) l'ensemence au premier accès.
 
 import { OKR } from './types';
-import { isEnglishSeed } from '@/lib/seed-i18n';
+import { seedOverlay } from '@/lib/seed-i18n';
 
 // ═══════════════════════════════════════════════════════════════════
 // DEMO DATA
@@ -152,20 +152,22 @@ const DEMO_KR_UNITS_EN: Record<string, string> = {
  * Rend `null` quand le couple n'est pas dans l'overlay : l'appelant garde alors
  * le français, même repli silencieux que `localizeSeed`.
  */
-export function demoOkrTitlesEn(
+export function localizedDemoOkrTitles(
   okrId: string,
   krId: string
 ): { okrTitle: string; krTitle: string } | null {
-  const patch = DEMO_OKRS_EN[okrId];
+  const patch = seedOverlay({ en: DEMO_OKRS_EN })?.[okrId];
   const krTitle = patch?.keyResults[krId];
   return patch && krTitle ? { okrTitle: patch.title, krTitle } : null;
 }
 
-/** Applique DEMO_OKRS_EN sur le seed français quand la locale est anglaise. */
+/** Applique l'overlay de la locale active sur le seed français. */
 export function localizeOkrs(okrs: OKR[]): OKR[] {
-  if (!isEnglishSeed()) return okrs;
+  const overlay = seedOverlay({ en: DEMO_OKRS_EN });
+  if (!overlay) return okrs;
+  const units = seedOverlay({ en: DEMO_KR_UNITS_EN }) ?? {};
   return okrs.map((okr) => {
-    const patch = DEMO_OKRS_EN[okr.id];
+    const patch = overlay[okr.id];
     if (!patch) return okr;
     return {
       ...okr,
@@ -174,7 +176,7 @@ export function localizeOkrs(okrs: OKR[]): OKR[] {
       keyResults: okr.keyResults.map((kr) => ({
         ...kr,
         title: patch.keyResults[kr.id] ?? kr.title,
-        unit: DEMO_KR_UNITS_EN[kr.id] ?? kr.unit,
+        unit: units[kr.id] ?? kr.unit,
       })),
     };
   });

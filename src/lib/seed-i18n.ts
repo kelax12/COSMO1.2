@@ -8,8 +8,8 @@
 // français — incompréhensible pour lui.
 //
 // Le français reste la table CANONIQUE de chaque module (id → objet complet,
-// inchangée) ; ce module ne fournit qu'un overlay anglais partiel, keyé par
-// id, dans le même esprit que les catalogues i18n (fr = référence + repli,
+// inchangée) ; chaque autre langue n'apporte qu'un overlay partiel, keyé par
+// id et rangé sous sa locale (`{ en: … }`), dans le même esprit que les catalogues i18n (fr = référence + repli,
 // en = overrides). Un id absent de l'overlay retombe silencieusement sur le
 // français plutôt que de planter — jamais vu en pratique (la table est tenue
 // à jour manuellement à côté du seed), mais c'est le même choix de repli que
@@ -18,9 +18,34 @@
 import { localeStore } from '@/i18n/store';
 import { DEFAULT_LOCALE, isLocale, type Locale } from '@/i18n/locale';
 
-/** `true` si le seed doit être produit en anglais. */
-export function isEnglishSeed(): boolean {
-  return localeStore.locale === 'en';
+/** Locales qui recouvrent le seed français : toutes sauf la référence. */
+export type SeedOverlayLocale = Exclude<Locale, 'fr'>;
+
+/**
+ * Overlays d'un seed, un par locale traduite. Une locale absente (ou la
+ * locale de référence) garde le français : ajouter une langue = ajouter une
+ * clé ici, sans aucune condition chez l'appelant.
+ */
+export type SeedOverlays<O> = Readonly<Partial<Record<SeedOverlayLocale, O>>>;
+
+/**
+ * Overlay de la locale active, `null` si elle n'en a pas (le français, ou une
+ * langue pas encore traduite) : l'appelant garde alors le seed tel quel.
+ */
+export function seedOverlay<O>(overlays: SeedOverlays<O>): O | null {
+  const locale = localeStore.locale;
+  // Littéral `'fr'` et non `DEFAULT_LOCALE` : c'est lui qui rétrécit le type
+  // vers `SeedOverlayLocale`, sans transtypage.
+  if (locale === 'fr') return null;
+  return overlays[locale] ?? null;
+}
+
+/** Un libellé de seed : le français fait foi, chaque autre langue est facultative. */
+export type SeedText = Readonly<{ fr: string } & Partial<Record<SeedOverlayLocale, string>>>;
+
+/** Libellé de seed dans la locale active, repli sur le français. */
+export function seedText(text: SeedText): string {
+  return seedOverlay<string>(text) ?? text.fr;
 }
 
 /**
@@ -68,7 +93,8 @@ export function seedLocaleMatchesCurrent(): boolean {
 }
 
 /**
- * Applique un overlay anglais par id sur un tableau seedé français.
+ * Applique l'overlay de la locale active, par id, sur un tableau seedé
+ * français. Sans overlay pour cette locale, rend une copie inchangée.
  *
  * `pick` extrait du `Partial<T>` de l'overlay les seuls champs à réellement
  * fusionner — nécessaire quand l'overlay ne porte qu'un sous-ensemble des
@@ -76,9 +102,10 @@ export function seedLocaleMatchesCurrent(): boolean {
  */
 export function localizeSeed<T extends { id: string }>(
   items: readonly T[],
-  overlay: Readonly<Record<string, Partial<T>>>
+  overlays: SeedOverlays<Readonly<Record<string, Partial<T>>>>
 ): T[] {
-  if (!isEnglishSeed()) return [...items];
+  const overlay = seedOverlay(overlays);
+  if (!overlay) return [...items];
   return items.map((item) => {
     const patch = overlay[item.id];
     return patch ? { ...item, ...patch } : item;

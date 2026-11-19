@@ -6,7 +6,7 @@
 // démo (`local.repository.ts`) l'ensemence au premier accès.
 
 import { Friend, PendingFriendRequest, SharedListGrant } from './types';
-import { isEnglishSeed } from '@/lib/seed-i18n';
+import { seedOverlay } from '@/lib/seed-i18n';
 
 /** Id de l'utilisateur démo — utilisé pour distinguer partages entrants/sortants. */
 export const DEMO_USER_ID = 'demo-user';
@@ -63,22 +63,36 @@ export const DEMO_INCOMING_SHARED_LISTS: SharedListGrant[] = [
 ];
 
 /**
- * Overlay anglais de la liste partagée entrante — cf. src/lib/seed-i18n.ts.
+ * Overlay de la liste partagée entrante, par locale — cf. src/lib/seed-i18n.ts.
  * Les noms de personnes (`sharedByName`) ne sont PAS traduits : un nom propre
  * n'est pas une langue.
  */
+interface SharedListOverlay {
+  name: string;
+  tasks: readonly { name: string; category: string }[];
+}
+
+const SHARED_LIST_DEMO_EN: SharedListOverlay = {
+  name: 'Weekend groceries',
+  tasks: [
+    { name: 'Fruits & vegetables', category: 'Personal' },
+    { name: 'Bread & pastries', category: 'Personal' },
+    { name: 'Household supplies', category: 'Personal' },
+  ],
+};
+
 export function localizeIncomingSharedLists(lists: SharedListGrant[]): SharedListGrant[] {
-  if (!isEnglishSeed()) return lists;
+  const overlay = seedOverlay({ en: SHARED_LIST_DEMO_EN });
+  if (!overlay) return lists;
   return lists.map((list) => {
     if (list.id !== 'shared-list-demo-1') return list;
     return {
       ...list,
-      name: 'Weekend groceries',
-      tasks: [
-        { ...list.tasks[0], name: 'Fruits & vegetables', category: 'Personal' },
-        { ...list.tasks[1], name: 'Bread & pastries', category: 'Personal' },
-        { ...list.tasks[2], name: 'Household supplies', category: 'Personal' },
-      ],
+      name: overlay.name,
+      tasks: list.tasks.map((task, i) => {
+        const patch = overlay.tasks[i];
+        return patch ? { ...task, ...patch } : task;
+      }),
     };
   });
 }

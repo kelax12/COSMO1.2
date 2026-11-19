@@ -44,4 +44,4 @@ export const DEMO_CATEGORIES_EN: Record<string, Partial<Category>> = {
 };
 
 /** Le seed dans la langue de l'interface (overlay anglais par id, cf. src/lib/seed-i18n.ts). */
-export const localizedDemoCategories = () => localizeSeed(DEMO_CATEGORIES, DEMO_CATEGORIES_EN);
+export const localizedDemoCategories = () => localizeSeed(DEMO_CATEGORIES, { en: DEMO_CATEGORIES_EN });

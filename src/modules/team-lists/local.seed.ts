@@ -31,4 +31,4 @@ export const DEMO_LINKS: StoredLink[] = [
 ];
 
 /** Le seed dans la langue de l'interface (overlay anglais par id, cf. src/lib/seed-i18n.ts). */
-export const localizedDemoTeamLists = () => localizeSeed(DEMO_LISTS, DEMO_LISTS_EN);
+export const localizedDemoTeamLists = () => localizeSeed(DEMO_LISTS, { en: DEMO_LISTS_EN });

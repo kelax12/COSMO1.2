@@ -114,7 +114,7 @@ vi.mock('@/lib/demo-engagement', () => ({
 vi.mock('@/lib/seed-i18n', () => ({
   recordSeedLocale: () => note('recordSeedLocale'),
   seedLocaleMatchesCurrent: () => fake.seedLocaleOk,
-  isEnglishSeed: () => false,
+  seedText: (text: { fr: string }) => text.fr,
 }));
 vi.mock('@/lib/monitoring', () => ({
   captureMessage: (msg: string) => note(`monitoring:message:${msg}`),

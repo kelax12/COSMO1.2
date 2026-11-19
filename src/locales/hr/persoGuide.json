@@ -1,0 +1,103 @@
+{
+  "drawer": {
+    "title": "Osobni vodič",
+    "close": "Zatvori vodič",
+    "searchPlaceholder": "Zadatak, navika, cilj…",
+    "noResult": "Nijedna radnja ne odgovara. Pokušajte s drugom riječi."
+  },
+  "categories": {
+    "tasks": "Zadaci i popisi",
+    "agenda": "Kalendar",
+    "habits": "Navike",
+    "okr": "Ciljevi"
+  },
+  "control": {
+    "progress": "{{action}} · korak {{current}}/{{total}}",
+    "pause": "Pauziraj",
+    "resume": "Nastavi",
+    "skip": "Preskoči",
+    "quit": "Izađi iz demonstracije"
+  },
+  "end": {
+    "missing": "Ovaj se zaslon promijenio otkad je vodič napisan. Otvorite ga sami.",
+    "openDirect": "Otvori zaslon"
+  },
+  "empty": {
+    "noHabit": "Najprije vam treba navika: započnite s „Izradi naviku“.",
+    "noOkr": "Najprije vam treba cilj: započnite s „Izradi cilj“."
+  },
+  "actions": {
+    "task": {
+      "create": {
+        "label": "Izradi zadatak",
+        "synonyms": "novi zadatak, dodaj, obaveza, za napraviti, todo",
+        "b1": "Obavezan je samo naziv. Zadatak se može odmah spremiti.",
+        "b2": "Prioritet razvrstava vaš popis: važni zadaci idu na vrh.",
+        "b3": "S rokom se zadatak pojavljuje u kalendaru i može se ponavljati."
+      },
+      "find": {
+        "label": "Pronađi zadatak",
+        "synonyms": "traži, pretraga, filtriraj, razvrstaj, kategorija",
+        "b1": "Pretražujte po nazivu ili filtrirajte po kategoriji da zadržite jednu temu.",
+        "b2": "Kalendar prikazuje vaše zadatke prema roku."
+      }
+    },
+    "list": {
+      "create": {
+        "label": "Izradi popis",
+        "synonyms": "popis, lista, grupa, mapa, osobni projekt",
+        "b1": "Imenujte svoj popis: kupovina, projekt, čitanje…",
+        "b2": "Njegova ga boja na prvi pogled izdvaja na traci popisa."
+      }
+    },
+    "agenda": {
+      "plan": {
+        "label": "Zakaži zadatak",
+        "synonyms": "blokiranje vremena, termin, povuci, planiraj, rezerviraj",
+        "b1": "Ovaj gumb otvara vaše zadatke za zakazivanje, pokraj kalendara.",
+        "b2": "Povucite zadatak na termin: postaje blok u vašem kalendaru."
+      },
+      "event": {
+        "label": "Izradi događaj",
+        "synonyms": "sastanak, dogovor, događaj, termin, blok",
+        "b1": "Kliknite i povucite preko slobodnog termina da izradite događaj u to vrijeme."
+      },
+      "views": {
+        "label": "Promijeni prikaz",
+        "synonyms": "dan, tjedan, mjesec, zumiranje, prikaz",
+        "b1": "Dan za detalje, tjedan za širu sliku, mjesec za pogled iz daljine.",
+        "b2": "Zumiranje sužava ili proširuje sate u mreži."
+      }
+    },
+    "habit": {
+      "create": {
+        "label": "Izradi naviku",
+        "synonyms": "nova navika, rutina, ritual, dnevno",
+        "b1": "Naziv navike, izražen kao radnja: čitati, hodati, meditirati…",
+        "b2": "Koliko vam vremena treba svaki dan, u minutama.",
+        "b3": "Njezina boja, koja se koristi u praćenju i statistici."
+      },
+      "track": {
+        "label": "Pratite svoje navike",
+        "synonyms": "označi, izvrši, niz, praćenje, toplinska karta",
+        "b1": "Odaberite prikaz: današnji popis za označavanje ili povijest svake navike.",
+        "b2": "Označite naviku da dovršite dan i produljite svoj niz."
+      }
+    },
+    "okr": {
+      "create": {
+        "label": "Izradi cilj",
+        "synonyms": "okr, cilj, namjera, ključni rezultat, ambicija",
+        "b1": "Cilj kaže kamo želite stići: jedna jasna rečenica.",
+        "b2": "Rok određuje kada ga preispitujete.",
+        "b3": "Ključni rezultati mjere napredak: broj koji treba dosegnuti ili obavljeno / nije obavljeno."
+      },
+      "progress": {
+        "label": "Unaprijedi cilj",
+        "synonyms": "napredak, ažuriranje, napredovanje, ključni rezultat, kategorija",
+        "b1": "Ažurirajte svaki ključni rezultat s kartice: pokazatelj cilja to prati.",
+        "b2": "Filtrirajte po kategoriji da vidite samo jedno područje svog života."
+      }
+    }
+  }
+}

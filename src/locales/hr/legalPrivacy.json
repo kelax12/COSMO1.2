@@ -1,0 +1,137 @@
+{
+  "privacy": {
+    "seoTitle": "Politika privatnosti – Cosmo App",
+    "seoDescription": "Politika privatnosti aplikacije Cosmo: prikupljeni podaci, sigurna pohrana na Supabaseu, Row Level Security, prava prema GDPR-u i kontakt.",
+    "title": "Politika privatnosti",
+    "updatedAt": "21. listopada 2026.",
+    "s1": {
+      "title": "1. Voditelj obrade",
+      "p1": "Voditelj obrade osobnih podataka prikupljenih putem aplikacije Cosmo je Axel Longatte, samostalni poduzetnik (EI, SIREN 131 769 317), izdavatelj Cosma, 138 avenue Victor Hugo, 75116 Pariz, dostupan na [contact@thecosmo.app](mailto:contact@thecosmo.app)."
+    },
+    "s2": {
+      "title": "2. Prikupljeni podaci",
+      "intro": "Tijekom vašeg korištenja Cosma prikupljamo samo podatke potrebne za funkcioniranje usluge:",
+      "li1": "**Identifikacijski podaci:** prikazno ime, e-adresa, šifrirana lozinka (klasična registracija) ili profilna fotografija i Google identifikator (prijava putem Google OAuth)",
+      "li2": "**Podaci o produktivnosti:** zadaci, kategorije, popisi, navike i povijest njihova ispunjavanja, događaji u kalendaru, OKR-ovi (ciljevi i ključni rezultati) i njihov napredak",
+      "li3": "**Društveni podaci:** popis prijatelja, zahtjevi za prijateljstvo, zadaci podijeljeni s drugim korisnicima",
+      "li4": "**Podaci o pretplati (prostor za tvrtke):** paket, status i datumi pretplate organizacije, tehnički identifikatori Stripea. Bankovnim podacima upravlja isključivo Stripe, Cosmo im nema pristup",
+      "li5": "**Tehnički podaci:** podaci o Supabase sesiji (token za autentifikaciju, datum posljednje prijave) i dani u kojima ste se prijavili (interna statistika korištenja)",
+      "p1": "**Mjerenje posjećenosti:** Cosmo koristi Vercel Analytics, alat za mjerenje posjećenosti bez kolačića, koji se učitava samo ako to prihvatite. Broji pregledane stranice i stranicu s koje dolazite, bez izrade ikakvog oglašivačkog profila. Uz istu privolu, i samo na javnim stranicama izvan prijave, Cosmo i sam mjeri svoju posjećenost: pregledana stranica, web-mjesto s kojeg dolazite, približna država i grad, vrsta preglednika i uređaja, provedeno vrijeme, pomicanje i klikovi na glavne gumbe. Vaša IP adresa ne čuva se: služi samo za prepoznavanje istog posjeta tijekom jednog dana, a ta se veza uništava sljedeći dan. Ta se mjerenja čuvaju 13 mjeseci.",
+      "p2": "**Interno mjerenje:** unutar aplikacije statistiku korištenja izračunava sam Cosmo iz vlastite baze podataka (gore opisani dani prijave). Nikakvi podaci o korištenju ne prenose se alatu za mjerenje treće strane. Ti se podaci nikad ne povezuju sa sadržajem vaših zadataka, navika ili OKR-ova.",
+      "p3": "**Opseg mjerenja:** ako to prihvatite, Vercel Analytics učitava se na cijeloj stranici, uključujući aplikaciju. Broji samo preglede stranica: ne čita sadržaj vaših stranica ni ono što unosite u obrasce.",
+      "note": "Ne koristi se nijedan drugi alat za praćenje treće strane (Google Analytics, Mixpanel, Hotjar itd.). Unutar aplikacije o vašem se ponašanju ne prikuplja ništa osim gore opisanih dana prijave.",
+      "li6": "**Podaci prostora za tvrtke:** pripadnost organizaciji, uloga, timski zadaci i projekti, komentari, povijest aktivnosti i obavijesti. Za te je podatke organizacija voditelj obrade, a Cosmo djeluje u njezino ime, kako predviđa odjeljak 6. OUK",
+      "li7": "**Prijave grešaka:** poruka i snimke zaslona koje priložite, e-adresa vašeg računa ako ste prijavljeni i tehnički kontekst stranice, poslani timu e-poštom",
+      "li8": "**Pozivnice e-poštom:** kad vas član organizacije pozove, vaša se e-adresa koristi za slanje poveznice za pozivnicu u ime te organizacije. Neprihvaćena poveznica istječe nakon 7 dana i briše se 30 dana kasnije",
+      "p4": "**Podrijetlo vaše registracije:** ako to prihvatite u natpisu, Cosmo 30 dana u lokalnoj pohrani vašeg preglednika pamti kanal koji vas je doveo (parametar „ref“ ili „utm“ poveznice kampanje ili „demo“), a zatim ga bilježi na vaš račun ako ga stvorite. Služi samo da bismo znali koji kanali donose registracije. Bez vaše privole ništa se ne pohranjuje niti bilježi.",
+      "p5": "**Isprobavanje dema:** ako to prihvatite, pri pokretanju dema pohranjuje se nasumični identifikator uređaja i posjet se broji. Ako zatim s istog uređaja stvorite račun, posjet se povezuje s vašim računom kako bismo izmjerili koliko isprobavanja završi registracijom. Bez vaše privole demo radi jednako i ništa se ne broji."
+    },
+    "s3": {
+      "title": "3. Načini autentifikacije",
+      "intro": "Cosmo nudi dva načina prijave:",
+      "li1": "**E-pošta / lozinka:** vaša se lozinka na poslužitelju hashira putem Supabase Autha i nikad se ne pohranjuje kao čisti tekst",
+      "li2": "**Google OAuth:** prijavom putem Googlea dopuštate Cosmu da iz vašeg Google računa preuzme vaše ime, e-adresu i profilnu fotografiju. Ne traži se pristup vašem kalendaru ni drugim Googleovim uslugama"
+    },
+    "s4": {
+      "title": "4. Svrhe obrade",
+      "intro": "Vaši se podaci koriste isključivo za:",
+      "li1": "Stvaranje i autentifikaciju vašeg korisničkog računa",
+      "li2": "Pohranu i sinkronizaciju vaših podataka o produktivnosti (zadaci, navike, kalendar, OKR-ovi)",
+      "li3": "Omogućivanje suradnje: dijeljenje zadataka, upravljanje prijateljima i prostor za tvrtke",
+      "li4": "Obradu plaćanja i upravljanje pretplatom prostora za tvrtke",
+      "li5": "Osiguravanje sigurnosti i ispravnog rada aplikacije",
+      "li6": "Izradu interne statistike korištenja (dani prijave) i, uz vašu privolu, mjerenje posjećenosti i podrijetla registracija",
+      "li7": "Slanje e-poruka povezanih s uslugom: pozivnice, obavijesti prije obnove pretplate, obavijesti organizacije koje ste odabrali primati, odgovori na vaše poruke"
+    },
+    "s5": {
+      "title": "5. Pravna osnova",
+      "intro": "Obrada vaših podataka temelji se na:",
+      "li1": "**Izvršenju ugovora** za sve podatke potrebne za funkcioniranje usluge",
+      "li2": "**Legitimnom interesu** za sigurnost i kontinuitet aplikacije te za internu statistiku korištenja (dani prijave), koja služi samo poboljšanju usluge",
+      "li3": "**Privoli** za mjerenje posjećenosti (Vercel Analytics), podrijetlo vaše registracije, brojanje isprobavanja dema i svako pohranjivanje informacija na vaš uređaj koje nije nužno potrebno za uslugu. Ništa se ne pohranjuje niti učitava dok ne prihvatite, a odbijanje nikad ništa ne pohranjuje. Taj izbor možete promijeniti u bilo kojem trenutku",
+      "note": "Cosmo je namijenjen osobama starijima od 15 godina. Ispod te dobi mjerenje posjećenosti može se prihvatiti samo uz zajedničku suglasnost nositelja roditeljske skrbi (članak 45. francuskog Zakona o informatici i slobodama)."
+    },
+    "s6": {
+      "title": "6. Razdoblje čuvanja",
+      "li1": "Podaci o računu i sadržaju: čuvaju se dok je račun aktivan, a zatim se trajno brišu u roku od 90 dana od zatvaranja. Račun bez ijedne prijave tijekom **3 godine** briše se nakon upozorenja poslanog e-poštom 30 dana prije",
+      "li2": "Tokeni sesije: automatski istječu prema konfiguraciji Supabasea",
+      "li3": "**Posjet demu** (identifikator uređaja, postavlja se samo ako ste prihvatili): **90 dana** ako posjet ne završi registracijom, **400 dana** ako završi",
+      "li4": "**Dani aktivnosti** (datumi prijave, koriste se za statistiku korištenja): **400 dana**",
+      "li5": "**Tehničke oznake plaćanja** (identifikatori već obrađenih Stripe događaja, koji sprječavaju dvostruku naplatu): **90 dana**",
+      "li6": "Podaci o plaćanju: čuvaju se u skladu sa zakonskim obvezama (10 godina za računovodstvo)",
+      "note": "Ta razdoblja baza podataka primjenjuje automatski, bez ručne intervencije. Iznimka je dnevnik naplata: porezni zakon nalaže njegovo čuvanje **i nepromjenjivost**, pa se ne može ni izbrisati ni izmijeniti, čak ni nakon zahtjeva za brisanje računa. Njegovi zapisi ne sadrže ni vaše ime ni e-adresu: sadrže samo tehnički identifikator koji prestaje označavati bilo koga čim se vaš račun izbriše.",
+      "li7": "**Podrijetlo registracije** (samo ako ste prihvatili): čuva se na vašem profilu dok račun postoji",
+      "li8": "**Prijave grešaka**: primljene e-poruke čuvaju se najviše 12 mjeseci nakon obrade",
+      "li9": "**Sigurnosne kopije baze**: šifrirane, čuvaju se 30 dana, a zatim se automatski zamjenjuju"
+    },
+    "s7": {
+      "title": "7. Dijeljenje podataka",
+      "intro": "Vaši podaci mogu prolaziti preko sljedećih izvršitelja obrade:",
+      "li1": "**Supabase**: baza podataka i autentifikacija. Vaši su podaci smješteni u regiji **eu-west-1 (Irska)**, dakle u Europskoj uniji",
+      "li2": "**Vercel**: hosting stranice. Obrađuje podatke o povezivanju (IP adresa, tehnički zapisnici)",
+      "li3": "**Vercel Analytics**: mjerenje posjećenosti bez kolačića, učitava se samo ako to prihvatite",
+      "li4": "**Sentry**: otkrivanje tehničkih pogrešaka, podaci smješteni u Uniji (Njemačka). E-adrese i identifikatori u porukama o pogreškama maskiraju se, a tokeni pozivnica ili prijave uklanjaju se iz adresa stranica. Tehnički identifikator vašeg računa (nasumičan niz, bez imena i e-adrese) prilaže se izvješćima radi povezivanja pogrešaka",
+      "li5": "**Stripe**: sigurna obrada plaćanja",
+      "li6": "**Google**: samo ako koristite prijavu putem Google OAuth",
+      "outro": "Nikakvi podaci ne prodaju se trećim stranama. Nema dijeljenja u oglašivačke ili marketinške svrhe.",
+      "li8": "**Resend**: slanje servisnih e-poruka (prijave grešaka, obavijesti prije obnove pretplate)",
+      "li9": "**Cloudflare Turnstile**: zaštita obrazaca za prijavu i registraciju od robota, kad je uključena. Obrađuje vašu IP adresu i tehničke signale preglednika, bez oglašivačke svrhe",
+      "li10": "**GitHub**: čuvanje dnevnih sigurnosnih kopija baze, šifriranih prije pohrane. GitHub nema ključ za dešifriranje"
+    },
+    "s7bis": {
+      "title": "7.a Prijenosi izvan Europske unije",
+      "p1": "Vaša je baza podataka smještena u Irskoj, unutar Europske unije.",
+      "p2": "Međutim, nekoliko pružatelja usluga su društva osnovana izvan Unije ili mogu pristupati podacima izvana: **Vercel**, **Sentry**, **Resend**, **Cloudflare**, **Stripe**, **Google** (prijava putem Googlea), **GitHub** (šifrirane sigurnosne kopije) te **Supabase Inc.**, čiji timovi mogu pristupati infrastrukturi radi održavanja i podrške. Podaci koje obrađuju u naše ime stoga mogu biti preneseni izvan Unije. Ti su prijenosi uređeni odlukom Europske komisije o primjerenosti u vezi s Okvirom za privatnost podataka EU-a i SAD-a, kad mu je pružatelj pristupio, ili u protivnom standardnim ugovornim klauzulama Komisije (članci 45. i 46. GDPR-a).",
+      "p3": "Primjerak primjenjivih zaštitnih mjera možete zatražiti na adresi navedenoj u nastavku."
+    },
+    "s7ter": {
+      "title": "7.b Izravni marketing prema poslovnim subjektima",
+      "p1": "Cosmo može e-poštom kontaktirati poslovne subjekte kako bi im predstavio svoju ponudu za tvrtke. Ovaj se odjeljak odnosi na tako kontaktirane osobe, koje nisu nužno korisnici Cosma.",
+      "li1": "**Obrađeni podaci:** poslovna e-adresa, ime, tvrtka, funkcija, izvor kontakta (stranica tvrtke, imenik ili poslovna mreža), povijest naše komunikacije i primljeni odgovori",
+      "li2": "**Svrha:** predstaviti vam Cosmo i pratiti našu komunikaciju. Poruke se odnose isključivo na vašu poslovnu djelatnost",
+      "li3": "**Pravna osnova:** legitimni interes Cosma da svoju ponudu predstavi poslovnim subjektima (članak 6. stavak 1. točka (f) GDPR-a i članak L34-5 francuskog Zakona o poštama i elektroničkim komunikacijama). Za marketing povezan s vašom funkcijom nije potrebna prethodna privola, ali mu se u bilo kojem trenutku možete usprotiviti",
+      "li4": "**Primatelji:** Supabase (smještaj podataka, u Irskoj), IONOS (sandučići za slanje, u Njemačkoj) i Anthropic (automatsko razvrstavanje primljenih odgovora, društvo osnovano u SAD-u, prijenos uređen standardnim ugovornim klauzulama). Vaši se podaci nikad ne prodaju niti ustupaju",
+      "li5": "**Razdoblje čuvanja:** tri godine od našeg posljednjeg kontakta, nakon čega se brišu",
+      "p2": "**Prigovor na izravni marketing.** Svaka e-poruka sadrži jednostavan i besplatan način da vas više ne kontaktiramo. Možete pisati i na [contact@thecosmo.app](mailto:contact@thecosmo.app). Vaša se adresa tada upisuje na popis prigovora, koji se čuva kako bismo osigurali da vas više ne kontaktiramo. Imate i prava opisana u odjeljku 8., uključujući pravo na primjerak podataka koji se odnose na vas."
+    },
+    "s8": {
+      "title": "8. Vaša prava (GDPR)",
+      "intro": "U skladu s Općom uredbom o zaštiti podataka (GDPR) imate sljedeća prava:",
+      "li1": "**Pravo na pristup**: dobiti primjerak svojih osobnih podataka",
+      "li2": "**Pravo na ispravak**: ispraviti netočne podatke u postavkama",
+      "li3": "**Pravo na brisanje**: izbrisati svoj račun i sve svoje podatke",
+      "li4": "**Pravo na prenosivost**: izvesti svoje podatke u čitljivom formatu",
+      "li5": "**Pravo na prigovor**: usprotiviti se određenim obradama",
+      "li6": "**Pravo na ograničenje**: ograničiti obradu u određenim slučajevima",
+      "p1": "Prenosivost se ostvaruje izravno u **Postavke, kartica Moji podaci**: izvoz obuhvaća vaše zadatke, navike, događaje, OKR-ove, kategorije, popise i profil, u formatu CSV.",
+      "p2": "Za sva ostala prava: [contact@thecosmo.app](mailto:contact@thecosmo.app). Odgovaramo u roku od **mjesec dana** od primitka vašeg zahtjeva, u skladu s člankom 12. GDPR-a. Taj se rok može produljiti za dva mjeseca u slučaju složenog zahtjeva, o čemu vas obavještavamo u roku od mjesec dana.",
+      "p3": "Možete se obratiti i francuskom nadzornom tijelu **CNIL**: [www.cnil.fr](https://www.cnil.fr)",
+      "li7": "**Upute za slučaj smrti**: odrediti upute o čuvanju, brisanju i priopćavanju vaših podataka nakon vaše smrti (članak 85. francuskog Zakona o informatici i slobodama)"
+    },
+    "s9": {
+      "title": "9. Sigurnost",
+      "p1": "Sva komunikacija između vašeg preglednika i naših poslužitelja šifrirana je putem HTTPS/TLS-a. Lozinke se pohranjuju u hashiranom obliku (bcrypt putem Supabase Autha). Pristup podacima zaštićen je pravilima Row Level Security (RLS) na razini baze podataka: svaki korisnik pristupa samo vlastitim podacima i onima koji su s njim podijeljeni. Izdavatelj ima tehnički administratorski pristup, rezerviran za održavanje, sigurnost i podršku. Sigurnosne kopije baze su šifrirane."
+    },
+    "s10": {
+      "title": "10. Kolačići i informacije pohranjene na vašem uređaju",
+      "intro": "Sljedeći su elementi **nužno potrebni** za funkcioniranje i pohranjuju se bez vaše privole jer usluga bez njih ne može:",
+      "li1": "Kolačić Supabase sesije (autentifikacija)",
+      "li2": "Postavke sučelja pohranjene u localStorageu (tema, filtri)",
+      "li3": "Izbor privole pohranjen u localStorageu: upravo nam on omogućuje da poštujemo vaše odbijanje",
+      "consentIntro": "Sljedeći se elementi pohranjuju **tek nakon vašeg prihvaćanja**:",
+      "note1": "Na vaš se uređaj ne pohranjuje nijedan oglašivački kolačić i nikakvi se podaci ne koriste u oglašivačke svrhe.",
+      "note2": "Naš alat za mjerenje posjećenosti (Vercel Analytics), podrijetlo vaše registracije i brojanje isprobavanja dema podliježu vašoj privoli: **ništa se od toga ne učitava niti pohranjuje dok ne kliknete „Prihvati“** u natpisu, a ako odbijete, nikad se ne učitava. Vaš se izbor čuva šest mjeseci na vašem uređaju, a zatim vas ponovno pitamo. Možete ga promijeniti u bilo kojem trenutku gumbom u nastavku ili poveznicom „Upravljanje kolačićima“: ako povučete privolu, identifikatori i podrijetlo zabilježeni na vašem uređaju brišu se.",
+      "consentLi2": "Podrijetlo vaše registracije (poveznica kampanje ili demo), čuva se 30 dana u lokalnoj pohrani preglednika",
+      "consentLi3": "Nasumični identifikator uređaja postavljen pri pokretanju dema, za brojanje isprobavanja",
+      "consentLi4": "Dva brojača dema (trajanje i broj stvorenih stavki), koji određuju trenutak kad vam predlažemo račun. Bez vaše privole ostaju u memoriji i nestaju pri ponovnom učitavanju stranice"
+    },
+    "s11": {
+      "title": "11. Izmjene",
+      "p1": "Ova se politika može ažurirati. U slučaju bitne izmjene bit ćete obaviješteni e-poštom ili obaviješću u aplikaciji. Datum posljednjeg ažuriranja naveden je na vrhu ove stranice."
+    },
+    "s12": {
+      "title": "12. Jezik ovog dokumenta",
+      "p1": "Ovaj je dokument dostupan na francuskom i engleskom jeziku. **U slučaju neslaganja između verzija, prednost ima francuska verzija**: to je izvorna verzija. Ovaj hrvatski prijevod služi samo za informaciju."
+    }
+  }
+}

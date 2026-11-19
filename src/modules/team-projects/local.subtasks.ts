@@ -22,7 +22,7 @@ function readSubtasks(): TeamSubtask[] {
       // illisible : on repart de la graine, comme au premier passage
     }
   }
-  const clone = JSON.parse(JSON.stringify(localizeSeed(DEMO_SUBTASKS, DEMO_SUBTASKS_EN))) as TeamSubtask[];
+  const clone = JSON.parse(JSON.stringify(localizeSeed(DEMO_SUBTASKS, { en: DEMO_SUBTASKS_EN }))) as TeamSubtask[];
   safeSetItem(TEAM_TASK_SUBTASKS_STORAGE_KEY, JSON.stringify(clone));
   return clone;
 }

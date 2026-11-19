@@ -68,4 +68,4 @@ export const DEMO_LISTS_EN: Record<string, Partial<TaskList>> = {
 };
 
 /** Le seed dans la langue de l'interface (overlay anglais par id, cf. src/lib/seed-i18n.ts). */
-export const localizedDemoLists = () => localizeSeed(DEMO_LISTS, DEMO_LISTS_EN);
+export const localizedDemoLists = () => localizeSeed(DEMO_LISTS, { en: DEMO_LISTS_EN });

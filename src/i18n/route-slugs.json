@@ -2,46 +2,55 @@
   "about": {
     "fr": "a-propos",
     "en": "about",
-    "es": "acerca-de"
+    "es": "acerca-de",
+    "hr": "o-nama"
   },
   "enterprisePresentation": {
     "fr": "entreprise-presentation",
     "en": "for-companies",
-    "es": "para-empresas"
+    "es": "para-empresas",
+    "hr": "za-tvrtke"
   },
   "freelancers": {
     "fr": "pour-freelances",
     "en": "for-freelancers",
-    "es": "para-freelancers"
+    "es": "para-freelancers",
+    "hr": "za-freelancere"
   },
   "students": {
     "fr": "pour-etudiants",
     "en": "for-students",
-    "es": "para-estudiantes"
+    "es": "para-estudiantes",
+    "hr": "za-studente"
   },
   "managers": {
     "fr": "pour-managers",
     "en": "for-managers",
-    "es": "para-managers"
+    "es": "para-managers",
+    "hr": "za-menadzere"
   },
   "teams": {
     "fr": "pour-equipes",
     "en": "for-teams",
-    "es": "para-equipos"
+    "es": "para-equipos",
+    "hr": "za-timove"
   },
   "legalNotice": {
     "fr": "mentions-legales",
     "en": "legal-notice",
-    "es": "aviso-legal"
+    "es": "aviso-legal",
+    "hr": "pravne-napomene"
   },
   "privacy": {
     "fr": "politique-confidentialite",
     "en": "privacy-policy",
-    "es": "politica-privacidad"
+    "es": "politica-privacidad",
+    "hr": "pravila-privatnosti"
   },
   "terms": {
     "fr": "cgu",
     "en": "terms",
-    "es": "condiciones"
+    "es": "condiciones",
+    "hr": "uvjeti-koristenja"
   }
 }

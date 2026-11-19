@@ -77,7 +77,7 @@ function readOrSeed<T>(key: string, seed: T): T {
 
 export class LocalStorageTeamProjectsRepository implements ITeamProjectsRepository {
   private getProjectsArray(): TeamProject[] {
-    return readOrSeed<TeamProject[]>(TEAM_PROJECTS_STORAGE_KEY, localizeSeed(DEMO_PROJECTS, DEMO_PROJECTS_EN));
+    return readOrSeed<TeamProject[]>(TEAM_PROJECTS_STORAGE_KEY, localizeSeed(DEMO_PROJECTS, { en: DEMO_PROJECTS_EN }));
   }
   private saveProjects(p: TeamProject[]): void {
     writeJsonOrThrow(TEAM_PROJECTS_STORAGE_KEY, p);
@@ -88,7 +88,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     // (singulier) et pas `assigneeIds`. Sans ce coercion, tout consommateur
     // qui itère `assigneeIds` (kanban, contributeurs, to-do) planterait sur
     // `undefined`. On dérive le tableau du champ legacy s'il existe.
-    return readOrSeed<TeamTask[]>(TEAM_TASKS_STORAGE_KEY, localizeSeed(DEMO_TASKS, DEMO_TASKS_EN)).map((t) => {
+    return readOrSeed<TeamTask[]>(TEAM_TASKS_STORAGE_KEY, localizeSeed(DEMO_TASKS, { en: DEMO_TASKS_EN })).map((t) => {
       if (Array.isArray(t.assigneeIds)) return t;
       const legacy = (t as TeamTask & { assigneeId?: string | null }).assigneeId;
       return { ...t, assigneeIds: legacy ? [legacy] : [] };
@@ -433,7 +433,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
   // ─── Commentaires (mig. 082) ───────────────────────────────────────
 
   private getCommentsArray(): TeamTaskComment[] {
-    return readOrSeed<TeamTaskComment[]>(TEAM_TASK_COMMENTS_STORAGE_KEY, localizeSeed(DEMO_COMMENTS, DEMO_COMMENTS_EN));
+    return readOrSeed<TeamTaskComment[]>(TEAM_TASK_COMMENTS_STORAGE_KEY, localizeSeed(DEMO_COMMENTS, { en: DEMO_COMMENTS_EN }));
   }
   private saveComments(c: TeamTaskComment[]): void {
     writeJsonOrThrow(TEAM_TASK_COMMENTS_STORAGE_KEY, c);

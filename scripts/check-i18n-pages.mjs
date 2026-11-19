@@ -2,35 +2,14 @@
 // C-99 — le CORPS des pages prérendues en `en` n'est comparé à rien
 // ═══════════════════════════════════════════════════════════════════
 //
-// 🔴 TROIS ANGLES MORTS, MESURÉS UNE FOIS ET JAMAIS DEPUIS.
-//
-// 1. LE VOLUME DE TEXTE PAR PAGE ET PAR LOCALE. Les 50 pages ont été mesurées
-//    UNE fois avant l'ouverture d'`en` à l'indexation (C-20), jamais depuis.
-//    Une traduction tronquée ne casse rien : la page s'affiche, le prérendu
-//    tourne, `i18n:check` est vert (il ne voit que les CLÉS). Google, lui,
-//    voit une page anglaise trois fois plus courte que sa française et la
-//    traite comme du contenu mince.
-//
-// 2. LES PLURIELS. Le moteur retombe clé par clé sur le français : un
-//    `_other` anglais manquant affiche une phrase FRANÇAISE dans une
-//    interface anglaise, sans jamais ressembler à une clé brute. C'est le
-//    mécanisme exact de C-38, refermé une fois et jamais outillé pour les
-//    formes plurielles.
-//    ⚠️ Et il y a pire : le français a une catégorie `many` que l'anglais
-//    n'a PAS (CLDR). Recopier les suffixes français en anglais produit des
-//    clés mortes, et en oublier un produit un repli silencieux.
-//
-// 3. `es` FIGURE DANS `route-slugs.json` sans être servie ni indexable. Une
-//    langue à moitié déclarée est une invitation à publier une page vide.
-//
-// ── CE QUE CETTE GARDE FAIT ─────────────────────────────────────────
-//
-// Elle est en DEUX MOITIÉS, et elles n'ont pas les mêmes prérequis :
-//   · les PLURIELS et les LOCALES DÉCLARÉES se lisent dans les catalogues,
-//     donc sur chaque PR, sans build ;
-//   · le VOLUME se lit dans `dist/`, donc après `npm run build`. Passer
-//     `--pages` le demande ; sans l'option, la garde le DIT au lieu de
-//     laisser croire qu'elle a tout regardé.
+// Trois contrôles que `i18n:check` (clés seules) ne fait pas :
+//   1. PLURIELS : chaque locale traduite porte exactement les catégories que
+//      `Intl.PluralRules` demandera (`many` en fr, `few` en hr) ; une forme
+//      manquante retombe en silence sur le français, une forme en trop est morte.
+//   2. LOCALES DÉCLARÉES dans `route-slugs.json` mais non servies.
+//   3. VOLUME de texte par page prérendue (`--pages`, après `npm run build`) :
+//      une traduction tronquée passe partout ailleurs. Sans l'option, la garde
+//      DIT qu'elle ne l'a pas mesuré.
 //
 // ❌ NE JAMAIS BAISSER UN PLANCHER DE VOLUME. Une page qui maigrit est soit
 //    une traduction perdue, soit une décision éditoriale — et une décision
@@ -46,7 +25,7 @@ const LOCALES_DIR = join(RACINE, 'src', 'locales');
 const PLANCHERS = join(RACINE, 'scripts', 'i18n-pages-floor.json');
 
 /** Les locales réellement SERVIES et indexables. */
-const LOCALES_SERVIES = ['fr', 'en'];
+const LOCALES_SERVIES = ['fr', 'en', 'hr']; // miroir de SUPPORTED_LOCALES (src/i18n/locale.ts)
 
 /** La table de correspondance des slugs localisés. Une seule, partagée. */
 const SLUGS = JSON.parse(
@@ -110,6 +89,61 @@ export function categoriesAttendues(locale) {
   // `Intl.PluralRules` fait autorité — pas une liste écrite de tête. Le
   // français a `one`/`many`/`other`, l'anglais `one`/`other`.
   return new Set(new Intl.PluralRules(locale).resolvedOptions().pluralCategories);
+}
+
+/**
+ * Les locales TRADUITES : chaque dossier de `src/locales/` hors la référence.
+ * Une locale sans dossier (pas encore traduite) n'est pas contrôlée : c'est
+ * un état de transition, pas une panne. Ajouter `src/locales/hr/` suffit à la
+ * faire entrer dans la garde, sans toucher à ce fichier.
+ */
+export function localesTraduites(racine = LOCALES_DIR, reference = 'fr') {
+  if (!existsSync(racine)) return [];
+  return readdirSync(racine, { withFileTypes: true })
+    .filter((d) => d.isDirectory() && d.name !== reference)
+    .map((d) => d.name)
+    .sort();
+}
+
+/**
+ * Formes plurielles manquantes et mortes, locale par locale.
+ *
+ * `cats` porte un catalogue aplati par locale, référence comprise. Chaque
+ * racine plurielle de la référence doit exister dans chaque locale traduite
+ * avec EXACTEMENT les catégories que `Intl.PluralRules(locale)` demandera :
+ * `one`/`other` en anglais, `one`/`few`/`other` en croate. Une catégorie en
+ * trop (un `_many` recopié du français) est MORTE : le moteur ne la demandera
+ * jamais.
+ */
+export function verifierPluriels(cats, reference = 'fr') {
+  const manquants = [];
+  const morts = [];
+  const plurielsRef = grouperPluriels(cats[reference] ?? {});
+  for (const [locale, cat] of Object.entries(cats)) {
+    if (locale === reference) continue;
+    const pluriels = grouperPluriels(cat);
+    const attendu = categoriesAttendues(locale);
+    for (const racine of plurielsRef.keys()) {
+      const formes = pluriels.get(racine);
+      if (!formes) {
+        manquants.push(`${racine} : aucune forme plurielle en \`${locale}\``);
+        continue;
+      }
+      for (const c of attendu) {
+        if (!formes.has(c)) manquants.push(`${racine}_${c} : absent de \`${locale}\``);
+      }
+      for (const c of formes) {
+        if (!attendu.has(c)) morts.push(`${racine}_${c} : \`${locale}\` n'a pas la catégorie \`${c}\``);
+      }
+    }
+  }
+  const attenduRef = categoriesAttendues(reference);
+  for (const [racine, formes] of plurielsRef) {
+    for (const c of attenduRef) {
+      if (!formes.has(c)) manquants.push(`${racine}_${c} : absent de \`${reference}\` (référence)`);
+    }
+  }
+  return { manquants, morts };
 }
 
 /** Regroupe les clés plurielles par racine : `x_one`,`x_other` → `x`. */
@@ -208,48 +242,24 @@ if (estLanceDirectement) {
   const avecPages = process.argv.includes('--pages');
 
   // ═══ MOITIÉ 1 · les catalogues ═══════════════════════════════════
-  const cats = Object.fromEntries(LOCALES_SERVIES.map((l) => [l, catalogue(l)]));
+  const traduites = localesTraduites();
+  const cats = Object.fromEntries(['fr', ...traduites].map((l) => [l, catalogue(l)]));
   const fr = cats.fr;
-  const en = cats.en;
 
   // 🔴 Anti-« garde qui répond sans mesurer ».
   if (Object.keys(fr).length < 500) {
     erreurs.push(`Seulement ${Object.keys(fr).length} clé(s) lue(s) en fr : la lecture est cassée.`);
   }
 
-  const plurielsFr = grouperPluriels(fr);
-  const plurielsEn = grouperPluriels(en);
-  const attenduFr = categoriesAttendues('fr');
-  const attenduEn = categoriesAttendues('en');
-
-  const manquants = [];
-  const morts = [];
-  for (const [racine, formesFr] of plurielsFr) {
-    const formesEn = plurielsEn.get(racine);
-    if (!formesEn) {
-      manquants.push(`${racine} : aucune forme plurielle en \`en\``);
-      continue;
-    }
-    for (const cat of attenduEn) {
-      if (!formesEn.has(cat)) manquants.push(`${racine}_${cat} : absent de \`en\``);
-    }
-    for (const cat of formesEn) {
-      // 🔴 `many` recopié du français en anglais : une clé MORTE, que
-      // `Intl.PluralRules('en')` ne demandera jamais. Elle donne l'illusion
-      // d'une traduction complète tout en n'étant jamais affichée.
-      if (!attenduEn.has(cat)) morts.push(`${racine}_${cat} : \`en\` n'a pas la catégorie \`${cat}\``);
-    }
-  }
-  for (const [racine, formesFr] of plurielsFr) {
-    for (const cat of attenduFr) {
-      if (!formesFr.has(cat)) manquants.push(`${racine}_${cat} : absent de \`fr\` (référence)`);
-    }
-  }
+  const { manquants, morts } = verifierPluriels(cats);
 
   console.log('i18n · pluriels');
-  console.log(`  racines plurielles fr : ${plurielsFr.size}`);
-  console.log(`  racines plurielles en : ${plurielsEn.size}`);
-  console.log(`  catégories CLDR       : fr {${[...attenduFr].join(',')}} · en {${[...attenduEn].join(',')}}`);
+  for (const l of ['fr', ...traduites]) {
+    console.log(
+      `  ${l} : ${grouperPluriels(cats[l]).size} racine(s) plurielle(s), `
+        + `catégories CLDR {${[...categoriesAttendues(l)].join(',')}}`,
+    );
+  }
 
   if (manquants.length > 0) {
     erreurs.push(
@@ -257,13 +267,13 @@ if (estLanceDirectement) {
         + manquants.slice(0, 20).map((m) => `      ${m}`).join('\n')
         + (manquants.length > 20 ? `\n      … et ${manquants.length - 20} autre(s)` : '')
         + '\n    Le moteur retombe clé par clé sur le français : une forme manquante\n'
-        + "    affiche une phrase FRANÇAISE dans l'interface anglaise, sans jamais\n"
+        + "    affiche une phrase FRANÇAISE dans une interface traduite, sans jamais\n"
         + '    ressembler à une clé brute.',
     );
   }
   if (morts.length > 0) {
     erreurs.push(
-      `${morts.length} forme(s) plurielle(s) MORTE(S) en \`en\` :\n`
+      `${morts.length} forme(s) plurielle(s) MORTE(S) :\n`
         + morts.slice(0, 20).map((m) => `      ${m}`).join('\n')
         + '\n    `Intl.PluralRules` ne les demandera jamais. Elles donnent l illusion\n'
         + "    d'une traduction complète tout en n'étant jamais affichées.",
@@ -285,17 +295,21 @@ if (estLanceDirectement) {
       `🔎 ${fantomes.length} locale(s) déclarée(s) et NON SERVIE(S) : ${fantomes.join(', ')}.\n`
         + '   Les slugs existent, aucune page n est prérendue, aucun catalogue n est\n'
         + '   complet. Ce n est pas une panne : c est un chantier ouvert (i18n\n'
-        + '   universel fr/en/es). ⚠️ Tant que c est le cas, ne JAMAIS poser de\n'
+        + '   universel). ⚠️ Tant que c est le cas, ne JAMAIS poser de\n'
         + '   `hreflang` vers ces slugs : on annoncerait à Google une page qui\n'
         + "   n'existe pas.",
     );
-    const catFantome = catalogue(fantomes[0]);
-    if (Object.keys(catFantome).length > 0) {
-      erreurs.push(
-        `La locale \`${fantomes[0]}\` a un CATALOGUE (${Object.keys(catFantome).length} clés) `
-          + "et n'est pas servie : soit elle s'ouvre, soit elle s'enlève. Un entre-deux "
-          + 'se traduit à moitié et se périme entièrement.',
-      );
+    // Chaque locale fantôme, pas seulement la première : avec `es` et `hr`
+    // déclarées, ne lire que `fantomes[0]` laissait passer la seconde.
+    for (const fantome of fantomes) {
+      const catFantome = catalogue(fantome);
+      if (Object.keys(catFantome).length > 0) {
+        erreurs.push(
+          `La locale \`${fantome}\` a un CATALOGUE (${Object.keys(catFantome).length} clés) `
+            + "et n'est pas servie : soit elle s'ouvre, soit elle s'enlève. Un entre-deux "
+            + 'se traduit à moitié et se périme entièrement.',
+        );
+      }
     }
   }
 

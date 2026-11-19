@@ -1,0 +1,117 @@
+{
+  "page": {
+    "new": "Novo",
+    "newHabit": "Nova navika",
+    "errorTitle": "Nije moguće učitati vaše navike",
+    "errorHint": "Provjerite internetsku vezu, a zatim pokušajte ponovno.",
+    "subtitle": "Gradite dobre navike, dan po dan",
+    "emptyTitle": "Još nema navika",
+    "emptyBody": "Započnite izradom svoje prve navike",
+    "emptyCta": "Izradi naviku",
+    "viewTable": "Tablica",
+    "viewList": "Popis",
+    "viewGlobal": "Ukupno praćenje"
+  },
+  "card": {
+    "paused": "Pauzirano",
+    "pausedUntil": "Pauzirano do {{date}}",
+    "history": "Povijest",
+    "deleted": "Navika je izbrisana",
+    "detailedTracking": "Detaljno praćenje (30 dana)"
+  },
+  "table": {
+    "title": "Ploča praćenja",
+    "subtitle": "Pregled svih vaših navika",
+    "streak": "Niz",
+    "prevPeriod": "Prethodno razdoblje",
+    "nextPeriod": "Sljedeće razdoblje",
+    "sinceCreation": "Od početka",
+    "weekOf": "Tjedan od {{date}}",
+    "dayCell": "{{name}}, {{date}}",
+    "dayCellDone": "{{name}}, {{date}} (obavljeno)"
+  },
+  "modal": {
+    "newCategory": "Nova kategorija",
+    "namePlaceholder": "Naziv navike",
+    "descriptionPlaceholder": "npr. Čitati 30 minuta...",
+    "duration": "Trajanje",
+    "decreaseDuration": "Smanji trajanje",
+    "increaseDuration": "Povećaj trajanje",
+    "customizeColors": "Prilagodi boje",
+    "close": "Zatvori",
+    "create": "Izradi",
+    "edit": "Uredi",
+    "newHabit": "Nova navika",
+    "ok": "OK",
+    "save": "Spremi",
+    "createHabit": "Izradi naviku",
+    "editHabit": "Uredi naviku",
+    "details": "Detalji",
+    "nameLabel": "Naziv navike",
+    "legend": "Legenda",
+    "category": "Kategorija",
+    "customize": "Prilagodi",
+    "days": "Dani",
+    "everyDay": "Svaki dan",
+    "daysTitle": "Planirani dani",
+    "daysHint": "Dani u kojima se ova navika računa. Ostali dani ostaju neutralni za vaš niz.",
+    "daysAria": "Planirani dani: {{days}}"
+  },
+  "schedule": {
+    "notScheduled": "{{name}}, {{date}} (nije planirano)"
+  },
+  "actions": {
+    "more": "Više radnji",
+    "resume": "Nastavi praćenje",
+    "pauseHint": "Godišnji odmor, bolest… niz je sačuvan",
+    "pauseKeepsStreak": "Vaš niz ostaje netaknut dok ne nastavite",
+    "indefinite": "neograničeno",
+    "scheduled": "Navika „{{name}}“ je zakazana",
+    "taskCreated": "Zadatak „{{name}}“ je izrađen",
+    "resumed": "„{{name}}“ je nastavljena",
+    "paused": "„{{name}}“ je pauzirana",
+    "resumeHabit": "Nastavi naviku",
+    "pauseHabit": "Pauziraj"
+  },
+  "tracking": {
+    "averageCompletion": "Prosječno izvršenje po danu",
+    "allHabits": "Sve navike",
+    "prevPage": "Prethodna stranica",
+    "nextPage": "Sljedeća stranica",
+    "globalTracking": "Ukupno praćenje",
+    "trackingFor": "Praćenje: {{name}}"
+  },
+  "recapCta": "Sažetak",
+  "recapSheetTitle": "Tjedni sažetak",
+  "recapSheetSubtitle": "Slika spremna za dijeljenje. Na njoj se ne pojavljuje nijedan naziv zadatka ni navike.",
+  "recapTitle": "Moj tjedan",
+  "recapTasks": "dovršenih zadataka",
+  "recapStreak": "trenutni niz",
+  "recapStreakUnit": "dana",
+  "recapTime": "uloženo vrijeme",
+  "recapHabits": "praćenih navika",
+  "recapShare": "Podijeli",
+  "recapDownload": "Preuzmi",
+  "recapClose": "Zatvori",
+  "recapRendering": "Izrada slike…",
+  "recapEmpty": "Slika nije dostupna",
+  "recapAlt": "Tjedni sažetak: toplinska karta navika, dovršeni zadaci, trenutni niz",
+  "recapShareText": "Moj tjedan u Cosmu.",
+  "recapImageCta": "Isprobajte, bez registracije",
+  "actionsMenu": {
+    "createTask": "Izradi zadatak",
+    "scheduleInAgenda": "Zakaži u kalendaru",
+    "scheduleHint": "Događaj s prilagodljivim vremenom",
+    "createTaskHint": "Danas · {{minutes}} min",
+    "dueTodayDuration": "Rok danas · {{minutes}} min"
+  },
+  "globalTracking": {
+    "empty": "Izradite navike da biste vidjeli ukupno praćenje"
+  },
+  "period": {
+    "week": "Tjedan",
+    "month": "Mjesec",
+    "all": "Sve",
+    "weekOf": "Tjedan od {{date}}"
+  }
+}

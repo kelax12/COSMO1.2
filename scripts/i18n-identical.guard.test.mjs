@@ -43,14 +43,25 @@ afterEach(() => rmSync(dir, { recursive: true, force: true }));
  * Ecrit un couple de catalogues + une allowlist, joue le script reel, et rend
  * son code de sortie avec sa sortie complete.
  */
-function run({ fr, en, entrees = {}, categories = CATEGORIES }) {
+function run({ fr, en, entrees = {}, categories = CATEGORIES, hr, entreesHr }) {
   writeFileSync(join(dir, 'src/locales/fr/probe.json'), JSON.stringify(fr), 'utf8');
   writeFileSync(join(dir, 'src/locales/en/probe.json'), JSON.stringify(en), 'utf8');
   writeFileSync(
-    join(dir, 'scripts/i18n-identical-allowlist.json'),
+    join(dir, 'scripts/i18n-identical-allowlist.en.json'),
     JSON.stringify({ categories, entrees }),
     'utf8',
   );
+  if (hr) {
+    mkdirSync(join(dir, 'src/locales/hr'), { recursive: true });
+    writeFileSync(join(dir, 'src/locales/hr/probe.json'), JSON.stringify(hr), 'utf8');
+  }
+  if (entreesHr) {
+    writeFileSync(
+      join(dir, 'scripts/i18n-identical-allowlist.hr.json'),
+      JSON.stringify({ categories, entrees: entreesHr }),
+      'utf8',
+    );
+  }
   const r = spawnSync(process.execPath, [SCRIPT, '--list'], { cwd: dir, encoding: 'utf8' });
   if (r.error) throw r.error;
   return { code: r.status, out: r.stdout + r.stderr };
@@ -98,6 +109,49 @@ describe('i18n-identical : temoin de corpus', () => {
     });
     expect(code).toBe(0);
     expect(out).toContain('COUPLES COMPARABLES: 0');
+  });
+});
+
+describe('i18n-identical : chaque locale traduite, avec SA propre allowlist', () => {
+  // Rouge avant la generalisation : le script ne lisait que `en`, une valeur
+  // croate recopiee du francais passait sans un bruit.
+  it('compte une valeur `hr` restee en francais', () => {
+    const { code, out } = run({
+      fr: { titre: 'Rapport hebdomadaire' },
+      en: { titre: 'Weekly report' },
+      hr: { titre: 'Rapport hebdomadaire' },
+    });
+    expect(code).toBe(1);
+    expect(out).toContain('[en] COUPLES COMPARABLES: 1 | IDENTIQUES: 0');
+    expect(out).toContain('[hr] COUPLES COMPARABLES: 1 | IDENTIQUES: 1');
+    expect(out).toContain('probe.titre');
+  });
+
+  it('une dispense `en` ne couvre pas `hr`, et inversement', () => {
+    const base = {
+      fr: { marque: 'Cosmo' },
+      en: { marque: 'Cosmo' },
+      hr: { marque: 'Cosmo' },
+      entrees: { 'probe.marque': { categorie: 'nom-propre', valeur: 'Cosmo' } },
+    };
+    const sansHr = run(base);
+    expect(sansHr.code).toBe(1);
+    expect(sansHr.out).toContain('[hr] COUPLES COMPARABLES: 1 | IDENTIQUES: 1 (100.0%) | DÉCLARÉES LÉGITIMES: 0');
+
+    const avecHr = run({ ...base, entreesHr: base.entrees });
+    expect(avecHr.code).toBe(0);
+    expect(avecHr.out).toContain('[hr] COUPLES COMPARABLES: 1 | IDENTIQUES: 1 (100.0%) | DÉCLARÉES LÉGITIMES: 1');
+  });
+
+  it('une allowlist `hr` perimee echoue, en nommant sa locale', () => {
+    const { code, out } = run({
+      fr: { role: 'Manager' },
+      en: { role: 'Team lead' },
+      hr: { role: 'Voditelj' },
+      entreesHr: { 'probe.role': { categorie: 'mot-identique', valeur: 'Manager' } },
+    });
+    expect(code).toBe(1);
+    expect(out).toContain('[hr] probe.role');
   });
 });
 

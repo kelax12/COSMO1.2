@@ -1,0 +1,122 @@
+{
+  "terms": {
+    "seoTitle": "Opći uvjeti korištenja – Cosmo App",
+    "seoDescription": "Opći uvjeti korištenja aplikacije Cosmo za upravljanje zadacima, navikama i OKR-ovima. Besplatan pristup, pravila korištenja i odgovornosti.",
+    "title": "Opći uvjeti korištenja",
+    "updatedAt": "1. studenoga 2026. (verzija 2026-11-01)",
+    "s1": {
+      "title": "1. Predmet",
+      "p1": "Ovi Opći uvjeti korištenja (OUK) uređuju pristup aplikaciji **Cosmo** i njezino korištenje, platformi za upravljanje zadacima, navikama, ciljevima (OKR) i kalendarom dostupnoj na webu.",
+      "p2": "Stvaranjem računa ili korištenjem Cosma bezuvjetno prihvaćate ove OUK. Ako ne prihvaćate ove uvjete, ne smijete koristiti aplikaciju.",
+      "p3": "Cosmo izdaje **Axel Longatte**, samostalni poduzetnik (EI) koji posluje pod trgovačkim nazivom COSMO, upisan u francuski Nacionalni registar poduzeća pod brojem SIREN 131 769 317, sa sjedištem na adresi 138 avenue Victor Hugo, 75116 Pariz, dostupan na [contact@thecosmo.app](mailto:contact@thecosmo.app) ili na [07 54 36 29 17](tel:+33754362917) (prednost dajte e-pošti ili ostavite glasovnu poruku). PDV se ne obračunava, članak 293 B francuskog Općeg poreznog zakonika (CGI). U ovim uvjetima „Cosmo“ označava i uslugu i njezina izdavatelja. Njegovi potpuni podaci navedeni su u pravnoj obavijesti na stranici."
+    },
+    "s2": {
+      "title": "2. Pristup usluzi",
+      "intro": "Cosmo je dostupan:",
+      "li1": "U **demo načinu** bez registracije, s primjernim podacima",
+      "li2": "U **standardnom načinu (besplatno)** nakon stvaranja računa",
+      "li3": "U **prostoru za tvrtke**, s besplatnim paketom i, kad je ta ponuda otvorena za pretplatu, plaćenim paketima. Trenutačno nije: prostor za tvrtke potpuno je besplatan",
+      "outro": "Za registraciju su potrebni valjana e-adresa i lozinka. Odgovorni ste za povjerljivost svojih podataka za prijavu."
+    },
+    "s3": {
+      "title": "3. Korisnički račun",
+      "p1": "Svaki korisnik smije imati samo jedan račun. Obvezujete se pri registraciji dati točne podatke i redovito ih ažurirati.",
+      "p2": "U slučaju teške povrede ovih OUK, osobito nezakonite upotrebe ili ugrožavanja sigurnosti usluge, Cosmo može suspendirati ili izbrisati račun. Osim u hitnim slučajevima ili kad to zahtijeva zakon, o tome ste unaprijed obaviješteni e-poštom, uz razlog odluke, i možete je osporiti odgovorom na tu poruku. Prije brisanja možete preuzeti svoje podatke, osim ako se tome protivi zakon.",
+      "p3": "Cosmo je namijenjen osobama starijima od **15 godina**. Osobe mlađe od te dobi smiju ga koristiti samo uz suglasnost nositelja roditeljske skrbi."
+    },
+    "s4": {
+      "title": "4. Prihvatljiva upotreba",
+      "intro": "Korištenjem Cosma obvezujete se da nećete:",
+      "li1": "Koristiti aplikaciju u nezakonite ili prijevarne svrhe",
+      "li2": "Pokušavati ugroziti sigurnost aplikacije ili poslužitelja",
+      "li3": "Izdvajati, kopirati ili redistribuirati sadržaj aplikacije bez dopuštenja",
+      "li4": "Stvarati više računa radi zaobilaženja ograničenja",
+      "li5": "Dijeliti svoj račun s drugim osobama (osim predviđenih značajki suradnje)",
+      "li6": "Koristiti robote ili automatizirane skripte za interakciju s aplikacijom"
+    },
+    "s5": {
+      "title": "5. Plaćena pretplata (opći uvjeti prodaje)",
+      "intro": "Prostor za tvrtke u Cosmu nudi se u više paketa, uključujući besplatni paket. Plaćeni paketi razlikuju se po broju članova dopuštenih u organizaciji. Važeće cijene prikazane su u aplikaciji i na stranici s predstavljanjem. Članci 5. do 5.b čine opće uvjete prodaje Cosma.",
+      "li1": "**Sve su cijene iskazane s uključenim porezima**: prikazani iznos je iznos koji se naplaćuje. PDV se ne obračunava, članak 293 B CGI-ja, dok Cosmo koristi oslobođenje za male poduzetnike",
+      "li2": "Plaćanje se sigurno obrađuje putem usluge **Stripe**. Cosmo nikad nema pristup vašim bankovnim podacima",
+      "li3": "Pretplatu sklapa vlasnik organizacije, za cijelu organizaciju. Prije plaćanja izričito traži trenutačan pristup usluzi (članak 5.a) i prihvaća važeću verziju ovih uvjeta, čiji je datum naveden na vrhu. Cosmo čuva verziju koju je prihvatio svaki klijent",
+      "li4": "**Trajanje.** **Mjesečna** pretplata je bez obveze i može se otkazati u bilo kojem trenutku. **Godišnja** pretplata sklapa se na godinu dana i automatski se obnavlja pri svakom isteku. Pri svakoj naplati e-poštom dobivate račun s poveznicom za upravljanje pretplatom ili njezino otkazivanje",
+      "li4bis": "**Podsjetnik prije obnove.** Za godišnju pretplatu Cosmo vas posebnom e-porukom, oko **45 dana** prije isteka i najkasnije mjesec dana prije, obavještava o datumu obnove, njezinu iznosu i vašoj mogućnosti da je ne obnovite otkazivanjem na stranici Naplata najkasnije dan prije tog datuma (francuski Zakon o zaštiti potrošača, članak L215-1). Ako vam taj podsjetnik nije poslan, možete besplatno otkazati u bilo kojem trenutku od obnove, a dio preostalog razdoblja vraća vam se u roku od 30 dana",
+      "li5": "**Otkaz.** Možete otkazati **u bilo kojem trenutku**, u nekoliko klikova, na stranici Naplata u prostoru za tvrtke: gumb „Otkaži pretplatu“, a zatim jedna potvrda. Otkaz proizvodi učinak **na kraju već plaćenog razdoblja**; pristup se zadržava do tog datuma i **ne izvršava se povrat novca**. E-poštom dobivate potvrdu otkaza i datuma prestanka pristupa. Otkaz možete poništiti dok razdoblje ne završi",
+      "li5bis": "**Nema povrata novca nakon roka za odustanak**, ni za mjesečnu ni za godišnju pretplatu, **osim** u slučajevima koje propisuje zakon i koje ovi uvjeti ne isključuju: nesukladnost usluge (članak 9.), neposlani podsjetnik o obnovi (gore) te izmjena ugovora ili cijene (članak 11.). Ti se zahtjevi upućuju na [contact@thecosmo.app](mailto:contact@thecosmo.app)",
+      "li6": "Ako vaša pretplata prestane biti aktivna, vaša se organizacija vraća na besplatni paket. **Nijedan član nikad nije uklonjen**: obustavlja se samo mogućnost dodavanja novih"
+    },
+    "s5bis": {
+      "title": "5.a Pravo na odustanak",
+      "p1": "Ako se pretplaćujete kao **potrošač** ili kao **poslovni subjekt s najviše pet zaposlenika** za ugovor koji ne ulazi u područje vaše glavne djelatnosti (francuski Zakon o zaštiti potrošača, članak L221-3), imate rok od **četrnaest dana** od sklapanja ugovora, odnosno od prve plaćene pretplate, da odustanete bez navođenja razloga i bez plaćanja penala. Automatska obnova ne otvara novi rok.",
+      "p2": "**Trenutačan pristup i razmjerni iznos.** Usluga počinje odmah nakon plaćanja, na vaš izričit zahtjev: prije plaćanja označavate okvir „Tražim trenutačan pristup usluzi i prihvaćam da će mi u slučaju odustanka već iskorišteno razdoblje biti naplaćeno razmjerno“. Taj vam se zahtjev potvrđuje e-poštom zajedno s potvrdom narudžbe. U slučaju odustanka plaćate dio usluge pružen **do dana odustanka uključivo**, a ostatak vam se vraća: plaćeni iznos × preostali dani ÷ dani razdoblja, zaokruženo na niži cent (članak L221-25). Bez tog izričitog zahtjeva povrat je potpun. Ne zadržavaju se nikakvi troškovi odustanka.",
+      "p3": "**Kako odustati.** Tijekom četrnaest dana stranica Naplata u prostoru za tvrtke prikazuje gumb **„Ovdje odustanite od ugovora“**. Otvara unaprijed ispunjen sažetak (ime, e-adresa, pretplata, iznos povrata), koji potvrđujete gumbom „Potvrdi odustanak“. Odmah vam se e-poštom šalje potvrda primitka s datumom i vremenom odustanka. Prihvaća se i svaka druga nedvosmislena izjava, osobito e-poštom na [contact@thecosmo.app](mailto:contact@thecosmo.app) ili poštom na adresu navedenu u članku 1., primjerice pomoću obrasca u nastavku.",
+      "p3bis": "**Učinci.** Odustanak odmah okončava pretplatu. Povrat se izvršava **najkasnije četrnaest dana** od datuma odustanka, istim sredstvom plaćanja koje je korišteno pri pretplati, bez troškova za vas.",
+      "p4": "**Obrazac za odustanak** (prilog članku R221-1 francuskog Zakona o zaštiti potrošača; ispunite i vratite ovaj obrazac samo ako želite odustati od ugovora): „Za Axel Longatte, EI, trgovački naziv COSMO, 138 avenue Victor Hugo, 75116 Pariz, contact@thecosmo.app: Ja/Mi (*) ovime izjavljujem/izjavljujemo (*) da odustajem/odustajemo (*) od ugovora o pružanju sljedeće usluge: pretplata COSMO Entreprise. Naručeno dana (*): [datum]. Ime potrošača: [ime]. Adresa potrošača: [adresa]. Potpis potrošača (samo ako se ovaj obrazac dostavlja u papirnatom obliku). Datum: [datum]. (*) Prekrižite nepotrebno.“"
+    },
+    "s6": {
+      "title": "6. Vlasništvo nad podacima",
+      "p1": "Podaci koje stvarate u Cosmu (zadaci, navike, ciljevi, događaji) pripadaju vama. Cosmo im pristupa samo u okviru pružanja usluge.",
+      "p2": "Izvoz ili brisanje svojih podataka možete zatražiti u bilo kojem trenutku putem postavki ili obraćanjem na [contact@thecosmo.app](mailto:contact@thecosmo.app).",
+      "p3": "**Prostor za tvrtke.** Kad organizacija koristi prostor za tvrtke, ona određuje zašto se i kako u njemu obrađuju podaci njezinih članova (zadaci, projekti, komentari, statistika aktivnosti): ona je **voditelj obrade**, a Cosmo djeluje u njezino ime kao **izvršitelj obrade** u smislu članka 28. GDPR-a. Po toj osnovi Cosmo: obrađuje te podatke samo radi pružanja usluge, prema uputama koje organizacija daje njezinim korištenjem; jamči povjerljivost od strane osoba koje im pristupaju; primjenjuje sigurnosne mjere opisane u politici privatnosti; koristi samo ondje navedene podizvršitelje i obavještava organizaciju o svakoj promjeni, koju ona može odbiti otkazom; pomaže joj odgovarati na zahtjeve za ostvarivanje prava i ispunjavati sigurnosne obveze; bez nepotrebnog odgađanja obavještava je o svakoj povredi podataka koja se na nju odnosi; briše te podatke na kraju usluge, nakon što joj omogući njihov izvoz; i pruža joj informacije potrebne za dokazivanje poštovanja tih obveza, uključujući tijekom razumne revizije. Organizacija je i dalje dužna obavijestiti svoje članove i, prema potrebi, njihove predstavnike o tome kako koristi te podatke.",
+      "p4": "**Promjena usluge.** Svoje podatke možete izvesti u bilo kojem trenutku i bez troškova (Postavke, kartica Moji podaci), u otvorenom formatu (CSV), kako biste ih prenijeli u drugu uslugu. Učinite to prije brisanja računa: brisanje je konačno."
+    },
+    "s7": {
+      "title": "7. Intelektualno vlasništvo",
+      "p1": "Aplikacija Cosmo, njezin izvorni kôd, dizajn, žigovi i logotipi vlasništvo su njezina izdavatelja. Svako neovlašteno umnožavanje ili iskorištavanje zabranjeno je, uz iznimku licencija komponenata otvorenog koda na kojima se aplikacija temelji."
+    },
+    "s8": {
+      "title": "8. Dostupnost usluge",
+      "p1": "Cosmo nastoji osigurati najveću moguću dostupnost usluge. Ipak, može doći do prekida radi održavanja ili zbog više sile. Cosmo tada nastoji ograničiti njihovo trajanje i, kad su predvidivi, unaprijed vas o njima obavijestiti."
+    },
+    "s9": {
+      "title": "9. Ograničenje odgovornosti",
+      "p1": "Cosmo ima obvezu uloženog truda. Ne odgovara za štetu koja proizlazi iz korištenja usluge protivno ovim OUK, iz više sile ili iz nepredvidive i neotklonjive radnje treće osobe koja nije uključena u pružanje usluge.",
+      "p2": "**Prema poslovnom subjektu**, osim u slučaju krajnje nepažnje ili namjere, odgovornost Cosma ograničena je na izravnu štetu i na iznos plaćen tijekom posljednjih 12 mjeseci.",
+      "p3": "**Prema potrošaču** nijedna odredba ovih uvjeta ne ograničava niti isključuje odgovornost Cosma izvan onoga što zakon dopušta, a **zakonska jamstva sukladnosti i za skrivene nedostatke** vrijede u svim okolnostima.",
+      "p4": "**Zakonsko jamstvo sukladnosti digitalnog sadržaja i digitalnih usluga.** Ako ste potrošač, usluga mora biti u skladu s ugovorom tijekom cijelog razdoblja pružanja (francuski Zakon o zaštiti potrošača, članci L224-25-12 i dalje). U slučaju nesukladnosti, osobito nedostupnosti ili neusklađenosti s onim što je obećano, možete zahtijevati njezino usklađivanje ili, ako to nije moguće, sniženje cijene ili raskid ugovora, uz razmjeran povrat za razdoblje u kojem usluga nije bila sukladna. To se pravo ostvaruje bez troškova, pisanim putem na [contact@thecosmo.app](mailto:contact@thecosmo.app). Nijedna odredba ovih uvjeta ne isključuje ga niti ograničava."
+    },
+    "s10": {
+      "title": "10. Prestanak",
+      "p1": "Svoj račun možete izbrisati u bilo kojem trenutku u postavkama aplikacije. Brisanje dovodi do trajnog brisanja svih vaših podataka u roku od 90 dana. Brisanje pretplaćene organizacije odmah okončava njezinu pretplatu, bez povrata novca; tijekom roka za odustanak radije upotrijebite gumb za odustanak (članak 5.a).",
+      "p2": "Cosmo može ukinuti vaš pristup u slučaju povrede OUK, nakon obavijesti e-poštom, osim u hitnim slučajevima."
+    },
+    "s11": {
+      "title": "11. Izmjene OUK",
+      "p1": "Cosmo može mijenjati ove OUK, osobito radi praćenja razvoja usluge ili zakona. Svaka bitna izmjena i **svaka promjena cijene pretplate** priopćuje vam se e-poštom **najmanje mjesec dana prije stupanja na snagu**. Isključivo formalne izmjene stupaju na snagu objavom. Datum i verzija posljednjeg ažuriranja navedeni su na vrhu ovog dokumenta.",
+      "p2": "Ako odbijete izmjenu, možete otkazati pretplatu i izbrisati račun bez troškova u bilo kojem trenutku prije njezina stupanja na snagu, nakon što izvezete svoje podatke. Već plaćeno razdoblje ne vraća se. U protivnom se izmjena primjenjuje od tog datuma."
+    },
+    "s12": {
+      "title": "12. Mjerodavno pravo i nadležnost",
+      "p1": "Na ove OUK primjenjuje se francusko pravo.",
+      "p2": "**Ako ste potrošač**, zadržavate pravo pokrenuti postupak pred sudom mjesta u kojem boravite i ništa vas u ovim uvjetima ne lišava tog prava.",
+      "p3": "Za sporove između Cosma i poslovnog subjekta, nakon pokušaja mirnog rješenja, nadležni su sudovi u Parizu, u mjeri u kojoj to zakon dopušta."
+    },
+    "s12bis": {
+      "title": "12.a Spor i potrošačko posredovanje",
+      "p1": "U slučaju spora između Klijenta i poduzeća, oni će ga nastojati riješiti mirnim putem (Klijent će poslati pisani prigovor trgovcu na [contact@thecosmo.app](mailto:contact@thecosmo.app)).",
+      "p2": "Ako ne postignu mirni sporazum ili ako trgovac ne odgovori u razumnom roku od jednog (1) mjeseca, Klijent potrošač u smislu članka L.612-2 francuskog Zakona o zaštiti potrošača može, ako nesuglasje i dalje postoji, besplatno se obratiti nadležnom posredniku upisanom na popis posrednika koji vodi Povjerenstvo za ocjenu i nadzor potrošačkog posredovanja u skladu s člankom L.615-1 francuskog Zakona o zaštiti potrošača, a to je:",
+      "p3": "La Société Médiation Professionnelle, [www.mediateur-consommation-smp.fr](https://www.mediateur-consommation-smp.fr), Alteritae, 5 rue Salvaing, 12000 Rodez."
+    },
+    "s13": {
+      "title": "13. Jezik ugovora",
+      "p1": "Ovaj je dokument dostupan na francuskom i engleskom jeziku. **U slučaju neslaganja između verzija, prednost ima francuska verzija**: to je izvorna verzija, a na ugovor se primjenjuje francusko pravo. Ovaj hrvatski prijevod služi samo za informaciju."
+    },
+    "s14": {
+      "title": "14. Kontakt",
+      "p1": "Za sva pitanja u vezi s ovim OUK: [contact@thecosmo.app](mailto:contact@thecosmo.app)"
+    },
+    "s4bis": {
+      "title": "4.a Prijava nezakonitog sadržaja",
+      "p1": "Ako na Cosmu primijetite sadržaj koji smatrate nezakonitim, primjerice u zadatku ili komentaru koji je podijeljen s vama, prijavite ga na [contact@thecosmo.app](mailto:contact@thecosmo.app) i navedite: razloge zbog kojih ga smatrate nezakonitim, točno mjesto na kojem se nalazi (naziv zadatka, projekta ili organizacije), svoje ime i e-adresu te izjavu kojom potvrđujete da je prijava podnesena u dobroj vjeri.",
+      "p2": "Potvrđujemo primitak prijave, savjesno je i objektivno razmatramo te vas obavještavamo o donesenoj odluci. Ako ograničimo sadržaj ili račun, osoba na koju se to odnosi dobiva obrazloženje odluke i može je osporiti odgovorom na poruku kojom joj je priopćena.",
+      "p3": "Jedinstvena kontaktna točka predviđena člancima 11. i 12. Uredbe (EU) 2022/2065 o digitalnim uslugama, za tijela i za korisnike, jest [contact@thecosmo.app](mailto:contact@thecosmo.app), na francuskom ili engleskom jeziku."
+    },
+    "s5ter": {
+      "title": "5.b Poslovni klijenti",
+      "p1": "Odredbe ovog članka primjenjuju se na klijenta koji djeluje u svrhe povezane sa svojom poslovnom djelatnošću, osim u slučaju poslovnog subjekta s najviše pet zaposlenika iz članka 5.a. Pretplatom klijent izjavljuje da djeluje u poslovnom svojstvu i navodi broj zaposlenika svojeg poduzeća.",
+      "p2": "Poslovni klijent nema **pravo na odustanak**. **Nikakav povrat novca**, ni djelomičan, ne duguje se, osim ako Cosmo ne ispuni svoje obveze. Otkaz proizvodi učinak na kraju plaćenog razdoblja. Godišnja pretplata obvezuje klijenta na **dvanaest mjeseci** i automatski se obnavlja na isto razdoblje, osim ako se otkaže prije datuma obnove; podsjetnik poslan oko 45 dana prije tog datuma šalje se i njemu.",
+      "p3": "Odgovornost Cosma prema poslovnom klijentu ograničena je pod uvjetima iz članka 9."
+    }
+  }
+}

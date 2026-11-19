@@ -12,7 +12,7 @@ import { join } from 'node:path';
 import {
   slackText, slackEscape, txtMatches, webhookHostOf, ipIsPublic, addressesArePublic,
 } from '../supabase/functions/_shared/org-integrations';
-import { describeRow, digestSubject, digestTime } from '../supabase/functions/_shared/org-digest-text';
+import { describeRow, digestFooter, digestSeeAll, digestSubject, digestTime, toDigestLocale } from '../supabase/functions/_shared/org-digest-text';
 
 const read = (p: string) => readFileSync(join(process.cwd(), p), 'utf8');
 const dispatch = read('supabase/functions/org-webhook-dispatch/index.ts');
@@ -110,5 +110,39 @@ describe('org-digest : langue et fuseau de l organisation (mig. 195)', () => {
     expect(describeRow(row, 'en', 'America/New_York')).toMatch(/^A task was assigned to you: Devis \(Marie\) · 26 Sept?,? 08:30$/);
     expect(digestTime(row.created_at, 'fr', 'Mars/Olympus')).toBe(digestTime(row.created_at, 'fr', 'Europe/Paris'));
     expect(digestSubject('daily', 'Acme', 3, '', 'en')).toBe('Your Acme summary: 3 unread notification(s)');
+  });
+});
+
+describe('org-digest : croate (mig. 251), table par locale, repli sur le français', () => {
+  const row = { kind: 'task_assigned', task_name: 'Ponuda', project_name: null, actor_name: 'Ana', created_at: '2026-09-26T12:30:00Z' };
+
+  it('libellé, séparateur et heure en croate, dans le fuseau de l organisation', () => {
+    expect(describeRow(row, 'hr', 'Europe/Zagreb')).toMatch(/^Dodijeljen vam je zadatak: Ponuda \(Ana\) · 26\. ?ruj\S*,? 14:30$/);
+    expect(describeRow({ ...row, kind: 'inconnu', task_name: null }, 'hr', 'Europe/Zagreb')).toMatch(/^Obavijest \(Ana\) · /);
+    expect(digestSeeAll('hr')).toBe('Prikaži sve');
+    expect(digestFooter('hr')).toBe('Ovu poruku primate jer ste je odabrali u postavkama obavijesti organizacije.');
+  });
+
+  it('sujet quotidien accordé : one, few, other', () => {
+    expect(digestSubject('daily', 'Acme', 1, '', 'hr')).toBe('Vaš sažetak za Acme: 1 nepročitana obavijest');
+    expect(digestSubject('daily', 'Acme', 21, '', 'hr')).toBe('Vaš sažetak za Acme: 21 nepročitana obavijest');
+    expect(digestSubject('daily', 'Acme', 3, '', 'hr')).toBe('Vaš sažetak za Acme: 3 nepročitane obavijesti');
+    expect(digestSubject('daily', 'Acme', 24, '', 'hr')).toBe('Vaš sažetak za Acme: 24 nepročitane obavijesti');
+    expect(digestSubject('daily', 'Acme', 5, '', 'hr')).toBe('Vaš sažetak za Acme: 5 nepročitanih obavijesti');
+    expect(digestSubject('daily', 'Acme', 12, '', 'hr')).toBe('Vaš sažetak za Acme: 12 nepročitanih obavijesti');
+    expect(digestSubject('hourly', 'Acme', 1, 'Novi komentar', 'hr')).toBe('Acme: Novi komentar');
+  });
+
+  it('les sujets français et anglais sont inchangés', () => {
+    expect(digestSubject('daily', 'Acme', 3, '', 'fr')).toBe('Votre résumé Acme : 3 notification(s) non lue(s)');
+    expect(digestSubject('hourly', 'Acme', 1, 'X', 'fr')).toBe('Acme : X');
+    expect(digestSubject('hourly', 'Acme', 1, 'X', 'en')).toBe('Acme: X');
+  });
+
+  it('une langue inconnue ou absente retombe sur le français', () => {
+    expect(toDigestLocale('hr')).toBe('hr');
+    expect(toDigestLocale('en')).toBe('en');
+    expect(toDigestLocale('de')).toBe('fr');
+    expect(toDigestLocale(null)).toBe('fr');
   });
 });
