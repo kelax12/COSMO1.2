@@ -4,9 +4,7 @@ import { ArrowRight } from 'lucide-react';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useMagnetic } from '@/lib/hooks/use-magnetic';
 import { useT } from '@/i18n/useT';
-import { DELAI_ARRIMAGE_MS } from './HeroModuleDock';
-import HeroAppIcon from './HeroAppIcon';
-import { setModuleActif } from './hero-module-actif';
+import HeroIconScatter from './HeroIconScatter';
 import BelowFold from './BelowFold';
 import { usePrerenderHeroTakeover } from './use-prerender-hero-takeover';
 import HeroBackdrop from './HeroBackdrop';
@@ -122,8 +120,9 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
         {/* Grille, bruit, aurores et encre : cf. HeroBackdrop. Les deux
             couches que la timeline translate arrivent par ref. */}
         <HeroBackdrop gridRef={gridLayerRef} auroraRef={auroraLayerRef} />
+        <HeroIconScatter />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* La colonne de lecture est plus large que le texte n'en a besoin,
               et c'est le titre qui fixe sa largeur : `max-w-4xl` est la valeur
               a laquelle les deux phrases du H1 tiennent chacune sur UNE ligne,
@@ -145,11 +144,9 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
                   Ici le gradient et le transform sont portés par le MÊME
                   élément, ce qui est le cas que `bg-clip-text` supporte, et le
                   masque est une simple div en `overflow: hidden`. */}
-              {/* La tuile remplace la fenetre de 540 px : elle dit « une seule
-                  app, quatre modules » sans repousser la promesse sous la ligne
-                  de flottaison. Le meme retard d'entree que la fenetre d'avant,
-                  pour que les puces se posent avant elle. */}
-              <HeroAppIcon onModuleChange={setModuleActif}delaiEntree={DELAI_ARRIMAGE_MS + 120} />
+              {/* Place reservee a la tuile centrale de `HeroIconScatter` (OKR),
+                  qui vit dans la couche de fond : le titre ne remonte pas. */}
+              <div className="h-24 mb-8 sm:mb-10" aria-hidden="true" />
 
               {/* ── Typographie de la refonte centree ──
                   Le titre est la seule chose que le premier ecran doit reussir,

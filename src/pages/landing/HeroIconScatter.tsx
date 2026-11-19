@@ -1,0 +1,64 @@
+// Les cinq tuiles du hero perso : a l'ouverture, elles partent du centre (la
+// place de l'ancienne tuile tournante) et se posent l'une apres l'autre autour
+// du titre, dans l'ordre Taches, Agenda, OKR, Habitudes, Statistiques.
+//
+// - Placement SYMETRIQUE par rapport a l'axe vertical : les ecarts horizontaux
+//   sont exprimes en % de la largeur du hero, par paires opposees (+/-).
+// - ARRIERE-PLAN : la couche est en `z-0` sous le contenu (`relative z-10`), donc
+//   le titre, le sous-titre et les boutons passent par-dessus une tuile.
+// - Entree en CSS (`.hero-scatter`, `src/index.css`) : un seul `from`, l'etat
+//   final est l'etat par defaut, donc sous mouvement reduit les tuiles sont
+//   simplement posees. Aucune boucle : rien a mettre en pause (C-69).
+import React from 'react';
+import { BarChart3, CalendarDays, ListChecks, Repeat, Target, type LucideIcon } from 'lucide-react';
+
+interface Tuile {
+  cle: string;
+  Icone: LucideIcon;
+  degrade: string;
+  /** Ecart horizontal au centre, en % de la largeur du hero (paires opposees). */
+  x: number;
+  /** Position verticale du centre de la tuile, en px depuis le haut du hero. */
+  y: number;
+}
+
+// Ordre du tableau = ordre d'arrivee. Emplacements : 1 = gauche basse,
+// 2 = gauche haute, 3 = centre, 4 = droite haute, 5 = droite basse.
+const TUILES: Tuile[] = [
+  { cle: 'tasks', Icone: ListChecks, degrade: 'from-blue-500 to-blue-700', x: -35, y: 250 },
+  { cle: 'agenda', Icone: CalendarDays, degrade: 'from-violet-500 to-violet-700', x: -18, y: 110 },
+  { cle: 'okr', Icone: Target, degrade: 'from-fuchsia-500 to-fuchsia-700', x: 0, y: 90 },
+  { cle: 'habits', Icone: Repeat, degrade: 'from-cyan-500 to-cyan-700', x: 18, y: 110 },
+  { cle: 'stats', Icone: BarChart3, degrade: 'from-indigo-500 to-indigo-700', x: 35, y: 250 },
+];
+
+const DEPART = TUILES[2];
+const PREMIER_MS = 250;
+const ECART_MS = 220;
+
+const HeroIconScatter: React.FC = () => (
+  <div className="pointer-events-none absolute inset-0 z-0" aria-hidden="true">
+    {TUILES.map(({ cle, Icone, degrade, x, y }, i) => (
+      <div
+        key={cle}
+        className="hero-scatter absolute"
+        style={{
+          left: `calc(50% + ${x}%)`,
+          top: `${y}px`,
+          ['--d' as string]: `${PREMIER_MS + i * ECART_MS}ms`,
+          // Depart : la place de la tuile centrale.
+          ['--tx' as string]: `${DEPART.x - x}vw`,
+          ['--ty' as string]: `${DEPART.y - y}px`,
+        }}
+      >
+        <div
+          className={`flex h-16 w-16 sm:h-20 sm:w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-[1.4rem] bg-gradient-to-br ${degrade} ring-1 ring-slate-900/10`}
+        >
+          <Icone className="h-8 w-8 sm:h-9 sm:w-9 text-white" strokeWidth={1.75} />
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
+export default HeroIconScatter;

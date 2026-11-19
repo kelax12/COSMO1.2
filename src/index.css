@@ -1797,6 +1797,24 @@ a:focus-visible:not([class*="ring-"]):not([class*="focus-visible:"]),
   }
 }
 
+.hero-scatter {
+  animation: hero-scatter 800ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes hero-scatter {
+  from {
+    opacity: 0;
+    transform: translate3d(var(--tx, 0), var(--ty, 0), 0) scale(0.6);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-scatter {
+    animation: none;
+  }
+}
+
 .hero-rise {
   animation: hero-rise 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
   animation-delay: var(--d, 0ms);
