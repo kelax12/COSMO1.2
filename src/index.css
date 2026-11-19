@@ -1831,13 +1831,13 @@ a:focus-visible:not([class*="ring-"]):not([class*="focus-visible:"]),
     transform: translate3d(0, 0, 0) rotate(var(--r, 0deg));
   }
   25% {
-    transform: translate3d(0, -6px, 0) rotate(calc(var(--r, 0deg) + 5deg));
+    transform: translate3d(0, -12px, 0) rotate(calc(var(--r, 0deg) + 7deg));
   }
   50% {
-    transform: translate3d(0, -2px, 0) rotate(var(--r, 0deg));
+    transform: translate3d(0, -4px, 0) rotate(var(--r, 0deg));
   }
   75% {
-    transform: translate3d(0, -7px, 0) rotate(calc(var(--r, 0deg) - 5deg));
+    transform: translate3d(0, -14px, 0) rotate(calc(var(--r, 0deg) - 7deg));
   }
 }
 
