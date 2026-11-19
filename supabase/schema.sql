@@ -21906,8 +21906,8 @@ CREATE TRIGGER trg_sync_profile_on_update AFTER UPDATE ON auth.users FOR EACH RO
 
 CREATE POLICY "avatars_owner_delete" ON "storage"."objects" AS PERMISSIVE FOR DELETE TO authenticated USING (((bucket_id = 'avatars'::text) AND ((storage.foldername(name))[1] = (( SELECT auth.uid() AS uid))::text)));
 CREATE POLICY "avatars_owner_insert" ON "storage"."objects" AS PERMISSIVE FOR INSERT TO authenticated WITH CHECK (((bucket_id = 'avatars'::text) AND ((storage.foldername(name))[1] = (( SELECT auth.uid() AS uid))::text)));
+CREATE POLICY "avatars_owner_read" ON "storage"."objects" AS PERMISSIVE FOR SELECT TO authenticated USING (((bucket_id = 'avatars'::text) AND ((storage.foldername(name))[1] = (( SELECT auth.uid() AS uid))::text)));
 CREATE POLICY "avatars_owner_update" ON "storage"."objects" AS PERMISSIVE FOR UPDATE TO authenticated USING (((bucket_id = 'avatars'::text) AND ((storage.foldername(name))[1] = (( SELECT auth.uid() AS uid))::text))) WITH CHECK (((bucket_id = 'avatars'::text) AND ((storage.foldername(name))[1] = (( SELECT auth.uid() AS uid))::text)));
-CREATE POLICY "avatars_public_read" ON "storage"."objects" AS PERMISSIVE FOR SELECT TO public USING ((bucket_id = 'avatars'::text));
 
 -- storage.buckets (id, public, file_size_limit, allowed_mime_types)
 
