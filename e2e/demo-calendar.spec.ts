@@ -125,7 +125,23 @@ async function openFirstTeamTask(page: Page) {
 /** Menu d'actions de la première tâche : `…` desktop ou « Options » mobile. */
 async function openFirstRowMenu(page: Page): Promise<void> {
   const trigger = page
-    .getByRole('button', { name: /^(actions pour |options$)/i })
+    .getByRole('button', { name: /^(actions pour (?!la liste )|options$)/i })
+    .filter({ visible: true })
+    .first();
+  await trigger.click({ timeout: 10_000 });
+}
+
+/**
+ * Menu d'actions de la première tâche PERSONNELLE du tableau. Une tâche reçue
+ * (`sharedBy`) a ses dépendances en lecture seule : sans bouton d'ajout. Depuis
+ * que l'ordre à priorité égale suit `createdAt` (627de068), la première ligne
+ * de `/tasks` est une tâche reçue.
+ */
+async function openFirstOwnRowMenu(page: Page): Promise<void> {
+  const trigger = page
+    .locator('tbody tr')
+    .filter({ hasNot: page.getByText(/Jean Martin|Marie Dupont/) })
+    .getByRole('button', { name: /^actions pour (?!la liste )/i })
     .filter({ visible: true })
     .first();
   await trigger.click({ timeout: 10_000 });
@@ -158,7 +174,7 @@ test.describe('C-27 — le calendrier COSMO, surface par surface (démo)', () =>
     demoPage: page,
   }) => {
     await navTo(page, /to ?do|tâches|tasks/i, /\/tasks/);
-    await openFirstRowMenu(page);
+    await openFirstOwnRowMenu(page);
     await page.getByRole('menuitem', { name: /^modifier$/i }).click();
 
     const taskDialog = page.getByRole('dialog', { name: /modifier la tâche/i });
@@ -166,7 +182,7 @@ test.describe('C-27 — le calendrier COSMO, surface par surface (démo)', () =>
     // ⚠️ « Dépendances » est un ONGLET de la modale depuis b2d79318 (avant :
     // une section repliée). Sans ce clic, le bouton d'ajout n'est pas rendu.
     await taskDialog.getByRole('tab', { name: /^dépendances/i }).click();
-    await taskDialog.getByRole('button', { name: /ajouter une dépendance/i }).click();
+    await taskDialog.getByRole('button', { name: /ajouter une tâche bloquante/i }).click();
 
     const picker = page.getByRole('dialog', { name: /ajouter une dépendance/i });
     await expect(picker).toBeVisible({ timeout: 10_000 });
@@ -253,12 +269,12 @@ test.describe('C-27 — le calendrier COSMO, surface par surface (démo)', () =>
     // DatePicker COSMO, raccourcis compris. La popup « Planifier » qui servait
     // ici est supprimée (2026-10-29).
     await navTo(page, /to ?do|tâches|tasks/i, /\/tasks/);
-    await openFirstRowMenu(page);
+    await openFirstOwnRowMenu(page);
     await page.getByRole('menuitem', { name: /^modifier$/i }).click();
     const taskDialog = page.getByRole('dialog', { name: /modifier la tâche/i });
     await expect(taskDialog).toBeVisible({ timeout: 10_000 });
     await taskDialog.getByRole('tab', { name: /^dépendances/i }).click();
-    await taskDialog.getByRole('button', { name: /ajouter une dépendance/i }).click();
+    await taskDialog.getByRole('button', { name: /ajouter une tâche bloquante/i }).click();
     const picker = page.getByRole('dialog', { name: /ajouter une dépendance/i });
     await expect(picker).toBeVisible({ timeout: 10_000 });
     await picker.getByRole('button', { name: /^créer une tâche$/i }).click();

@@ -90,7 +90,7 @@ test.describe('Entreprise — correctifs de session (démo)', () => {
     await page.waitForURL(/\/entreprise\/tasks/);
     await expect(page.getByRole('columnheader', { name: 'PROJET', exact: true })).toBeVisible({ timeout: 15_000 });
 
-    const actionsBtn = page.getByRole('button', { name: /^Actions pour/ }).first();
+    const actionsBtn = page.getByRole('button', { name: /^Actions pour (?!la liste )/ }).first();
     const ariaLabel = await actionsBtn.getAttribute('aria-label');
     const taskName = ariaLabel!.replace(/^Actions pour /, '');
 

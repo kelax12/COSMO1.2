@@ -19,7 +19,7 @@ import { test, expect, navTo, openOrgSection } from './fixtures';
  * (« Replier ou déplier « P1 · Critique » »). `tbody tr` les comptait.
  */
 const taskRows = (page: Page) =>
-  page.locator('tbody tr').filter({ has: page.getByRole('button', { name: /^actions pour /i }) });
+  page.locator('tbody tr').filter({ has: page.getByRole('button', { name: /^actions pour (?!la liste )/i }) });
 
 test.describe('Entreprise — onglet Tâches (démo)', () => {
   test.describe.configure({ timeout: 120_000 });
@@ -141,7 +141,7 @@ test.describe('Entreprise — onglet Tâches (démo)', () => {
     // ⚠️ On suit la ligne de CETTE tâche, plus un nombre de `tbody tr` : les
     // en-têtes de groupe y entrent, et le tableau (virtualisé) se remplit par
     // étapes. Mesuré : 12 lignes au relevé, 18 après la suppression.
-    const actions = page.getByRole('button', { name: /^Actions pour / }).first();
+    const actions = page.getByRole('button', { name: /^Actions pour (?!la liste )/ }).first();
     const taskName = (await actions.getAttribute('aria-label'))!.replace(/^Actions pour /, '');
     const row = taskRows(page).filter({ has: page.getByRole('button', { name: `Actions pour ${taskName}`, exact: true }) });
     await expect(row).toHaveCount(1);

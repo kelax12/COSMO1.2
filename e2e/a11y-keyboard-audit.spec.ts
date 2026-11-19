@@ -361,7 +361,7 @@ async function ouvrirActionsAuClavier(page: Page) {
   await carte.focus();
   await markTrigger(page);
   await carte.press('Shift+F10');
-  const sheet = page.getByRole('dialog', { name: /^actions pour /i });
+  const sheet = page.getByRole('dialog', { name: /^actions pour (?!la liste )/i });
   await expect(sheet).toBeVisible({ timeout: 20_000 });
   return sheet;
 }
@@ -453,13 +453,16 @@ test('MESURE — ShareListSheet (partage d\'une liste manuelle)', async ({ demoP
   // un contrat, et une attente fixe redeviendrait fausse au premier réglage.
   await expect(page.locator('[data-sonner-toast]')).toHaveCount(0, { timeout: 30_000 });
 
-  // Les actions de la puce sont révélées au SURVOL sur desktop.
+  // Le menu « ⋯ » de la puce est révélé au SURVOL sur desktop ; « Partager » en est une entrée.
   await chip.hover();
-  const trigger = page.getByRole('button', { name: /^partager la liste$/i }).filter({ visible: true }).first();
+  const trigger = page.getByRole('button', { name: /^actions pour la liste liste a11y$/i }).filter({ visible: true }).first();
   await expect(trigger).toBeVisible({ timeout: 10_000 });
   await trigger.focus();
   await markTrigger(page);
   await trigger.click();
+  const partager = page.getByRole('menuitem', { name: /^partager$/i });
+  await partager.focus();
+  await page.keyboard.press('Enter');
 
   const sheet = page.getByRole('dialog', { name: /^partager la liste liste a11y$/i });
   await expect(sheet).toBeVisible({ timeout: 20_000 });
@@ -487,7 +490,7 @@ test('MESURE — ShareListSheet (partage d\'une liste manuelle)', async ({ demoP
 async function ouvrirAttribuerUnRole(page: Page): Promise<Locator> {
   await ouvrirEntreprise(page);
   await openOrgSection(page, /^membres/i);
-  const triggers = page.getByRole('button', { name: /^actions pour /i }).filter({ visible: true });
+  const triggers = page.getByRole('button', { name: /^actions pour (?!la liste )/i }).filter({ visible: true });
   await expect(triggers.first()).toBeVisible({ timeout: 20_000 });
   const item = page.locator('[data-guide-id="member-assign-role"]');
   // Le menu d'un membre ne porte « Attribuer un rôle » que dans la portée de

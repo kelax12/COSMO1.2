@@ -112,7 +112,7 @@ async function ouvrirDepuisMenuMembre(page: Page, item: (p: Page) => Locator): P
   await versSection(page, /^membres/i, /\/entreprise\/members/);
   // Un rôle fraîchement affiché ouvre sa définition d'elle-même, et le focus avec.
   await dismissFirstSightBubble(page);
-  const triggers = page.getByRole('button', { name: /^actions pour /i }).filter({ visible: true });
+  const triggers = page.getByRole('button', { name: /^actions pour (?!la liste )/i }).filter({ visible: true });
   await expect(triggers.first()).toBeVisible({ timeout: 30_000 });
   const n = await triggers.count();
   for (let i = 0; i < n; i++) {
@@ -201,7 +201,7 @@ test('MESURE · ProjectAddTaskPicker (« Ajouter une tâche… » d un projet)',
 
 test("MESURE · AssignEventDialog (« Assigner l'événement », tâches d'équipe)", async ({ demoPage: page }) => {
   await versSection(page, /^tâches/i, /\/entreprise\/tasks/);
-  const trigger = visible(page.getByRole('button', { name: /^actions pour /i }));
+  const trigger = visible(page.getByRole('button', { name: /^actions pour (?!la liste )/i }));
   await ouvrirAuClavier(page, trigger);
   const item = page.getByRole('menuitem', { name: /^assigner l.événement$/i });
   await item.focus();
@@ -375,7 +375,7 @@ async function rendreCollaboratives(page: Page): Promise<void> {
 async function ouvrirMenuLigne(page: Page, entree: RegExp): Promise<void> {
   // Vue « Liste » (par défaut) : c'est elle qui porte le menu « Actions pour … » d'une ligne.
   await openTasksPage(page);
-  await ouvrirAuClavier(page, visible(page.getByRole('button', { name: /^actions pour /i })));
+  await ouvrirAuClavier(page, visible(page.getByRole('button', { name: /^actions pour (?!la liste )/i })));
   const item = page.getByRole('menuitem', { name: entree });
   await item.focus();
   await page.keyboard.press('Enter');

@@ -42,7 +42,7 @@ async function openTaskModal(page: Page, name: string): Promise<void> {
     timeout: 15_000,
   });
   const trigger = page
-    .getByRole('button', { name: /^(actions pour |options$)/i })
+    .getByRole('button', { name: /^(actions pour (?!la liste )|options$)/i })
     .filter({ visible: true })
     .first();
   await trigger.click({ timeout: 15_000 });
@@ -63,7 +63,7 @@ function escapeRe(s: string): string {
 async function openDependencyPicker(page: Page): Promise<void> {
   const taskDialog = page.getByRole('dialog', { name: /modifier la tâche/i });
   await taskDialog.getByRole('tab', { name: /^dépendances/i }).click();
-  await taskDialog.getByRole('button', { name: /ajouter une dépendance/i }).click();
+  await taskDialog.getByRole('button', { name: /ajouter une tâche bloquante/i }).click();
   await expect(page.getByRole('dialog', { name: /ajouter une dépendance/i })).toBeVisible({
     timeout: 10_000,
   });
