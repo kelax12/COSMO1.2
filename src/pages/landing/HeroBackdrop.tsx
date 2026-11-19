@@ -60,49 +60,9 @@ const HeroBackdrop: React.FC<Props> = ({ gridRef, auroraRef }) => (
             dégradés d'alpha 0,16 posés sur du BLANC était sous le seuil de perception.
             Ne pas la remettre : la vie du fond, c'est la trace d'encre.
             Harnais de non-régression : `scripts/landing-motion-probe.mjs`. */}
-        <div ref={auroraRef} className="absolute inset-0">
-          {/* Nappe de teintes (remplace le halo conique tournant).
-              ⚠️ Chaque dégradé DOIT atteindre `transparent` avant le bord de
-              sa boîte : sans le flou qui adoucissait les arêtes, un stop
-              encore coloré à 100 % dessine un rectangle visible. C'est le
-              défaut qu'a montré la première capture après correctif. */}
-          <div
-            className="absolute left-1/2 top-[-18%] h-[58rem] w-[58rem] -translate-x-1/2 rounded-full"
-            style={{
-              background:
-                'radial-gradient(circle closest-side, rgba(99,102,241,0.04) 0%, rgba(99,102,241,0.035) 34%, rgba(139,92,246,0.028) 56%, rgba(217,70,239,0.018) 76%, rgba(34,211,238,0.01) 90%, transparent 100%)',
-            }}
-          />
-          {/* Aurores : alphas divisés par deux, deux fois. Réglés pour un fond
-              `slate-900`, ils lavaient la page blanche en pastel ; et le titre, seul
-              élément du premier écran, porte un dégradé bleu → fuchsia qui se détache
-              mal d'un fond teinté des mêmes couleurs.
-              ⚠️ Ce sont des teintes, pas un décor. Si le fond commence à se voir,
-              c'est qu'il est déjà trop fort. */}
-          <div
-            className="absolute -top-40 left-1/2 h-[60rem] w-[60rem] -translate-x-1/2 rounded-full"
-            style={{
-              background:
-                'radial-gradient(circle closest-side, rgba(37,99,235,0.045) 0%, rgba(37,99,235,0.04) 34%, rgba(37,99,235,0.032) 54%, rgba(139,92,246,0.022) 72%, rgba(217,70,239,0.012) 88%, transparent 100%)',
-            }}
-          />
-          <div
-            className="absolute -top-4 -left-40 h-[38rem] w-[38rem] rounded-full"
-            style={{ background: 'radial-gradient(circle closest-side, rgba(6,182,212,0.035) 0%, rgba(6,182,212,0.03) 40%, rgba(6,182,212,0.015) 70%, transparent 100%)' }}
-          />
-          <div
-            className="absolute top-8 -right-36 h-[38rem] w-[38rem] rounded-full"
-            style={{ background: 'radial-gradient(circle closest-side, rgba(217,70,239,0.032) 0%, rgba(217,70,239,0.028) 40%, rgba(217,70,239,0.015) 70%, transparent 100%)' }}
-          />
-        </div>
-        {/* Texture noise (SVG feTurbulence, ultra-léger) */}
-        <div
-          className="absolute inset-0 opacity-[0.035] mix-blend-multiply"
-          style={{
-            backgroundImage:
-              "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
-          }}
-        />
+        {/* Fond blanc pur : aurores et bruit retires (refonte 2026-11-19). Le
+            calque reste, vide, parce que le parallax GSAP le vise. */}
+        <div ref={auroraRef} className="absolute inset-0" />
         {/* Fondu vers la section suivante */}
         <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-white" />
 

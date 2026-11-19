@@ -15,12 +15,10 @@
   "hero": {
     "line1": "All your productivity,",
     "line2": "in a single app.",
-    "subtitle": "Tasks, habits, a calendar with time-blocking and the OKR method, connected in one tool built to move you forward. No friction.",
+    "subtitle": "Tasks, habits, calendar and OKRs, in one tool that moves you forward without friction.",
     "demoAria": "Try the free demo, without signing up",
     "demoCta": "Try the free demo",
     "signupCta": "Create a free account",
-    "reassurance": "Demo pre-filled with 100 tasks · nothing to install · ready in 1 click",
-    "scroll": "Discover",
     "modulesLabel": "The four modules brought together in COSMO",
     "modules": {
       "tasks": "Tasks",

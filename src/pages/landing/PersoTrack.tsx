@@ -168,24 +168,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
           );
         }
 
-        // Indicateur de scroll : le chevron rebondit en boucle, et tout
-        // l'indicateur s'efface dès que l'utilisateur commence à scroller.
-        heroLoops.push(
-          gsap.to('.scroll-cue-arrow', {
-            y: 8,
-            repeat: -1,
-            yoyo: true,
-            duration: 0.9,
-            ease: 'sine.inOut',
-          }),
-        );
-
         if (heroRef.current) pauseWhenOffscreen(heroRef.current, heroLoops);
-        gsap.to('.scroll-cue', {
-          autoAlpha: 0,
-          ease: 'none',
-          scrollTrigger: { trigger: heroRef.current, start: 'top top', end: '+=200', scrub: true },
-        });
 
         // W3 : parallax de fond scrubbé (grille lente, aurores moyennes). `ease: none`
         // obligatoire (scrub). Pas de parallax sur le bloc de texte : c'est la promesse
@@ -293,7 +276,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
               >
                 <span className="hero-line-mask">
                   <span
-                    className={`${reprise ? '' : 'hero-line-in '}block bg-gradient-to-r from-slate-900 via-slate-700 to-slate-900 bg-clip-text text-transparent`}
+                    className={`${reprise ? '' : 'hero-line-in '}block text-slate-900`}
                     style={{ ['--d' as string]: '80ms' }}
                   >
                     {t('hero.line1')}
@@ -301,7 +284,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
                 </span>
                 <span className="hero-line-mask">
                   <span
-                    className={`${reprise ? '' : 'hero-line-in '}block bg-gradient-to-r from-blue-600 via-violet-600 to-fuchsia-600 bg-clip-text text-transparent`}
+                    className={`${reprise ? '' : 'hero-line-in '}block text-slate-900`}
                     style={{ ['--d' as string]: '200ms' }}
                   >
                     {t('hero.line2')}
@@ -349,23 +332,8 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
                 </button>
               </div>
 
-              {/* Micro-preuve sous les CTAs */}
-              <p data-hero-fade className="mt-5 text-xs text-slate-500">
-                {t('hero.reassurance')}
-              </p>
             </div>
 
-          {/* Indicateur de scroll : chevron qui rebondit + fond au scroll */}
-          <div
-            data-hero-fade
-            className="scroll-cue mt-14 hidden lg:flex flex-col items-center gap-2 text-slate-500"
-            aria-hidden="true"
-          >
-            <span className="text-[10px] font-mono uppercase tracking-[0.3em]">{t('hero.scroll')}</span>
-            <svg className="scroll-cue-arrow h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-            </svg>
-          </div>
         </div>
       </section>
 

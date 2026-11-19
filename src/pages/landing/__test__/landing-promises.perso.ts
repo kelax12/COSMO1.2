@@ -48,14 +48,13 @@ export const PROMISES_PERSO: LandingPromise[] = [
     constat:
       'Le jeu de démo a été réduit à 10 tâches de base (commit 944015ba4) : il ouvre avec 12 tâches, 10 habitudes, 123 événements et 4 OKR (mesuré le 2026-10-24).',
     anchors: [
-      { key: 'hero.reassurance', includes: 'Démo pré-remplie de 100 tâches' },
       { key: 'cta.statsAria', includes: '100 tâches, 100 habitudes, 150 événements' },
       { key: 'why.demoVolume', includes: '100 tâches · 100 habitudes · 150 events' },
       { key: 'faq.a4', includes: '100 tâches, 100 habitudes, 150 événements agenda et 8 OKRs' },
     ],
     proofs: [{ file: 'src/modules/tasks/local.seed.ts', has: '// 10 tâches' }],
     figures: {
-      '100': ['hero.reassurance', 'cta.statsAria', 'why.demoVolume', 'faq.a4'],
+      '100': ['cta.statsAria', 'why.demoVolume', 'faq.a4'],
       '150': ['cta.statsAria', 'why.demoVolume', 'faq.a4'],
       '8': ['faq.a4'],
     },
@@ -103,11 +102,10 @@ export const PROMISES_PERSO: LandingPromise[] = [
     claim: 'Démo prête en 1 clic ; réorganisation d’un rattachement en 1 clic.',
     reason: 'Nombre de gestes, non mesurable par le code.',
     anchors: [
-      { key: 'hero.reassurance', includes: 'prêt en 1 clic' },
       { key: 'enterprise.pyramid.b4t', includes: 'Une réorganisation en 1 clic' },
     ],
     proofs: [],
-    figures: { '1': ['hero.reassurance', 'enterprise.pyramid.b4t'] },
+    figures: { '1': ['enterprise.pyramid.b4t'] },
   },
   {
     id: 'google-oauth',
