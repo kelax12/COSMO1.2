@@ -14,7 +14,7 @@
 | Workflows GitHub | **36** | fichiers de `.github/workflows/` |
 | dont planifiés | **24** | workflows portant un `schedule:` |
 | Fichiers de `scripts/` | **165** | fichiers suivis (budget d outillage, `scripts/outillage.reference.json`) |
-| Lignes de `scripts/` | **40988** | lignes des fichiers suivis de `scripts/` |
+| Lignes de `scripts/` | **40984** | lignes des fichiers suivis de `scripts/` |
 | Tests de garde | **113** | fichiers `*.guard.test.*` du dépôt |
 | Modules applicatifs | **23** | dossiers de `src/modules/` |
 | Namespaces i18n | **34** | fichiers de `src/locales/fr/` |
@@ -23,9 +23,9 @@
 | Fonctions Vercel | **1** | fichiers `.ts` de `api/` (hors tests et `_*`) |
 | `CLAUDE.md` | **20** | racine et dossiers, hors `node_modules`, `.claude`, `.worktrees` |
 | Docs vivantes de `docs/` | **37** | fichiers `.md` de `docs/`, hors `archive/` et `adr/` |
-| Tables du schéma `public` | **92** | `CREATE TABLE public.` dans `supabase/schema.sql` |
-| dont sous RLS | **92** | `ENABLE ROW LEVEL SECURITY` dans `supabase/schema.sql` |
-| Policies RLS | **208** | `CREATE POLICY` dans `supabase/schema.sql` |
+| Tables du schéma `public` | **93** | `CREATE TABLE public.` dans `supabase/schema.sql` |
+| dont sous RLS | **93** | `ENABLE ROW LEVEL SECURITY` dans `supabase/schema.sql` |
+| Policies RLS | **212** | `CREATE POLICY` dans `supabase/schema.sql` |
 | Fonctions SQL de `public` | **253** | `CREATE FUNCTION public.` dans `supabase/schema.sql` |
 
 ## Se mesurent, ne s'écrivent pas

@@ -123,13 +123,9 @@ const DECISIONS = {
   // 2026-10-22 : la ligne ne sert qu'à ouvrir l'effacement 30 jours plus tard.
   // Le compte parti, elle n'a plus d'objet ; aucune adresse n'y est stockée.
   account_inactivity_notices: { decision: 'cascade' },
-  // Jours cochés des habitudes (mig. 248, DAT-02), décidé le 2026-11-09 : la
-  // ligne n'a pas d'existence sans son habitude ni sans son compte. `user_id`
-  // cascade vers `auth.users`, ET la clé composée `(habit_id, user_id)` part
-  // avec l'habitude, que `delete-account` purge explicitement.
+  // Jours cochés (mig. 248, décidé le 2026-11-09) et tâche du jour (mig. 265, 2026-11-19) : rien sans
+  // leur habitude ni leur compte (cascade vers `auth.users` et `habits`, que `delete-account` purge).
   habit_completions: { decision: 'cascade' },
-  // Option « tâche créée chaque jour prévu » (mig. 265), décidé le 2026-11-19 :
-  // même forme que `habit_completions`, elle part avec l'habitude et le compte.
   habit_auto_tasks: { decision: 'cascade' },
 
   // ── Conservées, par obligation légale ───────────────────────────

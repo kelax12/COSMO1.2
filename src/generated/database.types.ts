@@ -344,6 +344,26 @@ isOneToOne: false
                   Relationships: [
 
                   ]
+                },"habit_auto_tasks": {
+                  Row: {
+                    "category": string | null,"created_at": string,"habit_id": string,"last_day": string | null,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "category"?: string | null,"created_at"?: string,"habit_id": string,"last_day"?: string | null,"user_id": string
+                  }
+                  Update: {
+                    "category"?: string | null,"created_at"?: string,"habit_id"?: string,"last_day"?: string | null,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "habit_auto_tasks_habit_fkey"
+      columns: ["habit_id","user_id"]
+isOneToOne: true
+      referencedRelation: "habits"
+      referencedColumns: ["id","user_id"]
+    }
+                  ]
                 },"habit_completions": {
                   Row: {
                     "created_at": string,"day": string,"habit_id": string,"user_id": string

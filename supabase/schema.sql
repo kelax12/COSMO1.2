@@ -10566,6 +10566,27 @@ COMMENT ON COLUMN public.friend_requests.sender_id IS 'Expéditeur de la demande
 
 
 --
+-- Name: habit_auto_tasks; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.habit_auto_tasks (
+    habit_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    category text,
+    last_day date,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT habit_auto_tasks_category_check CHECK (((category IS NULL) OR (char_length(category) <= 100)))
+);
+
+
+--
+-- Name: TABLE habit_auto_tasks; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.habit_auto_tasks IS 'Mig. 265 : une ligne = l''habitude cree une tache chaque jour prevu. last_day = dernier jour reserve (idempotence, UPDATE conditionnel client).';
+
+
+--
 -- Name: habit_completions; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -12153,6 +12174,14 @@ ALTER TABLE ONLY public.friends
 
 
 --
+-- Name: habit_auto_tasks habit_auto_tasks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.habit_auto_tasks
+    ADD CONSTRAINT habit_auto_tasks_pkey PRIMARY KEY (habit_id, user_id);
+
+
+--
 -- Name: habit_completions habit_completions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -12875,6 +12904,13 @@ CREATE INDEX cron_runs_job_started_idx ON public.cron_runs USING btree (job, sta
 --
 
 CREATE INDEX cron_runs_pending_idx ON public.cron_runs USING btree (request_id) WHERE (status = 'started'::text);
+
+
+--
+-- Name: habit_auto_tasks_user_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX habit_auto_tasks_user_idx ON public.habit_auto_tasks USING btree (user_id);
 
 
 --
@@ -14684,6 +14720,13 @@ CREATE TRIGGER trg_freeze_team_membership_identity BEFORE UPDATE ON public.org_t
 
 
 --
+-- Name: habit_auto_tasks trg_habit_auto_tasks_user_id_immutable; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_habit_auto_tasks_user_id_immutable BEFORE UPDATE ON public.habit_auto_tasks FOR EACH ROW EXECUTE FUNCTION public.prevent_user_id_change();
+
+
+--
 -- Name: habits trg_habit_completions_mirror; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -15332,6 +15375,22 @@ ALTER TABLE ONLY public.friends
 
 ALTER TABLE ONLY public.friends
     ADD CONSTRAINT friends_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: habit_auto_tasks habit_auto_tasks_habit_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.habit_auto_tasks
+    ADD CONSTRAINT habit_auto_tasks_habit_fkey FOREIGN KEY (habit_id, user_id) REFERENCES public.habits(id, user_id) ON DELETE CASCADE;
+
+
+--
+-- Name: habit_auto_tasks habit_auto_tasks_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.habit_auto_tasks
+    ADD CONSTRAINT habit_auto_tasks_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 
 
 --
@@ -17152,6 +17211,40 @@ CREATE POLICY friend_requests_update_sender_or_receiver ON public.friend_request
 --
 
 ALTER TABLE public.friends ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: habit_auto_tasks; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.habit_auto_tasks ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: habit_auto_tasks habit_auto_tasks_delete; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY habit_auto_tasks_delete ON public.habit_auto_tasks FOR DELETE TO authenticated USING ((( SELECT auth.uid() AS uid) = user_id));
+
+
+--
+-- Name: habit_auto_tasks habit_auto_tasks_insert; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY habit_auto_tasks_insert ON public.habit_auto_tasks FOR INSERT TO authenticated WITH CHECK ((( SELECT auth.uid() AS uid) = user_id));
+
+
+--
+-- Name: habit_auto_tasks habit_auto_tasks_select; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY habit_auto_tasks_select ON public.habit_auto_tasks FOR SELECT TO authenticated USING ((( SELECT auth.uid() AS uid) = user_id));
+
+
+--
+-- Name: habit_auto_tasks habit_auto_tasks_update; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY habit_auto_tasks_update ON public.habit_auto_tasks FOR UPDATE TO authenticated USING ((( SELECT auth.uid() AS uid) = user_id)) WITH CHECK ((( SELECT auth.uid() AS uid) = user_id));
+
 
 --
 -- Name: habit_completions; Type: ROW SECURITY; Schema: public; Owner: -
@@ -21236,6 +21329,14 @@ GRANT ALL ON TABLE public.events TO service_role;
 GRANT ALL ON TABLE public.friend_requests TO anon;
 GRANT ALL ON TABLE public.friend_requests TO authenticated;
 GRANT ALL ON TABLE public.friend_requests TO service_role;
+
+
+--
+-- Name: TABLE habit_auto_tasks; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON TABLE public.habit_auto_tasks TO service_role;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.habit_auto_tasks TO authenticated;
 
 
 --
