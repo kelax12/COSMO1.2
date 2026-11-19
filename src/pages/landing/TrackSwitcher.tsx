@@ -49,7 +49,7 @@ const TrackSwitcher: React.FC<TrackSwitcherProps> = ({ track, onSelect, classNam
         className={`pointer-events-none absolute inset-y-0.5 rounded-[10px] transition-[left,background-color,box-shadow] duration-400 ease-[cubic-bezier(0.22,1,0.36,1)] ${
           isEnterprise
             ? 'bg-cyan-400/15 shadow-[0_0_0_1px_rgba(34,211,238,0.35),0_0_18px_-4px_rgba(34,211,238,0.7)]'
-            : 'bg-blue-600/10 shadow-[0_0_0_1px_rgba(37,99,235,0.35),0_0_18px_-6px_rgba(37,99,235,0.6)]'
+            : 'bg-blue-600/10 shadow-[0_0_0_1px_rgba(37,99,235,0.35)]'
         }`}
         style={{ left: `calc(${activeIndex * 50}% + 2px)`, width: 'calc(50% - 4px)' }}
       />

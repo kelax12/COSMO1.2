@@ -271,7 +271,7 @@ const LandingPage: React.FC = () => {
             scrolled
               ? isEnterprise
                 ? 'bg-slate-950/75 backdrop-blur-2xl border border-white/10 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.7)]'
-                : 'bg-white/85 backdrop-blur-2xl border border-slate-900/10 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.35)]'
+                : 'bg-white/85 backdrop-blur-2xl border border-slate-900/10'
               : isEnterprise
                 ? 'bg-white/[0.03] backdrop-blur-md border border-white/[0.06]'
                 : 'bg-white/60 backdrop-blur-md border border-slate-900/[0.06]'
@@ -292,7 +292,7 @@ const LandingPage: React.FC = () => {
               onClick={() => window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' })}
               aria-label={t('nav.backToTop')}
             >
-              <div className="w-9 h-9 overflow-hidden rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[10deg] motion-reduce:transition-none">
+              <div className="w-9 h-9 overflow-hidden rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[10deg] motion-reduce:transition-none">
                 <img src="/logo-128.webp" alt="Logo Cosmo" width="36" height="36" className="w-full h-full object-contain bg-white/10" />
               </div>
               <span
@@ -359,10 +359,10 @@ const LandingPage: React.FC = () => {
                 className={`group relative inline-flex items-center justify-center overflow-hidden px-4 py-2 min-h-touch xl:px-5 rounded-xl font-semibold transition-[box-shadow,color,background-color] duration-300 text-sm whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
                   isEnterprise
                     ? 'bg-cyan-400 text-[#04141A] shadow-lg shadow-cyan-500/25 hover:bg-cyan-300 hover:shadow-cyan-400/50 focus-visible:ring-cyan-300 focus-visible:ring-offset-slate-900'
-                    : 'bg-blue-600 text-white shadow-lg shadow-blue-600/25 hover:bg-blue-700 hover:shadow-blue-600/40 focus-visible:ring-blue-500 focus-visible:ring-offset-white'
+                    : 'bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-500 focus-visible:ring-offset-white'
                 }`}
               >
-                <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700" aria-hidden="true" />
+                {isEnterprise && <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700" aria-hidden="true" />}
                 {/* Les deux libellés occupent la MÊME cellule de grille : la
                     largeur est réservée par le plus long, la barre ne saute
                     pas à la bascule. Le fondu ne porte que sur l'opacité. */}

@@ -69,7 +69,7 @@ function extraire(track) {
   const aMasquer = [];
   if (track === 'perso') {
     const tuile = hero.querySelector('button[aria-pressed], button[aria-label*="ause"], button[aria-label*="ecture"]');
-    aMasquer.push(tuile?.parentElement, ...hero.querySelectorAll('.hero-chip, .hero-link, .hero-dock-settle, .hero-trace-h, .hero-trace-v'));
+    aMasquer.push(tuile?.parentElement, ...hero.querySelectorAll('.hero-chip, .hero-link, .hero-dock-settle'));
   }
   // Entreprise : RIEN de masqué. La pile garde son image : même URL que celle
   // de React (aucun octet perdu), et le plus grand élément du hero. Masquée,

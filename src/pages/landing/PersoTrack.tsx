@@ -4,7 +4,6 @@ import { ArrowRight } from 'lucide-react';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useMagnetic } from '@/lib/hooks/use-magnetic';
 import { useT } from '@/i18n/useT';
-import { pauseWhenOffscreen } from './pause-offscreen';
 import { DELAI_ARRIMAGE_MS } from './HeroModuleDock';
 import HeroAppIcon from './HeroAppIcon';
 import { setModuleActif } from './hero-module-actif';
@@ -72,9 +71,6 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
       const mm = gsap.matchMedia();
 
       mm.add('(prefers-reduced-motion: no-preference)', () => {
-        // Boucles infinies du hero, mises en pause dès que le hero sort de
-        // l'écran (perf : zéro tick offscreen).
-        const heroLoops: gsap.core.Tween[] = [];
         // W1 : le reveal du H1 est en CSS (masques par ligne, cf. `src/index.css`).
         // Il vivait ici en SplitText, trois mécanismes fragiles et une entrée qui ne
         // pouvait jouer qu'une fois GSAP chargé, donc après le fallback de page.
@@ -88,75 +84,6 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
           stagger: 0.12,
           delay: 0.5,
         });
-
-        // Vie permanente du fond, version ENCRE.
-        //
-        // Sur une page BLANCHE, un mouvement ne peut pas se faire par la lumière :
-        // des orbes floutés ou des faisceaux translucides ne rendent rien de visible
-        // et coûtent toujours (un flou se rastérise à chaque frame). Un trait sombre
-        // se voit. La version sombre est archivée dans `docs/archive/`.
-        //
-        // Les NOEUDS respirent sur place (opacité + échelle) au lieu de dériver : un
-        // point sombre qui glisse hors de la grille se lit comme un défaut
-        // d'alignement.
-        gsap.utils.toArray<HTMLElement>('.hero-node').forEach((node, i) => {
-          heroLoops.push(
-            gsap.to(node, {
-              opacity: 0.9,
-              scale: 1.5,
-              duration: 1.6,
-              ease: 'sine.inOut',
-              repeat: -1,
-              yoyo: true,
-              delay: i * 1.3,
-            }),
-          );
-        });
-        // Les TRACES gardent la trajectoire des anciens faisceaux — elle est
-        // éprouvée, et mise en pause hors écran. Seule leur matière change :
-        // le dégradé va de transparent à l'encre, donc l'entrée et la sortie
-        // restent portées par le dégradé lui-même, sans tween d'opacité.
-        const traceH = heroRef.current?.querySelector<HTMLElement>('.hero-trace-h');
-        if (traceH) {
-          heroLoops.push(
-            gsap.fromTo(
-              traceH,
-              { x: -220 },
-              {
-                x: () => (heroRef.current?.offsetWidth ?? window.innerWidth) + 220,
-                duration: 5.5,
-                ease: 'power1.inOut',
-                repeat: -1,
-                repeatDelay: 1.8,
-                onRepeat: () => {
-                  traceH.style.top = `${gsap.utils.random(14, 62)}%`;
-                },
-              },
-            ),
-          );
-        }
-        const traceV = heroRef.current?.querySelector<HTMLElement>('.hero-trace-v');
-        if (traceV) {
-          heroLoops.push(
-            gsap.fromTo(
-              traceV,
-              { y: -220 },
-              {
-                y: () => (heroRef.current?.offsetHeight ?? window.innerHeight) + 220,
-                duration: 6.5,
-                ease: 'power1.inOut',
-                repeat: -1,
-                repeatDelay: 2.6,
-                delay: 2.2,
-                onRepeat: () => {
-                  traceV.style.left = `${gsap.utils.random(20, 82)}%`;
-                },
-              },
-            ),
-          );
-        }
-
-        if (heroRef.current) pauseWhenOffscreen(heroRef.current, heroLoops);
 
         // W3 : parallax de fond scrubbé (grille lente, aurores moyennes). `ease: none`
         // obligatoire (scrub). Pas de parallax sur le bloc de texte : c'est la promesse
