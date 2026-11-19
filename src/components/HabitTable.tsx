@@ -1,5 +1,5 @@
 import React, { useState, useRef, useLayoutEffect } from 'react';
-import { Flame, CheckCircle, Circle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Flame, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useHabits, useToggleHabitCompletion, type Habit } from '@/modules/habits';
 import { useT } from '@/i18n/useT';
 import { habitStreak } from '@/modules/habits/streak';
@@ -479,7 +479,7 @@ const HabitTable: React.FC = () => {
                           data-unscheduled={cell.unscheduled || undefined}
                           className="w-11 h-11 md:w-8 md:h-8 rounded-lg border-1.5 md:border-2 transition-all flex items-center justify-center mx-auto"
                           style={cell.style}>
-                          {cell.done ? <CheckCircle size={14} /> : day.isFuture ? <Circle size={12} className="opacity-10" /> : <Circle size={14} className="opacity-30 hover:opacity-100" />}
+                          {cell.done ? <CheckCircle size={14} /> : <span className={`text-xs font-medium text-slate-600 dark:text-slate-400${day.isFuture ? ' opacity-40' : ''}`}>{day.dayNumber}</span>}
                         </button>
                       </td>);
                     })}
