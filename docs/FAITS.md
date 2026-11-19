@@ -9,7 +9,7 @@
 | Fait | Valeur | Source |
 |---|---|---|
 | Edge Functions déployables | **17** | dossiers de `supabase/functions/` portant un `index.ts` (hors `_shared`) |
-| Migrations SQL | **234** | fichiers `NNN_*.sql` de `supabase/migration/` |
+| Migrations SQL | **235** | fichiers `NNN_*.sql` de `supabase/migration/` |
 | Dernière migration | **263** | plus grand préfixe numérique de `supabase/migration/` |
 | Workflows GitHub | **36** | fichiers de `.github/workflows/` |
 | dont planifiés | **24** | workflows portant un `schedule:` |
@@ -26,7 +26,7 @@
 | Tables du schéma `public` | **92** | `CREATE TABLE public.` dans `supabase/schema.sql` |
 | dont sous RLS | **92** | `ENABLE ROW LEVEL SECURITY` dans `supabase/schema.sql` |
 | Policies RLS | **208** | `CREATE POLICY` dans `supabase/schema.sql` |
-| Fonctions SQL de `public` | **252** | `CREATE FUNCTION public.` dans `supabase/schema.sql` |
+| Fonctions SQL de `public` | **253** | `CREATE FUNCTION public.` dans `supabase/schema.sql` |
 
 ## Se mesurent, ne s'écrivent pas
 
