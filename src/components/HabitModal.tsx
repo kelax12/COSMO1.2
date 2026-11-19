@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Check, ChevronRight } from 'lucide-react';
+import { X, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useInvalidShake } from '@/hooks/use-invalid-shake';
@@ -12,7 +12,6 @@ import { useCreateHabit, useUpdateHabit, Habit } from '@/modules/habits';
 import { habitCreateInput, habitUpdates, initialHabitForm, type HabitFormData } from '@/components/habits/habit-form';
 import HabitDaysPicker from '@/components/habits/HabitDaysPicker';
 import ColorSettingsModal from './ColorSettingsModal';
-import AddCategoryButton from '@/components/AddCategoryButton';
 import CategoryTreeSelect from '@/components/category/CategoryTreeSelect';
 import ConfirmDiscardDialog from './ConfirmDiscardDialog';
 import { Button } from '@/components/ui/button';
@@ -48,15 +47,15 @@ const CategoryDaysRow: React.FC<{
   days: number[];
   onDays: (days: number[]) => void;
 }> = ({ categoryId, categories, onCategory, days, onDays }) => (
-  <div className="flex items-center gap-2">
-    <div className="flex-1 min-w-0">
+  <div className="grid grid-cols-3 gap-4 items-center">
+    <div className="col-span-2 min-w-0">
       <CategoryTreeSelect
         value={categoryId}
         categories={categories}
         onChange={(id) => onCategory(categories.find((c) => c.id === id))}
       />
     </div>
-    <div className="shrink-0 max-w-[45%]">
+    <div className="min-w-0">
       <HabitDaysPicker value={days} onChange={onDays} />
     </div>
   </div>
@@ -166,7 +165,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
               ref={sheetRef}
               {...sheetDragProps}
               {...sheetMotion}
-              className="w-full sm:max-w-[35.2rem] sm:rounded-2xl rounded-t-[28px] shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl flex flex-col max-h-[88vh]"
+              className="w-full sm:max-w-[38.016rem] sm:rounded-2xl rounded-t-[28px] shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl flex flex-col max-h-[88vh]"
               style={{
                 backgroundColor: 'rgb(var(--color-surface))',
                 paddingBottom: isMobile ? 0 : 'env(safe-area-inset-bottom)',
@@ -370,7 +369,6 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                         <span className="block text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                           {t('modal.category')}
                         </span>
-                        <AddCategoryButton onClick={() => setIsColorSettingsOpen(true)} />
                       </div>
                       <CategoryDaysRow
                         categoryId={selectedCategory?.id ?? ''}
@@ -399,7 +397,6 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                       size="lg"
                       className="bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))] !border-0 gap-2 sm:w-auto"
                     >
-                      <Check size={16} />
                       {isEditing ? t('modal.save') : t('modal.createHabit')}
                     </Button>
                   </div>
