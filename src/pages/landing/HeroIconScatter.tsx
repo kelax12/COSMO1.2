@@ -20,16 +20,18 @@ interface Tuile {
   x: number;
   /** Position verticale du centre de la tuile, en px depuis le haut du hero. */
   y: number;
+  /** Inclinaison en degres : chaque tuile penche vers le point entre les deux CTA. */
+  r: number;
 }
 
 // Ordre du tableau = ordre d'arrivee. Emplacements : 1 = gauche basse,
 // 2 = gauche haute, 3 = centre, 4 = droite haute, 5 = droite basse.
 const TUILES: Tuile[] = [
-  { cle: 'tasks', Icone: ListChecks, degrade: 'from-blue-500 to-blue-700', x: -35, y: 250 },
-  { cle: 'agenda', Icone: CalendarDays, degrade: 'from-violet-500 to-violet-700', x: -18, y: 110 },
-  { cle: 'okr', Icone: Target, degrade: 'from-fuchsia-500 to-fuchsia-700', x: 0, y: 90 },
-  { cle: 'habits', Icone: Repeat, degrade: 'from-cyan-500 to-cyan-700', x: 18, y: 110 },
-  { cle: 'stats', Icone: BarChart3, degrade: 'from-indigo-500 to-indigo-700', x: 35, y: 250 },
+  { cle: 'tasks', Icone: ListChecks, degrade: 'from-blue-500 to-blue-700', x: -35, y: 250, r: -38 },
+  { cle: 'agenda', Icone: CalendarDays, degrade: 'from-violet-500 to-violet-700', x: -18, y: 110, r: -20 },
+  { cle: 'okr', Icone: Target, degrade: 'from-fuchsia-500 to-fuchsia-700', x: 0, y: 90, r: 0 },
+  { cle: 'habits', Icone: Repeat, degrade: 'from-cyan-500 to-cyan-700', x: 18, y: 110, r: 20 },
+  { cle: 'stats', Icone: BarChart3, degrade: 'from-indigo-500 to-indigo-700', x: 35, y: 250, r: 38 },
 ];
 
 const DEPART = TUILES[2];
@@ -38,26 +40,41 @@ const ECART_MS = 220;
 
 const HeroIconScatter: React.FC = () => (
   <div className="pointer-events-none absolute inset-0 z-0" aria-hidden="true">
-    {TUILES.map(({ cle, Icone, degrade, x, y }, i) => (
-      <div
-        key={cle}
-        className="hero-scatter absolute"
-        style={{
-          left: `calc(50% + ${x}%)`,
-          top: `${y}px`,
-          ['--d' as string]: `${PREMIER_MS + i * ECART_MS}ms`,
-          // Depart : la place de la tuile centrale.
-          ['--tx' as string]: `${DEPART.x - x}vw`,
-          ['--ty' as string]: `${DEPART.y - y}px`,
-        }}
-      >
+    {TUILES.map(({ cle, Icone, degrade, x, y, r }, i) => {
+      const d = PREMIER_MS + i * ECART_MS;
+      return (
         <div
-          className={`flex h-16 w-16 sm:h-20 sm:w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-[1.4rem] bg-gradient-to-br ${degrade} ring-1 ring-slate-900/10`}
+          key={cle}
+          className="hero-scatter absolute origin-top-left"
+          style={{
+            left: `calc(50% + ${x}%)`,
+            top: `${y}px`,
+            ['--d' as string]: `${d}ms`,
+            // Depart : la place de la tuile centrale, a plat.
+            ['--tx' as string]: `${DEPART.x - x}vw`,
+            ['--ty' as string]: `${DEPART.y - y}px`,
+            ['--r0' as string]: `${-r}deg`,
+          }}
         >
-          <Icone className="h-8 w-8 sm:h-9 sm:w-9 text-white" strokeWidth={1.75} />
+          {/* Inclinaison de repos + mouvement lent sur place, demarre apres
+              l'arrivee. Separe de l'entree : deux transforms, deux elements. */}
+          <div
+            className="hero-tile-idle origin-top-left"
+            style={{
+              ['--r' as string]: `${r}deg`,
+              ['--di' as string]: `${d + 1000}ms`,
+              ['--dur' as string]: `${7 + i * 0.9}s`,
+            }}
+          >
+            <div
+              className={`flex h-16 w-16 sm:h-20 sm:w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-[1.4rem] bg-gradient-to-br ${degrade} ring-1 ring-slate-900/10`}
+            >
+              <Icone className="h-8 w-8 sm:h-9 sm:w-9 text-white" strokeWidth={1.75} />
+            </div>
+          </div>
         </div>
-      </div>
-    ))}
+      );
+    })}
   </div>
 );
 
