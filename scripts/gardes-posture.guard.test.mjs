@@ -708,10 +708,10 @@ describe('témoin — pages et pluriels i18n (C-99)', () => {
     expect(verifierPluriels({ fr, en: { 'ns.x_one': 'a', 'ns.x_few': 'b', 'ns.x_other': 'c' } }).morts)
       .toEqual(["ns.x_few : `en` n'a pas la catégorie `few`"]);
     const deux = verifierPluriels({ fr, en: { 'ns.x_other': 'c' }, hr: { 'ns.x_other': 'c' } });
-    expect(deux.manquants).toEqual([
+    expect([...deux.manquants].sort()).toEqual([
+      'ns.x_few : absent de `hr`',
       'ns.x_one : absent de `en`',
       'ns.x_one : absent de `hr`',
-      'ns.x_few : absent de `hr`',
     ]);
   });
 });

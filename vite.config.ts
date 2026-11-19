@@ -190,11 +190,17 @@ export default defineConfig(({ mode }) => ({
         // build Vite 8. C'est le piège décrit plus bas pour `clsx`, que Rollup
         // ne faisait qu'à la demande et que Rolldown fait par défaut.
         codeSplitting: {
-          groups: Object.entries(GROUP_PRIORITY).map(([name, priority]) => ({
-            name,
-            priority,
-            test: (id: string) => chunkFor(id) === name,
-          })),
+          groups: [
+            // Catalogues croates : un chunk par namespace (`i18n-hr-org`), chargé
+            // par les seuls visiteurs `hr`. Sous le nom du namespace, ils
+            // s'ajoutaient à la somme fr + en que juge chaque plafond de catalogue.
+            { name: hrCatalogChunk, priority: 100 },
+            ...Object.entries(GROUP_PRIORITY).map(([name, priority]) => ({
+              name,
+              priority,
+              test: (id: string) => chunkFor(id) === name,
+            })),
+          ],
         },
       },
     },
@@ -221,6 +227,11 @@ const GROUP_PRIORITY: Record<string, number> = {
   'vendor-gsap': 20,
   'vendor-ogl': 20,
 };
+
+function hrCatalogChunk(id: string): string | null {
+  const m = /[\\/]src[\\/]locales[\\/]hr[\\/]([\w-]+)\.json$/.exec(id);
+  return m ? `i18n-hr-${m[1]}` : null;
+}
 
 function chunkFor(id: string): string | null | undefined {
   if (id.includes('node_modules/react-router')) {

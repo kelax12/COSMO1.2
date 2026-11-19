@@ -10889,12 +10889,19 @@ CREATE TABLE public.org_settings (
     member_default_perms text[],
     CONSTRAINT org_settings_audience CHECK ((default_project_audience = ANY (ARRAY['org'::text, 'team'::text]))),
     CONSTRAINT org_settings_guest_days CHECK (((default_guest_days IS NULL) OR ((default_guest_days >= 1) AND (default_guest_days <= 365)))),
-    CONSTRAINT org_settings_locale CHECK ((locale = ANY (ARRAY['fr'::text, 'en'::text]))),
+    CONSTRAINT org_settings_locale CHECK ((locale = ANY (ARRAY['fr'::text, 'en'::text, 'hr'::text]))),
     CONSTRAINT org_settings_member_default_perms_check CHECK (((member_default_perms IS NULL) OR (member_default_perms <@ ARRAY['task.create'::text, 'task.editAny'::text, 'task.deleteAny'::text, 'project.create'::text, 'project.edit'::text, 'project.delete'::text, 'okr.create'::text, 'okr.delete'::text, 'category.manage'::text, 'team.create'::text, 'member.invite'::text, 'report.org'::text, 'report.allTeams'::text, 'role.manage'::text]))),
     CONSTRAINT org_settings_priority CHECK (((default_task_priority >= 1) AND (default_task_priority <= 5))),
     CONSTRAINT org_settings_week_start CHECK (((week_start >= 0) AND (week_start <= 6))),
     CONSTRAINT org_settings_work_days CHECK ((((cardinality(work_days) >= 1) AND (cardinality(work_days) <= 7)) AND (work_days <@ '{0,1,2,3,4,5,6}'::smallint[])))
 );
+
+
+--
+-- Name: CONSTRAINT org_settings_locale ON org_settings; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT org_settings_locale ON public.org_settings IS 'Langue de l''organisation (mig. 263) : fr, en ou hr. Lue par l''Edge Function org-digest, repli sur fr.';
 
 
 --

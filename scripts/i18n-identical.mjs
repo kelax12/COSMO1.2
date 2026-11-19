@@ -5,7 +5,7 @@
 // s'affiche en français, jamais comme clé brute, et `i18n:check` (clés seules)
 // ne la voit pas. Ce script compte, pour CHAQUE locale de `src/locales/` hors
 // `fr`, les valeurs IDENTIQUES au fr non déclarées dans
-// `scripts/i18n-identical-allowlist.<locale>.json` (une par langue : « Description »
+// la section `locales.<locale>` de `scripts/i18n-identical-allowlist.json` (une par langue : « Description »
 // est légitime en anglais, pas en croate).
 //
 // L'allowlist est VÉRIFIÉE : clé disparue, valeurs devenues différentes, ou
@@ -22,8 +22,10 @@ import { join } from 'node:path';
 const LOCALES_DIR = 'src/locales';
 const REFERENCE = 'fr';
 
-/** Allowlist propre à une locale traduite. */
-const allowlistPath = (locale) => `scripts/i18n-identical-allowlist.${locale}.json`;
+/** Allowlist unique, une section `locales.<locale>` par langue traduite. */
+const ALLOWLIST = 'scripts/i18n-identical-allowlist.json';
+const allowlistPath = (locale) => `${ALLOWLIST} § locales.${locale}`;
+const ALLOW_ALL = existsSync(ALLOWLIST) ? JSON.parse(readFileSync(ALLOWLIST, 'utf8')) : {};
 
 // ❌ Ne JAMAIS relever : on traduit, ou on DÉCLARE (catégorie + valeur).
 const MAX_UNDECLARED = 0;
@@ -60,11 +62,7 @@ for (const target of targets) {
   // ────────────────────────────────────────────────────────────────
   // 1. Allowlist de la locale
   // ────────────────────────────────────────────────────────────────
-  const allowlist = allowlistPath(target);
-  let allow = { categories: {}, entrees: {} };
-  if (existsSync(allowlist)) {
-    allow = JSON.parse(readFileSync(allowlist, 'utf8'));
-  }
+  const allow = { categories: ALLOW_ALL.categories, entrees: ALLOW_ALL.locales?.[target] };
   const categories = allow.categories ?? {};
   const declared = new Map(Object.entries(allow.entrees ?? {}));
 

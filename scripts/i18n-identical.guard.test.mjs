@@ -46,21 +46,11 @@ afterEach(() => rmSync(dir, { recursive: true, force: true }));
 function run({ fr, en, entrees = {}, categories = CATEGORIES, hr, entreesHr }) {
   writeFileSync(join(dir, 'src/locales/fr/probe.json'), JSON.stringify(fr), 'utf8');
   writeFileSync(join(dir, 'src/locales/en/probe.json'), JSON.stringify(en), 'utf8');
-  writeFileSync(
-    join(dir, 'scripts/i18n-identical-allowlist.en.json'),
-    JSON.stringify({ categories, entrees }),
-    'utf8',
-  );
+  const locales = { en: entrees, ...(entreesHr ? { hr: entreesHr } : {}) };
+  writeFileSync(join(dir, 'scripts/i18n-identical-allowlist.json'), JSON.stringify({ categories, locales }), 'utf8');
   if (hr) {
     mkdirSync(join(dir, 'src/locales/hr'), { recursive: true });
     writeFileSync(join(dir, 'src/locales/hr/probe.json'), JSON.stringify(hr), 'utf8');
-  }
-  if (entreesHr) {
-    writeFileSync(
-      join(dir, 'scripts/i18n-identical-allowlist.hr.json'),
-      JSON.stringify({ categories, entrees: entreesHr }),
-      'utf8',
-    );
   }
   const r = spawnSync(process.execPath, [SCRIPT, '--list'], { cwd: dir, encoding: 'utf8' });
   if (r.error) throw r.error;
