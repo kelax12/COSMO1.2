@@ -63,7 +63,8 @@ interface Feature {
   icon: LucideIcon;
   /** Aplat d'accent (icône, puces, CTA) : la couleur de la page dans l'app (`Layout.tsx`). */
   fond: string;
-  accentText: string;
+  /** Surlignage du mot clé du titre (teinte 200 de la couleur de page). */
+  surligne: string;
   Desktop: React.ComponentType;
   Mobile: React.ComponentType;
   /** sens d'entrée du texte en mode empilé */
@@ -84,7 +85,7 @@ const FEATURES: Feature[] = [
     path: '/tasks',
     icon: CheckSquare,
     fond: 'bg-blue-500',
-    accentText: 'from-blue-600 to-cyan-600',
+    surligne: '#bfdbfe',
     Desktop: TaskTableShowcase,
     Mobile: TaskCardMobileShowcase,
   },
@@ -93,7 +94,7 @@ const FEATURES: Feature[] = [
     path: '/agenda',
     icon: Calendar,
     fond: 'bg-red-500',
-    accentText: 'from-red-600 to-rose-600',
+    surligne: '#fecaca',
     Desktop: AgendaShowcase,
     Mobile: AgendaMobileShowcase,
     fromRight: true,
@@ -106,7 +107,7 @@ const FEATURES: Feature[] = [
     path: '/okr',
     icon: Target,
     fond: 'bg-green-500',
-    accentText: 'from-green-600 to-emerald-600',
+    surligne: '#bbf7d0',
     Desktop: OKRCardShowcase,
     Mobile: OKRMobileShowcase,
   },
@@ -115,7 +116,7 @@ const FEATURES: Feature[] = [
     path: '/habits',
     icon: Repeat,
     fond: 'bg-yellow-500',
-    accentText: 'from-yellow-600 to-amber-600',
+    surligne: '#fef08a',
     Desktop: HabitHeatmapShowcase,
     Mobile: HabitMobileShowcase,
     fromRight: true,
@@ -125,7 +126,7 @@ const FEATURES: Feature[] = [
     path: '/statistics',
     icon: BarChart2,
     fond: 'bg-violet-500',
-    accentText: 'from-violet-600 to-purple-600',
+    surligne: '#ddd6fe',
     Desktop: () => (
       <WhenVisible fallback={<ShowcaseSkeleton />}>
         <Suspense fallback={<ShowcaseSkeleton />}>
@@ -153,13 +154,19 @@ const FeatureCopy: React.FC<{ feature: Feature; onCta: () => void }> = ({ featur
   const key = (suffix: string) => `features.${feature.id}.${suffix}` as Parameters<typeof t>[0];
   return (
     <div className="space-y-6">
-      <div className={`inline-flex items-center justify-center w-14 h-14 ${feature.fond} rounded-2xl`}>
-        <Icon size={28} className="text-white" />
+      {/* Même flottement que les tuiles du hero (`.hero-tile-idle`, src/index.css). */}
+      <div
+        className="hero-tile-idle inline-block"
+        style={{ ['--r' as string]: feature.fromRight ? '6deg' : '-6deg', ['--dur' as string]: '8s' }}
+      >
+        <div className={`inline-flex items-center justify-center w-14 h-14 ${feature.fond} rounded-2xl ring-1 ring-slate-900/10`}>
+          <Icon size={28} className="text-white" />
+        </div>
       </div>
       <h3 className="text-3xl lg:text-4xl font-bold text-slate-900 leading-tight">
         {t(key('titleTop'))}
         <br />
-        <span className={`bg-gradient-to-r ${feature.accentText} bg-clip-text text-transparent`}>
+        <span style={{ boxShadow: `inset 0 -0.32em 0 ${feature.surligne}` }}>
           {t(key('titleAccent'))}
         </span>
       </h3>
@@ -176,9 +183,10 @@ const FeatureCopy: React.FC<{ feature: Feature; onCta: () => void }> = ({ featur
       </div>
       <button
         onClick={onCta}
-        className={`group ${feature.fond} text-white px-8 py-4 rounded-xl font-semibold transition-[filter] duration-300 hover:brightness-95 flex items-center gap-2`}
+        className="group bg-slate-900 hover:bg-slate-800 text-white pl-4 pr-5 py-3 rounded-full font-semibold text-[15px] transition-colors duration-300 flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
       >
-        {t(key('cta'))} <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+        <Icon size={16} aria-hidden="true" />
+        {t(key('cta'))} <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" aria-hidden="true" />
       </button>
     </div>
   );
