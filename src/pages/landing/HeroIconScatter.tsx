@@ -27,11 +27,11 @@ interface Tuile {
 // Ordre du tableau = ordre d'arrivee. Emplacements : 1 = gauche basse,
 // 2 = gauche haute, 3 = centre, 4 = droite haute, 5 = droite basse.
 const TUILES: Tuile[] = [
-  { cle: 'tasks', Icone: ListChecks, degrade: 'from-blue-500 to-blue-700', x: -35, y: 250, r: -38 },
-  { cle: 'agenda', Icone: CalendarDays, degrade: 'from-violet-500 to-violet-700', x: -18, y: 110, r: -20 },
-  { cle: 'okr', Icone: Target, degrade: 'from-fuchsia-500 to-fuchsia-700', x: 0, y: 90, r: 0 },
-  { cle: 'habits', Icone: Repeat, degrade: 'from-cyan-500 to-cyan-700', x: 18, y: 110, r: 20 },
-  { cle: 'stats', Icone: BarChart3, degrade: 'from-indigo-500 to-indigo-700', x: 35, y: 250, r: 38 },
+  { cle: 'tasks', Icone: ListChecks, degrade: 'bg-blue-600', x: -35, y: 250, r: -38 },
+  { cle: 'agenda', Icone: CalendarDays, degrade: 'bg-violet-600', x: -18, y: 110, r: -20 },
+  { cle: 'okr', Icone: Target, degrade: 'bg-fuchsia-600', x: 0, y: 90, r: 0 },
+  { cle: 'habits', Icone: Repeat, degrade: 'bg-cyan-600', x: 18, y: 110, r: 20 },
+  { cle: 'stats', Icone: BarChart3, degrade: 'bg-indigo-600', x: 35, y: 250, r: 38 },
 ];
 
 const DEPART = TUILES[2];
@@ -67,7 +67,7 @@ const HeroIconScatter: React.FC = () => (
             }}
           >
             <div
-              className={`flex h-16 w-16 sm:h-20 sm:w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-[1.4rem] bg-gradient-to-br ${degrade} ring-1 ring-slate-900/10`}
+              className={`flex h-16 w-16 sm:h-20 sm:w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-[1.4rem] ${degrade} ring-1 ring-slate-900/10`}
             >
               <Icone className="h-8 w-8 sm:h-9 sm:w-9 text-white" strokeWidth={1.75} />
             </div>
