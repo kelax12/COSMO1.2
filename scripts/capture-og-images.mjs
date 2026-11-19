@@ -1,18 +1,12 @@
 /**
- * capture-og-images.mjs · une image Open Graph PAR PAGE prérendue.
- *
- * Avant le 2026-10-12, les 40 pages du sitemap partageaient `og-card.png` :
- * un article partagé sur LinkedIn ou Slack montrait la vignette de l'accueil,
- * en français, y compris pour une page anglaise. Ce script rend une carte
- * 1200×630 par page, titre de la page incrusté, dans la charte d'og-card.
+ * capture-og-images.mjs · une image Open Graph 1200×630 PAR PAGE prérendue,
+ * titre incrusté, libellés dans la langue de la page.
  *
  * Usage : `npm run build` puis `node scripts/capture-og-images.mjs`.
  * Il lit les titres dans `dist/` (la source de vérité est donc le catalogue
  * `seo` et les articles, via le prérendu) et écrit `public/og/<clé>.jpg`.
- * JPEG et pas PNG : les dégradés pèsent ~180 ko en PNG, ~40 ko en JPEG.
- * Les PNG sont COMMITÉES : le build Vercel n'a pas de navigateur. Le prérendu
- * branche une image si elle existe et retombe sur og-card sinon, donc une page
- * ajoutée sans relancer ce script garde une vignette, juste générique.
+ * JPEG (~40 ko), COMMITÉES : le build Vercel n'a pas de navigateur. Sans
+ * image, le prérendu retombe sur og-card.
  *
  * ⚠️ La clé doit rester celle d'`ogKey()` dans prerender/ld.ts.
  * L'accueil français garde og-card.png, dessinée à la main.
@@ -37,14 +31,20 @@ const unescape = (s) =>
 const escapeHtml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 /** Étiquette de rubrique, d'après le chemin. */
-function section(path, en) {
-  const p = path.replace(/^\/en(?=\/|$)/, '') || '/';
-  if (p.startsWith('/blog')) return 'Blog';
-  if (p === '/guide') return en ? 'User guide' : "Guide d'utilisation";
-  if (/^\/(a-propos|about)$/.test(p)) return en ? 'About' : 'À propos';
-  if (/^\/(entreprise-presentation|for-companies)$/.test(p)) return en ? 'For companies' : 'Entreprise';
-  if (/^\/(pour|for)-/.test(p)) return en ? 'Use case' : "Cas d'usage";
-  return en ? 'Productivity app' : 'Application de productivité';
+const LIBELLES = {
+  fr: ['Blog', "Guide d'utilisation", 'À propos', 'Entreprise', "Cas d'usage", 'Application de productivité'],
+  en: ['Blog', 'User guide', 'About', 'For companies', 'Use case', 'Productivity app'],
+  hr: ['Blog', 'Korisnički vodič', 'O nama', 'Za tvrtke', 'Primjer upotrebe', 'Aplikacija za produktivnost'],
+};
+const PIED = { fr: 'Tâches · Habitudes · Agenda · OKR', en: 'Tasks · Habits · Calendar · OKRs', hr: 'Zadaci · Navike · Kalendar · OKR' };
+function section(path, locale) {
+  const [blog, guide, about, corp, usage, app] = LIBELLES[locale];
+  const p = path.replace(/^\/(en|hr)(?=\/|$)/, '') || '/';
+  if (p.startsWith('/blog')) return blog;
+  if (p === '/guide') return guide;
+  if (/^\/(a-propos|about|o-nama)$/.test(p)) return about;
+  if (/^\/(entreprise-presentation|for-companies|za-tvrtke)$/.test(p)) return corp;
+  return /^\/(pour|for|za)-/.test(p) ? usage : app;
 }
 
 function pagesFromSitemap() {
@@ -59,17 +59,17 @@ function pagesFromSitemap() {
       const html = readFileSync(file, 'utf8');
       const m = html.match(/<meta property="og:title" content="([^"]*)"/);
       if (!m) throw new Error(`og:title introuvable : ${path}`);
-      const en = /^\/en(\/|$)/.test(path);
+      const locale = /^\/(en|hr)(?=\/|$)/.exec(path)?.[1] ?? 'fr';
       // « | Cosmo » double le logo de la carte.
       const title = unescape(m[1]).replace(/\s*\|\s*Cosmo$/, '');
-      return { path, key: ogKey(path), title, en };
+      return { path, key: ogKey(path), title, locale };
     });
 }
 
 const fontData = readFileSync(join(ROOT, 'public', 'fonts', 'inter-var-latin.woff2')).toString('base64');
 const fontExt = readFileSync(join(ROOT, 'public', 'fonts', 'inter-var-latin-ext.woff2')).toString('base64');
 
-function card({ title, path, en }) {
+function card({ title, path, locale }) {
   // Taille du titre selon sa longueur : un titre de 70 caractères doit tenir
   // sur trois lignes sans déborder sur le pied de carte.
   const size = title.length > 60 ? 58 : title.length > 42 ? 66 : 76;
@@ -87,9 +87,9 @@ h1{font-size:${size}px;line-height:1.12;font-weight:800;letter-spacing:-0.025em;
 .foot{display:flex;justify-content:space-between;align-items:center;font-size:24px;color:#94a3b8}
 .foot b{color:#e2e8f0;font-weight:600}
 </style></head><body>
-<div class="top"><div class="logo">C</div><div class="brand">Cosmo</div><div class="pill">${escapeHtml(section(path, en))}</div></div>
+<div class="top"><div class="logo">C</div><div class="brand">Cosmo</div><div class="pill">${escapeHtml(section(path, locale))}</div></div>
 <h1>${escapeHtml(title)}</h1>
-<div class="foot"><span>${en ? 'Tasks · Habits · Calendar · OKRs' : 'Tâches · Habitudes · Agenda · OKR'}</span><b>${ORIGIN.replace('https://', '')}</b></div>
+<div class="foot"><span>${PIED[locale]}</span><b>${ORIGIN.replace('https://', '')}</b></div>
 </body></html>`;
 }
 
