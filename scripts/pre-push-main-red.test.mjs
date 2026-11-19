@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { decide, main, shasVersMain, lireRuns, WORKFLOW } from './pre-push-main-red.mjs';
+import { decide, main, shasVersMain, lireRuns, WORKFLOW, pousser, brancheDeVerif } from './pre-push-main-red.mjs';
 
 const red = { status: 'completed', conclusion: 'failure', headSha: 'abcdef123456', url: 'u' };
 const green = { status: 'completed', conclusion: 'success' };
@@ -116,5 +116,70 @@ describe('pre-push-main-red', () => {
     const r = spawnSync('git', ['grep', '-l', ANCIENNE, '--', '.', ':!docs/archive/**'], { encoding: 'utf8' });
     expect(r.stdout.trim()).toBe('');
     expect(r.status).toBe(1);
+  });
+});
+
+describe('pousser (npm run pousser, ADR 0022)', () => {
+  const H = 'abcdef1234567890abcdef1234567890abcdef12';
+  const BR = 'noyau/tests-alleges-abcdef12';
+  const VERT = [{ status: 'completed', conclusion: 'success', headSha: H }];
+  /** Un faux `git` qui note chaque appel ; `refus` : préfixes d'appels en échec (une fois chacun). */
+  const deps = (runsParBranche, refus = []) => {
+    const vus = [];
+    const l = [];
+    const git = (args) => {
+      const c = args.join(' ');
+      vus.push(c);
+      if (c === 'rev-parse HEAD') return { code: 0, out: `${H}\n` };
+      if (c === 'rev-parse --abbrev-ref HEAD') return { code: 0, out: 'worktree-tests-alleges\n' };
+      const n = refus.findIndex((r) => c.startsWith(r));
+      if (n >= 0) {
+        refus.splice(n, 1);
+        return { code: 1, out: '' };
+      }
+      return { code: 0, out: '' };
+    };
+    const runs = (f) => runsParBranche[f[1]] ?? [];
+    return { vus, l, d: { git, runs, attendre: async () => {}, log: (m) => l.push(m), delai: 1, limite: 3 } };
+  };
+
+  it('nomme la branche de vérification par session et SHA', () => {
+    expect(brancheDeVerif('worktree-tests-alleges', H)).toBe(BR);
+    expect(brancheDeVerif('a b/é', H)).toBe('noyau/a-b-abcdef12');
+  });
+
+  it('vert sur noyau/ : supprime la branche puis pousse ce SHA sur main', async () => {
+    const { vus, d } = deps({ [BR]: VERT }, ['merge-base']);
+    expect(await pousser(d)).toBe(0);
+    expect(vus).toEqual(expect.arrayContaining([`push origin HEAD:refs/heads/${BR}`, `push origin --delete ${BR}`, 'push origin HEAD:main']));
+    expect(vus.indexOf(`push origin --delete ${BR}`)).toBeLessThan(vus.indexOf('push origin HEAD:main'));
+  });
+
+  it('TÉMOIN : un noyau rouge, ou sans verdict, ne pousse RIEN sur main', async () => {
+    for (const r of [[{ status: 'completed', conclusion: 'failure', headSha: H, url: 'u' }], [{ status: 'in_progress', headSha: H }], []]) {
+      const { vus, l, d } = deps({ [BR]: r }, ['merge-base']);
+      expect(await pousser(d)).toBe(1);
+      expect(vus).not.toContain('push origin HEAD:main');
+      expect(vus).toContain(`push origin --delete ${BR}`);
+      expect(l.join()).toMatch(/rien n'est parti sur main/);
+    }
+  });
+
+  it('attend la fin d’un run de main avant de pousser, et rebase si main a bougé', async () => {
+    let appels = 0;
+    const { vus, d } = deps({}, ['merge-base', 'push origin HEAD:main']);
+    d.runs = (f) => (f[1] === 'main' ? (appels++ < 1 ? [{ status: 'in_progress' }] : []) : VERT);
+    expect(await pousser(d)).toBe(0);
+    expect(appels).toBeGreaterThan(1);
+    expect(vus.filter((c) => c === 'rebase origin/main')).toHaveLength(2);
+  });
+
+  it('rien de neuf, ou rebase en échec : ne pousse rien', async () => {
+    const neuf = deps({});
+    expect(await pousser(neuf.d)).toBe(0);
+    expect(neuf.vus.some((c) => c.startsWith('push'))).toBe(false);
+    const casse = deps({}, ['rebase']);
+    expect(await pousser(casse.d)).toBe(1);
+    expect(casse.l.join()).toMatch(/rebase en échec/);
   });
 });

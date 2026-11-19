@@ -1,6 +1,6 @@
 # ADR 0002 · Poussée directe sur `main`, derrière le `CI noyau`
 
-- **Statut** : acceptée
+- **Statut** : remplacée par [0022](./0022-poussee-jugee-sur-noyau-avant-main.md) le 2026-11-19
 - **Date** : 2026-10-29, reconfirmée par Axel le 2026-11-06
 
 ## Contexte

@@ -14,12 +14,12 @@
 | Workflows GitHub | **36** | fichiers de `.github/workflows/` |
 | dont planifiés | **24** | workflows portant un `schedule:` |
 | Fichiers de `scripts/` | **172** | fichiers suivis (budget d outillage, `scripts/outillage.reference.json`) |
-| Lignes de `scripts/` | **41012** | lignes des fichiers suivis de `scripts/` |
+| Lignes de `scripts/` | **41010** | lignes des fichiers suivis de `scripts/` |
 | Tests de garde | **113** | fichiers `*.guard.test.*` du dépôt |
 | Modules applicatifs | **23** | dossiers de `src/modules/` |
 | Namespaces i18n | **34** | fichiers de `src/locales/fr/` |
 | Gardes `check:` / `i18n:` / `validate:` | **45** | scripts de `package.json` |
-| ADR | **21** | fichiers `NNNN-*.md` de `docs/adr/` |
+| ADR | **22** | fichiers `NNNN-*.md` de `docs/adr/` |
 | Fonctions Vercel | **1** | fichiers `.ts` de `api/` (hors tests et `_*`) |
 | `CLAUDE.md` | **20** | racine et dossiers, hors `node_modules`, `.claude`, `.worktrees` |
 | Docs vivantes de `docs/` | **37** | fichiers `.md` de `docs/`, hors `archive/` et `adr/` |

@@ -157,11 +157,15 @@ Puis relire `git diff prerender/instantanes/` : chaque ligne s'explique par le c
 
 - ❌ Mettre à jour pour faire passer un rouge dont on ne sait pas expliquer le diff.
 
-### Boucle locale : `npm run test:changed` (DEV-01)
+### Boucle locale : `npm run verif:rapide` et `npm run test:changed` (DEV-01, ADR 0022)
 
-`scripts/test-changed.mjs` prend les fichiers modifiés depuis la base de fusion avec `origin/main` (commits locaux, arbre, non suivis) et joue (1) `vitest related` sur les sources JS/TS modifiées et les tests modifiés, (2) tout test qui NOMME un fichier modifié (les gardes qui lisent un fichier par `readFileSync` échappent au graphe). `--base <ref>` change la référence, `--liste` montre la sélection. Base illisible (pas de `git fetch`) = échec, jamais « rien à tester ». Lockfile, `vitest.config.ts` ou `src/test/setup.ts` modifiés : il le signale et conseille `npm test`. Aucune option de parallélisme (`maxWorkers: 2`). Témoin : `scripts/test-changed.test.mjs`.
+`scripts/test-changed.mjs` prend les fichiers modifiés depuis la base de fusion avec `origin/main` (commits locaux, arbre, non suivis) et joue (1) le `related` de Vitest sur les sources JS/TS modifiées et les tests modifiés, (2) tout test qui NOMME un fichier modifié (les gardes qui lisent un fichier par `readFileSync` échappent au graphe). `--base <ref>` change la référence, `--liste` montre la sélection. Base illisible (pas de `git fetch`) = échec, jamais « rien à tester ». Lockfile, `vitest.config.ts` ou `src/test/setup.ts` modifiés : il le signale et conseille `npm test`. Aucune option de parallélisme (`maxWorkers: 2`). Témoin : `scripts/test-changed.test.mjs`.
 
-✅ Boucle d'une session : `lint`, `typecheck`, `test:changed`, push, puis le verdict du noyau (`gh run watch`). La boucle locale ne juge rien.
+- 🔴 Plafond : plus de 40 fichiers de test retenus (fichier carrefour : `translate.ts` entraîne toute la suite, `utils.ts` 46 fichiers) = rien ne joue, sortie **2**, le noyau juge. `--tout` force.
+- `verif:rapide` (`--rapide`) : ESLint en cache (`.eslintcache`, `--cache-strategy content`) sur les sources modifiées, puis la sélection et six gardes transverses d'interface (`GARDES_UI`, ~15 s). Un ESLint rouge arrête avant Vitest.
+- `npm run lint` est en cache aussi : 5 min 37 s à froid, 27 s au passage suivant sur ce poste. La CI part sans cache.
+
+✅ Boucle d'une session : `verif:rapide`, commit, `npm run pousser` (verdict du noyau sur `noyau/`, puis `main`). ❌ `tsc -b`, lint complet, suite complète et `build` en local pour une retouche d'interface : le noyau les joue. `build` + `check:bundle` en local seulement pour un écran, une route lazy ou un namespace i18n neufs.
 
 ### `edge-deploy-drift.yml` : le code déployé contre le dépôt (C-35)
 

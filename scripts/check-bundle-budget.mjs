@@ -1,24 +1,8 @@
-// Budget de bundle, le seul budget du dépôt qui n'était mesuré par AUCUNE garde.
-//
-// Tous les autres ont fini par obtenir un cliquet (taille des fichiers, échelle
-// typographique, échelle z-index, mouvement des feuilles, couverture de tests).
-// Celui-ci non, et c'est le seul qui ait reculé sans que rien ne le signale :
-// +5 ko gzip sur le chunk d'entrée en UNE journée le 2026-08-25, pour une marge
-// de 11 ko. Les mesures étaient dans `docs/PERFORMANCE.md`, donc dans un
-// Markdown, donc invérifiables, exactement le motif que ce dépôt documente
-// depuis des semaines : *une règle qu'aucun script ne mesure recule à chaque
-// vague de features.*
-//
-// Ce script lit le build RÉEL (`dist/`) et compare au cliquet ci-dessous.
-//
-// Usage :
-//   npm run build && npm run check:bundle
-//   npm run check:bundle -- --report   (affiche tout, ne fait échouer rien)
-//
-// 🔴 **Ne jamais remonter un plafond pour faire passer la CI.** La règle est
-// celle de `vitest.config.ts` : un plafond ne descend que quand la mesure
-// descend. S'il est franchi, c'est le bundle qui doit maigrir, le levier est
-// documenté dans `docs/PERFORMANCE.md`.
+// Budget de bundle : lit le build RÉEL (`dist/`) et le compare aux cliquets ci-dessous.
+// Usage : `npm run build && npm run check:bundle` · `npm run check:bundle -- --report` (n'échoue pas).
+// 🔴 Ne jamais remonter un plafond pour faire passer la CI : il descend avec la mesure ; franchi,
+// c'est le bundle qui maigrit (leviers : `docs/PERFORMANCE.md`). Historique des cliquets :
+// `docs/archive/outillage-recits-2026-11-19.md`.
 
 import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
@@ -35,94 +19,18 @@ const ASSETS = join(ROOT, 'dist', 'assets');
  * par ceux qui ouvrent l'écran correspondant.
  */
 const BUDGETS = {
-  // ── LE budget qui compte ──
-  //
-  // Somme gzip du chunk d'entrée ET de tout ce que `dist/index.html` précharge.
-  // C'est ce qu'un visiteur télécharge avant de voir quoi que ce soit, y compris
-  // celui qui arrive sur la landing et repart.
-  //
-  // Mesuré 393 850 o le 2026-08-26. Plafond ~1,5 % au-dessus.
-  //
-  // ⚠️ Ce budget a REMPLACÉ « taille du chunk d'entrée » comme mesure
-  // principale, et le remplacement vient d'une erreur réelle : en sortant les
-  // primitives Radix de leur chunk groupé, l'entrée a GROSSI de 19 ko pendant
-  // que le chemin critique MAIGRISSAIT de 26 ko. L'ancienne mesure aurait
-  // refusé une amélioration. Une garde qui mesure le mauvais nombre est pire
-  // qu'une garde absente : elle donne tort à la bonne décision.
-  // 2026-08-28 : 393 850 → **373 043 o** (364,3 ko). Deux leviers, tous deux
-  // payés par TOUS les visiteurs :
-  //   • zod (131,8 ko bruts) sort de l'entrée — garde UX chargée à la première
-  //     écriture, pas à l'ouverture (`src/lib/validation/lazy.ts`) ;
-  //   • le `<TooltipProvider>` d'`App.tsx` était REDONDANT (le composant
-  //     `Tooltip` fournit déjà le sien) et traînait `@radix-ui/react-tooltip`
-  //     + tout `floating-ui`, 113 ko bruts, pour un seul consommateur lazy.
-  // Plafond reposé ~1,6 % au-dessus du mesuré.
-  // 2026-09-02 : 373 043 → **364 500 o**, et le plafond REDESCEND de 379 000 à
-  // 370 000. Les dépôts de DÉMONSTRATION du mode entreprise sont sortis du
-  // chemin critique (`src/lib/demo-repositories.ts`) : ils pesaient 52 ko bruts
-  // que tout visiteur téléchargeait, y compris celui qui repart de la landing
-  // sans jamais se connecter. Le reste des dépôts de démo, 72 ko bruts encore
-  // dans l'entrée, attend la séparation interface / implémentation locale que
-  // six modules n'ont pas.
-  // 2026-09-11 : 316 407 → **306 347 o**, et le plafond REDESCEND de 370 000 à
-  // 323 000. `sonner` (10,1 ko gzip) sort du chemin critique : le `<Toaster>`
-  // d'`App.tsx` est différé et tous les appels passent par la façade
-  // `src/lib/toast.ts`, qui fait le SEUL `import('sonner')` du dépôt.
-  //
-  // 🔴 Le piège, mesuré, parce qu'il se reproduira : nettoyer le SHELL ne
-  // suffit pas. Tant qu'une page lazy garde un import statique de `sonner`,
-  // Rollup place le module dans l'ancêtre commun des chunks qui le partagent,
-  // c'est-à-dire l'ENTRÉE. Et l'en sortir par `manualChunks` fait émettre à
-  // Vite un `<link rel="modulepreload">` : l'entrée maigrit de 10 ko, le
-  // chemin critique de 162 OCTETS. Le gain n'existe qu'avec zéro import
-  // statique dans tout `src/`. Cliquet : `src/lib/toast.guard.test.ts`.
-  //
-  // ⚠️ Le plafond est posé ~5 % au-dessus du mesuré, et non ~1,5 % comme les
-  // précédents : le critère de sortie de C-14 exige 5 % de marge sur les DEUX
-  // budgets. Reposer le cliquet à 1,5 % rouvrirait l'item le jour même.
+  // ── LE budget qui compte : gzip de l'entrée + tout ce que `dist/index.html` précharge, payé par
+  // chaque visiteur. Il a remplacé « taille de l'entrée », qui refusait une coupe réelle du chemin
+  // critique dès que l'entrée grossissait.
+  // 🔴 Un module importé en statique par une seule page lazy revient dans l'entrée (ancêtre commun
+  // Rollup) : le gain n'existe qu'avec zéro import statique (cliquet `src/lib/toast.guard.test.ts`).
+  // ~5 % au-dessus du mesuré (306 347 o le 2026-09-11), marge exigée par la sortie de C-14.
   critical: 323_000,
 
-  // Mesure secondaire, conservée pour attraper le cas inverse : une entrée qui
-  // enfle sans que le nombre de préchargements bouge. Le plafond est passé de
-  // 92 à 112 ko le 2026-08-26, et c'est la SEULE fois où remonter un plafond
-  // est la bonne réponse : l'entrée a absorbé du code qui était préchargé à
-  // côté, donc le total a baissé. Vérifier `critical` avant de toucher à
-  // celui-ci.
-  // 2026-08-28 : 106,9 → **77 312 o** (75,5 ko), et le plafond REDESCEND de
-  // 112 000 à 79 000. C'est le remboursement de la seule fois où ce dépôt a
-  // relevé un plafond pour absorber une dérive — le cliquet joue dans les deux
-  // sens, il attrape la dette PUIS enregistre son remboursement.
-  //
-  // 🔴 Toujours vérifier `critical` avant de toucher à celui-ci : sortir un
-  // module de l'entrée sans le sortir du chemin critique ne gagne rien.
-  // 2026-09-03 : 77 312 → **77 379 o**, plafond de 79 000 à 78 000. Même coupe
-  // que ci-dessus (les dépôts de démo entreprise sortent du chemin critique).
-  //
-  // ⚠️ Le cliquet a failli être RELEVÉ la veille pour absorber les 2,5 ko d'un
-  // lot de correctifs. Les deux mesures montaient, donc ce n'était pas le cas
-  // d'absorption qui l'autorise : couper d'abord était la bonne réponse, et la
-  // coupe a rendu 5,1 ko, deux fois ce qu'il fallait.
-  //
-  // 🔴 Le chiffre ci-dessus n'est PAS celui qu'annonçait la première version de
-  // ce commentaire (75 798). Il datait d'un arbre de la veille au soir ; le lot
-  // a continué de grossir de 1,6 ko pendant la nuit. Un plafond posé sur une
-  // mesure périmée est un plafond faux, même quand il est plus bas — celui-ci
-  // aurait fait échouer la CI sur une valeur que plus rien ne mesurait.
-  // 2026-09-11 : 76 954 → **66 896 o**, plafond de 78 000 à 71 000. Même coupe
-  // que ci-dessus, et `critique` a baissé d'autant (−10 060 o des deux côtés) :
-  // c'est ce qui la distingue d'un déplacement.
-  //
-  // ⚠️ La mesure du 2026-09-04 annonçait 74 903 o (3,97 % de marge). Elle
-  // n'avait pas été refaite depuis, et l'entrée avait REPRIS 2 051 o entre
-  // temps — marge réelle au 2026-09-11 avant coupe : **1,34 %**. Un budget
-  // qu'on ne remesure pas dérive dans le sens qui arrange.
-  // 2026-10-01 : 73 159 → **67 141 o**, plafond de 71 000 à 70 500. Cause de
-  // la dérive : les barils `tasks`, `habits`, `organizations`, `team-projects`,
-  // `team-okrs` et `org-teams` RÉEXPORTAIENT leur dépôt de démo ; importés par
-  // le shell, ils le ramenaient dans l'entrée alors que la fabrique le charge à
-  // la demande. Réexportations retirées, tâches et habitudes passées par
-  // `demo-repositories.ts`. `critique` a baissé d'autant (315,3 → 309,3 ko) :
-  // une coupe, pas un déplacement.
+  // Mesure secondaire : une entrée qui enfle sans que les préchargements bougent. Seule remontée
+  // légitime : l'entrée absorbe du code préchargé à côté ET `critical` baisse ; vérifier `critical`
+  // d'abord. Remesurer le jour même avant de reposer : une mesure périmée dérive dans le sens qui
+  // arrange. 67 141 o le 2026-10-01.
   entry: 70_500,
 
   // Le plus gros chunk de page. `OrganizationPage` mesure ~64 ko.

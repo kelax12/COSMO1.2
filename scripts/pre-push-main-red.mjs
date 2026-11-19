@@ -1,27 +1,15 @@
-// pre-push · refuse de pousser sur `main` quand le dernier run `CI noyau` de `main` est rouge.
+// pre-push · refuse de pousser sur `main` quand le dernier run `CI noyau` de `main` est rouge ;
+// `--pousser` : la poussée d'une session (`npm run pousser`, ADR 0022), en bas du fichier.
 //
-// Vague 2.3 (2026-11-06) : le hook ne lit plus QUE le noyau (`ci-noyau.yml`), le seul
-// workflow qui juge le commit et lui seul. `CI etendue` (e2e, Lighthouse, audit), `Visual`,
-// `Mutation`, `Sabotages` et les gardes de calendrier ne bloquent rien.
-//
-// Pourquoi (2026-10-20) : 23 commits de code poussés sur un `main` rouge pendant 26 h.
-// Tant que `main` est rouge, aucune garde ne voit la régression suivante.
-//
-// 🔴 AUCUN CONTOURNEMENT. Il n'existait qu'une variable d'environnement pour forcer la
-// poussée ; banalisée (CI-01), elle est retirée. Ce script ne lit AUCUNE variable
-// d'environnement (témoin : `pre-push-main-red.test.mjs`).
-//
-// Le seul chemin pour réparer un noyau rouge : pousser le correctif sur une branche
-// `noyau/<nom>` (le noyau y tourne), attendre son verdict VERT, puis pousser CE MÊME SHA
-// sur `main`. Le hook laisse passer un commit dont `CI noyau` a déjà rendu un verdict vert,
-// et seulement lui : ce n'est pas pousser du rouge, c'est pousser un commit jugé.
-//
-// - Ne regarde QUE les poussées vers `refs/heads/main`.
-// - `gh` absent, hors ligne ou non authentifié : REFUSE en le disant. Un état illisible
-//   n'est pas un état vert ; sans réseau, la poussée échouerait de toute façon.
-//
+// - Seul le noyau (`ci-noyau.yml`) juge ; les autres workflows ne bloquent rien. Tant que `main`
+//   est rouge, aucune garde ne voit la régression suivante.
+// - 🔴 AUCUN CONTOURNEMENT : ce script ne lit AUCUNE variable d'environnement (témoin
+//   `pre-push-main-red.test.mjs`).
+// - Passe un commit dont `CI noyau` a déjà rendu un verdict VERT (branche `noyau/<nom>`), et lui
+//   seul : c'est pousser un commit jugé, pas du rouge.
+// - Ne regarde QUE `refs/heads/main`. `gh` absent, hors ligne ou non authentifié : REFUSE.
 // Installé par `git config core.hooksPath .githooks` (cf. scripts/CLAUDE.md).
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
@@ -127,7 +115,62 @@ export function main({ stdin, lire = lireRuns, log = console.error }) {
   return block ? 1 : 0;
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+// ── `npm run pousser` (ADR 0022) : le noyau juge le commit sur `noyau/<session>-<sha>`, puis ce
+// SHA part sur `main`. Rien de lourd ne tourne sur le poste pendant l'attente.
+
+/** La branche de vérification d'un commit : `noyau/<branche locale>-<sha court>`. */
+export function brancheDeVerif(branche, sha) {
+  const nom = branche.replace(/^worktree-/, '').replace(/[^A-Za-z0-9._-]+/g, '-').slice(0, 40).replace(/^-+|-+$/g, '') || 'session';
+  return `noyau/${nom}-${sha.slice(0, 8)}`;
+}
+
+const EN_COURS = new Set(['queued', 'in_progress', 'waiting', 'pending', 'requested']);
+
+/** Attend que `trouver()` rende un run terminé ; `null` au bout de `limite` ms. */
+async function attendreRun(trouver, attendre, delai, limite) {
+  for (let t = 0; t <= limite; t += delai) {
+    const run = trouver();
+    if (run?.status === 'completed') return run;
+    await attendre(delai);
+  }
+  return null;
+}
+
+/** `git(args, voir)` → {code, out} ; `runs(filtre)` = `lireRuns` ; `attendre(ms)` → Promise. */
+export async function pousser({ git, runs, attendre, log, delai = 20_000, limite = 40 * 60_000 }) {
+  const ok = (args, voir) => git(args, voir).code === 0;
+  const rebaser = () => ok(['fetch', 'origin']) && ok(['rebase', 'origin/main'], true);
+  if (!rebaser()) return (log('pousser · fetch ou rebase en échec : régler à la main.'), 1);
+  if (ok(['merge-base', '--is-ancestor', 'HEAD', 'origin/main'])) return (log('pousser · rien de neuf face à origin/main.'), 0);
+  const sha = git(['rev-parse', 'HEAD']).out.trim();
+  const branche = brancheDeVerif(git(['rev-parse', '--abbrev-ref', 'HEAD']).out.trim(), sha);
+  if (!ok(['push', 'origin', `HEAD:refs/heads/${branche}`], true)) return 1;
+  log(`pousser · ${WORKFLOW} juge ${sha.slice(0, 8)} sur ${branche} (4 à 7 min, rien ne tourne ici).`);
+  const run = await attendreRun(() => (runs(['--branch', branche]) ?? []).find((r) => r.headSha === sha), attendre, delai, limite);
+  git(['push', 'origin', '--delete', branche]);
+  if (run?.conclusion !== 'success') {
+    log(`pousser · ${WORKFLOW} ${run ? run.conclusion : 'sans verdict'} ${run?.url ?? ''} : rien n'est parti sur main.`);
+    return 1;
+  }
+  for (let essai = 0; essai < 3; essai += 1) {
+    // `garde-noyau-en-cours.sh` refuse une poussée pendant un run de main : attendre sa fin.
+    await attendreRun(() => ((runs(['--branch', 'main']) ?? []).some((r) => EN_COURS.has(r.status)) ? null : { status: 'completed' }), attendre, delai, limite);
+    if (ok(['push', 'origin', 'HEAD:main'], true)) return (log(`pousser · ${sha.slice(0, 8)} jugé vert, poussé sur main.`), 0);
+    if (!rebaser()) break;
+    log('pousser · main a bougé : commit rebasé, le noyau de main le rejugera.');
+  }
+  log('pousser · poussée sur main refusée : lire le message du hook.');
+  return 1;
+}
+
+const lance = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+if (lance && process.argv.includes('--pousser')) {
+  const git = (args, voir = false) => {
+    const r = spawnSync('git', args, { encoding: 'utf8', stdio: voir ? 'inherit' : ['ignore', 'pipe', 'pipe'] });
+    return { code: r.status ?? 1, out: r.stdout ?? '' };
+  };
+  process.exit(await pousser({ git, runs: lireRuns, attendre: (ms) => new Promise((r) => setTimeout(r, ms)), log: console.log }));
+} else if (lance) {
   let stdin = '';
   try {
     stdin = readFileSync(0, 'utf8');

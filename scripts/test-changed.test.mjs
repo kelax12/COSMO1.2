@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { fichiersDeTest, selectionner, lireChangements, run, CONFIGURATION } from './test-changed.mjs';
+import { fichiersDeTest, selectionner, lireChangements, run, CONFIGURATION, PLAFOND, GARDES_UI, refusPlafond } from './test-changed.mjs';
 
 const CONTENUS = {
   'scripts/ci-toutes-les-gardes.guard.test.mjs': "readFileSync('.github/workflows/ci-noyau.yml')",
@@ -94,61 +94,94 @@ describe('run', () => {
     'ls-files': (a) => (a.includes('--others') ? '' : `${Object.keys(CONTENUS).join('\n')}\n`),
   });
   const existe = (f) => f !== 'supprime.ts';
+  const base = { executer: ex, lire, existe, log: () => {} };
 
-  it('lance vitest related sur les sources et les tests trouvés par le texte, sans option de parallélisme', () => {
+  it('lance Vitest sur les sources et les tests trouvés par le texte, plafond par défaut', async () => {
     const s = sortie();
-    let args;
-    const code = run({ argv: [], executer: ex, lire, existe, log: s.log, lancer: (a) => { args = a; return 0; } });
+    let recu;
+    const code = await run({ ...base, argv: [], log: s.log, lancer: (o) => { recu = o; return 0; } });
     expect(code).toBe(0);
-    expect(args).toEqual(['related', '--run', '--passWithNoTests', 'src/lib/toast.ts', 'scripts/ci-toutes-les-gardes.guard.test.mjs']);
-    expect(args.join(' ')).not.toMatch(/worker|thread|pool|parallel/i);
+    expect(recu.fichiers).toEqual(['src/lib/toast.ts', 'scripts/ci-toutes-les-gardes.guard.test.mjs']);
+    expect(recu.plafond).toBe(PLAFOND);
     expect(s.l.join('\n')).toMatch(/2 fichier\(s\) modifié\(s\) depuis origin\/main/);
   });
 
-  it('rend le code de sortie de vitest', () => {
-    expect(run({ argv: [], executer: ex, lire, existe, log: () => {}, lancer: () => 1 })).toBe(1);
+  it('rend le code de sortie du lanceur (1 rouge, 2 plafond dépassé)', async () => {
+    expect(await run({ ...base, argv: [], lancer: () => 1 })).toBe(1);
+    expect(await run({ ...base, argv: [], lancer: () => 2 })).toBe(2);
   });
 
-  it('--liste n’exécute rien ; --base change la référence', () => {
+  it('--tout lève le plafond', async () => {
+    let recu;
+    await run({ ...base, argv: ['--tout'], lancer: (o) => { recu = o; return 0; } });
+    expect(recu.plafond).toBe(0);
+  });
+
+  it('TÉMOIN plafond : au-delà, un refus qui dit NON JOUÉS ; en deçà ou sans plafond, rien', () => {
+    expect(refusPlafond(PLAFOND + 1, PLAFOND)).toMatch(/NON JOUÉS.*npm run pousser/);
+    expect(refusPlafond(PLAFOND, PLAFOND)).toBe('');
+    expect(refusPlafond(505, 0)).toBe('');
+  });
+
+  it('--rapide : ESLint sur les sources modifiées, puis la sélection et les gardes UI', async () => {
+    let lintes;
+    let recu;
+    const code = await run({ ...base, argv: ['--rapide'], linter: (f) => { lintes = f; return 0; }, lancer: (o) => { recu = o; return 0; } });
+    expect(code).toBe(0);
+    expect(lintes).toEqual(['src/lib/toast.ts']);
+    expect(recu.fichiers).toEqual(expect.arrayContaining([...GARDES_UI, 'src/lib/toast.ts']));
+  });
+
+  it('TÉMOIN --rapide : un ESLint rouge arrête tout, Vitest ne part pas', async () => {
+    let lance = false;
+    const s = sortie();
+    expect(await run({ ...base, argv: ['--rapide'], log: s.log, linter: () => 1, lancer: () => { lance = true; return 0; } })).toBe(1);
+    expect(lance).toBe(false);
+    expect(s.l.join()).toMatch(/ESLint rouge/);
+  });
+
+  it('--liste n’exécute rien (ni lint ni Vitest) ; --base change la référence', async () => {
     let appele = false;
     const vus = [];
     const ex2 = (a) => { vus.push(a.join(' ')); return ex(a); };
-    expect(run({ argv: ['--liste', '--base', 'HEAD~1'], executer: ex2, lire, existe, log: () => {}, lancer: () => { appele = true; return 0; } })).toBe(0);
+    const rien = () => { appele = true; return 0; };
+    expect(await run({ ...base, argv: ['--liste', '--rapide', '--base', 'HEAD~1'], executer: ex2, linter: rien, lancer: rien })).toBe(0);
     expect(appele).toBe(false);
     expect(vus[0]).toBe('merge-base HEAD~1 HEAD');
   });
 
-  it('TÉMOIN : une base illisible est une ERREUR, jamais un « rien à tester »', () => {
+  it('TÉMOIN : une base illisible est une ERREUR, jamais un « rien à tester »', async () => {
     const s = sortie();
     const casse = fauxGit({ 'merge-base': new Error('fatal: Not a valid object name origin/main') });
-    expect(run({ argv: [], executer: casse, lire, existe, log: s.log, lancer: () => 0 })).toBe(1);
+    expect(await run({ ...base, argv: [], executer: casse, log: s.log, lancer: () => 0 })).toBe(1);
     expect(s.l.join()).toMatch(/illisible/);
-    expect(run({ argv: ['--base'], executer: ex, lire, existe, log: () => {}, lancer: () => 0 })).toBe(1);
+    expect(await run({ ...base, argv: ['--base'], lancer: () => 0 })).toBe(1);
   });
 
-  it('aucun fichier modifié, ou aucun test lié : 0, et le dit', () => {
+  it('aucun fichier modifié, ou aucun test lié : 0, et le dit', async () => {
     const s = sortie();
     const vide = fauxGit({ 'merge-base': 'abc', diff: '', 'ls-files': '' });
-    expect(run({ argv: [], executer: vide, lire, existe, log: s.log, lancer: () => 1 })).toBe(0);
+    expect(await run({ ...base, argv: [], executer: vide, log: s.log, lancer: () => 1 })).toBe(0);
     expect(s.l.join()).toMatch(/aucun fichier modifié/);
     const s2 = sortie();
     const isole = fauxGit({ 'merge-base': 'abc', diff: 'README.txt\n', 'ls-files': (a) => (a.includes('--others') ? '' : 'src/lib/autre.test.ts\n') });
-    expect(run({ argv: [], executer: isole, lire, existe: () => true, log: s2.log, lancer: () => 1 })).toBe(0);
+    expect(await run({ ...base, argv: [], executer: isole, existe: () => true, log: s2.log, lancer: () => 1 })).toBe(0);
     expect(s2.l.join()).toMatch(/aucun test lié/);
   });
 
-  it('avertit quand la configuration de test a bougé', () => {
+  it('avertit quand la configuration de test a bougé', async () => {
     const s = sortie();
     const conf = fauxGit({ 'merge-base': 'abc', diff: 'vitest.config.ts\nsrc/lib/toast.ts\n', 'ls-files': (a) => (a.includes('--others') ? '' : 'src/lib/toast.test.ts\n') });
-    run({ argv: ['--liste'], executer: conf, lire, existe: () => true, log: s.log, lancer: () => 0 });
+    await run({ ...base, argv: ['--liste'], executer: conf, existe: () => true, log: s.log, lancer: () => 0 });
     expect(s.l.join()).toMatch(/configuration modifiée \(vitest\.config\.ts\)/);
   });
 
   // C-47 : `maxWorkers: 2` est fixé dans vitest.config.ts ; l'écraser sature la machine.
-  it('TÉMOIN : ni le script ni la commande npm ne passent --maxWorkers', () => {
+  it('TÉMOIN : ni le script ni les commandes npm ne passent --maxWorkers', () => {
     const script = readFileSync(join(process.cwd(), 'scripts/test-changed.mjs'), 'utf8');
-    expect(script).not.toMatch(/--max-?workers|maxWorkers:/i);
+    expect(script).not.toMatch(/--max-?workers|maxWorkers:|maxWorkers\s*=/i);
     const pkg = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf8'));
     expect(pkg.scripts['test:changed']).toBe('node scripts/test-changed.mjs');
+    expect(pkg.scripts['verif:rapide']).toBe('node scripts/test-changed.mjs --rapide');
   });
 });

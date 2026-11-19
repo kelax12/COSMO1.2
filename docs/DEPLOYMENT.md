@@ -27,13 +27,7 @@ Porte (`CI-02`) :
 
 - `.githooks/pre-push` lance `scripts/pre-push-main-red.mjs` : refus vers `main` si le dernier `CI noyau` de `main` est rouge ou illisible (`gh` absent ou non authentifié). Installer une fois par clone : `git config core.hooksPath .githooks`.
 - 🔴 Aucun contournement : le script ne lit aucune variable d'environnement. ❌ `--no-verify` interdit. Seule une protection de branche GitHub fermerait ce dernier chemin.
-- Réparer un noyau rouge :
-```bash
-git push origin HEAD:refs/heads/noyau/<nom>
-# attendre CI noyau vert sur ce SHA
-git push origin HEAD:main
-git push origin --delete noyau/<nom>
-```
+- Pousser une session (ADR 0022) : `npm run pousser` (`scripts/pre-push-main-red.mjs --pousser`). Il rebase sur `origin/main`, pousse le SHA sur `noyau/<session>-<sha>`, attend le verdict du `CI noyau` (40 min au plus), supprime la branche, puis pousse ce SHA sur `main` une fois fini tout run de `main` en cours. Rouge ou sans verdict : rien ne part sur `main`. `main` a bougé : rebase, et le noyau de `main` rejuge. Le même chemin répare un noyau rouge.
 - Témoin : `scripts/pre-push-main-red.test.mjs`.
 - `.githooks/garde-worktree.sh` refuse toute poussée partant du checkout principal (`--git-dir` égal à `--git-common-dir`) ; secours, Axel seul : `COSMO_PUSH_CHECKOUT_PRINCIPAL=1 git push …`.
 - `.githooks/garde-noyau-en-cours.sh` refuse une poussée vers `main` tant qu'un run `CI noyau` est `queued` ou `in_progress` sur `main` ; `gh` illisible = avertissement et passage ; secours, Axel seul : `COSMO_PUSH_NOYAU_EN_COURS=1 git push …`. Témoin : `sh .githooks/garde-noyau-en-cours.test.sh`.

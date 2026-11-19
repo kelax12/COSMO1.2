@@ -15,7 +15,7 @@ Format MADR léger : **Statut**, **Date**, **Contexte**, **Décision**, **Consé
   plus ce qui était vrai à sa date.
 - Statuts : `proposée`, `acceptée`, `remplacée par 00NN`, `abandonnée`.
 - Numérotation à quatre chiffres, nom de fichier `NNNN-sujet-en-minuscules.md`. Le suivant est le
-  **0022**, après avoir relu ce dossier.
+  **0023**, après avoir relu ce dossier.
 - ❌ Aucune liste de faiblesses ni de findings de sécurité ouverts : le dépôt est public (voir l'ADR 0008).
 
 ## Index
@@ -23,7 +23,7 @@ Format MADR léger : **Statut**, **Date**, **Contexte**, **Décision**, **Consé
 | # | Décision | Statut | Date |
 |---|---|---|---|
 | [0001](./0001-supabase-assume-rls-frontiere.md) | Supabase est assumé, la RLS est la frontière de sécurité | acceptée | 2026-11-07 (décision d'origine) |
-| [0002](./0002-poussee-directe-sur-main-derriere-ci-noyau.md) | Poussée directe sur `main`, derrière le `CI noyau` | acceptée | 2026-10-29 |
+| [0002](./0002-poussee-directe-sur-main-derriere-ci-noyau.md) | Poussée directe sur `main`, derrière le `CI noyau` | remplacée par 0022 | 2026-10-29 |
 | [0003](./0003-i18n-maison-catalogues-json.md) | i18n maison, en catalogues JSON | acceptée | 2026-07-30 |
 | [0004](./0004-stripe-redirection-serveur-facturation-entreprise-seule.md) | Stripe par redirection serveur, facturation entreprise seule, Premium perso coupé | acceptée | 2026-10-20 |
 | [0005](./0005-modules-entreprise-separes-des-modules-perso.md) | Les modules entreprise sont séparés des modules perso | acceptée | 2026-11-07 (décision d'origine) |
@@ -43,6 +43,7 @@ Format MADR léger : **Statut**, **Date**, **Contexte**, **Décision**, **Consé
 | [0019](./0019-tailwind-3-tant-que-le-css-maison-n-est-pas-repris.md) | Tailwind 3, tant que le CSS maison n'est pas repris | acceptée | 2026-11-09 |
 | [0020](./0020-definition-of-done-et-gel-fonctionnel.md) | Definition of Done en cinq critères, backlog en issues, gel fonctionnel | acceptée | 2026-11-09 |
 | [0021](./0021-documentation-ecrite-pour-un-agent.md) | La documentation est écrite pour un agent, et sa convention est gardée | acceptée | 2026-11-13 |
+| [0022](./0022-poussee-jugee-sur-noyau-avant-main.md) | Poussée jugée sur `noyau/` avant `main`, rien de lourd en local | acceptée | 2026-11-19 |
 
 Le double backend de démonstration (`localStorage`) et sa parité avec Supabase n'ont pas encore leur
 ADR : il est en cours d'écriture dans un chantier à part.

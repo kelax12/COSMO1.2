@@ -123,9 +123,9 @@ et **prouvées avant application**. Ne lancez jamais `supabase db push` ici. Lir
 
 ## Comment le code arrive sur `main`
 
-Décision du 2026-10-29 ([ADR 0002](./docs/adr/0002-poussee-directe-sur-main-derriere-ci-noyau.md)) : le
-mainteneur **pousse directement sur `main`**, sans branche ni pull request, derrière un contrôle
-automatique.
+Décision du 2026-11-19 ([ADR 0022](./docs/adr/0022-poussee-jugee-sur-noyau-avant-main.md), qui
+remplace l'ADR 0002) : le mainteneur pousse sans pull request, par `npm run pousser`. Le commit est
+d'abord jugé sur une branche `noyau/<session>-<sha>`, puis ce même SHA part sur `main`.
 
 - Le workflow **`CI noyau`** (`.github/workflows/ci-noyau.yml`, environ 5 minutes) est le verdict
   **bloquant** : lint, `tsc -b`, tests et couverture, gardes statiques, parité i18n, build et budget
@@ -151,7 +151,8 @@ issue de backlog et toute poussée sur `main`. Le mainteneur les relit à la cl�
 2. **Tests du parcours touché.** Le parcours de la personne qui utilise la chose, pas seulement
    l'unité : un correctif de bug a le test qui l'aurait attrapé, vu rouge avant le correctif, et un
    parcours d'écran a sa spec `e2e/` jouée par la CI (en local, seule la spec modifiée se lance).
-   `lint`, `typecheck` et `test:changed` à zéro erreur avant de pousser.
+   `npm run verif:rapide` vert avant `npm run pousser` ; `tsc -b` et la suite complète, le noyau
+   les juge sur `noyau/` avant `main`.
 3. **Double mode, démo et Supabase.** Le changement marche dans les deux backends, derrière la même
    interface de repository. Ce qui touche le schéma suit la règle des migrations (numérotée,
    prouvée avant application) et garde les données de démo alignées sur la base.
@@ -165,7 +166,7 @@ issue de backlog et toute poussée sur `main`. Le mainteneur les relit à la cl�
    soit **Axel**. Le changement se pousse d'abord sur `noyau/<nom>`, `main` n'avance à ce même SHA
    qu'une fois le noyau vert et la revue faite, et le message du commit la nomme
    (`Revu-par : Axel` ou `Revu-par : session <nom>`). Les autres changements gardent la poussée
-   directe de l'ADR 0002, sans revue.
+   de l'ADR 0022, sans revue.
 
 Aucun de ces critères n'est une garde de CI en soi, à l'exception du critère 1 et de ce que le noyau
 joue déjà : ils se contrôlent à la clôture, comme la poussée directe se contrôle par ses gardes et

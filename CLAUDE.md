@@ -76,19 +76,19 @@ React 19 · TypeScript 6 strict (pas 7 : ADR 0015) · Vite 8 (Rolldown) · React
 
 ## Commandes
 
-`dev` (5173) · `start` (3000, celui de Playwright) · `build` · `preview` · `lint` et `typecheck` (`tsc -b`), **0 erreur** chacun · `test` (une passe) · `test:changed` (diff contre `origin/main`) · `test:coverage` · `test:rls` (stack locale) · `test:e2e` (→ `e2e/CLAUDE.md`). Gardes `check:*`, `i18n:*`, `validate:*` : `scripts/CLAUDE.md` § Inventaire.
+`dev` (5173) · `start` (3000, celui de Playwright) · `build` · `preview` · `lint` et `typecheck` (`tsc -b`), **0 erreur** chacun · `test` (une passe) · `test:changed` (diff contre `origin/main`, plafond 40 fichiers) · `verif:rapide` · `pousser` · `test:coverage` · `test:rls` (stack locale) · `test:e2e` (→ `e2e/CLAUDE.md`). Gardes `check:*`, `i18n:*`, `validate:*` : `scripts/CLAUDE.md` § Inventaire.
 
-- ✅ Boucle locale : `lint` + `typecheck` + `test:changed`. Le verdict est le noyau CI (`ci-noyau.yml`), qui joue tout après le push.
+- ✅ Boucle locale : `npm run verif:rapide` (ESLint en cache sur le diff, `test:changed`, gardes d'interface). ❌ Pas de `tsc -b`, lint complet, suite complète ni `build` en local pour une retouche : le noyau les joue sur `noyau/` avant `main` (ADR 0022).
 - ❌ Ne jamais conclure d'une ligne de résumé : lire `$?`, puis comparer le nombre de fichiers annoncé au périmètre du glob (une suite a déjà rendu « passed » et exit 1, des fichiers n'ayant jamais démarré).
 - 🔴 Ne jamais passer `--maxWorkers` en ligne de commande : `vitest.config.ts` fixe `maxWorkers: 2` (C-47) ; l'écraser sature la machine et compte comme échec un worker vide.
 - ❌ Ne jamais relever un seuil, un plafond ni ajouter une entrée d'allowlist pour faire passer la CI : un dépassement dit qu'un contenu doit bouger.
 
-## Git : poussée directe sur `main` (ADR 0002)
+## Git : poussée jugée sur `noyau/` avant `main` (ADR 0022)
 
-- 🔴 Commit + push sur `main`. ❌ Pas de branche ni de PR, sauf demande explicite d'Axel dans la session.
-- 🔴 Une session = un worktree = une branche locale. ❌ Jamais deux écrivains dans le même arbre (ni le checkout principal partagé). Le hook `pre-push` refuse une poussée depuis le checkout principal (secours Axel seul : `COSMO_PUSH_CHECKOUT_PRINCIPAL=1`, jamais `--no-verify`). Pousser : `git fetch origin && git rebase origin/main && git push origin HEAD:main`.
-- 🔴 Le hook `pre-push` refuse aussi une poussée vers `main` tant qu'un run `CI noyau` tourne sur `main` : attendre sa fin puis rejouer (`gh run list --workflow ci-noyau.yml --branch main --limit 3`). Secours, Axel seul : `docs/DEPLOYMENT.md` § Hook `pre-push`.
-- ❌ Pas de `npm run test:e2e` en local pour une retouche d'UI : `lint`, `typecheck`, `test:changed` et un coup d'œil au preview. Exceptions : une spec `e2e/` modifiée (ne lancer qu'elle), ou une demande d'Axel.
+- 🔴 Commit puis `npm run pousser` : le noyau juge le SHA sur `noyau/<session>-<sha>`, puis ce SHA part sur `main` (branche supprimée, attente d'un run de `main` en cours). ❌ Pas de PR, sauf demande explicite d'Axel dans la session.
+- 🔴 Une session = un worktree = une branche locale. ❌ Jamais deux écrivains dans le même arbre (ni le checkout principal partagé). Le hook `pre-push` refuse une poussée depuis le checkout principal (secours Axel seul : `COSMO_PUSH_CHECKOUT_PRINCIPAL=1`, jamais `--no-verify`).
+- 🔴 Le hook `pre-push` refuse aussi une poussée vers `main` tant qu'un run `CI noyau` tourne sur `main` (`pousser` attend sa fin). Secours, Axel seul : `docs/DEPLOYMENT.md` § Hook `pre-push`.
+- ❌ Pas de `npm run test:e2e` en local pour une retouche d'UI : `verif:rapide` et un coup d'œil au preview. Exceptions : une spec `e2e/` modifiée (ne lancer qu'elle), ou une demande d'Axel.
 - 🔴 Le hook `pre-push` refuse un noyau (`CI noyau`) rouge sur `main`. ❌ Aucun contournement : ni `--no-verify`, ni PR d'office. Réparer : pousser le correctif sur `noyau/<nom>`, puis ce même SHA sur `main` une fois son noyau vert → `docs/DEPLOYMENT.md` § Hook `pre-push`.
 - 🔴 Ne jamais rebaser sur `origin/main` une branche antérieure à la purge d'historique (`.githooks/garde-historique.sh` refuse la poussée) : worktree neuf, puis `git cherry-pick`.
 

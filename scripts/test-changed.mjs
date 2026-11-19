@@ -1,23 +1,16 @@
-// test:changed · Vitest sur les seuls tests liés au diff contre `origin/main` (DEV-01, vague 2.4, 2026-11-06)
+// test:changed · les tests liés au diff contre `origin/main` (DEV-01) ; `--rapide` = boucle locale (ADR 0022)
 //
-// 🔴 POURQUOI. La suite complète prend 54 min sur le poste de dev (4 cœurs, 8 Go) : on ne la
-// lance pas, donc on pousse sans avoir rien joué. La boucle locale joue ce que le diff touche ;
-// le noyau CI (`ci-noyau.yml`, ~5 min) joue tout, et c'est lui qui juge.
-//
-// Ce qui est sélectionné, à partir des fichiers modifiés depuis la base de fusion avec
-// `origin/main` (commits locaux + arbre de travail + fichiers non suivis) :
-//   1. les sources JS/TS modifiées sont passées à `vitest related` : Vitest joue tout test qui
-//      les importe, directement ou non (graphe de modules), et les tests modifiés eux-mêmes ;
-//   2. tout test qui NOMME un fichier modifié (chemin complet, ou nom de fichier pour ce qui
-//      n'est pas du code : workflow, `.md`, `.sql`, hook…) : beaucoup de gardes lisent un
-//      fichier par `readFileSync`, invisible au graphe d'imports.
-//
-// ⚠️ `maxWorkers` reste celui de `vitest.config.ts` (C-47) : ce script ne passe AUCUNE option
-// de parallélisme à Vitest (témoin : `test-changed.test.mjs`).
-// ⚠️ Lockfile, `vitest.config.ts` ou `src/test/setup.ts` modifiés : tout test peut en
-// dépendre. Le script le dit et conseille `npm test` ; il joue quand même sa sélection.
-//
-// Usage : `npm run test:changed` · `npm run test:changed -- --base <ref>` · `--liste` (n'exécute pas).
+// La suite complète prend 54 min sur le poste (4 cœurs, 8 Go) : elle ne tourne qu'au noyau CI.
+// Sélection, depuis la base de fusion (commits locaux, arbre, non suivis) :
+//   1. sources JS/TS modifiées → `related` de Vitest (tout test qui les importe, et les tests modifiés) ;
+//   2. tout test qui NOMME un fichier modifié (chemin complet, ou nom pour ce qui n'est pas du code) :
+//      les gardes qui lisent par `readFileSync` échappent au graphe d'imports.
+// 🔴 Plafond : au-delà de PLAFOND fichiers retenus (fichier carrefour : i18n, `utils.ts`), rien ne joue,
+//    sortie 2 : le verdict revient au noyau (`npm run pousser`). `--tout` lève le plafond.
+// `--rapide` : ESLint en cache sur les fichiers modifiés, puis la sélection + GARDES_UI.
+// ⚠️ Aucune option de parallélisme passée à Vitest (C-47, témoin `test-changed.test.mjs`).
+// ⚠️ Lockfile, `vitest.config.ts` ou `src/test/setup.ts` modifiés : signalé, `npm test` conseillé.
+// Usage : `npm run test:changed [-- --base <ref> | --liste | --tout]` · `npm run verif:rapide`.
 import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -82,7 +75,20 @@ export function lireChangements(base, executer = git) {
   return [...new Set([...modifies, ...nouveaux])].sort();
 }
 
-export function run({ argv, executer = git, lire = (f) => readFileSync(f, 'utf8'), existe = existsSync, log = console.log, lancer }) {
+/** Au-delà, la sélection coûterait plus qu'un verdict du noyau (~6 s par fichier ici, 4 à 7 min au noyau). */
+export const PLAFOND = 40;
+export const SELECTION_TROP_LARGE = 2;
+/** Gardes transverses qu'une retouche d'interface peut rougir sans les importer (~15 s à elles six). */
+export const GARDES_UI = ['architecture', 'design-system', 'loading-empty-state', 'keyboard-audit-coverage', 'theme-contrast']
+  .map((g) => `src/${g}.guard.test.ts`).concat('src/modules/orphan-hooks.guard.test.ts');
+
+/** Le message de refus quand `n` fichiers retenus dépassent le plafond ; '' sinon (`plafond` 0 = aucun). */
+export function refusPlafond(n, plafond) {
+  if (!plafond || n <= plafond) return '';
+  return `test:changed · ${n} fichiers de test retenus (plafond ${plafond}) : NON JOUÉS ici, le noyau juge (npm run pousser). Forcer : --tout.`;
+}
+
+export async function run({ argv, executer = git, lire = (f) => readFileSync(f, 'utf8'), existe = existsSync, log = console.log, lancer, linter }) {
   const iBase = argv.indexOf('--base');
   const base = iBase >= 0 ? argv[iBase + 1] : 'origin/main';
   if (!base) {
@@ -109,23 +115,49 @@ export function run({ argv, executer = git, lire = (f) => readFileSync(f, 'utf8'
   if (configuration.length) {
     log(`  ⚠️ configuration modifiée (${configuration.join(', ')}) : tout test peut en dépendre, npm test conseillé.`);
   }
-  const fichiers = [...related, ...parTexte];
+  const rapide = argv.includes('--rapide');
+  const aLinter = rapide ? changes.filter((f) => SOURCE.test(f)) : [];
+  if (aLinter.length && !argv.includes('--liste') && (await linter(aLinter)) !== 0) {
+    log('verif:rapide · ESLint rouge : tests non lancés.');
+    return 1;
+  }
+  const fichiers = [...new Set([...related, ...parTexte, ...(rapide ? GARDES_UI.filter((g) => existe(g)) : [])])];
   if (fichiers.length === 0) {
     log('test:changed · aucun test lié au diff.');
     return 0;
   }
   if (argv.includes('--liste')) return 0;
-  return lancer(['related', '--run', '--passWithNoTests', ...fichiers]);
+  const code = await lancer({ fichiers, plafond: argv.includes('--tout') ? 0 : PLAFOND, log });
+  if (rapide && code === 0) log('verif:rapide · vert. tsc, lint complet et suite complète : le noyau les joue (npm run pousser).');
+  return code;
 }
 
-function lancerVitest(args) {
-  const require = createRequire(import.meta.url);
-  // `process.execPath` + le .mjs de Vitest : `spawnSync('npx.cmd')` rend EINVAL sous Windows.
-  const bin = join(dirname(require.resolve('vitest/package.json')), 'vitest.mjs');
-  const r = spawnSync(process.execPath, [bin, ...args], { stdio: 'inherit' });
-  return r.status ?? 1;
+/** Vitest en processus : compter la sélection avant de la jouer, sans payer deux démarrages. */
+async function lancerVitest({ fichiers, plafond, log }) {
+  const { createVitest } = await import('vitest/node');
+  const v = await createVitest('test', { related: fichiers, watch: false, run: true, passWithNoTests: true });
+  try {
+    const specs = await v.getRelevantTestSpecifications();
+    const n = new Set(specs.map((s) => s.moduleId)).size;
+    log(`  fichiers de test retenus par Vitest : ${n}`);
+    const refus = refusPlafond(n, plafond);
+    if (refus) return (log(refus), SELECTION_TROP_LARGE);
+    if (n === 0) return 0;
+    // `start()` et non `runTestSpecifications()` : lui seul initialise les reporters (`onInit`).
+    const r = await v.start();
+    return r.unhandledErrors.length > 0 || r.testModules.some((m) => !m.ok()) ? 1 : 0;
+  } finally {
+    await v.close();
+  }
+}
+
+function lancerEslint(fichiers) {
+  // `process.execPath` + le .js d'ESLint : `spawnSync('npx.cmd')` rend EINVAL sous Windows.
+  const bin = join(dirname(createRequire(import.meta.url).resolve('eslint/package.json')), 'bin', 'eslint.js');
+  const cache = ['--cache', '--cache-strategy', 'content', '--cache-location', '.eslintcache', '--no-warn-ignored'];
+  return spawnSync(process.execPath, [bin, ...cache, ...fichiers], { stdio: 'inherit' }).status ?? 1;
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  process.exit(run({ argv: process.argv.slice(2), lancer: lancerVitest }));
+  process.exit(await run({ argv: process.argv.slice(2), lancer: lancerVitest, linter: lancerEslint }));
 }
