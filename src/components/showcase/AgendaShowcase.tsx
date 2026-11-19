@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Clock, Bookmark, Calendar } from 'lucide-react';
+import { Search, Clock, Bookmark, Calendar, CalendarDays } from 'lucide-react';
 import { useShowcasePalette, eventFill } from './showcase-theme';
 import { LARGEUR_BARRE_TACHES } from './agenda-geometrie';
 
@@ -26,6 +26,47 @@ const P_COLORS: Record<number, string> = {
   3: 'bg-yellow-100 text-yellow-800',
   2: 'bg-orange-100 text-orange-800',
   1: 'bg-red-200   text-red-900',
+};
+
+// Corps d'une carte du panneau : decalque de `PersonalTaskCard` (app, refonte
+// du 2026-11-16) : barre coloree interne, echeance et duree en puces, priorite
+// a droite. La carte qui le contient porte `pl-4` pour laisser la barre.
+const CarteTacheCorps: React.FC<{
+  nom: string;
+  couleur: string;
+  favori?: boolean;
+  barre?: boolean;
+  echeance: string;
+  duree: number;
+  priorite: number;
+}> = ({ nom, couleur, favori, barre, echeance, duree, priorite }) => {
+  const P = useShowcasePalette();
+  return (
+    <>
+      <span
+        aria-hidden="true"
+        className="absolute left-1.5 top-2 bottom-2 w-[3px] rounded-full"
+        style={{ backgroundColor: couleur }}
+      />
+      <div className="flex items-center gap-1.5 min-w-0 mb-1.5">
+        <span className={`text-xs font-medium text-white sc-ink truncate ${barre ? 'line-through' : ''}`}>{nom}</span>
+        {favori && <Bookmark size={11} className="text-yellow-400 fill-yellow-400 shrink-0" />}
+      </div>
+      <div className="flex items-center gap-1 text-[10px]" style={{ color: P.textSecondary }}>
+        <span className="flex items-center gap-1 px-1 py-px rounded border whitespace-nowrap" style={{ borderColor: P.hairline }}>
+          <CalendarDays size={9} aria-hidden="true" />
+          {echeance.slice(0, 5)}
+        </span>
+        <span className="flex items-center gap-1 px-1 py-px rounded border whitespace-nowrap" style={{ borderColor: P.hairline }}>
+          <Clock size={9} aria-hidden="true" />
+          {duree} min
+        </span>
+        <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full font-semibold shrink-0 ${P_COLORS[priorite]}`}>
+          P{priorite}
+        </span>
+      </div>
+    </>
+  );
 };
 
 // Calendar config: Mon–Sun, 08:00–18:00 (10 hours × 54px = 540px)
@@ -162,47 +203,23 @@ const AgendaShowcase: React.FC = () => {
                 // Une tâche planifiée n'est plus estompée (opacité 50 % + voile
                 // noir) : son texte tombait à 1,2:1. Le nom barré et « ✓ Déjà
                 // planifiée » le disent déjà (Lighthouse).
-                className={`rounded-lg p-2.5 border relative transition-all ${
+                className={`rounded-lg py-2.5 pr-2.5 pl-4 border relative transition-all ${
                   isAnimated && phase === 'highlight' ? 'ring-2 ring-orange-400/70' : ''
                 }`}
                 style={{
                   backgroundColor: P.card,
                   borderColor: P.hairline,
-                  borderLeft: `4px solid ${cat.color}`,
                 }}
               >
-                {/* Task name row */}
-                <div className="flex items-center justify-between mb-1.5 gap-1">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: cat.color }} />
-                    <span className={`text-xs font-medium text-white sc-ink truncate ${isPlaced ? 'line-through' : ''}`}>
-                      {task.name}
-                    </span>
-                    {task.bookmarked && <Bookmark size={11} className="text-yellow-400 fill-yellow-400 shrink-0" />}
-                  </div>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold shrink-0 ${P_COLORS[task.priority]}`}>
-                    P{task.priority}
-                  </span>
-                </div>
-
-                {/* Meta row */}
-                <div className="flex items-center justify-between text-[10px] text-slate-500">
-                  <div className="flex items-center gap-1">
-                    <Clock size={9} />
-                    <span>{task.estimatedTime} min</span>
-                  </div>
-                  <span
-                    className="px-1.5 py-0.5 rounded border text-[10px]"
-                    style={{ backgroundColor: P.inset, borderColor: P.hairline, color: P.textSecondary }}
-                  >
-                    {cat.name}
-                  </span>
-                </div>
-
-                <div className="mt-1 text-[10px] text-slate-500">
-                  Deadline: {task.deadline}
-                </div>
-
+                <CarteTacheCorps
+                  nom={task.name}
+                  couleur={cat.color}
+                  favori={task.bookmarked}
+                  barre={isPlaced}
+                  echeance={task.deadline}
+                  duree={task.estimatedTime}
+                  priorite={task.priority}
+                />
                 {isPlaced ? (
                   <div className="mt-1 text-[10px] font-semibold text-green-400">✓ Déjà planifiée</div>
                 ) : (
@@ -429,34 +446,24 @@ const AgendaShowcase: React.FC = () => {
                 ? { type: 'spring', stiffness: 90, damping: 16, mass: 0.8 }
                 : { duration: 0.25 }
             }
-            className="absolute z-50 rounded-lg p-2.5 border pointer-events-none shadow-2xl"
+            className="absolute z-50 rounded-lg py-2.5 pr-2.5 pl-4 border pointer-events-none shadow-2xl"
             style={{
               left: ghostFrom.x,
               top: ghostFrom.y,
               width: ghostFrom.w,
               backgroundColor: P.card,
-              borderColor: CATEGORIES['c2'].color,
-              borderLeft: `4px solid ${CATEGORIES['c2'].color}`,
+              borderColor: P.hairline,
               boxShadow: P.dragShadow,
             }}
           >
-            <div className="flex items-center justify-between mb-1.5 gap-1">
-              <div className="flex items-center gap-1.5">
-                <div className="w-2.5 h-2.5 rounded-full shrink-0 bg-orange-500" />
-                <span className="text-xs font-medium text-white sc-ink">{DRAG_TASK.name}</span>
-                <Bookmark size={11} className="text-yellow-400 fill-yellow-400" />
-              </div>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold shrink-0 ${P_COLORS[DRAG_TASK.priority]}`}>
-                P{DRAG_TASK.priority}
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-[10px] text-slate-400">
-              <div className="flex items-center gap-1"><Clock size={9} />{DRAG_TASK.estimatedTime} min</div>
-              <span className="text-[10px] px-1.5 py-0.5 rounded border border-white/10 text-slate-400 bg-slate-900">
-                Projets
-              </span>
-            </div>
-            <div className="mt-1 text-[10px] text-slate-500">Deadline: {DRAG_TASK.deadline}</div>
+            <CarteTacheCorps
+              nom={DRAG_TASK.name}
+              couleur={CATEGORIES['c2'].color}
+              favori
+              echeance={DRAG_TASK.deadline}
+              duree={DRAG_TASK.estimatedTime}
+              priorite={DRAG_TASK.priority}
+            />
             <div className="mt-1 text-[10px] text-orange-400/60">↗ Glisser vers le calendrier</div>
           </motion.div>
         )}
