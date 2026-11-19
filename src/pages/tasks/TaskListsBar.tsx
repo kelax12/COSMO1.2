@@ -2,7 +2,14 @@
 // inline + smart lists + sélection de tâches) — extraite verbatim, prop-driven.
 import React from 'react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
-import { X, Plus, Pencil, Trash2, Sparkles, Pin, PinOff, Share2 } from 'lucide-react';
+import { X, Plus, Pencil, Trash2, Sparkles, Pin, PinOff, Share2, MoreHorizontal } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import SmartListMenu from '@/components/SmartListMenu';
 import CreateListForm from './CreateListForm';
 import CreateListSheet from './CreateListSheet';
@@ -77,6 +84,67 @@ interface TaskListsBarProps {
   onShareList?: (list: TaskList) => void;
 }
 
+interface ListActionsMenuProps {
+  list: TaskList;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  visible: boolean;
+  isSelected: boolean;
+  onAdd: (listId: string) => void;
+  onRename: (list: TaskList) => void;
+  onTogglePin: (list: TaskList) => void;
+  onShare?: (list: TaskList) => void;
+  onDelete: (listId: string) => void;
+}
+
+/** Menu « ⋯ » d'une liste (desktop) : Ajouter, Renommer, Épingler, Partager, Supprimer. */
+const ListActionsMenu: React.FC<ListActionsMenuProps> = ({
+  list, open, onOpenChange, visible, isSelected, onAdd, onRename, onTogglePin, onShare, onDelete,
+}) => {
+  const { t } = useT('tasks');
+  return (
+        <DropdownMenu open={open} onOpenChange={onOpenChange}>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              onPointerDown={(e) => e.stopPropagation()}
+              aria-label={t('lists.actionsAria', { list: list.name })}
+              className={`absolute right-1.5 top-1/2 -translate-y-1/2 p-1 rounded-md transition-opacity ${
+                visible ? 'opacity-100' : 'opacity-0 pointer-events-none focus-visible:opacity-100 focus-visible:pointer-events-auto'
+              } ${isSelected ? 'text-[rgb(var(--color-accent-solid-foreground))] hover:bg-white/20' : 'text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'}`}
+            >
+              <MoreHorizontal size={16} aria-hidden="true" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            {list.type !== 'smart' && (
+              <DropdownMenuItem onClick={() => onAdd(list.id)}>
+                <Plus aria-hidden="true" /> {t('lists.menuAdd')}
+              </DropdownMenuItem>
+            )}
+            {list.type !== 'smart' && (
+              <DropdownMenuItem onClick={() => onRename(list)}>
+                <Pencil aria-hidden="true" /> {t('lists.menuRename')}
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onClick={() => onTogglePin(list)}>
+              {list.isDefault ? <PinOff aria-hidden="true" /> : <Pin aria-hidden="true" />}
+              {' '}{list.isDefault ? t('lists.menuUnpin') : t('lists.menuPin')}
+            </DropdownMenuItem>
+            {list.type !== 'smart' && onShare && (
+              <DropdownMenuItem onClick={() => onShare(list)}>
+                <Share2 aria-hidden="true" /> {t('lists.menuShare')}
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem variant="destructive" onClick={() => onDelete(list.id)}>
+              <Trash2 className="!text-red-500" aria-hidden="true" /> {t('lists.menuDelete')}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+  );
+};
+
 const TaskListsBar: React.FC<TaskListsBarProps> = ({
   lists, orderedLists, tasksCountByListId, isMobile, colorOptions, resolveListColor,
   chipLongPressFired,
@@ -92,6 +160,9 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
   onShareList,
 }) => {
   const { t, tp } = useT('tasks');
+  // Liste dont le menu « ⋯ » est ouvert : garde l'icône visible quand la
+  // souris quitte la pastille pour aller dans le menu (rendu en portail).
+  const [menuListId, setMenuListId] = React.useState<string | null>(null);
 
   // Une seule création, deux emplacements (desktop inline, mobile empilé) :
   // les deux formulaires partagent ces gestes plutôt que d'en recopier un.
@@ -198,7 +269,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                         const isHovered = hoveredListId === list.id;
                         // Boutons flottants = desktop uniquement (hover). Sur mobile,
                         // l'appui long ouvre ListActionsSheet (cibles ≥ 44 px).
-                        const showActions = (isHovered || isSelected) && !isEditing && !isMobile;
+                        const showActions = (isHovered || menuListId === list.id) && !isEditing && !isMobile;
 
                         return (
                           <Reorder.Item
@@ -221,73 +292,6 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                             onMouseEnter={() => setHoveredListId(list.id)}
                             onMouseLeave={() => setHoveredListId(null)}
                           >
-                            <AnimatePresence>
-                              {showActions && (
-                                <motion.div
-                                  initial={{ opacity: 0, y: 4 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  exit={{ opacity: 0, y: 4 }}
-                                  transition={{ duration: 0.15 }}
-                                  className="absolute -top-8 inset-x-0 flex justify-center gap-2.5 z-20"
-                                >
-                                  {/* Bouton "épingler par défaut" — seul un peut être actif */}
-                                  <button
-                                    onClick={(e) => { e.stopPropagation(); handleToggleDefault(list); }}
-                                    className={`p-2 rounded-lg border shadow-sm transition-colors ${
-                                      list.isDefault
-                                        ? 'bg-amber-50 dark:bg-amber-900/30 border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-300'
-                                        : 'bg-white dark:bg-slate-700 border-[rgb(var(--color-border))] text-slate-500 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400'
-                                    }`}
-                                    title={list.isDefault ? t('lists.defaultOnTitle') : t('lists.defaultOffTitle')}
-                                    aria-label={list.isDefault ? t('lists.defaultOnAria') : t('lists.defaultOffAria')}
-                                  >
-                                    {list.isDefault ? <Pin size={15} fill="currentColor" /> : <PinOff size={15} />}
-                                  </button>
-                                  {/* Ajouter des tâches — désactivé pour les smart lists (auto-générées) */}
-                                  {list.type !== 'smart' && (
-                                    <button
-                                      onClick={(e) => { e.stopPropagation(); startSelectingTasks(list.id); }}
-                                      className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-[rgb(var(--color-border))] text-slate-500 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
-                                      title={t('lists.addTasks')}
-                                      aria-label={t('lists.addTasks')}
-                                    >
-                                      <Plus size={15} />
-                                    </button>
-                                  )}
-                                  {/* Modifier — désactivé pour smart (la règle est fixe) */}
-                                  {list.type !== 'smart' && (
-                                    <button
-                                      onClick={(e) => { e.stopPropagation(); startEditList(list); }}
-                                      className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-[rgb(var(--color-border))] text-slate-500 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
-                                      title={t('lists.edit')}
-                                      aria-label={t('lists.edit')}
-                                    >
-                                      <Pencil size={15} />
-                                    </button>
-                                  )}
-                                  {/* Partager — listes manuelles uniquement (les smart sont des filtres) */}
-                                  {list.type !== 'smart' && onShareList && (
-                                    <button
-                                      onClick={(e) => { e.stopPropagation(); onShareList(list); }}
-                                      className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-[rgb(var(--color-border))] text-slate-500 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-colors"
-                                      title={t('lists.share')}
-                                      aria-label={t('lists.share')}
-                                    >
-                                      <Share2 size={15} />
-                                    </button>
-                                  )}
-                                  <button
-                                    onClick={(e) => { e.stopPropagation(); setListToDeleteId(list.id); }}
-                                    className="p-2 rounded-lg bg-white dark:bg-slate-700 border border-[rgb(var(--color-border))] text-slate-500 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 shadow-sm transition-colors"
-                                    title={t('lists.delete')}
-                                    aria-label={t('lists.delete')}
-                                  >
-                                    <Trash2 size={15} />
-                                  </button>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
-
                             {isEditing ? (
                               <form
                                 onSubmit={(e) => { e.preventDefault(); submitEditList(); }}
@@ -369,7 +373,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                 // remplacement, demandée explicitement.
                                 // Desktop (sm+) : forme d'origine inchangée
                                 // (rounded-lg, bordure, shadow-sm).
-                                className={`flex items-center gap-1.5 px-3 sm:px-3.5 h-9 sm:h-auto sm:py-2 ${TAP_AREA_44_Y} rounded-full sm:rounded-lg text-label sm:text-sm font-medium transition-all sm:shadow-sm sm:border ${
+                                className={`flex items-center gap-1.5 px-3 sm:px-3.5 h-9 sm:h-auto sm:py-2 ${TAP_AREA_44_Y} rounded-full sm:rounded-lg sm:pr-8 text-label sm:text-sm font-medium transition-all sm:shadow-sm sm:border ${
                                   isSelected
                                     ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] sm:border-[rgb(var(--color-accent-solid))] sm:shadow-md'
                                     : 'bg-[rgb(var(--color-chip-bg))] sm:bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] sm:border-[rgb(var(--color-border))]'
@@ -406,6 +410,23 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                   </div>
                                 )}
                               </button>
+                            )}
+                            {/* Menu d'actions (desktop) : « ⋯ » révélé au survol de la
+                                liste, posé dans la pastille après le compte ; l'espace
+                                est réservé (`sm:pr-8`) pour que la rangée ne bouge pas. */}
+                            {!isEditing && !isMobile && (
+                              <ListActionsMenu
+                                list={list}
+                                open={menuListId === list.id}
+                                onOpenChange={(open) => setMenuListId(open ? list.id : null)}
+                                visible={showActions}
+                                isSelected={isSelected}
+                                onAdd={startSelectingTasks}
+                                onRename={startEditList}
+                                onTogglePin={handleToggleDefault}
+                                onShare={onShareList}
+                                onDelete={setListToDeleteId}
+                              />
                             )}
                           </Reorder.Item>
                         );
