@@ -9,9 +9,10 @@
 // L'emplacement de `BelowFold` (200vh) reste en place pendant ce temps, donc rien
 // ne saute. ⚠️ Une ancre du sommaire cliquée avant l'arrivée du chunk ne trouve
 // pas sa cible : `useSuivreAncre` défile vers elle au montage.
-import React, { useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { gsap, ScrollTrigger, useGSAP } from '@/lib/gsap';
+import React, { useEffect } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { TUILES } from './hero-tuiles';
+import { gsap, ScrollTrigger } from '@/lib/gsap';
 import { ArrowRight } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import FeaturesSection from './FeaturesSection';
@@ -70,149 +71,68 @@ const PersoBelowFold: React.FC<PersoBelowFoldProps> = ({ isMobile, onDemo, onReg
  */
 const PersoCta: React.FC<{ onDemo: () => void; onRegister: () => void }> = ({ onDemo, onRegister }) => {
   const { t } = useT('landing');
-  const ctaRef = useRef<HTMLElement>(null);
-
-  useGSAP(
-    () => {
-      const mm = gsap.matchMedia();
-      mm.add('(prefers-reduced-motion: no-preference)', () => {
-        // Reveal des 2 lignes de la CTA finale (masquées, montée décalée).
-        gsap.from('.cta-line', {
-          yPercent: 110,
-          duration: 0.8,
-          ease: 'power3.out',
-          stagger: 0.14,
-          scrollTrigger: { trigger: '.cta-card', start: 'top 80%', once: true },
-        });
-
-        // Deux filets d'encre encadrent le titre de la CTA. Ils se dessinent UNE
-        // FOIS, à l'arrivée de la carte, puis ne coûtent plus rien (règle du hero :
-        // « le hero ne doit rien coûter une fois l'entrée finie »).
-        //
-        // Ils remplacent un `conic-gradient` en `filter: blur(60px)` en ROTATION
-        // INFINIE, motif retiré du hero (audit A-8 : neutraliser les `filter: blur`
-        // ramenait 2 856 ms bloquées à 259). Ne jamais le remettre.
-        gsap.from('.cta-rule', {
-          scaleX: 0,
-          duration: 0.9,
-          ease: 'power3.out',
-          stagger: 0.12,
-          scrollTrigger: { trigger: '.cta-card', start: 'top 80%', once: true },
-        });
-      });
-    },
-    { scope: ctaRef },
-  );
-
-  // W6 — Count-ups de la CTA finale : les chiffres montent de 0 à leur
-  // valeur (déjà présente dans le markup = fallback reduced-motion).
-  useGSAP(
-    () => {
-      const mm = gsap.matchMedia();
-      mm.add('(prefers-reduced-motion: no-preference)', () => {
-        gsap.utils.toArray<HTMLElement>('[data-countup]').forEach((el) => {
-          const end = Number(el.dataset.countup);
-          if (!Number.isFinite(end)) return;
-          const counter = { v: 0 };
-          gsap.to(counter, {
-            v: end,
-            duration: 1.6,
-            ease: 'power2.out',
-            onUpdate: () => {
-              el.textContent = String(Math.round(counter.v));
-            },
-            scrollTrigger: { trigger: el, start: 'top 88%', once: true },
-          });
-        });
-      });
-    },
-    { scope: ctaRef },
-  );
-
+  // Maquette 20 : la page se referme sur son ouverture. Les cinq tuiles du hero
+  // reviennent en rangée, chacune avec son inclinaison, puis flottent comme au
+  // hero (`.hero-tile-idle`). Plus de carte teintée, de filets ni de compteurs
+  // (les « 100 / 150 » étaient faux, cf. le test des promesses).
+  const reduceMotion = useReducedMotion();
   return (
-    <section ref={ctaRef} className="py-24">
+    <section className="py-28 bg-white">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          className="cta-card bg-gradient-to-r from-blue-50 to-violet-50 border border-blue-200 shadow-[0_24px_60px_-30px_rgba(37,99,235,0.45)] rounded-3xl p-12 relative overflow-hidden"
-        >
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-500/[0.04] to-violet-500/[0.04] z-0"></div>
-          {/* Filets d'encre : ils se dessinent avec la carte, une fois.
-              ⚠️ Le centrage passe par `inset-x-0 mx-auto`, jamais par
-              `-translate-x-1/2` : GSAP anime `scaleX` sur ces éléments, et
-              il fige alors le centrage en pixels — la ligne se décalerait au
-              premier redimensionnement. */}
-          <span
-            className="cta-rule pointer-events-none absolute inset-x-0 top-6 mx-auto h-px w-2/3 origin-center bg-gradient-to-r from-transparent via-blue-600/45 to-transparent"
-            aria-hidden="true"
-          />
-          <span
-            className="cta-rule pointer-events-none absolute inset-x-0 bottom-6 mx-auto h-px w-2/3 origin-center bg-gradient-to-r from-transparent via-violet-600/40 to-transparent"
-            aria-hidden="true"
-          />
-
-          <div className="relative z-10">
-            {/* Lignes masquées : révélées par montée décalée (GSAP) */}
-            <h2 className="text-4xl lg:text-5xl font-bold mb-6">
-              <span className="block overflow-hidden">
-                <span className="cta-line block bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-                  {t('cta.line1')}
-                </span>
-              </span>
-              <span className="block overflow-hidden">
-                <span className="cta-line block bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
-                  {t('cta.line2')}
-                </span>
-              </span>
-            </h2>
-            <p className="text-xl text-slate-600 mb-8 max-w-2xl mx-auto">
-              {t('cta.subtitle')}
-            </p>
-            {/*
-              Count-ups : la démo est pré-remplie, chiffres animés (GSAP).
-
-              `role="img"` n'est pas décoratif : les enfants sont `aria-hidden`
-              (animés), donc le sens ne tient qu'à l'`aria-label`, et sans rôle
-              `aria-label` est INTERDIT sur un `div` (axe `aria-prohibited-attr`).
-            */}
-            <div
-              role="img"
-              className="flex items-center justify-center gap-8 mb-10 text-slate-600"
-              aria-label={t('cta.statsAria')}
-            >
-              {[
-                { value: 100, label: t('cta.tasks') },
-                { value: 100, label: t('cta.habits') },
-                { value: 150, label: t('cta.events') },
-              ].map(({ value, label }) => (
-                <div key={label} className="flex flex-col items-center">
-                  <span data-countup={value} className="text-3xl lg:text-4xl font-bold tabular-nums bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent" aria-hidden="true">
-                    {value}
-                  </span>
-                  <span className="text-xs uppercase tracking-widest text-slate-500" aria-hidden="true">{label}</span>
+        <div className="flex justify-center gap-3 mb-10" aria-hidden="true">
+          {TUILES.map(({ cle, Icone, degrade }, i) => {
+            const r = (i - 2) * 4;
+            return (
+              <motion.div
+                key={cle}
+                initial={reduceMotion ? false : { opacity: 0, y: 28, rotate: 0, scale: 0.7 }}
+                whileInView={{ opacity: 1, y: 0, rotate: r, scale: 1 }}
+                viewport={{ once: true, amount: 0.6 }}
+                transition={{ type: 'spring', stiffness: 260, damping: 16, delay: i * 0.09 }}
+              >
+                <div
+                  className="hero-tile-idle"
+                  style={{ ['--r' as string]: '0deg', ['--dur' as string]: `${7 + i * 0.9}s`, ['--di' as string]: `${1200 + i * 90}ms` }}
+                >
+                  <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${degrade} ring-1 ring-slate-900/10`}>
+                    <Icone className="h-7 w-7 text-white" strokeWidth={1.75} />
+                  </div>
                 </div>
-              ))}
-            </div>
-            {/* Même hiérarchie que le hero : la démo en bleu plein, l'inscription
-                en blanc avec la seule flèche. Cette carte l'inversait, et un
-                `hover:scale-105` sur les deux faisait bouger le texte au survol. */}
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <button
-                onClick={onDemo}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-full font-semibold text-base tracking-[-0.01em] transition-[box-shadow,background-color] duration-300 shadow-[0_8px_30px_-8px_rgba(37,99,235,0.55)] hover:shadow-[0_12px_38px_-8px_rgba(37,99,235,0.7)] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-              >
-                {t('cta.tryDemo')}
-              </button>
-              <button
-                onClick={onRegister}
-                className="group bg-white hover:bg-slate-50 text-slate-900 border border-slate-300 px-8 py-4 rounded-full font-semibold text-base tracking-[-0.01em] shadow-sm transition-[box-shadow,background-color] duration-300 flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-              >
-                {t('cta.startNow')}
-                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" aria-hidden="true" />
-              </button>
-            </div>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        <motion.div
+          initial={reduceMotion ? false : { opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.6 }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.35 }}
+        >
+          <h2 className="text-4xl lg:text-5xl font-bold tracking-[-0.04em] leading-[1.02] text-slate-900 mb-5">
+            {t('cta.line1')}
+            <br />
+            {t('cta.line2')}
+          </h2>
+          <p className="text-lg text-slate-500 mb-9 max-w-xl mx-auto leading-[1.55]">
+            {t('cta.subtitle')}
+          </p>
+          {/* Même hiérarchie que le hero : la démo en bleu plein, l'inscription
+              en blanc avec la seule flèche. */}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              onClick={onDemo}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-7 py-3.5 rounded-full font-semibold text-[15px] tracking-[-0.01em] transition-colors duration-300 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+            >
+              {t('cta.tryDemo')}
+            </button>
+            <button
+              onClick={onRegister}
+              className="group bg-white hover:bg-slate-50 text-slate-900 border border-slate-300 px-7 py-3.5 rounded-full font-semibold text-[15px] tracking-[-0.01em] transition-colors duration-300 flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            >
+              {t('cta.startNow')}
+              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" aria-hidden="true" />
+            </button>
           </div>
         </motion.div>
       </div>

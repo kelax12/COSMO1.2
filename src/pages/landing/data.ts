@@ -35,11 +35,11 @@ export interface FaqItemData {
 }
 
 // ── FAQ data ──────────────────────────────────────────────────────────────
-// 12 items : les deux derniers portent sur la confidentialité en entreprise
-// (surveillance, cloisonnement entre équipes). Ils alimentent aussi le JSON-LD
-// FAQPage — c'est aujourd'hui la seule surface publique qui répond à ces deux
-// objections, systématiques dès qu'une organisation dépasse quelques personnes.
-export const FAQ_ITEMS: FaqItemData[] = Array.from({ length: 12 }, (_, i) => ({
-  questionKey: `faq.q${i + 1}` as KeyOf<'landing'>,
-  answerKey: `faq.a${i + 1}` as KeyOf<'landing'>,
+// Questions retenues (2026-11-20) : les numéros 7, 10, 11 et 12 (collaboration,
+// hors connexion, surveillance, cloisonnement) ont été retirés de la page perso.
+// La liste alimente aussi le JSON-LD FAQPage.
+const FAQ_NUMEROS = [1, 2, 3, 4, 5, 6, 8, 9] as const;
+export const FAQ_ITEMS: FaqItemData[] = FAQ_NUMEROS.map((n) => ({
+  questionKey: `faq.q${n}` as KeyOf<'landing'>,
+  answerKey: `faq.a${n}` as KeyOf<'landing'>,
 }));

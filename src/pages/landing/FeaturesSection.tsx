@@ -63,7 +63,7 @@ interface Feature {
   icon: LucideIcon;
   /** Aplat d'accent (icône, puces, CTA) : la couleur de la page dans l'app (`Layout.tsx`). */
   fond: string;
-  /** Surlignage du mot clé du titre (teinte 200 de la couleur de page). */
+  /** Surlignage du mot clé du titre (teinte 300 de la couleur de page). */
   surligne: string;
   Desktop: React.ComponentType;
   Mobile: React.ComponentType;
@@ -85,7 +85,7 @@ const FEATURES: Feature[] = [
     path: '/tasks',
     icon: CheckSquare,
     fond: 'bg-blue-500',
-    surligne: '#bfdbfe',
+    surligne: '#93c5fd',
     Desktop: TaskTableShowcase,
     Mobile: TaskCardMobileShowcase,
   },
@@ -94,7 +94,7 @@ const FEATURES: Feature[] = [
     path: '/agenda',
     icon: Calendar,
     fond: 'bg-red-500',
-    surligne: '#fecaca',
+    surligne: '#fca5a5',
     Desktop: AgendaShowcase,
     Mobile: AgendaMobileShowcase,
     fromRight: true,
@@ -107,7 +107,7 @@ const FEATURES: Feature[] = [
     path: '/okr',
     icon: Target,
     fond: 'bg-green-500',
-    surligne: '#bbf7d0',
+    surligne: '#86efac',
     Desktop: OKRCardShowcase,
     Mobile: OKRMobileShowcase,
   },
@@ -116,7 +116,7 @@ const FEATURES: Feature[] = [
     path: '/habits',
     icon: Repeat,
     fond: 'bg-yellow-500',
-    surligne: '#fef08a',
+    surligne: '#fde047',
     Desktop: HabitHeatmapShowcase,
     Mobile: HabitMobileShowcase,
     fromRight: true,
@@ -126,7 +126,7 @@ const FEATURES: Feature[] = [
     path: '/statistics',
     icon: BarChart2,
     fond: 'bg-violet-500',
-    surligne: '#ddd6fe',
+    surligne: '#c4b5fd',
     Desktop: () => (
       <WhenVisible fallback={<ShowcaseSkeleton />}>
         <Suspense fallback={<ShowcaseSkeleton />}>
@@ -148,6 +148,7 @@ interface FeaturesSectionProps {
 const FeatureCopy: React.FC<{ feature: Feature; onCta: () => void }> = ({ feature, onCta }) => {
   const { t } = useT('landing');
   const Icon = feature.icon;
+  const reduceMotion = useReducedMotion();
   // Clé de section = `feature.id`. `t` est typée par le catalogue `fr`, d'où
   // le cast : la clé est construite, mais son existence est garantie par le
   // type `FeatureId` qui n'accepte que les cinq sections écrites au catalogue.
@@ -157,7 +158,7 @@ const FeatureCopy: React.FC<{ feature: Feature; onCta: () => void }> = ({ featur
       {/* Même flottement que les tuiles du hero (`.hero-tile-idle`, src/index.css). */}
       <div
         className="hero-tile-idle inline-block"
-        style={{ ['--r' as string]: feature.fromRight ? '6deg' : '-6deg', ['--dur' as string]: '8s' }}
+        style={{ ['--r' as string]: '0deg', ['--dur' as string]: '8s' }}
       >
         <div className={`inline-flex items-center justify-center w-14 h-14 ${feature.fond} rounded-2xl ring-1 ring-slate-900/10`}>
           <Icon size={28} className="text-white" />
@@ -166,9 +167,20 @@ const FeatureCopy: React.FC<{ feature: Feature; onCta: () => void }> = ({ featur
       <h3 className="text-3xl lg:text-4xl font-bold text-slate-900 leading-tight">
         {t(key('titleTop'))}
         <br />
-        <span style={{ boxShadow: `inset 0 -0.32em 0 ${feature.surligne}` }}>
+        {/* Surlignage dessiné au scroll : une bande d'aplat qui s'étend de 0 à 100 %. */}
+        <motion.span
+          className="bg-no-repeat"
+          style={{
+            backgroundImage: `linear-gradient(${feature.surligne}, ${feature.surligne})`,
+            backgroundPosition: '0 88%',
+          }}
+          initial={reduceMotion ? false : { backgroundSize: '0% 0.34em' }}
+          whileInView={{ backgroundSize: '100% 0.34em' }}
+          viewport={{ once: true, amount: 'some' }}
+          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
+        >
           {t(key('titleAccent'))}
-        </span>
+        </motion.span>
       </h3>
       <p className="text-lg text-slate-600 leading-relaxed">{t(key('description'))}</p>
       <div className="space-y-3">
@@ -183,7 +195,7 @@ const FeatureCopy: React.FC<{ feature: Feature; onCta: () => void }> = ({ featur
       </div>
       <button
         onClick={onCta}
-        className="group bg-slate-900 hover:bg-slate-800 text-white pl-4 pr-5 py-3 rounded-full font-semibold text-[15px] transition-colors duration-300 flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+        className={`group ${feature.fond} hover:brightness-95 text-white pl-4 pr-5 py-3 rounded-full font-semibold text-[15px] transition-[filter] duration-300 flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2`}
       >
         <Icon size={16} aria-hidden="true" />
         {t(key('cta'))} <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" aria-hidden="true" />

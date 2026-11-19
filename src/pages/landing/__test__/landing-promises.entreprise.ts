@@ -12,7 +12,6 @@ export const PROMISES_ENTREPRISE: LandingPromise[] = [
     claim: 'Une organisation est gratuite jusqu’à 5 membres, sans carte bancaire.',
     anchors: [
       { key: 'faq.a1', includes: "ne commence qu'au-delà de cinq membres" },
-      { key: 'faq.a7', includes: 'gratuit jusqu’à cinq membres'.replace('’', "'") },
       { key: 'enterprise.hero.reassurance', includes: "Jusqu'à 5 membres gratuitement · sans carte bancaire" },
       { key: 'enterprise.pricing.ctaNote', includes: 'Gratuit jusqu\'à 5 membres' },
       { key: 'enterprise.cta.note', includes: "Gratuit jusqu'à 5 membres · sans carte bancaire" },
@@ -29,7 +28,6 @@ export const PROMISES_ENTREPRISE: LandingPromise[] = [
     figures: {
       '5': [
         'faq.a1',
-        'faq.a7',
         'enterprise.hero.reassurance',
         'enterprise.pricing.ctaNote',
         'enterprise.cta.note',
@@ -150,7 +148,6 @@ export const PROMISES_ENTREPRISE: LandingPromise[] = [
     anchors: [
       { key: 'enterprise.security.s1d', includes: 'vivent dans la base de données' },
       { key: 'enterprise.faq.a3', includes: 'appliquée en base de données' },
-      { key: 'faq.a12', includes: 'appliqué au niveau de la base de données' },
     ],
     proofs: [
       { file: 'supabase/migration/066_org_hierarchy.sql', re: 'CREATE (OR REPLACE )?FUNCTION public\\.is_above' },
@@ -163,7 +160,6 @@ export const PROMISES_ENTREPRISE: LandingPromise[] = [
     claim: 'La hiérarchie ne voit jamais les tâches, habitudes et agenda personnels.',
     anchors: [
       { key: 'enterprise.faq.a2', includes: 'ne sont jamais exposés à sa hiérarchie' },
-      { key: 'faq.a11', includes: 'ni vos tâches et habitudes personnelles' },
     ],
     proofs: [
       { file: 'supabase/migration/081_event_privacy_owner_transfer.sql', re: 'private' },

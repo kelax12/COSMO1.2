@@ -194,18 +194,12 @@ const LandingSkeleton = () => (
         (bridage CPU, onglet rechargé). */}
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-10 lg:pt-16">
       <div className="mx-auto flex max-w-4xl flex-col items-center">
-        {/* La rangée de puces (< xl) puis la tuile produit. Au-delà de `xl`
-            les puces partent dans les marges : le squelette ne les y suit pas,
-            elles n'y pèsent aucune hauteur. */}
-        <div className="mb-6 flex gap-2.5 xl:invisible">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="h-7 w-24 rounded-full bg-slate-900/[0.05]" />
-          ))}
-        </div>
-        <div className="mb-8 sm:mb-10 h-24 w-24 rounded-[1.7rem] bg-slate-900/[0.06]" />
+        {/* Place de la tuile centrale du hero (les cinq tuiles vivent dans la
+            couche de fond et entrent avec la page : le squelette ne les montre pas). */}
+        <div className="mb-8 sm:mb-10 h-24" />
         <div className="w-full space-y-3">
           <div className="mx-auto h-[2.35rem] lg:h-[3.75rem] xl:h-[4.25rem] w-11/12 rounded-xl bg-slate-900/[0.06]" />
-          <div className="mx-auto h-[2.35rem] lg:h-[3.75rem] xl:h-[4.25rem] w-10/12 rounded-xl bg-blue-600/10" />
+          <div className="mx-auto h-[2.35rem] lg:h-[3.75rem] xl:h-[4.25rem] w-10/12 rounded-xl bg-slate-900/[0.06]" />
         </div>
         <div className="mt-8 w-full max-w-xl space-y-2.5">
           <div className="mx-auto h-4 w-11/12 rounded bg-slate-900/[0.05]" />

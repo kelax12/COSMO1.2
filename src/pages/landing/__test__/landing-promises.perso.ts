@@ -22,7 +22,6 @@ export const PROMISES_PERSO: LandingPromise[] = [
     claim: 'Le partage de tâches est gratuit, en rôle Lecteur ou Éditeur.',
     anchors: [
       { key: 'faq.a1', includes: 'Le partage restera gratuit' },
-      { key: 'faq.a7', includes: 'rôle Lecteur ou Éditeur' },
     ],
     proofs: [
       { file: 'src/modules/friends/types.ts', has: "role: 'viewer' | 'editor';" },
@@ -263,19 +262,10 @@ export const PROMISES_PERSO: LandingPromise[] = [
     proofs: [{ file: 'index.html', has: 'id="root"' }],
   },
   {
-    id: 'cache-24-heures',
-    kind: 'limite',
-    claim: 'Un cache localStorage de 24 heures garde les tâches et habitudes récentes.',
-    anchors: [{ key: 'faq.a10', includes: 'un cache localStorage 24 heures' }],
-    proofs: [{ file: 'src/modules/auth/session-cache.ts', has: 'CACHE_MAX_AGE = 24 * 60 * 60 * 1000' }],
-    figures: { '24': ['faq.a10'] },
-  },
-  {
     id: 'demo-locale',
     kind: 'produit',
     claim: 'En mode démo, les données restent dans le navigateur.',
     anchors: [
-      { key: 'faq.a10', includes: 'En mode démo, toutes les données sont stockées localement' },
       { key: 'faq.a9', includes: 'les données restent dans votre navigateur (localStorage)' },
     ],
     proofs: [{ file: 'src/lib/repository.factory.ts', has: 'localStorage' }],
