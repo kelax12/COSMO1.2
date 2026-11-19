@@ -373,7 +373,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                 // remplacement, demandée explicitement.
                                 // Desktop (sm+) : forme d'origine inchangée
                                 // (rounded-lg, bordure, shadow-sm).
-                                className={`flex items-center gap-1.5 px-3 sm:px-3.5 h-9 sm:h-auto sm:py-2 ${TAP_AREA_44_Y} rounded-full sm:rounded-lg sm:pr-8 text-label sm:text-sm font-medium transition-all sm:shadow-sm sm:border ${
+                                className={`flex items-center gap-1.5 px-3 sm:px-3.5 h-9 sm:h-auto sm:py-2 ${TAP_AREA_44_Y} rounded-full sm:rounded-lg ${showActions ? 'sm:pr-8' : ''} text-label sm:text-sm font-medium transition-all sm:shadow-sm sm:border ${
                                   isSelected
                                     ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] sm:border-[rgb(var(--color-accent-solid))] sm:shadow-md'
                                     : 'bg-[rgb(var(--color-chip-bg))] sm:bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] sm:border-[rgb(var(--color-border))]'
@@ -413,7 +413,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                             )}
                             {/* Menu d'actions (desktop) : « ⋯ » révélé au survol de la
                                 liste, posé dans la pastille après le compte ; l'espace
-                                est réservé (`sm:pr-8`) pour que la rangée ne bouge pas. */}
+                                s'ouvre (`sm:pr-8`) au survol seulement : hors survol, la pastille garde sa taille. */}
                             {!isEditing && !isMobile && (
                               <ListActionsMenu
                                 list={list}
