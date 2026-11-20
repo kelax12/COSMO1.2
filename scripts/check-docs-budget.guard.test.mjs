@@ -14,7 +14,6 @@ const EN_TETE = '> **Quand lire** : x. **Fait foi** : y.'
 const RACINE_SAINE = '# Racine\n\n| Zone | Fichier |\n|---|---|\n| Modules | [`src/modules/CLAUDE.md`](./src/modules/CLAUDE.md) |\n'
 const lignes = (n) => Array.from({ length: n }, (_, i) => `l${i}`).join(NL)
 const doc = (corps) => '# Doc' + NL + EN_TETE + NL + NL + corps + NL
-
 let dir
 beforeEach(() => { dir = mkdtempSync(join(tmpdir(), 'docs-budget-')) })
 afterEach(() => { rmSync(dir, { recursive: true, force: true }) })
@@ -239,4 +238,5 @@ describe('check-docs-budget · chemins et symboles cites (regle 9)', () => {
     putBrut('src/lib/absent.ts', 'export const fantome = () => 1\n')
     vert()
   })
+  it('echapperRegExp : metacaracteres neutralises', async () => { const { echapperRegExp: e } = await import('./check-docs-budget.mjs'); expect(['a.b', 'a*', 'f(', '[x', 'a\\b', '$x', 'a|b'].every((s) => new RegExp(`^${e(s)}$`).test(s)) && !new RegExp(e('a.b')).test('axb')).toBe(true) })
 })

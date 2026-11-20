@@ -173,14 +173,14 @@ export function citations(texte) {
 }
 
 const corpusCode = (root) => SOURCES_CODE.flatMap((d) => parcourir(join(root, d), (n) => /\.(?:[cm]?[jt]sx?|sql|json|yml)$/.test(n))).map((p) => readFileSync(p, 'utf8')).join('\n')
-
+export const echapperRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 export function auditSymboles(root, fichiers) {
   const errors = []
   let corpus
   for (const f of fichiers) {
     const { chemins, symboles } = citations(lire(root, f))
     for (const c of chemins) if (!existsSync(join(root, c))) errors.push(`${f} cite \`${c}\`, qui n'existe pas. Corriger la doc, pas recreer le code.`)
-    for (const s of symboles) if (!new RegExp(`(?<![\\w$])${s.replace(/\$/g, '\\$')}(?![\\w$])`).test(corpus ??= corpusCode(root))) errors.push(`${f} cite \`${s}()\`, introuvable dans le code. Corriger la doc.`)
+    for (const s of symboles) if (!new RegExp(`(?<![\\w$])${echapperRegExp(s)}(?![\\w$])`).test(corpus ??= corpusCode(root))) errors.push(`${f} cite \`${s}()\`, introuvable dans le code. Corriger la doc.`)
   }
   return errors
 }
