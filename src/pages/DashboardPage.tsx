@@ -39,6 +39,8 @@ import { useIsMobile } from '@/lib/hooks/use-mobile';
 import WeeklyCheckinModal, { useWeeklyCheckin } from '@/components/WeeklyCheckinModal';
 import { formatDate, formatTime } from '@/i18n/format';
 import { useStatCards } from './dashboard/useStatCards';
+import { useModuleColors } from '@/hooks/useDocumentTheme';
+import { withModuleColors } from '@/lib/module-colors';
 import { deadlineDayKey } from '@/lib/deadline';
 import { useT } from '@/i18n/useT';
 import { VIEW_MODES, type ViewMode } from '@/lib/view-mode';
@@ -127,7 +129,7 @@ const DashboardPage: React.FC = () => {
   const today = new Date().toLocaleDateString('en-CA');
 
   // Les quatre tuiles de statistiques — derivation pure, extraite.
-  const statCards = useStatCards({ tasks, events, habits, krCompletions, viewMode, today, t });
+  const statCards = withModuleColors(useStatCards({ tasks, events, habits, krCompletions, viewMode, today, t }), useModuleColors());
 
   // Section « Tâches collaboratives » masquée quand elle est vide :
   // gagner de la place plutôt que montrer une carte vide en permanence.

@@ -45,6 +45,15 @@ import PersoGuideFab from './perso-guide/PersoGuideFab';
 import { isDueToday } from '@/lib/deadline';
 import { readJson, safeSetItem } from '@/lib/safe-json';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
+
+// Couleur de survol de chaque module : variables `--module-*` de src/index.css,
+// adoucies par le thème Gris (charte V4).
+const CHART_COLORS = {
+  tasks:  'var(--module-tasks)',
+  events: 'var(--module-events)',
+  okrs:   'var(--module-okrs)',
+  habits: 'var(--module-habits)',
+} as const;
 import { readFirstRunDone } from './onboarding/first-run';
 
 // Quick-add global — lazy : ne se charge qu'au premier rendu du Layout.
@@ -61,13 +70,6 @@ const FirstRunSetup = lazyWithRetry(() => import('./onboarding/FirstRunSetup'), 
 // sessions ne l'ouvre jamais, son chunk n'a pas à peser sur le Layout.
 const BugReportModal = lazy(() => import('./BugReportModal'));
 
-// Couleurs du graphique "Répartition du temps"
-const CHART_COLORS = {
-  tasks:  '#3b82f6',
-  events: '#ef4444',
-  okrs:   '#22c55e',
-  habits: '#eab308',
-} as const;
 
 import NavItemLink from './layout/NavItemLink';
 import { PAGE_RIGHT_RAIL_ID } from './layout/page-right-rail';
@@ -324,7 +326,6 @@ const NavItems = () =>
       <Bug size={13} aria-hidden="true" />
     </button>
   );
-
 
   // Composants globaux montés dans les DEUX variantes du Layout (mobile a son
   // propre return early — sans ce bloc partagé, quick-add/rappel/onboarding

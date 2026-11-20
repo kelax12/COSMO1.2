@@ -19,6 +19,8 @@ import { calculateWorkTimeForPeriod } from '@/lib/workTimeCalculator';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import { type ViewMode } from '@/lib/view-mode';
+import { useDocumentTheme } from '@/hooks/useDocumentTheme';
+import { moduleColorsFor } from '@/lib/module-colors';
 
 interface DashboardChartProps {
   viewMode: ViewMode;
@@ -34,14 +36,9 @@ interface DashboardChartProps {
  * comporte exactement comme une valeur correcte. Les libellés sont désormais
  * résolus au rendu, via `t()`.
  */
-const SERIES = [
-  { key: 'tasks',  color: '#3b82f6' },
-  { key: 'events', color: '#ef4444' },
-  { key: 'okrs',   color: '#22c55e' },
-  { key: 'habits', color: '#eab308' },
-] as const;
+const SERIES_KEYS = ['tasks', 'events', 'okrs', 'habits'] as const;
 
-type SeriesKey = typeof SERIES[number]['key'];
+type SeriesKey = typeof SERIES_KEYS[number];
 
 interface ChartPoint {
   label: string;
@@ -113,6 +110,9 @@ const CustomTooltip = ({ active, payload, label, seriesLabel }: {
 
 const DashboardChart: React.FC<DashboardChartProps> = ({ viewMode }) => {
   const { t } = useT('dashboard');
+  // Couleur de module du thème affiché (adoucie en Gris, cf. module-colors).
+  const colors = moduleColorsFor(useDocumentTheme());
+  const SERIES = SERIES_KEYS.map(key => ({ key, color: colors[key] }));
   // V14.1 : six mois de terminées, requête dédiée (jeu de travail = 35 j).
   const tasks = useChartCompletedTasks();
   const { data: events = [] } = useEventsAroundToday();
