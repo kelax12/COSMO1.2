@@ -246,6 +246,9 @@ export const CONTACTS_PROD = {
   'edge-deploy-drift.yml › compare › Sondes de fumee · les fonctions repondent-elles vraiment ?': {
     affiche: 'codes HTTP et verdicts des sondes',
   },
+  'ci-vert.yml › migrations › Porte · toutes les migrations du depot sont en production': {
+    affiche: "noms de fichiers de migration et verdicts du classeur ; l'introspection va dans un fichier du runner, jamais publie",
+  },
   'edge-deploy.yml › deploy › Porte · toutes les migrations du depot sont en production': {
     affiche: "noms de fichiers de migration et verdicts du classeur, noms d'objets de catalogue ; l'introspection va dans un fichier du runner, jamais publie",
   },

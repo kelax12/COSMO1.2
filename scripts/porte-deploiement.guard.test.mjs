@@ -2,14 +2,10 @@
 // porte-deploiement.guard.test.mjs · TEMOIN de la porte de deploiement
 // (CI-02, vague 3.2, 2026-11-07).
 //
-// La porte tient en trois pieces, et une seule qui lache rouvre CI-02 sans
-// qu'aucun build ne rougisse :
-//   1. `vercel.json` → `ignoreCommand` lance le script ET traduit son code ;
-//   2. `scripts/vercel-ignore-build.mjs` attend `ci-vert/<sha>` ;
-//   3. `.github/workflows/ci-vert.yml` pose ce tag apres un noyau vert.
-// Ce fichier tient les trois, et la commande de `vercel.json` est jouee
-// TELLE QUELLE sous `sh`, y compris avec un Node qui plante : c'est le cas
-// ou une porte naive (`node script.mjs` seul) construirait.
+// Trois pieces : `vercel.json` (`ignoreCommand`, jouee TELLE QUELLE sous `sh`,
+// y compris avec un Node qui plante), `vercel-ignore-build.mjs` (attend
+// `ci-vert/<sha>`), `ci-vert.yml` (pose le tag apres un noyau vert ET les
+// migrations en production, CI-05).
 // ═══════════════════════════════════════════════════════════════════
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
@@ -248,5 +244,33 @@ describe('porte · ci-vert.yml', () => {
   it('un rouge de CI vert sonne (ci-alert.yml)', () => {
     const alerte = lire('.github/workflows/ci-alert.yml')
     expect(alerte).toMatch(/^ {6}- CI vert$/m)
+  })
+})
+
+describe('porte · ci-vert.yml · migrations en production (CI-05)', () => {
+  const wf = lire('.github/workflows/ci-vert.yml')
+  const porte = wf.slice(wf.indexOf('REFUS() {'), wf.indexOf('\n  tag:'))
+  const tag = wf.slice(wf.indexOf('\n  tag:'))
+
+  it('TEMOIN : la porte precede le tag (needs, refus = pas de tag), lit les migrations du SHA, sans secret cote tag', () => {
+    expect(tag).toMatch(/needs: migrations/)
+    expect(tag).toContain("(needs.migrations.result == 'success' || needs.migrations.result == 'skipped')")
+    expect(tag).not.toContain('SUPABASE_DB_URL')
+    expect(porte).toContain('COSMO_MIGRATION_DIR="$DEPOT/supabase/migration"')
+    expect(porte).toContain('check-migration-coverage.mjs "$RUNNER_TEMP/introspection.json" --sens=depot')
+    expect(porte).toContain('git archive "$SHA" supabase/migration')
+  })
+
+  it('TEMOIN : echec FERME, secret absent, ledger illisible ou vide refusent, aucun repli ouvert', () => {
+    for (const cas of ['SUPABASE_DB_URL absent', 'ledger de production illisible', 'ledger de production vide', 'absente(s) de la production']) {
+      expect(porte).toContain(cas)
+    }
+    expect(porte).toMatch(/REFUS\(\) \{[\s\S]*exit 1/)
+    expect(wf).not.toMatch(/secrets\.SUPABASE_DB_URL\s*!=/)
+    expect(wf).not.toMatch(/continue-on-error/)
+  })
+
+  it('le refus se lit dans le resume du run et donne le geste (Re-run apres application)', () => {
+    expect(porte).toContain('GITHUB_STEP_SUMMARY'); expect(porte).toMatch(/Appliquer en prod .* relancer CI vert sur ce SHA/)
   })
 })

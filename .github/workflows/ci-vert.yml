@@ -33,7 +33,21 @@
 # sonne, et la production reste sur son dernier deploiement vert (echec
 # ferme cote porte).
 #
-# Aucun secret : `GITHUB_TOKEN`, `contents: write` sur ce seul job. Un tag
+# ── LA PORTE DES MIGRATIONS (CI-05, 2026-11-20) ───────────────────────
+#
+# Un vert n'est tague QUE si chaque migration de `supabase/migration/` au SHA
+# est en production : meme lecture du ledger et meme classeur que
+# `migration-coverage.yml` et `edge-deploy.yml` (`check-migration-coverage.mjs
+# --sens=depot`). Les migrations 262 a 265 etaient parties en production avec
+# leur code avant d'etre appliquees. Refus = aucun tag, ce run rouge, la
+# production reste sur son dernier deploiement (la porte de Vercel sonde 15
+# min, puis ignore le build). Geste : appliquer la migration, puis Re-run de
+# CE run (le tag est alors pose), puis redeployer si le build a ete ignore.
+# Echec FERME : `SUPABASE_DB_URL` absent, ledger illisible ou vide = refus.
+# ❌ Jamais de `if: secrets.X != ''` sur cette porte.
+#
+# Secrets : `SUPABASE_DB_URL` pour le seul job `migrations` (lecture du
+# catalogue, rien publie) ; le job `tag` ne voit que `GITHUB_TOKEN`, `contents: write`. Un tag
 # pose par `GITHUB_TOKEN` ne declenche aucun workflow, et Vercel ne
 # deploie pas les tags.
 # Temoin : `scripts/porte-deploiement.guard.test.mjs`.
@@ -59,8 +73,68 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  tag:
+  # Job a part : il LIT la prod (secret) et ne publie rien ; le job `tag`
+  # publie (tag, menage) et ne voit aucun secret.
+  migrations:
     if: >-
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          filter: blob:none
+
+      - name: Installer psql 17
+        run: |
+          set -euo pipefail
+          sudo sh -c 'echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/pgdg.gpg
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17
+          echo /usr/lib/postgresql/17/bin >> "$GITHUB_PATH"
+
+      - name: Porte · toutes les migrations du depot sont en production
+        env:
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          if ! [[ "$SHA" =~ ^[0-9a-f]{40}$ ]]; then echo "::error title=CI vert::SHA illisible : '$SHA'"; exit 1; fi
+          # Porte des migrations : fichiers de CE SHA (le checkout est celui
+          # de `main`), ledger de la production.
+          REFUS() {
+            echo "::error title=CI vert::$1"
+            {
+              echo "### ❌ Vert NON publie : $1"
+              echo ""
+              echo "Appliquer en prod les migrations listees, puis relancer CI vert sur ce SHA (Re-run all jobs), puis redeployer si le build Vercel a ete ignore."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          }
+          [ -n "${DB_URL:-}" ] || REFUS "SUPABASE_DB_URL absent : migrations non verifiees, aucun tag."
+          DEPOT="$RUNNER_TEMP/depot"; mkdir -p "$DEPOT"
+          git fetch --quiet --no-tags --filter=blob:none origin "$SHA" || REFUS "commit $SHA introuvable : migrations non lues."
+          git archive "$SHA" supabase/migration | tar -x -C "$DEPOT" || REFUS "migrations de $SHA illisibles."
+          node scripts/check-migration-coverage.mjs --print-sql > "$RUNNER_TEMP/introspection.sql"
+          psql "$DB_URL" -A -t -f "$RUNNER_TEMP/introspection.sql" > "$RUNNER_TEMP/introspection.json" || REFUS "ledger de production illisible."
+          test -s "$RUNNER_TEMP/introspection.json" || REFUS "ledger de production vide."
+          if ! COSMO_MIGRATION_DIR="$DEPOT/supabase/migration" node scripts/check-migration-coverage.mjs "$RUNNER_TEMP/introspection.json" --sens=depot > "$RUNNER_TEMP/m.out" 2> "$RUNNER_TEMP/m.err"; then
+            cat "$RUNNER_TEMP/m.out" "$RUNNER_TEMP/m.err"
+            { echo '```'; grep -E '^ +[0-9]+[a-z]?_.*\.sql' "$RUNNER_TEMP/m.err" || cat "$RUNNER_TEMP/m.err"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            REFUS "migration(s) du depot absente(s) de la production."
+          fi
+          echo "Migrations : toutes en production."
+
+  tag:
+    # Echec FERME : un refus de `migrations` (failure) ne laisse PAS passer ;
+    # seul son saut (conclusion non verte) laisse le rouge de main se publier.
+    needs: migrations
+    if: >-
+      !cancelled() &&
+      (needs.migrations.result == 'success' || needs.migrations.result == 'skipped') &&
       github.event.workflow_run.event == 'push' &&
       github.event.workflow_run.head_repository.full_name == github.repository &&
       (github.event.workflow_run.conclusion == 'success' ||

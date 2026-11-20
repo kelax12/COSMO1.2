@@ -14,7 +14,7 @@ Projet Supabase de production : `ykeugqfgklejcdbrmawy` (le second projet est ina
 
 Porte (`CI-02`) :
 1. `CI noyau` juge la poussée (`main` ou `noyau/<nom>`).
-2. `ci-vert.yml` pose `ci-vert/<sha>` sur un vert, `ci-rouge/<sha>` sur un rouge de `main` (50 derniers de chaque, `GITHUB_TOKEN` seul).
+2. `ci-vert.yml` pose `ci-vert/<sha>` sur un vert, `ci-rouge/<sha>` sur un rouge de `main` (50 derniers de chaque, `GITHUB_TOKEN` seul). 🔴 Un vert n'est tague que si chaque migration de `supabase/migration/` est en production (ledger lu par `SUPABASE_DB_URL`, échec fermé, CI-05) : une migration s'applique en prod AVANT que son code parte en production, sinon le déploiement attend. Refus : run rouge, migrations nommées au résumé ; appliquer, puis Re-run de `CI vert` sur ce SHA, puis redéployer si Vercel a ignoré le build.
 3. `vercel.json` → `ignoreCommand` : `node scripts/vercel-ignore-build.mjs; test $? -ne 78`. En production, le script sonde `git ls-remote https://github.com/kelax12/COSMO1.2 refs/tags/ci-vert/<sha>` toutes les 20 s, 15 min au plus. Tag vert : sortie 78, Vercel construit. Tout le reste (tag rouge, délai, GitHub injoignable, Node qui plante) : build ignoré (`CANCELED`), raison dans les lignes `[porte]` du journal de build.
 4. Les aperçus (`noyau/*` et autres branches) construisent tout de suite.
 

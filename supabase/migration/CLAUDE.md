@@ -34,6 +34,7 @@
 - Quotidien et à chaque push sur `supabase/migration/` (`migration-coverage.yml`, `ci-alert.yml`) ; témoin `scripts/check-migration-coverage.guard.test.mjs`.
 - Un verdict par fichier : AU LEDGER · OBJET EN BASE · OBJET RETIRÉ DEPUIS · SUPPRESSION VÉRIFIÉE · SANS OBJET VÉRIFIABLE · NON APPLIQUÉE · ABSENT DES DEUX (seul rouge). Il liste aussi les PARTIELS (ligne au ledger ne prouve pas un corps remplacé).
 - Les deux sens : une entrée récente du ledger sans fichier rougit (ROB-03) ; `edge-deploy.yml` refuse le lot tant qu'une migration du dépôt manque en prod (CI-05).
+- 🔴 Une migration s'applique en prod AVANT que son code parte en production ; sinon le déploiement attend : `ci-vert.yml` ne pose `ci-vert/<sha>` que si tout `supabase/migration/` est en prod (`--sens=depot`). Après application : Re-run de `CI vert` sur ce SHA.
 - 🔴 Sans `SUPABASE_DB_URL` : ÉCHEC, jamais un `::warning::` dans un run vert.
 - ❌ Jamais ajouter une entrée à `NON_APPLIQUEES_DELIBEREMENT` ou `SANS_OBJET_VERIFIABLE` pour passer la CI ; une dispense fausse fait échouer la garde.
 

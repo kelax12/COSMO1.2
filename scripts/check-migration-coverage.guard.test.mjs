@@ -1,29 +1,12 @@
 // ═══════════════════════════════════════════════════════════════════
 // check-migration-coverage.guard.test.mjs · UN TEMOIN PAR VERDICT
 //
-// 🔴 POURQUOI CE FICHIER EXISTE
-//
-// `check:migration-coverage` repond a C-79 : rien ne reliait les 152 fichiers
-// de `supabase/migration/` aux 138 entrees du ledger de production, et
-// l'enonce « tout le depot est applique, ledger relu » a ete ecrit CINQ FOIS
-// sur une lecture qui n'en recouvrait que 120.
-//
-// Une garde de plus ne vaut que ce que vaut ce qu'elle REGARDE. En cinq jours,
-// QUATRE gardes de ce depot ont ete prises en train de repondre sans mesurer,
-// et toutes les quatre sortaient en 0. La question n'est jamais « tourne-t-
-// elle ? », c'est « sur quoi ? ».
-//
-// Chaque cas ci-dessous SOUMET au classeur reel un jeu de migrations fabrique
-// et une introspection fabriquee. Le classeur n'est jamais re-implemente ici :
-// une garde qui reecrit la logique qu'elle teste ne teste que sa copie.
-//
-// Les deux temoins qui comptent le plus ne portent pas sur la detection :
-//   · « introspection vide » refuse un verdict rendu sans avoir rien lu, la
-//     classe de defaut exacte de `restore-drill.yml`, dont le controle NE
-//     POUVAIT PAS echouer ;
-//   · « dispense perimee » refuse qu'une declaration « non appliquee » survive
-//     a l'application de la migration qu'elle dispense. Sans elle, la dispense
-//     perimerait en silence, ce qui est le defaut que tout ce script ferme.
+// Chaque cas SOUMET au classeur reel un jeu de migrations et une introspection
+// fabriques ; le classeur n est jamais re-implemente ici. La question n est
+// pas « tourne-t-elle ? » mais « sur quoi ? ».
+// Les deux temoins qui comptent le plus : « introspection vide » (un verdict
+// rendu sans rien lire) et « dispense perimee » (une declaration qui survit a
+// l application de sa migration).
 // ═══════════════════════════════════════════════════════════════════
 import { describe, it, expect } from 'vitest';
 import { spawnSync } from 'node:child_process';
@@ -403,5 +386,32 @@ describe('check-migration-coverage · migrations en attente de prod (CI-05)', ()
     }, ['--sens=depot']);
     expect(r.status).toBe(1);
     expect(r.stderr).toMatch(/245_cron\.sql/);
+  });
+});
+
+// ─── CI-05 : la porte de `ci-vert.yml` (pas de tag vert avant la migration) ──
+describe('check-migration-coverage · porte du tag ci-vert', () => {
+  const PRESENTE = { '001_socle.sql': 'CREATE TABLE public.tasks (id uuid);' };
+  const ABSENTE = { ...PRESENTE, '262_neuve.sql': 'CREATE TABLE public.dependances (id uuid);' };
+
+  it('TEMOIN : tout est en production, accord (sortie 0)', () => {
+    expect(lancer(CATALOGUE_PLEIN, PRESENTE, ['--sens=depot']).status).toBe(0);
+  });
+
+  it('TEMOIN : un fichier absent de la production, refus qui le NOMME', () => {
+    const r = lancer(CATALOGUE_PLEIN, ABSENTE, ['--sens=depot']);
+    expect(r.status).toBe(1);
+    expect(r.stderr).toMatch(/^ +262_neuve\.sql/m);
+  });
+
+  it('TEMOIN : un ledger illisible (ni JSON, ni lisible), refus', () => {
+    const bac = mkdtempSync(join(tmpdir(), 'cosmo-cov-'));
+    try {
+      writeFileSync(join(bac, 'intro.json'), 'psql: error: connection refused');
+      const r = spawnSync(process.execPath, [SCRIPT, join(bac, 'intro.json'), '--sens=depot'], { encoding: 'utf8' });
+      expect(r.status).toBe(2);
+    } finally {
+      rmSync(bac, { recursive: true, force: true });
+    }
   });
 });

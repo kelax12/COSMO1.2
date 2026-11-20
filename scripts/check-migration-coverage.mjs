@@ -3,61 +3,39 @@
 //
 // 🔴 POURQUOI CE FICHIER EXISTE
 //
-// Mesure du 2026-09-14, nom a nom : 152 fichiers dans supabase/migration/,
-// 138 entrees dans supabase_migrations.schema_migrations. 32 fichiers sans
-// aucune correspondance, 17 entrees sans fichier.
-//
-// L'enonce « tout le depot est applique en prod, ledger relu » a ete ecrit
-// CINQ FOIS dans CLAUDE.md sur une lecture qui ne recouvre que 120 fichiers
-// sur 152. Et « ledger a 148 entrees » etait le NUMERO de la derniere
-// migration, recopie comme un total.
-//
-// ❌ Ne pas se contenter d'un comptage : c'est precisement le comptage qui a
-// menti. Ce script ne compte pas, il RANGE chaque fichier dans un verdict, et
-// n'echoue que sur le dernier.
+// « Tout le depot est applique en prod » s'etait ecrit sur un comptage qui ne
+// recouvrait pas les fichiers (mesure du 2026-09-14).
+// ❌ Ne pas se contenter d'un comptage : ce script RANGE chaque fichier dans
+// un verdict, et n'echoue que sur le dernier.
 //
 // ── LES VERDICTS ────────────────────────────────────────────────────
 //
 //   AU LEDGER      le nom du fichier a une entree. C'est la preuve la plus
 //                  forte dont on dispose ici, et elle reste faible (cf. plus
 //                  bas).
-//   OBJET EN BASE  aucune entree, mais au moins un des objets que le fichier
-//                  pretend creer EXISTE dans le catalogue Postgres. C'est le
-//                  cas des migrations precoces (000 a 058, plus 081 et 082),
-//                  passees avant que le ledger serve.
-//   OBJET RETIRE   aucune entree, et tous ses objets ont ete supprimes par une
-//   DEPUIS         migration ULTERIEURE. Mesure, pas declare : les mig. 013,
-//                  015 et 016 ont ete videes par la 141 (C-04, 2026-09-04).
-//   SUPPRESSION    le fichier ne cree rien et ne fait que supprimer ; ses
-//   VERIFIEE       cibles sont bien absentes du catalogue. Un effet negatif se
-//                  mesure aussi (mig. 090).
-//   SANS OBJET     GRANT ou migration de donnees : le catalogue n'en garde
-//   VERIFIABLE     aucune trace. DECLARE un par un, avec son motif, parce
-//                  qu'un fichier qu'on ne sait pas verifier doit se voir.
-//   NON APPLIQUEE  absence DELIBEREE et declaree dans
-//   (declaree)     NON_APPLIQUEES_DELIBEREMENT (vide depuis le 2026-10-22).
+//   OBJET EN BASE  aucune entree, mais un des objets que le fichier cree
+//                  EXISTE au catalogue (migrations precoces, avant le ledger).
+//   OBJET RETIRE   aucune entree, tous ses objets supprimes par une migration
+//   DEPUIS         ULTERIEURE. Mesure, pas declare.
+//   SUPPRESSION    le fichier ne fait que supprimer ; ses cibles sont absentes.
+//   VERIFIEE
+//   SANS OBJET     GRANT ou donnees : le catalogue n'en garde aucune trace.
+//   VERIFIABLE     DECLARE un par un, avec son motif.
+//   NON APPLIQUEE  absence DELIBEREE, declaree dans NON_APPLIQUEES_DELIBEREMENT.
+//   (declaree)
 //   ABSENT DES DEUX -> ECHEC. Le depot decrit un objet que la prod n'a pas.
 //
 // ── CE QUE CE SCRIPT NE PROUVE PAS, ET IL FAUT LE DIRE ──────────────
 //
 // 🔴 UNE LIGNE AU LEDGER NE PROUVE PAS QU'UN `CREATE OR REPLACE` A REMPLACE
-// LE CORPS VIVANT. La mig. 144 portait sa ligne depuis le 2026-09-09 et
-// `pg_get_functiondef()` montrait encore le corps de la 143 : il a fallu la
-// rejouer sous la 147. Ce script rendrait « AU LEDGER » sur la 144, et il
-// aurait eu tort de rassurer.
+// LE CORPS VIVANT (mig. 144 : sa ligne, le corps de la 143, rejouee sous la 147).
 //
 // 🔴 « OBJET EN BASE » NE PROUVE PAS QUE TOUT LE FICHIER EST PASSE. Un
 // fichier qui cree trois objets dont un seul existe rend ce verdict. Le
 // script le DIT dans sa sortie plutot que de le taire.
 //
-// La seule preuve forte reste celle qui a servi pour la 147 : interroger le
-// catalogue sur l'objet que la migration pretend creer, ou rejouer le chemin
-// reel dans une transaction annulee. Ce script automatise le grossier ; il ne
-// remplace pas le fin, et sa sortie le rappelle a chaque execution.
-//
-// ⚠️ L'ancien `check:drift` (schema agrege, deux etapes a la main, retire le
-// 2026-11-08) ne comblait pas ce trou non plus : son seul verdict d'echec,
-// « objet attendu absent de la prod », est celui d'ABSENT DES DEUX ci-dessus.
+// La preuve forte : interroger le catalogue sur l'objet, ou rejouer le chemin
+// reel dans une transaction annulee. Ce script automatise le grossier.
 //
 // ── USAGE (2 etapes, lecture seule cote prod) ───────────────────────
 //
@@ -68,17 +46,15 @@
 //      -> range les fichiers et sort en 1 si l'un d'eux n'est pas en prod
 //         (ABSENT DES DEUX, ou partiel hors ledger depuis la 200), ou si une
 //         entree recente du ledger n'a pas de fichier (ROB-03). `--sens=depot`
-//         ne juge que le premier sens : c'est la porte de `edge-deploy.yml`.
+//         ne juge que le premier sens : c'est la porte de `edge-deploy.yml`
+//         et celle du tag `ci-vert` (`ci-vert.yml`, CI-05).
 // ═══════════════════════════════════════════════════════════════════
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// Resolu depuis l'emplacement du SCRIPT, pas depuis `cwd`. `COSMO_MIGRATION_DIR`
-// n'existe que pour le temoin (`scripts/check-migration-coverage.guard.test.mjs`),
-// qui doit pouvoir lui soumettre un jeu de migrations fabrique. Sans cette
-// porte, la garde ne serait verifiable que contre le depot entier, donc pas
-// verifiable du tout.
+// Resolu depuis le SCRIPT, pas `cwd`. `COSMO_MIGRATION_DIR` : le temoin y soumet
+// un jeu fabrique, et `ci-vert.yml` les migrations du SHA a tagger.
 const MIGRATION_DIR =
   process.env.COSMO_MIGRATION_DIR
   ?? join(dirname(fileURLToPath(import.meta.url)), '..', 'supabase', 'migration');
@@ -86,31 +62,21 @@ const MIGRATION_DIR =
 /**
  * Migrations que le depot porte SANS qu'elles soient appliquees, DELIBEREMENT.
  *
- * 🔴 Meme discipline que `.github/edge-deploy.json` : une dispense declare
- * l'EXISTENCE d'un ecart voulu, son motif et sa date. Elle ne peut PAS faire
- * taire un ecart non voulu, et une entree qui se revele FAUSSE (la migration
- * est en fait appliquee) fait ECHOUER la garde. Sans cette symetrie, la
- * dispense perimerait en silence, ce qui est exactement le defaut que tout ce
- * fichier existe pour fermer.
+ * 🔴 Meme discipline que `.github/edge-deploy.json` : une dispense declare un ecart
+ * voulu, son motif et sa date ; une entree FAUSSE (migration en fait appliquee)
+ * fait ECHOUER la garde, sinon elle perimerait en silence.
  *
  * ❌ Ne JAMAIS y ajouter une entree pour faire passer la CI. Une migration
  * qu'on veut appliquer s'applique ; une migration qu'on ne veut pas appliquer
  * se declare ici, avec la raison.
  */
-// Vide du 2026-10-22 au 10-23, puis la 227 (index de FK, AM-5) y a ete declaree
-// jusqu'a son application le 2026-10-26 (ledger `20261026124018`) ; vide depuis. Son ancienne entree, `140_stripe_identifiers_reset`
-// (declaree le 2026-09-15), est tombee : la mig. 140 est appliquee depuis la
-// bascule Stripe live du 2026-10-20 (ledger `20261020204838`), et la garde l'a
-// signale chaque jour comme dispense perimee jusqu'a son retrait.
 const NON_APPLIQUEES_DELIBEREMENT = {};
 
 /**
  * Migrations qui ne creent ni ne suppriment AUCUN objet de catalogue.
  *
- * ⚠️ Ce n'est pas une dispense de conformite, c'est l'aveu d'une LIMITE : le
- * catalogue Postgres ne garde aucune trace d'un GRANT par defaut ni d'un
- * `INSERT` de rattrapage. La garde ne peut rien en dire, et elle le DIT plutot
- * que de les ranger en vert sans le signaler.
+ * ⚠️ Aveu d'une LIMITE, pas dispense : le catalogue ne garde aucune trace d'un
+ * GRANT par defaut ni d'un `INSERT` de rattrapage ; la garde le DIT.
  *
  * ❌ N'y mettre que des fichiers reellement sans objet. Un fichier qui cree
  * quoi que ce soit se verifie, et une entree ici le soustrairait a la mesure.
@@ -354,10 +320,8 @@ export const VERDICT = {
  *
  * @param {{name: string, sql: string}[]} fichiers
  * @param {object} intro  l'introspection de prod
- * @param {Record<string, string>} [dispenses]  les non-appliquees declarees.
- *   ⚠️ Parametre pour le SEUL temoin, qui doit pouvoir exercer le verdict
- *   « declaree » et la dispense perimee quand la vraie table est vide. Le CLI
- *   ne le passe jamais : il lit `NON_APPLIQUEES_DELIBEREMENT`.
+ * @param {Record<string, string>} [dispenses]  non-appliquees declarees (⚠️ pour le
+ *   SEUL temoin ; le CLI lit `NON_APPLIQUEES_DELIBEREMENT`).
  */
 export function classer(fichiers, intro, dispenses = NON_APPLIQUEES_DELIBEREMENT) {
   const ledger = new Set([
@@ -593,11 +557,8 @@ function main() {
     return 2;
   }
 
-  // 🔴 REFUSER UN VERDICT RENDU SANS AVOIR RIEN LU. C'est la classe de defaut
-  // de `restore-drill.yml`, dont le controle NE POUVAIT PAS echouer. Une
-  // introspection vide rendrait « ABSENT DES DEUX » sur les 152 fichiers, donc
-  // un rouge spectaculaire ; mais un ledger vide avec un catalogue plein
-  // rendrait « OBJET EN BASE » partout, donc un VERT qui ne mesure rien.
+  // 🔴 REFUSER UN VERDICT RENDU SANS AVOIR RIEN LU : un ledger vide avec un
+  // catalogue plein rendrait « OBJET EN BASE » partout, un VERT qui ne mesure rien.
   if ((intro.ledger ?? []).length === 0 && (intro.ledger_names ?? []).length === 0) {
     console.error('ECHEC : le ledger lu est VIDE. Une garde ne rend pas de verdict sans avoir lu.');
     return 1;
@@ -624,9 +585,7 @@ function main() {
   }
   console.log('');
 
-  // Les partiels ne font PAS echouer : ils NOMMENT ce que le verdict ne prouve
-  // pas. Les taire reviendrait a laisser « OBJET EN BASE » passer pour « tout
-  // le fichier est passe », ce qu'il ne dit pas.
+  // Les partiels ne font PAS echouer : ils NOMMENT ce que « OBJET EN BASE » ne prouve pas.
   const partiels = (parVerdict[VERDICT.OBJET] ?? []).filter((r) => r.manquants.length > 0);
   if (partiels.length > 0) {
     console.log(`⚠️  ${partiels.length} fichier(s) « OBJET EN BASE » n ont qu une partie de leurs objets :`);
@@ -664,8 +623,7 @@ function main() {
     console.error('son motif et sa date. Jamais un silence.');
   }
 
-  // `--sens=depot` : le seul sens que `edge-deploy.yml` juge (le code appelle-
-  // t-il une migration absente ?). Le quotidien juge les deux.
+  // `--sens=depot` : le seul sens jugé par `edge-deploy.yml` et `ci-vert.yml`.
   if (!process.argv.includes('--sens=depot')) {
     const orphelines = entreesSansFichier(fichiers, intro);
     const anciennes = orphelines.filter((o) => !o.recente);
