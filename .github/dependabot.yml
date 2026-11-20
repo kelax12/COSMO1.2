@@ -37,6 +37,12 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "tailwindcss"          # ADR 0019
         update-types: ["version-update:semver-major"]
+      # react-virtual est épinglé à 3.14.9 (exact) : la 3.14.26 (virtual-core 3.17.x)
+      # fait passer vendor-virtual de 7,6 à 10,0 ko gzip, au-delà de son cliquet
+      # (check:bundle rouge, mesuré le 2026-11-20). Retirer cette ligne et l'épinglage
+      # quand une version repasse sous 7,6 ko, sans relever le plafond.
+      - dependency-name: "@tanstack/react-virtual"
+        update-types: ["version-update:semver-minor", "version-update:semver-patch"]
     groups:
       dev-dependencies:
         dependency-type: development
