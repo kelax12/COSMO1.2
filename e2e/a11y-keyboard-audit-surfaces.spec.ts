@@ -362,6 +362,16 @@ test('MESURE · ListActionsSheet (menu d\'une liste, mobile, touche Menu)', asyn
 
 /** Marque les tâches du compte « collaboratives » dans le stockage de la démo, puis recharge. */
 async function rendreCollaboratives(page: Page): Promise<void> {
+  // 🔴 Les tâches de la démo sont semées À LA PREMIÈRE LECTURE (`local.repository.ts`),
+  // pas au `loginDemo()`. Le titre « Bonjour » peut s'afficher avant cette lecture :
+  // lire alors `null` et réécrire `[]` effaçait le seed, la page rechargée n'avait
+  // plus de tâche et « Actions pour … » restait introuvable (échec à la 1re
+  // tentative, réussite au rejeu sur un stockage déjà semé). Attendre le seed.
+  await expect
+    .poll(() => page.evaluate(() => {
+      try { return JSON.parse(localStorage.getItem('cosmo_demo_tasks') ?? '[]').length; } catch { return 0; }
+    }), { timeout: 30_000 })
+    .toBeGreaterThan(0);
   await page.evaluate(() => {
     const brut = localStorage.getItem('cosmo_demo_tasks');
     const taches = brut ? JSON.parse(brut) : [];

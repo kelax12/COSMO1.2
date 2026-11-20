@@ -1,4 +1,4 @@
-import { test, expect, navTo, openOrgSection, expectOrgSectionOffered } from './fixtures';
+import { test, expect, navTo, openOrgSection, expectOrgSectionOffered, gotoTolerant } from './fixtures';
 
 /**
  * Parcours entreprise (reco #19) — mode démo, org « Nova Studio » seedée
@@ -183,7 +183,9 @@ test.describe('Espace entreprise · navigation', () => {
 
   test('mobile : le sélecteur ouvre une feuille, choisir navigue', async ({ demoPage: page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
-    await page.goto('/entreprise/members');
+    // gotoTolerant : la navigation peut être annulée par un rechargement (re-empaquetage Vite
+    // au premier passage d'une page lazy, « interrupted by another navigation to /dashboard »).
+    await gotoTolerant(page, '/entreprise/members');
 
     const switcher = page.locator('[data-org-section-switcher]');
     await expect(switcher).toBeVisible({ timeout: 20_000 });
