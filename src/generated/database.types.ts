@@ -2260,6 +2260,9 @@ isOneToOne: false
 "get_admin_traffic":
 { Args: { "p_days"?: number }; Returns: Json
                            },
+"get_admin_usage_by_feature":
+{ Args: Record<PropertyKey, never>; Returns: Json
+                           },
 "get_incoming_request_senders":
 { Args: Record<PropertyKey, never>; Returns: {
               "avatar_url": string,"display_name": string,"request_id": string,"sender_id": string

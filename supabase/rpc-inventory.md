@@ -16,12 +16,12 @@ Regenerer : npm run contrat:generer (Docker, supabase start, node scripts/apply-
 
 | Mesure | Nombre |
 |---|---|
-| Fonctions | 253 |
+| Fonctions | 254 |
 | Executables par `anon` | 3 |
-| Executables par `authenticated` | 114 |
-| Executables par `service_role` | 246 |
+| Executables par `authenticated` | 115 |
+| Executables par `service_role` | 247 |
 | Droit accorde a `PUBLIC` | 0 |
-| SECURITY DEFINER | 158 |
+| SECURITY DEFINER | 159 |
 | SECURITY DEFINER sans `search_path` fige | 0 |
 | SECURITY DEFINER executables par `anon` | 2 |
 
@@ -120,6 +120,7 @@ Aucune.
 | `get_admin_revenue(p_days integer)` | DEFINER | `""` | - | oui | oui | - |
 | `get_admin_stats()` | DEFINER | `""` | - | oui | oui | `src/modules/admin/supabase.repository.ts` |
 | `get_admin_traffic(p_days integer)` | DEFINER | `""` | - | oui | oui | - |
+| `get_admin_usage_by_feature()` | DEFINER | `""` | - | oui | oui | `src/modules/admin/supabase.repository.ts`<br>~`src/pages/admin/FeatureUsageCard.tsx` |
 | `get_incoming_request_senders()` | DEFINER | `public, pg_temp` | - | oui | oui | `src/modules/friends/supabase.repository.ts`<br>~`src/modules/friends/types.ts` |
 | `get_my_habits(p_days integer, p_today date)` | INVOKER | `""` | - | oui | oui | `src/modules/habits/supabase.repository.ts`<br>~`src/modules/habits/mappers.ts` |
 | `get_my_org_inbox()` | INVOKER | `public` | - | oui | oui | `src/modules/organizations/supabase.repository.ts` |
