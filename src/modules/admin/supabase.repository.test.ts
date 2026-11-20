@@ -17,6 +17,7 @@ import {
   fetchAdminStats,
   fetchIsAdmin,
   fetchOnboardingFunnel,
+  fetchUsageByFeature,
   fetchSupportStats,
 } from './supabase.repository';
 
@@ -285,6 +286,37 @@ describe('fetchOnboardingFunnel', () => {
   it('toute autre erreur remonte', async () => {
     supabaseMock.queueRpc('get_admin_onboarding_funnel', { error: { code: '57014', message: 'timeout' } });
     await expect(fetchOnboardingFunnel()).rejects.toBeInstanceOf(Error);
+  });
+});
+
+describe('fetchUsageByFeature', () => {
+  it('mappe le jsonb et garde les valeurs masquées à null', async () => {
+    supabaseMock.queueRpc('get_admin_usage_by_feature', {
+      data: {
+        min_users: 3,
+        features: [
+          { feature: 'tasks', active_7d: 5, active_30d: 8, actions_30d: 40 },
+          { feature: 'friends', active_7d: null, active_30d: null, actions_30d: null },
+        ],
+      },
+    });
+    expect(await fetchUsageByFeature()).toEqual({
+      minUsers: 3,
+      features: [
+        { feature: 'tasks', active7d: 5, active30d: 8, actions30d: 40 },
+        { feature: 'friends', active7d: null, active30d: null, actions30d: null },
+      ],
+    });
+  });
+
+  it.each(['42883', 'PGRST202'])('rend null quand la RPC n’existe pas (%s)', async (code) => {
+    supabaseMock.queueRpc('get_admin_usage_by_feature', { error: { code, message: 'missing' } });
+    expect(await fetchUsageByFeature()).toBeNull();
+  });
+
+  it('traduit 42501 en AdminForbiddenError', async () => {
+    supabaseMock.queueRpc('get_admin_usage_by_feature', { error: { code: '42501', message: 'forbidden' } });
+    await expect(fetchUsageByFeature()).rejects.toBeInstanceOf(AdminForbiddenError);
   });
 });
 

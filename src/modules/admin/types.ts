@@ -177,3 +177,20 @@ export interface AdminOnboardingFunnel {
   businessSignups: number;
   orgs: { created: number; withTeam: number; withMember: number; withProject: number; withOkr: number };
 }
+
+/**
+ * Usage d'une fonctionnalité (mig. 266). Les trois compteurs sont `null`
+ * quand moins de `minUsers` comptes sont concernés : seuil d'affichage, pas
+ * un zéro.
+ */
+export interface AdminFeatureUsage {
+  feature: string;
+  active7d: number | null;
+  active30d: number | null;
+  actions30d: number | null;
+}
+
+export interface AdminUsageByFeature {
+  minUsers: number;
+  features: AdminFeatureUsage[];
+}

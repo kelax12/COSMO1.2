@@ -6,6 +6,7 @@ export const adminKeys = {
   mfa: () => [...adminKeys.all, 'mfa'] as const,
   support: () => [...adminKeys.all, 'support'] as const,
   onboarding: () => [...adminKeys.all, 'onboarding'] as const,
+  usage: () => [...adminKeys.all, 'usage'] as const,
 };
 
 /**

@@ -25,6 +25,7 @@ import {
 import type { AdminChartPoint, LabeledValue } from './admin/AdminCharts';
 import { useT } from '@/i18n/useT';
 import { AdminMfaGate } from '@/components/admin/AdminMfaGate';
+import { FeatureUsageCard } from './admin/FeatureUsageCard';
 
 // Règle P-2 : recharts (vendor-charts) chargé uniquement quand un admin
 // ouvre effectivement la page.
@@ -176,8 +177,7 @@ const AdminDashboard: React.FC = () => {
     );
   }
 
-  const { totals, demo, usage, adoption, activation24h, tasksCompletion, collaboration, stickiness } = data;
-  const { activation48h, orgs, retentionD7BySource } = data;
+  const { totals, demo, usage, adoption, activation24h, tasksCompletion, collaboration, stickiness, activation48h, orgs, retentionD7BySource } = data;
 
   // ── Plan d'acquisition 30 j (mig. 099) ───────────────────────────────
   // Canaux triés par volume : c'est cet ordre qui pilote « couper / doubler ».
@@ -454,9 +454,8 @@ const AdminDashboard: React.FC = () => {
         </ChartCard>
 
         {/* ═══ ACCUEILS : qui va au bout, et qui revient ═════════════
-          * Les deux accueils ont été refaits pour une raison
-          * chiffrée (50 % des inscrits ne revenaient jamais). Cette carte dit
-          * si ça change quelque chose. Mêmes trois états que le support.
+          * Les deux accueils ont été refaits car 50 % des inscrits ne revenaient
+          * jamais : cette carte dit si ça change quelque chose (mêmes trois états que le support).
           */}
         <ChartCard title={t('onboarding')} note={t('onboardingNote')}>
           {funnel === null ? (
@@ -497,6 +496,7 @@ const AdminDashboard: React.FC = () => {
           )}
         </ChartCard>
 
+        <FeatureUsageCard />
         <ChartCard title={t('demoConversion')} note={t('demoConversionNote', { pct: demo.visitors > 0 ? `${demo.conversionPct}%` : '·' })}>
           <CountBars data={demoData} />
         </ChartCard>

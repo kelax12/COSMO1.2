@@ -11,8 +11,8 @@ import {
   type AssuranceLevel,
 } from '@/modules/auth/mfa';
 import { adminKeys } from './constants';
-import { fetchAdminStats, fetchIsAdmin, fetchOnboardingFunnel, fetchSupportStats } from './supabase.repository';
-import type { AdminOnboardingFunnel, AdminStats, AdminSupport } from './types';
+import { fetchAdminStats, fetchIsAdmin, fetchOnboardingFunnel, fetchSupportStats, fetchUsageByFeature } from './supabase.repository';
+import type { AdminOnboardingFunnel, AdminStats, AdminSupport, AdminUsageByFeature } from './types';
 
 /**
  * Stats globales du dashboard admin. La RPC rejette (42501 →
@@ -62,6 +62,22 @@ export function useOnboardingFunnel() {
   return useQuery<AdminOnboardingFunnel | null, Error>({
     queryKey: adminKeys.onboarding(),
     queryFn: fetchOnboardingFunnel,
+    enabled: isAuthenticated && !isDemo && isSupabaseConfigured,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+}
+
+/**
+ * Usage par fonctionnalité (mig. 266). Requête SÉPARÉE : `null` tant que la
+ * migration n'est pas appliquée. La console est réservée au mode connecté
+ * (redirigée en démo), donc pas de variante locale.
+ */
+export function useUsageByFeature() {
+  const { isAuthenticated, isDemo } = useAuth();
+  return useQuery<AdminUsageByFeature | null, Error>({
+    queryKey: adminKeys.usage(),
+    queryFn: fetchUsageByFeature,
     enabled: isAuthenticated && !isDemo && isSupabaseConfigured,
     staleTime: 5 * 60 * 1000,
     retry: false,

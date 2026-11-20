@@ -1,4 +1,4 @@
-export { useAdminStats, useIsAdmin, useAdminGate, useSupportStats, useOnboardingFunnel } from './hooks';
+export { useAdminStats, useIsAdmin, useAdminGate, useSupportStats, useOnboardingFunnel, useUsageByFeature } from './hooks';
 export { adminKeys, ACQUISITION_GOALS } from './constants';
 export { AdminForbiddenError } from './supabase.repository';
 export {
@@ -30,5 +30,7 @@ export type {
   SourceRetention,
   AdminOrgs,
   AdminOnboardingFunnel,
+  AdminFeatureUsage,
+  AdminUsageByFeature,
   AdminSupport,
 } from './types';
