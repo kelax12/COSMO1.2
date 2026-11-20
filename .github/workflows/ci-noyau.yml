@@ -487,7 +487,9 @@ jobs:
           version: latest
       - run: npm ci
       - name: Start Supabase stack (local)
-        run: supabase start
+        uses: ./.github/actions/supabase-stack
+        with:
+          action: start
       - name: Export Supabase env
         run: |
           supabase status -o env > supabase.env
@@ -578,9 +580,12 @@ jobs:
           TAIL=$(tail -n 25 rls.log | sed 's/%/%25/g; s/\r//g' | awk '{printf "%s%%0A", $0}')
           echo "::error title=rls-tail::${TAIL}"
           exit 1
+      # Le runner est jetable : un nettoyage en echec ne doit pas rougir un job vert.
       - name: Stop Supabase stack
         if: ${{ always() }}
-        run: supabase stop
+        uses: ./.github/actions/supabase-stack
+        with:
+          action: stop
 
   # ──────────────────────────────────────────────────────────────────
   # CONTRAT DE DONNEES (MAI-01, API-01, ARC-07, 2026-11-06). Le schema vivant
@@ -613,7 +618,9 @@ jobs:
           version: 2.122.1
       - run: npm ci
       - name: Start Supabase stack (local)
-        run: supabase start
+        uses: ./.github/actions/supabase-stack
+        with:
+          action: start
       - name: Apply migrations on fresh DB
         id: migrate
         run: |
@@ -651,9 +658,12 @@ jobs:
           path: contrat-donnees-genere/
           if-no-files-found: error
           retention-days: 14
+      # Le runner est jetable : un nettoyage en echec ne doit pas rougir un job vert.
       - name: Stop Supabase stack
         if: ${{ always() }}
-        run: supabase stop
+        uses: ./.github/actions/supabase-stack
+        with:
+          action: stop
 
   # ──────────────────────────────────────────────────────────────────
   # PARCOURS E2E SUR VRAIE BASE (TST-03, audit externe 2026-11-06). Job du
@@ -687,7 +697,9 @@ jobs:
           version: 2.122.1
       - run: npm ci
       - name: Start Supabase stack (local)
-        run: supabase start
+        uses: ./.github/actions/supabase-stack
+        with:
+          action: start
       - name: Export Supabase env
         run: |
           supabase status -o env > supabase.env
@@ -789,8 +801,12 @@ jobs:
       - name: Edge Functions log
         if: ${{ failure() }}
         run: tail -n 60 functions.log || true
+      - name: Stop Edge Functions
+        if: ${{ always() }}
+        run: if [ -f functions.pid ]; then kill "$(cat functions.pid)" 2>/dev/null || true; fi
+      # Le runner est jetable : un nettoyage en echec ne doit pas rougir un job vert.
       - name: Stop Supabase stack
         if: ${{ always() }}
-        run: |
-          if [ -f functions.pid ]; then kill "$(cat functions.pid)" 2>/dev/null || true; fi
-          supabase stop
+        uses: ./.github/actions/supabase-stack
+        with:
+          action: stop

@@ -1,0 +1,46 @@
+name: Supabase stack locale (demarrage et arret tolerants a l infrastructure)
+description: >
+  `start` : `supabase start`, un seul nouvel essai apres un nettoyage si le
+  demarrage echoue (port deja pris, conteneur coince, pull d image : pannes du
+  runner, jamais un test). `stop` : `supabase stop`, un nouvel essai, puis
+  suppression forcee des conteneurs du projet ; n echoue QUE si des conteneurs
+  restent. Aucune etape de test n est enveloppee ici : un vrai echec de test
+  reste rouge. Pas de `continue-on-error`.
+inputs:
+  action:
+    description: start ou stop
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: ${{ inputs.action }} (tolerant)
+      shell: bash
+      env:
+        ACTION: ${{ inputs.action }}
+      run: |
+        PROJET=cosmo
+        restants() { docker ps -aq --filter "label=com.supabase.cli.project=${PROJET}"; }
+        case "$ACTION" in
+          start)
+            if supabase start; then exit 0; fi
+            echo "::warning title=supabase-start::premier demarrage en echec (infrastructure du runner), nettoyage puis un second essai"
+            supabase stop --no-backup || true
+            restants | xargs -r docker rm -f || true
+            sleep 10
+            supabase start
+            ;;
+          stop)
+            if supabase stop; then exit 0; fi
+            echo "::warning title=supabase-stop::arret en echec, nouvel essai puis suppression forcee des conteneurs"
+            sleep 5
+            if supabase stop; then exit 0; fi
+            # Le runner est jetable : supprimer de force les conteneurs ne perd rien.
+            restants | xargs -r docker rm -f || true
+            if [ -n "$(restants)" ]; then
+              echo "::error title=supabase-stop::conteneurs encore presents apres suppression forcee"
+              restants
+              exit 1
+            fi
+            ;;
+          *) echo "action inconnue : $ACTION"; exit 2 ;;
+        esac
