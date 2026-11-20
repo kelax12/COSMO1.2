@@ -37,8 +37,9 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { readFileSync, writeFileSync } from 'node:fs';
-import { join, sep } from 'node:path';
+import { join } from 'node:path';
 import { createSign } from 'node:crypto';
+import { estLance } from './ops-alert.mjs';
 
 const RACINE = process.cwd();
 export const SERIE = join(RACINE, 'docs', 'seo-signals-series.json');
@@ -375,8 +376,7 @@ export function resume({ point, rouges }) {
   return l.join('\n');
 }
 
-const estLanceDirectement =
-  process.argv[1] && import.meta.url === new URL(`file://${process.argv[1].split(sep).join('/')}`).href;
+const estLanceDirectement = estLance(import.meta.url);
 
 if (estLanceDirectement) {
   // Lecture directe, sans `existsSync` avant : vérifier puis lire laisse une

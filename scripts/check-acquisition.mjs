@@ -44,7 +44,8 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { readFileSync, existsSync } from 'node:fs';
-import { join, sep } from 'node:path';
+import { join } from 'node:path';
+import { estLance, interrogerSupabase } from './ops-alert.mjs';
 
 const RACINE = process.cwd();
 const BACKLINKS = join(RACINE, 'docs', 'ACQUISITION-BACKLINKS.md');
@@ -94,15 +95,7 @@ export function dateDeRemesure(texte) {
 }
 
 /** Exécute du SQL en LECTURE via l'API Management. */
-export async function interroger(sql, { token, projet, fetchImpl = fetch }) {
-  const res = await fetchImpl(`https://api.supabase.com/v1/projects/${projet}/database/query`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query: sql }),
-  });
-  if (!res.ok) throw new Error(`API Management : HTTP ${res.status} ${await res.text()}`);
-  return res.json();
-}
+export const interroger = interrogerSupabase;
 
 /**
  * Les compteurs d'acquisition.
@@ -129,9 +122,7 @@ SELECT
 
 // ── Exécution ──────────────────────────────────────────────────────
 
-const estLanceDirectement =
-  process.argv[1]
-  && import.meta.url === new URL(`file://${process.argv[1].split(sep).join('/')}`).href;
+const estLanceDirectement = estLance(import.meta.url);
 
 if (estLanceDirectement) {
   const erreurs = [];

@@ -7,6 +7,7 @@
 
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
+import { estLance } from './ops-alert.mjs';
 
 const RACINE = process.cwd();
 const RAPPORT = join(RACINE, 'coverage-tooling', 'coverage-summary.json');
@@ -74,8 +75,7 @@ export function fichiersAttendus(racine = RACINE) {
 // ── Exécution ──────────────────────────────────────────────────────
 // `import.meta.url` : ce module est aussi IMPORTÉ par son témoin, qui ne doit
 // pas déclencher le contrôle ni faire sortir le processus.
-const estLanceDirectement =
-  process.argv[1] && import.meta.url === new URL(`file://${process.argv[1].split(sep).join('/')}`).href;
+const estLanceDirectement = estLance(import.meta.url);
 
 if (estLanceDirectement) {
   const erreurs = [];

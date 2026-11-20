@@ -43,7 +43,8 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { readFileSync, writeFileSync } from 'node:fs';
-import { join, sep } from 'node:path';
+import { join } from 'node:path';
+import { estLance, interrogerSupabase } from './ops-alert.mjs';
 
 const RACINE = process.cwd();
 const SERIE = join(RACINE, 'docs', 'db-cost-series.json');
@@ -111,15 +112,7 @@ const FACTEUR_PENTE = 3;
 const POINTS_MIN_POUR_PENTE = 4;
 
 /** Exécute du SQL via l'API Management. */
-export async function interroger(sql, { token, projet, fetchImpl = fetch }) {
-  const res = await fetchImpl(`https://api.supabase.com/v1/projects/${projet}/database/query`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query: sql }),
-  });
-  if (!res.ok) throw new Error(`API Management : HTTP ${res.status} ${await res.text()}`);
-  return res.json();
-}
+export const interroger = interrogerSupabase;
 
 /** Le SQL d'un EXPLAIN joué sous la RLS, dans une transaction annulée. */
 export function sqlExplain(requete, compte = COMPTE) {
@@ -162,9 +155,7 @@ export function pente(valeurs) {
 
 // ── Exécution ──────────────────────────────────────────────────────
 
-const estLanceDirectement =
-  process.argv[1]
-  && import.meta.url === new URL(`file://${process.argv[1].split(sep).join('/')}`).href;
+const estLanceDirectement = estLance(import.meta.url);
 
 if (estLanceDirectement) {
   const token = process.env.SUPABASE_ACCESS_TOKEN;

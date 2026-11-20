@@ -37,7 +37,8 @@
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { join, sep } from 'node:path';
+import { join } from 'node:path';
+import { estLance } from './ops-alert.mjs';
 
 const RACINE = process.cwd();
 const JOURNAL = join(RACINE, 'docs', 'LEGAL-JOURNAL.md');
@@ -100,9 +101,7 @@ export function empreintesDuJournal(texte) {
   return new Set([...texte.matchAll(/\b([0-9a-f]{16})\b/g)].map((m) => m[1]));
 }
 
-const estLanceDirectement =
-  process.argv[1]
-  && import.meta.url === new URL(`file://${process.argv[1].split(sep).join('/')}`).href;
+const estLanceDirectement = estLance(import.meta.url);
 
 if (estLanceDirectement) {
   const actuelles = empreintesActuelles();

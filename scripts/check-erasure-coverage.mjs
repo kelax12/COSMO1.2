@@ -52,7 +52,8 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
-import { join, sep } from 'node:path';
+import { join } from 'node:path';
+import { estLance } from './ops-alert.mjs';
 
 const RACINE = process.cwd();
 const MIGRATIONS = join(RACINE, 'supabase', 'migration');
@@ -247,9 +248,7 @@ export function tablesPurgees(chemin = DELETE_ACCOUNT) {
 
 // ── Exécution ──────────────────────────────────────────────────────
 
-const estLanceDirectement =
-  process.argv[1]
-  && import.meta.url === new URL(`file://${process.argv[1].split(sep).join('/')}`).href;
+const estLanceDirectement = estLance(import.meta.url);
 
 if (estLanceDirectement) {
   const tables = tablesAvecUserId();

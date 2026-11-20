@@ -36,7 +36,8 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
-import { join, dirname, resolve, sep } from 'node:path';
+import { join, dirname, resolve } from 'node:path';
+import { estLance } from './ops-alert.mjs';
 
 const RACINE = process.cwd();
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -153,9 +154,7 @@ export function verifier(racine = RACINE, maintenant = new Date()) {
   return { erreurs, resume };
 }
 
-const estLanceDirectement =
-  process.argv[1]
-  && import.meta.url === new URL(`file://${process.argv[1].split(sep).join('/')}`).href;
+const estLanceDirectement = estLance(import.meta.url);
 
 if (estLanceDirectement) {
   const { erreurs, resume } = verifier();

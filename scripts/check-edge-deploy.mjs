@@ -71,6 +71,7 @@ import { readFileSync, existsSync, readdirSync, statSync, mkdtempSync, rmSync, m
 import { join, resolve, dirname, relative, sep } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
+import { ecrireResume } from './ops-alert.mjs';
 
 const ROOT = process.cwd();
 const FUNCTIONS_DIR = resolve(ROOT, 'supabase/functions');
@@ -599,15 +600,7 @@ function annoter(niveau, message) {
   console.log(`::${niveau}::${String(message).replace(/\r?\n/g, '%0A')}`);
 }
 
-function resume(lignes) {
-  const f = process.env.GITHUB_STEP_SUMMARY;
-  if (!f) return;
-  try {
-    writeFileSync(f, `${lignes.join('\n')}\n`, { flag: 'a' });
-  } catch {
-    /* le resume est un confort, jamais une condition du verdict */
-  }
-}
+const resume = (lignes) => ecrireResume(`${lignes.join('\n')}\n`);
 
 async function main() {
   const args = process.argv.slice(2);

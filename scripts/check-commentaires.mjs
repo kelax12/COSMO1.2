@@ -16,9 +16,10 @@
 // une URL n'est pas un commentaire), jamais par une expression régulière sur le
 // texte. Les tests (`*.test.*`) sont comptés à part et ne sont pas bornés : leurs
 // dates sont des témoins d'incident, c'est leur rôle.
-import { readFileSync, writeFileSync, readdirSync, statSync, existsSync } from 'node:fs'
+import { readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { join, relative, sep } from 'node:path'
 import { createRequire } from 'node:module'
+import { parcourirFichiers } from './ops-alert.mjs';
 
 const require = createRequire(import.meta.url)
 const ts = require('typescript')
@@ -33,20 +34,12 @@ const IGNORES = new Set(['node_modules', 'dist', 'coverage', '__test__'])
 
 /** Tous les `.ts` / `.tsx` de `src/`, chemins POSIX relatifs à `racine`. */
 export function listerSources(racine = RACINE) {
-  const out = []
-  const marcher = (rep) => {
-    for (const entree of readdirSync(rep)) {
-      if (IGNORES.has(entree)) continue
-      const chemin = join(rep, entree)
-      if (statSync(chemin).isDirectory()) marcher(chemin)
-      else if (/\.(ts|tsx)$/.test(entree) && !entree.endsWith('.d.ts')) {
-        out.push(relative(racine, chemin).split(sep).join('/'))
-      }
-    }
-  }
   const src = join(racine, 'src')
-  if (existsSync(src)) marcher(src)
-  return out.sort()
+  if (!existsSync(src)) return []
+  return parcourirFichiers(src, {
+    ignorerDossier: (nom) => IGNORES.has(nom),
+    garder: (nom) => !IGNORES.has(nom) && /\.(ts|tsx)$/.test(nom) && !nom.endsWith('.d.ts'),
+  }).map((chemin) => relative(racine, chemin).split(sep).join('/')).sort()
 }
 
 /** Les commentaires d'un source : `{ texte, ligne }` (ligne de début, base 1). */

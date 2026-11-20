@@ -35,6 +35,7 @@
 
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
+import { estLance } from './ops-alert.mjs';
 
 const RACINE = process.cwd();
 const FONCTIONS = join(RACINE, 'supabase', 'functions');
@@ -102,9 +103,7 @@ export function temoinsParFonction(racine = RACINE) {
   return out;
 }
 
-const estLanceDirectement =
-  process.argv[1]
-  && import.meta.url === new URL(`file://${process.argv[1].split(sep).join('/')}`).href;
+const estLanceDirectement = estLance(import.meta.url);
 
 if (estLanceDirectement) {
   if (!existsSync(FONCTIONS)) {

@@ -30,6 +30,10 @@
 //    emporte les 2 205 autres tests). Invoquer par `node scripts/ops-alert.mjs`.
 // ═══════════════════════════════════════════════════════════════════
 
+import { appendFileSync, readdirSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+
 /** Le corps envoye couvre Slack (`text`) et Discord (`content`) sans savoir
  *  lequel est branche — meme format que `opsAlert()` des Edge Functions. */
 export function buildMessage({ event, wf, sha, runUrl }) {
@@ -109,6 +113,79 @@ export async function run(env, { retries = 3, delayMs = 2000 } = {}) {
         : "L'issue ci-red reste le seul filet, celui qu'on sait non lu."),
   );
   return { exit: 1, lines };
+}
+
+// ─── Plomberie partagee par les gardes de `scripts/` (MAI-02) ───────────
+// Rien ici ne juge : chaque garde garde son verdict. Importee par une quinzaine de scripts.
+
+/** Vrai quand le module `metaUrl` est le script lancé en ligne de commande (pas importé par un témoin). */
+export const estLance = (metaUrl) =>
+  Boolean(process.argv[1]) && metaUrl === pathToFileURL(resolve(process.argv[1])).href;
+
+/** Échappe un message pour une commande de workflow : les sauts de ligne la coupent. */
+export const echapperAnnotation = (message) =>
+  String(message).replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A');
+
+/** Écrit une annotation GitHub (`::error`, `::warning`, `::notice`) sur UNE ligne. */
+export function annoter(niveau, message, proprietes = '') {
+  console.log(`::${niveau}${proprietes ? ` ${proprietes}` : ''}::${echapperAnnotation(message)}`);
+}
+
+/** Ajoute au résumé d'étape (`GITHUB_STEP_SUMMARY`) ; un résumé est un confort, jamais une condition du verdict. */
+export function ecrireResume(texte, env = process.env) {
+  if (!env.GITHUB_STEP_SUMMARY) return;
+  try {
+    appendFileSync(env.GITHUB_STEP_SUMMARY, texte);
+  } catch {
+    /* le résumé ne décide de rien */
+  }
+}
+
+/** Appel JSON sur l'API REST de GitHub (`repos/<repo><chemin>`). `204` rend `null`. */
+export async function apiGitHub(chemin, { token, repo, methode = 'GET', corpsJson, fetchImpl = fetch }) {
+  const rep = await fetchImpl(`https://api.github.com/repos/${repo}${chemin}`, {
+    method: methode,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/vnd.github+json',
+      ...(corpsJson ? { 'Content-Type': 'application/json' } : {}),
+    },
+    body: corpsJson ? JSON.stringify(corpsJson) : undefined,
+  });
+  if (!rep.ok) throw new Error(`HTTP ${rep.status} sur ${methode} ${chemin.split('?')[0]}`);
+  return rep.status === 204 ? null : rep.json();
+}
+
+/** Exécute du SQL via l'API Management de Supabase. Aucune écriture : à l'appelant de ne passer que des lectures. */
+export async function interrogerSupabase(sql, { token, projet, fetchImpl = fetch }) {
+  const res = await fetchImpl(`https://api.supabase.com/v1/projects/${projet}/database/query`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: sql }),
+  });
+  if (!res.ok) throw new Error(`API Management : HTTP ${res.status} ${await res.text()}`);
+  return res.json();
+}
+
+/**
+ * Tous les fichiers sous `racine` (chemins absolus, ordre du système de fichiers).
+ * `ignorerDossier(nom)` écarte un sous-arbre, `garder(nom)` filtre les fichiers.
+ * Le type vient de la même lecture que le nom (pas de `statSync` entre les deux, CodeQL M-60).
+ */
+export function parcourirFichiers(racine, { ignorerDossier = () => false, garder = () => true } = {}) {
+  const sortie = [];
+  const marcher = (rep) => {
+    for (const e of readdirSync(rep, { withFileTypes: true })) {
+      const chemin = join(rep, e.name);
+      if (e.isDirectory()) {
+        if (!ignorerDossier(e.name)) marcher(chemin);
+      } else if (garder(e.name)) {
+        sortie.push(chemin);
+      }
+    }
+  };
+  marcher(racine);
+  return sortie;
 }
 
 // Entree CLI. `import.meta.main` n'existe pas en Node 20 : on compare argv.

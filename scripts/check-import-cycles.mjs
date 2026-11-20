@@ -36,8 +36,9 @@
 //     empêche de lire ce zéro-là comme une bonne nouvelle.
 // ═══════════════════════════════════════════════════════════════════
 
-import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
+import { readFileSync, statSync, existsSync } from 'node:fs';
 import { join, dirname, relative, resolve, sep } from 'node:path';
+import { estLance, parcourirFichiers } from './ops-alert.mjs';
 
 const RACINE = process.cwd();
 const SRC = join(RACINE, 'src');
@@ -49,23 +50,13 @@ const IGNORES = new Set(['node_modules', '__test__']);
 
 /** Tous les modules de `src/`, hors tests. */
 export function listerModules(racine = SRC) {
-  const out = [];
-  const marcher = (rep) => {
-    for (const entree of readdirSync(rep)) {
-      if (IGNORES.has(entree)) continue;
-      const chemin = join(rep, entree);
-      if (statSync(chemin).isDirectory()) marcher(chemin);
-      else if (
-        EXTENSIONS.some((e) => entree.endsWith(e))
-        && !/\.(test|spec)\.[a-z]+$/.test(entree)
-        && !entree.endsWith('.d.ts')
-      ) {
-        out.push(chemin);
-      }
-    }
-  };
-  marcher(racine);
-  return out.sort();
+  return parcourirFichiers(racine, {
+    ignorerDossier: (nom) => IGNORES.has(nom),
+    garder: (nom) => !IGNORES.has(nom)
+      && EXTENSIONS.some((e) => nom.endsWith(e))
+      && !/\.(test|spec)\.[a-z]+$/.test(nom)
+      && !nom.endsWith('.d.ts'),
+  }).sort();
 }
 
 /**
@@ -181,9 +172,7 @@ export function trouverCycles(graphe) {
 
 // ── Exécution ──────────────────────────────────────────────────────
 
-const estLanceDirectement =
-  process.argv[1]
-  && import.meta.url === new URL(`file://${process.argv[1].split(sep).join('/')}`).href;
+const estLanceDirectement = estLance(import.meta.url);
 
 if (estLanceDirectement) {
   if (!existsSync(SRC)) {

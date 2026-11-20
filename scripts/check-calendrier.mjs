@@ -10,7 +10,8 @@
 // Docs : MIGRATION-REACT19.md, AUDIT-NVDA-WINDOWS.md, AUDIT-VOICEOVER-IOS.md, POST-AUDIT-GUIDE.md.
 // ═══════════════════════════════════════════════════════════════════
 import { readFileSync, existsSync } from 'node:fs';
-import { join, sep } from 'node:path';
+import { join } from 'node:path';
+import { estLance } from './ops-alert.mjs';
 
 const RACINE = process.cwd();
 const JOUR = 86_400_000;
@@ -309,9 +310,7 @@ function cliChantiers() {
 
 const SOUS_COMMANDES = { study: cliEtudes, lecteurs: cliLecteurs, chantiers: cliChantiers };
 
-const estLanceDirectement =
-  process.argv[1]
-  && import.meta.url === new URL(`file://${process.argv[1].split(sep).join('/')}`).href;
+const estLanceDirectement = estLance(import.meta.url);
 
 if (estLanceDirectement) {
   const demande = process.argv[2];

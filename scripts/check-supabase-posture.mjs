@@ -41,7 +41,8 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { join, sep } from 'node:path';
+import { join } from 'node:path';
+import { estLance } from './ops-alert.mjs';
 
 const RACINE = process.cwd();
 const REFERENCE = join(RACINE, 'scripts', 'supabase-posture.reference.json');
@@ -222,9 +223,7 @@ export function fusionnerReference(ancienne, securite, reglages, date, performan
 
 // ── Exécution ──────────────────────────────────────────────────────
 
-const estLanceDirectement =
-  process.argv[1]
-  && import.meta.url === new URL(`file://${process.argv[1].split(sep).join('/')}`).href;
+const estLanceDirectement = estLance(import.meta.url);
 
 if (estLanceDirectement) {
   const token = process.env.SUPABASE_ACCESS_TOKEN;

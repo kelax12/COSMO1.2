@@ -34,6 +34,7 @@ import { appendFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { CATEGORIES } from './detection-violation.mjs';
+import { apiGitHub } from './ops-alert.mjs';
 
 const JOUR = 86_400_000;
 export const LABEL = 'detection-violation';
@@ -105,28 +106,14 @@ export function decider({ cats, ouverte, recentes, plafond = PLAFOND_7J }) {
 
 // ═══════════════ RÉSEAU · GitHub REST ═══════════════
 
-async function api(chemin, { token, repo, methode = 'GET', corpsJson, fetchImpl = fetch }) {
-  const rep = await fetchImpl(`https://api.github.com/repos/${repo}${chemin}`, {
-    method: methode,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: 'application/vnd.github+json',
-      ...(corpsJson ? { 'Content-Type': 'application/json' } : {}),
-    },
-    body: corpsJson ? JSON.stringify(corpsJson) : undefined,
-  });
-  if (!rep.ok) throw new Error(`HTTP ${rep.status} sur ${methode} ${chemin.split('?')[0]}`);
-  return rep.status === 204 ? null : rep.json();
-}
-
 /** Issues `detection-violation` des 7 derniers jours (ouvertes ou fermées), et leurs commentaires. */
 async function etat({ token, repo, maintenant, fetchImpl }) {
   const depuis = new Date(maintenant.getTime() - 7 * JOUR).toISOString();
-  const issues = await api(`/issues?state=all&labels=${LABEL}&since=${depuis}&per_page=100`, { token, repo, fetchImpl });
+  const issues = await apiGitHub(`/issues?state=all&labels=${LABEL}&since=${depuis}&per_page=100`, { token, repo, fetchImpl });
   const elements = [];
   let ouverte = null;
   for (const i of issues) {
-    const commentaires = await api(`/issues/${i.number}/comments?since=${depuis}&per_page=100`, { token, repo, fetchImpl });
+    const commentaires = await apiGitHub(`/issues/${i.number}/comments?since=${depuis}&per_page=100`, { token, repo, fetchImpl });
     const fil = [{ body: i.body, created_at: i.created_at, user: i.user }, ...commentaires];
     elements.push(...fil);
     if (i.state === 'open' && !ouverte) ouverte = { number: i.number, html_url: i.html_url, elements: fil };
@@ -161,7 +148,7 @@ export async function run(env = process.env, { maintenant = new Date(), fetchImp
     return { exit: 1, lignes, sorties: { publie: 'false', issue: ouverte?.html_url ?? '' } };
   }
   if (v.action === 'commenter') {
-    const c = await api(`/issues/${ouverte.number}/comments`, {
+    const c = await apiGitHub(`/issues/${ouverte.number}/comments`, {
       token, repo, fetchImpl, methode: 'POST',
       corpsJson: { body: texte({ cats, detecteLe, echeance, runUrl: env.RUN_URL, proprietaire, premier: false }) },
     });
@@ -170,11 +157,11 @@ export async function run(env = process.env, { maintenant = new Date(), fetchImp
   }
   // Le label peut ne pas exister au premier passage ; 422 = il existe déjà.
   try {
-    await api('/labels', { token, repo, fetchImpl, methode: 'POST', corpsJson: { name: LABEL, color: 'b60205', description: 'Signal du detecteur de violation, a trier sous 72 h' } });
+    await apiGitHub('/labels', { token, repo, fetchImpl, methode: 'POST', corpsJson: { name: LABEL, color: 'b60205', description: 'Signal du detecteur de violation, a trier sous 72 h' } });
   } catch (e) {
     if (!/HTTP 422/.test(e.message)) throw e;
   }
-  const cree = await api('/issues', {
+  const cree = await apiGitHub('/issues', {
     token, repo, fetchImpl, methode: 'POST',
     corpsJson: {
       title: `Seuil de détection franchi le ${jjmm(detecteLe)}`,

@@ -43,7 +43,7 @@
 //    sonde qui irait plus loin finirait par écrire en production.
 // ═══════════════════════════════════════════════════════════════════
 
-import { sep } from 'node:path';
+import { estLance } from './ops-alert.mjs';
 
 /** Le projet de production. Publique : elle est dans le bundle client. */
 const URL_DEFAUT = 'https://ykeugqfgklejcdbrmawy.supabase.co';
@@ -324,9 +324,7 @@ export async function jouer(sonde, { base, anon, fetchImpl = fetch }) {
 
 // ── Exécution ──────────────────────────────────────────────────────
 
-const estLanceDirectement =
-  process.argv[1]
-  && import.meta.url === new URL(`file://${process.argv[1].split(sep).join('/')}`).href;
+const estLanceDirectement = estLance(import.meta.url);
 
 if (estLanceDirectement) {
   const base = (process.env.SUPABASE_URL || URL_DEFAUT).replace(/\/+$/, '');

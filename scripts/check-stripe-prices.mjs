@@ -45,7 +45,8 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { readFileSync } from 'node:fs';
-import { join, sep } from 'node:path';
+import { join } from 'node:path';
+import { estLance } from './ops-alert.mjs';
 
 const RACINE = process.cwd();
 
@@ -190,9 +191,7 @@ export function rapprocher({ paliers, totalAnnuelEur }, prix) {
 
 // ── Exécution ──────────────────────────────────────────────────────
 
-const estLanceDirectement =
-  process.argv[1]
-  && import.meta.url === new URL(`file://${process.argv[1].split(sep).join('/')}`).href;
+const estLanceDirectement = estLance(import.meta.url);
 
 if (estLanceDirectement) {
   const cle = process.env.STRIPE_SECRET_KEY;

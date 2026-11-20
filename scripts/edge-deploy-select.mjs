@@ -61,6 +61,7 @@ import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { repoFilesFor } from './check-edge-deploy.mjs';
 import { SONDES } from './check-edge-smoke.mjs';
+import { ecrireResume } from './ops-alert.mjs';
 
 const ROOT = process.cwd();
 const FUNCTIONS_DIR = resolve(ROOT, 'supabase/functions');
@@ -286,15 +287,7 @@ function sortie(cle, valeur) {
   if (f) writeFileSync(f, `${cle}=${valeur}\n`, { flag: 'a' });
 }
 
-function resume(lignes) {
-  const f = process.env.GITHUB_STEP_SUMMARY;
-  if (!f) return;
-  try {
-    writeFileSync(f, `${lignes.join('\n')}\n`, { flag: 'a' });
-  } catch {
-    /* le resume est un confort, jamais une condition du verdict */
-  }
-}
+const resume = (lignes) => ecrireResume(`${lignes.join('\n')}\n`);
 
 async function main() {
   const tete = process.env.HEAD_SHA;

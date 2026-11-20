@@ -58,6 +58,7 @@
 import { readFileSync, appendFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { apiGitHub } from './ops-alert.mjs';
 
 const JOUR = 86_400_000;
 export const SEUIL_JOURS = 7;
@@ -222,26 +223,12 @@ export function corps({ violations, recales, decisionsSansObjet, alertes = [], m
 
 // ═══════════════ RÉSEAU · GitHub REST, jeton exigé ═══════════════
 
-async function api(chemin, { token, repo, methode = 'GET', corpsJson } = {}) {
-  const rep = await fetch(`https://api.github.com/repos/${repo}${chemin}`, {
-    method: methode,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: 'application/vnd.github+json',
-      ...(corpsJson ? { 'Content-Type': 'application/json' } : {}),
-    },
-    body: corpsJson ? JSON.stringify(corpsJson) : undefined,
-  });
-  if (!rep.ok) throw new Error(`HTTP ${rep.status} sur ${methode} ${chemin.split('?')[0]}`);
-  return rep.status === 204 ? null : rep.json();
-}
-
 export async function mesurer({ token, repo }) {
-  const { workflows } = await api('/actions/workflows?per_page=100', { token, repo });
+  const { workflows } = await apiGitHub('/actions/workflows?per_page=100', { token, repo });
   const rouges = [];
   for (const w of workflows ?? []) {
     if (w.state !== 'active' || EXCLUS.has(w.name)) continue;
-    const { workflow_runs: runs } = await api(
+    const { workflow_runs: runs } = await apiGitHub(
       `/actions/workflows/${w.id}/runs?branch=main&exclude_pull_requests=true&per_page=60`,
       { token, repo },
     );
@@ -253,21 +240,21 @@ export async function mesurer({ token, repo }) {
 
 /** Les issues de détection ouvertes (label `detection-violation`). */
 export async function mesurerAlertes({ token, repo }) {
-  return api(`/issues?state=open&labels=${LABEL_DETECTION}&per_page=100`, { token, repo });
+  return apiGitHub(`/issues?state=open&labels=${LABEL_DETECTION}&per_page=100`, { token, repo });
 }
 
 /** Ouvre ou met à jour l'issue `ci-red`. Rend { url, nouveau }. `forcer` :
  *  republier même si la liste n'a pas changé (revue du lundi). */
 export async function publier({ token, repo, texte, maintenant, forcer = false }) {
   const sig = /<!-- gardes-rouges-7j (.*?) -->/.exec(texte)?.[1] ?? '';
-  const ouvertes = await api('/issues?state=open&labels=ci-red&per_page=1', { token, repo });
+  const ouvertes = await apiGitHub('/issues?state=open&labels=ci-red&per_page=1', { token, repo });
   if (!ouvertes.length) {
     const titre = `Gardes rouges depuis plus de ${SEUIL_JOURS} jours (${maintenant.toISOString().slice(0, 10)})`;
-    const cree = await api('/issues', { token, repo, methode: 'POST', corpsJson: { title: titre, body: texte, labels: ['ci-red'] } });
+    const cree = await apiGitHub('/issues', { token, repo, methode: 'POST', corpsJson: { title: titre, body: texte, labels: ['ci-red'] } });
     return { url: cree.html_url, nouveau: true };
   }
   const issue = ouvertes[0];
-  const commentaires = await api(`/issues/${issue.number}/comments?per_page=100`, { token, repo });
+  const commentaires = await apiGitHub(`/issues/${issue.number}/comments?per_page=100`, { token, repo });
   // L'issue créée par ce script porte le marqueur dans son CORPS : il compte comme précédent.
   // Seuls les écrits du bot comptent (vague 6.1) : sur un dépôt public, un commentaire
   // tiers qui recopierait le marqueur ferait taire la liste.
@@ -276,7 +263,7 @@ export async function publier({ token, repo, texte, maintenant, forcer = false }
     .find((c) => c?.user?.login === AUTEUR_BOT && String(c.body).startsWith(MARQUEUR));
   const sigPrecedente = precedent ? /<!-- gardes-rouges-7j (.*?) -->/.exec(precedent.body)?.[1] ?? null : null;
   if (sigPrecedente === sig && !forcer) return { url: precedent.html_url, nouveau: false };
-  const c = await api(`/issues/${issue.number}/comments`, { token, repo, methode: 'POST', corpsJson: { body: texte } });
+  const c = await apiGitHub(`/issues/${issue.number}/comments`, { token, repo, methode: 'POST', corpsJson: { body: texte } });
   return { url: c.html_url, nouveau: true };
 }
 

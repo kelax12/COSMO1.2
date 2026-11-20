@@ -57,7 +57,8 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { readFileSync, existsSync } from 'node:fs';
-import { join, sep } from 'node:path';
+import { join } from 'node:path';
+import { estLance } from './ops-alert.mjs';
 
 const RACINE = process.cwd();
 const REFERENCE = join(RACINE, 'scripts', 'prod-errors.reference.json');
@@ -483,9 +484,7 @@ export function comparer(reference, mesure) {
 
 // ── Exécution ──────────────────────────────────────────────────────
 
-const estLanceDirectement =
-  process.argv[1]
-  && import.meta.url === new URL(`file://${process.argv[1].split(sep).join('/')}`).href;
+const estLanceDirectement = estLance(import.meta.url);
 
 if (estLanceDirectement) {
   const env = process.env;

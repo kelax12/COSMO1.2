@@ -70,13 +70,14 @@ import {
   readFileSync, writeFileSync, existsSync, mkdtempSync, mkdirSync, copyFileSync, rmSync,
   symlinkSync, unlinkSync, rmdirSync, lstatSync, realpathSync,
 } from 'node:fs';
-import { join, sep, dirname } from 'node:path';
+import { join, dirname } from 'node:path';
 import { tmpdir, cpus } from 'node:os';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { execFileSync, spawnSync, spawn } from 'node:child_process';
 
 import { CATALOGUE } from './replay-sabotages.catalogue.mjs';
+import { estLance } from './ops-alert.mjs';
 
 export { CATALOGUE };
 
@@ -690,9 +691,7 @@ async function jouerUneVoie(atelier, voie, temoins) {
   return { echecs, resultats, rejoues };
 }
 
-const estLanceDirectement =
-  process.argv[1]
-  && import.meta.url === new URL(`file://${process.argv[1].split(sep).join('/')}`).href;
+const estLanceDirectement = estLance(import.meta.url);
 
 if (estLanceDirectement) {
   const debut = Date.now();

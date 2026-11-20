@@ -42,7 +42,7 @@
 //    éteindre un rouge.
 // ═══════════════════════════════════════════════════════════════════
 
-import { sep } from 'node:path';
+import { estLance, interrogerSupabase } from './ops-alert.mjs';
 
 const PROJET_DEFAUT = 'ykeugqfgklejcdbrmawy';
 
@@ -157,15 +157,7 @@ export const PREUVES = new Set(['payment_records', 'payment_closures', 'withdraw
  * toute écriture par ce chemin (il contourne la RLS). Les requêtes de ce
  * fichier sont toutes des `SELECT count(*)`.
  */
-export async function interroger(sql, { token, projet, fetchImpl = fetch }) {
-  const res = await fetchImpl(`https://api.supabase.com/v1/projects/${projet}/database/query`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query: sql }),
-  });
-  if (!res.ok) throw new Error(`API Management : HTTP ${res.status} ${await res.text()}`);
-  return res.json();
-}
+export const interroger = interrogerSupabase;
 
 /**
  * Le libellé d'une ligne du contrôle A. Une table peut porter DEUX colonnes de
@@ -205,9 +197,7 @@ export function sqlAges(bornees = DUREES_BORNEES) {
 
 // ── Exécution ──────────────────────────────────────────────────────
 
-const estLanceDirectement =
-  process.argv[1]
-  && import.meta.url === new URL(`file://${process.argv[1].split(sep).join('/')}`).href;
+const estLanceDirectement = estLance(import.meta.url);
 
 if (estLanceDirectement) {
   const token = process.env.SUPABASE_ACCESS_TOKEN;
