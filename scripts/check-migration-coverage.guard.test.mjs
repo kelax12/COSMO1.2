@@ -1,13 +1,5 @@
-// ═══════════════════════════════════════════════════════════════════
-// check-migration-coverage.guard.test.mjs · UN TEMOIN PAR VERDICT
-//
-// Chaque cas SOUMET au classeur reel un jeu de migrations et une introspection
-// fabriques ; le classeur n est jamais re-implemente ici. La question n est
-// pas « tourne-t-elle ? » mais « sur quoi ? ».
-// Les deux temoins qui comptent le plus : « introspection vide » (un verdict
-// rendu sans rien lire) et « dispense perimee » (une declaration qui survit a
-// l application de sa migration).
-// ═══════════════════════════════════════════════════════════════════
+// check-migration-coverage.guard.test.mjs · UN TEMOIN PAR VERDICT, sur le classeur reel (jamais
+// re-implemente ici) : « introspection vide » (verdict sans rien lire) et « dispense perimee » comptent le plus.
 import { describe, it, expect } from 'vitest';
 import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
@@ -62,9 +54,7 @@ describe('check-migration-coverage · le classeur', () => {
   });
 
   it('un objet SUPPRIME PAR UNE MIGRATION ULTERIEURE ne compte pas comme absent', () => {
-    // C'est le cas reel des mig. 013 / 015 / 016, videes par la 141 (C-04).
-    // ⚠️ Mesure, pas declaration : aucune de ces trois n'a d'entree dans une
-    // liste ecrite a la main, et c'est le point.
+    // Mig. 013 / 015 / 016, videes par la 141 (C-04) : mesure, pas declaration.
     const out = classer(
       [
         { name: '002_cree.sql', sql: 'CREATE OR REPLACE FUNCTION public.jeton_premium() RETURNS void AS $$ $$ LANGUAGE sql;' },
@@ -76,10 +66,7 @@ describe('check-migration-coverage · le classeur', () => {
   });
 
   it('un DROP TABLE ULTERIEUR emporte les index, policies, triggers et contraintes de la table', () => {
-    // Cas reel de la mig. 196 (2026-10-01) : la 200 fait `DROP TABLE` de ses
-    // deux tables, et Postgres supprime avec elles tout ce qui leur est
-    // ATTACHE. Aucun de ces objets n'est nomme dans un DROP, et la garde
-    // rendait « ABSENT DES DEUX » sur une migration appliquee puis retiree.
+    // Mig. 196 : la 200 fait `DROP TABLE` de ses tables, et tout ce qui leur est attache part sans etre nomme.
     const out = classer(
       [
         {
@@ -130,9 +117,7 @@ describe('check-migration-coverage · le classeur', () => {
   });
 
   it("TEMOIN : l'ordre compte, un DROP ANTERIEUR n'excuse rien", () => {
-    // 🔴 Sans ce cas, il suffirait qu'un objet soit supprime N IMPORTE OU dans
-    // le depot pour excuser son absence, y compris AVANT sa creation. La garde
-    // deviendrait alors une machine a fabriquer du vert.
+    // 🔴 Sans ce cas, un DROP N'IMPORTE OU, meme AVANT la creation, excuserait l'absence.
     const out = classer(
       [
         { name: '002_supprime_avant.sql', sql: 'DROP FUNCTION IF EXISTS public.jeton_premium();' },
@@ -144,9 +129,7 @@ describe('check-migration-coverage · le classeur', () => {
   });
 
   it("TEMOIN : un DROP suivi d'un CREATE dans le MEME fichier n'est pas une suppression", () => {
-    // 🔴 `DROP ... IF EXISTS` puis `CREATE` est le motif idempotent normal de
-    // ce depot. Compte naivement, il faisait dire a la garde que la mig. 015
-    // avait supprime `trg_subscriptions_guard`, alors qu'elle le repose.
+    // 🔴 `DROP ... IF EXISTS` puis `CREATE` : motif idempotent normal (mig. 015, `trg_subscriptions_guard`).
     const out = classer(
       [
         { name: '002_cree.sql', sql: 'CREATE TRIGGER trg_x BEFORE INSERT ON public.tasks EXECUTE FUNCTION f();' },
@@ -180,10 +163,7 @@ describe('check-migration-coverage · le classeur', () => {
     expect(verdictDe(out, '002_menage.sql')).toBe(VERDICT.ABSENT);
   });
 
-  // Une dispense FICTIVE, passee au classeur reel. La vraie table est vide
-  // depuis le 2026-10-22 (la mig. 140, sa seule entree, a ete appliquee le
-  // 2026-10-20) : s'appuyer sur elle laisserait ces temoins sans objet le jour
-  // ou elle se vide, et c'est exactement ce qui vient d'arriver.
+  // Une dispense FICTIVE : la vraie table est vide depuis le 2026-10-22, s'y appuyer laisserait ces temoins sans objet.
   const DISPENSE_FICTIVE = { '998_dispense_fictive': 'Motif fictif, declare pour le temoin.' };
 
   it('une migration declaree et REELLEMENT non appliquee rend le verdict « declaree »', () => {
@@ -197,11 +177,7 @@ describe('check-migration-coverage · le classeur', () => {
   });
 
   it('TEMOIN : une dispense PERIMEE (objet en base) fait echouer la garde', () => {
-    // 🔴 Le jour ou une migration declaree non appliquee l'est, la declaration
-    // doit TOMBER, pas survivre en silence : c'est exactement le contrat de
-    // `.github/edge-deploy.json`, et la raison pour laquelle une dispense ne
-    // peut jamais faire taire un ecart de CONTENU. Cas vecu avec la mig. 140,
-    // rouge chaque jour du 2026-10-20 au retrait de son entree.
+    // 🔴 Une migration declaree non appliquee qui l'est devient : la declaration doit TOMBER (mig. 140).
     const out = classer(
       [{
         name: '998_dispense_fictive.sql',
@@ -227,9 +203,7 @@ describe('check-migration-coverage · le classeur', () => {
   });
 
   it('sans dispense passee, le classeur lit la VRAIE table', () => {
-    // Le parametre `dispenses` ne doit pas devenir une porte ouverte : par
-    // defaut, c'est `NON_APPLIQUEES_DELIBEREMENT` qui fait foi, et le meme
-    // fichier non applique n'y figurant pas est reclame.
+    // Par defaut, `NON_APPLIQUEES_DELIBEREMENT` fait foi : `dispenses` n'est pas une porte ouverte.
     const out = classer(
       [{ name: '998_dispense_fictive.sql', sql: 'CREATE TABLE public.table_pas_encore_la (id uuid);' }],
       CATALOGUE_PLEIN,
@@ -239,9 +213,7 @@ describe('check-migration-coverage · le classeur', () => {
   });
 
   it('un fichier sans objet NI suppression, NON declare, echoue', () => {
-    // ❌ Une migration qu'on ne sait pas verifier ne passe pas en silence :
-    // elle se DECLARE, avec son motif. C'est le prix a payer pour que la liste
-    // des non-verifiables reste courte et lisible.
+    // ❌ Un fichier non verifiable se DECLARE, avec son motif.
     const out = classer(
       [{ name: '002_data.sql', sql: "INSERT INTO public.tasks (id) VALUES (gen_random_uuid());" }],
       CATALOGUE_PLEIN,
@@ -282,9 +254,7 @@ function lancer(introspection, migrations, args = []) {
 
 describe('check-migration-coverage · le CLI', () => {
   it('TEMOIN : un LEDGER VIDE fait ECHOUER, il ne rend pas un verdict', () => {
-    // 🔴 C'est la classe de defaut de `restore-drill.yml` : un controle qui NE
-    // POUVAIT PAS echouer. Un ledger vide avec un catalogue plein rendrait
-    // « OBJET EN BASE » partout, donc un VERT qui ne mesure rien.
+    // 🔴 Un ledger vide avec un catalogue plein rendrait « OBJET EN BASE » partout : un VERT qui ne mesure rien.
     const r = lancer(
       { ...CATALOGUE_PLEIN, ledger: [], ledger_names: [] },
       { '001_socle.sql': 'CREATE TABLE public.tasks (id uuid);' },
@@ -313,9 +283,7 @@ describe('check-migration-coverage · le CLI', () => {
   it('sort en 0 quand tout est couvert, et DIT ce que ce vert ne prouve pas', () => {
     const r = lancer(CATALOGUE_PLEIN, { '001_socle.sql': 'CREATE TABLE public.tasks (id uuid);' });
     expect(r.status).toBe(0);
-    // ⚠️ Un vert qui ne dit pas ses limites est la moitie d'un mensonge : une
-    // ligne au ledger ne prouve pas qu'un CREATE OR REPLACE a remplace le
-    // corps vivant (mig. 144, rejouee par la 147).
+    // ⚠️ Un vert qui ne dit pas ses limites est la moitie d'un mensonge (mig. 144, rejouee par la 147).
     expect(r.stdout).toMatch(/CE QUE CE VERT NE DIT PAS/);
   });
 
@@ -377,6 +345,42 @@ describe('check-migration-coverage · migrations en attente de prod (CI-05)', ()
       { name: '206_complet.sql', sql: 'CREATE OR REPLACE FUNCTION public.get_my_tasks() RETURNS void AS $$ $$ LANGUAGE sql;' },
     ], CATALOGUE_PLEIN);
     expect(enAttenteDeProduction(out)).toEqual([]);
+  });
+
+  // Depuis la 200, hors ledger, le NOM ne suffit plus : la definition se mesure (ROB-02).
+  const F = (corps) => `CREATE OR REPLACE FUNCTION public.get_my_tasks() RETURNS void AS $$ ${corps} $$ LANGUAGE sql;`;
+  const AVEC = { ...CATALOGUE_PLEIN, function_bodies: { get_my_tasks: ['select 1;'] } };
+  const attente = (sql, intro = AVEC) => enAttenteDeProduction(classer([{ name: '262_remplace.sql', sql }], intro)).map((r) => r.name);
+
+  it('TEMOIN (a)(b) : corps different de la prod = pas « en base » ; meme corps (blancs, commentaires a part) = accepte', () => {
+    expect(attente(F('select 2;'))).toEqual(['262_remplace.sql']);
+    expect(attente(F('-- note\n  select   1;'))).toEqual([]);
+    expect(attente(F('select 2;'), CATALOGUE_PLEIN)).toEqual([]); // sans corps de prod lu : rien ne se conclut
+  });
+
+  const P = (using, extra = '') => `CREATE POLICY tasks_select_own_or_shared ON public.tasks FOR SELECT TO authenticated ${extra} USING (${using});`;
+  const POL = { ...CATALOGUE_PLEIN, policy_defs: { 'tasks_select_own_or_shared@@tasks': { c: 'SELECT', r: ['authenticated'], q: '(user_id = ( SELECT auth.uid() AS uid))', w: null } } };
+
+  it('TEMOIN : une policy recreee sous son nom se mesure sur USING, roles et commande', () => {
+    expect(attente(P('user_id = (select auth.uid())'), POL)).toEqual([]);
+    expect(attente(P('true'), POL)).toEqual(['262_remplace.sql']);
+    expect(attente(P('user_id = (select auth.uid())').replace('authenticated', 'anon'), POL)).toEqual(['262_remplace.sql']);
+    expect(attente(P('user_id = (select auth.uid())').replace('FOR SELECT', 'FOR ALL'), POL)).toEqual(['262_remplace.sql']);
+  });
+
+  it('TEMOIN (c) : DROP POLICY dont la cible est ENCORE en base = non appliquee ; une policy recreee plus tard ne compte pas', () => {
+    const drop = { name: '264_drop.sql', sql: 'DROP POLICY IF EXISTS tasks_select_own_or_shared ON public.tasks; CREATE POLICY nouvelle ON public.tasks FOR SELECT USING (true);' };
+    const intro = { ...CATALOGUE_PLEIN, policies: ['tasks_select_own_or_shared@@tasks', 'nouvelle@@tasks'] };
+    expect(enAttenteDeProduction(classer([drop], intro)).map((r) => r.name)).toEqual(['264_drop.sql']);
+    expect(enAttenteDeProduction(classer([drop], { ...intro, policies: ['nouvelle@@tasks'] }))).toEqual([]);
+    const relance = { name: '270_recree.sql', sql: 'CREATE POLICY tasks_select_own_or_shared ON public.tasks FOR SELECT USING (true);' };
+    expect(enAttenteDeProduction(classer([drop, relance], intro)).map((r) => r.name)).not.toContain('264_drop.sql');
+  });
+
+  it('TEMOIN : une fonction redefinie par un fichier ULTERIEUR ne rougit pas l ancien ; un fichier AU LEDGER n est pas juge', () => {
+    const f = (n, c) => ({ name: n, sql: F(c) });
+    expect(enAttenteDeProduction(classer([f('250_ancien.sql', 'select 0;'), f('260_recent.sql', 'select 1;')], AVEC)).map((r) => r.name)).toEqual([]);
+    expect(enAttenteDeProduction(classer([f('001_socle.sql', 'select 9;')], AVEC))).toEqual([]);
   });
 
   it('TEMOIN CLI : --sens=depot sort en 1 sur une migration absente des deux', () => {
