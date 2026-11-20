@@ -26,6 +26,17 @@ updates:
     open-pull-requests-limit: 8
     labels:
       - dependencies
+    # Majeures écartées par ADR : sans ces lignes elles reviennent chaque lundi.
+    # Rouvrir = lire la section « Ce qui rouvre la décision » de l'ADR, puis retirer la ligne.
+    ignore:
+      - dependency-name: "framer-motion"        # ADR 0018
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "lucide-react"         # ADR 0017
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@fullcalendar/*"      # ADR 0016
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "tailwindcss"          # ADR 0019
+        update-types: ["version-update:semver-major"]
     groups:
       dev-dependencies:
         dependency-type: development
