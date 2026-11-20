@@ -34,7 +34,7 @@ Après le header, `landing/LandingGateway` aiguille vers l'un des deux :
 - ⚠️ Un filet animé en `scaleX` ne se centre pas par `-translate-x-1/2` (GSAP fige des pixels) : `inset-x-0 mx-auto`.
 - ⚠️ Une opacité Tailwind n'existe qu'en multiples de 5 : `via-slate-900/16` ne produit AUCUN stop, sans erreur. Relire le `background-image` calculé.
 - 🔴 La couche de fond du hero perso est en `z-0`, JAMAIS `-z-10` : un descendant en z négatif est peint avant le fond du `<div>` racine et disparaît, rasterisé pour rien. Alphas des aurores calés pour du blanc.
-- ⚠️ Un effet de fond ne se vérifie pas en relisant sa couleur : forcer un traceur en rouge par règle CSS `!important` (React réécrit `style` à chaque rendu ; même piège que `scripts/landing-motion-probe.mjs`).
+- ⚠️ Un effet de fond ne se vérifie pas en relisant sa couleur : forcer un traceur en rouge par règle CSS `!important` (React réécrit `style` à chaque rendu).
 - 🔴 L'entrée du hero perso est en CSS (`src/index.css`, « Hero de la landing », keyframes pilotées par `--d` / `--tx`) : indépendante de GSAP, du chunk de page et des fontes. Chaque règle n'a qu'un `from` : l'état final est l'état par défaut. La route `/` a son squelette, jamais le `PageLoader` générique.
 - ❌ `SplitText` sur le H1 perso : le titre est révélé ligne par ligne, gradient et transform portés par le MÊME élément (`bg-clip-text` ne survit pas aux transforms des enfants).
 

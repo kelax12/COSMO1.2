@@ -105,7 +105,7 @@ export const EXCEPTIONS = [
     chemin: 'public/downloads/template-okr-cosmo.xlsx',
     blob: 'b3b549066eb0d97851e45206c75b578681247534',
     motif: 'gabarit OKR vide offert en téléchargement par l article `template-okr-gratuit` '
-      + '(généré par `scripts/generate-okr-template.py`, aucune donnée réelle).',
+      + '(aucune donnée réelle).',
   },
   {
     chemin: 'public/videos/onboarding-entreprise-v2.mp4',

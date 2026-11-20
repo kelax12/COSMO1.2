@@ -58,8 +58,7 @@ const HeroBackdrop: React.FC<Props> = ({ gridRef, auroraRef }) => (
             peint comme un dégradé ordinaire.
             Les quatre couches sont FIXES : l'oscillation d'opacité (0,82 à 1) sur des
             dégradés d'alpha 0,16 posés sur du BLANC était sous le seuil de perception.
-            Ne pas la remettre : la vie du fond, c'est la trace d'encre.
-            Harnais de non-régression : `scripts/landing-motion-probe.mjs`. */}
+            Ne pas la remettre : la vie du fond, c'est la trace d'encre. */}
         <div ref={auroraRef} className="absolute inset-0">
           {/* Nappe de teintes (remplace le halo conique tournant).
               ⚠️ Chaque dégradé DOIT atteindre `transparent` avant le bord de
