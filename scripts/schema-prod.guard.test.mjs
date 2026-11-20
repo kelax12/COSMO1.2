@@ -6,7 +6,8 @@ import { readFileSync } from 'node:fs';
 import { X509Certificate } from 'node:crypto';
 import { describe, it, expect } from 'vitest';
 
-import { objets, ecarts, rapport, enAttente, masquer, optionsClient, SUPABASE_ROOT_CA, expliquerErreurTls } from './schema-prod.mjs';
+import { tmpdir } from 'node:os';
+import { fichierEnAttente, objets, ecarts, rapport, enAttente, masquer, optionsClient, SUPABASE_ROOT_CA, expliquerErreurTls } from './schema-prod.mjs';
 
 const bloc = (nom, type, corps) => `--\n-- Name: ${nom}; Type: ${type}; Schema: public; Owner: -\n--\n\n${corps}\n\n`;
 const DUMP = [
@@ -149,3 +150,7 @@ describe('schema-prod : migrations retirées du rejeu', () => {
   });
 });
 
+it('TEMOIN : liste des migrations en attente sous RUNNER_TEMP, jamais dans le temporaire du systeme (js/insecure-temporary-file)', () => {
+  expect(fichierEnAttente({ RUNNER_TEMP: '/j' }).split(String.fromCharCode(92)).join('/')).toBe('/j/cosmo-migrations-en-attente.json');
+  expect(fichierEnAttente({}).startsWith(tmpdir())).toBe(false);
+});

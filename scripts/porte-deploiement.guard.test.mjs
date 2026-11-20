@@ -249,14 +249,21 @@ describe('porte · ci-vert.yml · migrations en production (CI-05)', () => {
   const wf = lire('.github/workflows/ci-vert.yml')
   const porte = wf.slice(wf.indexOf('REFUS() {'), wf.indexOf('\n  tag:'))
   const tag = wf.slice(wf.indexOf('\n  tag:'))
+  const depot = wf.slice(wf.indexOf('\n  depot:'), wf.indexOf('\n  migrations:'))
 
   it('TEMOIN : la porte precede le tag (needs, refus = pas de tag), lit les migrations du SHA, sans secret cote tag', () => {
-    expect(tag).toMatch(/needs: migrations/)
+    expect(tag).toMatch(/needs: \[depot, migrations\]/)
+    expect(tag).toContain("(needs.depot.result == 'success' || needs.depot.result == 'skipped')")
     expect(tag).toContain("(needs.migrations.result == 'success' || needs.migrations.result == 'skipped')")
     expect(tag).not.toContain('SUPABASE_DB_URL')
     expect(porte).toContain('COSMO_MIGRATION_DIR="$DEPOT/supabase/migration"')
     expect(porte).toContain('check-migration-coverage.mjs "$RUNNER_TEMP/introspection.json" --sens=depot')
-    expect(porte).toContain('git archive "$SHA" supabase/migration')
+    expect(depot).toContain('git archive "$SHA" supabase/migration')
+  })
+
+  it('TEMOIN : seul `depot` touche au SHA, sans secret ; `migrations` ne lit que l artefact (CodeQL actions/untrusted-checkout)', () => {
+    expect(depot).not.toMatch(/secrets./); expect(depot).toContain('upload-artifact'); expect(depot).toContain('persist-credentials: false')
+    expect(porte).not.toMatch(/git (fetch|archive)|head_sha|$SHA/); expect(wf).toMatch(/download-artifact@\S+ # v[\d.]+\n {8}with:\n {10}name: migrations-depot/)
   })
 
   it('TEMOIN : echec FERME, secret absent, ledger illisible ou vide refusent, aucun repli ouvert', () => {

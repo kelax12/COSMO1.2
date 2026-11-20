@@ -10,9 +10,8 @@
 // 🔴 AUCUNE ecriture en production ; journal public, definitions masquees.
 // ⚠️ Pas de shebang : le temoin importe ce module (cf. `scripts/CLAUDE.md`).
 // ═══════════════════════════════════════════════════════════════════
-import { readFileSync, writeFileSync, unlinkSync, appendFileSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
-import { tmpdir } from 'node:os';
+import { readFileSync, writeFileSync, unlinkSync, appendFileSync, existsSync, mkdirSync } from 'node:fs';
+import { join, dirname } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 import { lireBase, normaliserDump, rendreComplements, projetId } from './contrat-donnees.mjs';
@@ -21,8 +20,8 @@ import { classer, lireMigrations, enAttenteDeProduction, sansCommentairesNiBlanc
 export { sansCommentairesNiBlancs };
 export const DOSSIER_MIGRATIONS = 'supabase/migration';
 
-/** Ou `en-attente` laisse sa liste pour `comparer` (meme runner). */
-export const fichierEnAttente = (env = process.env) => join(env.RUNNER_TEMP || tmpdir(), 'cosmo-migrations-en-attente.json');
+/** Liste de `en-attente` pour `comparer` : dossier du job, jamais le temporaire partage du systeme (js/insecure-temporary-file). */
+export const fichierEnAttente = (env = process.env) => join(env.RUNNER_TEMP || join(process.cwd(), 'node_modules', '.cache'), 'cosmo-migrations-en-attente.json');
 
 /** Les fichiers du depot que la prod n'a pas (classeur de `check:migration-coverage`, DROP restants compris). */
 export function enAttente(fichiers, intro) {
@@ -79,21 +78,13 @@ const ERREURS_TLS = /certificate|self[- ]signed|CERT_|UNABLE_TO_VERIFY|issuer|ho
 export function expliquerErreurTls(err) {
   const m = String(err?.code ?? '') + ' ' + String(err?.message ?? '');
   if (!ERREURS_TLS.test(m)) return err;
-  return new Error(
-    'verification TLS de la production refusee (' + (err.code || err.message) + '). ' +
-    'La racine embarquee (scripts/schema-prod.mjs, SUPABASE_ROOT_CA) ne signe plus le pooler : ' +
-    'comparer avec le certificat actuel de la documentation Supabase. Aucune connexion non verifiee n\'est tentee.',
-  );
+  return new Error(`verification TLS de la production refusee (${err.code || err.message}). La racine embarquee (scripts/schema-prod.mjs, SUPABASE_ROOT_CA) ne signe plus le pooler : comparer avec le certificat actuel de la documentation Supabase. Aucune connexion non verifiee n'est tentee.`);
 }
 
 async function connecter(url) {
   const { default: pg } = await import('pg');
   const client = new pg.Client(optionsClient(url));
-  try {
-    await client.connect();
-  } catch (err) {
-    throw expliquerErreurTls(err);
-  }
+  await client.connect().catch((err) => { throw expliquerErreurTls(err); });
   // Lecture seule, posee par la session elle-meme : un ordre d'ecriture echouerait.
   await client.query('set session characteristics as transaction read only');
   return client;
@@ -102,15 +93,9 @@ async function connecter(url) {
 /** pg_dump du conteneur local ; l'URL passe par l'environnement, jamais en argument (mot de passe). */
 export function pgDump(conteneur, urlDansConteneur) {
   const variable = 'COSMO_URL_DUMP';
-  const r = spawnSync('docker', [
-    'exec', '-e', variable, conteneur, 'sh', '-c',
-    `pg_dump "$${variable}" --schema-only --schema=public --no-owner --no-tablespaces`,
-  ], { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024, env: { ...process.env, [variable]: urlDansConteneur } });
+  const r = spawnSync('docker', ['exec', '-e', variable, conteneur, 'sh', '-c', `pg_dump "$${variable}" --schema-only --schema=public --no-owner --no-tablespaces`], { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024, env: { ...process.env, [variable]: urlDansConteneur } });
   if (r.error) throw new Error(`docker : ${r.error.message}`);
-  if (r.status !== 0) {
-    const fin = masquer(String(r.stderr || '').trim().split('\n').slice(-8).join('\n'));
-    throw new Error(`pg_dump a rendu ${r.status}\n${fin}`);
-  }
+  if (r.status !== 0) throw new Error(`pg_dump a rendu ${r.status}\n${masquer(String(r.stderr || '').trim().split('\n').slice(-8).join('\n'))}`);
   return r.stdout;
 }
 
@@ -267,7 +252,8 @@ export async function main(argv = process.argv.slice(2), env = process.env) {
       if ((intro.ledger ?? []).length === 0) throw new Error('ledger de production vide : lecture suspecte, aucune conclusion.');
       const attente = enAttente(lireMigrations(join(racine, DOSSIER_MIGRATIONS)), intro);
       const liste = attente.map((f) => `  · ${f}`).join('\n') || '  (aucune)';
-      writeFileSync(fichierEnAttente(env), JSON.stringify(attente));
+      mkdirSync(dirname(fichierEnAttente(env)), { recursive: true });
+      writeFileSync(fichierEnAttente(env), JSON.stringify(attente), { mode: 0o600 });
       console.log(`Migrations du depot pas encore en production : ${attente.length}\n${liste}`);
       const puces = attente.map((f) => `- \`${f}\``).join('\n') || '- aucune';
       resumer(`### Migrations en attente de production (${attente.length})\n\n${puces}\n`);

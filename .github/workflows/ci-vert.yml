@@ -73,9 +73,10 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Job a part : il LIT la prod (secret) et ne publie rien ; le job `tag`
-  # publie (tag, menage) et ne voit aucun secret.
-  migrations:
+  # SANS secret : seul job qui touche au SHA du run. Il en extrait les fichiers
+  # `supabase/migration/` (donnees inertes, jamais executees) et les passe en
+  # artefact ; le job `migrations`, qui lit la prod, n'a plus aucun acces au SHA.
+  depot:
     if: >-
       github.event.workflow_run.event == 'push' &&
       github.event.workflow_run.head_repository.full_name == github.repository &&
@@ -86,6 +87,44 @@ jobs:
         with:
           fetch-depth: 0
           filter: blob:none
+          persist-credentials: false
+
+      - name: Extraire les migrations du SHA (lecture seule, aucun secret)
+        env:
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          if ! [[ "$SHA" =~ ^[0-9a-f]{40}$ ]]; then echo "::error title=CI vert::SHA illisible : '$SHA'"; exit 1; fi
+          DEPOT="$RUNNER_TEMP/depot"; mkdir -p "$DEPOT"
+          git fetch --quiet --no-tags --filter=blob:none origin "$SHA" || { echo "::error title=CI vert::commit $SHA introuvable : migrations non lues."; exit 1; }
+          git archive "$SHA" supabase/migration | tar -x -C "$DEPOT" || { echo "::error title=CI vert::migrations de $SHA illisibles."; exit 1; }
+          test -n "$(ls "$DEPOT/supabase/migration")" || { echo "::error title=CI vert::aucune migration dans $SHA."; exit 1; }
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: migrations-depot
+          path: ${{ runner.temp }}/depot/supabase/migration
+          if-no-files-found: error
+          retention-days: 1
+
+  # Job a part : il LIT la prod (secret) et ne publie rien ; le job `tag`
+  # publie (tag, menage) et ne voit aucun secret.
+  migrations:
+    needs: depot
+    if: >-
+      !cancelled() &&
+      needs.depot.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          filter: blob:none
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: migrations-depot
+          path: ${{ runner.temp }}/depot/supabase/migration
 
       - name: Installer psql 17
         run: |
@@ -98,13 +137,11 @@ jobs:
 
       - name: Porte · toutes les migrations du depot sont en production
         env:
-          SHA: ${{ github.event.workflow_run.head_sha }}
           DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
           set -euo pipefail
-          if ! [[ "$SHA" =~ ^[0-9a-f]{40}$ ]]; then echo "::error title=CI vert::SHA illisible : '$SHA'"; exit 1; fi
-          # Porte des migrations : fichiers de CE SHA (le checkout est celui
-          # de `main`), ledger de la production.
+          # Porte des migrations : fichiers de CE SHA (artefact du job `depot`,
+          # le checkout est celui de `main`), ledger de la production.
           REFUS() {
             echo "::error title=CI vert::$1"
             {
@@ -115,9 +152,8 @@ jobs:
             exit 1
           }
           [ -n "${DB_URL:-}" ] || REFUS "SUPABASE_DB_URL absent : migrations non verifiees, aucun tag."
-          DEPOT="$RUNNER_TEMP/depot"; mkdir -p "$DEPOT"
-          git fetch --quiet --no-tags --filter=blob:none origin "$SHA" || REFUS "commit $SHA introuvable : migrations non lues."
-          git archive "$SHA" supabase/migration | tar -x -C "$DEPOT" || REFUS "migrations de $SHA illisibles."
+          DEPOT="$RUNNER_TEMP/depot"
+          test -n "$(ls "$DEPOT/supabase/migration" 2>/dev/null)" || REFUS "migrations du SHA illisibles : artefact vide."
           node scripts/check-migration-coverage.mjs --print-sql > "$RUNNER_TEMP/introspection.sql"
           psql "$DB_URL" -A -t -f "$RUNNER_TEMP/introspection.sql" > "$RUNNER_TEMP/introspection.json" || REFUS "ledger de production illisible."
           test -s "$RUNNER_TEMP/introspection.json" || REFUS "ledger de production vide."
@@ -130,10 +166,11 @@ jobs:
 
   tag:
     # Echec FERME : un refus de `migrations` (failure) ne laisse PAS passer ;
-    # seul son saut (conclusion non verte) laisse le rouge de main se publier.
-    needs: migrations
+    # (idem `depot`, dont un echec saute `migrations`) ; seul son saut (conclusion non verte) laisse le rouge de main se publier.
+    needs: [depot, migrations]
     if: >-
       !cancelled() &&
+      (needs.depot.result == 'success' || needs.depot.result == 'skipped') &&
       (needs.migrations.result == 'success' || needs.migrations.result == 'skipped') &&
       github.event.workflow_run.event == 'push' &&
       github.event.workflow_run.head_repository.full_name == github.repository &&
