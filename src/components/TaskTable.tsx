@@ -12,6 +12,7 @@ import TaskTableDesktop from './task-table/TaskTableDesktop';
 import ConfirmDeleteSheet from './task-table/ConfirmDeleteSheet';
 import TaskListPlaceholders from './task-table/TaskListPlaceholders';
 import { useTaskSelection } from './task-table/useTaskSelection';
+import { useTaskDeletion } from './task-table/useTaskDeletion';
 import TaskQuickFilters from './task-table/TaskQuickFilters';
 import { useQuickFilter } from './task-table/quick-filter.store';
 import OverdueBanner from './task-table/OverdueBanner';
@@ -24,9 +25,7 @@ import TeamTaskModal from './organization/TeamTaskModal';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 
 // Module tasks - Hooks indépendants
-import { showUndoToast } from '@/lib/undo-toast';
 import { toast } from '@/lib/toast';
-import { useQueryClient } from '@tanstack/react-query';
 import {
   useTasks,
   useDeleteTask,
@@ -36,7 +35,6 @@ import {
   useToggleTaskComplete,
   useToggleTaskBookmark,
   useKnownTask,
-  taskKeys,
   Task,
   type TaskQuery,
 } from '@/modules/tasks';
@@ -125,7 +123,6 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const navigate = useNavigate();
   const { user } = useAuth();
   const isDemo = useIsDemo();
-  const queryClient = useQueryClient();
   const { data: friends = [] } = useFriends();
   const collaboratorsByTask = useCollaboratorsByTask(user?.id);
   const pendingCollaboratorTaskIds = usePendingCollaboratorTaskIds(user?.id);
@@ -155,7 +152,6 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const [selectedTaskForCollaborators, setSelectedTaskForCollaborators] = useState<string | null>(null);
   const [addToListTask, setAddToListTask] = useState<string | null>(null);
   const [taskToEventModal, setTaskToEventModal] = useState<Task | null>(null);
-  const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
   const [showCreateFromEmpty, setShowCreateFromEmpty] = useState(false);
 
   const { data: allLists = [] } = useLists();
@@ -200,10 +196,14 @@ const TaskTable: React.FC<TaskTableProps> = ({
   });
   const bulkListModalMounted = useLazyMount(showBulkListModal);
 
+  const { taskToDelete, setTaskToDelete, confirmDelete, handleDeleteRequest } = useTaskDeletion({
+    tasks, isDemo, userId: user?.id, deleteMutation, restoreMutation, unshareTaskMutation,
+  });
+
   // Les deux feuilles de confirmation ci-dessous affichaient une poignee de
   // glissement qui ne declenchait rien. Un helper
   // par feuille : `useBottomSheet` ne sait fermer qu'une seule surface.
-  const deleteSheet = useBottomSheet(useCallback(() => setTaskToDelete(null), []));
+  const deleteSheet = useBottomSheet(useCallback(() => setTaskToDelete(null), [setTaskToDelete]));
   const bulkDeleteSheet = useBottomSheet(useCallback(() => setShowBulkDeleteConfirm(false), [setShowBulkDeleteConfirm]));
   // Filtre rapide : store externe, et non `useState` local. La barre de
   // recherche mobile (`MobileTaskSearch`, ancree hors de cet arbre) le pilote
@@ -286,66 +286,6 @@ const TaskTable: React.FC<TaskTableProps> = ({
     // au lieu d'un second popup dédié — une seule UI de partage.
     setSelectedTaskForCollaborators(taskId);
   }, [isPremium, navigate]);
-
-  const deleteTaskById = (taskId: string) => {
-    // Snapshot la tâche AVANT suppression pour permettre l'undo
-    const taskSnapshot = tasks.find(t => t.id === taskId);
-
-    // Tâche collaborative REÇUE (prod) : on n'en est pas propriétaire, la RLS
-    // bloque le DELETE (qui échouait en silence → la tâche réapparaissait). On
-    // retire plutôt notre accès (quitter la tâche) en supprimant la grant.
-    const isReceivedProd =
-      !isDemo && !!taskSnapshot?.userId && !!user?.id && taskSnapshot.userId !== user.id;
-    if (isReceivedProd && user?.id) {
-      unshareTaskMutation.mutate(
-        { taskId, friendId: user.id },
-        {
-          onSuccess: () => {
-            setTaskToDelete(null);
-            queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
-            toast.success(t('toast.leftShared'));
-          },
-          onError: (err) => console.error('Leave shared task failed', err),
-        }
-      );
-      return;
-    }
-
-    deleteMutation.mutate(taskId, {
-      onSuccess: () => {
-        setTaskToDelete(null);
-        if (taskSnapshot) {
-          showUndoToast(t('toast.deleted'), () => {
-            restoreMutation.mutate(taskSnapshot);
-          });
-        }
-      },
-      onError: (err) => console.error('Delete failed', err),
-    });
-  };
-
-  const confirmDelete = () => {
-    if (taskToDelete) deleteTaskById(taskToDelete);
-  };
-
-  // Tâche perso : suppression directe, réversible via le toast « Annuler ».
-  // La popup de confirmation n'est gardée que pour les tâches collaboratives
-  // ou reçues (impact sur d'autres personnes, partages non restaurés).
-  const handleDeleteRequest = useCallback((taskId: string) => {
-    const task = tasks.find(t => t.id === taskId);
-    const isReceivedProd =
-      !isDemo && !!task?.userId && !!user?.id && task.userId !== user.id;
-    if (task?.isCollaborative || isReceivedProd) {
-      setTaskToDelete(taskId);
-    } else {
-      deleteTaskById(taskId);
-    }
-    /* eslint-disable-next-line react-hooks/exhaustive-deps --
-    `deleteTaskById` est redefini a chaque rendu ; le mettre en dependance
-       annulerait la memoisation que ce `useCallback` existe pour obtenir. Les
-       trois valeurs LUES pour decider (`tasks`, `isDemo`, `user?.id`) y sont,
-       donc la confirmation ne peut pas se decider sur une donnee perimee. */
-  }, [tasks, isDemo, user?.id]);
 
   const handleSelectTask = useCallback((id: string) => {
     setSelectedTaskForCollaborators(null);
