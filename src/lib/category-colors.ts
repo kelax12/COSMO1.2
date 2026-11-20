@@ -93,7 +93,10 @@ export const textOnCategoryColor = (color: string | null | undefined): string =>
  * hex non lisible (`rgb(var(...))`), est rendue telle quelle. Ne sert qu'à
  * l'AFFICHAGE : la couleur stockée de l'événement reste celle de la catégorie.
  */
-export const darkenForWhiteText = (color: string): string => {
+export function darkenForWhiteText(color: string): string;
+export function darkenForWhiteText(color: string | undefined): string | undefined;
+export function darkenForWhiteText(color: string | undefined): string | undefined {
+  if (color === undefined) return undefined;
   const m = /^#([0-9a-f]{6})$/i.exec(color.trim());
   if (!m) return color;
   const n = parseInt(m[1], 16);
@@ -110,4 +113,4 @@ export const darkenForWhiteText = (color: string): string => {
     else hi = mid;
   }
   return hex(lo);
-};
+}
