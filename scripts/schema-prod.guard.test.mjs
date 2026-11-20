@@ -88,7 +88,6 @@ describe('schema-prod : comparaison objet par objet', () => {
   });
 });
 
-
 describe('schema-prod : vérification TLS de la production', () => {
   it('TÉMOIN : la racine embarquée est un vrai certificat Supabase, autosigné, non expiré', () => {
     const c = new X509Certificate(SUPABASE_ROOT_CA);

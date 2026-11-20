@@ -113,6 +113,7 @@ export const ARTEFACTS = {
     raison:
       'schema, inventaire des fonctions et types regeneres depuis une base vierge de la stack Supabase locale du runner (`supabase start`, migrations du depot rejouees, aucun secret du depot lu) : structure seule, aucune donnee, rien de la production',
   },
+  'ci-vert.yml › migrations-depot': { nature: 'sans-prod', raison: "fichiers `supabase/migration/*.sql` du SHA juge, deja publics dans le depot, extraits par le job `depot` sans aucun secret (CodeQL 37) ; aucune ligne de table, rien de la production (decision d'Axel, 2026-11-20)" },
   'ci.yml › lighthouse': {
     nature: 'sans-prod',
     raison: 'Lighthouse sur le build servi en local : pages publiques prérendues, aucune session',
