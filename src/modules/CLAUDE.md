@@ -31,7 +31,11 @@ src/modules/{module}/
 
 - ✅ Facette (`governance`, `roles`, `execution`) : même forme préfixée (`governance.local.repository.ts`). Un seul backend : `supabase.repository.ts` seul (`admin`).
 - ✅ Instanciation **uniquement** par `defineRepository(démo, production)` (`src/lib/define-repository.ts`), côté démo toujours `lazy` depuis `src/lib/demo-repositories.ts`. ❌ Import statique d'un `local.repository` / `local.seed` hors fichiers démo et tests.
-- ✅ Hors forme (dépôts-fonctions à deux modes) : `follows`, `messages`, `audience`, `inbox`, `notifications`, `member-activity`, `share-link`, `profile`, `billing`.
+- ✅ Hors forme, motif écrit (aucun n'est un dépôt à deux modes : `follows` et `messages` y sont revenus, `team-projects/follows|messages.*repository.ts`) :
+  - Supabase seul, pas de démo voulue : `share-link` (`friends/`, un lien suppose un second compte), `profile` (`user/profile.repository.ts`, vitrine auprès d'autres comptes), `member-activity` (`organizations/`, une RPC de lecture), `billing` (Stripe, premium perso coupé, démo sans objet).
+  - Morceau de `supabase.repository.ts` extrait pour tenir 600 lignes : `audience` (`team-projects/`, équipes associées et purge d'un projet).
+  - Démo tenue par les hooks : `notifications` (`organizations/`, lit `localStorage` dans `notifications.ts`, deux fonctions de marquage « lu »).
+  - Pas un dépôt : `inbox` (`organizations/inbox.repository.ts`, mapping de la RPC `get_my_org_inbox`).
 - 🔴 Un baril importé pour un TYPE s'importe en `import type` (`npm run check:cycles`, C-103).
 - ✅ Import par zone : Tâches `tasks` `categories` `lists` · Agenda `events` `tasks` · Habitudes `habits` `categories` · OKR `okrs` `kr-completions` · Amis `friends` · Entreprise `organizations` `org-teams` `org-config` `org-reports` `team-projects` `team-okrs` `team-categories` `team-lists` · UI `ui-states` · Dashboard `tasks` `habits` `events` `kr-completions` `okrs` `auth`.
 

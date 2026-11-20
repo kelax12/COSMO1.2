@@ -6,7 +6,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/lib/toast';
 import { translator } from '@/i18n/useT';
 import { teamProjectKeys } from './constants';
-import { getMyFollows, setFollow, type FollowTarget, type MyFollows } from './follows.repository';
+import { getProjectFollowsRepository } from '@/lib/repository.factory';
+import type { FollowTarget, MyFollows } from './follows.repository';
 
 export type { FollowTarget, MyFollows };
 
@@ -15,7 +16,7 @@ const followsKey = (orgId: string) => [...teamProjectKeys.all, 'follows', orgId]
 export const useMyFollows = (orgId: string | undefined) =>
   useQuery({
     queryKey: followsKey(orgId ?? ''),
-    queryFn: () => getMyFollows(orgId as string),
+    queryFn: () => getProjectFollowsRepository().getMyFollows(orgId as string),
     enabled: !!orgId,
     staleTime: 1000 * 60 * 5,
   });
@@ -25,7 +26,7 @@ export const useToggleFollow = (orgId: string) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ target, id, follow }: { target: FollowTarget; id: string; follow: boolean }) =>
-      setFollow(orgId, target, id, follow),
+      getProjectFollowsRepository().setFollow(orgId, target, id, follow),
     onMutate: async ({ target, id, follow }) => {
       await queryClient.cancelQueries({ queryKey: followsKey(orgId) });
       const previous = queryClient.getQueryData<MyFollows>(followsKey(orgId));

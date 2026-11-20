@@ -49,6 +49,8 @@ import { SupabaseStatsRepository } from '@/modules/stats/supabase.repository';
 import type { IOrgGovernanceRepository } from '@/modules/organizations/governance.repository';
 import type { IOrgRolesRepository } from '@/modules/organizations/roles.repository';
 import type { IOkrExecutionRepository } from '@/modules/team-okrs/execution.repository';
+import type { IProjectFollowsRepository } from '@/modules/team-projects/follows.repository';
+import type { IProjectMessagesRepository } from '@/modules/team-projects/messages.repository';
 
 /** Chargement du module des dépôts de démonstration (un seul chunk, hors entrée). */
 const demoModule = () => import('./demo-repositories');
@@ -175,6 +177,22 @@ export const getOrgRolesRepository = defineRepository<IOrgRolesRepository>(
 export const getOkrExecutionRepository = defineRepository<IOkrExecutionRepository>(
   lazy(() => demoModule().then((m) => m.createDemoOkrExecutionRepository())),
   lazy(() => import('@/modules/team-okrs/execution.supabase.repository').then((m) => new m.SupabaseOkrExecutionRepository())),
+);
+
+/** Suivre une tâche ou un projet d'entreprise (mig. 162). */
+export const getProjectFollowsRepository = defineRepository<IProjectFollowsRepository>(
+  lazy(() => demoModule().then((m) => m.createDemoProjectFollowsRepository())),
+  lazy(() =>
+    import('@/modules/team-projects/follows.supabase.repository').then((m) => new m.SupabaseProjectFollowsRepository()),
+  ),
+);
+
+/** Chat d'un projet d'entreprise (mig. 220). */
+export const getProjectMessagesRepository = defineRepository<IProjectMessagesRepository>(
+  lazy(() => demoModule().then((m) => m.createDemoProjectMessagesRepository())),
+  lazy(() =>
+    import('@/modules/team-projects/messages.supabase.repository').then((m) => new m.SupabaseProjectMessagesRepository()),
+  ),
 );
 
 // ═══════════════════════════════════════════════════════════════════

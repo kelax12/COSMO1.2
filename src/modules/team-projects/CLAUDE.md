@@ -15,8 +15,8 @@ La classe `SupabaseTeamProjectsRepository` délègue en une ligne par méthode (
 | Historique d'une tâche | `supabase.activity.ts` | `local.activity.ts` | 094 |
 | Sous-tâches | `supabase.repository.ts` | `local.subtasks.ts` | 092 |
 | Statut propre au projet, automatisations | triggers en base | `local.task-rules.ts` | 197, 198 |
-| Suivre une tâche ou un projet | `follows.repository.ts` | idem | 162 |
-| Chat d'un projet | `messages.repository.ts` | idem | 220 |
+| Suivre une tâche ou un projet | `follows.supabase.repository.ts` | `follows.local.repository.ts` (interface `follows.repository.ts`) | 162 |
+| Chat d'un projet | `messages.supabase.repository.ts` | `messages.local.repository.ts` (interface `messages.repository.ts`) | 220 |
 | Seeds démo (« Nova Studio ») | | `local.seed.ts` | |
 
 ## Règles

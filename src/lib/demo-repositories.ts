@@ -28,8 +28,12 @@ import { LocalStorageOKRsRepository } from '@/modules/okrs/local.repository';
 import { LocalStorageKRCompletionsRepository } from '@/modules/kr-completions/local.repository';
 import { LocalStorageTeamCategoriesRepository } from '@/modules/team-categories/local.repository';
 import { LocalStorageTeamListsRepository } from '@/modules/team-lists/local.repository';
+import { LocalStorageProjectFollowsRepository } from '@/modules/team-projects/follows.local.repository';
+import { LocalStorageProjectMessagesRepository } from '@/modules/team-projects/messages.local.repository';
 import { LocalStatsRepository } from '@/modules/stats/local.repository';
 
+import type { IProjectFollowsRepository } from '@/modules/team-projects/follows.repository';
+import type { IProjectMessagesRepository } from '@/modules/team-projects/messages.repository';
 import type { IOrgGovernanceRepository } from '@/modules/organizations/governance.repository';
 import type { IOrgRolesRepository } from '@/modules/organizations/roles.repository';
 import type { IOkrExecutionRepository } from '@/modules/team-okrs/execution.repository';
@@ -72,6 +76,11 @@ export const createDemoOrgGovernanceRepository = (): IOrgGovernanceRepository =>
 export const createDemoOrgRolesRepository = (): IOrgRolesRepository => new LocalStorageOrgRolesRepository();
 export const createDemoOkrExecutionRepository = (): IOkrExecutionRepository =>
   new LocalStorageOkrExecutionRepository();
+
+export const createDemoProjectFollowsRepository = (): IProjectFollowsRepository =>
+  new LocalStorageProjectFollowsRepository();
+export const createDemoProjectMessagesRepository = (): IProjectMessagesRepository =>
+  new LocalStorageProjectMessagesRepository();
 
 /** Les cinq sources du temps investi, injectées par le factory (pas d'import circulaire). */
 export interface DemoStatsSources {

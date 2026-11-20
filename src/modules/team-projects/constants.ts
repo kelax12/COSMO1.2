@@ -48,5 +48,7 @@ export const teamProjectKeys = {
     [...teamProjectKeys.all, 'org-activity', orgId, since] as const,
 };
 
-/** Identifiant de l'utilisateur démo, partagé par la démo et les dépôts-fonctions (`messages`). */
+/** Identifiant de l'utilisateur démo, partagé par la démo et le chat de projet. */
 export const DEMO_USER_ID = 'demo-user';
+
+export const PROJECT_MESSAGE_MAX = 2000;
