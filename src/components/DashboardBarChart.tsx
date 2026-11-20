@@ -18,7 +18,6 @@ import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import { type ViewMode } from '@/lib/view-mode';
 import { useDocumentTheme } from '@/hooks/useDocumentTheme';
-import { moduleColorsFor } from '@/lib/module-colors';
 
 interface DashboardBarChartProps {
   viewMode: ViewMode;
@@ -30,6 +29,13 @@ interface DashboardBarChartProps {
  * changement de langue ne l'atteignait jamais. Ils sont reconstruits au rendu
  * par `useChartConfig`.
  */
+const SERIES_COLORS = {
+  tasks:  '#3b82f6',
+  events: '#ef4444',
+  okrs:   '#22c55e',
+  habits: '#eab308',
+} as const;
+
 /** Thème Noir : la palette monochrome de COSMO Analytics. */
 const SERIES_COLORS_NOIR = {
   tasks:  '#ededed',
@@ -59,8 +65,7 @@ interface ChartPoint {
 
 const DashboardBarChart: React.FC<DashboardBarChartProps> = ({ viewMode }) => {
   const { t } = useT('dashboard');
-  const theme = useDocumentTheme();
-  const colors = theme === 'noir' ? SERIES_COLORS_NOIR : moduleColorsFor(theme);
+  const colors = useDocumentTheme() === 'noir' ? SERIES_COLORS_NOIR : SERIES_COLORS;
   // Config shadcn reconstruite à chaque changement de langue — c'est elle qui
   // porte les libellés de la légende et de l'infobulle.
   const chartConfig = useMemo(

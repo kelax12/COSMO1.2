@@ -245,12 +245,6 @@
     /* Cible tactile minimale (WCAG 2.5.5) */
     --touch-min: 2.75rem;   /* 44px */
 
-    /* Couleur d'identité de chaque module (miroir de MODULE_COLORS, src/lib/module-colors.ts) */
-    --module-tasks: #3b82f6;
-    --module-events: #ef4444;
-    --module-okrs: #22c55e;
-    --module-habits: #eab308;
-
     /* shadcn/ui sidebar variables - Light mode */
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 215 16% 47%;
@@ -400,102 +394,83 @@
     --color-warning: 251 191 36;
     --color-error: 239 68 68;
     --color-danger-text: 255 138 128; /* AM-5 (2026-10-22) : #f47067 rendait 4,29:1 sur le bandeau teinté de rouge ; 5,36:1 désormais, 5,76:1 sur une surface. Avant : #f47067 (maquette 146), 5,1:1 sur le fond, 4,6:1 sur une surface. `--color-error` (239 68 68) mesurait 3,9:1 en 11 px sur /tasks le 2026-10-10 */
-    /* Charte V4 (2026-11-20) : anthracite entre l'ancien Gris (#24292e) et
-       le Noir (#0a0a0a), quasi neutre, bordures adoucies, rayons serrés. */
+    /* Charte V4 (2026-11-20) : fonds seuls, anthracite entre l'ancien Gris
+       (#24292e) et le Noir (#0a0a0a). Textes, bordures et accents inchangés. */
     --color-surface: 34 36 40;         /* #222428 card/surface */
     --color-background: 22 23 25;      /* #161719 canvas */
 
     /* Semantic colors */
-    --color-text-primary: 230 231 233;   /* #e6e7e9 */
-    --color-text-secondary: 171 175 182; /* #abafb6 */
-    --color-text-muted: 139 144 151;     /* #8b9097 : 5,3:1 sur surface, 5,8:1 sur fond */
-    --color-border: 42 44 48;            /* #2a2c30 */
-    --color-border-muted: 34 36 39;      /* #222427 */
-    --color-border-strong: 54 57 62;     /* #36393e — survol */
+    --color-text-primary: 250 251 252;   /* #fafbfc */
+    --color-text-secondary: 173 186 199; /* #adbac7 */
+    --color-text-muted: 143 153 164;     /* gris : 3.39 -> 4.55 sur surface, 3.79 -> 5.07 sur fond */
+    --color-border: 55 62 71;            /* #373e47 */
+    --color-border-muted: 47 53 59;      /* #2f353b */
+    --color-border-strong: 68 76 86;     /* #444c56 — survol */
     --color-hover: 40 42 46;             /* #282a2e, un cran au-dessus de la surface */
     --color-active: 42 44 48;            /* #2a2c30 */
     --color-chip-bg: 35 37 40;
-    --color-chip-border: 42 44 48;
+    --color-chip-border: 55 62 71;
 
     /* Navigation specific colors */
     --nav-bg: 18 19 21;                /* #121315, un cran sous le fond */
-    --nav-border: 34 36 39;
-    --nav-item-text: 139 144 151;      /* = --color-text-muted, 6,1:1 sur la barre latérale */
+    --nav-border: 55 62 71;
+    --nav-item-text: 143 153 164;      /* AM-5 : #768390 rendait 3,78:1 sur la barre latérale ; aligné sur --color-text-muted, 5,07:1 */
     --nav-item-hover-bg: 30 32 35;
-    --nav-item-hover-text: 171 175 182;
+    --nav-item-hover-text: 173 186 199;
     --nav-item-active-bg: 47 117 213; /* #2f75d5 = --color-accent-solid. AM-5 : #388bfd laissait le blanc à 3,34:1 sur l'entrée active, la valeur que C-25 avait corrigée sur le bouton et oubliée ici */
     --nav-item-active-text: 255 255 255;
 
     /* Calendar specific colors */
     --calendar-bg: 30 32 35;
-    --calendar-border: 42 44 48;
+    --calendar-border: 55 62 71;
     --calendar-header-bg: 22 23 25;
-    --calendar-header-text: 171 175 182;
+    --calendar-header-text: 173 186 199;
     --calendar-day-bg: 22 23 25;
     --calendar-day-hover: 35 37 40;
     --calendar-today-bg: 42 44 48;
 
     /* Table specific colors */
     --table-bg: 30 32 35;
-    --table-border: 42 44 48;
+    --table-border: 55 62 71;
     --table-header-bg: 22 23 25;
-    --table-header-text: 171 175 182;
+    --table-header-text: 173 186 199;
     --table-row-hover: 35 37 40;
     --table-row-even: 30 32 35;
     --table-row-odd: 22 23 25;
 
     /* shadcn/ui variables (HSL format) — Gris mode */
-    --radius: 0.5rem;            /* charte V4 : rayons serrés */
-
-    /* Couleurs de module adoucies (miroir de MODULE_COLORS_GRIS, src/lib/module-colors.ts) */
-    --module-tasks: #5b93f0;
-    --module-events: #e8615f;
-    --module-okrs: #3fbf75;
-    --module-habits: #e3b33d;
     --background: 220 6% 9%;     /* #161719 */
-    --foreground: 220 5% 91%;    /* #e6e7e9 */
+    --foreground: 210 17% 98%;   /* #fafbfc */
     --card: 220 8% 15%;          /* #222428 */
-    --card-foreground: 220 5% 91%;
+    --card-foreground: 210 17% 98%;
     --popover: 216 7% 15%;       /* #232528 */
-    --popover-foreground: 220 5% 91%;
-    --primary: 218 6% 69%;       /* #abafb6 */
-    --primary-foreground: 220 6% 9%;
+    --popover-foreground: 210 17% 98%;
+    --primary: 210 19% 73%;      /* #adbac7 */
+    --primary-foreground: 210 12% 16%;
     --secondary: 220 7% 18%;     /* #2a2c30 */
-    --secondary-foreground: 220 5% 91%;
+    --secondary-foreground: 210 17% 98%;
     --muted: 216 7% 15%;         /* #232528 */
-    --muted-foreground: 215 5% 57%; /* #8b9097 */
+    --muted-foreground: 210 10% 51%; /* #768390 */
     --accent: 212 100% 67%;      /* #58a6ff */
     --accent-foreground: 0 0% 100%;
     --accent-solid: 215 98% 61%; /* #388bfd — intensifié */
     --accent-solid-hover: 212 100% 67%; /* #58a6ff */
     --accent-solid-foreground: 0 0% 100%;
     --destructive: 0 63% 40%;
-    --destructive-foreground: 220 5% 91%;
-    --border: 220 7% 18%;        /* #2a2c30 */
-    --input: 220 7% 18%;
+    --destructive-foreground: 210 17% 98%;
+    --border: 214 13% 25%;       /* #373e47 */
+    --input: 214 13% 25%;
     --ring: 212 100% 67%;        /* #58a6ff */
 
     /* shadcn/ui sidebar variables — Gris mode */
     --sidebar-background: 220 8% 8%;  /* #121315 */
-    --sidebar-foreground: 215 5% 57%;
-    --sidebar-primary: 220 5% 91%;
-    --sidebar-primary-foreground: 220 6% 9%;
+    --sidebar-foreground: 210 10% 51%;
+    --sidebar-primary: 210 17% 98%;
+    --sidebar-primary-foreground: 210 12% 16%;
     --sidebar-accent: 216 8% 13%;
-    --sidebar-accent-foreground: 220 5% 91%;
-    --sidebar-border: 216 7% 15%;
+    --sidebar-accent-foreground: 210 17% 98%;
+    --sidebar-border: 214 13% 25%;
     --sidebar-ring: 212 100% 67%;
-  }
-
-  /* Charte V4, style du thème Gris : chiffres à chasse fixe (alignement des
-     compteurs, heures, pourcentages) et filet de lumière de 1 px en haut des
-     surfaces et des boutons pleins, pour le relief sans ombre ni lueur. */
-  .gris body { font-variant-numeric: tabular-nums; }
-  .gris .bg-\[rgb\(var\(--color-surface\)\)\],
-  .gris .bg-card {
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
-  }
-  .gris .bg-\[rgb\(var\(--color-accent-solid\)\)\] {
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.16);
   }
 
   /* ── Noir (vrai noir / OLED) — 4e thème. Depuis le 2026-11-01, palette de

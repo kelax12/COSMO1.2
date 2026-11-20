@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import type { Theme } from '@/lib/theme';
-import { moduleColorsFor, type ModuleColors } from '@/lib/module-colors';
 
 /** Thème posé sur `<html>` par `applyTheme` (classes `dark`, `gris`, `noir`). */
 export function readDocumentTheme(root?: HTMLElement): Theme {
@@ -30,9 +29,4 @@ export function useDocumentTheme(): Theme {
     return () => observer.disconnect();
   }, []);
   return theme;
-}
-
-/** Couleurs de module du thème affiché (adoucies en Gris, cf. module-colors). */
-export function useModuleColors(): ModuleColors {
-  return moduleColorsFor(useDocumentTheme());
 }
