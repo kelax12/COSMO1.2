@@ -12,6 +12,7 @@ const h = vi.hoisted(() => ({
   stats: { data: undefined, isLoading: false, error: null } as { data?: unknown; isLoading: boolean; error: unknown },
   support: { data: null as unknown },
   funnel: { data: null as unknown },
+  usage: { data: null as unknown },
 }));
 
 vi.mock('@/modules/auth/AuthContext', () => ({ useAuth: () => ({ isDemo: h.isDemo }) }));
@@ -21,6 +22,7 @@ vi.mock('@/modules/admin', async (importOriginal) => ({
   useAdminStats: () => h.stats,
   useSupportStats: () => h.support,
   useOnboardingFunnel: () => h.funnel,
+  useUsageByFeature: () => h.usage,
 }));
 vi.mock('./admin/AdminCharts', () => {
   const stub = (name: string) => () => <div data-testid={`chart-${name}`} />;
@@ -78,6 +80,7 @@ beforeEach(() => {
   h.stats = { data: STATS, isLoading: false, error: null };
   h.support = { data: null };
   h.funnel = { data: null };
+  h.usage = { data: null };
   window.scrollTo = vi.fn() as never;
 });
 
@@ -135,5 +138,26 @@ describe('AdminPage', () => {
     };
     renderPage();
     expect((await screen.findAllByTestId('chart-count')).length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('usage par fonctionnalite : tableau, valeurs masquees en point, ou mesure non installee', async () => {
+    h.usage = {
+      data: {
+        minUsers: 3,
+        features: [
+          { feature: 'tasks', active7d: 5, active30d: 8, actions30d: 40 },
+          { feature: 'friends', active7d: null, active30d: null, actions30d: null },
+        ],
+      },
+    };
+    const { unmount } = renderPage();
+    const rows = (await screen.findByTestId('admin-usage-table')).querySelectorAll('tbody tr');
+    expect(rows.length).toBe(2);
+    expect(rows[0].textContent).toContain('40');
+    expect(rows[1].textContent).toContain('·');
+    unmount();
+    h.usage = { data: null };
+    renderPage();
+    expect(await screen.findByText(lazyT('admin').t('featureUsageNotInstalled'))).toBeTruthy();
   });
 });

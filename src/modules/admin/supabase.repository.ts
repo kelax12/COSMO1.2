@@ -11,6 +11,7 @@ import type {
   AdminSupport,
   DailyPoint,
   AdminOnboardingFunnel,
+  AdminUsageByFeature,
 } from './types';
 
 /** Signal de routing (compte non admin) — jamais toasté ni affiché. */
@@ -314,5 +315,39 @@ export async function fetchOnboardingFunnel(): Promise<AdminOnboardingFunnel | n
       withProject: o.with_project ?? 0,
       withOkr: o.with_okr ?? 0,
     },
+  };
+}
+
+interface RawUsageByFeature {
+  min_users?: number;
+  features?: Array<{
+    feature?: string;
+    active_7d?: number | null;
+    active_30d?: number | null;
+    actions_30d?: number | null;
+  }>;
+}
+
+/**
+ * Usage par fonctionnalité (mig. 266). Même contrat que `fetchOnboardingFunnel` :
+ * `null` SEULEMENT quand la fonction n'existe pas encore (migration non
+ * appliquée), jamais des zéros qui se liraient « personne ne s'en sert ».
+ */
+export async function fetchUsageByFeature(): Promise<AdminUsageByFeature | null> {
+  const { data, error } = await supabase.rpc('get_admin_usage_by_feature');
+  if (error) {
+    if (error.code === '42501') throw new AdminForbiddenError();
+    if (error.code === '42883' || error.code === 'PGRST202') return null;
+    throw normalizeApiError(error);
+  }
+  const raw = (data ?? {}) as RawUsageByFeature;
+  return {
+    minUsers: raw.min_users ?? 3,
+    features: (raw.features ?? []).map((f) => ({
+      feature: f.feature ?? '',
+      active7d: f.active_7d ?? null,
+      active30d: f.active_30d ?? null,
+      actions30d: f.actions_30d ?? null,
+    })),
   };
 }
