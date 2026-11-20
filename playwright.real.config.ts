@@ -3,7 +3,7 @@ import { defineConfig, devices } from '@playwright/test';
 /**
  * Playwright, parcours contre une VRAIE base Supabase locale (TST-03).
  *
- * Ce fichier n'est lu que par `.github/workflows/e2e-supabase.yml`, qui monte
+ * Ce fichier n'est lu que par le job `e2e-supabase` de `.github/workflows/ci-noyau.yml`, qui monte
  * la pile (`supabase start`), rejoue les migrations, construit l'app avec
  * `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` de cette pile, puis lance :
  *

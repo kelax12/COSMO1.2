@@ -202,20 +202,18 @@ describe('porte · vercel.json', () => {
 describe('porte · ci-vert.yml', () => {
   const wf = lire('.github/workflows/ci-vert.yml')
 
-  it('part apres CHAQUE CI noyau et chaque e2e-supabase termines, sur main et noyau/**', () => {
+  it('part apres CHAQUE CI noyau termine, sur main et noyau/**', () => {
     expect(wf).toMatch(/^name: CI vert$/m)
-    expect(wf).toMatch(/^ {4}workflows: \[CI noyau, e2e-supabase\]$/m)
+    expect(wf).toMatch(/^ {4}workflows: \[CI noyau\]$/m)
     expect(wf).toMatch(/^ {4}types: \[completed\]$/m)
     expect(wf).toMatch(/^ {4}branches: \[main, 'noyau\/\*\*'\]$/m)
   })
 
-  // TST-03 : l'E2E reel contre Supabase local conditionne le vert, sans entrer dans le noyau.
-  it('TEMOIN : le vert exige CI noyau ET e2e-supabase sur le meme SHA', () => {
-    expect(wf).toContain('for W in ci-noyau.yml e2e-supabase.yml')
-    expect(wf).toMatch(/pending\) echo .*exit 0/)
-    expect(wf).toMatch(/failure\) CONCLUSION=failure/)
-    expect(wf).toMatch(/^ {6}actions: read$/m)
-    expect(lire('.github/workflows/e2e-supabase.yml')).toMatch(/branches: \[main, 'noyau\/\*\*'\]/)
+  // TST-03 : l'E2E reel est un JOB du noyau (`e2e-supabase`) : aucun second workflow a attendre.
+  it('TEMOIN : le vert ne lit que CI noyau, qui porte l E2E reel', () => {
+    expect(wf).not.toContain('e2e-supabase')
+    expect(wf).not.toMatch(/^ {6}actions: read$/m)
+    expect(lire('.github/workflows/ci-noyau.yml')).toMatch(/^ {2}e2e-supabase:$/m)
   })
 
   it('pose ci-vert sur un succes, ci-rouge sur un echec de main SEULEMENT', () => {

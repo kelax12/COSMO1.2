@@ -31,7 +31,7 @@ export function assertLocalStack(): void {
   if (!SUPABASE_URL || !ANON_KEY || !SERVICE_KEY) {
     throw new Error(
       'e2e/real : SUPABASE_URL / SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY requis ' +
-        '(`supabase status -o env` sur la pile locale, cf. .github/workflows/e2e-supabase.yml).',
+        '(`supabase status -o env` sur la pile locale, cf. le job e2e-supabase de .github/workflows/ci-noyau.yml).',
     );
   }
   const host = new URL(SUPABASE_URL).hostname;

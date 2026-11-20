@@ -35,7 +35,7 @@ Règles transversales : [`CLAUDE.md`](../CLAUDE.md).
 
 ## `e2e/real/` : vraie base Supabase locale (TST-03)
 
-- ✅ Joué par `playwright.real.config.ts` et `e2e-supabase.yml`, jamais par `npm run test:e2e` (`chromium` et `mobile-safari` l'excluent par `testIgnore`). Sans Docker, la CI est le seul moyen. ❌ Les « essayer » contre un projet distant.
+- ✅ Joué par `playwright.real.config.ts` et le job `e2e-supabase` de `ci-noyau.yml` (bloquant), jamais par `npm run test:e2e` (`chromium` et `mobile-safari` l'excluent par `testIgnore`). Sans Docker, la CI est le seul moyen. ❌ Les « essayer » contre un projet distant.
 - ❌ Assouplir `helpers.ts` : il refuse tout hôte autre que `127.0.0.1` / `localhost`. Comptes `@example.com` créés par le test et supprimés en fin de cas, jamais un vrai compte.
 - ✅ Relire chaque écriture après `reload()` et par le client authentifié du compte (RLS exercée) : le cache React Query masque sinon l'absence de persistance.
 - 🔴 Un parcours rouge ici est un défaut de production jusqu'à preuve du contraire : `test.fixme` avec le bug décrit, ❌ jamais relâcher l'assertion. Détail : `docs/TESTING.md` § TST-03.

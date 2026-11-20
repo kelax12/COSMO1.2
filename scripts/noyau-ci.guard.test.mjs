@@ -12,9 +12,9 @@
 // Ce témoin refuse :
 //   · un noyau amputé d'une des gardes qui jugent le commit (lint, tsc,
 //     tests + couverture, i18n, fichiers sensibles, RLS d'intégration,
-//     build + budget de bundle) ;
-//   · une garde de calendrier, un job lent ou variable (e2e, Lighthouse,
-//     audit, mutation, visuel, sabotages) remis dans le noyau ;
+//     build + budget de bundle, parcours e2e sur vraie base locale) ;
+//   · une garde de calendrier, un job lent ou variable (e2e en mode démo,
+//     Lighthouse, audit, mutation, visuel, sabotages) remis dans le noyau ;
 //   · un job du noyau resté en double dans `ci.yml`.
 // ═══════════════════════════════════════════════════════════════════
 import { describe, it, expect } from 'vitest';
@@ -36,8 +36,8 @@ const jobsDe = (yaml) => {
 const commandes = (job) => lireEtapes(NOYAU, job).map((e) => e.run ?? '').join('\n');
 
 describe('ci-noyau.yml : la composition du noyau', () => {
-  it('cinq jobs parallèles, sans `needs:` (le verdict tombe au rythme du plus lent)', () => {
-    expect(jobsDe(NOYAU)).toEqual(['noyau', 'lint-test-build', 'fichiers-sensibles', 'rls-integration', 'contrat-donnees']);
+  it('six jobs parallèles, sans `needs:` (le verdict tombe au rythme du plus lent)', () => {
+    expect(jobsDe(NOYAU)).toEqual(['noyau', 'lint-test-build', 'fichiers-sensibles', 'rls-integration', 'contrat-donnees', 'e2e-supabase']);
     expect(NOYAU).not.toMatch(/^\s+needs:/m);
   });
 
@@ -52,6 +52,7 @@ describe('ci-noyau.yml : la composition du noyau', () => {
     ['fichiers-sensibles', ['node scripts/check-fichiers-sensibles.mjs --arbre --plage']],
     ['rls-integration', ['node scripts/apply-migrations.mjs', 'npm run test:rls']],
     ['contrat-donnees', ['node scripts/apply-migrations.mjs', 'node scripts/contrat-donnees.mjs --verifier --sortie']],
+    ['e2e-supabase', ['node scripts/apply-migrations.mjs', 'npx playwright test -c playwright.real.config.ts']],
   ])('TÉMOIN : le job `%s` lance ses gardes', (job, attendues) => {
     const texte = commandes(job);
     for (const c of attendues) expect(texte, `${job} : ${c}`).toContain(c);
@@ -62,7 +63,7 @@ describe('ci-noyau.yml : la composition du noyau', () => {
   it('TÉMOIN : aucune garde de calendrier, aucun job lent ou variable dans le noyau', () => {
     const interdits = [
       'check:study', 'check:lecteurs-ecran', 'check:exercice-violation',
-      'check:peremption-chantiers', 'check:acquisition', 'check:coffre', 'playwright test', 'lhci', 'npm audit',
+      'check:peremption-chantiers', 'check:acquisition', 'check:coffre', 'lhci', 'npm audit',
       'stryker', 'test:mutation', 'check:sabotages', 'test:e2e',
       // V18.1 (2026-11-08) : plancher de couverture de l'outillage, planifie.
       'test:coverage:tooling',
@@ -71,6 +72,7 @@ describe('ci-noyau.yml : la composition du noyau', () => {
     const lance = jobsDe(NOYAU).flatMap((j) => lireEtapes(NOYAU, j)).map((e) => `${e.run ?? ''} ${e.uses ?? ''}`).join('\n');
     expect(lance).toContain('npm run lint');
     for (const g of interdits) expect(lance, g).not.toContain(g);
+    expect(lance.match(/playwright test(?! -c playwright\.real\.config\.ts)/g)).toBeNull();
     expect(NOYAU).not.toMatch(/^\s+schedule:/m);
   });
 

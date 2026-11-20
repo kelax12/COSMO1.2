@@ -80,9 +80,9 @@ Dossier `e2e/`, config `playwright.config.ts`. Avant le premier run : `npx playw
 
 ### `e2e/real/` : parcours contre une VRAIE base (TST-03)
 
-Workflow `.github/workflows/e2e-supabase.yml` (push sur `main` et `noyau/**`, `workflow_dispatch`), config `playwright.real.config.ts` (`playwright.config.ts` démarre deux `webServer` qu'un `--project=` ne désactive pas ; `chromium` et `mobile-safari` excluent `**/real/**`).
+Job `e2e-supabase` de `.github/workflows/ci-noyau.yml` (push sur `main` et `noyau/**`, PR), config `playwright.real.config.ts` (`playwright.config.ts` démarre deux `webServer` qu'un `--project=` ne désactive pas ; `chromium` et `mobile-safari` excluent `**/real/**`).
 
-- ✅ Bloquant pour la PRODUCTION, pas pour le push : `ci-vert.yml` ne pose `ci-vert/<sha>` que si `CI noyau` ET ce workflow sont verts sur le SHA ; un échec sur `main` pose `ci-rouge/<sha>`. Hors noyau exprès : `noyau-ci.guard` y interdit Playwright.
+- ✅ Bloquant pour le push ET la production : ce job compte dans `CI noyau`, seul verdict lu par `pre-push` et `ci-vert.yml`. ❌ Aucun autre Playwright au noyau : `noyau-ci.guard` n'accepte que `-c playwright.real.config.ts`.
 - ✅ Monte la pile comme `rls-integration` (`supabase start`, `node scripts/apply-migrations.mjs`), sert les Edge Functions (`supabase functions serve`, `APP_URL` = origine de l'app), construit l'app avec `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` de la pile, la sert (`vite preview`, port 3220).
 - ✅ Parcours : inscription et connexion, tâche, habitude, événement, OKR et KR, partage entre deux comptes, entreprise (invitation, tâche visible du membre, invisible d'un tiers), suppression de compte, cycle de vie d'une entreprise (suppression par le propriétaire, refusée au membre ; abonnement lu sous la RLS, jamais écrit, garde « abonnement actif »). Chaque écriture est relue après `reload()` ET par le client authentifié du compte. Pas de Stripe.
 - 🔴 Local seulement : `e2e/real/helpers.ts` refuse tout hôte autre que `127.0.0.1` / `localhost` ; comptes `@example.com`, `service_role` seulement pour créer et supprimer. ❌ Un vrai compte, l'URL de production.
@@ -113,16 +113,17 @@ npx playwright test e2e/a11y-audit.spec.ts --project=chromium
 
 🔴 Un seul verdict bloque : le workflow `CI noyau`. Il juge le COMMIT et lui seul ; sa conclusion bloque la poussée (`.githooks/pre-push`), déclenche `edge-deploy.yml` et sonne `ci-alert.yml`. Un workflow, pas une liste de jobs : le hook, `edge-deploy.yml` et `ci-alert.yml` lisent la conclusion d'un WORKFLOW (`gh run list --workflow`, `workflow_run`) ; une liste serait recopiée trois fois et divergerait. Cible < 15 min, donc pas de shards Vitest.
 
-Cinq jobs parallèles, sans `needs:` :
+Six jobs parallèles, sans `needs:` :
 
 - `noyau` : lint, `tsc -b`, `check:edge-coverage`, `test:coverage` (témoins de `scripts/` compris). `test:coverage:tooling` tourne dans `Sabotages` (hebdo).
 - `lint-test-build` : `check:docs`, `validate:migrations`, `check:rls`, gardes statiques (cycles, plancher, effacement, sous-traitants, portabilité, env, journal des CGU, `check:legal`), `i18n:check`, `i18n:scan`, `i18n:identical`, `i18n:pages`, `i18n:quality`, build, `check:bundle`, `check:prerender`.
 - `fichiers-sensibles` : `check:fichiers-sensibles --arbre --plage <poussée>`, historique complet. Refuse `prive/**`, `docs/business-plan/**`, `leads-*`, `supabase/.temp/**`, `.claude/settings.local.json`, csv, pdf, xls(x), docx, pptx, dumps, `.env*` (hors `.env.example`, `.env.e2e-stub`) et fichiers > 1 Mo, dans l'arbre ET dans chaque version poussée. Exceptions une par une (chemin, blob, motif) dans le script ; aucune variable de contournement. Même liste dans `.githooks/pre-commit` (l'index) et `scripts/fichiers-suivis.guard.test.mjs` (`git ls-files`, joué par `npm test` : un `--no-verify` y tombe).
 - `rls-integration` : `supabase start`, rejoue TOUTES les migrations sur base vierge (`scripts/apply-migrations.mjs`), puis `npm run test:rls`.
 - `contrat-donnees` (ARC-07) : même base vierge, `check:contrat` compare `schema.sql`, l'inventaire des RPC et les types générés.
+- `e2e-supabase` (TST-03) : même pile que `rls-integration`, CLI Supabase épinglée, Edge Functions servies, app construite contre la pile, puis `playwright test -c playwright.real.config.ts` (`e2e/real/`). ~4 à 5 min.
 
 - ❌ Rien dans le noyau ne juge une date, un document qui vieillit ou un état extérieur : un verdict qui change sans commit rend `main` rouge un matin. `check:legal-journal`, `check:docs`, `check:test-floor`, `check:subprocessors`, `check:env` (moitié statique) y restent parce qu'aucun ne lit l'horloge ni le réseau.
-- ✅ Hors noyau, ne bloquent rien et ne sonnent pas : `ci.yml` (CI étendue : `e2e`, `lighthouse`), `visual.yml`, `mutation.yml`, `sabotages.yml`, `scalability-volume.yml`, `gardes-calendrier.yml` (quotidien 06:29 UTC, issue `calendrier-red` refermée au vert : `check:study`, `check:lecteurs-ecran`, `check:exercice-violation`, `check:peremption-chantiers`, `check:acquisition`, `check:coffre`).
+- ✅ Hors noyau, ne bloquent rien et ne sonnent pas : `ci.yml` (CI étendue : `e2e` en mode démo, `lighthouse`), `visual.yml`, `mutation.yml`, `sabotages.yml`, `scalability-volume.yml`, `gardes-calendrier.yml` (quotidien 06:29 UTC, issue `calendrier-red` refermée au vert : `check:study`, `check:lecteurs-ecran`, `check:exercice-violation`, `check:peremption-chantiers`, `check:acquisition`, `check:coffre`).
 - ✅ Branches `noyau/**` : le noyau y tourne sur `push`, c'est le chemin de réparation d'un noyau rouge ([`DEPLOYMENT.md`](./DEPLOYMENT.md) § Hook `pre-push` : aucun contournement, seul un SHA déjà jugé vert passe). `fichiers-sensibles` y juge la première poussée contre `origin/main`.
 - ✅ Témoins : `noyau-ci.guard.test.mjs` (composition, aucune garde de calendrier ni job lent dans le noyau), `ci-toutes-les-gardes.guard.test.mjs` (chaque étape joue après un rouge, le résumé liste tous les rouges), `edge-deploy-select.guard.test.mjs`, `check-fichiers-sensibles.guard.test.mjs`.
 - ✅ `lighthouse` (`lighthouserc.json`) : LCP, TBT, CLS, a11y, SEO sur les routes prérendues ; ses assertions rougissent le job, pas le noyau. ⚠️ Seuils provisoires à resserrer sur le réel.
