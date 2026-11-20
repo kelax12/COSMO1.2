@@ -9,8 +9,8 @@
 | Fait | Valeur | Source |
 |---|---|---|
 | Edge Functions déployables | **17** | dossiers de `supabase/functions/` portant un `index.ts` (hors `_shared`) |
-| Migrations SQL | **237** | fichiers `NNN_*.sql` de `supabase/migration/` |
-| Dernière migration | **265** | plus grand préfixe numérique de `supabase/migration/` |
+| Migrations SQL | **238** | fichiers `NNN_*.sql` de `supabase/migration/` |
+| Dernière migration | **266** | plus grand préfixe numérique de `supabase/migration/` |
 | Workflows GitHub | **35** | fichiers de `.github/workflows/` |
 | dont planifiés | **24** | workflows portant un `schedule:` |
 | Fichiers de `scripts/` | **161** | fichiers suivis (budget d outillage, `scripts/outillage.reference.json`) |
