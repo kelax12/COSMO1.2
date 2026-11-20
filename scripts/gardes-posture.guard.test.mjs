@@ -32,11 +32,13 @@ import {
   REGLAGES_SURVEILLES,
 } from './check-supabase-posture.mjs';
 import { grilleDuCode, palierDe, rapprocher, prixStripe } from './check-stripe-prices.mjs';
-import { sqlOrphelines, sqlAges, DUREE_DE_VIE_DU_COMPTE, DUREES_BORNEES, PREUVES, libelle } from './check-retention.mjs';
-import { sqlExplain, extraire, pente, REQUETES } from './check-db-cost.mjs';
 import { SONDES, jouer, cleAnonDepuisApi } from './check-edge-smoke.mjs';
 import { variablesLues, variablesDeLExemple, secretsExposes, serveurNonLues } from './check-env-contract.mjs';
-import { lignesAnnuaires, dateDeRemesure, ETATS } from './check-acquisition.mjs';
+import {
+  sqlOrphelines, sqlAges, DUREE_DE_VIE_DU_COMPTE, DUREES_BORNEES, PREUVES, libelle,
+  sqlExplain, extraire, pente, REQUETES,
+  lignesAnnuaires, dateDeRemesure, ETATS,
+} from './check-sql-prod.mjs';
 import { CATALOGUE, verifierCatalogue } from './replay-sabotages.mjs';
 import { aplatir, grouperPluriels, categoriesAttendues, volumeIndexable, decouper } from './check-i18n-pages.mjs';
 

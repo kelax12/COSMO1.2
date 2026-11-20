@@ -21,7 +21,7 @@ La table ne porte que la commande, sa classe et ce qu'elle regarde ; ❌ elle ne
 | `check:env` | N + P | contrat des variables Vercel (moitié statique au noyau) | `C-105` | `docs/DEPLOYMENT.md` |
 | `check:bundle` | N | budget de bundle | | `docs/PERFORMANCE.md` |
 | `check:prerender` | N | HTML prérendu vs instantanés versionnés | `COD-04` | `docs/TESTING.md` |
-| `check:db-cost` | P | coût serveur et croissance | `C-87` | `docs/SCALABILITY.md` |
+| `check:db-cost` | P | coût serveur et croissance (`scripts/check-sql-prod.mjs db-cost`) | `C-87` | `docs/SCALABILITY.md` |
 | `check:cycles` | N | cycles d'imports | `C-103` | `docs/ARCHITECTURE.md` |
 | `check:test-floor` | N | test supprimé avec le code qu'il gardait | `C-83` | `docs/TESTING.md` |
 | `check:commentaires` | N | cliquet des récits datés dans `src/` | `COD-01` | `scripts/commentaires.reference.json` |
@@ -58,6 +58,7 @@ La table ne porte que la commande, sa classe et ce qu'elle regarde ; ❌ elle ne
 | `check:mail` | O | SPF / DKIM / DMARC | | `docs/DEPLOYMENT.md` |
 | `images:check` | O | images non optimisées | | `docs/PERFORMANCE.md` |
 
+- ✅ Gardes SQL de prod (`acquisition`, `db-cost`, `retention` : un seul fichier, `scripts/check-sql-prod.mjs <acquisition|db-cost|retention>` ; `npm run check:<nom>` garde son nom, `acquisition` accepte `--live`) : `posture.yml` (les trois, avec `SUPABASE_ACCESS_TOKEN`) et `gardes-calendrier.yml` (acquisition, moitié documentaire). Secret absent = échec, sans exception.
 - ✅ Gardes de calendrier (`study`, `lecteurs-ecran`, `peremption-chantiers` : un seul fichier, `scripts/check-calendrier.mjs <study|lecteurs|chantiers>` ; puis `exercice-violation`, `acquisition`, `coffre`) : `gardes-calendrier.yml`, quotidien, issue `calendrier-red`. ❌ Jamais dans un job bloquant (CI-01) → `docs/TESTING.md` § CI.
 - ✅ Budget d'outillage (MAI-02) : fichiers et lignes de `scripts/`, workflows planifiés, tests `*.guard.test.*`, plafonds dans `scripts/outillage.reference.json`, joués par `check:faits`. Un nouvel outil en remplace un : retirer ou fusionner avant d'ajouter ; une baisse se recopie (`npm run faits:generer -- --recaler`), ❌ jamais de relèvement. Hors produit (DEP-03) : le tri de la boîte contact (`scripts/mail/`) n'a plus `imapflow ^2.10.0` ni `mailparser ^3.14.1` dans `package.json` ; réactivation : `npm install --no-save imapflow@^2.10.0 mailparser@^3.14.1`, ❌ jamais dans `package.json`.
 - ✅ Hooks : `pre-push` refuse un noyau rouge (`CI noyau` seul), sans contournement → `docs/DEPLOYMENT.md` § 1 ; `pre-commit` lance `check:fichiers-sensibles --index`. Disponibilité (OBS-02) : sonde et alerte dans la base (`cosmo-uptime` mig. `252`, `cosmo-sonde-alerte` mig. `261`, Discord, silence compris), sans GitHub ; `uptime.yml` = SECOURS extérieur ; `check-cron-runs.mjs` relit le verdict → `docs/MISES-EN-SERVICE.md`.

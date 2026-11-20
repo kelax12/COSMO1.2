@@ -1,13 +1,13 @@
 <!-- chiffres-remesures: 2026-10-30 -->
-<!-- Lu par `npm run check:acquisition` (échoue au-delà de 45 jours). ❌ Ne jamais avancer cette date sans rejouer : SUPABASE_ACCESS_TOKEN=… node scripts/check-acquisition.mjs --live -->
+<!-- Lu par `npm run check:acquisition` (échoue au-delà de 45 jours). ❌ Ne jamais avancer cette date sans rejouer : SUPABASE_ACCESS_TOKEN=… node scripts/check-sql-prod.mjs acquisition --live -->
 
 # Acquisition : instrumentation, chiffres, runbook
 
-**Quand lire** : avant de toucher l'attribution `?ref=`, `demo_devices`, `scripts/check-acquisition.mjs` ou une campagne. **Fait foi** : le code et la production. Stratégie : [`archive/PLAN-ACQUISITION-30J-2026-08-13.md`](./archive/PLAN-ACQUISITION-30J-2026-08-13.md). Historique des chiffres : [`archive/ACQUISITION-chiffres-et-recits-2026-08-14-au-2026-10-30.md`](./archive/ACQUISITION-chiffres-et-recits-2026-08-14-au-2026-10-30.md). Levier hors dépôt : [`ACQUISITION-BACKLINKS.md`](./ACQUISITION-BACKLINKS.md).
+**Quand lire** : avant de toucher l'attribution `?ref=`, `demo_devices`, `scripts/check-sql-prod.mjs` ou une campagne. **Fait foi** : le code et la production. Stratégie : [`archive/PLAN-ACQUISITION-30J-2026-08-13.md`](./archive/PLAN-ACQUISITION-30J-2026-08-13.md). Historique des chiffres : [`archive/ACQUISITION-chiffres-et-recits-2026-08-14-au-2026-10-30.md`](./archive/ACQUISITION-chiffres-et-recits-2026-08-14-au-2026-10-30.md). Levier hors dépôt : [`ACQUISITION-BACKLINKS.md`](./ACQUISITION-BACKLINKS.md).
 
 ## Compteurs
 
-Le marqueur en tête date la dernière remesure en production (`SQL_COMPTEURS` de `scripts/check-acquisition.mjs`, mêmes comptes exclus que `get_admin_stats`, mig. `149`).
+Le marqueur en tête date la dernière remesure en production (`SQL_COMPTEURS` de `scripts/check-sql-prod.mjs`, mêmes comptes exclus que `get_admin_stats`, mig. `149`).
 
 | Compteur | Valeur |
 |---|---|
