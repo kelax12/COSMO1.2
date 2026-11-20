@@ -136,7 +136,11 @@ export default defineConfig({
         // Règle : seuil = mesure − 0,25 point, arrondi vers le bas au demi-point
         // (marge de 0,25 à 0,75 point, jamais plus d'un point). Remontée par
         // paliers et interdiction de baisser : `docs/TESTING.md` § Couverture.
-        'src/components/**': { lines: 47, statements: 45.5, functions: 34.5, branches: 40 },
+        // Remontee 2026-11-20 (TST-02, cible 50 % de lignes atteinte) : base `CI noyau` 44730980714
+        // (47,67 L / 45,95 S / 34,94 F / 40,64 B) + huit composants a 0 % testes
+        // (BugReportModal, CookieBanner, QuickAddBar, TodayHabits, HabitActionsMenu,
+        // TodayTasks, OKRDeadlineReviewModal, WeeklyCheckinModal) = 50,44 / 48,56 / 37,38 / 42,65.
+        'src/components/**': { lines: 50, statements: 48, functions: 37, branches: 42 },
         'src/pages/**': { lines: 45, statements: 44.5, functions: 35, branches: 33.5 },
         // ── Gates par fichier (code à fort risque) ──
         'src/modules/**/mappers.ts': { lines: 95, functions: 100, statements: 95, branches: 85 },
