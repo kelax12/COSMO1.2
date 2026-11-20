@@ -65,7 +65,7 @@
     },
     "src/components/TaskTable.tsx": {
       "complexity": [37],
-      "max-lines-per-function": [406]
+      "max-lines-per-function": [364]
     },
     "src/components/TextType.tsx": {
       "complexity": [23]
