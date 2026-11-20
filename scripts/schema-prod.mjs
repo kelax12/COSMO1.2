@@ -10,27 +10,23 @@
 // 🔴 AUCUNE ecriture en production ; journal public, definitions masquees.
 // ⚠️ Pas de shebang : le temoin importe ce module (cf. `scripts/CLAUDE.md`).
 // ═══════════════════════════════════════════════════════════════════
-import { readFileSync, unlinkSync, appendFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, unlinkSync, appendFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 
 import { lireBase, normaliserDump, rendreComplements, projetId } from './contrat-donnees.mjs';
-import {
-  classer, lireMigrations, enAttenteDeProduction, objetsCrees, objetsSupprimes, VERDICT, PARTIEL_EN_ATTENTE_DEPUIS,
-} from './check-migration-coverage.mjs';
+import { classer, lireMigrations, enAttenteDeProduction, sansCommentairesNiBlancs } from './check-migration-coverage.mjs';
 
+export { sansCommentairesNiBlancs };
 export const DOSSIER_MIGRATIONS = 'supabase/migration';
 
-/** Les fichiers du depot que la prod n'a pas, lus sur une introspection de `check:migration-coverage`. */
+/** Ou `en-attente` laisse sa liste pour `comparer` (meme runner). */
+export const fichierEnAttente = (env = process.env) => join(env.RUNNER_TEMP || tmpdir(), 'cosmo-migrations-en-attente.json');
+
+/** Les fichiers du depot que la prod n'a pas (classeur de `check:migration-coverage`, DROP restants compris). */
 export function enAttente(fichiers, intro) {
-  const res = classer(fichiers, intro);
-  const attente = new Set(enAttenteDeProduction(res).map((r) => r.name));
-  // Hors ledger, objets crees deja en base, mais une cible de suppression encore la (mig. 206).
-  const sql = new Map(fichiers.map((f) => [f.name, f.sql]));
-  for (const r of res.filter((x) => x.verdict === VERDICT.OBJET && Number.parseInt(x.name, 10) >= PARTIEL_EN_ATTENTE_DEPUIS)) {
-    const [sup, cre] = [objetsSupprimes(sql.get(r.name)), objetsCrees(sql.get(r.name))];
-    if (Object.keys(sup).some((k) => sup[k].some((n) => !cre[k].includes(n) && (intro[k] ?? []).includes(n)))) attente.add(r.name);
-  }
+  const attente = new Set(enAttenteDeProduction(classer(fichiers, intro)).map((r) => r.name));
   return fichiers.map((f) => f.name).filter((n) => attente.has(n));
 }
 
@@ -173,9 +169,6 @@ export function objets(texte) {
 
 // Bruit de comparaison, et lui seul (TST-06). FUNCTION : commentaires et blancs hors des
 // chaines (corps poses compactes en prod). TABLE : ordre des colonnes (historique des ALTER).
-const LITTERAL_OU_BRUIT = /('(?:[^']|'')*')|--[^\n]*|\/\*[\s\S]*?\*\/|\s+/g;
-export const sansCommentairesNiBlancs = (t) => String(t).replace(LITTERAL_OU_BRUIT, (m, lit) => lit ?? ' ')
-  .replace(/('(?:[^']|'')*')| {2,}/g, (m, lit) => lit ?? ' ').trim();
 export function normaliserObjet(cle, texte) {
   if (/^FUNCTION /.test(cle)) return sansCommentairesNiBlancs(texte);
   const l = String(texte).split('\n');
@@ -185,14 +178,18 @@ export function normaliserObjet(cle, texte) {
   return [...l.slice(0, debut + 1), ...l.slice(debut + 1, fin).map((x) => x.replace(/,$/, '')).sort(), ...l.slice(fin)].join('\n');
 }
 
-/** Ecarts entre la base fraiche et la prod : trois listes de cles, plus les definitions. */
-export function ecarts(fraiche, prod) {
+/**
+ * Ecarts base fraiche / prod. 🔴 `enAttente` : la base fraiche est batie SANS les migrations que la
+ * prod n'a pas, donc ce qu'elles posent manque des DEUX cotes (262 : fonction absente, 2 ecarts) :
+ * chacune est un ecart.
+ */
+export function ecarts(fraiche, prod, enAttente = []) {
   const a = objets(fraiche);
   const b = objets(prod);
   const seulementProd = [...b.keys()].filter((k) => !a.has(k)).sort();
   const seulementDepot = [...a.keys()].filter((k) => !b.has(k)).sort();
   const differents = [...a.keys()].filter((k) => b.has(k) && normaliserObjet(k, a.get(k)) !== normaliserObjet(k, b.get(k))).sort();
-  return { seulementProd, seulementDepot, differents, a, b, total: a.size };
+  return { seulementProd, seulementDepot, differents, enAttente, a, b, total: a.size };
 }
 
 /** Lignes propres a chaque cote (multiensemble), dans l'ordre : un diff d'objet lisible. */
@@ -226,6 +223,8 @@ export function rapport(e, { maxLignes = 60, complet = false } = {}) {
   }
   out.push(`Dans le depot seulement : ${e.seulementDepot.length}`);
   for (const k of e.seulementDepot) out.push(`  - ${k}`);
+  out.push(`Migrations du depot pas en production (hors de la base fraiche) : ${e.enAttente.length}`);
+  for (const f of e.enAttente) out.push(`  ! ${f}`);
   out.push(`Definitions differentes : ${e.differents.length}`);
   for (const k of e.differents) {
     out.push(`  ~ ${k}`);
@@ -268,6 +267,7 @@ export async function main(argv = process.argv.slice(2), env = process.env) {
       if ((intro.ledger ?? []).length === 0) throw new Error('ledger de production vide : lecture suspecte, aucune conclusion.');
       const attente = enAttente(lireMigrations(join(racine, DOSSIER_MIGRATIONS)), intro);
       const liste = attente.map((f) => `  · ${f}`).join('\n') || '  (aucune)';
+      writeFileSync(fichierEnAttente(env), JSON.stringify(attente));
       console.log(`Migrations du depot pas encore en production : ${attente.length}\n${liste}`);
       const puces = attente.map((f) => `- \`${f}\``).join('\n') || '- aucune';
       resumer(`### Migrations en attente de production (${attente.length})\n\n${puces}\n`);
@@ -284,9 +284,10 @@ export async function main(argv = process.argv.slice(2), env = process.env) {
       const localDansConteneur = 'postgresql://postgres:postgres@127.0.0.1:5432/postgres';
       const fraiche = await instantane(local, conteneur, localDansConteneur);
       const prod = await instantane(urlProd(env), conteneur);
-      const e = ecarts(fraiche, prod);
+      if (!existsSync(fichierEnAttente(env))) throw new Error('liste des migrations en attente absente : lancer `en-attente` avant `comparer`, sans quoi elles resteraient invisibles.');
+      const e = ecarts(fraiche, prod, JSON.parse(readFileSync(fichierEnAttente(env), 'utf8')));
       const texte = rapport(e);
-      const n = e.seulementProd.length + e.seulementDepot.length + e.differents.length;
+      const n = e.seulementProd.length + e.seulementDepot.length + e.differents.length + e.enAttente.length;
       console.log(rapport(e, { complet: true }));
       resumer(`### Base fraiche contre production : ${n === 0 ? 'identiques' : `${n} ecart(s)`}\n\n\`\`\`\n${texte.split('\n').slice(0, 400).join('\n')}\n\`\`\`\n`);
       if (n === 0) {

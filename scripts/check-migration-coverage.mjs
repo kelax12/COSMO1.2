@@ -1,53 +1,22 @@
 // ═══════════════════════════════════════════════════════════════════
-// check-migration-coverage.mjs — RECOUVREMENT depot <-> ledger de prod (C-79)
+// check-migration-coverage.mjs · RECOUVREMENT depot <-> ledger de prod (C-79)
 //
-// 🔴 POURQUOI CE FICHIER EXISTE
+// ❌ Ne pas se contenter d'un comptage : ce script RANGE chaque fichier dans un verdict et
+// n'echoue que sur le dernier.
+//   AU LEDGER      une entree au nom du fichier (preuve forte mais faible : mig. 144).
+//   OBJET EN BASE  hors ledger, un objet cree existe au catalogue. Depuis la 200, le NOM ne
+//                  suffit plus : definition de fonction / policy, cible de DROP (ROB-02).
+//   OBJET RETIRE DEPUIS / SUPPRESSION VERIFIEE / SANS OBJET VERIFIABLE / NON APPLIQUEE (declaree)
+//   ABSENT DES DEUX -> ECHEC : le depot decrit un objet que la prod n'a pas.
+// 🔴 Une ligne au ledger ne prouve pas qu'un CREATE OR REPLACE a remplace le corps vivant ; « OBJET
+// EN BASE » ne prouve pas que tout le fichier est passe (le script le DIT). Preuve forte :
+// pg_get_functiondef, ou rejouer le chemin reel dans une transaction annulee.
 //
-// « Tout le depot est applique en prod » s'etait ecrit sur un comptage qui ne
-// recouvrait pas les fichiers (mesure du 2026-09-14).
-// ❌ Ne pas se contenter d'un comptage : ce script RANGE chaque fichier dans
-// un verdict, et n'echoue que sur le dernier.
-//
-// ── LES VERDICTS ────────────────────────────────────────────────────
-//
-//   AU LEDGER      le nom du fichier a une entree. C'est la preuve la plus
-//                  forte dont on dispose ici, et elle reste faible (cf. plus
-//                  bas).
-//   OBJET EN BASE  aucune entree, mais un des objets que le fichier cree
-//                  EXISTE au catalogue (migrations precoces, avant le ledger).
-//   OBJET RETIRE   aucune entree, tous ses objets supprimes par une migration
-//   DEPUIS         ULTERIEURE. Mesure, pas declare.
-//   SUPPRESSION    le fichier ne fait que supprimer ; ses cibles sont absentes.
-//   VERIFIEE
-//   SANS OBJET     GRANT ou donnees : le catalogue n'en garde aucune trace.
-//   VERIFIABLE     DECLARE un par un, avec son motif.
-//   NON APPLIQUEE  absence DELIBEREE, declaree dans NON_APPLIQUEES_DELIBEREMENT.
-//   (declaree)
-//   ABSENT DES DEUX -> ECHEC. Le depot decrit un objet que la prod n'a pas.
-//
-// ── CE QUE CE SCRIPT NE PROUVE PAS, ET IL FAUT LE DIRE ──────────────
-//
-// 🔴 UNE LIGNE AU LEDGER NE PROUVE PAS QU'UN `CREATE OR REPLACE` A REMPLACE
-// LE CORPS VIVANT (mig. 144 : sa ligne, le corps de la 143, rejouee sous la 147).
-//
-// 🔴 « OBJET EN BASE » NE PROUVE PAS QUE TOUT LE FICHIER EST PASSE. Un
-// fichier qui cree trois objets dont un seul existe rend ce verdict. Le
-// script le DIT dans sa sortie plutot que de le taire.
-//
-// La preuve forte : interroger le catalogue sur l'objet, ou rejouer le chemin
-// reel dans une transaction annulee. Ce script automatise le grossier.
-//
-// ── USAGE (2 etapes, lecture seule cote prod) ───────────────────────
-//
-//   1. node scripts/check-migration-coverage.mjs --print-sql
-//      -> affiche la requete d'introspection a executer sur la prod.
-//         Elle renvoie UNE ligne JSON.
+// USAGE (lecture seule cote prod) :
+//   1. node scripts/check-migration-coverage.mjs --print-sql   (requete d'introspection, une ligne JSON)
 //   2. node scripts/check-migration-coverage.mjs <introspection.json> [--sens=depot]
-//      -> range les fichiers et sort en 1 si l'un d'eux n'est pas en prod
-//         (ABSENT DES DEUX, ou partiel hors ledger depuis la 200), ou si une
-//         entree recente du ledger n'a pas de fichier (ROB-03). `--sens=depot`
-//         ne juge que le premier sens : c'est la porte de `edge-deploy.yml`
-//         et celle du tag `ci-vert` (`ci-vert.yml`, CI-05).
+//      sort en 1 sur un fichier pas en prod, ou une entree recente du ledger sans fichier (ROB-03) ;
+//      `--sens=depot` ne juge que le premier sens (`edge-deploy.yml`, `ci-vert.yml` CI-05).
 // ═══════════════════════════════════════════════════════════════════
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -60,27 +29,12 @@ const MIGRATION_DIR =
   ?? join(dirname(fileURLToPath(import.meta.url)), '..', 'supabase', 'migration');
 
 /**
- * Migrations que le depot porte SANS qu'elles soient appliquees, DELIBEREMENT.
- *
- * 🔴 Meme discipline que `.github/edge-deploy.json` : une dispense declare un ecart
- * voulu, son motif et sa date ; une entree FAUSSE (migration en fait appliquee)
- * fait ECHOUER la garde, sinon elle perimerait en silence.
- *
- * ❌ Ne JAMAIS y ajouter une entree pour faire passer la CI. Une migration
- * qu'on veut appliquer s'applique ; une migration qu'on ne veut pas appliquer
- * se declare ici, avec la raison.
+ * Non-appliquees DELIBEREMENT (ecart voulu, motif, date). Une entree FAUSSE (migration en fait
+ * appliquee) fait ECHOUER la garde. ❌ Jamais d'entree pour faire passer la CI.
  */
 const NON_APPLIQUEES_DELIBEREMENT = {};
 
-/**
- * Migrations qui ne creent ni ne suppriment AUCUN objet de catalogue.
- *
- * ⚠️ Aveu d'une LIMITE, pas dispense : le catalogue ne garde aucune trace d'un
- * GRANT par defaut ni d'un `INSERT` de rattrapage ; la garde le DIT.
- *
- * ❌ N'y mettre que des fichiers reellement sans objet. Un fichier qui cree
- * quoi que ce soit se verifie, et une entree ici le soustrairait a la mesure.
- */
+/** Migrations sans objet de catalogue (GRANT, donnees) : aveu d'une LIMITE, pas dispense. ❌ Y mettre un fichier qui cree quoi que ce soit le soustrairait a la mesure. */
 const SANS_OBJET_VERIFIABLE = {
   '000_default_privileges':
     "N'ecrit que des GRANT et des ALTER DEFAULT PRIVILEGES. Aucun objet de "
@@ -98,15 +52,7 @@ const SANS_OBJET_VERIFIABLE = {
 
 const norm = (s) => s.replace(/^public\./i, '').replace(/"/g, '').toLowerCase();
 
-/**
- * Les objets crees par un fichier de migration.
- *
- * ⚠️ On ne suit PAS les DROP ici. La
- * question n'est pas « quel etat final le depot decrit-il » mais « ce fichier
- * a-t-il laisse une trace en base ». Un objet cree puis supprime par une
- * migration ULTERIEURE ne dit rien de celle-ci ; c'est justement pour ca que le
- * verdict « OBJET EN BASE » est une preuve FAIBLE, et que le script le dit.
- */
+/** Les objets crees par un fichier. ⚠️ Les DROP ne sont pas suivis : « OBJET EN BASE » reste une preuve FAIBLE, dite telle. */
 function objetsCrees(sql) {
   const propre = sql.replace(/--[^\n]*/g, '');
   const out = {
@@ -131,19 +77,15 @@ function objetsCrees(sql) {
     out.indexes.push(norm(m[1]));
   }
   for (const m of propre.matchAll(
-    // Le nom d'une policy peut etre entre guillemets OU nu : les deux formes
-    // existent dans ce depot, et n'en reconnaitre qu'une a deja produit un faux
-    // positif dans l'ancien `check:drift` (mig. 135).
+    // Nom de policy entre guillemets OU nu : en reconnaitre une seule a produit un faux positif (mig. 135).
     /create\s+policy\s+(?:"([^"]+)"|([a-z_][\w$]*))\s+on\s+([\w."]+)/gi,
   )) {
-    out.policies.push(`${(m[1] ?? m[2]).toLowerCase()}@@${norm(m[3])}`);
+    out.policies.push(`${(m[1] ?? m[2]).toLowerCase()}@@${norm(m[3]).split('.').pop()}`);
   }
   for (const m of propre.matchAll(/create\s+(?:or\s+replace\s+)?trigger\s+([\w."]+)/gi)) {
     out.triggers.push(norm(m[1]));
   }
-  // `ADD CONSTRAINT` : c'est ce qui rend la mig. 037 verifiable. Sans lui, une
-  // migration qui ne fait que reposer une cle etrangere (`ON DELETE CASCADE`)
-  // n'a AUCUN objet identifiable, et la garde ne sait rien en dire.
+  // `ADD CONSTRAINT` rend la mig. 037 verifiable (elle ne fait que reposer une cle etrangere).
   for (const m of propre.matchAll(/add\s+constraint\s+([\w"]+)/gi)) {
     out.constraints.push(norm(m[1]));
   }
@@ -151,20 +93,7 @@ function objetsCrees(sql) {
   return out;
 }
 
-/**
- * La TABLE a laquelle chaque objet cree est attache, quand il l'est.
- *
- * 🔴 Pourquoi (2026-10-01) : un `DROP TABLE` supprime aussi ses index, ses
- * policies, ses triggers, ses colonnes et ses contraintes, SANS les nommer.
- * La garde ne reconnaissait que les suppressions NOMMEES, et rendait donc
- * « ABSENT DES DEUX » sur la mig. 196, appliquee puis retiree par la 200, qui
- * fait `DROP TABLE` de ses deux tables.
- *
- * ⚠️ Une FONCTION n'est jamais attachee a une table : elle survit a son
- * `DROP TABLE`, et doit etre supprimee nommement pour etre excusee.
- *
- * @returns {Map<string, string>} `kind:nom` -> table
- */
+/** La TABLE de chaque objet cree : un `DROP TABLE` emporte index, policies, triggers, colonnes, contraintes (mig. 196). Pas les fonctions. */
 function tablesProprietaires(propre, out) {
   const map = new Map();
   for (const c of out.columns) map.set(`columns:${c}`, c.split('.')[0]);
@@ -189,25 +118,7 @@ function tablesProprietaires(propre, out) {
   return map;
 }
 
-/**
- * Les objets qu'un fichier SUPPRIME.
- *
- * 🔴 Deux verdicts en dependent, et aucun des deux n'etait dans la premiere
- * version de ce script :
- *
- *   • « OBJET RETIRE DEPUIS » : un fichier dont TOUS les objets ont ete
- *     supprimes par une migration ULTERIEURE est legitimement invisible du
- *     catalogue. Mesure : les mig. 013, 015 et 016 creent
- *     `subscriptions_guard`, `consume_premium_token` et
- *     `credit_premium_token_from_ad`, que la mig. 141 a supprimees le
- *     2026-09-04 (C-04). Sans ce verdict, la garde reclamait trois migrations
- *     bel et bien appliquees, et il aurait fallu les dispenser a la main, donc
- *     ecrire un allowlist la ou une MESURE suffit.
- *
- *   • « SUPPRESSION VERIFIEE » : un fichier qui ne cree rien et ne fait que
- *     supprimer se verifie par l'ABSENCE de ses cibles. C'est le cas de la
- *     mig. 090. Son effet est negatif, il se mesure quand meme.
- */
+/** Les objets qu'un fichier SUPPRIME (« OBJET RETIRE DEPUIS » : 013, 015, 016 par la 141 ; « SUPPRESSION VERIFIEE » : 090). */
 function objetsSupprimes(sql) {
   const propre = sql.replace(/--[^\n]*/g, '');
   const out = {
@@ -231,7 +142,7 @@ function objetsSupprimes(sql) {
   for (const m of propre.matchAll(
     /drop\s+policy\s+(?:if\s+exists\s+)?(?:"([^"]+)"|([a-z_][\w$]*))\s+on\s+([\w."]+)/gi,
   )) {
-    out.policies.push(`${(m[1] ?? m[2]).toLowerCase()}@@${norm(m[3])}`);
+    out.policies.push(`${(m[1] ?? m[2]).toLowerCase()}@@${norm(m[3]).split('.').pop()}`);
   }
   for (const m of propre.matchAll(/drop\s+trigger\s+(?:if\s+exists\s+)?([\w."]+)/gi)) {
     out.triggers.push(norm(m[1]));
@@ -251,6 +162,83 @@ function clesLedger(fichier) {
   // ressort du verdict « OBJET EN BASE ».
   const sansPrefixe = base.replace(/^\d+[a-z]?_/, '');
   return [base, sansPrefixe];
+}
+
+// ─── Definitions : un NOM en base ne prouve pas que CE fichier est passe (ROB-02) ─────
+// Depuis la 200, hors ledger : fonction = corps normalise egal a un corps de prod ; policy =
+// commande, roles, jetons de USING / WITH CHECK ; DROP = cible encore la, que rien ne recree.
+// ⚠️ Preuve FAIBLE, dite telle : index, table, colonne, contrainte, trigger (nom seul), fonction
+// `AS '...'`, introspection sans `function_bodies` / `policy_defs`.
+
+const LITTERAL_OU_BRUIT = /('(?:[^']|'')*')|--[^\n]*|\/\*[\s\S]*?\*\/|\s+/g;
+export const sansCommentairesNiBlancs = (t) => String(t).replace(LITTERAL_OU_BRUIT, (m, lit) => lit ?? ' ')
+  .replace(/('(?:[^']|'')*')| {2,}/g, (m, lit) => lit ?? ' ').trim();
+
+const MOTS_SQL = new Set(('public and or not is null true false in any all array select from where as exists case when then else end '
+  + 'between like ilike uuid text int integer bigint boolean smallint timestamp timestamptz date jsonb json numeric varchar bpchar').split(' '));
+const jetons = (expr) => {
+  const lit = [...String(expr ?? '').matchAll(/'((?:[^']|'')*)'/g)].map((m) => `'${m[1].toLowerCase()}`);
+  const mots = String(expr ?? '').replace(/'(?:[^']|'')*'/g, ' ').toLowerCase().match(/[a-z_][a-z0-9_]*/g) ?? [];
+  return new Set([...lit, ...mots.filter((w) => !MOTS_SQL.has(w) && !/_\d+$/.test(w))]);
+};
+const memesJetons = (a, b) => { const [x, y] = [jetons(a), jetons(b)]; return x.size === y.size && [...x].every((j) => y.has(j)); };
+
+/** Contenu de la parenthese qui suit `re` (qui se termine par `\(`). */
+function groupe(s, re) {
+  const m = re.exec(s);
+  if (!m) return '';
+  let [i, n] = [m.index + m[0].length, 1];
+  const debut = i;
+  for (; i < s.length && n; i += 1) n += s[i] === '(' ? 1 : s[i] === ')' ? -1 : 0;
+  return s.slice(debut, i - 1);
+}
+
+/** Les definitions d'un fichier : corps de fonctions `$tag$...$tag$`, policies (commande, roles, USING, CHECK). */
+export function definitionsCreees(sql) {
+  const fonctions = new Map();
+  const policies = new Map();
+  for (const m of sql.matchAll(/create\s+(?:or\s+replace\s+)?function\s+([\w."]+)\s*\(/gi)) {
+    let reste = sql.slice(m.index + 1);
+    reste = reste.slice(0, Math.max(0, reste.search(/create\s+(?:or\s+replace\s+)?function\s/i)) || undefined);
+    const d = reste.match(/\bas\s+(\$\w*\$)/i);
+    const fin = d ? reste.indexOf(d[1], d.index + d[0].length) : -1;
+    if (fin < 0) continue;
+    const nom = norm(m[1]);
+    fonctions.set(nom, [...(fonctions.get(nom) ?? []), sansCommentairesNiBlancs(reste.slice(d.index + d[0].length, fin))]);
+  }
+  for (const instr of sql.replace(/--[^\n]*/g, '').split(';')) {
+    const m = instr.match(/^\s*create\s+policy\s+(?:"([^"]+)"|([a-z_][\w$]*))\s+on\s+([\w."]+)([\s\S]*)$/i);
+    if (!m) continue;
+    const tete = m[4].split(/\b(?:using|with\s+check)\b/i)[0];
+    policies.set(`${(m[1] ?? m[2]).toLowerCase()}@@${norm(m[3]).split('.').pop()}`, {
+      c: (tete.match(/\bfor\s+(\w+)/i)?.[1] ?? 'all').toUpperCase(),
+      r: (tete.match(/\bto\s+([\w",\s]+)/i)?.[1] ?? 'public').replace(/"/g, '').split(',').map((x) => x.trim().toLowerCase()).filter(Boolean).sort().join(','),
+      q: groupe(instr, /\busing\s*\(/i),
+      w: groupe(instr, /\bwith\s+check\s*\(/i),
+    });
+  }
+  return { fonctions, policies };
+}
+
+/** Ce que la prod a de DIFFERENT de ce que `sql` pose (liste de textes, vide = rien de mesurable ou tout egal). */
+function definitionsDivergentes(sql, intro, redefini) {
+  const { fonctions, policies } = definitionsCreees(sql);
+  const out = [];
+  for (const [nom, corps] of fonctions) {
+    const prod = intro.function_bodies?.[nom];
+    if (!prod || redefini('functions', nom)) continue;
+    const vus = new Set(prod.map(sansCommentairesNiBlancs));
+    if (corps.some((c) => !vus.has(c))) out.push(`functions: ${nom} (corps different de la prod)`);
+  }
+  for (const [cle, p] of policies) {
+    const prod = intro.policy_defs?.[cle];
+    if (!prod || redefini('policies', cle)) continue;
+    const roles = [...(prod.r ?? [])].map((x) => String(x).toLowerCase()).sort().join(',');
+    if (p.c !== String(prod.c).toUpperCase() || p.r !== roles || !memesJetons(p.q, prod.q) || !memesJetons(p.w, prod.w)) {
+      out.push(`policies: ${cle} (commande, roles ou expression differents de la prod)`);
+    }
+  }
+  return out;
 }
 
 // ─── SQL d'introspection (lecture seule) ────────────────────────────
@@ -294,6 +282,18 @@ SELECT json_build_object(
     JOIN pg_namespace n ON n.oid = c.relnamespace
     WHERE n.nspname IN ('public', 'storage')
   ),
+  'function_bodies', (
+    SELECT coalesce(json_object_agg(f, b), '{}'::json) FROM (
+      SELECT lower(p.proname) AS f, json_agg(p.prosrc) AS b
+      FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+      WHERE n.nspname = 'public' GROUP BY 1) x
+  ),
+  'policy_defs', (
+    SELECT coalesce(json_object_agg(k, d), '{}'::json) FROM (
+      SELECT lower(policyname) || '@@' || lower(tablename) AS k,
+             json_build_object('c', cmd, 'r', roles, 'q', qual, 'w', with_check) AS d
+      FROM pg_policies WHERE schemaname IN ('public', 'storage')) x
+  ),
   'triggers', (
     SELECT coalesce(json_agg(DISTINCT lower(t.tgname)), '[]'::json)
     FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
@@ -315,14 +315,7 @@ export const VERDICT = {
   ABSENT: 'ABSENT DES DEUX',
 };
 
-/**
- * Range chaque fichier de migration dans un verdict.
- *
- * @param {{name: string, sql: string}[]} fichiers
- * @param {object} intro  l'introspection de prod
- * @param {Record<string, string>} [dispenses]  non-appliquees declarees (⚠️ pour le
- *   SEUL temoin ; le CLI lit `NON_APPLIQUEES_DELIBEREMENT`).
- */
+/** Range chaque fichier dans un verdict. `dispenses` : pour le SEUL temoin (le CLI lit `NON_APPLIQUEES_DELIBEREMENT`). */
 export function classer(fichiers, intro, dispenses = NON_APPLIQUEES_DELIBEREMENT) {
   const ledger = new Set([
     ...(intro.ledger ?? []).map((s) => String(s).toLowerCase()),
@@ -332,17 +325,8 @@ export function classer(fichiers, intro, dispenses = NON_APPLIQUEES_DELIBEREMENT
   const catalogue = {};
   for (const k of KINDS) catalogue[k] = new Set((intro[k] ?? []).map(String));
 
-  // ── Qui supprime quoi, et QUAND ──
-  //
-  // Les fichiers sont lus dans l'ordre de leur nom, qui est l'ordre
-  // d'application. Pour chaque objet, on retient les fichiers qui le
-  // suppriment ; « ulterieur » se lit alors sur cet ordre.
-  //
-  // ⚠️ Un fichier qui SUPPRIME PUIS RECREE le meme objet ne le supprime pas :
-  // `DROP ... IF EXISTS` suivi d'un `CREATE` est le motif idempotent normal de
-  // ce depot. Compte naivement, il faisait dire a la garde que la mig. 015
-  // avait supprime `trg_subscriptions_guard`, alors qu'elle le repose. On
-  // retranche donc de chaque fichier ce qu'il recree lui-meme.
+  // Qui supprime quoi, et QUAND : l'ordre des noms est l'ordre d'application. Un fichier qui SUPPRIME
+  // PUIS RECREE un objet (motif idempotent, mig. 015) ne le supprime pas : on retranche ce qu'il recree.
   const supprimeParFichier = new Map();
   for (const { name, sql } of fichiers) {
     const sup = objetsSupprimes(sql);
@@ -351,11 +335,11 @@ export function classer(fichiers, intro, dispenses = NON_APPLIQUEES_DELIBEREMENT
     supprimeParFichier.set(name, sup);
   }
   const ordre = new Map(fichiers.map((f, i) => [f.name, i]));
+  const creeParFichier = new Map(fichiers.map((f) => [f.name, objetsCrees(f.sql)]));
+  /** Un fichier ULTERIEUR recree `kind: nom` : l'etat en base n'est plus celui de `name`. */
+  const recreeApres = (name, kind, nom) => fichiers.some((f) => ordre.get(f.name) > ordre.get(name) && creeParFichier.get(f.name)[kind].includes(nom));
 
-  /**
-   * Le fichier ULTERIEUR a `name` qui supprime `kind: nom`, s'il existe :
-   * nommement, ou en supprimant la table a laquelle l'objet est attache.
-   */
+  /** Le fichier ULTERIEUR qui supprime `kind: nom`, nommement ou par le `DROP TABLE` de sa table. */
   const supprimeApres = (name, kind, nom, proprietaires) => {
     const table = proprietaires?.get(`${kind}:${nom}`);
     for (const [autre, sup] of supprimeParFichier) {
@@ -386,10 +370,7 @@ export function classer(fichiers, intro, dispenses = NON_APPLIQUEES_DELIBEREMENT
       }
     }
 
-    // 🔴 Une dispense qui se revele FAUSSE fait echouer la garde. Une migration
-    // declaree « non appliquee » qui est en fait au ledger, ou dont les objets
-    // sont en base, decrit un etat perime : la declaration doit tomber, pas
-    // survivre en silence.
+    // 🔴 Une dispense FAUSSE (au ledger, ou objets en base) fait echouer : la declaration doit tomber.
     if (cleDeclaree) {
       if (auLedger || trouves.length > 0) {
         resultats.push({
@@ -413,7 +394,13 @@ export function classer(fichiers, intro, dispenses = NON_APPLIQUEES_DELIBEREMENT
       continue;
     }
     if (trouves.length > 0) {
-      resultats.push({ name, verdict: VERDICT.OBJET, total, trouves, manquants, retires });
+      // Depuis la 200, le nom ne suffit plus : definitions differentes, cibles de DROP encore la.
+      const divergents = Number.parseInt(name, 10) < PARTIEL_EN_ATTENTE_DEPUIS ? [] : [
+        ...definitionsDivergentes(sql, intro, (k, n) => recreeApres(name, k, n)),
+        ...KINDS.flatMap((k) => supprimeParFichier.get(name)[k]
+          .filter((n) => catalogue[k].has(n) && !recreeApres(name, k, n)).map((n) => `${k}: ${n} (supprime par ce fichier, encore en base)`)),
+      ];
+      resultats.push({ name, verdict: VERDICT.OBJET, total, trouves, manquants, retires, divergents });
       continue;
     }
     // Tous ses objets ont ete supprimes par une migration ULTERIEURE : il est
@@ -472,27 +459,14 @@ export function classer(fichiers, intro, dispenses = NON_APPLIQUEES_DELIBEREMENT
 }
 
 // ─── Sens inverse : chaque entree du ledger a-t-elle son fichier ? (ROB-03) ──
-//
-// 🔴 La mig. `238_affiliation_deduction` est en production depuis le
-// 2026-11-01 (ledger `20261101143700`) et n'existe dans AUCUN commit. Le
-// classeur ci-dessus part des fichiers : une migration appliquee sans fichier
-// lui est invisible, et une base reconstruite depuis le depot ne l'a pas.
-//
-// ⚠️ La borne n'est pas une dispense : la mesure du 2026-09-14 (C-79, en tete
-// de ce fichier) comptait deja 17 entrees sans fichier, correctifs poses au
-// Dashboard d'avril a aout 2026. Elles restent LISTEES a chaque run ; ce qui
-// echoue, c'est une entree posterieure a la mise en place de la garde.
+// 🔴 La 238 est en production depuis le 2026-11-01 sans fichier dans aucun commit : le classeur
+// part des fichiers et ne la voit pas. Les 17 entrees d'avril a aout 2026 (C-79) restent LISTEES ;
+// seule une entree posterieure a la garde echoue.
 
 /** Version de ledger (14 chiffres) a partir de laquelle une entree sans fichier fait echouer. */
 export const LEDGER_FICHIER_OBLIGATOIRE_DEPUIS = '20260914000000';
 
-/**
- * Les entrees du ledger (`version_nom`) sans fichier dans `supabase/migration/`.
- * Une entree se rapproche d'un fichier par son nom, avec ou sans prefixe
- * numerique, comme `clesLedger` le fait dans l'autre sens.
- *
- * @returns {{entree: string, version: string, recente: boolean}[]}
- */
+/** Les entrees du ledger (`version_nom`) sans fichier, rapprochees par nom avec ou sans prefixe numerique (comme `clesLedger`). */
 export function entreesSansFichier(fichiers, intro, depuis = LEDGER_FICHIER_OBLIGATOIRE_DEPUIS) {
   const cles = new Set(fichiers.flatMap((f) => clesLedger(f.name)));
   const out = [];
@@ -508,20 +482,16 @@ export function entreesSansFichier(fichiers, intro, depuis = LEDGER_FICHIER_OBLI
 }
 
 // ─── Migrations du depot en attente de production (CI-05) ──────────
-//
-// Ce que `edge-deploy.yml` refuse de devancer : un fichier ABSENT DES DEUX, ou
-// un fichier hors ledger dont une partie des objets manque en base (mig. 248 :
-// 3 objets sur 13 trouves, parce qu'ils preexistaient). Le partiel ne compte
-// qu'a partir de la 200 : les partiels de 001 a 012 sont anterieurs au ledger.
-// Un fichier hors ledger entierement present en base (la 206, non appliquee
-// mais dont les fonctions existent deja) reste au verdict du classeur.
+// Ce que `edge-deploy.yml` et `ci-vert.yml` refusent de devancer : un fichier ABSENT DES DEUX, ou
+// hors ledger a partir de la 200 dont un objet manque en base (mig. 248) ou dont la DEFINITION
+// differe de la prod (ROB-02, 262 et 264). Les partiels de 001 a 012 precedent le ledger.
 
 /** Premier numero de fichier ou un « OBJET EN BASE » partiel compte comme non applique. */
 export const PARTIEL_EN_ATTENTE_DEPUIS = 200;
 
 export function enAttenteDeProduction(resultats) {
   return resultats.filter((r) => r.verdict === VERDICT.ABSENT
-    || (r.verdict === VERDICT.OBJET && r.manquants.length > 0
+    || (r.verdict === VERDICT.OBJET && (r.manquants.length > 0 || r.divergents?.length > 0)
       && Number.parseInt(r.name, 10) >= PARTIEL_EN_ATTENTE_DEPUIS));
 }
 
@@ -615,7 +585,7 @@ function main() {
     console.error('');
     console.error(`❌ ${attente.length} migration(s) du depot PAS EN PRODUCTION :`);
     for (const r of attente) {
-      console.error(`   ${r.name} : ${r.raison ?? `hors ledger, ${r.trouves.length}/${r.total} objets en base, manque ${r.manquants.join(', ')}`}`);
+      console.error(`   ${r.name} : ${r.raison ?? `hors ledger, ${r.trouves.length}/${r.total} objets en base, manque ${[...r.manquants, ...(r.divergents ?? [])].join(', ')}`}`);
     }
     console.error('');
     console.error('Soit la migration doit etre appliquee, soit son absence est');

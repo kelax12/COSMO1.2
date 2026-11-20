@@ -53,6 +53,21 @@ describe('schema-prod : comparaison objet par objet', () => {
     expect(t).toContain('<<< prod FUNCTION public.f()\nCREATE FUNCTION public.f() RETURNS int LANGUAGE sql AS $$ select 2 $$;\n>>>');
   });
 
+  it('TÉMOIN : une fonction présente d un seul côté est un écart, dans les deux sens (262)', () => {
+    const g = bloc('g()', 'FUNCTION', 'CREATE FUNCTION public.g() RETURNS int LANGUAGE sql AS $$ select 2 $$;');
+    const avec = DUMP.replace('-- ─── Objets', () => g + '-- ─── Objets');
+    expect(ecarts(avec, DUMP).seulementDepot).toEqual(['FUNCTION public.g()']);
+    expect(ecarts(DUMP, avec).seulementProd).toEqual(['FUNCTION public.g()']);
+  });
+
+  it('TÉMOIN : une migration en attente est un écart, que sa base fraîche ne bâtit pas (262)', () => {
+    const e = ecarts(DUMP, DUMP, ['262_dependances_taches_partagees.sql']);
+    expect([e.seulementProd, e.seulementDepot, e.differents]).toEqual([[], [], []]);
+    expect(e.enAttente).toEqual(['262_dependances_taches_partagees.sql']);
+    expect(rapport(e)).toContain('! 262_dependances_taches_partagees.sql');
+    expect(ecarts(DUMP, DUMP).enAttente).toEqual([]);
+  });
+
   it('les surcharges de même nom ne s écrasent pas', () => {
     const d = bloc('tasks', 'TABLE', 'CREATE TABLE public.tasks2 ();') + DUMP;
     expect(objets(d).has('TABLE public.tasks #2')).toBe(true);
