@@ -51,7 +51,7 @@ interface HabitWithPeriodCompletions extends Habit {
 // ═══════════════════════════════════════════════════════════════════
 //
 // `okrTime` se lit dans `kr_completions` (une ligne = une rep, cf.
-// `src/modules/okrs/supabase.repository.ts → recordKRReps`), jamais dans
+// `src/modules/okrs/kr-journal.supabase.repository.ts → recordKRReps`), jamais dans
 // `kr.history` : ce champ n'existe pas (absent de `KeyResult` et des mappers),
 // l'ancienne lecture rendait toujours un tableau vide et `okrTime` valait
 // structurellement zéro (page Statistiques, démo comme production). Il n'y a plus

@@ -9,6 +9,8 @@ import { IOKRsRepository } from './repository';
 import { OKR, CreateOKRInput, UpdateOKRInput, UpdateKeyResultInput, OKRFilters, KeyResult } from './types';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
+import { fetchKRsForOkrs, syncKRsToTable } from './key-results.supabase.repository';
+import { recordKRReps, removeKRReps, restoreCompletions } from './kr-journal.supabase.repository';
 import { fetchAllPages, MAX_ROWS } from '@/lib/fetch-all-pages';
 // Source unique du calcul de progression OKR — fonction pure testable.
 import { recalcProgress } from './progress';
@@ -17,11 +19,9 @@ import {
   OKRRow,
   KRRow,
   mapKRFromDb,
-  mapKRToDb,
   mapOkrFromDb,
   mapOkrToDb,
 } from './mappers';
-import { MAX_REPS_PER_WRITE } from '@/modules/kr-completions/constants';
 import type { KRCompletion } from '@/modules/kr-completions/types';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -33,112 +33,6 @@ const isUuid = (id: string): boolean => UUID_REGEX.test(id);
 // dans ./mappers. recalcProgress = fonction pure dans ./progress.
 
 export class SupabaseOKRsRepository implements IOKRsRepository {
-
-  // ─── Fetch KRs from dedicated table, fallback to JSONB ──────────────────
-
-  private async fetchKRsForOkrs(okrRows: OKRRow[]): Promise<Map<string, KeyResult[]>> {
-    if (!supabase || okrRows.length === 0) return new Map();
-
-    const db = supabase;
-    const okrIds = okrRows.map(r => r.id);
-    // PER-01 : par pages `.range`. Sans elles, PostgREST plafonne en silence à
-    // son `max-rows` (1 000) et des KR disparaissaient sans erreur ; le plafond
-    // `MAX_ROWS` est signalé par `warnIfTruncated`. Une erreur garde le repli.
-    let data: KRRow[] | null;
-    try {
-      const raw = await fetchAllPages(async (from, to) => {
-        const { data: page, error } = await db
-          .from('key_results')
-          .select('*')
-          .in('okr_id', okrIds)
-          .order('created_at', { ascending: true })
-          .order('id', { ascending: true })
-          .range(from, to);
-        if (error) throw error;
-        return (page || []) as KRRow[];
-      });
-      data = warnIfTruncated(raw, MAX_ROWS, 'key_results');
-    } catch {
-      data = null;
-    }
-
-    const krMap = new Map<string, KeyResult[]>();
-
-    if (!data || data.length === 0) {
-      // Fallback: use JSONB data from okrs table
-      for (const row of okrRows) {
-        krMap.set(row.id, row.key_results || []);
-      }
-      return krMap;
-    }
-
-    for (const kr of data as KRRow[]) {
-      const list = krMap.get(kr.okr_id) ?? [];
-      list.push(mapKRFromDb(kr));
-      krMap.set(kr.okr_id, list);
-    }
-
-    // For OKRs with no rows in key_results table, fallback to JSONB.
-    // KR créés ensemble partagent `created_at` : le départage par `id` (uuid)
-    // est aléatoire, l'ordre saisi est celui du JSONB `okrs.key_results`.
-    for (const row of okrRows) {
-      const list = krMap.get(row.id);
-      if (list && row.key_results?.length) {
-        const pos = new Map(row.key_results.map((k, i) => [k.id, i]));
-        list.sort((x, y) => (pos.get(x.id) ?? Infinity) - (pos.get(y.id) ?? Infinity));
-      }
-      if (!krMap.has(row.id)) {
-        krMap.set(row.id, row.key_results || []);
-      }
-    }
-
-    return krMap;
-  }
-
-  // ─── Sync KRs to dedicated table (upsert) ───────────────────────────────
-
-  private async syncKRsToTable(okrId: string, userId: string, keyResults: KeyResult[]): Promise<void> {
-    if (!supabase) return;
-
-    // Faille B6 — `upsert` alone never DELETEs KRs removed client-side; the
-    // orphaned rows then reappear on the next read via `fetchKRsForOkrs`.
-    // Mirror the canonical state: (1) upsert the new/updated rows, then
-    // (2) delete any rows in `key_results` whose id is no longer present.
-    if (keyResults.length > 0) {
-      const rows = keyResults.map(kr => mapKRToDb(kr, okrId, userId));
-      const { error: upsertError } = await supabase
-        .from('key_results')
-        .upsert(rows, { onConflict: 'id' });
-      if (upsertError) throw normalizeApiError(upsertError);
-
-      // M-1 — Validate every KR id is a UUID before interpolating into the
-      // PostgREST `not.in.(...)` filter. A crafted id like `aaa","bbb")` would
-      // break the closing paren and either neutralize the filter (orphans
-      // never deleted) or tautologize it (data loss). RLS scopes us to our
-      // own rows so impact is auto-DoS, but the contract is "never inline
-      // client-controlled strings into PostgREST filters".
-      const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      const keepIds = keyResults.map(kr => kr.id);
-      if (keepIds.some(id => !UUID_RE.test(id))) {
-        throw makeApiError('invalid_input');
-      }
-      const { error: deleteError } = await supabase
-        .from('key_results')
-        .delete()
-        .eq('okr_id', okrId)
-        .eq('user_id', userId)
-        .not('id', 'in', `(${keepIds.map(id => `"${id}"`).join(',')})`);
-      if (deleteError) throw normalizeApiError(deleteError);
-    } else {
-      // All KRs removed → drop every row for this OKR.
-      const { error } = await supabase
-        .from('key_results')
-        .delete()
-        .eq('okr_id', okrId)
-        .eq('user_id', userId);
-      if (error) throw normalizeApiError(error);
-    }
-  }
 
   // ═══════════════════════════════════════════════════════════════════
   // READ OPERATIONS
@@ -160,7 +54,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
     });
 
     const rows = warnIfTruncated(raw, MAX_ROWS, 'okrs');
-    const krMap = await this.fetchKRsForOkrs(rows);
+    const krMap = await fetchKRsForOkrs(rows);
     return rows.map(row => mapOkrFromDb(row, krMap.get(row.id) ?? []));
   }
 
@@ -197,7 +91,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
     const hasMore = rows.length > limit;
     const items = hasMore ? rows.slice(0, limit) : rows;
     const lastItem = items[items.length - 1];
-    const krMap = await this.fetchKRsForOkrs(items);
+    const krMap = await fetchKRsForOkrs(items);
 
     return {
       data: items.map(row => mapOkrFromDb(row, krMap.get(row.id) ?? [])),
@@ -222,7 +116,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
     if (!data) return null;
 
     const row = data as OKRRow;
-    const krMap = await this.fetchKRsForOkrs([row]);
+    const krMap = await fetchKRsForOkrs([row]);
     return mapOkrFromDb(row, krMap.get(row.id) ?? []);
   }
 
@@ -236,7 +130,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
 
     if (error) throw normalizeApiError(error);
     const rows = (data || []) as OKRRow[];
-    const krMap = await this.fetchKRsForOkrs(rows);
+    const krMap = await fetchKRsForOkrs(rows);
     return rows.map(row => mapOkrFromDb(row, krMap.get(row.id) ?? []));
   }
 
@@ -253,7 +147,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
     if (error) throw normalizeApiError(error);
 
     const rows = (data || []) as OKRRow[];
-    const krMap = await this.fetchKRsForOkrs(rows);
+    const krMap = await fetchKRsForOkrs(rows);
     return rows.map(row => mapOkrFromDb(row, krMap.get(row.id) ?? []));
   }
 
@@ -287,7 +181,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
 
     // Sync KRs to dedicated table
     if (input.keyResults?.length) {
-      await this.syncKRsToTable(row.id, user.id, input.keyResults);
+      await syncKRsToTable(row.id, user.id, input.keyResults);
 
       // Journal append-only : on N'enregistre PAS la valeur initiale d'un KR à
       // la création. `currentValue` de départ = état de base (progression
@@ -327,7 +221,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
     if (updates.keyResults) {
       const user = await getCurrentUser();
       if (user) {
-        await this.syncKRsToTable(id, user.id, updates.keyResults);
+        await syncKRsToTable(id, user.id, updates.keyResults);
       }
 
       // Journal append-only : 1 ligne = 1 rep. Enregistre delta reps pour
@@ -337,14 +231,14 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
         const previousValue = previous?.currentValue ?? 0;
         const delta = Math.round(kr.currentValue - previousValue);
         if (delta > 0) {
-          await this.recordKRReps(id, kr, row.title, delta);
+          await recordKRReps(id, kr, row.title, delta);
         } else if (delta < 0) {
-          await this.removeKRReps(kr.id, -delta);
+          await removeKRReps(kr.id, -delta);
         }
       }
     }
 
-    const krMap = await this.fetchKRsForOkrs([row]);
+    const krMap = await fetchKRsForOkrs([row]);
     return mapOkrFromDb(row, krMap.get(row.id) ?? []);
   }
 
@@ -445,115 +339,18 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
     if (updatedKr) {
       const delta = Math.round(updatedKr.currentValue - previousCurrentValue);
       if (delta > 0) {
-        await this.recordKRReps(okrId, updatedKr, (data as OKRRow).title, delta);
+        await recordKRReps(okrId, updatedKr, (data as OKRRow).title, delta);
       } else if (delta < 0) {
-        await this.removeKRReps(updatedKr.id, -delta);
+        await removeKRReps(updatedKr.id, -delta);
       }
     }
 
     return mapOkrFromDb(data as OKRRow, keyResults);
   }
 
-  /**
-   * Append-only : enregistre `count` reps réalisées pour ce KR dans
-   * kr_completions. 1 ligne = 1 rep ; toutes timestampées à l'instant
-   * de l'update (pas de notion d'historique fin-grained par rep).
-   * Les erreurs sont propagées pour visibilité.
-   */
-  private async recordKRReps(okrId: string, kr: KeyResult, okrTitle: string, count: number): Promise<void> {
-    if (!supabase || count <= 0) return;
-    // Clamp the row count: a client setting currentValue to e.g. 100_000 would
-    // otherwise insert 100k rows in one call (storage abuse + dashboard
-    // overcount). Faille B18. La borne est PARTAGEE avec le repository
-    // localStorage (`@/modules/kr-completions/constants`) : elle avait diverge,
-    // seul ce chemin-ci clampait (audit A-2).
-    const safeCount = Math.min(count, MAX_REPS_PER_WRITE);
-    const user = await getCurrentUser();
-    if (!user) {
-      console.warn('recordKRReps: no auth user; KR journal entry skipped');
-      return;
-    }
-
-    const completedAt = new Date().toISOString();
-    const rows = Array.from({ length: safeCount }, () => ({
-      user_id: user.id,
-      kr_id: kr.id,
-      okr_id: okrId,
-      completed_at: completedAt,
-      kr_title: kr.title,
-      okr_title: okrTitle,
-    }));
-
-    const { error } = await supabase.from('kr_completions').insert(rows);
-    if (error) throw normalizeApiError(error);
-  }
-
-  /**
-   * C-01 — rejoue le journal d'un OKR restauré. Contrat et raison dans
-   * `IOKRsRepository.restoreCompletions`.
-   *
-   * ⚠️ Les horodatages d'ORIGINE sont conservés, contrairement à
-   * `recordKRReps` qui timestampe à l'instant : c'est tout l'intérêt. Les
-   * réécrire à `now()` remettrait les N points d'un coup sur aujourd'hui, ce
-   * qui n'est pas restaurer un graphique mais en inventer un autre.
-   *
-   * ⚠️ `user_id` vient de la SESSION, jamais du tableau : restaurer ne doit
-   * pas devenir un chemin pour écrire dans le journal de quelqu'un d'autre.
-   * La RLS le vérifie de toute façon.
-   */
+  /** C-01 : voir `kr-journal.supabase.repository.ts` (contrat dans `IOKRsRepository.restoreCompletions`). */
   async restoreCompletions(completions: KRCompletion[]): Promise<void> {
-    if (!supabase || completions.length === 0) return;
-    const user = await getCurrentUser();
-    // C-62 — identifiant CATALOGUE, pas un littéral anglais. Les voisins de ce
-    // fichier écrivent encore `throw makeApiError('not_authenticated')`, et c'est
-    // exactement le tuyau que C-62 doit fermer : le message atterrit tel quel
-    // dans le gabarit français `mutation.*`. Ne pas en ajouter un de plus par
-    // \« parité \» avec un défaut.
-    if (!user) throw makeApiError('not_authenticated');
-
-    // Même borne que l'écriture normale (faille B18).
-    const rows = completions.slice(0, MAX_REPS_PER_WRITE).map((c) => ({
-      user_id: user.id,
-      kr_id: c.krId,
-      okr_id: c.okrId,
-      completed_at: c.completedAt,
-      kr_title: c.krTitle,
-      okr_title: c.okrTitle,
-    }));
-
-    const { error } = await supabase.from('kr_completions').insert(rows);
-    if (error) throw normalizeApiError(error);
-  }
-
-  /**
-   * Symétrique de recordKRReps : retire les `count` reps les plus récentes
-   * pour ce KR (ORDER BY completed_at DESC, LIMIT count). Appelé quand
-   * currentValue diminue, pour que le graphique dashboard reflète bien
-   * la décrémentation.
-   */
-  private async removeKRReps(krId: string, count: number): Promise<void> {
-    if (!supabase || count <= 0) return;
-    const safeCount = Math.min(count, MAX_REPS_PER_WRITE);
-    const user = await getCurrentUser();
-    if (!user) return;
-
-    const { data: rows, error: selectErr } = await supabase
-      .from('kr_completions')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('kr_id', krId)
-      .order('completed_at', { ascending: false })
-      .limit(safeCount);
-    if (selectErr) throw normalizeApiError(selectErr);
-    if (!rows || rows.length === 0) return;
-
-    const ids = rows.map((r: { id: string }) => r.id);
-    const { error: deleteErr } = await supabase
-      .from('kr_completions')
-      .delete()
-      .in('id', ids)
-      .eq('user_id', user.id);
-    if (deleteErr) throw normalizeApiError(deleteErr);
+    return restoreCompletions(completions);
   }
 
   // Fallback: update KR in JSONB when it's not yet in key_results table
@@ -583,7 +380,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
 
     // Sync to key_results table for future reads (ids sont maintenant tous des UUID)
     const user = await getCurrentUser();
-    if (user) await this.syncKRsToTable(okrId, user.id, okr.keyResults);
+    if (user) await syncKRsToTable(okrId, user.id, okr.keyResults);
 
     const { data, error } = await supabase
       .from('okrs')
@@ -598,9 +395,9 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
     const updatedKr = okr.keyResults[krIndex];
     const delta = Math.round(updatedKr.currentValue - previousCurrentValue);
     if (delta > 0) {
-      await this.recordKRReps(okrId, updatedKr, (data as OKRRow).title, delta);
+      await recordKRReps(okrId, updatedKr, (data as OKRRow).title, delta);
     } else if (delta < 0) {
-      await this.removeKRReps(updatedKr.id, -delta);
+      await removeKRReps(updatedKr.id, -delta);
     }
 
     return mapOkrFromDb(data as OKRRow, okr.keyResults);

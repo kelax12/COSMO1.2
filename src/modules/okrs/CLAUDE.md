@@ -5,7 +5,7 @@ Règles transversales : [`../CLAUDE.md`](../CLAUDE.md).
 
 ## Journal append-only `kr_completions`
 
-- 🔴 Quand un KR passe `completed: false → true`, les DEUX repositories insèrent une ligne dans `kr_completions` : `local.repository.ts → updateKeyResult` et `supabase.repository.ts → recordKRCompletion()` (appelé par `updateKeyResult` ET `updateKeyResultViaJsonb`). Sans elle le graphique du Dashboard reste à 0 en prod. ❌ Modifier sans vérifier le graphique, démo ET prod.
+- 🔴 Quand un KR passe `completed: false → true`, les DEUX repositories insèrent une ligne dans `kr_completions` : `local.repository.ts → updateKeyResult` et `kr-journal.supabase.repository.ts → recordKRReps()` (appelé par `updateKeyResult` ET `updateKeyResultViaJsonb` de `supabase.repository.ts`). Sans elle le graphique du Dashboard reste à 0 en prod. ❌ Modifier sans vérifier le graphique, démo ET prod.
 - ❌ Valider un calcul à deux implémentations (cliente, SQL) sur la seule démo.
 - 🔴 La démo rejoue les cascades de la base : supprimer un OKR (`okr_id`) ou retirer un KR à l'édition (`kr_id`, mig. `037`) purge ses lignes (`dropJournal`). Sans elle, « Annuler » doublait le journal. Contrat : `src/test/contracts/__test__/okrs.contract.ts`.
 
@@ -18,6 +18,6 @@ Règles transversales : [`../CLAUDE.md`](../CLAUDE.md).
 
 `kr_completions` cascade depuis `okrs` ET `key_results`. `useRestoreOkrWithJournal` (`restore-journal.hooks.ts`) capture les lignes AVANT le `delete`, recrée l'objectif sous SON id, puis rejoue le journal : l'ordre est impératif (un id neuf orpheline chaque ligne).
 
-- 🔴 L'écriture appartient au REPOSITORY (`restoreCompletions`), à côté de `recordKRReps` ; ❌ un `create()` client (INSERT libre dans un journal append-only). La borne `MAX_REPS_PER_WRITE` (B18, cap 100/write) vit avec lui, jamais dupliquée dans le hook.
+- 🔴 L'écriture appartient au REPOSITORY (`restoreCompletions`, dans `kr-journal.supabase.repository.ts`), à côté de `recordKRReps` ; ❌ un `create()` client (INSERT libre dans un journal append-only). La borne `MAX_REPS_PER_WRITE` (B18, cap 100/write) vit avec lui, jamais dupliquée dans le hook.
 - ⚠️ Les ids des lignes de journal ne sont pas restaurés, voulu : seul le contenu (`kr_id`, `okr_id`, `completed_at`) alimente le graphique.
 - ❌ Documenter une perte de données comme « limite acceptée » : un trou documenté reste un trou.
