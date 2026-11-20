@@ -73,8 +73,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # SANS secret : seul job qui touche au SHA du run. Il en extrait les fichiers
-  # `supabase/migration/` (donnees inertes, jamais executees) et les passe en
+  # SANS secret : seul job qui touche au SHA du run, sans checkout. Il en lit les fichiers
+  # `supabase/migration/` par l'API (donnees inertes, jamais executees) et les passe en
   # artefact ; le job `migrations`, qui lit la prod, n'a plus aucun acces au SHA.
   depot:
     if: >-
@@ -83,22 +83,27 @@ jobs:
       github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-          filter: blob:none
-          persist-credentials: false
-
-      - name: Extraire les migrations du SHA (lecture seule, aucun secret)
+      # AUCUN checkout du SHA : la liste et les contenus passent par l'API
+      # (jeton en lecture), ecrits sous un chemin fixe, noms valides.
+      - name: Lire les migrations du SHA par l'API (lecture seule, aucun secret)
         env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
           SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           set -euo pipefail
           if ! [[ "$SHA" =~ ^[0-9a-f]{40}$ ]]; then echo "::error title=CI vert::SHA illisible : '$SHA'"; exit 1; fi
-          DEPOT="$RUNNER_TEMP/depot"; mkdir -p "$DEPOT"
-          git fetch --quiet --no-tags --filter=blob:none origin "$SHA" || { echo "::error title=CI vert::commit $SHA introuvable : migrations non lues."; exit 1; }
-          git archive "$SHA" supabase/migration | tar -x -C "$DEPOT" || { echo "::error title=CI vert::migrations de $SHA illisibles."; exit 1; }
-          test -n "$(ls "$DEPOT/supabase/migration")" || { echo "::error title=CI vert::aucune migration dans $SHA."; exit 1; }
+          DEPOT="$RUNNER_TEMP/depot/supabase/migration"; mkdir -p "$DEPOT"
+          gh api "repos/$REPO/contents/supabase/migration?ref=$SHA" --jq '.[] | select(.type == "file") | "\(.sha) \(.name)"' > "$RUNNER_TEMP/liste.txt" || { echo "::error title=CI vert::migrations de $SHA illisibles."; exit 1; }
+          N=0
+          while read -r BLOB NOM; do
+            [[ "$BLOB" =~ ^[0-9a-f]{40}$ ]] || { echo "::error title=CI vert::identifiant de blob illisible."; exit 1; }
+            [[ "$NOM" =~ \.sql$ ]] || continue
+            [[ "$NOM" =~ ^[0-9]+[a-z]?_[A-Za-z0-9_.-]+\.sql$ ]] || { echo "::error title=CI vert::nom de migration inattendu."; exit 1; }
+            gh api -H "Accept: application/vnd.github.raw+json" "repos/$REPO/git/blobs/$BLOB" > "$DEPOT/$NOM" || { echo "::error title=CI vert::contenu de $NOM illisible."; exit 1; }
+            N=$((N + 1))
+          done < "$RUNNER_TEMP/liste.txt"
+          test "$N" -gt 0 || { echo "::error title=CI vert::aucune migration dans $SHA."; exit 1; }
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:

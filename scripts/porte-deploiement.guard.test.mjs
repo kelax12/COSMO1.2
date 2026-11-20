@@ -258,11 +258,11 @@ describe('porte · ci-vert.yml · migrations en production (CI-05)', () => {
     expect(tag).not.toContain('SUPABASE_DB_URL')
     expect(porte).toContain('COSMO_MIGRATION_DIR="$DEPOT/supabase/migration"')
     expect(porte).toContain('check-migration-coverage.mjs "$RUNNER_TEMP/introspection.json" --sens=depot')
-    expect(depot).toContain('git archive "$SHA" supabase/migration')
+    expect(depot).toContain('contents/supabase/migration?ref=$SHA')
   })
 
   it('TEMOIN : seul `depot` touche au SHA, sans secret ; `migrations` ne lit que l artefact (CodeQL actions/untrusted-checkout)', () => {
-    expect(depot).not.toMatch(/secrets./); expect(depot).toContain('upload-artifact'); expect(depot).toContain('persist-credentials: false')
+    expect(depot).not.toMatch(/secrets./); expect(depot).toContain('upload-artifact'); expect(depot).not.toContain('actions/checkout'); expect(depot).not.toMatch(/git (fetch|archive)/)
     expect(porte).not.toMatch(/git (fetch|archive)|head_sha|$SHA/); expect(wf).toMatch(/download-artifact@\S+ # v[\d.]+\n {8}with:\n {10}name: migrations-depot/)
   })
 

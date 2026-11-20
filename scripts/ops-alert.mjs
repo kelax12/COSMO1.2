@@ -131,14 +131,11 @@ export function annoter(niveau, message, proprietes = '') {
   console.log(`::${niveau}${proprietes ? ` ${proprietes}` : ''}::${echapperAnnotation(message)}`);
 }
 
-/** Ajoute au résumé d'étape (`GITHUB_STEP_SUMMARY`) ; un résumé est un confort, jamais une condition du verdict. */
+/** Ajoute au résumé d'étape (`GITHUB_STEP_SUMMARY`), reconstruit point de code par point de code (borné, sans contrôle ni bidi : rien de brut venu du réseau) ; un résumé est un confort, jamais une condition du verdict. */
 export function ecrireResume(texte, env = process.env) {
   if (!env.GITHUB_STEP_SUMMARY) return;
-  try {
-    appendFileSync(env.GITHUB_STEP_SUMMARY, texte);
-  } catch {
-    /* le résumé ne décide de rien */
-  }
+  const propre = [...String(texte).slice(0, 60000)].map((c) => c.codePointAt(0)).filter((cp) => cp === 10 || (cp >= 32 && cp < 127) || (cp >= 0xa0 && !(cp >= 0x200b && cp <= 0x200f) && !(cp >= 0x202a && cp <= 0x202e) && !(cp >= 0x2066 && cp <= 0x2069))).map((cp) => String.fromCodePoint(cp)).join('');
+  try { appendFileSync(env.GITHUB_STEP_SUMMARY, propre); } catch { /* le résumé ne décide de rien */ }
 }
 
 /** Appel JSON sur l'API REST de GitHub (`repos/<repo><chemin>`). `204` rend `null`. */
