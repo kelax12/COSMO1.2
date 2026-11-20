@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router';
-import { CircleCheck, ChevronRight, FolderKanban, Target, Users } from 'lucide-react';
+import { CircleCheck, ChevronRight, FolderKanban, Users } from 'lucide-react';
+import { OkrIcon } from '@/components/icons/cosmo-icons';
 import { useT } from '@/i18n/useT';
 import { buildOrgLink } from './deep-link.helpers';
 
@@ -26,7 +27,7 @@ const NewcomerHints = () => {
   const hints: { id: string; label: string; tab: string; Icon: typeof FolderKanban }[] = [
     { id: 'projects', label: tOrgAdmin('myWork.hintProjects'), tab: 'projects', Icon: FolderKanban },
     { id: 'members', label: tOrgAdmin('myWork.hintMembers'), tab: 'members', Icon: Users },
-    { id: 'okr', label: tOrgAdmin('myWork.hintOkr'), tab: 'okr', Icon: Target },
+    { id: 'okr', label: tOrgAdmin('myWork.hintOkr'), tab: 'okr', Icon: OkrIcon },
   ];
   return (
     <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4 max-md:rounded-none max-md:border-0 max-md:bg-transparent max-md:px-0 max-md:py-2">

@@ -1,5 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { BarChart3, Check, Clock, Flame, Target } from 'lucide-react';
+import { BarChart3, Check, Clock, Flame } from 'lucide-react';
+import { OkrIcon } from '@/components/icons/cosmo-icons';
 import { useT } from '@/i18n/useT';
 import { formatDate } from '@/i18n/format';
 import { PLANET_COLOR, PLANETS, type Planet } from './orrery-geometry';
@@ -258,7 +259,7 @@ const PersoPreview = ({
           <div className="mt-4 rounded-xl border border-[var(--onb-tint-okr-line)] bg-[var(--onb-tint-okr)] px-3.5 py-3">
             <p className="flex items-center justify-between gap-3 text-label">
               <span className={`flex min-w-0 items-center gap-2 ${keyResult ? 'text-[var(--onb-ink)]' : 'text-[var(--onb-faint)]'}`}>
-                <Target size={14} className="shrink-0" style={{ color: text.okr }} />
+                <OkrIcon size={14} className="shrink-0" style={{ color: text.okr }} />
                 <span className="truncate">{keyResult || t('perso.okr.previewKrFallback')}</span>
               </span>
               <span className="shrink-0 font-data text-caption text-[var(--onb-muted)]">{`0 / ${targetLabel}`}</span>

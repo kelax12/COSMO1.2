@@ -1,6 +1,7 @@
 import { Suspense, useMemo, useState, type CSSProperties } from 'react';
 import { Link } from 'react-router';
-import { CalendarPlus, Pencil, Trash2, FolderKanban, Target, ChevronRight, ChevronDown, ChevronUp, MoreHorizontal } from 'lucide-react';
+import { CalendarPlus, Pencil, Trash2, FolderKanban, ChevronRight, ChevronDown, ChevronUp, MoreHorizontal } from 'lucide-react';
+import { OkrIcon } from '@/components/icons/cosmo-icons';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { startOfDay, subDays } from 'date-fns';
 import { useOrgTeams, useOrgTeamMembers } from '@/modules/org-teams';
@@ -272,7 +273,7 @@ const TeamPage = ({ orgId, teamId, members, currentUserId, isAdmin }: TeamPagePr
 
           <section aria-labelledby="team-okr-title" className="pb-5">
             <h3 id="team-okr-title" className={sectionLabelClass}>
-              <Target size={16} aria-hidden="true" />
+              <OkrIcon size={16} aria-hidden="true" />
               {t('teamPage.okrTitle')}
             </h3>
             {teamOkrs.length === 0 ? (

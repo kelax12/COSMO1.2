@@ -8,9 +8,10 @@ import { currentInLanguage } from '@/lib/useSeoMeta';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
 import {
-  CheckSquare, Calendar, Repeat, Target, BarChart2,
+  CheckSquare, Calendar, BarChart2,
   Rocket, Lightbulb, CircleDot, List, Building2,
 } from 'lucide-react';
+import { HabitIcon, OkrIcon } from '@/components/icons/cosmo-icons';
 
 // ─── Types ────────────────────────────────────────────────────────────
 export type SectionId = 'demarrage' | 'taches' | 'listes' | 'agenda' | 'habitudes' | 'okr' | 'statistiques' | 'entreprise';
@@ -34,8 +35,8 @@ export const NAV_ITEMS: NavItem[] = [
   { id: 'taches',       labelKey: 'nav.taches',       icon: <CheckSquare size={16} />, color: '#3b82f6' },
   { id: 'listes',       labelKey: 'nav.listes',       icon: <List size={16} />,        color: '#3b82f6' },
   { id: 'agenda',       labelKey: 'nav.agenda',       icon: <Calendar size={16} />,    color: '#ef4444' },
-  { id: 'habitudes',    labelKey: 'nav.habitudes',    icon: <Repeat size={16} />,      color: '#eab308' },
-  { id: 'okr',          labelKey: 'nav.okr',          icon: <Target size={16} />,      color: '#22c55e' },
+  { id: 'habitudes',    labelKey: 'nav.habitudes',    icon: <HabitIcon size={16} />,      color: '#eab308' },
+  { id: 'okr',          labelKey: 'nav.okr',          icon: <OkrIcon size={16} />,      color: '#22c55e' },
   { id: 'statistiques', labelKey: 'nav.statistiques', icon: <BarChart2 size={16} />,   color: '#8b5cf6' },
   { id: 'entreprise',   labelKey: 'nav.entreprise',   icon: <Building2 size={16} />,   color: '#6366f1' },
 ];

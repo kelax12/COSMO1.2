@@ -1,7 +1,8 @@
 import OkrPickerMenu from '@/components/OkrPickerMenu';
 import { useState } from 'react';
 import { format, parseISO } from 'date-fns';
-import { AlarmClock, Gauge, Target } from 'lucide-react';
+import { AlarmClock, Gauge } from 'lucide-react';
+import { OkrIcon } from '@/components/icons/cosmo-icons';
 import { safeGetItem, safeSetItem } from '@/lib/safe-json';
 import type { TeamTask } from '@/modules/team-projects';
 import { getDateLocale } from '@/i18n/format';
@@ -175,7 +176,7 @@ export const OkrsWidget = ({ size, rows, onOpen }: {
   const average = rows.length ? Math.round(rows.reduce((s, r) => s + r.progress, 0) / rows.length) : 0;
   return (
     <WidgetShell
-      icon={Target}
+      icon={OkrIcon}
       title={t('apercu.widgets.names.companyOkrs')}
       titleControl={rows.length > 0 ? (
         <div className="flex min-w-0">

@@ -7,11 +7,9 @@ import {
   LayoutDashboard,
   CheckSquare,
   Calendar,
-  Target,
   BarChart2,
   Crown,
   Settings,
-  Repeat,
   Eye,
   EyeOff,
   Building2,
@@ -19,6 +17,7 @@ import {
   Bug,
   Check } from
   'lucide-react';
+import { HabitIcon, OkrIcon } from '@/components/icons/cosmo-icons';
 import Logo from './Logo';
 import ThemeToggle from './ThemeToggle';
 import { Button } from '@/components/ui/button';
@@ -249,10 +248,10 @@ const NavItems = () =>
       <NavItemLink to="/agenda" guideId="perso-nav-agenda" label={t('nav.agenda')} icon={<Calendar size={20} aria-hidden="true" />}
           hoverColor={CHART_COLORS.events} collapsed={isCollapsed} showLabel={showLabels} />
 
-      <NavItemLink to="/okr" guideId="perso-nav-okr" label={t('nav.okr')} icon={<Target size={20} aria-hidden="true" />}
+      <NavItemLink to="/okr" guideId="perso-nav-okr" label={t('nav.okr')} icon={<OkrIcon size={20} aria-hidden="true" />}
           hoverColor={CHART_COLORS.okrs} collapsed={isCollapsed} showLabel={showLabels} />
 
-      <NavItemLink to="/habits" guideId="perso-nav-habits" label={t('nav.habits')} icon={<Repeat size={20} aria-hidden="true" />}
+      <NavItemLink to="/habits" guideId="perso-nav-habits" label={t('nav.habits')} icon={<HabitIcon size={20} aria-hidden="true" />}
           hoverColor={CHART_COLORS.habits} collapsed={isCollapsed} showLabel={showLabels} />
 
       <NavItemLink to="/statistics" label={t('nav.statistics')} icon={<BarChart2 size={20} aria-hidden="true" />}

@@ -5,11 +5,9 @@ import {
   LayoutDashboard,
   CheckSquare,
   Calendar,
-  Target,
   TrendingUp,
   Settings as SettingsIcon,
   Crown,
-  Repeat,
   Moon,
   MoonStar,
   Circle,
@@ -24,6 +22,7 @@ import {
   Building2,
   Crosshair,
 } from 'lucide-react';
+import { HabitIcon, OkrIcon } from '@/components/icons/cosmo-icons';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useDarkMode } from '@/hooks/useDarkMode';
 import { useAuth } from '@/modules/auth/AuthContext';
@@ -58,7 +57,7 @@ interface PaletteCommand {
 const ORG_SEARCH_ICON: Record<OrgSearchKind, typeof CheckSquare> = {
   project: FolderKanban,
   task: CheckSquare,
-  okr: Target,
+  okr: OkrIcon,
   kr: Crosshair,
   member: UserRound,
   team: UsersRound,
@@ -159,7 +158,7 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
         <CommandGroup heading="Habitudes">
           {matchedHabits.map((h) => (
             <CommandItem key={`habit-${h.id}`} value={`habit-${h.id}`} onSelect={() => go('/habits')}>
-              <Repeat size={16} aria-hidden="true" />
+              <HabitIcon size={16} aria-hidden="true" />
               <span>{h.name}</span>
             </CommandItem>
           ))}
@@ -182,7 +181,7 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
         <CommandGroup heading="Objectifs">
           {matchedOkrs.map((o) => (
             <CommandItem key={`okr-${o.id}`} value={`okr-${o.id}`} onSelect={() => go('/okr', { selectedOKRId: o.id })}>
-              <Target size={16} aria-hidden="true" />
+              <OkrIcon size={16} aria-hidden="true" />
               <span>{o.title}</span>
             </CommandItem>
           ))}
@@ -238,8 +237,8 @@ export function CommandPalette() {
       { id: 'nav-dashboard', label: ov.t('palette.goHome'), group: ov.t('palette.groupNavigation'), icon: <LayoutDashboard size={16} />, run: nav('/dashboard'), keywords: ['dashboard', 'accueil', 'home', 'tableau de bord'] },
       { id: 'nav-tasks', label: ov.t('palette.goTasks'), group: ov.t('palette.groupNavigation'), icon: <CheckSquare size={16} />, run: nav('/tasks'), keywords: ['tasks', 'todo', 'todolist'] },
       { id: 'nav-agenda', label: ov.t('palette.goAgenda'), group: ov.t('palette.groupNavigation'), icon: <Calendar size={16} />, run: nav('/agenda'), keywords: ['calendar', 'événements', 'events'] },
-      { id: 'nav-habits', label: ov.t('palette.goHabits'), group: ov.t('palette.groupNavigation'), icon: <Repeat size={16} />, run: nav('/habits'), keywords: ['habits', 'routines'] },
-      { id: 'nav-okr', label: ov.t('palette.goOkr'), group: ov.t('palette.groupNavigation'), icon: <Target size={16} />, run: nav('/okr'), keywords: ['objectives', 'key results', 'objectifs'] },
+      { id: 'nav-habits', label: ov.t('palette.goHabits'), group: ov.t('palette.groupNavigation'), icon: <HabitIcon size={16} />, run: nav('/habits'), keywords: ['habits', 'routines'] },
+      { id: 'nav-okr', label: ov.t('palette.goOkr'), group: ov.t('palette.groupNavigation'), icon: <OkrIcon size={16} />, run: nav('/okr'), keywords: ['objectives', 'key results', 'objectifs'] },
       { id: 'nav-statistics', label: ov.t('palette.goStats'), group: ov.t('palette.groupNavigation'), icon: <TrendingUp size={16} />, run: nav('/statistics'), keywords: ['stats', 'analytics', 'analyses'] },
       { id: 'nav-settings', label: ov.t('palette.goSettings'), group: ov.t('palette.groupNavigation'), icon: <SettingsIcon size={16} />, run: nav('/settings'), keywords: ['settings', 'config', 'réglages'] },
       ...(PREMIUM_ENFORCED
@@ -258,7 +257,7 @@ export function CommandPalette() {
         { id: 'org-overview', label: ov.t('palette.goOrgOverview'), group: org, icon: <Building2 size={16} />, run: nav(buildOrgLink('overview')), keywords: ['entreprise', 'company', 'aperçu', 'overview', 'mon travail'] },
         { id: 'org-tasks', label: ov.t('palette.goOrgTasks'), group: org, icon: <CheckSquare size={16} />, run: nav(buildOrgLink('tasks')), keywords: ['entreprise', 'company', 'tâches', 'tasks'] },
         { id: 'org-projects', label: ov.t('palette.goOrgProjects'), group: org, icon: <FolderKanban size={16} />, run: nav(buildOrgLink('projects')), keywords: ['entreprise', 'company', 'projets', 'projects'] },
-        { id: 'org-okr', label: ov.t('palette.goOrgOkr'), group: org, icon: <Target size={16} />, run: nav(buildOrgLink('okr')), keywords: ['entreprise', 'company', 'okr', 'objectifs'] },
+        { id: 'org-okr', label: ov.t('palette.goOrgOkr'), group: org, icon: <OkrIcon size={16} />, run: nav(buildOrgLink('okr')), keywords: ['entreprise', 'company', 'okr', 'objectifs'] },
         { id: 'org-members', label: ov.t('palette.goOrgMembers'), group: org, icon: <UsersRound size={16} />, run: nav(buildOrgLink('members')), keywords: ['entreprise', 'company', 'membres', 'members', 'équipes', 'teams', 'inviter'] },
         { id: 'org-settings', label: ov.t('palette.goOrgSettings'), group: org, icon: <SettingsIcon size={16} />, run: nav(buildOrgLink('settings')), keywords: ['entreprise', 'company', 'paramètres', 'settings', 'profil', 'quitter', 'supprimer'] },
       );
@@ -291,7 +290,7 @@ export function CommandPalette() {
           id: 'action-create-habit',
           label: ov.t('palette.createHabit'),
           group: 'Actions',
-          icon: <Repeat size={16} />,
+          icon: <HabitIcon size={16} />,
           run: nav('/habits', { openCreate: true }),
           keywords: ['nouvelle', 'habitude', 'habit', 'routine', 'creer', 'ajouter'],
         },
@@ -299,7 +298,7 @@ export function CommandPalette() {
           id: 'action-create-okr',
           label: ov.t('palette.createObjective'),
           group: 'Actions',
-          icon: <Target size={16} />,
+          icon: <OkrIcon size={16} />,
           run: nav('/okr', { openCreate: true }),
           keywords: ['nouvel', 'objectif', 'okr', 'creer', 'ajouter'],
         },

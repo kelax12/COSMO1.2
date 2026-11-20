@@ -1,5 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { ChevronLeft, ChevronRight, CircleCheck, Download, FolderKanban, Target, UserRound, UsersRound } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CircleCheck, Download, FolderKanban, UserRound, UsersRound } from 'lucide-react';
+import { OkrIcon } from '@/components/icons/cosmo-icons';
 import type { OrgMember } from '@/modules/organizations';
 import { useMyOrgPermissions } from '@/modules/organizations';
 import { useOrgTeams, useOrgTeamMembers } from '@/modules/org-teams';
@@ -343,7 +344,7 @@ const OrgReportsSection = ({ orgId, members, currentUserId, initialTeamId }: Org
               )}
               {report.krs.length > 0 && (
                 <section className={card}>
-                  <BlockTitle Icon={Target}>{t('reports.krsTitle')}</BlockTitle>
+                  <BlockTitle Icon={OkrIcon}>{t('reports.krsTitle')}</BlockTitle>
                   <ul className="divide-y divide-[rgb(var(--color-border))]">
                     {report.krs.map((k) => (
                       <li key={k.id} className="py-2.5 text-sm">

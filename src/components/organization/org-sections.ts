@@ -1,6 +1,7 @@
 import type React from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { LayoutDashboard, Users, UsersRound, Settings, FolderKanban, Target, Network, BarChart3, ListTodo } from 'lucide-react';
+import { LayoutDashboard, Users, UsersRound, Settings, FolderKanban, Network, BarChart3, ListTodo } from 'lucide-react';
+import { OkrIcon } from '@/components/icons/cosmo-icons';
 import type { KeyOf } from '@/i18n/catalog';
 import type { OrgSectionSegment } from './deep-link.helpers';
 
@@ -42,7 +43,7 @@ export const ORG_SECTIONS: OrgSectionDef[] = [
   { id: 'overview', labelKey: 'tabs.overview', Icon: LayoutDashboard, group: 'mine' },
   { id: 'tasks', labelKey: 'tabs.tasks', Icon: ListTodo, group: 'mine' },
   { id: 'projects', labelKey: 'tabs.projects', Icon: FolderKanban, group: 'steer' },
-  { id: 'okr', labelKey: 'tabs.okr', Icon: Target, group: 'steer' },
+  { id: 'okr', labelKey: 'tabs.okr', Icon: OkrIcon, group: 'steer' },
   // #13 : statistiques collectives — admin (toute l'org) / manager (son périmètre).
   { id: 'stats', labelKey: 'tabs.stats', Icon: BarChart3, group: 'steer', managerOnly: true, hidden: true },
   // Masquée de la navigation (code et route conservés).

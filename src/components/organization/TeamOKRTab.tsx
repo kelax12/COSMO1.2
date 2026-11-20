@@ -2,7 +2,8 @@ import { OrgEmptyState } from './OrgPagePrimitives';
 import { OrgTabSkeleton } from './OrgLoadingSkeletons';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
-import { Plus, Target } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import { OkrIcon } from '@/components/icons/cosmo-icons';
 import {
   useTeamOKRs,
   useUpdateTeamKR,
@@ -180,7 +181,7 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
 
       {okrs.length === 0 ? (
         <OrgEmptyState
-          Icon={Target}
+          Icon={OkrIcon}
           title={tOrgAdmin('okrTab.empty')}
           body={can['okr.create'] ? tOrgAdmin('okrTab.emptyManager') : tOrgAdmin('okrTab.emptyMember')}
           action={can['okr.create'] ? (

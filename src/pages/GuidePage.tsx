@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useRef, useState, Suspense, lazy } from '
 import { useSeoMeta } from '@/lib/useSeoMeta';
 import { Link } from 'react-router';
 import {
-  CheckSquare, Calendar, Repeat, Target, BarChart2,
+  CheckSquare, Calendar, Repeat, BarChart2,
   Rocket, ArrowRight, ChevronRight, ChevronLeft, ChevronDown,
   BookOpen, Clock, Flag, Bookmark, Users, TrendingUp,
   Flame, Layers, Filter, Inbox, List,
@@ -10,6 +10,7 @@ import {
   ShieldCheck, UserPlus, BarChart3, Columns3, ListChecks, Link2,
   Sparkles, Pin, Share2, CalendarCheck, PauseCircle, Image, UsersRound
 } from 'lucide-react';
+import { HabitIcon, OkrIcon } from '@/components/icons/cosmo-icons';
 import TaskTableShowcase from '@/components/showcase/TaskTableShowcase';
 import AgendaShowcase from '@/components/showcase/AgendaShowcase';
 import OKRCardShowcase from '@/components/showcase/OKRCardShowcase';
@@ -342,7 +343,7 @@ const GuidePage: React.FC = () => {
             <section>
               <SectionHeader
                 id="habitudes"
-                icon={<Repeat size={24} />}
+                icon={<HabitIcon size={24} />}
                 color="#eab308"
                 title={t('habits.title')}
                 subtitle={t('habits.subtitle')}
@@ -406,7 +407,7 @@ const GuidePage: React.FC = () => {
             <section>
               <SectionHeader
                 id="okr"
-                icon={<Target size={24} />}
+                icon={<OkrIcon size={24} />}
                 color="#22c55e"
                 title={t('okr.title')}
                 subtitle={t('okr.subtitle')}
@@ -539,7 +540,7 @@ const GuidePage: React.FC = () => {
                 <FeatureRow icon={<FolderKanban size={15} />} label={t('entreprise.featProjects')}    desc={t('entreprise.featProjectsDesc')} />
                 <FeatureRow icon={<ListTodo size={15} />}     label={t('entreprise.featTasks')}       desc={t('entreprise.featTasksDesc')} />
                 <FeatureRow icon={<BadgeCheck size={15} />}   label={t('entreprise.featValidation')}  desc={t('entreprise.featValidationDesc')} />
-                <FeatureRow icon={<Target size={15} />}       label={t('entreprise.featOkr')}         desc={t('entreprise.featOkrDesc')} />
+                <FeatureRow icon={<OkrIcon size={15} />}       label={t('entreprise.featOkr')}         desc={t('entreprise.featOkrDesc')} />
                 <FeatureRow icon={<BarChart3 size={15} />}    label={t('entreprise.featReports')}     desc={t('entreprise.featReportsDesc')} />
                 <FeatureRow icon={<UserPlus size={15} />}     label={t('entreprise.featInvite')}      desc={t('entreprise.featInviteDesc')} />
               </div>

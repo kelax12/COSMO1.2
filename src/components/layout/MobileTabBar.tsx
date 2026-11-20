@@ -4,11 +4,11 @@ import {
   LayoutDashboard,
   CheckSquare,
   Calendar,
-  Repeat,
   Building2,
   MoreHorizontal,
   type LucideIcon,
 } from 'lucide-react';
+import { HabitIcon } from '@/components/icons/cosmo-icons';
 import { cn } from '@/lib/utils';
 import { prefetchRoute } from '@/lib/route-prefetch';
 import { usePendingRequestCount } from '@/modules/friends';
@@ -36,7 +36,7 @@ const TABS: TabConfig[] = [
   { to: '/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard, end: true },
   { to: '/tasks',     labelKey: 'nav.tasks',     icon: CheckSquare },
   { to: '/agenda',    labelKey: 'nav.agenda',    icon: Calendar },
-  { to: '/habits',    labelKey: 'nav.habits',    icon: Repeat },
+  { to: '/habits',    labelKey: 'nav.habits',    icon: HabitIcon },
 ];
 
 /**

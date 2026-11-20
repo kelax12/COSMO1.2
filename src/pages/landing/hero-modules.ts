@@ -13,7 +13,8 @@
 // rotation de la tuile. Ne pas le réordonner pour des raisons de mise en page :
 // la position à l'écran se règle par `cote` / `place`, pas en déplaçant une
 // ligne de ce tableau.
-import { CalendarDays, ListChecks, Repeat, Target, type LucideIcon } from 'lucide-react';
+import { CalendarDays, ListChecks, type LucideIcon } from 'lucide-react';
+import { HabitIcon, OkrIcon } from '@/components/icons/cosmo-icons';
 
 export interface ModuleHero {
   cle: 'tasks' | 'habits' | 'agenda' | 'okr';
@@ -49,7 +50,7 @@ export const MODULES_HERO: ModuleHero[] = [
   },
   {
     cle: 'habits',
-    Icone: Repeat,
+    Icone: HabitIcon,
     from: { tx: '-40px', ty: '-110px' },
     teinte: 'text-cyan-700 ring-cyan-500/30 bg-cyan-500/10',
     tuile: 'from-cyan-500 to-cyan-700',
@@ -69,7 +70,7 @@ export const MODULES_HERO: ModuleHero[] = [
   },
   {
     cle: 'okr',
-    Icone: Target,
+    Icone: OkrIcon,
     from: { tx: '120px', ty: '-70px' },
     teinte: 'text-fuchsia-700 ring-fuchsia-500/30 bg-fuchsia-500/10',
     tuile: 'from-fuchsia-500 to-fuchsia-700',

@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router';
-import { Target, TrendingUp } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
+import { OkrIcon } from '@/components/icons/cosmo-icons';
 import { useOkrs, KeyResult } from '@/modules/okrs';
 import { useCategories } from '@/modules/categories';
 import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
@@ -121,7 +122,7 @@ const ActiveOKRs = ({ limit = 3 }: ActiveOKRsProps) => {
               /* Empty state avec CTA (#16) : seul point de découverte des OKR
                  sur mobile (absents de la tab bar). */
               <EmptyState
-                icon={Target}
+                icon={OkrIcon}
                 title={t('okrs.empty.title')}
                 description={t('okrs.empty.description')}
                 actionLabel={t('okrs.empty.action')}

@@ -5,7 +5,8 @@
 // layout empilé classique (Framer whileInView), comme avant.
 import React, { Suspense, lazy, useEffect, useRef } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { CheckCircle, Calendar, Target, Repeat, ArrowRight, BarChart2 } from 'lucide-react';
+import { CheckCircle, Calendar, ArrowRight, BarChart2 } from 'lucide-react';
+import { HabitIcon, OkrIcon } from '@/components/icons/cosmo-icons';
 import type { LucideIcon } from 'lucide-react';
 import { gsap, ScrollTrigger, useGSAP } from '@/lib/gsap';
 import TaskTableShowcase from '@/components/showcase/TaskTableShowcase';
@@ -110,7 +111,7 @@ const FEATURES: Feature[] = [
   {
     id: 'okr',
     path: '/okr',
-    icon: Target,
+    icon: OkrIcon,
     gradient: 'from-green-500 to-emerald-500',
     shadow: 'shadow-green-500/30',
     glow: 'from-green-500/15 to-emerald-500/15',
@@ -121,7 +122,7 @@ const FEATURES: Feature[] = [
   {
     id: 'habits',
     path: '/habits',
-    icon: Repeat,
+    icon: HabitIcon,
     gradient: 'from-yellow-500 to-amber-500',
     shadow: 'shadow-yellow-500/30',
     glow: 'from-yellow-500/15 to-amber-500/15',

@@ -1,9 +1,10 @@
 import React from 'react';
 import {
   ArchiveRestore, BadgeCheck, BellRing, CalendarPlus, Copy, Download, Filter, KeyRound, Link2,
-  ListChecks, Rocket, ScrollText, Search, Target, Timer, UserCog, UserMinus, UsersRound, Webhook, Zap,
+  ListChecks, Rocket, ScrollText, Search, Timer, UserCog, UserMinus, UsersRound, Webhook, Zap,
   type LucideIcon,
 } from 'lucide-react';
+import { OkrIcon } from '@/components/icons/cosmo-icons';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
 import ScrollHighlight from './ScrollHighlight';
@@ -11,7 +12,7 @@ import { MORE_FEATURE_GROUPS, type MoreFeatureIcon } from './data';
 
 const ICONS: Record<MoreFeatureIcon, LucideIcon> = {
   ArchiveRestore, BadgeCheck, BellRing, CalendarPlus, Copy, Download, Filter, KeyRound, Link2,
-  ListChecks, Rocket, ScrollText, Search, Target, Timer, UserCog, UserMinus, UsersRound, Webhook, Zap,
+  ListChecks, Rocket, ScrollText, Search, Target: OkrIcon, Timer, UserCog, UserMinus, UsersRound, Webhook, Zap,
 };
 
 /**

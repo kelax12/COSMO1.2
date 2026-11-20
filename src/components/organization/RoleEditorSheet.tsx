@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { CheckSquare, Folder, Info, Target, X, type LucideIcon } from 'lucide-react';
+import { CheckSquare, Folder, Info, X, type LucideIcon } from 'lucide-react';
+import { OkrIcon } from '@/components/icons/cosmo-icons';
 import {
   ORG_ASSIGN_TARGETS,
   ROLE_COLORS,
@@ -30,7 +31,7 @@ const GROUPS = [
   { titleKey: 'customRoles.editor.groupProjects', Icon: Folder, keys: ['project.create', 'project.edit', 'project.delete'] },
   {
     titleKey: 'customRoles.editor.groupOther',
-    Icon: Target,
+    Icon: OkrIcon,
     keys: ['okr.create', 'okr.delete', 'category.manage', 'team.create', 'member.invite', 'report.org', 'report.allTeams', 'role.manage'],
   },
 ] as const satisfies readonly { titleKey: string; Icon: LucideIcon; keys: readonly OrgPermissionKey[] }[];

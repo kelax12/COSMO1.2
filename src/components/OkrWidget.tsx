@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router';
-import { Target } from 'lucide-react';
+import { OkrIcon } from '@/components/icons/cosmo-icons';
 import { useOkrs, recalcProgress } from '@/modules/okrs';
 import { useCategories } from '@/modules/categories';
 import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
@@ -40,7 +40,7 @@ const OkrWidget = ({ okrId, fallbackIndex, onSelect }: OkrWidgetProps) => {
     return (
       <div className="p-gutter md:p-6 rounded-2xl">
         <EmptyState
-          icon={Target}
+          icon={OkrIcon}
           title={t('okrs.empty.title')}
           description={t('okrs.empty.description')}
           actionLabel={t('okrs.empty.action')}

@@ -1,5 +1,6 @@
 import { format, parseISO } from 'date-fns';
-import { Activity, CalendarClock, ExternalLink, FolderKanban, Hourglass, Target } from 'lucide-react';
+import { Activity, CalendarClock, ExternalLink, FolderKanban, Hourglass } from 'lucide-react';
+import { OkrIcon } from '@/components/icons/cosmo-icons';
 import type { TeamTask } from '@/modules/team-projects';
 import type { OrgMember } from '@/modules/organizations';
 import { getDateLocale } from '@/i18n/format';
@@ -42,7 +43,7 @@ export const KrsCompact = ({ size, items, onOpen }: { size: CompactSize; items: 
   const { t } = useT('orgAdmin');
   const pager = usePager(items, perPage(size));
   return (
-    <WidgetShell icon={Target} title={t('apercu.widgets.names.krs')} count={items.length} pager={pager}>
+    <WidgetShell icon={OkrIcon} title={t('apercu.widgets.names.krs')} count={items.length} pager={pager}>
       {items.length === 0 ? <WidgetEmpty>{t('apercu.widgets.c.noKrs')}</WidgetEmpty> : (
         <ul className="space-y-3">
           {pager.slice.map(({ kr, okr, percent }) => {

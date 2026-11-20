@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Trash2, RotateCcw, Target, CheckSquare } from 'lucide-react';
+import { Trash2, RotateCcw, CheckSquare } from 'lucide-react';
+import { OkrIcon } from '@/components/icons/cosmo-icons';
 import {
   Dialog,
   DialogContent,
@@ -121,7 +122,7 @@ const TeamTrashDialog = ({ orgId, projects, members }: TeamTrashDialogProps) => 
           </DialogHeader>
           <ul data-guide-id="trash-list" className="max-h-80 overflow-y-auto divide-y divide-[rgb(var(--color-border))] rounded-xl border border-[rgb(var(--color-border))]">
             {rows.map((row) => {
-              const Icon = row.kind === 'task' ? CheckSquare : Target;
+              const Icon = row.kind === 'task' ? CheckSquare : OkrIcon;
               const key = `${row.kind}-${row.id}`;
               return (
                 <li key={key} className="flex items-center gap-3 px-3 py-2.5">

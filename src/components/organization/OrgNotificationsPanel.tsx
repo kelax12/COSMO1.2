@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { format, formatDistanceToNow, parseISO } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
-import { Bell, UserPlus, AtSign, AlarmClock, MessageSquare, ArrowRightLeft, Unlock, TriangleAlert, Target, CalendarPlus, CalendarX, Archive, Network, Settings2, Zap } from 'lucide-react';
+import { Bell, UserPlus, AtSign, AlarmClock, MessageSquare, ArrowRightLeft, Unlock, TriangleAlert, CalendarPlus, CalendarX, Archive, Network, Settings2, Zap } from 'lucide-react';
+import { OkrIcon } from '@/components/icons/cosmo-icons';
 import { useDeleteEvent } from '@/modules/events';
 import type { OrgMember, OrgNotification, OrgNotificationKind } from '@/modules/organizations';
 import { buildOrgLink } from './deep-link.helpers';
@@ -34,7 +35,7 @@ const KIND_META: Record<OrgNotificationKind, { Icon: typeof Bell; labelKey: KeyO
   status_changed: { Icon: ArrowRightLeft, labelKey: 'notifications.kindStatusChanged' },
   unblocked: { Icon: Unlock, labelKey: 'notifications.kindUnblocked' },
   project_at_risk: { Icon: TriangleAlert, labelKey: 'notifications.kindProjectAtRisk' },
-  kr_due: { Icon: Target, labelKey: 'notifications.kindKrDue' },
+  kr_due: { Icon: OkrIcon, labelKey: 'notifications.kindKrDue' },
   event_scheduled: { Icon: CalendarPlus, labelKey: 'notifications.kindEventScheduled' },
   // Mig. 164 (audit, étape 4).
   project_archived: { Icon: Archive, labelKey: 'notifications.kindProjectArchived' },

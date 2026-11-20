@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router';
-import { Target, BarChart2, Crown, Settings, LogOut, ChevronRight, Building2, Check, Plus, Bug, Repeat, Sparkles } from 'lucide-react';
+import { BarChart2, Crown, Settings, LogOut, ChevronRight, Building2, Check, Plus, Bug, Sparkles } from 'lucide-react';
+import { HabitIcon, OkrIcon } from '@/components/icons/cosmo-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { prefetchRoute } from '@/lib/route-prefetch';
@@ -56,13 +57,13 @@ interface SheetLink {
   labelKey: KeyOf<'common'>;
   /** Nom accessible, quand le libellé visible ne suffit pas (« Objectifs (OKR) »). */
   ariaLabelKey?: KeyOf<'common'>;
-  icon: typeof Target;
+  icon: typeof OkrIcon;
 }
 
 const links: SheetLink[] = [
   // Maquette 224 : « Objectifs », le nom de la page (le nom accessible garde
   // « OKR », cf. `ariaLabelKey`).
-  { to: '/okr',        labelKey: 'nav.objectives', icon: Target, ariaLabelKey: 'nav.objectivesAria' },
+  { to: '/okr',        labelKey: 'nav.objectives', icon: OkrIcon, ariaLabelKey: 'nav.objectivesAria' },
   { to: '/statistics', labelKey: 'nav.statistics', icon: BarChart2 },
   { to: '/premium',    labelKey: 'nav.premium',    icon: Crown     },
   { to: '/settings',   labelKey: 'nav.settings',   icon: Settings  },
@@ -84,7 +85,7 @@ const GroupLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 // à /habits pour un membre d'organisation. Ajoutée ICI, conditionnelle au
 // même déclencheur que le remplacement dans la barre — un compte SANS
 // organisation la voit déjà en barre du bas, l'y dupliquer ferait doublon.
-const habitsLink: SheetLink = { to: '/habits', labelKey: 'nav.habits', icon: Repeat };
+const habitsLink: SheetLink = { to: '/habits', labelKey: 'nav.habits', icon: HabitIcon };
 
 const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange }) => {
   const sheetMotion = useSheetMotion();

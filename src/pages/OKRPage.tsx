@@ -2,7 +2,8 @@ import React, { Suspense, useState, useEffect, useRef } from 'react';
 import { PageHeading } from '@/components/ui/typography';
 import { MobileHeader } from '@/components/mobile';
 import TouchTarget from '@/components/mobile/TouchTarget';
-import { Plus, Target, CheckCircle2 } from 'lucide-react';
+import { Plus, CheckCircle2 } from 'lucide-react';
+import { OkrIcon } from '@/components/icons/cosmo-icons';
 import { getColorHex } from '@/lib/category-colors';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router';
@@ -404,7 +405,7 @@ const OKRPage: React.FC = () => {
           className="flex flex-col items-center justify-center py-20 px-6 text-center"
         >
           <div className="w-20 h-20 rounded-2xl bg-green-50 dark:bg-green-500/10 flex items-center justify-center mb-6 border border-green-100 dark:border-green-400/20">
-            <Target className="w-10 h-10 text-green-500 dark:text-green-400" strokeWidth={1.75} />
+            <OkrIcon className="w-10 h-10 text-green-500 dark:text-green-400" strokeWidth={1.75} />
           </div>
           <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">
             {activeCategoryIds.size === 0

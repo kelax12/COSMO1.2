@@ -3,7 +3,8 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { PageHeading } from '@/components/ui/typography';
 import { MobileHeader } from '@/components/mobile';
-import { BarChart3, Target, CheckSquare, Repeat, CalendarDays, ChevronRight } from 'lucide-react';
+import { BarChart3, CheckSquare, CalendarDays, ChevronRight } from 'lucide-react';
+import { HabitIcon, OkrIcon } from '@/components/icons/cosmo-icons';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ReferenceLine } from 'recharts';
 import {
   ChartContainer,
@@ -239,8 +240,8 @@ export default function StatisticsPage() {
     { id: 'all', label: t('sections.all'), icon: BarChart3, color: '#8B5CF6' },
     { id: 'tasks', label: t('sections.tasks'), icon: CheckSquare, color: '#3B82F6' },
     { id: 'agenda', label: t('sections.agenda'), icon: CalendarDays, color: '#ef4444' },
-    { id: 'okr', label: t('sections.okr'), icon: Target, color: '#22C55E' },
-    { id: 'habits', label: t('sections.habits'), icon: Repeat, color: '#EAB308' },
+    { id: 'okr', label: t('sections.okr'), icon: OkrIcon, color: '#22C55E' },
+    { id: 'habits', label: t('sections.habits'), icon: HabitIcon, color: '#EAB308' },
   ];
 
   const periods = [

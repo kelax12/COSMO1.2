@@ -1,6 +1,7 @@
 // src/components/org-guide/OrgGuideDrawer.tsx
 import { useCallback, useMemo, useState } from 'react';
-import { ChevronDown, Folder, Lock, Play, Shield, Target, Users } from 'lucide-react';
+import { ChevronDown, Folder, Lock, Play, Shield, Users } from 'lucide-react';
+import { OkrIcon } from '@/components/icons/cosmo-icons';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,7 +11,7 @@ import { matchesGuideQuery } from './guide-search';
 import { GUIDE_ACTIONS, GUIDE_CATEGORIES } from './scenarios';
 import type { GuideAction, GuideCategory, GuideViewer } from './guide-types';
 
-const ICONS: Record<GuideCategory, typeof Folder> = { work: Folder, people: Users, roles: Shield, steer: Target };
+const ICONS: Record<GuideCategory, typeof Folder> = { work: Folder, people: Users, roles: Shield, steer: OkrIcon };
 
 interface Props {
   open: boolean;

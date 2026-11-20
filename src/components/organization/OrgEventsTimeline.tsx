@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { Target } from 'lucide-react';
+import { OkrIcon } from '@/components/icons/cosmo-icons';
 import { getDateLocale } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import { placeOrgEvents, type OrgEvent, type OrgEventUrgency, type PlacedOrgEvent } from './org-events.helpers';
@@ -83,7 +83,7 @@ const OrgEventsTimeline = ({ events }: OrgEventsTimelineProps) => {
               </div>
               {e.kind === 'okr' ? (
                 <span className="inline-flex items-center gap-1 text-caption font-semibold text-[rgb(var(--color-text-muted))]">
-                  <Target size={10} aria-hidden="true" /> OKR
+                  <OkrIcon size={10} aria-hidden="true" /> OKR
                 </span>
               ) : e.projectName ? (
                 <span className="text-caption text-[rgb(var(--color-text-muted))]">{e.projectName}</span>

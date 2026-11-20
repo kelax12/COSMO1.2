@@ -1,13 +1,14 @@
 // src/components/perso-guide/PersoGuideDrawer.tsx
 import { useMemo, useState } from 'react';
-import { Calendar, CheckSquare, ChevronDown, Play, Repeat, Target } from 'lucide-react';
+import { Calendar, CheckSquare, ChevronDown, Play } from 'lucide-react';
+import { HabitIcon, OkrIcon } from '@/components/icons/cosmo-icons';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { matchesGuideQuery } from '@/components/org-guide/guide-search';
 import type { GuideT } from '@/components/org-guide/use-guide-demo';
 import { PERSO_GUIDE_ACTIONS, PERSO_GUIDE_CATEGORIES, type PersoGuideAction, type PersoGuideCategory } from './scenarios';
 
-const ICONS: Record<PersoGuideCategory, typeof CheckSquare> = { tasks: CheckSquare, agenda: Calendar, habits: Repeat, okr: Target };
+const ICONS: Record<PersoGuideCategory, typeof CheckSquare> = { tasks: CheckSquare, agenda: Calendar, habits: HabitIcon, okr: OkrIcon };
 
 interface Props {
   open: boolean;

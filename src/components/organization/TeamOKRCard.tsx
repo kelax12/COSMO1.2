@@ -4,7 +4,8 @@
 // catégories ; la carte, la lecture d'UN objectif.
 
 import { useEffect, useState } from 'react';
-import { Target, Trash2, Pencil, Building2, CornerLeftUp } from 'lucide-react';
+import { Trash2, Pencil, Building2, CornerLeftUp } from 'lucide-react';
+import { OkrIcon } from '@/components/icons/cosmo-icons';
 import HealthStateMenu from './HealthStateMenu';
 import type { KRProjectLink, ProjectHealth, TeamKeyResult, TeamOKR } from '@/modules/team-okrs';
 import type { TeamProjectTaskStats } from '@/modules/team-projects';
@@ -252,7 +253,7 @@ const TeamOKRCard = ({
 
       {okr.keyResults.length === 0 ? (
         <p className="flex items-center gap-1.5 text-xs text-[rgb(var(--color-text-muted))]">
-          <Target size={12} aria-hidden="true" /> {pf('okrCard.noKr')}
+          <OkrIcon size={12} aria-hidden="true" /> {pf('okrCard.noKr')}
         </p>
       ) : (
         <div className="space-y-5">
