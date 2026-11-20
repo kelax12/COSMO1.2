@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 // C-119 · témoin : seul un défileur qui déborde devient un arrêt de tabulation nommé.
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { markScrollers } from './useFocusableScrollers';
 
 function scroller(overflowing: boolean): HTMLElement {
@@ -12,9 +12,21 @@ function scroller(overflowing: boolean): HTMLElement {
   return el;
 }
 
+// jsdom 31 suit la spec : un élément détaché du document n'a aucun style calculé
+// (`getComputedStyle(el).overflowY` rend ''). Un défileur n'est donc "défilant" que
+// monté dans le document, comme dans le navigateur : chaque arbre y est attaché.
+function mount<T extends HTMLElement>(node: T): T {
+  document.body.appendChild(node);
+  return node;
+}
+
 describe('markScrollers (C-119)', () => {
+  afterEach(() => {
+    document.body.replaceChildren();
+  });
+
   it('rend focalisable et nomme un défileur qui déborde', () => {
-    const root = document.createElement('div');
+    const root = mount(document.createElement('div'));
     const el = scroller(true);
     root.appendChild(el);
     markScrollers(root, 'Grille du calendrier');
@@ -24,7 +36,7 @@ describe('markScrollers (C-119)', () => {
   });
 
   it("n'ajoute aucun arrêt de tabulation à un défileur qui ne déborde pas", () => {
-    const root = document.createElement('div');
+    const root = mount(document.createElement('div'));
     const el = scroller(false);
     root.appendChild(el);
     markScrollers(root, 'Grille du calendrier');
@@ -47,7 +59,7 @@ describe('markScrollers (C-119)', () => {
     tr.appendChild(td);
     tbody.appendChild(tr);
     grid.appendChild(tbody);
-    return { grid, tbody };
+    return { grid: mount(grid), tbody };
   }
 
   it('dans une grille, le défileur prend le rôle du rowgroup au lieu de region', () => {
@@ -88,7 +100,7 @@ describe('markScrollers (C-119)', () => {
   });
 
   it("retire l'arrêt quand le défileur cesse de déborder", () => {
-    const root = document.createElement('div');
+    const root = mount(document.createElement('div'));
     const el = scroller(true);
     root.appendChild(el);
     markScrollers(root, 'x');
