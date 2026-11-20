@@ -11,8 +11,9 @@
 --   · catalogue : rien pour anon, EXECUTE pour authenticated ;
 --   · admin aal2 : 13 fonctionnalités rendues, jamais de compte de 1 ou 2
 --     (seuil d'affichage : sous 3 la valeur est NULL) ;
---   · trois nouveaux comptes ayant créé une tâche : actifs 30 j des tâches
---     +3, actions +3 (relatif à la base lue avant, la préprod n'est pas vide) ;
+--   · trois nouveaux comptes ayant créé une tâche : actifs 30 j et actions des
+--     tâches égaux à un décompte direct de la table (la base peut déjà porter
+--     des comptes, donc pas d'écart « +3 » : la base lue avant serait masquée) ;
 --   · admin en aal1, compte ordinaire et anon : refusés.
 --
 -- Procédure d'application en production (après accord d'Axel) :
@@ -33,7 +34,7 @@ DECLARE
   X3  constant uuid := '00000000-0000-0000-0000-0000000e0266';
   j0  jsonb; j1 jsonb;
   ok_ boolean;
-  t0  int; t1 int; ac0 int; ac1 int;
+  t1  int; ac1 int; e_a int; e_ac int;
 BEGIN
   EXECUTE $mig$
 -- ═══════════════════════════════════════════════════════════════════
@@ -219,13 +220,20 @@ $mig$;
   BEGIN j1 := public.get_admin_usage_by_feature(); EXCEPTION WHEN OTHERS THEN j1 := NULL; END;
   EXECUTE 'RESET ROLE';
 
-  SELECT (e->>'active_30d')::int, (e->>'actions_30d')::int INTO t0, ac0
-    FROM jsonb_array_elements(j0->'features') e WHERE e->>'feature' = 'tasks';
   SELECT (e->>'active_30d')::int, (e->>'actions_30d')::int INTO t1, ac1
     FROM jsonb_array_elements(j1->'features') e WHERE e->>'feature' = 'tasks';
+  -- Décompte direct, sans passer par la RPC (rôle propriétaire) : la base peut
+  -- déjà porter des comptes, la base lue avant serait masquée sous 3.
+  SELECT count(DISTINCT user_id) INTO e_a FROM public.tasks
+   WHERE (created_at >= now() - interval '30 days' OR completed_at >= now() - interval '30 days')
+     AND user_id <> ALL(public.admin_stats_excluded_uids());
+  SELECT (SELECT count(*) FROM public.tasks WHERE created_at >= now() - interval '30 days'
+                 AND user_id <> ALL(public.admin_stats_excluded_uids()))
+       + (SELECT count(*) FROM public.tasks WHERE completed_at >= now() - interval '30 days'
+                 AND user_id <> ALL(public.admin_stats_excluded_uids())) INTO e_ac;
   ok_ := j1 IS NOT NULL AND t1 IS NOT NULL AND ac1 IS NOT NULL
-         AND t1 - COALESCE(t0, 0) = 3 AND ac1 - COALESCE(ac0, 0) = 3;
-  r := r || ('03 trois comptes de plus comptent:' || CASE WHEN ok_ THEN 'OK' ELSE 'ECHEC' END);
+         AND t1 = e_a AND ac1 = e_ac AND e_a >= 3;
+  r := r || ('03 la RPC egale le decompte direct de la table:' || CASE WHEN ok_ THEN 'OK' ELSE 'ECHEC' END);
   IF NOT ok_ THEN ko := ko + 1; END IF;
 
   -- ── Seuil : jamais 1 ou 2 utilisateurs, ni actions sans actifs ────
