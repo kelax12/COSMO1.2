@@ -155,7 +155,7 @@ export function resumerSentry(listes) {
         raison,
         evenements: Number(i.count ?? 0),
         utilisateurs: Number(i.userCount ?? 0),
-        lien: i.permalink ?? null,
+        lien: i.permalink ?? null, vues: [i.firstSeen, i.lastSeen],
       });
     }
   }
@@ -421,7 +421,7 @@ export function comparer(reference, mesure) {
       for (const i of mesure.sentry.issues) {
         ecarts.push(
           `  Sentry ${i.raison} · ${i.court} · ${i.titre} · ${i.evenements} événement(s), `
-            + `${i.utilisateurs} utilisateur(s)${i.lien ? ` · ${i.lien}` : ''}`,
+            + `${i.utilisateurs} utilisateur(s)${i.vues?.[0] ? ` · 1re ${i.vues[0]} · dernière ${i.vues[1]}` : ''}${i.lien ? ` · ${i.lien}` : ''}`,
         );
       }
     }

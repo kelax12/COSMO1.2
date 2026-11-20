@@ -105,11 +105,11 @@ describe('témoin · Sentry (AM-1)', () => {
 
   it('`resumerSentry` fusionne nouvelles et régressions, une issue vue deux fois compte une fois', () => {
     const { issues } = resumerSentry([
-      { raison: 'nouvelle', issues: [{ id: '1', shortId: 'COSMO-1', title: 'A', count: '7', userCount: 3 }] },
+      { raison: 'nouvelle', issues: [{ id: '1', shortId: 'COSMO-1', title: 'A', count: '7', userCount: 3, firstSeen: '2026-11-19T10:00Z', lastSeen: '2026-11-19T11:00Z' }] },
       { raison: 'regression', issues: [{ id: '1' }, { id: '2', title: 'B' }] },
     ]);
     expect(issues.map((i) => [i.id, i.raison])).toEqual([['1', 'nouvelle'], ['2', 'regression']]);
-    expect(issues[0]).toMatchObject({ court: 'COSMO-1', evenements: 7, utilisateurs: 3 });
+    expect(issues[0]).toMatchObject({ court: 'COSMO-1', evenements: 7, utilisateurs: 3, vues: ['2026-11-19T10:00Z', '2026-11-19T11:00Z'] });
   });
 
   it('TEMOIN : `lireSentry` lit les DEUX recherches, suit les pages, et refuse une réponse en erreur', async () => {
