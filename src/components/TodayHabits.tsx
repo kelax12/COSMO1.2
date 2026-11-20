@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { Clock, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { Clock, Check, ChevronDown, ChevronUp, Flame } from 'lucide-react';
 
 import { useHabits, useToggleHabitCompletion, type Habit } from '@/modules/habits';
 import { habitStreak } from '@/modules/habits/streak';
@@ -116,7 +116,7 @@ const TodayHabits: React.FC = () => {
             {formatDurationMinutes(habit.estimatedTime)}
           </span>
           <span className="flex items-center gap-1 font-medium text-orange-600 dark:text-orange-400 noir:text-[rgb(var(--color-warning))]">
-            <span aria-hidden="true">🔥</span>
+            <Flame size={12} aria-hidden="true" />
             {/* Une SEULE logique de streak dans l'app : celle de
                 modules/habits/streak.ts. */}
             {tp('habits.streak', habitStreak(habit))}
@@ -228,7 +228,7 @@ const TodayHabits: React.FC = () => {
                     <span>{formatDurationMinutes(habit.estimatedTime)}</span>
                   </div>
                   <div className={`flex items-center gap-1 text-label sm:text-sm font-medium ${habit.completedToday ? 'text-white dark:text-orange-400 noir:text-[rgb(var(--color-warning))]' : 'text-orange-600 dark:text-orange-400 noir:text-[rgb(var(--color-warning))]'}`}>
-                    <span>🔥</span>
+                    <Flame size={14} aria-hidden="true" />
                     {/* Une SEULE logique de streak dans l'app : celle de
                         modules/habits/streak.ts, déjà utilisée par HabitCard et
                         HabitTable. Le comptage précédent
