@@ -418,7 +418,7 @@
     --color-chip-border: 42 44 48;
 
     /* Navigation specific colors */
-    --nav-bg: 14 15 17;                /* #0e0f11, nettement sous le fond */
+    --nav-bg: 18 19 21;                /* #121315, un cran sous le fond */
     --nav-border: 34 36 39;
     --nav-item-text: 139 144 151;      /* = --color-text-muted, 6,1:1 sur la barre latérale */
     --nav-item-hover-bg: 30 32 35;
@@ -476,7 +476,7 @@
     --ring: 212 100% 67%;        /* #58a6ff */
 
     /* shadcn/ui sidebar variables — Gris mode */
-    --sidebar-background: 220 10% 6%; /* #0e0f11 */
+    --sidebar-background: 220 8% 8%;  /* #121315 */
     --sidebar-foreground: 215 5% 57%;
     --sidebar-primary: 220 5% 91%;
     --sidebar-primary-foreground: 220 6% 9%;
