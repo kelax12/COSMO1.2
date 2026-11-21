@@ -74,8 +74,8 @@
     "title5b": "Just try it."
   },
   "features": {
-    "heading": "A productivity app for every profile",
-    "subtitle": "Student, professional, founder or team: Cosmo adapts task management, habit tracking and OKRs to what you actually need",
+    "heading": "An app for every profile",
+    "subtitle": "Student, professional or founder: Cosmo adapts to your needs, not the other way around.",
     "modulesSubtitle": "Every module is built to be complete and intuitive, so the tool adapts to you, not the other way around.",
     "tasks": {
       "titleTop": "Your tasks,",
@@ -134,34 +134,42 @@
     "students": {
       "profile": "Students",
       "title": "Academic excellence",
-      "description": "Manage your courses, assignments and revision with optimized planning that adapts to how you learn.",
-      "f1": "Optimized revision schedule",
-      "f2": "Track grades and objectives",
-      "f3": "The full picture + less stress"
+      "description": "Manage classes, homework and revision with intuitive planning that fits your pace.",
+      "f1": "Write down everything you have to do so nothing slips",
+      "f2": "Revision schedule",
+      "f3": "Track progress on your goals",
+      "f4": "Build your routine",
+      "f5": "The big picture, less stress"
     },
     "professionals": {
       "profile": "Professionals",
       "title": "Peak performance",
-      "description": "Boost your career with productivity tools that change how you work and how you reach your objectives.",
-      "f1": "Advanced project management",
-      "f2": "OKRs and personal development",
-      "f3": "An effective prioritization system"
-    },
-    "teams": {
-      "profile": "Teams",
-      "title": "Smooth collaboration",
-      "description": "Keep your team in sync with collaborative tools that align everyone on the same strategic objectives.",
-      "f1": "Simple task sharing",
-      "f2": "Shared objective tracking",
-      "f3": "Team dashboards"
+      "description": "Boost your career with tools that change how you work and reach your goals.",
+      "f1": "Prioritize your work to handle what matters first",
+      "f2": "Block time for deep work between meetings",
+      "f3": "Tie your work to your yearly goals",
+      "f4": "Build the habits that grow your career",
+      "f5": "See where your time really goes"
     },
     "founders": {
       "profile": "Founders",
       "title": "Faster growth",
-      "description": "Steer your startup with precise metrics and automations that save you real time.",
-      "f1": "Advanced multi-project organization",
-      "f2": "Delegation and task tracking",
-      "f3": "Built-in strategic planning"
+      "description": "Run your business on every front without losing sight of what makes it grow.",
+      "f1": "Handle several projects without dropping anything",
+      "f2": "Protect time for strategy, not just emergencies",
+      "f3": "Set growth goals and track every step",
+      "f4": "Keep a pace you can sustain",
+      "f5": "Spot what really moves you forward"
+    },
+    "teams": {
+      "profile": "Teams",
+      "title": "Smooth collaboration",
+      "description": "Keep your team in sync with collaborative tools that align everyone on the same goals.",
+      "f1": "Share tasks and see who does what",
+      "f2": "Coordinate deadlines in everyone's calendar",
+      "f3": "Align the team on shared goals",
+      "f4": "Set up the team rituals that matter",
+      "f5": "Follow collective progress at a glance"
     }
   },
   "faq": {

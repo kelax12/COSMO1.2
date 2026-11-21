@@ -74,8 +74,8 @@
     "title5b": "Juste essayer."
   },
   "features": {
-    "heading": "Application productivité pour chaque profil",
-    "subtitle": "Étudiant, professionnel, entrepreneur ou équipe : Cosmo adapte la gestion de tâches, le suivi d'habitudes et les OKR à vos besoins spécifiques",
+    "heading": "Une application pour chaque profil",
+    "subtitle": "Étudiant, professionnel ou entrepreneur : Cosmo s'adapte à vos besoins, et non l'inverse.",
     "modulesSubtitle": "Chaque module est conçu pour être complet et intuitif, afin que ce soit l'outil qui s'adapte à vous, et non l'inverse.",
     "tasks": {
       "titleTop": "Vos tâches,",
@@ -134,34 +134,42 @@
     "students": {
       "profile": "Étudiants",
       "title": "Excellence académique",
-      "description": "Gérez vos cours, devoirs et révisions avec une planification optimisée qui s'adapte à votre rythme d'apprentissage.",
-      "f1": "Planning de révisions optimisé",
-      "f2": "Suivi des notes et objectifs",
-      "f3": "Vision globale + réduction du stress"
+      "description": "Gérez vos cours, devoirs et révisions avec une planification intuitive qui s'adapte à votre rythme.",
+      "f1": "Notez tout ce que vous avez à faire pour ne rien oublier",
+      "f2": "Planning de révisions",
+      "f3": "Suivez l'avancement de vos objectifs",
+      "f4": "Construisez votre routine",
+      "f5": "Vision globale + réduction du stress"
     },
     "professionals": {
       "profile": "Professionnels",
       "title": "Performance maximale",
-      "description": "Boostez votre carrière avec des outils de productivité qui transforment votre façon de travailler et d'atteindre vos objectifs.",
-      "f1": "Gestion de projets avancée",
-      "f2": "OKR et développement personnel",
-      "f3": "Système de priorisation efficace"
-    },
-    "teams": {
-      "profile": "Équipes",
-      "title": "Collaboration fluide",
-      "description": "Synchronisez votre équipe avec des outils collaboratifs qui alignent tous les membres sur les mêmes objectifs stratégiques.",
-      "f1": "Partage de tâches simplifié",
-      "f2": "Suivi partagé des objectifs",
-      "f3": "Tableaux de bord équipe"
+      "description": "Boostez votre carrière avec des outils qui transforment votre façon de travailler et d'atteindre vos objectifs.",
+      "f1": "Priorisez vos dossiers pour traiter l'essentiel en premier",
+      "f2": "Bloquez du temps pour le travail de fond entre vos réunions",
+      "f3": "Alignez votre travail sur vos objectifs annuels",
+      "f4": "Ancrez les habitudes qui font progresser votre carrière",
+      "f5": "Mesurez où passe réellement votre temps"
     },
     "founders": {
       "profile": "Entrepreneurs",
       "title": "Croissance accélérée",
-      "description": "Pilotez votre startup avec des métriques précises et des automatisations qui vous font gagner un temps précieux.",
-      "f1": "Organisation multi-projets avancée",
-      "f2": "Délégation et suivi des tâches",
-      "f3": "Planification stratégique intégrée"
+      "description": "Pilotez votre activité sur tous les fronts, sans perdre de vue ce qui fait grandir votre entreprise.",
+      "f1": "Gérez plusieurs projets sans rien laisser filer",
+      "f2": "Protégez du temps pour la stratégie, pas seulement l'urgence",
+      "f3": "Fixez vos objectifs de croissance et suivez chaque étape",
+      "f4": "Gardez un rythme tenable sur la durée",
+      "f5": "Repérez ce qui vous fait vraiment avancer"
+    },
+    "teams": {
+      "profile": "Équipes",
+      "title": "Collaboration fluide",
+      "description": "Synchronisez votre équipe avec des outils collaboratifs qui alignent chacun sur les mêmes objectifs.",
+      "f1": "Partagez les tâches et voyez qui fait quoi",
+      "f2": "Coordonnez les échéances dans l'agenda de chacun",
+      "f3": "Alignez l'équipe sur des objectifs communs",
+      "f4": "Installez les rituels d'équipe qui comptent",
+      "f5": "Suivez l'avancement collectif en un coup d'œil"
     }
   },
   "faq": {

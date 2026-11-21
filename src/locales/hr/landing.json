@@ -74,8 +74,8 @@
     "title5b": "Samo isprobajte."
   },
   "features": {
-    "heading": "Aplikacija za produktivnost za svaki profil",
-    "subtitle": "Student, profesionalac, osnivač ili tim: Cosmo prilagođava upravljanje zadacima, praćenje navika i OKR-ove onome što vam doista treba",
+    "heading": "Aplikacija za svaki profil",
+    "subtitle": "Student, profesionalac ili poduzetnik: Cosmo se prilagođava vašim potrebama, a ne obrnuto.",
     "modulesSubtitle": "Svaki je modul izrađen da bude potpun i intuitivan, kako bi se alat prilagodio vama, a ne obrnuto.",
     "tasks": {
       "titleTop": "Upravljanje zadacima",
@@ -134,34 +134,42 @@
     "students": {
       "profile": "Studenti",
       "title": "Akademska izvrsnost",
-      "description": "Upravljajte predavanjima, zadaćama i ponavljanjem uz optimizirano planiranje koje se prilagođava načinu na koji učite.",
-      "f1": "Optimiziran raspored ponavljanja",
-      "f2": "Praćenje ocjena i ciljeva",
-      "f3": "Potpun pregled + manje stresa"
+      "description": "Upravljajte predavanjima, zadaćama i ponavljanjem uz intuitivno planiranje prilagođeno vašem ritmu.",
+      "f1": "Zapišite sve što trebate napraviti kako ništa ne biste zaboravili",
+      "f2": "Raspored ponavljanja",
+      "f3": "Pratite napredak svojih ciljeva",
+      "f4": "Izgradite svoju rutinu",
+      "f5": "Cjelovit pregled i manje stresa"
     },
     "professionals": {
       "profile": "Profesionalci",
       "title": "Vrhunska učinkovitost",
-      "description": "Unaprijedite karijeru alatima za produktivnost koji mijenjaju način na koji radite i ostvarujete ciljeve.",
-      "f1": "Napredno upravljanje projektima",
-      "f2": "OKR-ovi i osobni razvoj",
-      "f3": "Učinkovit sustav određivanja prioriteta"
-    },
-    "teams": {
-      "profile": "Timovi",
-      "title": "Glatka suradnja",
-      "description": "Održite tim usklađenim alatima za suradnju koji sve usmjeravaju prema istim strateškim ciljevima.",
-      "f1": "Jednostavno dijeljenje zadataka",
-      "f2": "Zajedničko praćenje ciljeva",
-      "f3": "Timske nadzorne ploče"
+      "description": "Unaprijedite karijeru alatima koji mijenjaju način na koji radite i ostvarujete ciljeve.",
+      "f1": "Odredite prioritete i prvo riješite bitno",
+      "f2": "Rezervirajte vrijeme za dubinski rad između sastanaka",
+      "f3": "Uskladite rad sa svojim godišnjim ciljevima",
+      "f4": "Usvojite navike koje unapređuju karijeru",
+      "f5": "Saznajte kamo vam stvarno odlazi vrijeme"
     },
     "founders": {
       "profile": "Osnivači",
       "title": "Brži rast",
-      "description": "Upravljajte svojim startupom uz precizne metrike i automatizacije koje vam štede stvarno vrijeme.",
-      "f1": "Napredna organizacija više projekata",
-      "f2": "Delegiranje i praćenje zadataka",
-      "f3": "Ugrađeno strateško planiranje"
+      "description": "Vodite posao na svim frontama, ne gubeći iz vida ono što ga čini rastućim.",
+      "f1": "Vodite više projekata, a da vam ništa ne promakne",
+      "f2": "Sačuvajte vrijeme za strategiju, ne samo za hitno",
+      "f3": "Postavite ciljeve rasta i pratite svaki korak",
+      "f4": "Održite ritam koji možete izdržati",
+      "f5": "Uočite što vas stvarno pokreće naprijed"
+    },
+    "teams": {
+      "profile": "Timovi",
+      "title": "Glatka suradnja",
+      "description": "Uskladite tim suradničkim alatima koji sve usmjeravaju prema istim ciljevima.",
+      "f1": "Dijelite zadatke i vidite tko što radi",
+      "f2": "Uskladite rokove u kalendaru svakog člana",
+      "f3": "Uskladite tim oko zajedničkih ciljeva",
+      "f4": "Uvedite timske rituale koji su važni",
+      "f5": "Pratite zajednički napredak na prvi pogled"
     }
   },
   "faq": {
