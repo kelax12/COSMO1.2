@@ -408,6 +408,8 @@ jobs:
       # V15.4 : `check-captures-relues --verifier-runs` lit le run cité par un
       # trailer (API Actions, lecture seule).
       actions: read
+      # SEC-13 : la porte CodeQL lit les analyses et alertes (lecture seule).
+      security-events: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -465,6 +467,32 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/check-captures-relues.mjs --plage "$PLAGE" --verifier-runs
+      # SEC-13 · un SHA qui ajoute une alerte CodeQL ouverte (absente de `main`,
+      # ouverte ou classee) est refuse. L'analyse du SHA est attendue (`codeql.yml`
+      # joue sur `noyau/**`). Echec ferme : analyse absente apres 15 min, en
+      # erreur, ou appel refuse = rouge (`set -e`), jamais un warning.
+      # Temoin (jouee avec un faux `gh`) : `noyau-ci.guard.test.mjs`.
+      - name: CodeQL (aucune alerte nouvelle)
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          API="repos/$GITHUB_REPOSITORY/code-scanning"
+          CAT='select(.commit_sha=="'"$GITHUB_SHA"'")'
+          for i in $(seq 1 45); do
+            N=$(gh api "$API/analyses?ref=$GITHUB_REF&per_page=100" --jq "[.[]|$CAT|.category]|unique|map(select(.==\"/language:javascript-typescript\" or .==\"/language:actions\"))|length")
+            [ "$N" = 2 ] && break
+            [ "$i" = 45 ] && { echo "::error::Aucune analyse CodeQL complete pour $GITHUB_SHA (echec ferme)."; exit 1; }
+            sleep 20
+          done
+          E=$(gh api "$API/analyses?ref=$GITHUB_REF&per_page=100" --jq "[.[]|$CAT|select(.error!=null and .error!=\"\")]|length")
+          [ "$E" = 0 ] || { echo "::error::Analyse CodeQL en erreur."; exit 1; }
+          lister() { gh api --paginate "$API/alerts?state=$2&ref=$1&per_page=100" --jq '.[].number'; }
+          SUR=$(lister "$GITHUB_REF" open | sort -u)
+          CONNUES=$( { lister refs/heads/main open; lister refs/heads/main dismissed; } | sort -u)
+          NOUVELLES=$(comm -23 <(echo "$SUR") <(echo "$CONNUES"))
+          [ -z "$NOUVELLES" ] || { echo "::error::Nouvelle(s) alerte(s) CodeQL ouverte(s) : $(echo $NOUVELLES)"; exit 1; }
 
   # ──────────────────────────────────────────────────────────────────
   # Tests RLS d'intégration : démarre une stack Supabase locale (GoTrue +

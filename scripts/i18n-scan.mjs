@@ -18,27 +18,16 @@
 // invisible. Ce script échoue au-dessus de `MAX_STRINGS`, à **ZÉRO**.
 // 🔴 Ne jamais relever ce seuil pour faire passer la CI.
 //
-// 🔴 Un seuil ne prouve que ce que la mesure couvre. Formes couvertes, chacune
-// un ancien angle mort (témoins : `i18n-scan.guard.test.mjs`) : texte JSX
-// interpolé ou multiligne ; propriété `label:` ; valeur par défaut de prop ;
-// messages rendus par du code (`return '…'`, `throw new Error('…')`,
-// `{ error: '…' }`, argument de fonction) ; français sans accent ni mot-outil ;
-// apostrophe dans une chaîne à guillemets doubles (`QUOTED`) ; mot isolé
-// (`looksLikeCode`) ; branches d'un ternaire ; éléments d'un tableau.
-// ✅ Avant de conclure « plus rien en dur » : soumettre des chaînes à la
-// mesure, pas relire la mesure.
+// 🔴 Un seuil ne prouve que ce que la mesure couvre : chaque forme couverte est un
+// ancien angle mort, nommé dans `i18n-scan.guard.test.mjs`. ✅ Avant de conclure
+// « plus rien en dur » : soumettre des chaînes à la mesure, pas relire la mesure.
 //
 // ── CE QUE LE SCAN NE VOIT VOLONTAIREMENT PAS ──────────────────────
 //
-// Trois exclusions, et ce sont des décisions, pas des angles morts :
-//
-//   - les COMMENTAIRES de code — ce dépôt commente en français ;
-//   - les SEEDS de démonstration, dont le français est la forme de référence,
-//     recouverte par locale par `localizeSeed` / `seedOverlay` / `seedText` ;
-//   - la SYNTAXE quick-add (`src/lib/quick-add-examples.ts`, marqueur
-//     `QUICK_ADD_FR_ONLY_SYNTAX`) : `parseQuickAdd` ne reconnaît que des
-//     mots-clés français, donc l'exemple affiché N'EST PAS un texte à
-//     traduire — le traduire casserait la démonstration qu'il donne.
+// Trois exclusions voulues : les COMMENTAIRES (en français) ; les SEEDS de démo,
+// recouverts par locale par `localizeSeed` / `seedOverlay` / `seedText` ; la
+// SYNTAXE quick-add (`QUICK_ADD_FR_ONLY_SYNTAX`), dont les mots-clés français ne
+// se traduisent pas sans casser la démonstration.
 //
 // ⚠️ Ce qu'il ne verra jamais : une phrase construite par concaténation, ou un
 // texte hors de `src/`. Le total est un PLANCHER, pas une preuve.
@@ -54,9 +43,7 @@ const SKIP = /(__test__|showcase|\.test\.|\.spec\.)/;
 // recouvrement, jamais par le nom : un seed non traduit redevient visible.
 const isSeedFile = (source) => /localizeSeed|seedOverlay|seedText|SEED_I18N|localizedDemoOkrTitles/.test(source);
 
-// Meme logique que `isSeedFile`, pour la syntaxe quick-add
-// (src/lib/quick-add-examples.ts) : un exemple qui cesserait de porter ce
-// marqueur redeviendrait visible au scan, ce qui est le signal voulu.
+// Meme logique, pour la syntaxe quick-add (`quick-add-examples.ts`).
 const isLockedSyntaxFile = (source) => /QUICK_ADD_FR_ONLY_SYNTAX/.test(source);
 
 function walk(d, out = []) {
@@ -70,10 +57,7 @@ function walk(d, out = []) {
   return out;
 }
 
-// Toutes les voyelles accentuées du français, PAS seulement les plus courantes.
-// La version précédente omettait `â` : « tâches » — le mot le plus fréquent de
-// l'app — était donc invisible pour le scan, et avec lui toute chaîne qui ne
-// contenait pas d'autre accent (« Toutes les tâches », « Tâches de… »).
+// Toutes les voyelles accentuées (`â` omis jadis : « tâches » était invisible).
 const ACC = '[éèêëàâäçùûüôöîïœÉÈÊËÀÂÄÇÙÛÔÖÎÏŒ]';
 
 // Second signal, pour le français SANS accent (« Ajouter », « Demain ») : une

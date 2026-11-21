@@ -2,40 +2,21 @@
 // check-captures-relues.mjs · aucune référence visuelle ne change sur `main`
 // sans comparaison avant/après relue et tracée (V15.4, FRO-02, 2026-11-08)
 //
-// 🔴 LE DÉFAUT (FRO-02). Quatorze références de `e2e/__screenshots__/` ont
-// été régénérées d'un geste, par le job `visual` lui-même, après huit jours de
-// rouge pendant des refontes d'interface. Une référence régénérée sans regard
-// entérine la régression qu'elle devait détecter, et rien ne gardait la trace
-// de ce qui avait bougé. Le plan disait « régénération par PR » ; la décision
-// d'Axel du 2026-10-29 garde le push direct sur `main` (ni branche ni PR). La
-// revue se trace donc DANS LE COMMIT.
+// 🔴 LE DÉFAUT (FRO-02). Quatorze références de `e2e/__screenshots__/` ont été
+// régénérées d'un geste par le job `visual`, sans regard. La décision d'Axel du
+// 2026-10-29 garde le push direct sur `main` : la revue se trace DANS LE COMMIT.
 //
-// ── LA RÈGLE ────────────────────────────────────────────────────────
-//
-// Tout commit de la plage poussée qui touche `e2e/__screenshots__/**` (ajout,
-// modification, suppression) doit porter, dans son DERNIER paragraphe, le
-// trailer
-//
+// LA RÈGLE. Tout commit de la plage poussée qui touche `e2e/__screenshots__/**`
+// porte, dans son DERNIER paragraphe, le trailer
 //     Captures-relues: https://github.com/<proprietaire>/<depot>/actions/runs/<id>
+// d'un run de `captures-regenerer.yml` (artefact `captures-revue`). Avec
+// `--verifier-runs` (CI) l'API GitHub confirme : run existant, même dépôt, bon
+// workflow, terminé en succès.
 //
-// qui pointe vers le run de `captures-regenerer.yml` ayant produit l'artefact
-// de revue `captures-revue` (avant, après, différence, page d'index).
-//
-// Avec `--verifier-runs` (CI), la garde interroge en plus l'API GitHub : le run
-// doit exister, appartenir au MÊME dépôt, provenir de `captures-regenerer.yml`
-// et être terminé en succès. Un lien recopié d'un autre run ne passe pas.
-//
-// ── CE QUE CETTE GARDE NE PROUVE PAS ────────────────────────────────
-//
-// ⚠️ Le trailer dit « un humain a ouvert l'artefact de CE run avant de
-// committer ». Il ne dit pas que l'humain a bien regardé, ni que les images
-// du commit sont celles du run (le run a poussé une branche `noyau/captures-<id>`
-// que l'on ramène sur `main` : la procédure est dans `e2e/CLAUDE.md`). C'est
-// une trace, pas une preuve de lecture. Elle ferme pourtant le geste de FRO-02 :
-// régénérer sans run, sans artefact, sans lien.
-// ❌ AUCUNE variable ne contourne la règle, et `--no-verify` ne la saute pas :
-//    c'est le job CI `fichiers-sensibles` de `ci-noyau.yml` qui la rejoue sur
-//    chaque poussée, et il ne se saute pas depuis le poste.
+// ⚠️ Le trailer est une trace (« un humain a ouvert l'artefact de CE run »), pas
+// une preuve de lecture ; la procédure est dans `e2e/CLAUDE.md`.
+// ❌ Aucune variable ne la contourne, `--no-verify` non plus : le job
+//    `fichiers-sensibles` de `ci-noyau.yml` la rejoue à chaque poussée.
 //
 // Témoin : `scripts/captures-revue.guard.test.mjs`.
 // ═══════════════════════════════════════════════════════════════════

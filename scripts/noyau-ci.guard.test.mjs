@@ -18,8 +18,10 @@
 //   · un job du noyau resté en double dans `ci.yml`.
 // ═══════════════════════════════════════════════════════════════════
 import { describe, it, expect } from 'vitest';
-import { readFileSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync, readdirSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import { join, delimiter } from 'node:path';
 import { lireEtapes } from './ci-toutes-les-gardes.mjs';
 
 const lire = (f) => readFileSync(join(process.cwd(), '.github/workflows', f), 'utf8').replace(/\r\n/g, '\n');
@@ -154,4 +156,49 @@ describe('package.json : chaque garde est lancée par un workflow', () => {
   it('TÉMOIN : un outil manuel déclaré existe encore dans package.json', () => {
     for (const nom of OUTILS_MANUELS.keys()) expect(scripts[nom], nom).toBeDefined();
   });
+});
+
+// SEC-13 : l'étape est JOUÉE avec un faux `gh` (nouvelle alerte, analyse absente ou
+// en erreur, appel refusé = rouge ; alerte connue de `main` = vert).
+describe('ci-noyau.yml : la porte CodeQL', () => {
+  const ETAPE = lireEtapes(NOYAU, 'fichiers-sensibles').find((e) => e.run?.includes('code-scanning'))?.run ?? '';
+  const jouer = (env, script = ETAPE) => {
+    const dir = mkdtempSync(join(tmpdir(), 'faux-gh-'));
+    writeFileSync(join(dir, 'gh'), `#!/usr/bin/env bash
+[ -n "$FAKE_KO" ] && exit 1
+case "$*" in
+  *'.error!=null'*) echo "\${FAKE_ERR:-0}";;
+  *analyses*) echo "\${FAKE_N:-2}";;
+  *"state=open&ref=refs/heads/main"*) printf '%s\n' "\${FAKE_MAIN:-1 2}" | tr ' ' '\n';;
+  *"state=dismissed"*) printf '%s\n' "\${FAKE_CLASSEES:-}" | tr ' ' '\n';;
+  *) printf '%s\n' "\${FAKE_REF:-1 2}" | tr ' ' '\n';;
+esac
+`, { mode: 0o755 });
+    const r = spawnSync('bash', ['-c', script.replace('seq 1 45', 'seq 1 2').replace('"$i" = 45', '"$i" = 2').replace('sleep 20', ':')], {
+      encoding: 'utf8',
+      env: { ...process.env, PATH: `${dir}${delimiter}${process.env.PATH}`, GITHUB_REPOSITORY: 'o/r', GITHUB_REF: 'refs/heads/noyau/x', GITHUB_SHA: 'abc', ...env },
+    });
+    rmSync(dir, { recursive: true, force: true });
+    return r;
+  };
+
+  it('l’étape existe et ne se contourne pas (ni `continue-on-error`, ni `|| true`)', () => {
+    expect(ETAPE).toContain('set -euo pipefail');
+    expect(ETAPE).not.toMatch(/\|\| true/);
+    expect(NOYAU).not.toMatch(/CodeQL \(aucune alerte nouvelle\)[^\n]*\n(?:[^\n]*\n){0,3}\s+continue-on-error/);
+  });
+  it('TÉMOIN : alerte connue de main (ouverte ou classée) = vert', () => {
+    expect(jouer({}).status).toBe(0);
+    expect(jouer({ FAKE_REF: '1 2 3', FAKE_CLASSEES: '3' }).status).toBe(0);
+  }, 60_000);
+  it('TÉMOIN : une alerte absente de main = rouge, et le journal la nomme', () => {
+    const r = jouer({ FAKE_REF: '1 2 3' });
+    expect(r.status).not.toBe(0);
+    expect(r.stdout).toContain('3');
+  });
+  it('TÉMOIN : échec fermé, analyse absente, en erreur ou appel refusé = rouge', () => {
+    expect(jouer({ FAKE_N: '0' }).status).not.toBe(0);
+    expect(jouer({ FAKE_ERR: '1' }).status).not.toBe(0);
+    expect(jouer({ FAKE_KO: '1' }).status).not.toBe(0);
+  }, 60_000);
 });

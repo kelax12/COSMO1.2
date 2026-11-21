@@ -14,7 +14,7 @@
 | Workflows GitHub | **35** | fichiers de `.github/workflows/` |
 | dont planifiés | **24** | workflows portant un `schedule:` |
 | Fichiers de `scripts/` | **161** | fichiers suivis (budget d outillage, `scripts/outillage.reference.json`) |
-| Lignes de `scripts/` | **40561** | lignes des fichiers suivis de `scripts/` |
+| Lignes de `scripts/` | **40560** | lignes des fichiers suivis de `scripts/` |
 | Tests de garde | **113** | fichiers `*.guard.test.*` du dépôt |
 | Modules applicatifs | **23** | dossiers de `src/modules/` |
 | Namespaces i18n | **34** | fichiers de `src/locales/fr/` |

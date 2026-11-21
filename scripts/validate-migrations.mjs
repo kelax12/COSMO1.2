@@ -7,19 +7,11 @@
 //   2. Pas de guillemets échappés \" dans une CREATE POLICY (casse Postgres).
 //   3. Numéros de migration uniques (pas de collision NNN).
 //   4. [WARN] tout CREATE POLICY ... FOR UPDATE devrait avoir WITH CHECK (N1).
-//   5. Toute fonction `RETURNS trigger` introduite a partir de la mig. 109
-//      doit etre REVOKE-ee pour `anon` ET `authenticated` (regle posee par la
-//      mig. 064b, re-appliquee par la 094b, oubliee par la 108 -> B-3).
-//      Etat FINAL rejoue sur tout l'historique : une migration ulterieure peut
-//      reparer l'oubli d'une precedente (c'est ce que fait la 109 pour la 108).
-//      [WARN] si elle est en plus `SECURITY DEFINER` : c'est legitime quand le
-//      trigger doit ECRIRE au-dela des droits de l'appelant (notifications,
-//      mig. 095/110), jamais quand il ne fait que VALIDER (une garde executee
-//      avec des privileges elargis devient elle-meme le contournement).
-//      [ERREUR] si en plus son nom porte le prefixe `validate_` / `enforce_` /
-//      `prevent_` (convention du depot pour une garde qui ne fait QUE valider,
-//      mig. 143) : la, DEFINER n'a jamais de justification, donc plus question
-//      d'avertissement.
+//   5. Toute fonction `RETURNS trigger` (mig. 109 et après) est REVOKE-ée pour
+//      `anon` ET `authenticated`, état FINAL rejoué sur tout l'historique.
+//      [WARN] si `SECURITY DEFINER` (légitime pour ÉCRIRE au-delà des droits de
+//      l'appelant, jamais pour VALIDER) ; [ERREUR] si le nom porte `validate_` /
+//      `enforce_` / `prevent_` (garde qui ne fait que valider, mig. 143).
 //   6-17. La checklist de docs/SECURITY.md (angle mort AM-4), CLIQUET a partir
 //      de la mig. 227 : idempotence (6), search_path des DEFINER (7), WITH
 //      CHECK en ERREUR (8), RLS activee DANS LE FICHIER qui cree la table (9), trigger jamais DEFINER (10),
@@ -37,25 +29,12 @@ import { join } from 'node:path';
 const DIR = 'supabase/migration';
 const NAME_RE = /^\d{3}_[a-z0-9_]+\.sql$/;
 
-// Plancher de la regle 5 — CLIQUET, pas audit retroactif.
-//
-// Le premier jet posait le plancher a 64 (la migration qui a pose la regle) et
-// sortait 12 erreurs. VERIFIE EN PROD le 2026-08-24, ces 12 sont des FAUX
-// POSITIFS : sur les 28 fonctions de trigger de `public`, seules QUATRE
-// etaient reellement executables par anon/authenticated, et la mig. 109 les
-// revoque toutes les quatre. Les autres ont ete durcies par des chemins que ce
-// modele statique ne peut pas voir (privileges par defaut du schema, REVOKE
-// hors du jeu de migrations, fonctions creees avant le GRANT par defaut de
-// Supabase).
-//
-// C'est exactement la limite que check-rls-advisors.mjs documente deja : un
-// modele statique de l'historique complet est FAUX, et une gate rouge en
-// permanence finit ignoree. Ce controle ne juge donc que le code NOUVEAU.
-// Pour l'etat reel, la source de verite reste les advisors Supabase et :
-//   select p.proname, has_function_privilege('anon', p.oid, 'EXECUTE')
-//     from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-//     join pg_type t on t.oid = p.prorettype
-//    where n.nspname = 'public' and t.typname = 'trigger';
+// Plancher de la regle 5 : CLIQUET, pas audit retroactif. Un modele statique de
+// l'historique complet est FAUX (privileges par defaut du schema, REVOKE hors du
+// jeu de migrations : 12 faux positifs verifies en prod le 2026-08-24), et une
+// gate rouge en permanence finit ignoree : seul le code NOUVEAU est juge. L'etat
+// reel : advisors Supabase, ou `has_function_privilege('anon', p.oid, 'EXECUTE')`
+// sur `pg_proc` des fonctions retournant `trigger`.
 const TRIGGER_RULE_FLOOR = 109;
 
 // Plancher des regles 6 a 16 (checklist AM-4, 2026-10-24), CLIQUET aussi.

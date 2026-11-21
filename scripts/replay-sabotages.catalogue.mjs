@@ -1513,6 +1513,14 @@ export const CATALOGUE = [
       + '« n’importe quel job », et le résumé juge les étapes d’un autre job que celui demandé.',
   },
   {
+    id: 'codeql-porte-aveugle',
+    famille: 'detecteur',
+    garde: 'scripts/noyau-ci.guard.test.mjs',
+    modifs: [r('.github/workflows/ci-noyau.yml', 'NOUVELLES=$(comm -23 <(echo "$SUR") <(echo "$CONNUES"))', 'NOUVELLES=')],
+    attendu: ['TÉMOIN : une alerte absente de main = rouge, et le journal la nomme'],
+    pourquoi: 'SEC-13 : une porte CodeQL qui ne voit plus de nouvelle alerte laisse passer celles de 2026-11-20.',
+  },
+  {
     id: 'ci-main-annule',
     famille: 'produit',
     garde: 'scripts/ci-toutes-les-gardes.guard.test.mjs',
