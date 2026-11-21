@@ -1401,6 +1401,10 @@ export const CATALOGUE = [
       r('eslint-rules/exhaustive-deps-justified.js', '          const listed = cut === -1 ? text : text.slice(0, cut);', '          const listed = text;'),
       ['ne lit pas le nom de la regle APRES le `--` (temoin du decoupage)'],
       'Une règle qui lit le commentaire entier signale un désarmement qui ne la concerne pas, et finit désactivée.'],
+    ['scripts/detection-violation.guard.test.mjs', 'violation-publie-sur-parole',
+      r('scripts/detection-violation.mjs', '(await publics(e.nom))?.equals(await entreeComplete(e, lire))) pourquoi = null;', '(await publics(e.nom))) pourquoi = null;'),
+      ['identique à la version du dépôt : pas suspect ; TÉMOIN : un octet de plus, ou aucune version, rougit'],
+      'Un nom de migration suffirait à blanchir un dump : le détecteur de BK-1 se tairait sur un artefact nommé comme un fichier du dépôt.'],
   ].map(([garde, id, modif, attendu, pourquoi]) => ({
     id, famille: garde.includes('.guard.') ? 'detecteur' : 'produit', garde, modifs: [modif], attendu, pourquoi,
   })),

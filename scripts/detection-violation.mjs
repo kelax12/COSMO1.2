@@ -2,15 +2,9 @@
 // detection-violation.mjs · LE DÉLAI DE 72 H COURT DEPUIS LA DÉTECTION,
 // IL FAUT DONC QUE QUELQUE CHOSE DÉTECTE
 //
-// Appelé chaque matin par `.github/workflows/detection-violation.yml` (job
-// `detecter`). Vague 6.1 du plan de reprise (OBS-01), reprise réécrite de la
-// PR n° 125 ; `docs/OBSERVABILITE.md` AM-5.
-//
-// 🔴 POURQUOI CE FICHIER EXISTE
-//
-// `BK-1` (dumps en clair dans les artefacts d'un dépôt public, 2026-08-29 au
-// 2026-10-13) a été trouvée par un AUDIT 45 jours après, par aucune garde. Le délai
-// CNIL court depuis la prise de connaissance : rien ne regarde, rien ne court.
+// Appelé chaque matin par `.github/workflows/detection-violation.yml` (job `detecter`), OBS-01,
+// `docs/OBSERVABILITE.md` AM-5. 🔴 BK-1 (dumps en clair dans les artefacts) a été trouvée par un
+// audit, par aucune garde : le délai CNIL court depuis la prise de connaissance.
 //
 // CE QU'IL LIT, chaque jour :
 //   1 · les alertes de SECRET SCANNING ouvertes (`SECURITY_ALERTS_TOKEN`,
@@ -22,25 +16,14 @@
 //       réinitialisations, volume DISTINCT lu par un même compte, requêtes
 //       d'un même compte, lignes rendues sans session.
 //
-// 🔴 LIGNES DISTINCTES, PAS LIGNES RENDUES : la PR n° 125 sommait les lignes
-// de TOUTES les réponses d'un compte. Or l'application relit les mêmes pages
-// sans cesse (invalidation de React Query après chaque écriture, retour sur
-// l'onglet) : un usage ordinaire de la page OKR, qui relit son journal
-// plafonné à 500 lignes après chaque mise à jour, franchissait le plancher
-// sans exporter quoi que ce soit. D'où `lignes_sujet_max` : pour chaque
-// compte, la somme, sur chaque FORME de requête distincte (chemin,
-// paramètres, début de plage), de la plus grande réponse. Relire la même
-// page ne compte qu'une fois ; paginer (offset, Range) ou varier les filtres
-// compte chaque page. Limite écrite : une RPC paginée par son CORPS (absent
-// des journaux) se replie sur une seule forme ; `requetes_sujet_max` la
-// couvre en partie. La somme brute reste imprimée, pour mémoire, sans seuil.
+// 🔴 LIGNES DISTINCTES, PAS LIGNES RENDUES (l'application relit sans cesse les
+// mêmes pages) : `lignes_sujet_max` somme, par compte et par FORME de requête
+// (chemin, paramètres, début de plage), la plus grande réponse. Limite : une RPC
+// paginée par son corps se replie sur une forme (`requetes_sujet_max` la couvre en partie).
 //
-// ⚠️ AUCUN IDENTIFIANT NE SORT DE SUPABASE : les requêtes exécutées rendent
-// des MAXIMA et des COMPTES, jamais un compte ni une IP. Le résumé du job
-// (public) ne porte donc que des nombres, des types d'alerte et des noms
-// d'artefact. Pour identifier un compte, Axel rejoue `SQL_TRI` sur la
-// fenêtre imprimée (MCP Supabase en lecture, ou Dashboard) : il n'est
-// exécuté par aucun workflow.
+// ⚠️ AUCUN IDENTIFIANT NE SORT DE SUPABASE : des MAXIMA et des COMPTES, jamais un compte ni une
+// IP ; le résumé (public) ne porte que nombres, types d'alerte et noms d'artefact. Identifier un
+// compte : Axel rejoue `SQL_TRI` sur la fenêtre imprimée, jamais un workflow.
 //
 // SORTIE : 0 = toutes les sources lues, aucun signal ; 1 = un signal, ou une
 // source illisible. ❌ Jamais de vert sur une source non lue.
@@ -63,8 +46,7 @@ const MAX_ENTREES = 5000;
 
 // ─── 1 · Seuils (planchers absolus) et vocabulaire des catégories ───
 
-/** Au-dessus du plancher : signal. `categorie` est le SEUL mot qui sort du
- *  job vers l'alerte (vocabulaire fermé, `CATEGORIES`). */
+/** Au-dessus du plancher : signal. `categorie` est le SEUL mot qui sort du job vers l'alerte (vocabulaire fermé, `CATEGORIES`). */
 export const MESURES = {
   echecs_auth: { plancher: 30, categorie: 'echecs-auth', libelle: "échecs d'authentification (4xx sur /auth/v1/token, verify, otp, recover, signup)" },
   echecs_auth_ip_max: { plancher: 15, categorie: 'echecs-auth-ip', libelle: "échecs d'authentification depuis une même IP" },
@@ -93,8 +75,7 @@ const LIGNES = `if(match(log_attributes['response.headers.content_range'], '^[0-
 const REST = `source = 'edge_logs' AND startsWith(log_attributes['request.path'], '/rest/v1/')`;
 const CLE_SERVEUR = `startsWith(log_attributes['request.sb.apikey.apikey.prefix'], 'sb_secret_')`; // nos Edge Functions : sans charge JWT, elles passaient pour anonymes (issue n° 186)
 
-/** Les requêtes EXÉCUTÉES. Chacune rend une seule ligne d'agrégats : un
- *  compte ou une IP n'apparaît que DANS une sous-requête, jamais en sortie. */
+/** Les requêtes EXÉCUTÉES. Chacune rend une seule ligne d'agrégats : un compte ou une IP n'apparaît que DANS une sous-requête, jamais en sortie. */
 export const SQL_JOURNAUX = {
   totaux: `SELECT
   countIf(${AUTH_ECHEC}) AS echecs_auth,
@@ -119,9 +100,7 @@ FROM logs`,
   GROUP BY sujet)`,
 };
 
-/** Pour le TRI À LA MAIN seulement (Axel, MCP en lecture ou Dashboard, sur
- *  la fenêtre imprimée par le run). ❌ Jamais exécutée par un workflow : elle
- *  rend des identifiants de compte. */
+/** Pour le TRI À LA MAIN seulement (Axel, MCP en lecture ou Dashboard, sur la fenêtre imprimée par le run). ❌ Jamais exécutée par un workflow : elle rend des identifiants de compte. */
 export const SQL_TRI = `SELECT sujet, sum(lmax) AS lignes_distinctes, sum(n) AS requetes, min(t0) AS debut, max(t1) AS fin FROM (
   SELECT ${SUJET} AS sujet, log_attributes['request.path'] AS chemin, log_attributes['request.search'] AS parametres,
     extract(log_attributes['response.headers.content_range'], '^([0-9]+)-') AS d,
@@ -149,14 +128,11 @@ const n = (x) => Number(x ?? 0) || 0;
 export async function lireJournaux(ctx) {
   const t = (await requeteJournaux(SQL_JOURNAUX.totaux, ctx))[0];
   if (!t) throw new Error('API journaux Supabase : aucune ligne de totaux');
-  // 🔴 Anti-« garde qui répond sans mesurer » : sur 24 h, la passerelle voit
-  // au moins les sondes d'`uptime.yml`. Zéro requête = une lecture qui ne
-  // voit plus rien (source renommée, clé changée), pas un service calme.
+  // 🔴 Anti-« garde qui répond sans mesurer » : sur 24 h, la passerelle voit au moins les sondes d'`uptime.yml`. Zéro requête = une lecture qui ne voit plus rien (source renommée, clé changée), pas un service calme.
   if (!(n(t.requetes_lues) > 0)) throw new Error('journaux Supabase : 0 requête sur 24 h, la lecture ne voit rien');
   const ip = (await requeteJournaux(SQL_JOURNAUX.ip, ctx))[0] ?? {};
   const s = (await requeteJournaux(SQL_JOURNAUX.sujets, ctx))[0] ?? {};
-  // Liste blanche des champs : un champ inattendu dans la réponse (un
-  // identifiant) ne traverse pas.
+  // Liste blanche des champs : un champ inattendu dans la réponse (un identifiant) ne traverse pas.
   return {
     mesures: {
       echecs_auth: n(t.echecs_auth),
@@ -180,8 +156,7 @@ async function ghPage(url, token, fetchImpl) {
   return { json: await res.json(), suivante: /<([^>]+)>;\s*rel="next"/.exec(res.headers.get('link') ?? '')?.[1] ?? null };
 }
 
-/** Secret scanning. ⚠️ La réponse porte la VALEUR du secret (`secret`) :
- *  seuls le numéro, le type et la date en sont gardés. */
+/** Secret scanning. ⚠️ La réponse porte la VALEUR du secret (`secret`) : seuls le numéro, le type et la date en sont gardés. */
 export async function lireSecretScanning({ depot, token, fetchImpl = fetch }) {
   const out = [];
   for (let url = `${GH}/repos/${depot}/secret-scanning/alerts?state=open&per_page=100`; url;) {
@@ -217,8 +192,7 @@ export function classer(nom, debut) {
   const hors = t.replace(/\$(\w*)\$[\s\S]*?(?:\$\1\$|$)/g, ' ');
   if (/^INSERT INTO\s+"?(?:public|auth)"?\./im.test(hors)) return 'données de table (INSERT INTO public/auth)';
   if (EXT_BASE.test(nom)) return 'nom de dump ou de base, contenu non chiffré';
-  // Quantificateurs BORNÉS : un fichier forgé (longue suite sans `@`) ne fait
-  // pas exploser le retour arrière sur les 64 Ko lus.
+  // Quantificateurs BORNÉS : un fichier forgé (longue suite sans `@`) ne fait pas exploser le retour arrière sur les 64 Ko lus.
   const emails = new Set((t.match(/[\w.+-]{1,64}@[\w-]{1,63}(?:\.[\w-]{1,63}){1,8}/g) ?? []).filter((e) => !DOMAINES_FICTIFS.test(e)));
   if (emails.size >= 20) return `${emails.size} adresses e-mail distinctes`;
   return null;
@@ -228,8 +202,7 @@ const u16 = (b, o) => b.readUInt16LE(o);
 const u32 = (b, o) => b.readUInt32LE(o);
 const u64 = (b, o) => Number(b.readBigUInt64LE(o));
 
-/** Entrées d'un zip, lues par son répertoire central. `lire(debut, longueur)`
- *  rend les octets demandés : un tampon complet ou des requêtes `Range`. */
+/** Entrées d'un zip, lues par son répertoire central. `lire(debut, longueur)` rend les octets demandés : un tampon complet ou des requêtes `Range`. */
 export async function entreesZip(taille, lire) {
   const queue = Math.min(taille, 65557 + 20);
   const fin = await lire(taille - queue, queue);
@@ -292,10 +265,8 @@ export async function debutEntree(e, lire) {
   throw new Error(`zip : méthode de compression ${e.methode} non lue pour ${e.nom}`);
 }
 
-/** Un dump SQL en clair porte-t-il des DONNÉES ? `COPY … FROM stdin;` suivi
- *  d'au moins une ligne de données, ou un `INSERT … VALUES` en début de ligne
- *  (`pg_dump --inserts`). Un schéma seul (`schema.sql` du contrat de données,
- *  régénéré depuis une base vierge) n'en porte aucune. */
+/** Un dump SQL en clair porte-t-il des DONNÉES ? `COPY … FROM stdin;` suivi d'au moins une ligne de données, ou un `INSERT … VALUES` en début de ligne
+ *  (`pg_dump --inserts`). Un schéma seul (`schema.sql` du contrat de données, régénéré depuis une base vierge) n'en porte aucune. */
 export function porteDesDonnees(texte) {
   return /^COPY\s+[\w."]+\s*\([^)]*\)\s+FROM\s+stdin;\n(?!\\\.\n)[^\n]/m.test(texte)
     || /^INSERT INTO\s+"?(?:public|auth)"?\.[^\n]*VALUES/m.test(texte);
@@ -314,26 +285,36 @@ async function entreeComplete(e, lire) {
   throw new Error(`zip : méthode de compression ${e.methode} non lue`);
 }
 
-/** Inspecte un zip déjà accessible par `lire`. Rend les fichiers suspects. */
-export async function inspecterZip(taille, lire) {
+/** Un fichier IDENTIQUE à sa version publiée (`supabase/migration/`, au commit du run) n'est pas une fuite
+ *  (`migrations-depot` de `ci-vert.yml`) : preuve par le contenu. Commit, nom ou réseau illisible = suspect. */
+export const lecteurDepot = ({ depot, sha, token, fetchImpl = fetch }) => async (nom) => {
+  const base = nom.split('/').pop();
+  if (!/^[0-9a-f]{40}$/.test(sha ?? '') || !/^\w[\w.-]*$/.test(base)) return null;
+  const res = await fetchImpl(`${GH}/repos/${depot}/contents/supabase/migration/${base}?ref=${sha}`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github.raw+json', 'X-GitHub-Api-Version': '2022-11-28' },
+  }).catch(() => null);
+  return res?.ok ? Buffer.from(await res.arrayBuffer()) : null;
+};
+
+/** Inspecte un zip déjà accessible par `lire`. Rend les fichiers suspects. `publics` : `lecteurDepot`. */
+export async function inspecterZip(taille, lire, publics = null) {
   const suspects = [];
   for (const e of await entreesZip(taille, lire)) {
     if (e.nom.endsWith('/')) continue;
     let pourquoi = classer(e.nom, await debutEntree(e, lire));
-    // Un en-tête de `pg_dump` ne dit pas s'il y a des lignes : le fichier est
-    // relu en entier. Trop gros pour être relu = suspect (échec fermé).
+    // Un en-tête de `pg_dump` ne dit pas s'il y a des lignes : le fichier est relu en entier. Trop gros pour être relu = suspect (échec fermé).
     if (pourquoi === 'dump PostgreSQL (SQL en clair)' && e.brut <= LIMITE_SQL_COMPLET) {
       pourquoi = porteDesDonnees((await entreeComplete(e, lire)).toString('latin1'))
         ? 'dump PostgreSQL (SQL en clair, avec des lignes de table)'
         : null;
     }
+    if (pourquoi && publics && e.brut <= LIMITE_SQL_COMPLET && (await publics(e.nom))?.equals(await entreeComplete(e, lire))) pourquoi = null;
     if (pourquoi) suspects.push({ fichier: e.nom, pourquoi });
   }
   return suspects;
 }
 
-/** Lecteur d'un artefact : tout le zip s'il est petit, sinon des `Range`
- *  sur l'URL signée vers laquelle GitHub redirige. */
+/** Lecteur d'un artefact : tout le zip s'il est petit, sinon des `Range` sur l'URL signée vers laquelle GitHub redirige. */
 export async function lecteurArtefact(a, token, fetchImpl, seuilComplet = TELECHARGEMENT_COMPLET) {
   const res = await fetchImpl(`${GH}/repos/${a.depot}/actions/artifacts/${a.id}/zip`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' },
@@ -368,29 +349,26 @@ export async function lireArtefacts({ depot, token, maintenant, fetchImpl = fetc
     for (const a of json.artifacts ?? []) {
       if (Date.parse(a.created_at) < limite) { url = null; break; }
       if (a.expired) continue;
-      // Un run de FOURCHE (pull_request d'un tiers) ne reçoit aucun secret de
-      // production : il ne peut pas porter nos données, et son contenu est
-      // choisi par un tiers, qui pourrait sinon occuper le plafond d'alertes.
-      // Compté, jamais inspecté. Origine illisible = inspecté (échec fermé).
+      // Un run de FOURCHE (pull_request d'un tiers) ne reçoit aucun secret de production : il ne peut pas porter nos données, et son contenu est
+      // choisi par un tiers, qui pourrait sinon occuper le plafond d'alertes. Compté, jamais inspecté. Origine illisible = inspecté (échec fermé).
       const wr = a.workflow_run;
       if (wr?.head_repository_id != null && wr?.repository_id != null && wr.head_repository_id !== wr.repository_id) { fourches += 1; continue; }
-      recents.push({ id: a.id, nom: a.name, taille: a.size_in_bytes, depot, run: wr?.id });
+      recents.push({ id: a.id, nom: a.name, taille: a.size_in_bytes, depot, run: wr?.id, sha: wr?.head_sha });
     }
   }
   const suspects = [];
   for (const a of recents) {
     const { taille, lire } = await lecteurArtefact(a, token, fetchImpl);
-    for (const s of await inspecterZip(taille, lire)) suspects.push({ artefact: a.nom, run: a.run, ...s });
+    const publics = lecteurDepot({ depot, sha: a.sha, token, fetchImpl });
+    for (const s of await inspecterZip(taille, lire, publics)) suspects.push({ artefact: a.nom, run: a.run, ...s });
   }
   return { lus: recents.length, fourches, suspects };
 }
 
 // ─── 5 · Décision (pure : le témoin la rejoue sans réseau) ──────────
 
-/** Un nom venu de l'extérieur (artefact, fichier de zip : une PR depuis une
- *  fourche peut déposer un artefact) ne doit ni injecter une commande de
- *  workflow (`::`, `%`, retour à la ligne) ni casser le bloc du résumé
- *  (accent grave). Caractères de contrôle retirés, longueur bornée. */
+/** Un nom venu de l'extérieur (artefact, fichier de zip : une PR depuis une fourche peut déposer un artefact) ne doit ni injecter une commande de
+ *  workflow (`::`, `%`, retour à la ligne) ni casser le bloc du résumé (accent grave). Caractères de contrôle retirés, longueur bornée. */
 export function propre(s, max = 80) {
   const t = String(s ?? '')
     .replace(/[\u0000-\u001f\u007f-\u009f]/g, ' ')

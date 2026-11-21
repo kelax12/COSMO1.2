@@ -2,25 +2,15 @@
 // detection-violation-alerte.mjs · UN SIGNAL DEVIENT UNE ISSUE, AVEC UN
 // PROPRIÉTAIRE, UNE ÉCHÉANCE, ET UN PLAFOND
 //
-// Appelé par `.github/workflows/detection-violation.yml`, job `alerter`, qui
-// ne reçoit AUCUN secret de production : il ne connaît du détecteur que trois
-// sorties (statut, catégories d'un vocabulaire fermé, date de détection).
-// Vague 6.1 (OBS-01) : « des signaux produits et jamais traités ». Le signal
-// du 2026-10-26 (PR n° 125) a été poussé sur le salon, puis n'a été trié par
-// personne pendant 13 jours : pas d'issue, pas de propriétaire, pas d'échéance.
+// Appelé par `.github/workflows/detection-violation.yml`, job `alerter`, SANS secret de production :
+// il ne connaît du détecteur que statut, catégories (vocabulaire fermé) et date (OBS-01 : un signal
+// poussé sur le salon sans issue n'est trié par personne).
 //
-// ── CE QU'IL FAIT ───────────────────────────────────────────────────
-//
-// · Une issue `detection-violation` OUVERTE à la fois, ASSIGNÉE au
-//   propriétaire du dépôt (Axel), avec une ÉCHÉANCE de tri de 72 h (le délai
-//   CNIL court depuis la prise de connaissance : le tri doit tenir dedans).
-// · Tant qu'elle est ouverte, un nouveau signal ne la commente que si
-//   l'ensemble des catégories CHANGE (empreinte, pas de texte en clair).
-// · PLAFOND : au plus `PLAFOND_7J` publications (issue ou commentaire) sur
-//   7 jours glissants. Au-delà, rien n'est écrit ni poussé, le job rougit
-//   (GitHub notifie l'échec) et le dit : un canal inondé apprend à se taire.
-// · La revue des issues ÉCHUES vit dans la règle des 7 jours
-//   (`scripts/gardes-rouges-7j.mjs`), pas ici : une seule règle.
+// · Une issue `detection-violation` OUVERTE à la fois, ASSIGNÉE à Axel, ÉCHÉANCE de tri 72 h (CNIL).
+// · Ouverte, un nouveau signal ne la commente que si l'ensemble des catégories CHANGE (empreinte).
+// · PLAFOND : au plus `PLAFOND_7J` publications sur 7 jours glissants ; au-delà rien n'est écrit,
+//   le job rougit et le dit : un canal inondé apprend à se taire.
+// · La revue des issues ÉCHUES vit dans `scripts/gardes-rouges-7j.mjs` : une seule règle.
 //
 // ⚠️ DÉPÔT PUBLIC : l'issue ne dit QUE « seuil franchi le JJ/MM, voir le
 // résumé du job », le propriétaire et l'échéance. Les catégories n'y sont

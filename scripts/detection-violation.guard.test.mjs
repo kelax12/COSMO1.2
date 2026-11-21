@@ -1,16 +1,10 @@
 // ═══════════════════════════════════════════════════════════════════
 // detection-violation.guard.test.mjs · LE TÉMOIN DU DÉTECTEUR ET DE SON ALERTE
 //
-// Vague 6.1 (OBS-01). Chaque cas soumet au code RÉEL une situation qu'il
-// DOIT signaler, et échoue s'il répond « rien ». Le cas central rejoue BK-1 :
-// un artefact avec un `pg_dump` en clair dedans ; sa version chiffrée (après
-// `8c6a971d`) ne doit PAS rougir, sinon le détecteur crierait chaque jour.
-// Le second : la même page relue des centaines de fois par l'application
-// n'est pas un export massif (lignes DISTINCTES, pas lignes rendues).
-//
-// Côté alerte : une issue avec propriétaire et échéance, une seule à la fois,
-// un plafond, et rien de personnel ni de catégoriel dans le texte public.
-// Côté revue : une alerte échue entre dans la règle des 7 jours.
+// OBS-01. Chaque cas soumet au code RÉEL une situation qu'il DOIT signaler. Cas central, BK-1 : un
+// `pg_dump` en clair dans un artefact rougit, sa version chiffrée non ; une page relue cent fois
+// n'est pas un export (lignes DISTINCTES) ; un fichier identique au dépôt n'est pas une fuite.
+// Alerte : une issue (propriétaire, échéance, plafond), rien de personnel dans le texte public.
 // ═══════════════════════════════════════════════════════════════════
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -18,7 +12,7 @@ import { resolve } from 'node:path';
 import { deflateRawSync } from 'node:zlib';
 import { load } from 'js-yaml';
 import {
-  classer, entreesZip, inspecterZip, lecteurArtefact, decider, executer, propre, MESURES, CATEGORIES, SQL_JOURNAUX, SQL_TRI,
+  classer, entreesZip, inspecterZip, lecteurArtefact, lecteurDepot, lireArtefacts, decider, executer, propre, MESURES, CATEGORIES, SQL_JOURNAUX, SQL_TRI,
 } from './detection-violation.mjs';
 import * as alerte from './detection-violation-alerte.mjs';
 import { alertesEchues, signature, corps, run as revue } from './gardes-rouges-7j.mjs';
@@ -161,6 +155,35 @@ describe('zip · lu par son répertoire central', () => {
   it('un zip sans répertoire central est une ERREUR, jamais « rien trouvé »', async () => {
     const b = Buffer.from('pas un zip du tout');
     await expect(inspecterZip(b.length, lecteur(b))).rejects.toThrow(/EOCD/);
+  });
+});
+
+// ═══ Un fichier identique à sa version publiée n'est pas une fuite (`migrations-depot`) ═══
+const SHA = 'a'.repeat(40);
+const MIGRATION = Buffer.from('CREATE TABLE public.t (id int);\nINSERT INTO public.t (id) VALUES (1);\n');
+const RESEAU_DEPOT = (depot, artefact) => async (url) => {
+  const u = String(url), wr = { id: 1, repository_id: 100, head_repository_id: 100, head_sha: SHA };
+  if (u.includes('/actions/artifacts?per_page')) return new Response(JSON.stringify({ artifacts: [{ id: 9, name: 'migrations-depot', size_in_bytes: artefact.length, created_at: '2026-11-21T12:00:00Z', expired: false, workflow_run: wr }] }));
+  if (u.endsWith('/actions/artifacts/9/zip')) return new Response(null, { status: 302, headers: { location: 'https://blob.invalid/9' } });
+  if (u === 'https://blob.invalid/9') return new Response(artefact);
+  return u.endsWith(`/contents/supabase/migration/236_affiliation.sql?ref=${SHA}`) ? new Response(depot) : new Response('', { status: 404 });
+};
+describe('fichier publié dans le dépôt · preuve par le contenu', () => {
+  it('identique à la version du dépôt : pas suspect ; TÉMOIN : un octet de plus, ou aucune version, rougit', async () => {
+    const z = zip([{ nom: '236_affiliation.sql', contenu: MIGRATION }]);
+    const plus = zip([{ nom: '236_affiliation.sql', contenu: Buffer.concat([MIGRATION, Buffer.from('INSERT INTO public.profiles (id) VALUES (2);\n')]) }]);
+    expect(await inspecterZip(z.length, lecteur(z), async () => MIGRATION)).toEqual([]);
+    for (const [b, publics] of [[plus, async () => MIGRATION], [z, async () => null], [z, null]]) expect((await inspecterZip(b.length, lecteur(b), publics))[0]?.pourquoi).toMatch(/INSERT INTO/);
+  });
+  it('lireArtefacts compare au commit du RUN (head_sha) ; commit, nom ou réseau illisible : aucune version', async () => {
+    const maintenant = new Date('2026-11-21T13:40:00Z'), z = zip([{ nom: '236_affiliation.sql', contenu: MIGRATION }]);
+    expect((await lireArtefacts({ depot: 'o/r', token: 't', maintenant, fetchImpl: RESEAU_DEPOT(MIGRATION, z) })).suspects).toEqual([]);
+    expect((await lireArtefacts({ depot: 'o/r', token: 't', maintenant, fetchImpl: RESEAU_DEPOT(Buffer.from('x'), z) })).suspects).toHaveLength(1);
+    const lire = (sha, fetchImpl = RESEAU_DEPOT(MIGRATION, z)) => lecteurDepot({ depot: 'o/r', sha, token: 't', fetchImpl });
+    expect(await lire(SHA)('dossier/236_affiliation.sql')).toEqual(MIGRATION);
+    for (const nom of ['..', '.env', 'a b.sql']) expect(await lire(SHA)(nom)).toBeNull();
+    for (const sha of [undefined, 'main']) expect(await lire(sha)('236_affiliation.sql')).toBeNull();
+    expect(await lire(SHA, async () => { throw new Error('réseau'); })('236_affiliation.sql')).toBeNull();
   });
 });
 
