@@ -86,6 +86,7 @@ React 19 · TypeScript 6 strict (pas 7 : ADR 0015) · Vite 8 (Rolldown) · React
 ## Git : poussée jugée sur `noyau/` avant `main` (ADR 0022)
 
 - 🔴 Commit puis `npm run pousser` : le noyau juge le SHA sur `noyau/<session>-<sha>`, puis ce SHA part sur `main` (branche supprimée, attente d'un run de `main` en cours). ❌ Pas de PR, sauf demande explicite d'Axel dans la session.
+- ✅ Itération sur une branche (décision d'Axel) : tant que le travail reste sur une branche, aucune vérification (`verif:rapide`, tests, lint, build, instantanés) ni réparation de rouge ; tout se joue une fois, au moment de partir sur `main` : `verif:rapide`, rouges remis au vert, puis `npm run pousser`. ❌ Jamais un SHA non vérifié sur `main`.
 - 🔴 Une session = un worktree = une branche locale. ❌ Jamais deux écrivains dans le même arbre (ni le checkout principal partagé). Le hook `pre-push` refuse une poussée depuis le checkout principal (secours Axel seul : `COSMO_PUSH_CHECKOUT_PRINCIPAL=1`, jamais `--no-verify`).
 - 🔴 Le hook `pre-push` refuse aussi une poussée vers `main` tant qu'un run `CI noyau` tourne sur `main` (`pousser` attend sa fin). Secours, Axel seul : `docs/DEPLOYMENT.md` § Hook `pre-push`.
 - ❌ Pas de `npm run test:e2e` en local pour une retouche d'UI : `verif:rapide` et un coup d'œil au preview. Exceptions : une spec `e2e/` modifiée (ne lancer qu'elle), ou une demande d'Axel.
