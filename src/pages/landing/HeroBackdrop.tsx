@@ -30,10 +30,10 @@ const HeroBackdrop: React.FC<Props> = ({ gridRef, auroraRef }) => (
           ⚠️ Le contenu reste au-dessus sans rien changer : il est `relative` et vient
           APRÈS dans l'arbre, donc il se peint après à la même étape. */}
       <div className="absolute inset-0 z-0" aria-hidden="true">
-        {/* Grille retiree (refonte 2026-11-19) : calque vide garde pour le parallax GSAP. */}
+        {/* Grille retiree : calque vide garde pour le parallax GSAP. */}
         <div ref={gridRef} className="absolute inset-0" />
 
-        {/* Fond blanc pur : aurores et bruit retires (refonte 2026-11-19). Le
+        {/* Fond blanc pur : aurores et bruit retires. Le
             calque reste, vide, parce que le parallax GSAP le vise. */}
         <div ref={auroraRef} className="absolute inset-0" />
       </div>

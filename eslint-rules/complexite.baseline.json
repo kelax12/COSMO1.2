@@ -431,9 +431,6 @@
     "src/pages/agenda/AgendaCalendarSection.tsx": {
       "max-lines-per-function": [323]
     },
-    "src/pages/landing/PersoTrack.tsx": {
-      "max-lines-per-function": [261]
-    },
     "src/pages/landing/WhySection.tsx": {
       "max-lines-per-function": [303]
     },

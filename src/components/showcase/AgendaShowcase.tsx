@@ -28,8 +28,8 @@ const P_COLORS: Record<number, string> = {
   1: 'bg-red-200   text-red-900',
 };
 
-// Corps d'une carte du panneau : decalque de `PersonalTaskCard` (app, refonte
-// du 2026-11-16) : barre coloree interne, echeance et duree en puces, priorite
+// Corps d'une carte du panneau : decalque de `PersonalTaskCard` (app) :
+// barre coloree interne, echeance et duree en puces, priorite
 // a droite. La carte qui le contient porte `pl-4` pour laisser la barre.
 const CarteTacheCorps: React.FC<{
   nom: string;

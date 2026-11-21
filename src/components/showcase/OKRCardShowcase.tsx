@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Edit2, Trash2, Clock, Check, MoreHorizontal } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useShowcasePalette } from './showcase-theme';
+import { formatNumber } from '@/i18n/format';
 
 // Vitrine OKR : décalque de la carte d'objectif de l'app (`src/pages/okr/OKRCard.tsx`,
 // vue desktop). En-tête catégorie / dates centrées / actions, pastille « j restants »,
@@ -51,7 +52,7 @@ const formatTime = (minutes: number) => {
   return m > 0 ? `${h} h ${m}` : `${h} h`;
 };
 
-const fmt = (n: number) => n.toLocaleString('fr-FR');
+const fmt = (n: number) => formatNumber(n);
 
 const OKRCardShowcase: React.FC = () => {
   const P = useShowcasePalette();

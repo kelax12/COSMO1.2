@@ -19,8 +19,6 @@
     "demoAria": "Isprobajte besplatni demo, bez registracije",
     "demoCta": "Isprobajte besplatni demo",
     "signupCta": "Izradite besplatan račun",
-    "reassurance": "Demo unaprijed popunjen sa 100 zadataka · ništa za instalirati · spreman u 1 kliku",
-    "scroll": "Otkrijte",
     "modulesLabel": "Četiri modula objedinjena u aplikaciji COSMO",
     "modules": {
       "tasks": "Zadaci",
@@ -30,15 +28,6 @@
     },
     "showcasePause": "Pauziraj prikaz proizvoda",
     "showcasePlay": "Pokreni prikaz proizvoda"
-  },
-  "marquee": {
-    "tasks": "Zadaci",
-    "agenda": "Kalendar",
-    "timeBlocking": "Blokiranje vremena",
-    "okr": "OKR-ovi",
-    "habits": "Navike",
-    "stats": "Statistika",
-    "demo": "Besplatan demo način"
   },
   "cta": {
     "line1": "Počnite s demom.",
@@ -192,18 +181,10 @@
     "a5": "Da. Cosmo je izgrađen prvenstveno za mobitele: prilagodljivo sučelje, donja navigacijska traka, geste povlačenja na zadacima, glatki donji listovi i podrška za sigurna područja na iOS-u. Radi u svakom mobilnom pregledniku (Safari na iOS-u, Chrome na Androidu), bez ičega za preuzimanje.",
     "q6": "Što je blokiranje vremena?",
     "a6": "Blokiranje vremena (time-blocking) znači rezerviranje termina u kalendaru za rad na određenim zadacima, umjesto reagiranja na ono što dolazi. U Cosmu samo povucite zadatak s bočne ploče na termin u kalendaru: događaj se automatski izrađuje i povezuje sa zadatkom. To je metoda koju preferiraju Elon Musk, Bill Gates i Cal Newport.",
-    "q7": "Mogu li surađivati sa svojim timom?",
-    "a7": "Da, besplatno. Pošaljite pozivnicu e-poštom, podijelite zadatak s ulogom Promatrač ili Urednik i pratite njegov napredak s nadzorne ploče. Za cijelu organizaciju (organigram, timski projekti i OKR-ovi, statistika po opsegu) postoji način rada za tvrtke, besplatan do pet članova.",
     "q8": "Kako učinkovito pratiti navike?",
     "a8": "Izradite naviku, postavite njezinu učestalost (dnevno, tjedno, određeni dani), a zatim je označavajte svaki dan. Cosmo prikazuje toplinsku kartu od 26 tjedana u stilu GitHuba, izračunava vaš niz (uzastopni dani) i stopu ispunjenja za razdoblje koje odaberete. Zlatno pravilo: počnite s najviše 2 do 3 navike.",
     "q9": "Jesu li moji podaci sigurni?",
     "a9": "Vaši se podaci pohranjuju u Irskoj na Supabaseu, uz Row Level Security: drugi korisnik može pristupiti samo onome što s njim podijelite. Tehnički pristup ima samo izdavatelj, isključivo radi održavanja, sigurnosti i podrške, a sigurnosne kopije su šifrirane. Stranice aplikacije (nadzorna ploča, zadaci itd.) blokirane su za tražilice u datoteci robots.txt. U demo načinu podaci ostaju u vašem pregledniku (localStorage) i nikad ne dolaze na naše poslužitelje.",
-    "q10": "Mogu li koristiti Cosmo bez internetske veze?",
-    "a10": "U demo načinu svi se podaci pohranjuju lokalno u pregledniku: nakon početnog učitavanja veza nije potrebna. S računom vam 24-satna predmemorija u localStorageu omogućuje pregled nedavnih zadataka i navika čak i uz nestabilnu vezu.",
-    "q11": "Hoće li se članovi mojeg tima osjećati nadzirano?",
-    "a11": "Cosmo je osmišljen da prikazuje samo timski rad. Voditelj vidi opterećenje, timske zadatke i njihov napredak, tko je što dovršio, datum posljednje aktivnosti svake osobe na tom radu i termine svojeg tima u kalendaru, ali nikad sadržaj događaja označenih kao privatni, ni vaše osobne zadatke i navike, ni vaše prijave. Svatko također prije pridruživanja tvrtki vidi što će ona moći pratiti o njegovu radu.",
-    "q12": "Kako su podaci odvojeni između timova?",
-    "a12": "Odvajanje se provodi na razini baze podataka, a ne samo u sučelju: projekt ili cilj vezan uz jedan tim ostaje nedostupan ostalima, čak i ako sučelje ima grešku. Voditelj na srednjoj razini vidi samo sebe i osobe koje mu odgovaraju, izravno ili neizravno, bez dopuštenja koja treba ručno konfigurirati.",
     "headingLine1": "Sve što želite znati",
     "headingLine2": "o Cosmu"
   },
