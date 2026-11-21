@@ -315,7 +315,7 @@ const TasksPage: React.FC = () => {
             {/* `card-plain-mobile` : la liste sort de la carte sous 768px.
                 Enfermer une liste pleine largeur dans une carte ajoutait une
                 2ᵉ gouttière et volait ~24px de largeur utile par ligne. */}
-            <div className="card card-plain-mobile p-0 sm:p-6">
+            <div className="card card-plain-mobile tasks-flat p-0 sm:p-6">
               {!showCompleted && !showAddTaskForm && (
               <div className={hiddenWhileSearching}>
               <TaskListsBar

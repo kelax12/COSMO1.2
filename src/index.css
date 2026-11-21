@@ -1044,6 +1044,24 @@ body {
   background-color: rgb(var(--table-row-hover));
 }
 
+/* Thème Gris, page Tâches : le bloc listes + filtres + tableau se fond dans
+   le fond de page (un seul arrière-plan, sans bordure ni ombre). Les
+   séparateurs de lignes et le survol restent. */
+.gris .tasks-flat,
+.gris .tasks-flat .table-container {
+  background-color: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+.gris .tasks-flat .data-table,
+.gris .tasks-flat .data-table thead,
+.gris .tasks-flat .data-table tbody tr:nth-child(n) {
+  background-color: transparent;
+}
+.gris .tasks-flat .data-table tbody tr:hover {
+  background-color: rgb(var(--table-row-hover));
+}
+
 .animate-fade-in {
   animation: fadeIn 0.3s ease-in-out;
 }
