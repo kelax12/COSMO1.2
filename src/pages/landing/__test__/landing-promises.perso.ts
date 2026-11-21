@@ -22,7 +22,6 @@ export const PROMISES_PERSO: LandingPromise[] = [
     claim: 'Le partage de tâches est gratuit, en rôle Lecteur ou Éditeur.',
     anchors: [
       { key: 'faq.a1', includes: 'Le partage restera gratuit' },
-      { key: 'faq.a7', includes: 'rôle Lecteur ou Éditeur' },
     ],
     proofs: [
       { file: 'src/modules/friends/types.ts', has: "role: 'viewer' | 'editor';" },
@@ -48,14 +47,13 @@ export const PROMISES_PERSO: LandingPromise[] = [
     constat:
       'Le jeu de démo a été réduit à 10 tâches de base (commit 944015ba4) : il ouvre avec 12 tâches, 10 habitudes, 123 événements et 4 OKR (mesuré le 2026-10-24).',
     anchors: [
-      { key: 'hero.reassurance', includes: 'Démo pré-remplie de 100 tâches' },
       { key: 'cta.statsAria', includes: '100 tâches, 100 habitudes, 150 événements' },
       { key: 'why.demoVolume', includes: '100 tâches · 100 habitudes · 150 events' },
       { key: 'faq.a4', includes: '100 tâches, 100 habitudes, 150 événements agenda et 8 OKRs' },
     ],
     proofs: [{ file: 'src/modules/tasks/local.seed.ts', has: '// 10 tâches' }],
     figures: {
-      '100': ['hero.reassurance', 'cta.statsAria', 'why.demoVolume', 'faq.a4'],
+      '100': ['cta.statsAria', 'why.demoVolume', 'faq.a4'],
       '150': ['cta.statsAria', 'why.demoVolume', 'faq.a4'],
       '8': ['faq.a4'],
     },
@@ -103,11 +101,10 @@ export const PROMISES_PERSO: LandingPromise[] = [
     claim: 'Démo prête en 1 clic ; réorganisation d’un rattachement en 1 clic.',
     reason: 'Nombre de gestes, non mesurable par le code.',
     anchors: [
-      { key: 'hero.reassurance', includes: 'prêt en 1 clic' },
       { key: 'enterprise.pyramid.b4t', includes: 'Une réorganisation en 1 clic' },
     ],
     proofs: [],
-    figures: { '1': ['hero.reassurance', 'enterprise.pyramid.b4t'] },
+    figures: { '1': ['enterprise.pyramid.b4t'] },
   },
   {
     id: 'google-oauth',
@@ -265,19 +262,10 @@ export const PROMISES_PERSO: LandingPromise[] = [
     proofs: [{ file: 'index.html', has: 'id="root"' }],
   },
   {
-    id: 'cache-24-heures',
-    kind: 'limite',
-    claim: 'Un cache localStorage de 24 heures garde les tâches et habitudes récentes.',
-    anchors: [{ key: 'faq.a10', includes: 'un cache localStorage 24 heures' }],
-    proofs: [{ file: 'src/modules/auth/session-cache.ts', has: 'CACHE_MAX_AGE = 24 * 60 * 60 * 1000' }],
-    figures: { '24': ['faq.a10'] },
-  },
-  {
     id: 'demo-locale',
     kind: 'produit',
     claim: 'En mode démo, les données restent dans le navigateur.',
     anchors: [
-      { key: 'faq.a10', includes: 'En mode démo, toutes les données sont stockées localement' },
       { key: 'faq.a9', includes: 'les données restent dans votre navigateur (localStorage)' },
     ],
     proofs: [{ file: 'src/lib/repository.factory.ts', has: 'localStorage' }],

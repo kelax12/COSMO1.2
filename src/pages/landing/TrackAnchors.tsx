@@ -75,7 +75,7 @@ const TrackAnchors: React.FC<TrackAnchorsProps> = ({ track, label, active, varia
             ? `rounded-full border px-2 py-1.5 backdrop-blur-xl ${
                 isEnterprise
                   ? 'border-white/[0.08] bg-[#0A0C11]/85'
-                  : 'border-slate-900/[0.08] bg-white/80 shadow-[0_8px_24px_-18px_rgba(15,23,42,0.45)]'
+                  : 'border-slate-900/[0.08] bg-white/80'
               }`
             : ''
         }`}

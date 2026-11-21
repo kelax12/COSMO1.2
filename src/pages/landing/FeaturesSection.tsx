@@ -5,7 +5,7 @@
 // layout empilé classique (Framer whileInView), comme avant.
 import React, { Suspense, lazy, useEffect, useRef } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { CheckCircle, Calendar, ArrowRight, BarChart2 } from 'lucide-react';
+import { Check, CheckSquare, Calendar, ArrowRight, BarChart2 } from 'lucide-react';
 import { HabitIcon, OkrIcon } from '@/components/icons/cosmo-icons';
 import type { LucideIcon } from 'lucide-react';
 import { gsap, ScrollTrigger, useGSAP } from '@/lib/gsap';
@@ -62,11 +62,10 @@ interface Feature {
   id: FeatureId;
   path: string;
   icon: LucideIcon;
-  /** classes tailwind du gradient d'accent (icône, puces, CTA) */
-  gradient: string;
-  shadow: string;
-  glow: string;
-  accentText: string;
+  /** Aplat d'accent (icône, puces, CTA) : la couleur de la page dans l'app (`Layout.tsx`). */
+  fond: string;
+  /** Surlignage du mot clé du titre (teinte 300 de la couleur de page). */
+  surligne: string;
   Desktop: React.ComponentType;
   Mobile: React.ComponentType;
   /** sens d'entrée du texte en mode empilé */
@@ -85,11 +84,9 @@ const FEATURES: Feature[] = [
   {
     id: 'tasks',
     path: '/tasks',
-    icon: CheckCircle,
-    gradient: 'from-blue-600 to-cyan-500',
-    shadow: 'shadow-blue-500/30',
-    glow: 'from-blue-500/15 to-cyan-500/15',
-    accentText: 'from-blue-600 to-cyan-600',
+    icon: CheckSquare,
+    fond: 'bg-blue-500',
+    surligne: '#93c5fd',
     Desktop: TaskTableShowcase,
     Mobile: TaskCardMobileShowcase,
   },
@@ -97,10 +94,8 @@ const FEATURES: Feature[] = [
     id: 'agenda',
     path: '/agenda',
     icon: Calendar,
-    gradient: 'from-red-500 to-rose-500',
-    shadow: 'shadow-red-500/30',
-    glow: 'from-red-500/15 to-rose-500/15',
-    accentText: 'from-red-600 to-rose-600',
+    fond: 'bg-red-500',
+    surligne: '#fca5a5',
     Desktop: AgendaShowcase,
     Mobile: AgendaMobileShowcase,
     fromRight: true,
@@ -112,10 +107,8 @@ const FEATURES: Feature[] = [
     id: 'okr',
     path: '/okr',
     icon: OkrIcon,
-    gradient: 'from-green-500 to-emerald-500',
-    shadow: 'shadow-green-500/30',
-    glow: 'from-green-500/15 to-emerald-500/15',
-    accentText: 'from-green-600 to-emerald-600',
+    fond: 'bg-green-500',
+    surligne: '#86efac',
     Desktop: OKRCardShowcase,
     Mobile: OKRMobileShowcase,
   },
@@ -123,10 +116,8 @@ const FEATURES: Feature[] = [
     id: 'habits',
     path: '/habits',
     icon: HabitIcon,
-    gradient: 'from-yellow-500 to-amber-500',
-    shadow: 'shadow-yellow-500/30',
-    glow: 'from-yellow-500/15 to-amber-500/15',
-    accentText: 'from-yellow-600 to-amber-600',
+    fond: 'bg-yellow-500',
+    surligne: '#fde047',
     Desktop: HabitHeatmapShowcase,
     Mobile: HabitMobileShowcase,
     fromRight: true,
@@ -135,10 +126,8 @@ const FEATURES: Feature[] = [
     id: 'stats',
     path: '/statistics',
     icon: BarChart2,
-    gradient: 'from-violet-500 to-purple-600',
-    shadow: 'shadow-violet-500/30',
-    glow: 'from-violet-500/15 to-purple-600/15',
-    accentText: 'from-violet-600 to-purple-600',
+    fond: 'bg-violet-500',
+    surligne: '#c4b5fd',
     Desktop: () => (
       <WhenVisible fallback={<ShowcaseSkeleton />}>
         <Suspense fallback={<ShowcaseSkeleton />}>
@@ -160,28 +149,46 @@ interface FeaturesSectionProps {
 const FeatureCopy: React.FC<{ feature: Feature; onCta: () => void }> = ({ feature, onCta }) => {
   const { t } = useT('landing');
   const Icon = feature.icon;
+  const reduceMotion = useReducedMotion();
   // Clé de section = `feature.id`. `t` est typée par le catalogue `fr`, d'où
   // le cast : la clé est construite, mais son existence est garantie par le
   // type `FeatureId` qui n'accepte que les cinq sections écrites au catalogue.
   const key = (suffix: string) => `features.${feature.id}.${suffix}` as Parameters<typeof t>[0];
   return (
     <div className="space-y-6">
-      <div className={`inline-flex items-center justify-center w-14 h-14 bg-gradient-to-r ${feature.gradient} rounded-2xl shadow-lg ${feature.shadow}`}>
-        <Icon size={28} className="text-white" />
+      {/* Même flottement que les tuiles du hero (`.hero-tile-idle`, src/index.css). */}
+      <div
+        className="hero-tile-idle inline-block"
+        style={{ ['--r' as string]: '0deg', ['--dur' as string]: '8s' }}
+      >
+        <div className={`inline-flex items-center justify-center w-14 h-14 ${feature.fond} rounded-2xl ring-1 ring-slate-900/10`}>
+          <Icon size={28} className="text-white" />
+        </div>
       </div>
       <h3 className="text-3xl lg:text-4xl font-bold text-slate-900 leading-tight">
         {t(key('titleTop'))}
         <br />
-        <span className={`bg-gradient-to-r ${feature.accentText} bg-clip-text text-transparent`}>
+        {/* Surlignage dessiné au scroll : une bande d'aplat qui s'étend de 0 à 100 %. */}
+        <motion.span
+          className="bg-no-repeat"
+          style={{
+            backgroundImage: `linear-gradient(${feature.surligne}, ${feature.surligne})`,
+            backgroundPosition: '0 88%',
+          }}
+          initial={reduceMotion ? false : { backgroundSize: '0% 0.34em' }}
+          whileInView={{ backgroundSize: '100% 0.34em' }}
+          viewport={{ once: true, amount: 'some' }}
+          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
+        >
           {t(key('titleAccent'))}
-        </span>
+        </motion.span>
       </h3>
       <p className="text-lg text-slate-600 leading-relaxed">{t(key('description'))}</p>
       <div className="space-y-3">
         {(['b1', 'b2', 'b3', 'b4'] as const).map((b, i) => (
           <div key={i} className="flex items-center gap-3">
-            <div className={`w-5 h-5 bg-gradient-to-r ${feature.gradient} rounded-full flex items-center justify-center flex-shrink-0`}>
-              <CheckCircle size={11} className="text-white" />
+            <div className={`w-5 h-5 ${feature.fond} rounded-full flex items-center justify-center flex-shrink-0`}>
+              <Check size={12} strokeWidth={3} className="text-white" />
             </div>
             <span className="text-slate-700 font-medium text-sm">{t(key(b))}</span>
           </div>
@@ -189,9 +196,10 @@ const FeatureCopy: React.FC<{ feature: Feature; onCta: () => void }> = ({ featur
       </div>
       <button
         onClick={onCta}
-        className={`group bg-gradient-to-r ${feature.gradient} text-white px-8 py-4 rounded-xl font-semibold shadow-sm hover:shadow-lg ${feature.shadow} transition-all duration-300 hover:scale-105 transform flex items-center gap-2`}
+        className={`group ${feature.fond} hover:brightness-95 text-white pl-4 pr-5 py-3 rounded-full font-semibold text-[15px] transition-[filter] duration-300 flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2`}
       >
-        {t(key('cta'))} <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+        <Icon size={16} aria-hidden="true" />
+        {t(key('cta'))} <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" aria-hidden="true" />
       </button>
     </div>
   );
@@ -325,7 +333,6 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isMobile, handleFeatu
                       transition={{ type: 'spring', stiffness: 55, damping: 13, mass: 0.9 }}
                       className="relative"
                     >
-                      <div className={`absolute -inset-3 bg-gradient-to-r ${feature.glow} rounded-3xl blur-2xl`} />
                       <div className="relative">
                         {/* Parcours perso BLANC : les vitrines passent en clair.
                             Sans ce fournisseur elles restent sombres, comme sur
@@ -381,7 +388,6 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isMobile, handleFeatu
                       style={{ perspective: 1200, ...(feature.basisMaquette ? { flex: `0 0 ${feature.basisMaquette}` } : {}) }}
                     >
                       <div className="feature-mockup relative">
-                        <div className={`absolute -inset-3 bg-gradient-to-r ${feature.glow} rounded-3xl blur-2xl`} />
                         <div className="relative">
                           <ShowcaseTheme theme="light">
                             <Showcase />

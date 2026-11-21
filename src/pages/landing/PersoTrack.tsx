@@ -2,12 +2,8 @@ import React, { Suspense, useRef } from 'react';
 import { gsap, useGSAP } from '@/lib/gsap';
 import { ArrowRight } from 'lucide-react';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
-import { useMagnetic } from '@/lib/hooks/use-magnetic';
 import { useT } from '@/i18n/useT';
-import { pauseWhenOffscreen } from './pause-offscreen';
-import HeroModuleDock, { DELAI_ARRIMAGE_MS } from './HeroModuleDock';
-import HeroAppIcon from './HeroAppIcon';
-import { setModuleActif } from './hero-module-actif';
+import HeroIconScatter from './HeroIconScatter';
 import BelowFold from './BelowFold';
 import { usePrerenderHeroTakeover } from './use-prerender-hero-takeover';
 import HeroBackdrop from './HeroBackdrop';
@@ -51,8 +47,6 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
   const auroraLayerRef = useRef<HTMLDivElement>(null);
 
   // W7 — CTAs magnétiques (no-op tactile / reduced-motion, cf. hook).
-  const magneticHeroDemo = useMagnetic<HTMLButtonElement>(0.16);
-  const magneticHeroSignup = useMagnetic<HTMLButtonElement>(0.16);
 
   // ── Effets de parcours : marquee infini, reveal + halo de la CTA finale ──
   useGSAP(
@@ -60,18 +54,6 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
       const mm = gsap.matchMedia();
 
       mm.add('(prefers-reduced-motion: no-preference)', () => {
-        // Marquee infini : la piste contient 2 copies identiques,
-        // xPercent -50 = boucle parfaitement seamless. En pause hors écran.
-        const marqueeTrack = rootRef.current?.querySelector('.marquee-track');
-        if (marqueeTrack) {
-          const marqueeLoop = gsap.to(marqueeTrack, {
-            xPercent: -50,
-            ease: 'none',
-            duration: 30,
-            repeat: -1,
-          });
-          pauseWhenOffscreen(marqueeTrack.parentElement ?? marqueeTrack, [marqueeLoop]);
-        }
 
       });
     },
@@ -84,9 +66,6 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
       const mm = gsap.matchMedia();
 
       mm.add('(prefers-reduced-motion: no-preference)', () => {
-        // Boucles infinies du hero, mises en pause dès que le hero sort de
-        // l'écran (perf : zéro tick offscreen).
-        const heroLoops: gsap.core.Tween[] = [];
         // W1 : le reveal du H1 est en CSS (masques par ligne, cf. `src/index.css`).
         // Il vivait ici en SplitText, trois mécanismes fragiles et une entrée qui ne
         // pouvait jouer qu'une fois GSAP chargé, donc après le fallback de page.
@@ -99,92 +78,6 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
           ease: 'power3.out',
           stagger: 0.12,
           delay: 0.5,
-        });
-
-        // Vie permanente du fond, version ENCRE.
-        //
-        // Sur une page BLANCHE, un mouvement ne peut pas se faire par la lumière :
-        // des orbes floutés ou des faisceaux translucides ne rendent rien de visible
-        // et coûtent toujours (un flou se rastérise à chaque frame). Un trait sombre
-        // se voit. La version sombre est archivée dans `docs/archive/`.
-        //
-        // Les NOEUDS respirent sur place (opacité + échelle) au lieu de dériver : un
-        // point sombre qui glisse hors de la grille se lit comme un défaut
-        // d'alignement.
-        gsap.utils.toArray<HTMLElement>('.hero-node').forEach((node, i) => {
-          heroLoops.push(
-            gsap.to(node, {
-              opacity: 0.9,
-              scale: 1.5,
-              duration: 1.6,
-              ease: 'sine.inOut',
-              repeat: -1,
-              yoyo: true,
-              delay: i * 1.3,
-            }),
-          );
-        });
-        // Les TRACES gardent la trajectoire des anciens faisceaux — elle est
-        // éprouvée, et mise en pause hors écran. Seule leur matière change :
-        // le dégradé va de transparent à l'encre, donc l'entrée et la sortie
-        // restent portées par le dégradé lui-même, sans tween d'opacité.
-        const traceH = heroRef.current?.querySelector<HTMLElement>('.hero-trace-h');
-        if (traceH) {
-          heroLoops.push(
-            gsap.fromTo(
-              traceH,
-              { x: -220 },
-              {
-                x: () => (heroRef.current?.offsetWidth ?? window.innerWidth) + 220,
-                duration: 5.5,
-                ease: 'power1.inOut',
-                repeat: -1,
-                repeatDelay: 1.8,
-                onRepeat: () => {
-                  traceH.style.top = `${gsap.utils.random(14, 62)}%`;
-                },
-              },
-            ),
-          );
-        }
-        const traceV = heroRef.current?.querySelector<HTMLElement>('.hero-trace-v');
-        if (traceV) {
-          heroLoops.push(
-            gsap.fromTo(
-              traceV,
-              { y: -220 },
-              {
-                y: () => (heroRef.current?.offsetHeight ?? window.innerHeight) + 220,
-                duration: 6.5,
-                ease: 'power1.inOut',
-                repeat: -1,
-                repeatDelay: 2.6,
-                delay: 2.2,
-                onRepeat: () => {
-                  traceV.style.left = `${gsap.utils.random(20, 82)}%`;
-                },
-              },
-            ),
-          );
-        }
-
-        // Indicateur de scroll : le chevron rebondit en boucle, et tout
-        // l'indicateur s'efface dès que l'utilisateur commence à scroller.
-        heroLoops.push(
-          gsap.to('.scroll-cue-arrow', {
-            y: 8,
-            repeat: -1,
-            yoyo: true,
-            duration: 0.9,
-            ease: 'sine.inOut',
-          }),
-        );
-
-        if (heroRef.current) pauseWhenOffscreen(heroRef.current, heroLoops);
-        gsap.to('.scroll-cue', {
-          autoAlpha: 0,
-          ease: 'none',
-          scrollTrigger: { trigger: heroRef.current, start: 'top top', end: '+=200', scrub: true },
         });
 
         // W3 : parallax de fond scrubbé (grille lente, aurores moyennes). `ease: none`
@@ -224,16 +117,9 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
         {/* Grille, bruit, aurores et encre : cf. HeroBackdrop. Les deux
             couches que la timeline translate arrivent par ref. */}
         <HeroBackdrop gridRef={gridLayerRef} auroraRef={auroraLayerRef} />
+        <HeroIconScatter />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Les quatre puces : rangee centree sous le sommaire jusqu'a `xl`,
-              flottantes de part et d'autre du titre au-dela. Posees ICI et pas
-              dans le bloc de texte : leurs positions sont en POURCENTAGE
-              (`xl:left-[1%]`, `xl:right-[4%]`, cf. hero-modules.ts), donc leur
-              ancetre positionne doit etre la pleine largeur, pas la colonne de
-              lecture. */}
-          <HeroModuleDock />
-
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* La colonne de lecture est plus large que le texte n'en a besoin,
               et c'est le titre qui fixe sa largeur : `max-w-4xl` est la valeur
               a laquelle les deux phrases du H1 tiennent chacune sur UNE ligne,
@@ -255,11 +141,9 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
                   Ici le gradient et le transform sont portés par le MÊME
                   élément, ce qui est le cas que `bg-clip-text` supporte, et le
                   masque est une simple div en `overflow: hidden`. */}
-              {/* La tuile remplace la fenetre de 540 px : elle dit « une seule
-                  app, quatre modules » sans repousser la promesse sous la ligne
-                  de flottaison. Le meme retard d'entree que la fenetre d'avant,
-                  pour que les puces se posent avant elle. */}
-              <HeroAppIcon onModuleChange={setModuleActif}delaiEntree={DELAI_ARRIMAGE_MS + 120} />
+              {/* Place reservee a la tuile centrale de `HeroIconScatter` (OKR),
+                  qui vit dans la couche de fond : le titre ne remonte pas. */}
+              <div className="h-24 mb-8 sm:mb-10" aria-hidden="true" />
 
               {/* ── Typographie de la refonte centree ──
                   Le titre est la seule chose que le premier ecran doit reussir,
@@ -293,7 +177,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
               >
                 <span className="hero-line-mask">
                   <span
-                    className={`${reprise ? '' : 'hero-line-in '}block bg-gradient-to-r from-slate-900 via-slate-700 to-slate-900 bg-clip-text text-transparent`}
+                    className={`${reprise ? '' : 'hero-line-in '}block text-slate-900`}
                     style={{ ['--d' as string]: '80ms' }}
                   >
                     {t('hero.line1')}
@@ -301,7 +185,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
                 </span>
                 <span className="hero-line-mask">
                   <span
-                    className={`${reprise ? '' : 'hero-line-in '}block bg-gradient-to-r from-blue-600 via-violet-600 to-fuchsia-600 bg-clip-text text-transparent`}
+                    className={`${reprise ? '' : 'hero-line-in '}block text-slate-900`}
                     style={{ ['--d' as string]: '200ms' }}
                   >
                     {t('hero.line2')}
@@ -331,7 +215,6 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
               <div ref={onHeroCtaRef} data-hero-fade className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 {/* CTA principal : démo sans inscription (friction zéro) */}
                 <button
-                  ref={magneticHeroDemo}
                   onClick={onDemo}
                   className="group relative overflow-hidden bg-blue-600 hover:bg-blue-700 text-white px-7 py-3.5 rounded-full font-semibold text-[15px] tracking-[-0.01em] transition-[box-shadow,color,background-color] duration-300 shadow-[0_8px_30px_-8px_rgba(37,99,235,0.55)] hover:shadow-[0_12px_38px_-8px_rgba(37,99,235,0.7)] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
                   aria-label={t('hero.demoAria')}
@@ -340,7 +223,6 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
                   <span className="relative">{t('hero.demoCta')}</span>
                 </button>
                 <button
-                  ref={magneticHeroSignup}
                   onClick={onRegister}
                   className="group bg-white hover:bg-slate-50 text-slate-900 border border-slate-300 px-7 py-3.5 rounded-full font-semibold text-[15px] tracking-[-0.01em] shadow-sm transition-[box-shadow,color,background-color] duration-300 flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 >
@@ -349,55 +231,10 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
                 </button>
               </div>
 
-              {/* Micro-preuve sous les CTAs */}
-              <p data-hero-fade className="mt-5 text-xs text-slate-500">
-                {t('hero.reassurance')}
-              </p>
             </div>
 
-          {/* Indicateur de scroll : chevron qui rebondit + fond au scroll */}
-          <div
-            data-hero-fade
-            className="scroll-cue mt-14 hidden lg:flex flex-col items-center gap-2 text-slate-500"
-            aria-hidden="true"
-          >
-            <span className="text-[10px] font-mono uppercase tracking-[0.3em]">{t('hero.scroll')}</span>
-            <svg className="scroll-cue-arrow h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-            </svg>
-          </div>
         </div>
       </section>
-
-      {/* ── Marquee infini : les modules défilent en continu (GSAP) ── */}
-      <div
-        className="relative overflow-hidden border-y border-slate-200 bg-slate-50 py-3.5"
-        aria-hidden="true"
-      >
-        {/* Fondu latéral pour une entrée/sortie douce des mots */}
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-slate-50 to-transparent z-10" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-slate-50 to-transparent z-10" />
-        <div className="marquee-track flex w-max whitespace-nowrap text-sm font-mono uppercase tracking-[0.25em] text-slate-500">
-          {[0, 1].map((copy) => (
-            <div key={copy} className="flex items-center gap-10 pr-10">
-              {[
-                t('marquee.tasks'),
-                t('marquee.agenda'),
-                t('marquee.timeBlocking'),
-                t('marquee.okr'),
-                t('marquee.habits'),
-                t('marquee.stats'),
-                t('marquee.demo'),
-              ].map((word) => (
-                <span key={word} className="flex items-center gap-10">
-                  <span>{word}</span>
-                  <span className="text-blue-500/70">✦</span>
-                </span>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* Tout ce qui suit le bandeau est monté au premier geste du visiteur :
           le monter avec le hero coûtait une tâche d'une seconde à CPU ×4
