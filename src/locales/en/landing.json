@@ -145,10 +145,10 @@
       "profile": "Professionals",
       "title": "Peak performance",
       "description": "Boost your career with tools that change how you work and reach your goals.",
-      "f1": "Prioritize your work to handle what matters first",
-      "f2": "Block time for deep work between meetings",
-      "f3": "Tie your work to your yearly goals",
-      "f4": "Build the habits that grow your career",
+      "f1": "Rank your priorities, the rest can wait",
+      "f2": "Plan your days around your priorities",
+      "f3": "Track progress on your professional goals",
+      "f4": "Build an effective work routine",
       "f5": "See where your time really goes"
     },
     "founders": {
@@ -156,10 +156,10 @@
       "title": "Faster growth",
       "description": "Run your business on every front without losing sight of what makes it grow.",
       "f1": "Handle several projects without dropping anything",
-      "f2": "Protect time for strategy, not just emergencies",
+      "f2": "Plan each day around what matters right now",
       "f3": "Set growth goals and track every step",
-      "f4": "Keep a pace you can sustain",
-      "f5": "Spot what really moves you forward"
+      "f4": "Build the routine that grows your business",
+      "f5": "See where your time goes, project by project"
     },
     "teams": {
       "profile": "Teams",

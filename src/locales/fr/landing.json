@@ -145,10 +145,10 @@
       "profile": "Professionnels",
       "title": "Performance maximale",
       "description": "Boostez votre carrière avec des outils qui transforment votre façon de travailler et d'atteindre vos objectifs.",
-      "f1": "Priorisez vos dossiers pour traiter l'essentiel en premier",
-      "f2": "Bloquez du temps pour le travail de fond entre vos réunions",
-      "f3": "Alignez votre travail sur vos objectifs annuels",
-      "f4": "Ancrez les habitudes qui font progresser votre carrière",
+      "f1": "Classez vos priorités, le reste peut attendre",
+      "f2": "Planifiez vos journées autour de vos priorités",
+      "f3": "Suivez l'avancement de vos objectifs professionnels",
+      "f4": "Construisez une routine de travail efficace",
       "f5": "Mesurez où passe réellement votre temps"
     },
     "founders": {
@@ -156,10 +156,10 @@
       "title": "Croissance accélérée",
       "description": "Pilotez votre activité sur tous les fronts, sans perdre de vue ce qui fait grandir votre entreprise.",
       "f1": "Gérez plusieurs projets sans rien laisser filer",
-      "f2": "Protégez du temps pour la stratégie, pas seulement l'urgence",
+      "f2": "Planifiez chaque journée selon vos priorités du moment",
       "f3": "Fixez vos objectifs de croissance et suivez chaque étape",
-      "f4": "Gardez un rythme tenable sur la durée",
-      "f5": "Repérez ce qui vous fait vraiment avancer"
+      "f4": "Construisez la routine qui fait avancer votre entreprise",
+      "f5": "Voyez où passe votre temps, projet par projet"
     },
     "teams": {
       "profile": "Équipes",
