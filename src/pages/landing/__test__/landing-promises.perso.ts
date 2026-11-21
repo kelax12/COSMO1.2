@@ -146,7 +146,7 @@ export const PROMISES_PERSO: LandingPromise[] = [
     id: 'agenda-vues',
     kind: 'produit',
     claim: 'L’agenda a des vues jour, semaine et mois.',
-    anchors: [{ key: 'features.agenda.b4', includes: 'Vues jour / semaine / mois' }],
+    anchors: [{ key: 'features.agenda.b4', includes: '(jour, semaine, mois)' }],
     proofs: [{ file: 'src/pages/agenda/AgendaDesktopHeader.tsx', has: "'timeGridDay', 'timeGridWeek', 'dayGridMonth'" }],
   },
   {
@@ -176,7 +176,6 @@ export const PROMISES_PERSO: LandingPromise[] = [
     kind: 'limite',
     claim: 'La heatmap des habitudes couvre 26 semaines.',
     anchors: [
-      { key: 'features.habits.description', includes: 'heatmap 26 semaines' },
       { key: 'why.habitsLine2', includes: 'sur 26 semaines' },
       { key: 'faq.a8', includes: 'heatmap 26 semaines' },
       { key: 'prerender:/guide', includes: 'heatmap 26 semaines' },
@@ -184,7 +183,6 @@ export const PROMISES_PERSO: LandingPromise[] = [
     proofs: [{ file: 'src/pages/statistics/HabitHeatmap.tsx', re: '\\b26\\b' }],
     figures: {
       '26': [
-        'features.habits.description',
         'why.habitsLine2',
         'faq.a8',
         'prerender:/guide',

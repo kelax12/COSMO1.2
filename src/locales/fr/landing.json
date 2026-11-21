@@ -88,8 +88,8 @@
       "cta": "Essayer les tâches"
     },
     "agenda": {
-      "titleTop": "Agenda avec",
-      "titleAccent": "vos tâches au bon créneau",
+      "titleTop": "Agenda,",
+      "titleAccent": "organisez vos journées.",
       "description": "Planifiez vos tâches directement dans votre agenda grâce au glisser-déposer.",
       "b1": "Glissez une tâche depuis la sidebar vers un créneau : un événement est créé instantanément",
       "b2": "Les informations de la tâche sont appliquées à l'événement",

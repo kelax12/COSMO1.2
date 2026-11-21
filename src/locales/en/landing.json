@@ -88,8 +88,8 @@
       "cta": "Try tasks"
     },
     "agenda": {
-      "titleTop": "A calendar with",
-      "titleAccent": "your tasks in the right slot",
+      "titleTop": "Your calendar,",
+      "titleAccent": "organize your days.",
       "description": "Plan your tasks straight into your calendar with drag and drop.",
       "b1": "Drag a task from the sidebar onto a slot: an event is created instantly",
       "b2": "The task's details carry over to the event",
