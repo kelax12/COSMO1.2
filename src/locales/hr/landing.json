@@ -76,31 +76,31 @@
   "features": {
     "heading": "Aplikacija za produktivnost za svaki profil",
     "subtitle": "Student, profesionalac, osnivač ili tim: Cosmo prilagođava upravljanje zadacima, praćenje navika i OKR-ove onome što vam doista treba",
-    "modulesSubtitle": "Svaki je modul izrađen da bude moćan i intuitivan: upravitelj zadataka, praćenje navika, kalendar s blokiranjem vremena i OKR metoda, zajedno",
+    "modulesSubtitle": "Svaki je modul izrađen da bude potpun i intuitivan, kako bi se alat prilagodio vama, a ne obrnuto.",
     "tasks": {
       "titleTop": "Upravljanje zadacima",
       "titleAccent": "kako treba",
-      "description": "Okupite sve zadatke s prioritetima, kategorijama u boji i rokovima. Filtrirajte jednim klikom kako biste se usredotočili na ono što je važno.",
+      "description": "Svi vaši zadaci su organizirani. Filtrirajte jednim klikom i usredotočite se na bitno.",
       "b1": "Filtrirajte po prioritetu, kategoriji ili roku jednim klikom",
       "b2": "Dodajte kategorije kako biste svoj rad vidjeli na prvi pogled",
       "b3": "Izrađujte popise zadataka kako biste ostali organizirani",
-      "b4": "Dijelite zadatke sa svojim timom",
+      "b4": "Surađujte!",
       "cta": "Isprobajte zadatke"
     },
     "agenda": {
-      "titleTop": "Ugrađeni kalendar",
-      "titleAccent": "i blokiranje vremena",
-      "description": "Planirajte zadatke u vremenskim blokovima. Povlačenje i ispuštanje povezuje kalendar sa zadacima, bez dvostrukog unosa.",
+      "titleTop": "Kalendar s",
+      "titleAccent": "zadacima u pravom terminu",
+      "description": "Planirajte zadatke izravno u kalendaru povlačenjem i ispuštanjem.",
       "b1": "Povucite zadatak s bočne trake na termin: događaj se odmah izrađuje",
-      "b2": "Boja događaja odgovara kategoriji zadatka, pa se vaši prioriteti ističu",
-      "b3": "Izrađujte, premještajte ili mijenjajte veličinu događaja mišem: povezani zadatak sam se ažurira",
-      "b4": "Prikazi dan / tjedan / mjesec, udaljeni jedan klik, s brzom navigacijom između razdoblja",
+      "b2": "Podaci zadatka prenose se na događaj",
+      "b3": "Povezani zadatak automatski se ažurira",
+      "b4": "Promijenite prikaz jednim klikom (dan, tjedan, mjesec)",
       "cta": "Isprobajte kalendar"
     },
     "okr": {
       "titleTop": "Ciljevi",
       "titleAccent": "na Googleov način",
-      "description": "OKR metoda koju koriste Google, Intel i Netflix, sada u vašem džepu. Postavite ambiciozne ciljeve i mjerite svaki ključni rezultat.",
+      "description": "OKR metoda koju koriste Google, Intel i Netflix: postavite ciljeve i mjerite svaki dio svakog cilja.",
       "b1": "Postavite ambiciozne ciljeve s brojčanim ključnim rezultatima",
       "b2": "Vaš se napredak izračunava automatski",
       "b3": "Gledajte kako vaši ciljevi napreduju u stvarnom vremenu",
@@ -109,8 +109,8 @@
     },
     "habits": {
       "titleTop": "Navike",
-      "titleAccent": "prikazane toplinskom kartom",
-      "description": "Izgradite trajne rutine uz potpuno praćenje. Toplinska karta od 26 tjedana otkriva vaše obrasce i nagrađuje vašu dosljednost.",
+      "titleAccent": "izgradite pravu rutinu",
+      "description": "Izgradite trajne rutine uz potpuno praćenje. Tablica vam na prvi pogled pokazuje vašu dosljednost.",
       "b1": "Mjerite svoju dosljednost tablicom praćenja.",
       "b2": "Ostanite motivirani sustavom nizova uzastopnih dana",
       "b3": "Tablica ukupnog praćenja: sve navike na prvi pogled",
@@ -121,13 +121,13 @@
       "titleTop": "Statistika",
       "titleAccent": "koja govori sama za sebe",
       "description": "Analizirajte vrijeme koje ulažete u svaki modul: zadatke, kalendar, OKR-ove, navike. Precizni podaci za utemeljene odluke.",
-      "b1": "Raspodjela vremena na zadatke, kalendar, OKR-ove i navike, za pravu jasnoću",
+      "b1": "Raspodjela vremena na zadatke, kalendar, OKR i navike",
       "b2": "Prikazi dan, tjedan, mjesec, godina: zumirajte gdje želite",
       "b3": "Pratite napredak s jedne stranice",
       "b4": "Vidite svoju produktivnost na prvi pogled",
       "cta": "Pogledajte statistiku"
     },
-    "headingLine1": "Zadaci, navike, kalendar i OKR-ovi",
+    "headingLine1": "Zadaci, kalendar, navike i OKR",
     "headingLine2": "u jednom alatu"
   },
   "useCases": {

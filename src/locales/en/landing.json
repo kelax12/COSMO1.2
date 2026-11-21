@@ -76,31 +76,31 @@
   "features": {
     "heading": "A productivity app for every profile",
     "subtitle": "Student, professional, founder or team: Cosmo adapts task management, habit tracking and OKRs to what you actually need",
-    "modulesSubtitle": "Every module is built to be powerful and intuitive: task manager, habit tracker, calendar with time-blocking and the OKR method, together",
+    "modulesSubtitle": "Every module is built to be complete and intuitive, so the tool adapts to you, not the other way around.",
     "tasks": {
       "titleTop": "Your tasks,",
       "titleAccent": "finally in order.",
-      "description": "Bring all your tasks together with priorities, color-coded categories and due dates. Filter in one click to focus on what matters.",
+      "description": "All your tasks, organized. Filter in one click to focus on what matters.",
       "b1": "Filter by priority, category or due date in one click",
       "b2": "Add categories to see your work at a glance",
       "b3": "Create task lists to stay organized",
-      "b4": "Share your tasks with your team",
+      "b4": "Collaborate!",
       "cta": "Try tasks"
     },
     "agenda": {
-      "titleTop": "Built-in calendar",
-      "titleAccent": "and time-blocking",
-      "description": "Plan your tasks in time blocks. Drag and drop links your calendar to your tasks, with no double entry.",
+      "titleTop": "A calendar with",
+      "titleAccent": "your tasks in the right slot",
+      "description": "Plan your tasks straight into your calendar with drag and drop.",
       "b1": "Drag a task from the sidebar onto a slot: an event is created instantly",
-      "b2": "The event's color matches the task's category, so your priorities stand out",
-      "b3": "Create, move or resize events with the mouse: the linked task updates on its own",
-      "b4": "Day / week / month views, one click apart, with quick navigation between periods",
+      "b2": "The task's details carry over to the event",
+      "b3": "The linked task updates automatically",
+      "b4": "Switch views in one click (day, week, month)",
       "cta": "Try the calendar"
     },
     "okr": {
       "titleTop": "Objectives",
       "titleAccent": "the Google way",
-      "description": "The OKR method used by Google, Intel and Netflix, now in your pocket. Set ambitious objectives and measure every key result.",
+      "description": "The OKR method used by Google, Intel and Netflix: set objectives and measure every part of each one.",
       "b1": "Set ambitious objectives with numeric key results",
       "b2": "Your progress is calculated automatically",
       "b3": "See your objectives advance in real time",
@@ -109,8 +109,8 @@
     },
     "habits": {
       "titleTop": "Habits",
-      "titleAccent": "shown as a heatmap",
-      "description": "Build routines that last with complete tracking. The 26-week heatmap reveals your patterns and rewards your consistency.",
+      "titleAccent": "build a real routine",
+      "description": "Build lasting routines with complete tracking. The board shows your consistency at a glance.",
       "b1": "Measure your consistency with the tracking board.",
       "b2": "Stay motivated with the consecutive-day streak system",
       "b3": "Overall tracking board: see all your habits at a glance",
@@ -121,13 +121,13 @@
       "titleTop": "Statistics",
       "titleAccent": "that speak for themselves",
       "description": "Analyze the time you invest across every module: tasks, calendar, OKRs, habits. Precise data for informed decisions.",
-      "b1": "Time split across tasks, calendar, OKRs and habits, for real clarity",
+      "b1": "Time split across tasks, calendar, OKRs and habits",
       "b2": "Day, week, month, year views: zoom wherever you want",
       "b3": "Track your progress from a single page",
       "b4": "See your productivity at a glance",
       "cta": "See the statistics"
     },
-    "headingLine1": "Tasks, habits, calendar and OKRs",
+    "headingLine1": "Tasks, calendar, habits and OKRs",
     "headingLine2": "in a single tool"
   },
   "useCases": {

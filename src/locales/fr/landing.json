@@ -76,31 +76,31 @@
   "features": {
     "heading": "Application productivité pour chaque profil",
     "subtitle": "Étudiant, professionnel, entrepreneur ou équipe : Cosmo adapte la gestion de tâches, le suivi d'habitudes et les OKR à vos besoins spécifiques",
-    "modulesSubtitle": "Chaque module est conçu pour être puissant et intuitif : gestionnaire de tâches, tracker d'habitudes, agenda avec time-blocking et méthode OKR réunis",
+    "modulesSubtitle": "Chaque module est conçu pour être complet et intuitif, afin que ce soit l'outil qui s'adapte à vous, et non l'inverse.",
     "tasks": {
       "titleTop": "Vos tâches,",
       "titleAccent": "enfin rangées.",
-      "description": "Centralisez toutes vos tâches avec priorités, catégories colorées et deadlines. Filtrez en un clic pour vous concentrer sur l'essentiel.",
+      "description": "Toutes vos tâches sont organisées. Filtrez en un clic pour vous concentrer sur l'essentiel.",
       "b1": "Filtrez par priorité, catégorie, deadline en un clic",
       "b2": "Ajoutez des catégories pour visualiser votre travail en un coup d'œil",
       "b3": "Créez des listes de tâches pour mieux vous organiser",
-      "b4": "Partagez vos tâches en équipe",
+      "b4": "Collaborez !",
       "cta": "Essayer les tâches"
     },
     "agenda": {
-      "titleTop": "Agenda intégré",
-      "titleAccent": "et time-blocking",
-      "description": "Planifiez vos tâches en blocs horaires. Le glisser-déposer relie votre agenda à vos tâches, sans double saisie.",
+      "titleTop": "Agenda avec",
+      "titleAccent": "vos tâches au bon créneau",
+      "description": "Planifiez vos tâches directement dans votre agenda grâce au glisser-déposer.",
       "b1": "Glissez une tâche depuis la sidebar vers un créneau : un événement est créé instantanément",
-      "b2": "Couleur de l'événement = couleur de la catégorie de la tâche, pour repérer vos priorités d'un coup d'œil",
-      "b3": "Créez, déplacez ou redimensionnez les événements à la souris : la tâche associée se met à jour automatiquement",
-      "b4": "Vues jour / semaine / mois avec basculement en un clic et navigation rapide entre les périodes",
+      "b2": "Les informations de la tâche sont appliquées à l'événement",
+      "b3": "La tâche associée se met à jour automatiquement",
+      "b4": "Changez de vue en un clic (jour, semaine, mois)",
       "cta": "Essayer l'agenda"
     },
     "okr": {
       "titleTop": "Objectifs",
       "titleAccent": "à la Google",
-      "description": "La méthode OKR utilisée par Google, Intel et Netflix, maintenant dans votre poche. Définissez des objectifs ambitieux et mesurez chaque résultat clé.",
+      "description": "La méthode OKR utilisée par Google, Intel et Netflix : définissez des objectifs et mesurez chaque composant de votre objectif.",
       "b1": "Définissez des objectifs ambitieux avec des résultats clés chiffrés",
       "b2": "Votre progression est calculée automatiquement",
       "b3": "Visualisez l'avancée de vos objectifs en temps réel",
@@ -109,8 +109,8 @@
     },
     "habits": {
       "titleTop": "Habitudes",
-      "titleAccent": "visualisés en heatmap",
-      "description": "Construisez des routines durables avec un suivi complet. La heatmap 26 semaines révèle vos patterns et récompense votre régularité.",
+      "titleAccent": "construisez une vraie routine",
+      "description": "Construisez des routines durables avec un suivi complet. Le tableau vous permet de visualiser votre régularité en un coup d'œil.",
       "b1": "Mesurez votre régularité grâce au système de tableau de suivi.",
       "b2": "Restez motivé avec le système de série de jours d'affilée (streak)",
       "b3": "Tableau de suivi global : visualisez toutes vos habitudes en un coup d'œil",
@@ -121,13 +121,13 @@
       "titleTop": "Statistiques",
       "titleAccent": "qui parlent",
       "description": "Analysez votre temps investi sur tous vos modules : tâches, agenda, OKR, habitudes. Des données précises pour des décisions éclairées.",
-      "b1": "Répartition du temps sur tâches, agenda, OKR et habitudes pour une meilleure clarté",
+      "b1": "Répartition du temps sur tâches, agenda, OKR et habitudes",
       "b2": "Vues jour, semaine, mois, année : zoomez où vous voulez",
       "b3": "Suivez vos progrès depuis une unique page",
       "b4": "Visualisez votre productivité en un coup d'œil",
       "cta": "Voir les statistiques"
     },
-    "headingLine1": "Tâches, habitudes, agenda et OKR",
+    "headingLine1": "Tâches, agenda, habitudes et OKR",
     "headingLine2": "dans un seul outil"
   },
   "useCases": {
