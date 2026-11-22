@@ -8,8 +8,6 @@ import {
   TrendingUp,
   Settings as SettingsIcon,
   Crown,
-  Moon,
-  MoonStar,
   Circle,
   Sun,
   LogOut,
@@ -245,9 +243,7 @@ export function CommandPalette() {
         ? [{ id: 'nav-premium', label: t('nav.seePremium'), group: 'Navigation' as const, icon: <Crown size={16} />, run: nav('/premium'), keywords: ['premium', 'subscription', 'abonnement'] }]
         : []),
       { id: 'pref-theme-light', label: ov.t('palette.themeLight'), group: ov.t('palette.groupPreferences'), icon: <Sun size={16} />, run: () => { setTheme('light'); setIsOpen(false); }, keywords: ['theme', 'light', 'jour', 'clair'] },
-      { id: 'pref-theme-dark', label: ov.t('palette.themeDark'), group: ov.t('palette.groupPreferences'), icon: <Moon size={16} />, run: () => { setTheme('dark'); setIsOpen(false); }, keywords: ['theme', 'dark', 'nuit', 'sombre'] },
       { id: 'pref-theme-gris', label: ov.t('palette.themeGrey'), group: ov.t('palette.groupPreferences'), icon: <Circle size={16} />, run: () => { setTheme('gris'); setIsOpen(false); }, keywords: ['theme', 'gris', 'graphite', 'github'] },
-      { id: 'pref-theme-noir', label: ov.t('palette.themeBlack'), group: ov.t('palette.groupPreferences'), icon: <MoonStar size={16} />, run: () => { setTheme('noir'); setIsOpen(false); }, keywords: ['theme', 'noir', 'oled', 'amoled', 'monochrome'] },
     ];
     // Sections de l'espace entreprise (M7) : atteignables au clavier depuis
     // n'importe quelle page, pour qui appartient à une organisation.

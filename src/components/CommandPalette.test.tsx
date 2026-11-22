@@ -107,7 +107,7 @@ describe('CommandPalette', () => {
     await open();
     const input = screen.getByRole('combobox');
     const total = screen.getAllByRole('option').length;
-    fireEvent.change(input, { target: { value: 'oled' } });
+    fireEvent.change(input, { target: { value: 'graphite' } });
     expect(screen.getAllByRole('option')).toHaveLength(1);
     expect(total).toBeGreaterThan(1);
     fireEvent.change(input, { target: { value: 'zzzzzzzz' } });
@@ -117,9 +117,9 @@ describe('CommandPalette', () => {
   it('changer de thème appelle setTheme', async () => {
     render(<CommandPalette />);
     await open();
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'oled' } });
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'graphite' } });
     fireEvent.click(screen.getByRole('option'));
-    expect(setTheme).toHaveBeenCalledWith('noir');
+    expect(setTheme).toHaveBeenCalledWith('gris');
   });
 
   it("l'action « créer un événement » passe l'état openCreate", async () => {

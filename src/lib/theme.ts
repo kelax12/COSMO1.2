@@ -9,6 +9,9 @@ export type Theme = 'light' | 'dark' | 'gris' | 'noir';
 
 export const THEME_STORAGE_KEY = 'theme';
 
+/** Thèmes proposés dans l'interface. 'dark' et 'noir' existent toujours mais sont masqués. */
+export const VISIBLE_THEMES: readonly Theme[] = ['light', 'gris'];
+
 /** Breakpoint mobile — aligné sur `useIsMobile()` (src/lib/hooks/use-mobile.tsx). */
 const MOBILE_BREAKPOINT = 768;
 
@@ -30,7 +33,7 @@ export function isTheme(value: unknown): value is Theme {
 export function defaultTheme(): Theme {
   if (typeof window === 'undefined') return 'light';
   if (window.innerWidth < MOBILE_BREAKPOINT) return 'gris';
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'gris' : 'light';
 }
 
 /**

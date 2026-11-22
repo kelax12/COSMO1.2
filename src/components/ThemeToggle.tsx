@@ -20,10 +20,13 @@ const THEMES: { id: Theme; icon: React.ElementType; labelKey: KeyOf<'common'> }[
   { id: 'noir',  icon: MoonStar, labelKey: 'theme.black' },
 ];
 
+import { VISIBLE_THEMES } from '@/lib/theme';
+
 const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '', showLabel = false }) => {
   const { t } = useT('common');
   const { theme, setTheme, toggleTheme } = useDarkMode();
-  const visibleThemes = THEMES;
+  // Sombre et Noir masqués (décision d'Axel) : toujours appliqués s'ils sont enregistrés.
+  const visibleThemes = THEMES.filter((th) => VISIBLE_THEMES.includes(th.id));
 
   /* ── Segmented control (4 options) ──
      Un seul indicateur (layoutId) glisse sous l'option active au lieu que
