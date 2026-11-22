@@ -1,58 +1,20 @@
-// ═══════════════════════════════════════════════════════════════════
-// Garde du tableau de conformité de docs/LEGAL.md
+// check-legal-table.mjs : garde du tableau de conformite de docs/LEGAL.md (C-107)
 //
-// POURQUOI CE SCRIPT EXISTE
+// Arithmetique :
+//   1. chaque ligne est une ligne Markdown a part entiere (refuse tout `|| <ID> |`) ;
+//   2. aucun identifiant deux fois ;
+//   3. les quatre nombres du bloc de synthese correspondent aux lignes ;
+//   4. le total annonce correspond au nombre de lignes.
+// Datation (l'arithmetique ne voit jamais la CONFORMITE, qui reste humaine) :
+//   5. une ligne ✅ DOIT PORTER UNE DATE (« ✅ verifie le AAAA-MM-JJ ») : ce qui
+//      force la relecture ;
+//   6. cliquet sur le nombre de lignes datees : il ne peut que MONTER (les lignes
+//      sans date sont des obligations non remplies, qu'on ne date pas « verifiees »).
 //
-// Le bloc de synthèse de ce tableau a été faux TROIS fois dans la même
-// journée du 2026-08-26, toujours pour la même raison : additionner de tête au
-// lieu de recompter la source. Une des trois fois, douze lignes étaient même
-// devenues invisibles au rendu Markdown pour s'être collées à la ligne
-// précédente, et le total n'en disait rien.
-//
-// Un tableau de conformité dont le total ne correspond pas à ses propres
-// lignes se disqualifie tout seul : c'est exactement le document qu'on
-// présente en contrôle pour montrer qu'on sait où on en est.
-//
-// Ce que le script vérifie :
-//   1. chaque ligne est bien une ligne Markdown à part entière (pas de
-//      collage), en refusant tout `|| <ID> |` ;
-//   2. aucun identifiant n'apparaît deux fois ;
-//   3. les quatre nombres du bloc de synthèse correspondent aux lignes ;
-//   4. le total annoncé correspond au nombre de lignes.
-//
-// ═══ C-107 · CE QUI A ÉTÉ AJOUTÉ LE 2026-09-20 ═════════════════════
-//
-// 🔴 CE QUE LES QUATRE CONTRÔLES CI-DESSUS NE VOIENT PAS : ils vérifient
-// l'ARITHMÉTIQUE, jamais la CONFORMITÉ. Une ligne marquée ✅ à tort laisse la
-// garde verte, et c'est ce document qu'on présente en contrôle.
-//
-// La conformité elle-même reste HUMAINE — aucun script ne dira si une
-// obligation est remplie. Mais deux choses sont outillables, et elles
-// répondent au même problème par un autre bout :
-//
-//   5. UNE LIGNE ✅ DOIT PORTER UNE DATE. « ✅ » sans date décrit un instant
-//      qu'on ne peut plus situer ; « ✅ vérifié le 2026-08-26 » se périme
-//      visiblement. La règle a mordu à sa pose : `C10` était le seul ✅ sans
-//      date, et sa relecture a trouvé une affirmation FAUSSE (« une purge doit
-//      anonymiser `user_id` »), contredite depuis le 2026-09-02 par
-//      `CLAUDE.md`. La date n'est pas de la bureaucratie : c'est ce qui force
-//      la relecture.
-//
-//   6. UN CLIQUET SUR LE NOMBRE DE LIGNES DATÉES. Il ne peut que monter. Les
-//      26 lignes sans date au 2026-09-20 sont presque toutes ❌ ou 🟡 — des
-//      obligations non remplies, qu'il serait malhonnête de dater comme
-//      « vérifiées ». Le cliquet dit la dette au lieu de l'inventer.
-//
-// ❌ NE JAMAIS DATER UNE LIGNE POUR FAIRE PASSER LA CI. Une date est une
-//    affirmation : quelqu'un a regardé, ce jour-là. L'inventer transforme le
-//    document en pièce qui ment à un contrôleur, ce qui est exactement le
-//    risque que ce tableau existe pour écarter.
-//
-// ⚠️ Le troisième volet de C-107 — « une modification de fond de `legal.json`
-// exige une entrée de journal » — vit dans `scripts/check-legal-journal.mjs` :
-// il regarde d'autres fichiers, et mélanger les deux rendrait chacun moins
-// lisible.
-// ═══════════════════════════════════════════════════════════════════
+// ❌ Ne jamais dater une ligne pour faire passer la CI : une date affirme que
+// quelqu'un a regarde ce jour-la.
+// ⚠️ Le volet « une modification de fond de `legal.json` exige une entree de
+// journal » vit dans `scripts/check-legal-journal.mjs`.
 import { readFileSync } from 'node:fs';
 
 const FILE = 'docs/LEGAL.md';

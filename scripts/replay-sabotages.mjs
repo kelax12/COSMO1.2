@@ -1,71 +1,34 @@
-// ═══════════════════════════════════════════════════════════════════
-// C-81 · AM-1 — LES TÉMOINS NE SONT JAMAIS REJOUÉS
-// ═══════════════════════════════════════════════════════════════════
+// replay-sabotages.mjs : C-81 · AM-1, rejouer les TEMOINS (les gardes des gardes)
 //
-// 🔴 LE DÉFAUT, ET IL EST STRUCTUREL. Un témoin est un cas de test qui prouve
-// qu'une garde mord encore. Chacun est arrivé avec la même phrase : « vu rouge
-// sur N sabotages ». Ce sabotage a été joué UNE FOIS, à la main, le jour de
-// l'écriture. Rien, ensuite, ne dit qu'un témoin détecte ENCORE.
+// 1. RECOMPTE les temoins du depot a chaque run (jamais un total recopie) : tout
+//    `it`/`test` de `src/**`, `scripts/**`, `eslint-rules/**` dont le nom, ou
+//    celui d'un `describe` porteur, a la marque `TÉMOIN` / `TEMOIN` (ou
+//    `témoin :`, `(témoin)`). Lecture par l'AST TypeScript, pas par regex.
+// 2. COPIE l'arbre de travail dans un dossier temporaire. 🔴 N'ecrit JAMAIS dans
+//    l'arbre de travail (plusieurs sessions partagent la machine).
+// 3. Joue chaque garde du catalogue sur la copie PROPRE (la reference).
+// 4. Pour chaque sabotage : casse la chose gardee DANS LA COPIE, rejoue la
+//    garde, exige qu'elle rougisse POUR LA BONNE RAISON, restaure octet pour octet.
+// 5. Imprime le ratio temoins rejoues / temoins du depot.
 //
-// Un témoin qui ne détecte plus est pire qu'un témoin absent : il produit un
-// vert, et ce vert est lu comme une preuve. C'est la thèse centrale de
-// `scripts/CLAUDE.md` appliquée à l'étage du dessus — les gardes gardent le
-// produit, et rien ne garde les gardes.
+// « Pour la bonne raison » (un fichier qui plante a l'import rougit aussi) :
+//   · fichier de test : chaque cas `attendu` est lu par son NOM dans le rapport
+//     JSON de vitest, VERT sur la copie propre, ROUGE sur la sabotee ; un cas
+//     absent du rapport n'est pas un rouge ;
+//   · commande (`npm run check:*`) : sortie non nulle, ET la `raison` attendue
+//     (qui nomme l'objet sabote) dans la sortie, ET absente de celle de la propre.
 //
-// ── CE QUE CE SCRIPT FAIT ───────────────────────────────────────────
+// 🔴 Un temoin compte quand son propre rouge a ete OBSERVE par son nom sous un
+// sabotage, et VERT sans lui. Les sabotages d'une garde-commande prouvent que la
+// GARDE mord ; comptes a part, hors de ce ratio.
 //
-//   1. Il RECOMPTE les témoins du dépôt à chaque run (jamais un total recopié) :
-//      tout cas `it`/`test` de `src/**`, `scripts/**` et `eslint-rules/**` dont
-//      le nom, ou celui d'un `describe` qui le porte, a la marque `TÉMOIN` /
-//      `TEMOIN` (ou l'étiquette `témoin :`, `(témoin)`). Lecture par l'AST de
-//      TypeScript, pas par une expression régulière : un parseur de garde qui
-//      se trompe est la classe de défaut que ce fichier existe pour attraper.
-//   2. Il COPIE l'arbre de travail dans un dossier temporaire. 🔴 Il n'écrit
-//      JAMAIS dans l'arbre de travail : plusieurs sessions travaillent sur
-//      cette machine, et la version d'avant écrivait ses sabotages en place.
-//   3. Il joue chaque garde du catalogue sur la copie PROPRE (la référence).
-//   4. Pour chaque sabotage : il casse la chose gardée DANS LA COPIE, rejoue
-//      la garde, exige qu'elle rougisse POUR LA BONNE RAISON, et restaure la
-//      copie octet pour octet.
-//   5. Il imprime le ratio témoins rejoués / témoins du dépôt.
+// Pas Stryker : la majorite des temoins lisent des FICHIERS (`vercel.json`,
+// migration SQL, Edge Function Deno, workflow YAML) qu'un mutateur JS ne touche
+// pas, et un score de mutation est un pourcentage qui finit negocie.
 //
-// ── « POUR LA BONNE RAISON » ────────────────────────────────────────
-//
-// Un rouge ne prouve rien par lui-même : un fichier qui plante à l'import, une
-// garde déjà rouge sur l'arbre propre, rougissent aussi. Deux formes de garde,
-// deux preuves :
-//   · un fichier de test : chaque cas `attendu` est lu par son NOM dans le
-//     rapport JSON de vitest. Il doit être VERT sur la copie propre et ROUGE
-//     sur la copie sabotée. Un cas absent du rapport n'est pas un rouge ;
-//   · une commande (`npm run check:*`) : elle doit sortir en non-zéro, ET sa
-//     sortie doit porter la `raison` attendue — qui nomme l'objet saboté —,
-//     ET cette raison doit être ABSENTE de la sortie de la copie propre.
-//
-// ── CE QUI COMPTE COMME « TÉMOIN REJOUÉ » ───────────────────────────
-//
-// 🔴 Un témoin compte quand il a été VU ROUGE, par son nom, sous un sabotage,
-// et VERT sans lui. Pas quand un sabotage le « concerne », pas quand son
-// fichier a été lancé : quand son propre rouge a été observé. Les sabotages
-// d'une garde-commande (`check:rls`…) prouvent que la GARDE mord ; ils sont
-// comptés à part, et n'entrent pas dans ce ratio.
-//
-// ── POURQUOI PAS STRYKER ────────────────────────────────────────────
-//
-//   · Stryker mute le code SOURCE et regarde si les tests tombent. Or la
-//     majorité des témoins de ce dépôt ne testent pas du code : ils lisent
-//     des FICHIERS — `vercel.json`, une migration SQL, une Edge Function
-//     Deno, un workflow YAML. Un mutateur JavaScript n'y touche pas ;
-//   · surtout : un score de mutation est un POURCENTAGE, et l'expérience de
-//     ce dépôt est qu'un pourcentage finit par être négocié. Un sabotage
-//     nommé qui passe au vert ne se négocie pas.
-//
-// ── CE QUE ÇA NE PROUVE PAS ─────────────────────────────────────────
-//
-// ⚠️ Que TOUS les témoins détectent. Le nombre rejoué est IMPRIMÉ à chaque
-// run, à côté du total, et les fichiers non rejoués sont nommés.
-// ❌ Ne jamais écrire « les témoins sont vérifiés » : écrire combien.
-// ═══════════════════════════════════════════════════════════════════
-
+// ⚠️ Ne prouve pas que TOUS les temoins detectent : le nombre rejoue est IMPRIME
+// avec le total, les fichiers non rejoues sont nommes.
+// ❌ Ne jamais ecrire « les temoins sont verifies » : ecrire combien.
 import {
   readFileSync, writeFileSync, existsSync, mkdtempSync, mkdirSync, copyFileSync, rmSync,
   symlinkSync, unlinkSync, rmdirSync, lstatSync, realpathSync,

@@ -1,56 +1,24 @@
-// ═══════════════════════════════════════════════════════════════════
-// C-92 — la garde d'effacement s'appuyait sur une LISTE EN DUR
-// ═══════════════════════════════════════════════════════════════════
+// check-erasure-coverage.mjs : couverture d'effacement DERIVEE du schema (C-92)
 //
-// 🔴 LE DÉFAUT. `src/rgpd-erasure.guard.test.ts` vérifie que trois tables
-// SYMÉTRIQUES sont purgées sur leurs deux colonnes. C'est juste, et c'est
-// étroit : la liste est écrite à la main, et rien ne relie une table NEUVE
-// portant `user_id` à `delete-account` ni au registre de l'article 30.
+// `src/rgpd-erasure.guard.test.ts` garde trois tables symetriques par une liste
+// en dur ; rien ne relie une table NEUVE portant `user_id` a `delete-account` ni
+// au registre de l'article 30. Cette garde derive le perimetre des migrations
+// (seule description du schema disponible AVANT application, sans secret) et
+// exige UNE decision ecrite par table portant `user_id` :
 //
-// Une migration peut donc créer une table de données personnelles sans
-// qu'aucun job ne demande ce qu'il advient de ces lignes à la suppression du
-// compte. Le symptôme est silencieux : la suppression réussit, l'utilisateur
-// reçoit sa confirmation, et ses données restent.
+//   · `purge`      : dans `USER_OWNED_TABLES` de `delete-account`, videe explicitement ;
+//   · `symetrique` : le compte peut figurer dans DEUX colonnes, purgee a part
+//                    (ce que garde `rgpd-erasure`) ;
+//   · `cascade`    : `user_id` reference `auth.users(id) ON DELETE CASCADE`.
+//                    🔴 VERIFIEE contre la migration : sans la clause, echec ;
+//   · `conserve`   : obligation legale de conservation, avec sa reference.
+//                    🔴 Verifiee AUSSI : une table `conserve` portant un
+//                    `ON DELETE CASCADE` ne conserve rien.
 //
-// CE QUE CETTE GARDE FAIT : elle DÉRIVE le périmètre du schéma — les
-// migrations du dépôt — au lieu de le recopier, et exige une décision écrite
-// pour CHAQUE table portant `user_id`. Quatre décisions possibles, et une
-// seule par table :
-//
-//   · `purge`      — la table est dans `USER_OWNED_TABLES` de
-//                    `delete-account`, donc vidée explicitement ;
-//   · `symetrique` — le compte peut y figurer dans DEUX colonnes, elle est
-//                    purgée à part (c'est ce que garde `rgpd-erasure`) ;
-//   · `cascade`    — `user_id` référence `auth.users(id) ON DELETE CASCADE`,
-//                    donc Postgres s'en charge. 🔴 CETTE DÉCLARATION EST
-//                    VÉRIFIÉE contre la migration : on ne croit personne sur
-//                    parole. Une table déclarée `cascade` sans la clause
-//                    fait échouer la garde ;
-//   · `conserve`   — obligation légale de conservation, avec sa référence.
-//                    🔴 Vérifiée AUSSI, et dans l'autre sens : une table
-//                    déclarée conservée qui porte un `ON DELETE CASCADE` ne
-//                    conserve rien du tout, et la déclaration serait un
-//                    mensonge à un contrôleur.
-//
-// ── POURQUOI LES MIGRATIONS ET PAS `information_schema` ─────────────
-//
-// L'énoncé de C-92 demande de dériver du schéma. `information_schema` exige
-// une connexion à la base, donc un secret, donc une garde qui ne peut pas
-// tourner sur une PR — c'est-à-dire au moment où la table est créée. Les
-// migrations du dépôt sont la seule description du schéma disponible AVANT
-// l'application.
-//
-// ⚠️ Et elles ne suffisent pas toujours : le dépôt a déjà constaté que la
-// base contient des objets qu'aucune migration ne crée (mémoire « migrations
-// non auto-suffisantes » : table `subscriptions` et trois colonnes). Le
-// recoupement avec la base reste donc un geste, et il est nommé comme tel
-// plutôt que prétendu couvert.
-//
-// ❌ NE JAMAIS AJOUTER UNE TABLE À `DECISIONS` SANS AVOIR RÉPONDU À LA
-//    QUESTION. Le but n'est pas que la garde passe, c'est qu'un humain ait
-//    écrit, une fois, ce qu'il advient de ces lignes.
-// ═══════════════════════════════════════════════════════════════════
-
+// ⚠️ Des objets existent en base sans migration (table `subscriptions`, trois
+// colonnes) : le recoupement avec la base reste un geste manuel.
+// ❌ Ne jamais ajouter une table a `DECISIONS` sans avoir repondu a la question :
+// un humain doit avoir ecrit, une fois, ce qu'il advient de ces lignes.
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { estLance } from './ops-alert.mjs';

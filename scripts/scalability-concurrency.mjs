@@ -1,72 +1,31 @@
-// ═══════════════════════════════════════════════════════════════════
-// scalability-concurrency.mjs — mesurer le mode entreprise EN CONCURRENCE
+// scalability-concurrency.mjs : mesurer le mode entreprise EN CONCURRENCE (C-16)
 //
-// ── POURQUOI CE SCRIPT EXISTE ──────────────────────────────────────
+// Une mesure de volume dit « combien coute UNE lecture » ; celle-ci dit a
+// partir de combien de lecteurs simultanes la base cesse de rendre du debit.
 //
-// `docs/SCALABILITY.md` §9ter a leve l'inconnue du planificateur : 200 puis
-// 2 000 `team_tasks`, aucun basculement de plan, 354× entre les deux chemins.
-// Sa derniere phrase dit ce qu'elle ne dit pas : « elle est MONO-SESSION ».
-// C'est l'item C-16, et c'est ce qui decide de C-15 : tant qu'on ignore si le
-// cout vient du volume par compte (289 taches au maximum mesure) ou du nombre
-// de sessions simultanees, toute decision de pagination est un pari.
+// Etapes : 1) seme la meme organisation que le harnais de volume
+// (`scalability-seed.mjs`, source unique) ; 2) balaie des paliers de
+// concurrence (1, 2, 4, 8, 16) : N connexions Postgres distinctes, chacune sous
+// un membre different, martelent `get_my_team_tasks(org)` ; 3) rend p50/p95 et
+// debit par session, p50/p95/p99 global, ecart plus lente / plus rapide ;
+// 4) rejoue le balayage sur le TEMOIN (`select count(*) from team_tasks`,
+// chemin interdit par la mig. 113) et ECHOUE s'il n'apparait pas sature.
 //
-// Une mesure de volume repond a « combien coute UNE lecture ». Une mesure de
-// concurrence repond a une autre question, qui n'en decoule pas : « a partir de
-// combien de lecteurs simultanes la base cesse-t-elle de rendre du debit ». Un
-// cout par lecture parfaitement plat peut saturer a 8 sessions ; un cout
-// dix fois plus lourd peut tenir a 64 s'il n'est pas CPU-bound. Le §9ter ne
-// pouvait pas le dire, quel que soit le nombre de paliers de volume ajoutes.
+// Choix de methode :
+// 1. N acteurs DISTINCTS (feuilles de la pyramide), jamais N fois le meme :
+//    sinon on mesure un seul cache d'autorisation.
+// 2. La requete mesuree rend UNE ligne (`count(*)`) : sinon on chronometre la
+//    deserialisation de Node. Le cout de TRANSFERT des lignes n'est pas couvert.
+//    Si le rapport de latence direct / RPC s'effondre, le client est redevenu
+//    le goulot et la sortie le dit.
+// 3. La saturation se lit sur le GAIN MARGINAL, pas sur un seuil d'efficacite
+//    absolu (un runner a 4 coeurs ne depasse pas 0,25 a N=16) :
+//    `scalability-concurrency.stats.mjs`.
 //
-// ── CE QU'IL FAIT ──────────────────────────────────────────────────
-//
-//   1. seme la MEME organisation que le harnais de volume
-//      (`scalability-seed.mjs`, source unique) et la remplit au volume voulu ;
-//   2. balaie des paliers de concurrence (1, 2, 4, 8, 16 par defaut). A chaque
-//      palier, N connexions Postgres DISTINCTES, chacune sous un membre
-//      DIFFERENT, martelent `get_my_team_tasks(org)` en parallele ;
-//   3. rend un chiffre PAR SESSION (p50, p95, debit) et un chiffre AGREGE
-//      (p50/p95/p99 global, debit total, ECART entre la session la plus lente
-//      et la plus rapide) ;
-//   4. rejoue le meme balayage sur le TEMOIN — le chemin direct
-//      `select count(*) from team_tasks`, celui que la mig. 113 interdit — et
-//      ECHOUE si ce temoin n'apparait pas comme sature.
-//
-// ── TROIS CHOIX DE METHODE, ET POURQUOI ────────────────────────────
-//
-// 1. 🔴 **N acteurs DISTINCTS, jamais N fois le meme.** Faire marteler la meme
-//    ligne d'`organization_members` par seize sessions mesure la contention sur
-//    un seul cache d'autorisation, pas la charge d'une organisation. Les
-//    acteurs sont pris parmi les feuilles de la pyramide (le cas frequent).
-//
-// 2. 🔴 **La requete mesuree rend UNE ligne (`count(*)`), pas 400.** Sans ca,
-//    a seize sessions, le fil unique de Node passe son temps a desserialiser
-//    des lignes et c'est LUI qu'on chronometre — la garde mesurerait le
-//    harnais. Le travail serveur est identique : le predicat est evalue ligne
-//    par ligne dans les deux cas. Ce que cette mesure ne couvre donc pas est le
-//    cout de TRANSFERT des lignes, et c'est ecrit plutot que sous-entendu.
-//    Un temoin de ce choix est integre : si le rapport de latence entre le
-//    chemin direct et la RPC s'effondre, c'est que le client est redevenu le
-//    goulot, et la sortie le dit.
-//
-// 3. 🔴 **La saturation se lit sur le GAIN MARGINAL, pas sur un seuil
-//    d'efficacite absolu.** Sur un runner a 4 cœurs, aucune charge CPU-bound ne
-//    peut depasser 0,25 d'efficacite a N=16 : un seuil absolu declarerait
-//    « sature » toute mesure au-dela de 4 sessions, base saine comprise.
-//    Detail dans `scalability-concurrency.stats.mjs`.
-//
-// ── USAGE ──────────────────────────────────────────────────────────
-//
-//   DATABASE_URL=postgres://... node scripts/scalability-concurrency.mjs
-//   ... --sessions=1,2,4,8,16     # paliers de concurrence (N parametrable)
-//   ... --volume=2000             # team_tasks semees
-//   ... --members=50              # taille de l'organisation
-//   ... --iterations=30           # requetes par session et par palier
-//   ... --witness-iterations=6    # idem pour le temoin (chaque requete est chere)
-//   ... --no-witness              # ⚠️ desarme la garde : diagnostic seulement
-//
-// ⚠️ Refuse de tourner ailleurs que sur une base LOCALE, sauf
-// `--i-know-this-is-not-production`. Ce script ECRIT.
-// ═══════════════════════════════════════════════════════════════════
+// Usage : DATABASE_URL=postgres://... node scripts/scalability-concurrency.mjs
+//   --sessions=1,2,4,8,16  --volume=2000  --members=50  --iterations=30
+//   --witness-iterations=6  --no-witness (desarme la garde : diagnostic seul)
+// ⚠️ Refuse une base non LOCALE sauf `--i-know-this-is-not-production`. ECRIT.
 import pg from 'pg';
 import { assertDisposable, fillTo, seedOrg } from './scalability-seed.mjs';
 import { aggregateLevel, classify, witnessVerdict } from './scalability-concurrency.stats.mjs';

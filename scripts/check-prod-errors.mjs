@@ -1,61 +1,23 @@
-// ═══════════════════════════════════════════════════════════════════
-// OBSERVABILITE AM-1 · AM-2 · AM-3 : les erreurs de PRODUCTION, lues
-// chaque jour, comparées à une référence d'écart commitée
-// ═══════════════════════════════════════════════════════════════════
+// check-prod-errors.mjs : AM-1 · AM-2 · AM-3, les erreurs de PRODUCTION lues
+// chaque jour et comparees a `scripts/prod-errors.reference.json`
 //
-// 🔴 LE DÉFAUT. Trois sources savaient que la production se trompait, et
-// aucune n'était relue par quoi que ce soit :
-//   · AM-1 · Sentry : le SDK remonte, le tableau de bord existe, rien ne le
-//     lit. Une régression vue par cent utilisateurs ne faisait échouer aucun
-//     job ;
-//   · AM-2 · les erreurs d'exécution Vercel (`api/collect.ts`) : le
-//     collecteur d'audience pouvait échouer en silence, l'audience tombant à
-//     zéro sans alerte ;
-//   · AM-3 · les journaux Supabase : lus à la main, le jour où quelqu'un y
-//     pensait (relevé du 2026-10-23 dans `docs/OBSERVABILITE.md`).
+// Sur 24 h : 1) Sentry : issues NOUVELLES (`firstSeen` dans la fenetre) ou en
+// REGRESSION (`is:regressed`), non resolues ; 2) Vercel : requetes de production
+// ayant journalise `error` / `fatal` ou rendu un 5xx, par chemin et statut ;
+// 3) Supabase (passerelle, `edge_logs`) : reponses >= 400 en quatre familles
+// (5xx, refus d'authentification, appels non signes au webhook Stripe, 4xx
+// metier) et par couple « chemin statut ». Un depassement fait ECHOUER le job
+// (`ci-alert.yml` le pousse). Les trois sources sont lues meme si l'une echoue.
 //
-// ── CE QUE CE SCRIPT PROUVE ─────────────────────────────────────────
+// Ne prouve pas : qu'une erreur SOUS le plafond est benigne (on juge un ECART) ;
+// qu'une erreur avalee par un `catch` muet n'existe pas ; que Vercel a recu du
+// trafic (0 sur 0 est vert ; Supabase doit rendre au moins une requete lue) ;
+// les journaux Postgres, PostgREST et Edge Functions (seule la PASSERELLE est lue).
 //
-// Sur les 24 dernières heures :
-//   1. Sentry : les issues NOUVELLES (`firstSeen` dans la fenêtre) ou en
-//      RÉGRESSION (`is:regressed`, revue dans la fenêtre), non résolues ;
-//   2. Vercel : les requêtes de production qui ont journalisé une erreur
-//      (`error` / `fatal`) ou rendu un 5xx, par chemin et statut ;
-//   3. Supabase (journaux de la passerelle, `edge_logs`) : les réponses
-//      >= 400, rangées en quatre familles (5xx, refus d'authentification,
-//      appels non signés au webhook Stripe, 4xx métier) et par couple
-//      « chemin statut ».
-// Chaque mesure est comparée à `scripts/prod-errors.reference.json`. Un
-// dépassement fait ÉCHOUER le job, et `ci-alert.yml` le pousse.
-//
-// ── CE QU'IL NE PROUVE PAS ──────────────────────────────────────────
-//
-//   · qu'une erreur SOUS le plafond est bénigne : la garde juge un ÉCART à
-//     la référence, pas un absolu. « 0 écart » veut dire « rien de plus que
-//     d'habitude », pas « rien » ;
-//   · qu'une erreur qui ne remonte NULLE PART n'existe pas : une exception
-//     avalée par un `catch` muet n'atteint ni Sentry ni les journaux ;
-//   · que Vercel a reçu du trafic : zéro erreur sur zéro requête est un
-//     vert. Supabase, lui, doit rendre au moins une requête lue, sinon la
-//     garde refuse de conclure (une source renommée rend aussi zéro) ;
-//   · les journaux Postgres, PostgREST et des Edge Functions eux-mêmes :
-//     seule la PASSERELLE est lue, c'est elle qui porte le statut rendu au
-//     client. Les `Thread killed by timeout manager` de PostgREST, sans
-//     réponse d'erreur au client, ne sont pas comptés.
-//
-// 🔴 ÉCHEC FERMÉ. Un jeton absent fait ÉCHOUER le job, jamais émettre un
-// avertissement dans un run vert : sans jeton cette garde ne lit rien, et
-// son vert affirmerait que la production va bien sans l'avoir regardée.
-// Les trois sources sont lues même quand l'une échoue, pour que le rapport
-// dise tout ce qu'il a pu voir.
-//
-// ❌ NE JAMAIS RELEVER UN PLAFOND DE LA RÉFÉRENCE POUR FAIRE PASSER LA CI.
-//    Un dépassement dit qu'il s'est passé quelque chose : le lire d'abord
-//    (issue Sentry, chemin, statut), corriger ou résoudre à la source (une
-//    issue réglée se résout DANS Sentry), et seulement ensuite, s'il s'agit
-//    d'un nouveau régime normal, recaler avec sa raison dans `_notes`.
-// ═══════════════════════════════════════════════════════════════════
-
+// Echec ferme : jeton absent = ECHEC, jamais un avertissement dans un run vert.
+// ❌ Ne jamais relever un plafond de la reference pour faire passer la CI : lire
+// l'ecart d'abord, corriger ou resoudre a la source (dans Sentry), et seulement
+// pour un nouveau regime normal recaler avec sa raison dans `_notes`.
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { estLance } from './ops-alert.mjs';

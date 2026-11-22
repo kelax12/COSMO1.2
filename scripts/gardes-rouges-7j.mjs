@@ -1,60 +1,34 @@
-// ═══════════════════════════════════════════════════════════════════
-// gardes-rouges-7j.mjs · UNE GARDE ROUGE PLUS DE 7 JOURS EST UNE GARDE MORTE
+// gardes-rouges-7j.mjs : UNE GARDE ROUGE PLUS DE 7 JOURS EST UNE GARDE MORTE (TST-05)
 //
-// Appelé chaque jour par `.github/workflows/ci-alert.yml` (job
-// `rouges-anciens`). Vague 9.4 du plan de reprise, constat TST-05 de l'audit
-// externe du 2026-11-06 (« seuils irréalistes et gardes laissées rouges »).
+// Appele chaque jour par `.github/workflows/ci-alert.yml` (job `rouges-anciens`).
+// `ci-alert.yml` sonne au PREMIER echec puis se tait tant que l'issue `ci-red`
+// est ouverte : une garde qui reste rouge ne sonne plus et rend muettes celles
+// qui rougiront apres elle.
 //
-// 🔴 POURQUOI CE FICHIER EXISTE
+// Regle : toute garde dont le dernier run conclu sur `main` est rouge sans
+// interruption depuis plus de 7 jours est dans UN de ces etats :
+//   1. corrigee ;
+//   2. recalee par une DECISION ECRITE ET DATEE dans
+//      `.github/gardes-rouges-decisions.json` (date, mesure, motif, date de
+//      revue au plus 30 jours apres) ;
+//   3. retiree (workflow supprime ou desactive, trace dans le doc de la garde).
+// Sinon : inscrite dans l'issue `ci-red` (celle de `ci-alert.yml`) et sortie 1.
 //
-// `ci-alert.yml` sonne au PREMIER échec d'une sonde, puis se tait tant que
-// l'issue `ci-red` reste ouverte. Une garde qui reste rouge ne sonne donc plus
-// jamais, et c'est exactement ce que l'audit a mesuré : `Posture` rouge chaque
-// jour depuis le 2026-10-30 au moins, `Secrets age` rouge depuis sa pose, et
-// `Sabotages`, `Mutation`, que la vague 2.3 a sortis de l'alerte, rouges sans
-// que personne le lise. Une garde rouge depuis des jours n'est plus lue :
-// elle ne protège plus rien et rend muettes celles qui rougiront après elle.
+// Regarde TOUS les workflows actifs (pas une liste). Seuls les runs de `main`
+// hors pull request comptent ; `cancelled`, `skipped`, `neutral` sont sautes ;
+// `CI alert` est exclu.
 //
-// ── LA RÈGLE ────────────────────────────────────────────────────────
+// Alertes de detection echues (OBS-01) : chaque issue `detection-violation`
+// ouverte porte son echeance de tri dans son marqueur ; passee l'echeance (une
+// echeance illisible vaut echue) elle entre dans la meme liste et la meme issue.
+// Le cron hebdomadaire de `ci-alert.yml` passe `REVUE_HEBDO=true` : une alerte
+// echue est republiee meme inchangee.
 //
-// Toute garde dont le dernier run conclu sur `main` est rouge, et rouge
-// sans interruption depuis plus de 7 jours, est dans UN de ces trois états :
-//   1. corrigée (elle redevient verte, ce script ne la voit plus) ;
-//   2. recalée par une DÉCISION ÉCRITE ET DATÉE dans
-//      `.github/gardes-rouges-decisions.json` (date, mesure, motif, et une
-//      date de revue au plus 30 jours après la décision) ;
-//   3. retirée (le workflow disparaît ou est désactivé, avec la même trace
-//      dans le doc de la garde).
-// Sinon : ce script l'inscrit dans l'issue `ci-red` (celle de `ci-alert.yml`,
-// pas une seconde) et sort en 1.
-//
-// ── CE QU'IL REGARDE ────────────────────────────────────────────────
-//
-// TOUS les workflows actifs du dépôt, pas une liste : une liste est
-// précisément ce qui a laissé `Sabotages` et `Mutation` hors de vue. Seuls les
-// runs de `main` qui ne sont pas des pull requests comptent ; `cancelled`,
-// `skipped` et `neutral` ne sont ni verts ni rouges et sont sautés.
-// `CI alert` lui-même est exclu (ses runs sont des `skipped` par construction).
-//
-// ── ET LES ALERTES DE DÉTECTION ÉCHUES (vague 6.1, OBS-01) ──────────
-//
-// Chaque issue `detection-violation` ouverte (`detection-violation.yml`)
-// porte son échéance de tri dans son marqueur. Passée l'échéance, elle entre
-// dans la même liste, la même issue `ci-red`, le même canal : une seule
-// règle de revue, pas une seconde. Une échéance illisible vaut échue.
-// REVUE DU LUNDI : le cron hebdomadaire de `ci-alert.yml` passe
-// `REVUE_HEBDO=true` ; s'il reste une alerte échue, la liste est republiée
-// même inchangée (une alerte échue ne doit pas se faire oublier en se taisant).
-//
-// ✅ ÉCHEC FERMÉ : API en panne, jeton refusé, fichier de décisions illisible
-//    ou mal formé = sortie 1. Jamais un vert sur une mesure qui n'a pas eu lieu.
-// ⚠️ Le dépôt est PUBLIC : l'issue ne porte que des noms de workflow, des
-//    dates et des liens de runs. Aucun journal, aucune annotation recopiée.
-//
-// 🔴 PAS DE SHEBANG : le témoin importe ce module (cf. `scripts/CLAUDE.md`).
-// Témoin : `scripts/gardes-rouges-7j.guard.test.mjs`.
-// ═══════════════════════════════════════════════════════════════════
-
+// ✅ Echec ferme : API en panne, jeton refuse, fichier de decisions illisible ou
+// mal forme = sortie 1.
+// ⚠️ Depot PUBLIC : l'issue ne porte que noms de workflow, dates et liens de runs.
+// 🔴 Pas de shebang : le temoin importe ce module (cf. `scripts/CLAUDE.md`).
+// Temoin : `gardes-rouges-7j.guard.test.mjs`.
 import { readFileSync, appendFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';

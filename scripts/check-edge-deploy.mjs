@@ -1,72 +1,17 @@
-// ═══════════════════════════════════════════════════════════════════
-// check-edge-deploy.mjs · le code DEPLOYE des Edge Functions contre le depot
+// check-edge-deploy.mjs : le code DEPLOYE des Edge Functions contre le depot (C-35)
 //
-// 🔴 POURQUOI CE FICHIER EXISTE (finding C-35, audit A-1)
-//
-// Le 2026-09-03, les trois sources deployees lisibles ont ete relues via
-// l'API et comparees a `main` : LES TROIS divergeaient, de trois facons
-// differentes.
-//
-//   delete-account   v13 · une variante ABSENTE du depot (correctifs R-03 et
-//                          R-06, mais pas la purge symetrique de `friends`).
-//                          Elle echouerait a `src/rgpd-erasure.guard.test.ts`,
-//                          qui est vert.
-//   renewal-notice   v9  · le defaut S-4 que `faille.md` (hors depot) declare corrige.
-//   report-bug       v8  · le meme defaut S-4, jamais repere a l'epoque.
-//
-// Remesure du 2026-09-04 : `stripe-org-refund` n'existe pas en prod,
-// `report-bug` tourne toujours en v8 du 08-29, `stripe-webhook` en v26 du
-// 08-26. Il a fallu interroger le projet A LA MAIN pour l'apprendre.
-//
-// Consequence, et c'est la seule qui compte : TOUTE conclusion tiree en
-// lisant `supabase/functions/` est fausse d'avance, y compris celles de
-// `faille.md` (hors depot, `prive/` du checkout principal). Un « ✅ corrige » sur une Edge Function ne veut rien dire
-// sans sa date de deploiement. Aucune garde du depot ne regardait la prod.
-//
-// ── CE QUE CE SCRIPT REGARDE (cf. CLAUDE.md, § « une garde se verifie sur
-//    ce qu'elle REGARDE ») ─────────────────────────────────────────────
-//
-// Pour chaque fonction REELLEMENT deployee : le bundle est telecharge, ses
-// fichiers sont compares OCTET POUR OCTET a ceux du depot, dans les DEUX
+// Regarde : pour chaque fonction reellement deployee, le bundle est telecharge
+// et ses fichiers sont compares OCTET POUR OCTET a ceux du depot, dans les deux
 // sens (un fichier present d'un seul cote est une divergence). Les modules
-// `_shared/` importes par l'entrypoint sont dans le perimetre : c'est par la
-// qu'un `alert.ts` fige depuis six semaines resterait invisible.
+// `_shared/` importes par l'entrypoint sont dans le perimetre.
+// Ne regarde pas : l'EXISTENCE, declaree dans `.github/edge-deploy.json`
+// (`notDeployed`, avec raison). Cette declaration ne couvre jamais le contenu :
+// aucun moyen de faire taire une divergence de code. Un `notDeployed` faux
+// (la fonction EST en ligne) est un echec.
+// Secret absent (`SUPABASE_ACCESS_TOKEN`) : sortie 1, jamais un `::warning::`.
+// Temoin : `check-edge-deploy.guard.test.mjs`.
 //
-// ── CE QUE CE SCRIPT NE REGARDE PAS, ET POURQUOI ────────────────────────
-//
-// L'EXISTENCE d'une fonction est declaree dans `.github/edge-deploy.json`.
-// Une fonction du depot jamais deployee (`stripe-org-refund` aujourd'hui) y
-// est nommee avec sa raison et sa date. Sans ca la gate serait rouge en
-// permanence en attendant un geste manuel d'Axel, et une gate rouge en
-// permanence finit ignoree : c'est la regle du dossier, mesuree sur
-// `rls-integration`.
-//
-// 🔴 CETTE DECLARATION NE COUVRE QUE L'EXISTENCE, JAMAIS LE CONTENU. Une
-// fonction deployee est comparee, sans exception et sans reglage. Il n'y a
-// aucun moyen de faire taire une divergence de code depuis ce fichier, et
-// c'est deliberé : ce serait la porte de sortie qui viderait la garde.
-// Un `notDeployed` qui se revele faux (la fonction EST en ligne) est lui
-// aussi un echec, sinon la note perime en silence.
-//
-// ── SECRET ABSENT = ECHEC ───────────────────────────────────────────────
-//
-// Sans `SUPABASE_ACCESS_TOKEN`, ce script SORT EN 1. Jamais un
-// `::warning::` dans un run vert. La regle est ecrite dans CLAUDE.md et a
-// deja ete violee deux fois (`renewal-notice` le 2026-08-26, `uptime.yml`
-// qui sautait sa moitie backend). Une garde qui ne se protege que quand
-// elle est deja protegee ne protege rien.
-//
-// ── TEMOIN ──────────────────────────────────────────────────────────────
-//
-// `scripts/check-edge-deploy.guard.test.mjs` soumet a `compareFunction()` et
-// au script lui-meme des cas qu'ils DOIVENT voir. Relire un comparateur ne
-// prouve rien ; lui soumettre une divergence, si.
-//
-// Usage :
-//   SUPABASE_ACCESS_TOKEN=sbp_... node scripts/check-edge-deploy.mjs
-//   node scripts/check-edge-deploy.mjs --list    (que la liste deployee)
-// ═══════════════════════════════════════════════════════════════════
-
+// Usage : SUPABASE_ACCESS_TOKEN=... node scripts/check-edge-deploy.mjs [--list]
 import { readFileSync, existsSync, readdirSync, statSync, mkdtempSync, rmSync, mkdirSync, writeFileSync, chmodSync } from 'node:fs';
 import { join, resolve, dirname, relative, sep } from 'node:path';
 import { tmpdir } from 'node:os';

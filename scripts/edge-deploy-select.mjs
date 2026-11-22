@@ -1,61 +1,27 @@
-// ═══════════════════════════════════════════════════════════════════
-// edge-deploy-select.mjs · QUELLES Edge Functions redeployer (AM-6)
+// edge-deploy-select.mjs : QUELLES Edge Functions redeployer (AM-6)
 //
-// 🔴 POURQUOI CE FICHIER EXISTE
+// `.github/workflows/edge-deploy.yml` deploie, apres une `CI` verte sur `main`,
+// les fonctions modifiees depuis le dernier SHA deploye ; ce script decide de
+// la LISTE. Dans le doute on deploie (une fonction oubliee est la derive C-35) :
+// chaque regle ajoute, aucune ne retire.
 //
-// Le deploiement des Edge Functions etait un geste MANUEL, et `check:edge`
-// ne voyait la derive qu'apres coup. Le 2026-10-23, `stripe-org-checkout`
-// et `stripe-org-portal` portaient sur `main` la mention 293 B (`c161de2b`)
-// que la production n'executait pas : un correctif committe n'est pas un
-// correctif deploye.
+//   · fichier sous `supabase/functions/<slug>/` -> `<slug>` ;
+//   · module `_shared/` -> TOUTE fonction qui l'importe (perimetre transitif de
+//     `check:edge`, `repoFilesFor`, uni au `grep -l "_shared/<module>"` du runbook) ;
+//   · `supabase/config.toml` -> TOUTES (un `verify_jwt` ne prend effet qu'au deploiement) ;
+//   · fichier a la racine de `supabase/functions/` (hors `.md`, ex. `deno.json`) -> TOUTES.
 //
-// `.github/workflows/edge-deploy.yml` deploie donc, apres une `CI` verte sur
-// `main`, les fonctions modifiees depuis le dernier SHA deploye. Ce script
-// decide de la LISTE. Le workflow ne fait que l'executer.
-//
-// ── LA REGLE DE SELECTION, ET POURQUOI ELLE PENCHE VERS « TROP » ─────────
-//
-// Une fonction redeployee pour rien coute une version de plus. Une fonction
-// OUBLIEE est la derive C-35, invisible jusqu'au prochain `check:edge`. Dans
-// le doute, on deploie : chaque regle ci-dessous ajoute, aucune ne retire.
-//
-//   · un fichier sous `supabase/functions/<slug>/` → `<slug>` ;
-//   · un module `_shared/` → TOUTE fonction qui l'importe. 🔴 C'est la lecon
-//     de W-2 : `verify-org-domain` embarquait l'ancienne
-//     `_shared/org-integrations.ts`. Deux lectures, UNIES : le perimetre
-//     transitif de `check:edge` (`repoFilesFor`, qui voit un `_shared` importe
-//     par un autre `_shared`) ET le `grep -l "_shared/<module>"` du runbook ;
-//   · `supabase/config.toml` → TOUTES : un `verify_jwt` ne prend effet qu'au
-//     deploiement (W-1, `org-webhook-dispatch` en 401 avant son code) ;
-//   · un fichier a la racine de `supabase/functions/` (hors `.md`), un
-//     `deno.json` par exemple → TOUTES : il s'applique a chacune.
-//
-// ── LE DERNIER SHA DEPLOYE ──────────────────────────────────────────────
-//
-// Il est lu dans le TITRE du dernier run vert de `edge-deploy.yml`
-// (`run-name`), pas dans son `head_sha` : un run `workflow_run` porte le SHA
-// de la branche par defaut AU MOMENT du declenchement, pas celui que `CI` a
-// valide. Un run sans SHA dans son titre (CI rouge, rien a faire) ne compte
-// jamais comme un deploiement.
-//
-//   · aucun run vert → AMORCAGE : toutes les fonctions ;
-//   · le SHA a deployer est deja contenu dans le dernier deploye (un run
-//     ancien qui finit apres un recent) → RIEN, et surtout pas un retour
-//     arriere de la prod vers un code plus vieux ;
-//   · le dernier deploye n'est pas un ancetre (historique reecrit) → TOUTES.
-//
-// ── UNE FONCTION, UNE SECTION, UNE SONDE ────────────────────────────────
+// Dernier SHA deploye : lu dans le TITRE (`run-name`) du dernier run vert de
+// `edge-deploy.yml`, pas dans son `head_sha`. Un run sans SHA ne compte pas.
+//   · aucun run vert -> AMORCAGE : toutes ;
+//   · SHA a deployer deja contenu dans le dernier deploye -> RIEN (jamais de
+//     retour arriere de la prod) ;
+//   · dernier deploye non ancetre (historique reecrit) -> TOUTES.
 //
 // Une fonction selectionnee sans section `[functions.<slug>]` dans
-// `supabase/config.toml`, ou sans sonde dans `check-edge-smoke.mjs`, fait
-// ECHOUER la selection. Deployee sans section, elle part en `verify_jwt =
-// true` par defaut (W-1) ; sans sonde, rien ne dit qu'elle repond.
-//
-// ── TEMOIN ──────────────────────────────────────────────────────────────
-//
-// `scripts/edge-deploy-select.guard.test.mjs`.
-// ═══════════════════════════════════════════════════════════════════
-
+// `supabase/config.toml` (sinon `verify_jwt = true` par defaut), ou sans sonde
+// dans `check-edge-smoke.mjs`, fait ECHOUER la selection.
+// Temoin : `edge-deploy-select.guard.test.mjs`.
 import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';

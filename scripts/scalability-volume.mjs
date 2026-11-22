@@ -1,59 +1,27 @@
-// ═══════════════════════════════════════════════════════════════════
-// scalability-volume.mjs — mesurer le mode entreprise À VOLUME
+// scalability-volume.mjs : mesurer le mode entreprise A VOLUME (`docs/SCALABILITY.md` §9bis)
 //
-// ── POURQUOI CE SCRIPT EXISTE ──────────────────────────────────────
+// Le cout PAR LIGNE des predicats RLS d'entreprise est mesure ; le comportement
+// du PLANIFICATEUR a volume ne l'est pas (Index Scan -> Seq Scan, Hash Join ->
+// Nested Loop : ca se constate sur un vrai jeu de donnees). Ecrire 2 000 lignes
+// en production est interdit : la mesure vit sur le runner de CI (stack deja
+// montee pour `rls-integration`), base jetable.
 //
-// `docs/SCALABILITY.md` §9bis dit précisément ce qui manque, et pourquoi il
-// manquait : le coût PAR LIGNE des prédicats RLS d'entreprise est mesuré et
-// confirmé deux fois (rapport de 54× contre `tasks`), mais **le comportement du
-// PLANIFICATEUR à volume ne l'est pas**. Un basculement de plan — Index Scan qui
-// devient Seq Scan, Hash Join qui devient Nested Loop — ne se déduit d'aucun
-// ratio : il se constate, et il exige un vrai jeu de données.
+// 1. seme une organisation realiste : 50 membres, pyramide sur trois niveaux,
+//    5 equipes, 20 projets rattaches a des equipes ;
+// 2. remplit `team_tasks` par paliers (200 puis 2 000) ;
+// 3. a chaque palier, sous le role `authenticated`, plan chauffe, transaction
+//    annulee, mesure `select * from team_tasks` (chemin direct interdit par la
+//    mig. 113, TEMOIN) et `get_my_team_tasks(org)` (chemin impose) ;
+// 4. rend buffers, lignes BALAYEES (`rows` + `Rows Removed by Filter`), ratio
+//    buffers/ligne et TYPES DE NOEUD du plan.
 //
-// La production compte une dizaine de `team_tasks`. Écrire les 2 000 lignes
-// nécessaires en production est interdit par ce dépôt, et à raison. Docker
-// n'est pas disponible sur le poste de dev, donc pas de stack locale non plus.
+// Lecture : le ratio buffers/ligne, jamais le chronometre (a petit volume le cout
+// fixe d'un appel de fonction inverse le verdict ; le temps est pour memoire).
+// Ce qu'on cherche : les types de noeud changent-ils entre les deux paliers ?
 //
-// Reste le runner de CI, qui monte DÉJÀ une stack Supabase complète pour le job
-// `rls-integration`. C'est là que cette mesure appartient : base jetable,
-// volume libre, aucun euro, aucune ligne écrite en production.
-//
-// ── CE QU'IL FAIT ──────────────────────────────────────────────────
-//
-//   1. sème une organisation réaliste : 50 membres, une pyramide managériale
-//      sur trois niveaux, 5 équipes, 20 projets RATTACHÉS à des équipes ;
-//   2. remplit `team_tasks` par paliers (200 puis 2 000 par défaut) ;
-//   3. à chaque palier, mesure les DEUX chemins sous le rôle `authenticated`
-//      réel, plan chauffé, dans une transaction annulée :
-//        • `select * from team_tasks`        → le chemin direct, celui que la
-//          mig. 113 interdit, gardé ici comme TÉMOIN ;
-//        • `get_my_team_tasks(org)`          → le chemin imposé ;
-//   4. rend, pour chacun : buffers, lignes réellement BALAYÉES
-//      (`rows` + `Rows Removed by Filter`), le ratio buffers/ligne, et les
-//      TYPES DE NŒUD du plan.
-//
-// ── COMMENT LIRE LE RÉSULTAT ───────────────────────────────────────
-//
-// 🔴 Le ratio buffers/ligne, jamais le chronomètre. Le §9bis démontre qu'à
-// petit volume le temps donne la réponse INVERSE de la bonne : la RPC lit moins
-// de buffers ET met 8× plus longtemps, parce que le coût fixe d'un appel de
-// fonction domine tant que tout tient en cache. Le temps est affiché pour
-// mémoire, il ne décide de rien.
-//
-// Ce qu'on cherche vraiment ici est ailleurs : **les types de nœud changent-ils
-// entre les deux paliers ?** Un ratio qui reste stable pendant que le plan
-// bascule est le scénario que personne n'avait encore éliminé.
-//
-// ── USAGE ──────────────────────────────────────────────────────────
-//
-//   DATABASE_URL=postgres://... node scripts/scalability-volume.mjs
-//   ... --steps=200,2000        # paliers de volume
-//   ... --members=50            # taille de l'organisation
-//
-// ⚠️ Refuse de tourner sur autre chose qu'une base LOCALE, sauf
-// `--i-know-this-is-not-production`. Ce script ÉCRIT, et beaucoup : le laisser
-// pointer une base réelle par accident est le seul dégât qu'il puisse causer.
-// ═══════════════════════════════════════════════════════════════════
+// Usage : DATABASE_URL=postgres://... node scripts/scalability-volume.mjs
+//   --steps=200,2000  --members=50
+// ⚠️ Refuse une base non LOCALE sauf `--i-know-this-is-not-production`. ECRIT beaucoup.
 import pg from 'pg';
 import { assertDisposable, fillTo, seedOrg, walkPlan } from './scalability-seed.mjs';
 
