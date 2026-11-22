@@ -2059,3 +2059,15 @@ a:focus-visible:not([class*="ring-"]):not([class*="focus-visible:"]),
     min-width: var(--touch-min);
   }
 }
+
+/* Titre du hero ENTREPRISE, mobile : la hauteur de quatre lignes est réservée.
+   Le titre passe sur deux lignes par vers ; le passage d'Instrument Serif à sa
+   police de secours (font-display: swap) change le point de coupure, la pile
+   d'images descendait (CLS 0,04) et se repeignait comme un NOUVEAU candidat LCP
+   (7,4 s simulés, CI etendue rouge le 2026-11-22). Réserver la hauteur rend la
+   position de l'image indépendante de la police. 4 × 0,98 × 3,15rem. */
+@media (max-width: 639px) {
+  h1:has(> .ent-hero-line) {
+    min-height: 12.35rem;
+  }
+}
