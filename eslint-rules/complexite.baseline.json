@@ -431,9 +431,6 @@
     "src/pages/agenda/AgendaCalendarSection.tsx": {
       "max-lines-per-function": [323]
     },
-    "src/pages/landing/entreprise/PricingSection.tsx": {
-      "max-lines-per-function": [273]
-    },
     "src/pages/okr/CategoryFilterBar.tsx": {
       "max-lines-per-function": [314]
     },
