@@ -17,7 +17,6 @@ import { ArrowRight } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import FeaturesSection from './FeaturesSection';
 import SolutionsSection from './SolutionsSection';
-import WhySection from './WhySection';
 import FaqSection from './FaqSection';
 
 interface PersoBelowFoldProps {
@@ -54,7 +53,6 @@ const PersoBelowFold: React.FC<PersoBelowFoldProps> = ({ isMobile, onDemo, onReg
 
       <SolutionsSection handleFeatureClick={onFeatureClick} />
 
-      <WhySection />
 
       {/* ── Section FAQ ── */}
       <FaqSection />

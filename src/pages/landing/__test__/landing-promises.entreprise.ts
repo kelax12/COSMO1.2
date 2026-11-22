@@ -317,15 +317,6 @@ export const PROMISES_ENTREPRISE: LandingPromise[] = [
     },
   },
   {
-    id: 'habitudes-retention-maquette',
-    kind: 'illustration',
-    claim: 'La pastille « Rétention 71% » de la maquette des habitudes.',
-    reason: 'Valeur de décor d’une maquette d’interface, pas une statistique de produit.',
-    anchors: [{ key: 'why.retention', includes: 'Rétention 71%' }],
-    proofs: [],
-    figures: { '71': ['why.retention'] },
-  },
-  {
     id: 'entreprise-rapports-quotidiens',
     kind: 'produit',
     claim: 'Chaque nuit, Cosmo fige l’activité de l’entreprise et de chaque équipe (rapports jour, semaine, mois).',

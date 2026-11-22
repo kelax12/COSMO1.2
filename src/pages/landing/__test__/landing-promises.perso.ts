@@ -48,13 +48,12 @@ export const PROMISES_PERSO: LandingPromise[] = [
       'Le jeu de démo a été réduit à 10 tâches de base (commit 944015ba4) : il ouvre avec 12 tâches, 10 habitudes, 123 événements et 4 OKR (mesuré le 2026-10-24).',
     anchors: [
       { key: 'cta.statsAria', includes: '100 tâches, 100 habitudes, 150 événements' },
-      { key: 'why.demoVolume', includes: '100 tâches · 100 habitudes · 150 events' },
       { key: 'faq.a4', includes: '100 tâches, 100 habitudes, 150 événements agenda et 8 OKRs' },
     ],
     proofs: [{ file: 'src/modules/tasks/local.seed.ts', has: '// 10 tâches' }],
     figures: {
-      '100': ['cta.statsAria', 'why.demoVolume', 'faq.a4'],
-      '150': ['cta.statsAria', 'why.demoVolume', 'faq.a4'],
+      '100': ['cta.statsAria', 'faq.a4'],
+      '150': ['cta.statsAria', 'faq.a4'],
       '8': ['faq.a4'],
     },
   },
@@ -65,7 +64,6 @@ export const PROMISES_PERSO: LandingPromise[] = [
     reason:
       'Durée couverte par des dates relatives au jour d’ouverture, non mesurée : les tâches de base remontent à 28 jours.',
     anchors: [
-      { key: 'why.desc5', includes: '12 mois de données réalistes' },
       { key: 'faq.a4', includes: '12 mois de données réalistes' },
       { key: 'about.principle2', includes: '12 mois de données réalistes' },
       { key: 'seo.root.description', includes: '12 mois de données pré-remplies' },
@@ -73,7 +71,6 @@ export const PROMISES_PERSO: LandingPromise[] = [
     proofs: [],
     figures: {
       '12': [
-        'why.desc5',
         'faq.a4',
         'about.principle2',
         'seo.root.description',
@@ -176,14 +173,12 @@ export const PROMISES_PERSO: LandingPromise[] = [
     kind: 'limite',
     claim: 'La heatmap des habitudes couvre 26 semaines.',
     anchors: [
-      { key: 'why.habitsLine2', includes: 'sur 26 semaines' },
       { key: 'faq.a8', includes: 'heatmap 26 semaines' },
       { key: 'prerender:/guide', includes: 'heatmap 26 semaines' },
     ],
     proofs: [{ file: 'src/pages/statistics/HabitHeatmap.tsx', re: '\\b26\\b' }],
     figures: {
       '26': [
-        'why.habitsLine2',
         'faq.a8',
         'prerender:/guide',
         'usecase.students.html',
