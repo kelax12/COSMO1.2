@@ -268,14 +268,8 @@ export const CONTACTS_PROD = {
   'posture.yml › stripe-grille › Comparer la grille Stripe au code': {
     affiche: 'grille de prix : montants et identifiants de prix, aucun client',
   },
-  'renewal-notice.yml › notify › Declencher les avis de reconduction': {
-    affiche: 'code HTTP et réponse `{due, sent, failed}` : trois compteurs',
-  },
-  'renewal-notice.yml › seat-alert › Declencher les alertes de sieges': {
-    affiche: 'code HTTP et réponse `{due, sent, failed, deferred}` (quatre compteurs) ou `{error}` (un code fixe)',
-  },
-  'org-digest.yml › send › Envoyer les notifications par e-mail': {
-    affiche: 'code HTTP et réponse `{mode, recipients, sent, failed}` : compteurs',
+  'rattrapage-crons.yml › appeler › Appeler la fonction': {
+    affiche: 'code HTTP et réponse de la fonction : compteurs (`{due, sent, failed}`, `{mode, recipients, sent, failed}`, `{delivered, failed}`, `{toWarn, warned, toDelete, deleted, …}`), aucun e-mail ni id, ou `{error}` (un code fixe)',
   },
   'prod-errors.yml › erreurs › Sentry, Vercel et Supabase sur 24 h': {
     affiche:
@@ -284,12 +278,6 @@ export const CONTACTS_PROD = {
   'detection-violation.yml › detecter › Lire les signaux de detection': {
     affiche:
       "statut de chaque source, nombre d'artefacts inspectés et d'alertes de secret ouvertes, six maxima et comptes agrégés des journaux Supabase (aucune requête exécutée ne rend un compte ni une IP), numéro et type d'une alerte de secret (jamais sa valeur), nom d'un artefact suspect et de son fichier",
-  },
-  'inactive-accounts.yml › run › Avertir puis effacer les comptes inactifs': {
-    affiche: 'code HTTP et réponse `{toWarn, warned, toDelete, deleted, …}` : compteurs, aucun e-mail',
-  },
-  'org-webhook-dispatch.yml › dispatch › Envoyer les webhooks en attente': {
-    affiche: 'code HTTP et réponse `{delivered, failed}` : compteurs',
   },
 };
 

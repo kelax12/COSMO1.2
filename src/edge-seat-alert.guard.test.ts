@@ -26,7 +26,7 @@ const codeOnly = (src: string) =>
 
 const code = codeOnly(read('supabase/functions/seat-alert/index.ts'));
 const sql = read('supabase/migration/240_org_seat_alerts.sql');
-const workflow = read('.github/workflows/renewal-notice.yml');
+const workflow = read('.github/workflows/rattrapage-crons.yml');
 
 const GUARD_ON_OWN_SECRET = /if\s*[(]\s*[A-Z_]*SECRET\s*&&/;
 
@@ -80,10 +80,10 @@ describe('seat-alert · idempotence', () => {
 });
 
 describe('seat-alert · déclenchement quotidien', () => {
-  it('le workflow quotidien appelle la fonction avec le secret, et échoue sans lui', () => {
-    expect(workflow).toContain('/functions/v1/seat-alert');
+  it('le workflow de rattrapage appelle la fonction avec le secret, et échoue sans lui', () => {
+    expect(workflow).toContain('- seat-alert');
+    expect(workflow).toContain('/functions/v1/$CHEMIN');
     expect(workflow).toContain('-H "x-cron-secret: $CRON_SECRET"');
-    const job = workflow.slice(workflow.indexOf('seat-alert:'));
-    expect(job).toMatch(/\[ -z "\$CRON_SECRET" \][^]*exit 1/);
+    expect(workflow).toMatch(/\[ -z "\$CRON_SECRET" \][^]*exit 1/);
   });
 });

@@ -1,0 +1,64 @@
+# ═══════════════════════════════════════════════════════════════════
+# RATTRAPAGE MANUEL des traitements pg_cron (MAI-02, fusion de quatre workflows)
+#
+# Les six traitements de production sont planifies par pg_cron (mig. 246,
+# `docs/MISES-EN-SERVICE.md` § 2sexies). Ce workflow n'a plus de `schedule:` :
+# il rejoue UN traitement a la main, en appelant son Edge Function avec
+# `x-cron-secret`. pg_net n'etait pas installe quand ils vivaient ici.
+#
+# ⚠️ Ne PAS le supprimer en croyant nettoyer : un avis de reconduction non
+# envoye rend l'abonnement resiliable a tout moment (Conso. L215-1).
+# ⚠️ Secret absent = ECHEC, jamais un silence vert (C-34). Sans code HTTP a
+# trois chiffres, l'appel n'a pas eu lieu : le test de statut ne mesurerait rien.
+# ═══════════════════════════════════════════════════════════════════
+name: Rattrapage crons
+
+on:
+  workflow_dispatch:
+    inputs:
+      fonction:
+        description: 'Traitement a rejouer'
+        required: true
+        type: choice
+        options:
+          - renewal-notice
+          - seat-alert
+          - org-digest-hourly
+          - org-digest-daily
+          - org-webhook-dispatch
+          - inactive-accounts
+
+# Moindre privilege (A-8) : le job n'appelle qu'une URL.
+permissions:
+  contents: read
+
+jobs:
+  appeler:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Appeler la fonction
+        env:
+          # L'URL du projet est publique (bundle client, docs).
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://ykeugqfgklejcdbrmawy.supabase.co' }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          FONCTION: ${{ inputs.fonction }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "::error::CRON_SECRET absent des secrets Actions : AUCUN traitement ne part ($FONCTION)."
+            exit 1
+          fi
+          case "$FONCTION" in
+            org-digest-hourly) CHEMIN='org-digest?mode=hourly' ;;
+            org-digest-daily) CHEMIN='org-digest?mode=daily' ;;
+            *) CHEMIN="$FONCTION" ;;
+          esac
+          code=$(curl -s -o /tmp/out.json -w '%{http_code}' -X POST \
+            "$SUPABASE_URL/functions/v1/$CHEMIN" \
+            -H "x-cron-secret: $CRON_SECRET")
+          # La reponse ne porte que des compteurs, jamais un e-mail ni un id.
+          echo "HTTP $code ($FONCTION)"; cat /tmp/out.json; echo
+          case "$code" in
+            [0-9][0-9][0-9]) ;;
+            *) echo "::error::Aucun code HTTP : l appel n a pas eu lieu, la garde n a rien mesure."; exit 1 ;;
+          esac
+          [ "$code" = "200" ]

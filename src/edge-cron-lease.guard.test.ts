@@ -203,12 +203,12 @@ const aLeCron = (yml: string, expr: string) =>
 
 /** Job du verdict → workflow et expression `schedule:` qui le déclenchent sur GitHub. */
 const DECLENCHEURS: Record<string, { wf: string; cron: string }> = {
-  'org-webhook-dispatch': { wf: 'org-webhook-dispatch', cron: '7-59/10 * * * *' },
-  'org-digest-hourly': { wf: 'org-digest', cron: '23 * * * *' },
-  'org-digest-daily': { wf: 'org-digest', cron: '41 7 * * *' },
-  'renewal-notice': { wf: 'renewal-notice', cron: '12 7 * * *' },
-  'seat-alert': { wf: 'renewal-notice', cron: '12 7 * * *' },
-  'inactive-accounts': { wf: 'inactive-accounts', cron: '37 6 * * *' },
+  'org-webhook-dispatch': { wf: 'rattrapage-crons', cron: '7-59/10 * * * *' },
+  'org-digest-hourly': { wf: 'rattrapage-crons', cron: '23 * * * *' },
+  'org-digest-daily': { wf: 'rattrapage-crons', cron: '41 7 * * *' },
+  'renewal-notice': { wf: 'rattrapage-crons', cron: '12 7 * * *' },
+  'seat-alert': { wf: 'rattrapage-crons', cron: '12 7 * * *' },
+  'inactive-accounts': { wf: 'rattrapage-crons', cron: '37 6 * * *' },
 };
 const BASCULES = new Set<string>(JOBS_BASCULES);
 
