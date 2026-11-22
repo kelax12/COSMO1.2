@@ -380,15 +380,12 @@
     --color-secondary: 118 131 144;    /* #768390 texte muted */
     --color-accent: 88 166 255;        /* #58a6ff texte / liens / focus / bordures actives */
     --color-accent-text: 145 198 255;  /* AM-5 : #58a6ff rendait 3,76 à 4,38:1 sur ses propres teintes ; 5,24:1 et plus */
-    /* 🔴 C-25 (2026-09-12) — #2f75d5 et non plus #388bfd. C'était le pire des
-       quatre thèmes : blanc sur #388bfd = 3,34:1, mesuré par l'audit A-8 le
-       2026-08-24 et laissé en arbitrage de marque pendant dix-neuf jours. La
-       teinte est assombrie de 16 %, le minimum qui passe la barre (4,54:1).
-       Le motif du choix d'origine (« #1f6feb trop terne sur graphite ») tient
-       toujours : on n'est pas revenu à #1f6feb, on a assombri #388bfd.
-       ❌ Ne jamais la remonter sans remesurer le blanc dessus. */
-    --color-accent-solid: 47 117 213;  /* #2f75d5 fonds pleins de boutons/chips actifs — blanc dessus : 4,54:1 */
-    --color-accent-solid-hover: 88 166 255; /* #58a6ff — même teinte que --color-accent, s'éclaircit au survol */
+    /* 🔴 C-25 puis choix d'Axel (2026-11-22) : #1f6feb, le bleu COSMO de la
+       landing entreprise. Blanc dessus : 4,6:1 (AA). #388bfd (3,34:1) ne sert
+       plus qu'au survol, jamais sous du texte au repos.
+       ❌ Ne jamais l'éclaircir sans remesurer le blanc dessus. */
+    --color-accent-solid: 31 111 235;  /* #1f6feb bleu COSMO (choix d'Axel 2026-11-22), fonds pleins de boutons/chips actifs — blanc dessus : 4,6:1 */
+    --color-accent-solid-hover: 56 139 253; /* #388bfd — s'éclaircit au survol */
     --color-accent-solid-foreground: 255 255 255; /* texte blanc sur les boutons pleins */
     --color-success: 52 211 153;
     --color-warning: 251 191 36;
@@ -417,7 +414,7 @@
     --nav-item-text: 143 153 164;      /* AM-5 : #768390 rendait 3,78:1 sur la barre latérale ; aligné sur --color-text-muted, 5,07:1 */
     --nav-item-hover-bg: 30 32 35;
     --nav-item-hover-text: 173 186 199;
-    --nav-item-active-bg: 47 117 213; /* #2f75d5 = --color-accent-solid. AM-5 : #388bfd laissait le blanc à 3,34:1 sur l'entrée active, la valeur que C-25 avait corrigée sur le bouton et oubliée ici */
+    --nav-item-active-bg: 31 111 235; /* #1f6feb = --color-accent-solid. AM-5 : #388bfd laissait le blanc à 3,34:1 sur l'entrée active, la valeur que C-25 avait corrigée sur le bouton et oubliée ici */
     --nav-item-active-text: 255 255 255;
 
     /* Calendar specific colors */
@@ -453,8 +450,8 @@
     --muted-foreground: 210 10% 51%; /* #768390 */
     --accent: 212 100% 67%;      /* #58a6ff */
     --accent-foreground: 0 0% 100%;
-    --accent-solid: 215 98% 61%; /* #388bfd — intensifié */
-    --accent-solid-hover: 212 100% 67%; /* #58a6ff */
+    --accent-solid: 216 83% 52%; /* #1f6feb — bleu COSMO */
+    --accent-solid-hover: 215 98% 61%; /* #388bfd */
     --accent-solid-foreground: 0 0% 100%;
     --destructive: 0 63% 40%;
     --destructive-foreground: 210 17% 98%;

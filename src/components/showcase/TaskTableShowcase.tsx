@@ -198,7 +198,7 @@ const JETONS: Record<ShowcaseTheme, Jetons> = {
     cadre: 'rgb(43, 49, 55)', cadreBord: 'rgb(68, 76, 86)', ombre: '0 30px 60px -24px rgba(0,0,0,0.65)',
     entete: 'rgb(36, 41, 46)', enteteTexte: 'rgb(173, 186, 199)', filet: 'rgba(68, 76, 86, 0.6)',
     encre: 'rgb(250, 251, 252)', encre2: 'rgb(173, 186, 199)', muet: 'rgb(143, 153, 164)',
-    puce: 'rgb(47, 53, 59)', puceTexte: 'rgb(173, 186, 199)', accent: 'rgb(47, 117, 213)', surAccent: '#FFFFFF',
+    puce: 'rgb(47, 53, 59)', puceTexte: 'rgb(173, 186, 199)', accent: 'rgb(31, 111, 235)', surAccent: '#FFFFFF',
     caseBord: 'rgb(118, 131, 144)', survol: 'rgba(47, 53, 59, 0.8)',
     menu: 'rgb(43, 49, 55)', menuBord: 'rgb(68, 76, 86)', menuOmbre: '0 18px 40px -10px rgba(0,0,0,0.6)',
     retardFond: 'rgba(239,68,68,0.1)', retardBord: 'rgba(239,68,68,0.3)', retardTexte: '#FCA5A5', retardIcone: '#EF4444', echeanceRetard: '#F87171',
