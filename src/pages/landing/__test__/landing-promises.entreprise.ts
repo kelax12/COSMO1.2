@@ -267,7 +267,7 @@ export const PROMISES_ENTREPRISE: LandingPromise[] = [
     kind: 'produit',
     claim: 'Les projets se voient en liste, planning ou portefeuille ; les tâches en liste ou kanban.',
     anchors: [
-      { key: 'enterprise.projects.p2d', includes: 'La liste pour le détail des tâches' },
+      { key: 'enterprise.projects.p2d', includes: 'Le portefeuille' },
     ],
     proofs: [
       { file: 'src/modules/team-projects/portfolio.hooks.ts', re: 'export' },
@@ -280,7 +280,7 @@ export const PROMISES_ENTREPRISE: LandingPromise[] = [
     claim: 'Sous-tâches, commentaires et mentions dans chaque tâche.',
     anchors: [
       { key: 'enterprise.projects.p1d', includes: 'sous-tâches' },
-      { key: 'enterprise.projects.p3d', includes: 'mentionnez' },
+      { key: 'enterprise.projects.p3d', includes: 'Mentionnez quelqu' },
     ],
     proofs: [
       { file: 'src/modules/team-projects/local.subtasks.ts', re: 'export' },
