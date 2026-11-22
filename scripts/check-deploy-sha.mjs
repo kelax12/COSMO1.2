@@ -1,80 +1,20 @@
-// ═══════════════════════════════════════════════════════════════════
-// check-deploy-sha.mjs — le commit SERVI en production contre le dépôt (T-8)
+// check-deploy-sha.mjs : le commit SERVI en production contre le depot (T-8)
 //
-// 🔴 POURQUOI CE FICHIER EXISTE
+// Defaut C-35 cote front : uptime.yml dit « HTTP 200 » (une coquille SPA vide aussi), check:edge ne
+// regarde que les Edge Functions, la CI dit que main COMPILE. Rien ne disait QUEL COMMIT tourne.
+// dist/version.json, ecrit au build par cosmo-emit-version (VERCEL_GIT_COMMIT_SHA, meme id que la
+// release Sentry), est lu SUR LA PRODUCTION (public, sans secret : la garde ne saute jamais faute de secret).
 //
-// C'est le défaut `C-35` des Edge Functions, CÔTÉ FRONT, et il est resté sans
-// nom jusqu'au 2026-09-16. `npm run check:edge` compare le code DÉPLOYÉ des
-// Edge Functions au dépôt ; il n'existait AUCUN équivalent pour l'application
-// elle-même, celle que tous les visiteurs exécutent.
+// Trois situations, qu'un `!=` confondrait :
+//   A JOUR   servi == reference                 → vert
+//   RETARD   servi est un ANCETRE de reference  → vert si recent (deploiement en vol), ROUGE au-dela de la tolerance
+//   DERIVE   servi INCONNU ou DESCENDANT        → ROUGE, toujours (une production en AVANCE a deploye du code jamais relu)
+// ❌ Ne jamais relacher TOLERANCE_RETARD_MIN pour faire passer la CI.
 //
-// Ce que le dépôt savait dire avant ce script :
-//   - `uptime.yml`  : « thecosmo.app répond HTTP 200 ». Une coquille SPA vide
-//                     répond 200. Un build vieux de trois semaines aussi.
-//   - `check:edge`  : les Edge Functions, jamais le front.
-//   - la CI         : que `main` COMPILE, jamais qu'il soit SERVI.
-//
-// Entre les trois, personne ne pouvait dire QUEL COMMIT tourne en production.
-// Un déploiement Vercel qui échoue en silence, une promotion oubliée, un
-// rollback laissé en place : tout cela laissait la CI verte et le site debout.
-//
-// ── CE QU'IL MESURE, ET IL NE DEVINE RIEN ──────────────────────────
-//
-// `dist/version.json` est écrit AU BUILD par le plugin `cosmo-emit-version`
-// (`vite.config.ts`) avec `VERCEL_GIT_COMMIT_SHA`, donc par Vercel lui-même,
-// et il porte le MÊME identifiant que la release Sentry. Il est servi en
-// `max-age=0, must-revalidate` (`vercel.json`), donc jamais depuis un cache.
-//
-// On lit ce fichier SUR LA PRODUCTION. C'est une mesure de ce qui est
-// réellement servi, pas une déclaration d'API : c'est exactement la leçon de
-// `C-35`, où le dépôt et le ledger décrivaient ce qu'on avait voulu écrire.
-//
-// ✅ AUCUN SECRET N'EST REQUIS. `/version.json` est public. La garde ne peut
-// donc pas « sauter silencieusement faute de secret », qui est le défaut qui a
-// fait échouer `Edge deploy drift` quatorze fois sans jamais rien comparer.
-//
-// ── TROIS SITUATIONS, ET UN `!=` LES CONFONDRAIT TOUTES ────────────
-//
-// Une garde qui compare bêtement deux chaînes serait ROUGE à chaque push, le
-// temps que Vercel construise. Elle crierait au loup, on la désarmerait, et on
-// aurait dépensé un job pour rien. Les trois cas se distinguent :
-//
-//   À JOUR    servi == HEAD                      → vert
-//   RETARD    servi est un ANCÊTRE de HEAD       → vert si HEAD est récent
-//                                                  (déploiement en vol),
-//                                                  ROUGE au-delà de la
-//                                                  tolérance : le déploiement
-//                                                  est bloqué et personne ne
-//                                                  le voit
-//   DÉRIVE    servi est INCONNU du dépôt         → ROUGE, toujours. Ce qui
-//             ou DESCEND de HEAD                   tourne ne vient pas de
-//                                                  `main`
-//
-// 🔴 Le cas « DESCENDANT » n'est pas théorique et il est contre-intuitif : une
-// production EN AVANCE sur `main` veut dire qu'on a déployé quelque chose qui
-// n'a jamais été relu sur la branche par défaut. C'est plus grave qu'un retard,
-// et un `!=` le rangerait avec lui.
-//
-// ❌ Ne JAMAIS relâcher `TOLERANCE_RETARD_MIN` pour faire passer la CI. Un
-// retard qui dure veut dire qu'un déploiement est cassé, pas que la borne est
-// trop basse.
-//
-// ── LA RÉFÉRENCE EST LE DERNIER COMMIT VERT, PLUS LA TÊTE DE `main` ─
-//
-// Depuis la porte de déploiement (CI-02, 2026-11-07), Vercel ne construit en
-// production qu'un SHA portant le tag `ci-vert/<sha>` (`ci-vert.yml`,
-// `scripts/vercel-ignore-build.mjs`). Un `main` rouge reste donc légitimement
-// hors production : comparée à HEAD, la garde crierait au « retard » sur une
-// production saine. La référence est le commit le plus récent de l'histoire
-// de HEAD qui porte ce tag (`dernierShaVert`). Conséquences :
-//   - `main` rouge, production sur le dernier vert        → À JOUR ;
-//   - production DESCENDANTE du dernier vert              → un commit SANS
-//     verdict vert est servi : porte contournée (redeploy d'urgence) ou tag
-//     manquant. ROUGE, toujours ;
-//   - aucun tag `ci-vert/*` dans les 500 derniers commits → ROUGE
-//     (`aucun_vert`) : `CI vert` ne pose plus rien, donc plus rien ne part en
-//     production. Une garde qui ne trouve pas sa référence échoue.
-// ═══════════════════════════════════════════════════════════════════
+// Reference (CI-02) : Vercel ne construit qu'un SHA tague `ci-vert/<sha>` ; un main rouge reste hors
+// production sans etre un retard. La reference est le commit le plus recent de HEAD portant ce tag
+// (dernierShaVert). Production descendante du dernier vert = porte contournee, ROUGE. Aucun tag
+// `ci-vert/*` dans les 500 derniers commits = ROUGE (`aucun_vert`) : une garde sans reference echoue.
 import { execFileSync } from 'node:child_process'
 
 /** URL du marqueur de version servi en production. */

@@ -1825,6 +1825,17 @@ export const CATALOGUE = [
       + 'dans le checkout d un dépôt PUBLIC : un `git add -f` le publierait sans un mot (SEC-02).',
   },
   {
+    id: 'message-commit-attente-aveugle',
+    famille: 'detecteur',
+    garde: 'scripts/check-fichiers-sensibles.guard.test.mjs',
+    modifs: [r('scripts/check-fichiers-sensibles.mjs', 'const ATTENTE = /', 'const ATTENTE = /(?!)|')],
+    attendu: [
+      'SEC-02 : un message public ne dit pas qu un correctif attend > TÉMOIN : refuse fix(securite): migration 300 pas appliquee',
+      'SEC-02 : un message public ne dit pas qu un correctif attend > TÉMOIN : le hook commit-msg refuse un message fautif',
+    ],
+    pourquoi: 'Un message public du 2026-11-19 disait une faiblesse de production « pas appliquee » : la carte des failles ouvertes (SEC-02).',
+  },
+  {
     id: 'pre-commit-vert-muet',
     famille: 'detecteur',
     garde: 'scripts/check-fichiers-sensibles.guard.test.mjs',

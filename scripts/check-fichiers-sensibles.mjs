@@ -17,7 +17,7 @@
 //     `.env.e2e-stub` (gabarits sans secret, lus par le dépôt) ;
 //   · tout fichier de plus de 1 Mo.
 //
-// Lu par le hook `pre-commit`, le job CI `fichiers-sensibles` et `fichiers-suivis.guard.test.mjs`.
+// Lu par les hooks `pre-commit` et `commit-msg` (`--message`, SEC-02 : jugerMessage), le job CI `fichiers-sensibles` et `fichiers-suivis.guard.test.mjs`.
 //
 // Une exception se déclare UNE PAR UNE dans `EXCEPTIONS`, avec son chemin,
 // l'empreinte git (blob) de la version admise et le motif. Une autre version
@@ -39,7 +39,22 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { sep } from 'node:path';
+
+// Messages de commit (SEC-02) : un message PUBLIC ne dit pas qu'un correctif de
+// securite ou de base attend son application. FILET, pas frontiere : quelques
+// formulations, une paraphrase passe. Le job CI rejoue la plage poussee.
+const SUJET = /secur|faille|vulnerab|\brls\b|migration|polic|supabase|prod/;
+const ATTENTE = /\b(?:pas|non|jamais)\s+(?:encore\s+)?appliquee?s?\b|en attente d\W?(?:application|deploiement)|\breste(?:nt)?\s+ouverts?\b|\bnot\s+(?:yet\s+)?(?:applied|deployed)\b/;
+const norm = (t) => String(t ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ');
+
+/** @returns {string|null} la formulation refusee, ou null */
+export function jugerMessage(message) {
+  const t = norm(message);
+  return SUJET.test(t) ? (ATTENTE.exec(t)?.[0] ?? null) : null;
+}
+const AIDE_MESSAGE = 'Appliquer le correctif AVANT de pousser, puis le decrire sans dire qu il attend (« applique en production le … »). Aucune variable ne contourne.';
 
 /** 1 Mo : au-delà, un fichier est un média ou une donnée, jamais du code. */
 export const TAILLE_MAX = 1024 * 1024;
@@ -278,8 +293,10 @@ export function run({ argv = process.argv.slice(2), env = process.env, executer 
   if (argv.includes('--arbre')) modes.push('arbre');
   const iPlage = argv.indexOf('--plage');
   if (iPlage >= 0) modes.push('plage');
+  const iMsg = argv.indexOf('--message');
+  if (iMsg >= 0) modes.push('message');
   if (modes.length === 0) {
-    erreur('usage : check-fichiers-sensibles.mjs --index | --arbre [--plage A..B]');
+    erreur('usage : check-fichiers-sensibles.mjs --index | --arbre [--plage A..B] | --message <fichier>');
     return 1;
   }
 
@@ -302,6 +319,15 @@ export function run({ argv = process.argv.slice(2), env = process.env, executer 
       const e = lirePlage(plage, executer);
       log(`fichiers sensibles · plage ${plage} : ${e.length} version(s) ajoutée(s) ou modifiée(s) lue(s)`);
       fautes.push(...juger(e).map((f) => `historique ${plage} · ${f}`));
+      for (const m of executer(['log', '--format=%h%x00%B%x01', plage]).split('\x01')) {
+        const [h, corps] = m.trim().split('\0');
+        const dit = h && jugerMessage(corps);
+        if (dit) fautes.push(`message de ${h} · « ${dit} »`);
+      }
+    }
+    if (modes.includes('message')) {
+      const dit = jugerMessage(readFileSync(argv[iMsg + 1], 'utf8'));
+      if (dit) fautes.push(`message de commit · « ${dit} »`);
     }
   } catch (e) {
     signaler(`lecture impossible : ${e.message}`);
@@ -313,7 +339,7 @@ export function run({ argv = process.argv.slice(2), env = process.env, executer 
     ? `pre-commit : commit REFUSÉ, ${fautes.length} fichier(s) interdit(s) sur ce dépôt public`
     : `fichiers sensibles : ${fautes.length} refus`);
   for (const f of fautes) signaler(f);
-  for (const l of AIDE) erreur(`  ${l}`);
+  for (const l of fautes.some((f) => f.startsWith('message')) ? [AIDE_MESSAGE] : AIDE) erreur(`  ${l}`);
   return 1;
 }
 

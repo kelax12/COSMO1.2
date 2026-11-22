@@ -25,6 +25,7 @@ import {
   lireArbre,
   lireLsFiles,
   lirePlage,
+  jugerMessage,
   run,
 } from './check-fichiers-sensibles.mjs';
 
@@ -302,5 +303,26 @@ describe('ci-noyau.yml : la garde CI rejoue la même règle, sur l arbre ET sur 
     expect(job).toContain('node scripts/check-fichiers-sensibles.mjs --arbre');
     expect(job).toContain('--plage');
     expect(job).not.toMatch(/continue-on-error/);
+  });
+});
+
+describe('SEC-02 : un message public ne dit pas qu un correctif attend', () => {
+  it.each([
+    ['fix(securite): migration 300 pas appliquee'],
+    ['RLS : politique non appliquée'],
+    ['correctif de faille, en attente d application'],
+    ['security fix, not applied yet'],
+    ['faille corrigée, reste ouvert'],
+  ])('TÉMOIN : refuse %s', (m) => expect(jugerMessage(m)).not.toBeNull());
+  it.each([
+    ['migration 300 appliquée en production le 2026-11-22'],
+    ['feat(ui): le style est pas appliqué au bouton'],
+    ['fix(securite): policy durcie'],
+  ])('TÉMOIN : laisse passer %s', (m) => expect(jugerMessage(m)).toBeNull());
+  it('TÉMOIN : le hook commit-msg refuse un message fautif', () => {
+    const f = join(mkdtempSync(join(tmpdir(), 'cm-')), 'm');
+    const lancer = (txt) => { writeFileSync(f, txt); return spawnSync('sh', ['.githooks/commit-msg', f], { cwd: resolve(import.meta.dirname, '..'), encoding: 'utf8' }).status; };
+    expect(lancer('fix(securite): rls non appliquee')).toBe(1);
+    expect(lancer('fix(securite): rls appliquee en production')).toBe(0);
   });
 });

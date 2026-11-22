@@ -1,0 +1,8 @@
+#!/bin/sh
+# SEC-02 : refuse un message de commit PUBLIC qui annonce qu'un correctif de
+# securite ou de base n'est pas encore applique. Filet : le job CI rejoue la plage.
+# Aucune variable de contournement ; sans script, on REFUSE (jamais un vert muet).
+garde=scripts/check-fichiers-sensibles.mjs
+[ -f "$garde" ] || garde="$(dirname "$0")/../scripts/check-fichiers-sensibles.mjs"
+[ -f "$garde" ] || { echo "commit-msg : commit refuse, garde introuvable." >&2; exit 1; }
+exec node "$garde" --message "$1"
