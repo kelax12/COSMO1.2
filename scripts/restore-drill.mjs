@@ -2,42 +2,29 @@
 // restore-drill.mjs · LE DRILL MENSUEL : LE DERNIER DUMP SE RESTAURE-T-IL ?
 //
 // Appele par le job `drill-auto` de `.github/workflows/restore-drill.yml`
-// (mensuel, ROB-01, vague 4.4), apres le `gh run download` des artefacts
-// `db-dump` et `db-comptages` d'un MEME run de `db-backup.yml`.
+// (mensuel, ROB-01), apres le `gh run download` des artefacts `db-dump` et
+// `db-comptages` d'un MEME run de `db-backup.yml`. Une sauvegarde jamais
+// restauree dans sa forme actuelle est une hypothese.
 //
-// 🔴 POURQUOI CE DRILL EXISTE (audit externe du 2026-11-06, ROB-01)
-//
-// Le dump quotidien chiffre est la copie restauree par ce drill. Jusqu'ici, rien d'automatique ne le restaurait : `dump-check` lisait
-// une table des matieres (`pg_restore --list`), pas une ligne, et le vrai
-// drill exigeait un projet jetable, une confirmation tapee et un secret qui
-// n'existe que ce jour-la. Dernier drill reussi : 2026-09-01. Une sauvegarde
-// jamais restauree dans sa forme actuelle est une hypothese.
-//
-// CE QUE FAIT CE MODULE, dans l'ordre ; chaque refus est un exit 1 :
+// Dans l'ordre ; chaque refus est un exit 1 :
 //   1. relit et dechiffre le dump (memes regles que `dump-check.mjs`) ;
 //   2. dechiffre le manifeste de comptages ecrit AU MOMENT du dump, dans le
 //      meme snapshot (`scripts/sql/comptages-sauvegarde.sql`) ;
-//   3. cree les roles Supabase dans un Postgres 17 JETABLE du runner
-//      (service container, `localhost` impose : jamais la production) ;
-//   4. restaure avec `pg_restore`, et classe CHAQUE erreur : seules sont
-//      tolerees celles d'une extension propre a Supabase absente de l'image
-//      Postgres officielle (liste fermee ci-dessous), et jamais sur un objet
-//      de `public` ou de `auth` ; le nombre d'erreurs classees doit egaler
-//      celui que pg_restore annonce, sinon le classement a rate quelque chose ;
-//   5. recompte avec la MEME requete, et compare au manifeste : une table de
-//      plus, de moins, ou une ligne d'ecart = echec ;
-//   6. rejoue l'isolation : le role `authenticated`, avec les claims d'un vrai
-//      proprietaire, ne voit que ses taches.
+//   3. restaure `public` et `auth` dans une STACK SUPABASE locale jetable du
+//      runner (Postgres 17, rôles, GoTrue, PostgREST ; PGHOST local impose :
+//      jamais la production). Aucune erreur de `pg_restore` n'est attendue ;
+//   4. recompte avec la MEME requete et compare au manifeste ;
+//   5. rejoue l'isolation par la stack : connexion d'un utilisateur restaure
+//      par GoTrue, lecture en `authenticated` (ses seules lignes, en SQL puis
+//      par PostgREST) et en `anon` (rien), RPC `get_my_tasks`, profils sans orphelin.
 // Le dechiffre est efface en sortie, reussite ou echec.
 //
-// 🔴 DONNEES PERSONNELLES. Le journal et le resume d'un depot PUBLIC se lisent
-//    par tous. N'en sortent que des NOMS d'objets et des COMPTES. Des erreurs
-//    de pg_restore ne sont imprimes que la premiere ligne du message et celle
-//    de la commande ; les lignes DETAIL / CONTEXT / HINT, qui peuvent citer
-//    une valeur, ne sont jamais lues, et un echec de COPY n'imprime que la
-//    table, jamais le message.
-// ❌ Ne prouve PAS : cf. `docs/DEPLOYMENT.md` § 7 (pg_cron, Vault, Edge
-//    Functions, Storage, parcours applicatif).
+// 🔴 DONNEES PERSONNELLES (depot PUBLIC) : n'en sortent que des NOMS d'objets
+//    et des COMPTES. D'une erreur de pg_restore : la premiere ligne du message
+//    et de la commande, jamais DETAIL / CONTEXT / HINT ; d'un echec de COPY :
+//    la table seule. L'email du compte d'essai ne quitte pas la memoire.
+// ❌ Ne prouve PAS : `docs/DEPLOYMENT.md` § 7 (pg_cron, Vault, Edge Functions,
+//    Storage, parcours applicatif).
 // 🔴 PAS DE SHEBANG (cf. `ops-alert.mjs`) : le temoin importe ce module.
 //    Temoin : `scripts/restore-drill.guard.test.mjs`.
 // ═══════════════════════════════════════════════════════════════════
@@ -54,33 +41,6 @@ export const SQL_COMPTAGES = join(dirname(fileURLToPath(import.meta.url)), 'sql'
 
 /** Le suffixe du manifeste chiffre que `db-backup.yml` depose. */
 export const SUFFIXE_MANIFESTE = '.comptages.tsv.gpg';
-
-/** Roles qu'un dump Supabase cite (GRANT, policies, ALTER DEFAULT PRIVILEGES).
- *  pg_dump ne les porte pas : ce sont des objets du cluster, pas de la base. */
-export const ROLES_SUPABASE = [
-  'anon', 'authenticated', 'service_role', 'authenticator', 'supabase_admin',
-  'supabase_auth_admin', 'supabase_storage_admin', 'supabase_realtime_admin',
-  'supabase_replication_admin', 'supabase_read_only_user', 'supabase_functions_admin',
-  'supabase_etl_admin', 'dashboard_user', 'pgbouncer',
-  'pgsodium_keyholder', 'pgsodium_keyiduser', 'pgsodium_keymaker',
-];
-
-/** Extensions propres a Supabase, ABSENTES de l'image `postgres:17` officielle,
- *  et le schema qu'elles possedent. Liste FERMEE : une erreur qui cite une
- *  autre extension est bloquante. ❌ Ne pas l'allonger pour faire passer un
- *  drill : une entree dit qu'une partie de la base n'est PAS restauree. */
-export const EXTENSIONS_ABSENTES = {
-  pg_graphql: 'graphql',
-  pg_net: 'net',
-  supabase_vault: 'vault',
-  pgsodium: 'pgsodium',
-  pg_cron: 'cron',
-  pgjwt: null,
-};
-const SCHEMAS_ABSENTS = new Set(Object.values(EXTENSIONS_ABSENTES).filter(Boolean));
-
-/** Schemas dont aucun objet ne peut etre perdu en silence. */
-const SCHEMAS_PROTEGES = /(?:^|[\s("',])"?(?:public|auth)"?\./;
 
 // ─── 1 · Le manifeste ──────────────────────────────────────────────
 
@@ -222,27 +182,6 @@ export function decouperErreurs(stderr) {
   return { erreurs, annoncees };
 }
 
-/** Une erreur est-elle celle d'une extension Supabase absente, hors public/auth ? */
-export function raisonTolerance({ message, commande, table }) {
-  const cmd = String(commande ?? '');
-  const copie = /^COPY\s/i.test(cmd) || table != null;
-  if (SCHEMAS_PROTEGES.test(cmd) || (table && /^(public|auth)\./.test(table))) return null;
-  if (copie) {
-    const s = cmd.match(/^COPY\s+"?([a-z_]\w*)"?\./i)?.[1];
-    return s && SCHEMAS_ABSENTS.has(s) ? `donnees du schema ${s} (extension absente)` : null;
-  }
-  const ext = String(message).match(/extension "([^"]+)"/)?.[1];
-  if (ext) return ext in EXTENSIONS_ABSENTES ? `extension ${ext} absente de postgres:17` : null;
-  // Une signature de fonction porte des espaces (`f(bytea, bigint)`) : elle a
-  // son motif. Vu sur le premier drill reel, le 2026-11-07 (Vault).
-  const schema = String(message).match(/schema "([^"]+)" does not exist/)?.[1]
-    ?? String(message).match(/(?:relation|type|operator|table) "?([a-z_]\w*)\.[^\s"]+"? does not exist/i)?.[1]
-    ?? String(message).match(/^function ([a-z_]\w*)\.\w+\([^)]*\) does not exist/i)?.[1]
-    ?? null;
-  if (schema && SCHEMAS_ABSENTS.has(schema)) return `objet du schema ${schema} (extension absente)`;
-  return null;
-}
-
 /** Ce qu'une erreur laisse imprimer : rien d'une valeur de ligne. */
 export function libelle({ message, commande, table }) {
   const cmd = String(commande ?? '');
@@ -253,16 +192,10 @@ export function libelle({ message, commande, table }) {
   return `${String(message).slice(0, 200)} :: ${cmd.slice(0, 120)}`;
 }
 
-/** Verdict sur la restauration : bloquantes, tolerees, et coherence du compte. */
+/** Verdict sur la restauration : sur une stack Supabase, AUCUNE erreur n'est attendue. */
 export function classerErreurs(code, stderr) {
   const { erreurs, annoncees } = decouperErreurs(stderr);
-  const bloquantes = [];
-  const tolerees = [];
-  for (const e of erreurs) {
-    const r = raisonTolerance(e);
-    if (r) tolerees.push({ raison: r, libelle: libelle(e) });
-    else bloquantes.push(libelle(e));
-  }
+  const bloquantes = erreurs.map(libelle);
   if (code !== 0 && annoncees === null) {
     bloquantes.push(`pg_restore sorti en ${code} sans annoncer de nombre d erreurs : echec hors classement`);
   }
@@ -272,7 +205,7 @@ export function classerErreurs(code, stderr) {
   if (code === 0 && erreurs.length > 0) {
     bloquantes.push(`pg_restore sorti en 0 avec ${erreurs.length} erreur(s) au journal : incoherent`);
   }
-  return { bloquantes, tolerees, total: erreurs.length };
+  return { bloquantes, total: erreurs.length };
 }
 
 // ─── 3 · La base jetable ───────────────────────────────────────────
@@ -288,56 +221,119 @@ export function verifierCible(env) {
   }
 }
 
-export function sqlRoles(roles = ROLES_SUPABASE) {
-  const liste = roles.map((r) => `'${r}'`).join(', ');
-  return [
-    'DO $$ DECLARE r text; BEGIN',
-    `  FOREACH r IN ARRAY ARRAY[${liste}] LOOP`,
-    '    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = r) THEN',
-    "      EXECUTE format('CREATE ROLE %I NOLOGIN', r);",
-    '    END IF;',
-    '  END LOOP;',
-    'END $$;',
-    // Le seul role qui contourne la RLS chez Supabase. `authenticated` et
-    // `anon` ne la contournent pas : c'est ce que le controle d'isolation teste.
-    'ALTER ROLE service_role BYPASSRLS;',
-  ].join('\n');
-}
+// ─── 4 · La stack Supabase : ce qu'un Postgres nu ne prouve pas ─────
 
-/** L'isolation EFFECTIVE : le proprietaire le plus charge, place dans le role
- *  `authenticated` avec ses claims, ne doit voir que ses taches. L'identifiant
- *  reste dans une table temporaire : il n'est jamais imprime. */
-export const SQL_ISOLATION = [
+const MDP_JETABLE = 'Drill-jetable-0001';
+
+/** Le compte le plus charge (confirme, non banni) recoit un mot de passe connu, puis ses
+ *  comptes sont lus en `authenticated`. L'email reste en memoire, jamais imprime. */
+export const SQL_STACK = [
+  'CREATE TEMP TABLE drill_compte AS',
+  '  SELECT u.id, u.email FROM auth.users u',
+  '  WHERE u.email IS NOT NULL AND u.email_confirmed_at IS NOT NULL AND u.deleted_at IS NULL',
+  '    AND (u.banned_until IS NULL OR u.banned_until < now())',
+  '  ORDER BY (SELECT count(*) FROM public.tasks t WHERE t.user_id = u.id) DESC, u.id LIMIT 1;',
+  `UPDATE auth.users SET encrypted_password = extensions.crypt('${MDP_JETABLE}', extensions.gen_salt('bf'))`,
+  '  WHERE id = (SELECT id FROM drill_compte);',
+  "SELECT 'users', count(*) FROM auth.users;",
   "SELECT 'total', count(*) FROM public.tasks;",
-  'CREATE TEMP TABLE drill_cible AS',
-  '  SELECT user_id FROM public.tasks GROUP BY user_id ORDER BY count(*) DESC, user_id LIMIT 1;',
-  "SELECT 'siennes', count(*) FROM public.tasks WHERE user_id = (SELECT user_id FROM drill_cible);",
+  "SELECT 'siennes', count(*) FROM public.tasks WHERE user_id = (SELECT id FROM drill_compte);",
+  "SELECT 'orphelins', count(*) FROM public.profiles p WHERE NOT EXISTS (SELECT 1 FROM auth.users u WHERE u.id = p.id);",
+  "SELECT 'email', email FROM drill_compte;",
   'BEGIN;',
   "SELECT 'claims', length(set_config('request.jwt.claims',",
-  "  json_build_object('sub', (SELECT user_id::text FROM drill_cible), 'role', 'authenticated')::text, true)) > 0;",
+  "  json_build_object('sub', (SELECT id::text FROM drill_compte), 'role', 'authenticated')::text, true)) > 0;",
   'SET LOCAL ROLE authenticated;',
   "SELECT 'visibles', count(*) FROM public.tasks;",
+  "SELECT 'rpc', count(*) FROM public.get_my_tasks();",
   'ROLLBACK;',
 ].join('\n');
 
-export function verdictIsolation(texte) {
-  const v = {};
-  for (const l of String(texte ?? '').split(/\r?\n/)) {
-    const m = l.match(/^(total|siennes|visibles)\|(\d+)$/);
-    if (m) v[m[1]] = Number(m[2]);
-  }
-  if (v.total === undefined || v.siennes === undefined || v.visibles === undefined) {
-    return { ...v, ok: false, raison: 'controle d isolation illisible (un des trois comptes manque)' };
-  }
-  if (v.total === 0) return { ...v, ok: false, raison: 'aucune tache restauree : isolation non demontrable' };
-  if (v.visibles !== v.siennes) {
-    return { ...v, ok: false, raison: `un utilisateur voit ${v.visibles} taches pour ${v.siennes} a lui : l isolation n est PAS revenue` };
-  }
-  if (v.siennes === v.total) return { ...v, ok: true, raison: 'un seul proprietaire : isolation non discriminante' };
-  return { ...v, ok: true, raison: 'ne voit que les siennes' };
+/** `--no-owner` : tout appartient a celui qui restaure. GoTrue, qui migre son schema en
+ *  `supabase_auth_admin`, doit redevenir proprietaire de `auth`, comme sur un projet neuf. */
+export const SQL_PROPRIETAIRE = [
+  'DO $$ DECLARE o record; BEGIN',
+  "  FOR o IN SELECT format('%s auth.%I', CASE c.relkind WHEN 'v' THEN 'VIEW' WHEN 'm' THEN 'MATERIALIZED VIEW' ELSE 'TABLE' END, c.relname) AS d",
+  "    FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'auth' AND c.relkind IN ('r', 'p', 'v', 'm')",
+  "    UNION ALL SELECT format('FUNCTION %s', p.oid::regprocedure) FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'auth'",
+  "    UNION ALL SELECT format('TYPE auth.%I', t.typname) FROM pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname = 'auth' AND t.typtype = 'e'",
+  "  LOOP EXECUTE 'ALTER ' || o.d || ' OWNER TO supabase_auth_admin'; END LOOP;",
+  '  ALTER SCHEMA auth OWNER TO supabase_auth_admin;',
+  'END $$;',
+].join('\n');
+
+const LOCAL_HTTP = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/;
+
+/** curl, sans rien imprimer : `-w` ajoute le code et l'en-tete content-range apres le corps. */
+function http(executer, base, cle, { chemin, jeton = cle, corps = null, compte = false }) {
+  const args = ['-sS', '--max-time', '30', '--retry', '20', '--retry-delay', '3', '--retry-all-errors',
+    '-w', '\n%{http_code}\n%header{content-range}', '-H', `apikey: ${cle}`, '-H', `Authorization: Bearer ${jeton}`,
+    ...(compte ? ['-H', 'Prefer: count=exact', '-H', 'Range-Unit: items', '-H', 'Range: 0-0'] : []),
+    ...(corps ? ['-X', 'POST', '-H', 'Content-Type: application/json', '--data-binary', '@-'] : []), `${base}${chemin}`];
+  const r = executer('curl', args, { input: corps ?? undefined, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, timeout: 300_000 });
+  if (r.error || r.status !== 0) throw new RefusDump(`curl a echoue (code ${r.status ?? r.error?.code}) sur ${chemin.split('?')[0]}`);
+  const l = String(r.stdout ?? '').split('\n');
+  const range = (l.pop() ?? '').trim();
+  const code = Number((l.pop() ?? '').trim());
+  return { code, corps: l.join('\n'), lignes: /\/(\d+)$/.test(range) ? Number(range.split('/')[1]) : 0 };
 }
 
-// ─── 4 · Le drill ──────────────────────────────────────────────────
+/** Verdict sur des mesures deja prises : une faute par preuve manquante. */
+export function verdictStack(m) {
+  const f = [];
+  if (!m.users) f.push('auth.users vide apres restauration');
+  if (m.orphelins !== 0) f.push(`${m.orphelins ?? '?'} profil(s) sans utilisateur auth`);
+  if (!m.connexion) f.push(`connexion d un utilisateur restaure par l API auth en echec (${m.diag ?? 'sans diagnostic'})`);
+  if (m.connexion && m.authentifie !== m.visibles) f.push(`lecture authentifiee : ${m.authentifie ?? '?'} taches par l API, ${m.visibles ?? '?'} sous RLS`);
+  if (m.connexion && !(m.authentifie > 0)) f.push('lecture authentifiee : aucune tache visible pour le compte le plus charge');
+  if (!m.total) f.push('aucune tache restauree : isolation non demontrable');
+  if (m.visibles !== m.siennes) f.push(`un utilisateur voit ${m.visibles ?? '?'} taches pour ${m.siennes ?? '?'} a lui : l isolation n est PAS revenue`);
+  if (m.anon !== 0) f.push(`anon voit ${m.anon ?? '?'} taches`);
+  if (m.connexion && (m.rpc !== m.rpcAttendu || !(m.rpc > 0))) f.push(`RPC get_my_tasks : ${m.rpc ?? '?'} lignes, ${m.rpcAttendu ?? '?'} attendues`);
+  return f;
+}
+
+/** Les preuves qui exigent GoTrue et PostgREST sur la base restauree. Des comptes, jamais une valeur. */
+export function preuvesStack(executer, env) {
+  const base = String(env.API_URL ?? '');
+  const cle = String(env.ANON_KEY ?? '');
+  if (!LOCAL_HTTP.test(base) || !cle) throw new RefusDump('API_URL (locale) ou ANON_KEY absente : la stack Supabase jetable est introuvable.');
+  psql(executer, { sql: SQL_PROPRIETAIRE });
+  const v = {};
+  for (const l of psql(executer, { sql: SQL_STACK }).split(/\r?\n/)) {
+    const n = l.match(/^(users|orphelins|total|siennes|visibles|rpc)\|(\d+)$/);
+    if (n) v[n[1]] = Number(n[2]);
+    const e = l.match(/^email\|(.+)$/);
+    if (e) v.email = e[1];
+  }
+  // La base a ete remplacee sous les services : caches (OID, schema) a vider.
+  const r = executer('docker', ['restart', 'supabase_auth_cosmo', 'supabase_rest_cosmo', 'supabase_kong_cosmo'], { encoding: 'utf8', timeout: 180_000 });
+  if (r.error || r.status !== 0) throw new RefusDump('docker restart des services auth et rest en echec.');
+  const m = { diag: 'aucun compte connectable', users: v.users, orphelins: v.orphelins, total: v.total, siennes: v.siennes, visibles: v.visibles, rpcAttendu: v.rpc, connexion: false };
+  if (v.email) {
+    const t = http(executer, base, cle, {
+      chemin: '/auth/v1/token?grant_type=password', corps: JSON.stringify({ email: v.email, password: MDP_JETABLE }),
+    });
+    let jeton = null;
+    let code = '';
+    try {
+      const j = JSON.parse(t.corps);
+      jeton = j.access_token ?? null;
+      code = /^[a-z_]{1,40}$/.test(j.error_code ?? '') ? j.error_code : '';
+    } catch { /* corps illisible : pas de jeton */ }
+    m.diag = `HTTP ${t.code} ${code}`.trim();
+    m.connexion = t.code === 200 && typeof jeton === 'string';
+    if (m.connexion) {
+      m.authentifie = http(executer, base, cle, { chemin: '/rest/v1/tasks?select=id', jeton, compte: true }).lignes;
+      m.rpc = http(executer, base, cle, { chemin: '/rest/v1/rpc/get_my_tasks', jeton, corps: '{}', compte: true }).lignes;
+    }
+  }
+  const a = http(executer, base, cle, { chemin: '/rest/v1/tasks?select=id', compte: true });
+  m.anon = a.code >= 200 && a.code < 300 ? a.lignes : 0;
+  return { mesures: { ...m, anonCode: a.code }, fautes: verdictStack(m) };
+}
+
+// ─── 5 · Le drill ──────────────────────────────────────────────────
 
 const PSQL = ['-X', '-q', '-tA', '-F', '|', '-v', 'ON_ERROR_STOP=1'];
 
@@ -362,15 +358,15 @@ function psql(executer, { sql = null, fichier = null }) {
  * que le temoin l'execute. `executer` est `spawnSync` en production.
  */
 export function drill({
-  dossierDump, dossierManifeste, phrase, env = process.env, temoin = false,
+  dossierDump, dossierManifeste, phrase, env = process.env, temoin = false, perteAuth = false,
   executer = spawnSync, horloge = () => Date.now(),
 }) {
   const t0 = horloge();
   const lines = [];
   const resume = {
     fichier: null, taille: null, objets: null, serveur: null, dureeRestauration: null, dureeTotale: null,
-    erreurs: null, tolerees: [], bloquantes: [], comparaison: null, isolation: null,
-    temoin: null, verdict: null,
+    erreurs: null, bloquantes: [], comparaison: null,
+    temoin: null, stack: null, verdict: null,
   };
   let clair = null;
   try {
@@ -401,27 +397,38 @@ export function drill({
       throw new RefusDump(`Postgres jetable en version ${version || 'illisible'} : la production est en 17.`);
     }
 
-    psql(executer, { sql: sqlRoles() });
-
     const t1 = horloge();
-    const r = executer('pg_restore', ['--no-owner', '--dbname', env.PGDATABASE ?? 'drill', clair], {
+    // `--clean --if-exists` : la stack a deja ses tables auth et storage, comme un projet neuf.
+    // Deux schemas : les extensions et `storage` (version propre a la stack) ne se rejouent pas.
+    const r = executer('pg_restore', ['--no-owner', '--clean', '--if-exists', '-n', 'public', '-n', 'auth',
+      '--dbname', env.PGDATABASE ?? 'postgres', clair], {
       encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, timeout: 1_800_000,
     });
     resume.dureeRestauration = Math.round((horloge() - t1) / 1000);
     if (r.error) throw new RefusDump(`pg_restore n a pas pu etre lance (${r.error.code ?? r.error.message}).`);
     const c = classerErreurs(r.status, r.stderr);
     resume.erreurs = c.total;
-    resume.tolerees = c.tolerees;
     resume.bloquantes = c.bloquantes;
 
+    if (perteAuth) {
+      psql(executer, { sql: 'TRUNCATE auth.users CASCADE;' });
+      lines.push('::warning title=drill::TEMOIN : auth.users videe apres la restauration. Le drill DOIT rougir.');
+    }
     const obtenu = lireComptages(psql(executer, { fichier: SQL_COMPTAGES }), 'base restauree');
     resume.comparaison = comparer(manifeste, obtenu);
-    resume.isolation = verdictIsolation(psql(executer, { sql: SQL_ISOLATION }));
+    let stack;
+    try {
+      stack = preuvesStack(executer, env);
+    } catch (e) {
+      if (!(e instanceof RefusDump)) throw e;
+      stack = { mesures: null, fautes: [e.message] };
+    }
+    resume.stack = stack.mesures;
 
     const fautes = [
       ...c.bloquantes.map((b) => `erreur de restauration : ${b}`),
       ...resume.comparaison.ecarts.map((e) => `ecart ${e.nom} : manifeste ${e.attendu ?? 'absent'}, restaure ${e.obtenu ?? 'absent'}`),
-      ...(resume.isolation.ok ? [] : [`isolation : ${resume.isolation.raison}`]),
+      ...stack.fautes.map((f) => `stack : ${f}`),
     ];
     if (fautes.length > 0) {
       for (const f of fautes.slice(0, 40)) lines.push(`::error title=drill::${f}`);
@@ -447,14 +454,14 @@ export function drill({
 
 /** Le resume de job, en Markdown : des noms et des comptes, rien d'autre. */
 export function resumeMarkdown(resume, runId, aujourdhui = new Date().toISOString().slice(0, 10)) {
-  const iso = resume.isolation;
   const tic = '`';
   const out = [`## Drill de restauration automatique · ${aujourdhui} (UTC)`, ''];
   if (resume.temoin) {
     out.push(`> ⚠️ **RUN TEMOIN** : le comptage de ${tic}${resume.temoin}${tic} a ete altere (+1). Ce run DOIT etre rouge.`, '');
   }
-  const isolation = iso
-    ? `${iso.visibles ?? '?'} taches visibles pour ${iso.siennes ?? '?'} a lui, sur ${iso.total ?? '?'} : ${iso.raison}`
+  const k = resume.stack;
+  const stack = k
+    ? `${k.users ?? '?'} comptes auth, ${k.orphelins ?? '?'} profils orphelins, connexion ${k.connexion ? 'ok' : 'EN ECHEC'}, ${k.visibles ?? '?'} taches sur ${k.total ?? '?'} visibles de ses ${k.siennes ?? '?'} (${k.authentifie ?? '?'} par l API), ${k.anon ?? '?'} en anon, RPC ${k.rpc ?? '?'}/${k.rpcAttendu ?? '?'}`
     : '?';
   const verdict = resume.verdict === 'ok'
     ? '✅ restaure, comptages identiques au manifeste'
@@ -465,8 +472,8 @@ export function resumeMarkdown(resume, runId, aujourdhui = new Date().toISOStrin
     `| Run db-backup | ${tic}${runId ?? '?'}${tic} |`,
     `| Dump | ${resume.fichier ?? '?'} · ${resume.taille ?? '?'} octets en clair (efface) · ${resume.objets ?? '?'} objets |`,
     `| Duree de la restauration | **${resume.dureeRestauration ?? '?'} s** (drill complet : ${resume.dureeTotale ?? '?'} s) |`,
-    `| Erreurs pg_restore | ${resume.erreurs ?? '?'}, dont ${resume.tolerees.length} tolerees (extensions Supabase absentes) et ${resume.bloquantes.length} bloquantes |`,
-    `| Isolation | ${isolation} |`,
+    `| Erreurs pg_restore | ${resume.erreurs ?? '?'} (attendu 0), dont ${resume.bloquantes.length} bloquantes |`,
+    `| Stack Supabase | ${stack} |`,
     `| Verdict | ${verdict} |`,
     '',
   );
@@ -476,13 +483,6 @@ export function resumeMarkdown(resume, runId, aujourdhui = new Date().toISOStrin
     for (const l of resume.comparaison.lignes) {
       out.push(`| ${tic}${l.nom}${tic} | ${l.attendu ?? 'absent'} | ${l.obtenu ?? 'absent'} | ${l.ok ? '✅' : '❌'} |`);
     }
-    out.push('');
-  }
-  if (resume.tolerees.length) {
-    const parRaison = new Map();
-    for (const t of resume.tolerees) parRaison.set(t.raison, (parRaison.get(t.raison) ?? 0) + 1);
-    out.push('### Erreurs tolerees (non restaure, et dit)', '');
-    for (const [r, n] of parRaison) out.push(`- ${r} : ${n}`);
     out.push('');
   }
   if (resume.bloquantes.length) {
@@ -575,6 +575,7 @@ if (process.argv[1] && process.argv[1].endsWith('restore-drill.mjs') && process.
     dossierManifeste: process.argv[3] ?? 'comptages',
     phrase: process.env.BACKUP_PASSPHRASE,
     temoin: process.env.TEMOIN === 'true',
+    perteAuth: process.env.PERTE_AUTH === 'true',
   });
   for (const l of lines) console.log(l);
   const md = resumeMarkdown(resume, process.env.RUN_ID);

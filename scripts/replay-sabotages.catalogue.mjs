@@ -1849,4 +1849,12 @@ export const CATALOGUE = [
     modifs: [r('.github/workflows/schema-prod.yml', '@127.0.0.1:54322/postgres', '@db.ykeugqfgklejcdbrmawy.supabase.co:5432/postgres')],
     attendu: ['TEMOIN : main seul, preuve APRES la comparaison a la prod, sans secret, sur le Postgres local'],
     pourquoi: 'Une preuve visant la prod, même annulée, est ce que CI-04 interdit.' },
+  { id: 'drill-stack-auth-aveugle', famille: 'detecteur', garde: 'scripts/restore-drill.guard.test.mjs', // ROB-01
+    modifs: [r('scripts/restore-drill.mjs', "  if (!m.users) f.push(", '  if (false) f.push(')],
+    attendu: ['TEMOIN : une restauration qui perd auth.users rougit (comptage ET connexion)'],
+    pourquoi: 'Une restauration qui perd `auth` rend les lignes de `public` et aucun utilisateur : le drill doit le voir.' },
+  { id: 'drill-stack-connexion-aveugle', famille: 'detecteur', garde: 'scripts/restore-drill.guard.test.mjs', // ROB-01
+    modifs: [r('scripts/restore-drill.mjs', '  if (!m.connexion) f.push(', '  if (false) f.push(')],
+    attendu: ['une connexion qui echoue rougit, a comptages egaux'],
+    pourquoi: 'Des comptages égaux ne prouvent pas que GoTrue relit les comptes restaurés.' },
 ];

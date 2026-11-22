@@ -4,14 +4,16 @@
 # DEUX JOBS, et la coupure est celle de la cible :
 #
 #   · `drill-auto` · MENSUEL ET AUTOMATIQUE (ROB-01, vague 4.4, 2026-11-07).
-#     Restaure le dernier dump de `db-backup.yml` dans un Postgres 17 JETABLE
-#     du runner (service container, détruit avec le job), puis compare le
-#     nombre de lignes de chaque table de `public` et d'`auth.users` au
-#     manifeste écrit par `db-backup` DANS LE MÊME SNAPSHOT que le dump. Une
-#     table de plus, de moins, ou une ligne d'écart : rouge. Rejoue aussi
-#     l'isolation RLS (un utilisateur ne voit que ses tâches). Aucun secret
-#     de connexion : il ne voit jamais la production (`PGHOST=localhost`,
-#     imposé par `scripts/restore-drill.mjs`).
+#     Restaure le dernier dump de `db-backup.yml` dans une STACK SUPABASE
+#     locale JETABLE du runner (CLI Supabase, Postgres 17, GoTrue, PostgREST,
+#     détruite avec le job), puis compare le nombre de lignes de chaque table
+#     de `public` et d'`auth.users` au manifeste écrit par `db-backup` DANS LE
+#     MÊME SNAPSHOT que le dump. Une table de plus, de moins, ou une ligne
+#     d'écart : rouge. Prouve aussi, par les API : la connexion d'un
+#     utilisateur restauré, une lecture sous RLS en `authenticated` (ses
+#     lignes seules) et en `anon` (rien), une RPC. Aucun secret de connexion :
+#     il ne voit jamais la production (`PGHOST=127.0.0.1`, imposé par
+#     `scripts/restore-drill.mjs`).
 #
 #   · `drill` · MANUEL, vers un projet Supabase jetable. Il garde ce que le
 #     Postgres du runner ne sait pas faire : restaurer sur la plateforme
@@ -58,6 +60,11 @@ on:
         type: boolean
         required: false
         default: false
+      temoin_auth:
+        description: 'TEMOIN : vider auth.users apres la restauration (une restauration qui perd auth) : le drill DOIT rougir'
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -73,32 +80,53 @@ jobs:
   drill-auto:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    services:
-      # Meme majeure que la production (17). L'image officielle n'a pas les
-      # extensions propres a Supabase : leurs erreurs sont classees, une a
-      # une, par `scripts/restore-drill.mjs` (liste fermee).
-      postgres:
-        image: postgres:17
-        env:
-          # Mot de passe d'une base jetable, joignable du seul runner, detruite
-          # avec le job : pas un secret.
-          POSTGRES_PASSWORD: drill-jetable
-          POSTGRES_DB: drill
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres -d drill"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 20
     env:
-      PGHOST: localhost
-      PGPORT: '5432'
-      PGUSER: postgres
-      PGPASSWORD: drill-jetable
-      PGDATABASE: drill
+      # La base `postgres` de la stack locale, en superutilisateur (mot de
+      # passe local connu de la CLI, base jetable détruite avec le job).
+      PGHOST: 127.0.0.1
+      PGPORT: '54322'
+      PGUSER: supabase_admin
+      PGPASSWORD: postgres
+      PGDATABASE: postgres
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # `@v1` était une branche : pinné comme dans `ci-noyau.yml`.
+      - uses: supabase/setup-cli@d239d1052f6f024a8d746d7e5aeddead63b9cb53 # v3.1.0
+        with:
+          version: latest
+
+      # La stack du drill n'est PAS celle des tests : même majeure que la
+      # production (17), et seulement ce qu'il faut (auth, rest, storage). La
+      # config est complétée dans CE runner, jamais dans le dépôt.
+      - name: Configurer la stack du drill
+        run: |
+          set -euo pipefail
+          cat >> supabase/config.toml <<'TOML'
+
+          [db]
+          major_version = 17
+          [studio]
+          enabled = false
+          [local_smtp]
+          enabled = false
+          [analytics]
+          enabled = false
+          [edge_runtime]
+          enabled = false
+          TOML
+      - name: Demarrer la stack Supabase jetable
+        uses: ./.github/actions/supabase-stack
+        with:
+          action: start
+      - name: Exporter l'API locale
+        run: |
+          set -euo pipefail
+          supabase status -o env > supabase.env
+          set -a; . ./supabase.env; set +a
+          [ -n "${API_URL:-}" ] && [ -n "${ANON_KEY:-}" ] || { echo "::error title=drill::API_URL ou ANON_KEY absents de supabase status."; exit 1; }
+          { echo "API_URL=$API_URL"; echo "ANON_KEY=$ANON_KEY"; } >> "$GITHUB_ENV"
+          rm -f supabase.env
 
       # Même piège que `db-backup.yml` : le paquet 17 se pose À CÔTÉ du client
       # 16 préinstallé, et c'est le 16 qui gagne dans le PATH.
@@ -127,6 +155,7 @@ jobs:
           REPO: ${{ github.repository }}
           RUN_ID: ${{ inputs.run_id }}
           TEMOIN: ${{ inputs.temoin }}
+          PERTE_AUTH: ${{ inputs.temoin_auth }}
         run: |
           set -euo pipefail
           if [ -z "${RUN_ID:-}" ]; then
@@ -144,8 +173,15 @@ jobs:
             echo "::error title=drill::Artefact db-comptages introuvable sur le run $RUN_ID : ce dump n a pas de manifeste, ses comptages ne se comparent a rien."
             exit 1
           fi
-          export RUN_ID TEMOIN
+          export RUN_ID TEMOIN PERTE_AUTH
           node scripts/restore-drill.mjs dump comptages
+
+      # La stack meurt avec le runner ; l'arrêt propre libère les conteneurs.
+      - name: Arreter la stack Supabase
+        if: always()
+        uses: ./.github/actions/supabase-stack
+        with:
+          action: stop
 
   # ── Le drill MANUEL : vers un projet Supabase jetable, celui qui écrit ─
   drill:

@@ -1,27 +1,20 @@
 // ═══════════════════════════════════════════════════════════════════
 // restore-drill.guard.test.mjs · LE TEMOIN DU DRILL MENSUEL (ROB-01)
 //
-// 🔴 POURQUOI CE FICHIER EXISTE
-//
-// Le drill est le seul controle qui RESTAURE la seule sauvegarde de la base.
-// Il juge sur trois choses qui savent toutes se tromper dans le sens
-// rassurant : un classement d'erreurs (une tolerance trop large avale une
-// table perdue), une comparaison de comptages (une table absente des deux
-// cotes ne se voit pas si on ne regarde que le manifeste), et un controle
+// Le drill restaure la seule sauvegarde de la base. Il juge sur ce qui sait se
+// tromper dans le sens rassurant : une comparaison de comptages, un controle
 // d'isolation (celui d'avant capturait le mot ROLLBACK et ne pouvait PAS
-// echouer, cf. `docs/DEPLOYMENT.md` § 7).
-//
-// Chaque cas soumet au code REEL une situation qui doit rougir. Le plancher :
-// un drill sain passe, et le dechiffre ne survit dans aucun cas.
+// echouer), des preuves par API (connexion, anon, RPC). Chaque cas soumet au
+// code REEL une situation qui doit rougir ; le plancher : un drill sain passe.
 // ═══════════════════════════════════════════════════════════════════
 import { describe, it, expect, afterEach } from 'vitest';
 import { mkdtempSync, writeFileSync, existsSync, rmSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import {
-  SQL_COMPTAGES, SUFFIXE_MANIFESTE, EXTENSIONS_ABSENTES, classerManifeste, lireComptages,
-  altererPourTemoin, comparer, decouperErreurs, raisonTolerance, libelle, classerErreurs,
-  verifierCible, verdictIsolation, sqlRoles, drill, resumeMarkdown,
+  SQL_COMPTAGES, SUFFIXE_MANIFESTE, classerManifeste, lireComptages,
+  altererPourTemoin, comparer, decouperErreurs, libelle, classerErreurs,
+  verifierCible, drill, resumeMarkdown, verdictStack, SQL_STACK,
 } from './restore-drill.mjs';
 import { ATTENDUES } from './dump-check.mjs';
 
@@ -34,7 +27,7 @@ const MANIFESTE = [
   'meta|policies_public|140', 'meta|tables_rls_public|3',
   'table|auth.users|27', 'table|public.profiles|27', 'table|public.tasks|724', 'table|public.habits|80',
 ].join('\n') + '\n';
-const LOCAL = { PGHOST: 'localhost', PGDATABASE: 'drill' };
+const LOCAL = { PGHOST: 'localhost', PGDATABASE: 'postgres', API_URL: 'http://127.0.0.1:54321', ANON_KEY: 'cle-anon' };
 
 const dossiers = [];
 function dossier(fichiers) {
@@ -48,8 +41,11 @@ afterEach(() => { while (dossiers.length) rmSync(dossiers.pop(), { recursive: tr
 /** Un faux monde : gpg, pg_restore et psql qui ENREGISTRENT leurs appels. */
 function monde({
   restaure = MANIFESTE, restore = { status: 0, stderr: '' }, version = '170006',
-  isolation = 'total|724\nsiennes|300\nclaims|t\nvisibles|300\n',
+  stack = {},
 } = {}) {
+  // La stack : comptes lus en SQL, puis ce que GoTrue et PostgREST repondent.
+  const k = { users: 27, orphelins: 0, total: 724, siennes: 300, email: 'a@b.c', visibles: 300, rpc: 300, jeton: true, api: 300, apiRpc: 300, anon: 0, ...stack };
+  let vide = false;
   const appels = [];
   const executer = (cmd, args, opts = {}) => {
     appels.push({ cmd, args, opts });
@@ -61,10 +57,22 @@ function monde({
     if (cmd === 'pg_restore') return args.includes('--list') ? { status: 0, stdout: TOC, stderr: '' } : { ...restore };
     if (cmd === 'psql') {
       const sql = String(opts.input ?? '');
-      if (args.includes(SQL_COMPTAGES)) return { status: 0, stdout: restaure, stderr: '' };
+      if (/TRUNCATE auth\.users/.test(sql)) vide = true;
+      if (args.includes(SQL_COMPTAGES)) return { status: 0, stdout: vide ? restaure.replace('table|auth.users|27\n', '') : restaure, stderr: '' };
+      if (/drill_compte/.test(sql)) {
+        const mail = k.email && !vide ? `email|${k.email}\n` : '';
+        return { status: 0, stdout: `users|${vide ? 0 : k.users}\ntotal|${k.total}\nsiennes|${k.siennes}\norphelins|${k.orphelins}\n${mail}claims|t\nvisibles|${k.visibles}\nrpc|${k.rpc}\n`, stderr: '' };
+      }
       if (/server_version_num/.test(sql)) return { status: 0, stdout: `${version}\n`, stderr: '' };
-      if (/SET LOCAL ROLE authenticated/.test(sql)) return { status: 0, stdout: isolation, stderr: '' };
       return { status: 0, stdout: '', stderr: '' };
+    }
+    if (cmd === 'docker') return { status: 0, stdout: '', stderr: '' };
+    if (cmd === 'curl') {
+      const url = args.at(-1);
+      const sortie = (corps, code, n = 0) => ({ status: 0, stdout: `${corps}\n${code}\n0-0/${n}`, stderr: '' });
+      if (/auth\/v1\/token/.test(url)) return k.jeton ? sortie('{"access_token":"jwt"}', 200) : sortie('{"error":"invalid"}', 400);
+      if (args.includes('Authorization: Bearer cle-anon')) return sortie('[]', 200, k.anon);
+      return sortie('[]', 200, /rpc/.test(url) ? k.apiRpc : k.api);
     }
     throw new Error(`commande inattendue ${cmd}`);
   };
@@ -153,66 +161,25 @@ describe('restore-drill · une ligne d ecart, une table de plus ou de moins = ec
 // ─── Les erreurs de pg_restore ──────────────────────────────────────
 
 const STDERR = [
-  'pg_restore: error: could not execute query: ERROR:  extension "pg_graphql" is not available',
-  'DETAIL:  Could not open extension control file "/usr/share/postgresql/17/extension/pg_graphql.control".',
-  'HINT:  The extension must first be installed on the system where PostgreSQL is running.',
-  'Command was: CREATE EXTENSION IF NOT EXISTS pg_graphql WITH SCHEMA graphql;',
+  'pg_restore: error: could not execute query: ERROR:  relation "public.tasks" already exists',
+  'DETAIL:  Key (id)=(jean.dupont@example.com) already exists.',
+  'Command was: CREATE TABLE public.tasks (',
   'pg_restore: error: could not execute query: ERROR:  schema "net" does not exist',
   'Command was: GRANT ALL ON FUNCTION net.http_get(url text) TO postgres;',
-  'pg_restore: error: could not execute query: ERROR:  relation "vault.secrets" does not exist',
-  'Command was: COPY vault.secrets (id, name, secret) FROM stdin;',
-  'pg_restore: warning: errors ignored on restore: 3',
+  'pg_restore: warning: errors ignored on restore: 2',
 ].join('\n');
 
-describe('restore-drill · une erreur n est toleree que pour une extension Supabase absente', () => {
-  it('decoupe trois erreurs, et le nombre annonce', () => {
+describe('restore-drill · sur une stack Supabase, aucune erreur de pg_restore n est attendue', () => {
+  it('decoupe les erreurs et le nombre annonce, sans DETAIL ni valeur', () => {
     const { erreurs, annoncees } = decouperErreurs(STDERR);
-    expect(erreurs).toHaveLength(3);
-    expect(annoncees).toBe(3);
-    expect(JSON.stringify(erreurs)).not.toMatch(/DETAIL|HINT|control file/);
+    expect(erreurs).toHaveLength(2);
+    expect(annoncees).toBe(2);
+    expect(JSON.stringify(erreurs)).not.toMatch(/DETAIL|dupont/);
   });
 
-  it('les trois sont tolerees : extension absente, son schema, ses donnees', () => {
-    const c = classerErreurs(1, STDERR);
-    expect(c.bloquantes).toEqual([]);
-    expect(c.tolerees.map((t) => t.raison)).toEqual([
-      'extension pg_graphql absente de postgres:17', 'objet du schema net (extension absente)',
-      'donnees du schema vault (extension absente)',
-    ]);
-  });
-
-  it('tolere une fonction du Vault absent, signature a espaces comprise (premier drill reel)', () => {
-    expect(raisonTolerance({
-      message: 'function vault.create_secret(text, text, text, uuid) does not exist',
-      commande: 'GRANT ALL ON FUNCTION vault.create_secret(new_secret text, new_name text, new_description text, new_key_id uuid) TO postgres WITH GRANT OPTION;',
-    })).toBe('objet du schema vault (extension absente)');
-  });
-
-  it('bloque une fonction de public absente, meme signature a espaces', () => {
-    expect(raisonTolerance({
-      message: 'function public.is_above(uuid, uuid) does not exist',
-      commande: 'CREATE POLICY p ON public.tasks USING (public.is_above(a, b));',
-    })).toBeNull();
-    expect(raisonTolerance({ message: 'function public.f(text, text) does not exist', commande: 'GRANT ALL ON FUNCTION x' })).toBeNull();
-  });
-
-  it.each([
-    ['une extension hors liste', { message: 'extension "vector" is not available', commande: 'CREATE EXTENSION vector;' }],
-    ['un objet de public, meme cause', { message: 'schema "net" does not exist', commande: 'CREATE FUNCTION public.notifier() RETURNS void' }],
-    ['une policy de public', { message: 'function vault.decrypt(uuid) does not exist', commande: 'CREATE POLICY p ON public.tasks USING (vault.decrypt(id))' }],
-    ['un objet d auth', { message: 'schema "net" does not exist', commande: 'CREATE TRIGGER t AFTER INSERT ON auth.users' }],
-    ['un role manquant', { message: 'role "supabase_nouveau" does not exist', commande: 'GRANT ALL ON SCHEMA x TO supabase_nouveau;' }],
-    ['un chargement de public', { message: 'invalid input syntax', commande: 'COPY public.tasks (id, name) FROM stdin;' }],
-    ['un chargement d auth.users', { message: 'x', commande: '', table: 'auth.users' }],
-    ['un schema inconnu', { message: 'schema "graphql_public" does not exist', commande: 'CREATE FUNCTION graphql_public.graphql()' }],
-  ])('bloque %s', (_, e) => {
-    expect(raisonTolerance(e)).toBeNull();
-  });
-
-  it('la liste fermee ne couvre aucune extension de contrib', () => {
-    for (const ext of ['pgcrypto', 'uuid-ossp', 'pg_stat_statements', 'pg_trgm', 'citext']) {
-      expect(ext in EXTENSIONS_ABSENTES).toBe(false);
-    }
+  it('toute erreur est bloquante, meme celle d une extension absente', () => {
+    expect(classerErreurs(1, STDERR).bloquantes).toHaveLength(2);
+    expect(classerErreurs(1, STDERR.split('\n').slice(3).join('\n').replace(': 2', ': 1')).bloquantes).toHaveLength(1);
   });
 
   it('un echec de COPY n imprime JAMAIS son message (il peut citer une valeur)', () => {
@@ -222,8 +189,8 @@ describe('restore-drill · une erreur n est toleree que pour une extension Supab
   });
 
   it('le nombre annonce differe du nombre classe : bloquant', () => {
-    const tronque = STDERR.replace('errors ignored on restore: 3', 'errors ignored on restore: 4');
-    expect(classerErreurs(1, tronque).bloquantes.join()).toMatch(/annonce 4 erreur\(s\), 3 classee/);
+    const tronque = STDERR.replace('errors ignored on restore: 2', 'errors ignored on restore: 4');
+    expect(classerErreurs(1, tronque).bloquantes.join()).toMatch(/annonce 4 erreur\(s\), 2 classee/);
   });
 
   it('un code non nul sans annonce : bloquant', () => {
@@ -256,32 +223,6 @@ describe('restore-drill · jamais la production', () => {
     const r = drill({ ...artefacts(), phrase: PHRASE, env: { PGHOST: 'db.prod.supabase.co' }, executer });
     expect(r.exit).toBe(1);
     expect(appels).toEqual([]);
-  });
-
-  it('les roles crees ne contournent pas la RLS, sauf service_role', () => {
-    const sql = sqlRoles();
-    expect(sql).toMatch(/CREATE ROLE %I NOLOGIN/);
-    expect(sql).toMatch(/'authenticated'/);
-    expect(sql.match(/BYPASSRLS/g)).toHaveLength(1);
-    expect(sql).toMatch(/ALTER ROLE service_role BYPASSRLS/);
-  });
-});
-
-describe('restore-drill · l isolation se mesure, elle ne s affirme pas', () => {
-  it('un utilisateur qui voit plus que ses taches : rouge', () => {
-    expect(verdictIsolation('total|724\nsiennes|300\nclaims|t\nvisibles|724\n').ok).toBe(false);
-  });
-
-  it('une sortie sans les trois comptes : rouge (le piege du ROLLBACK)', () => {
-    expect(verdictIsolation('total|724\nROLLBACK\n').ok).toBe(false);
-  });
-
-  it('aucune tache restauree : rouge', () => {
-    expect(verdictIsolation('total|0\nsiennes|0\nvisibles|0\n').ok).toBe(false);
-  });
-
-  it('ne voit que les siennes : vert', () => {
-    expect(verdictIsolation('total|724\nsiennes|300\nclaims|t\nvisibles|300\n')).toMatchObject({ ok: true, visibles: 300 });
   });
 });
 
@@ -323,7 +264,7 @@ describe('restore-drill · bout en bout, avec un faux monde', () => {
 
   it('une isolation perdue fait rougir, a comptages egaux', () => {
     const r = drill({ ...artefacts(), phrase: PHRASE, env: LOCAL,
-      executer: monde({ isolation: 'total|724\nsiennes|300\nclaims|t\nvisibles|724\n' }).executer });
+      executer: monde({ stack: { visibles: 724, api: 724 } }).executer });
     expect(r.exit).toBe(1);
     expect(r.lines.join('\n')).toMatch(/isolation n est PAS revenue/);
   });
@@ -354,6 +295,65 @@ describe('restore-drill · bout en bout, avec un faux monde', () => {
     expect(md).toMatch(/\| `public\.tasks` \| 724 \| 724 \| ✅ \|/);
     expect(md).toMatch(/\| `auth\.users` \| 27 \| 27 \| ✅ \|/);
     expect(md).toMatch(/Ne prouve pas/);
+  });
+});
+
+// ─── La stack Supabase : ce que le Postgres nu ne prouve pas ────────
+
+describe('restore-drill · la stack Supabase juge au-dela des comptages', () => {
+  const rouge = (opts, motif, extra = {}) => {
+    const r = drill({ ...artefacts(), phrase: PHRASE, env: LOCAL, executer: monde(opts).executer, ...extra });
+    expect(r.exit).toBe(1);
+    expect(r.lines.join('\n')).toMatch(motif);
+    return r;
+  };
+
+  it('PLANCHER : un drill sain rend ses preuves, en nombres seulement', () => {
+    const r = drill({ ...artefacts(), phrase: PHRASE, env: LOCAL, executer: monde().executer });
+    expect(r.exit).toBe(0);
+    expect(r.resume.stack).toMatchObject({ users: 27, connexion: true, authentifie: 300, anon: 0, rpc: 300 });
+    expect(resumeMarkdown(r.resume, '42')).not.toMatch(/a@b\.c|jwt/);
+  });
+
+  it('TEMOIN : une restauration qui perd auth.users rougit (comptage ET connexion)', () => {
+    const r = rouge({}, /ecart auth\.users : manifeste 27, restaure absent/, { perteAuth: true });
+    expect(r.lines.join('\n')).toMatch(/stack : auth\.users vide apres restauration/);
+    expect(r.lines.join('\n')).toMatch(/stack : connexion d un utilisateur restaure/);
+  });
+
+  it('une connexion qui echoue rougit, a comptages egaux', () => {
+    rouge({ stack: { jeton: false } }, /stack : connexion d un utilisateur restaure/);
+  });
+
+  it('un profil sans utilisateur auth rougit', () => {
+    rouge({ stack: { orphelins: 2 } }, /2 profil\(s\) sans utilisateur auth/);
+  });
+
+  it('un utilisateur authentifie qui lit plus que sous RLS rougit', () => {
+    rouge({ stack: { api: 724 } }, /724 taches par l API, 300 sous RLS/);
+  });
+
+  it('anon qui lit des lignes rougit', () => {
+    rouge({ stack: { anon: 724 } }, /anon voit 724 taches/);
+  });
+
+  it('une RPC qui ne rend pas ce que la RLS donne rougit', () => {
+    rouge({ stack: { apiRpc: 0 } }, /RPC get_my_tasks : 0 lignes, 300 attendues/);
+  });
+
+  it('une stack introuvable rougit, sans cacher les autres fautes', () => {
+    const r = drill({ ...artefacts(), phrase: PHRASE, temoin: true, executer: monde().executer,
+      env: { ...LOCAL, API_URL: 'https://prod.supabase.co' } });
+    expect(r.lines.join('\n')).toMatch(/ecart public\.tasks[\s\S]*stack : API_URL \(locale\)/);
+  });
+
+  it('verdictStack : chaque mesure manquante est une faute', () => {
+    expect(verdictStack({})).not.toEqual([]);
+    expect(verdictStack({ users: 1, orphelins: 0, total: 2, siennes: 1, connexion: true, authentifie: 1, visibles: 1, anon: 0, rpc: 1, rpcAttendu: 1 })).toEqual([]);
+  });
+
+  it('le compte recoit un mot de passe connu, rien ne s imprime', () => {
+    expect(SQL_STACK).toMatch(/UPDATE auth\.users SET encrypted_password/);
   });
 });
 

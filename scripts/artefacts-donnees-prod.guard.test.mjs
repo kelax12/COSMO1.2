@@ -199,7 +199,7 @@ export const CONTACTS_PROD = {
   },
   'restore-drill.yml › drill-auto › Restaurer le dernier dump et comparer ses comptages': {
     affiche:
-      "nom et taille du dump, durée de restauration, par table de public et pour auth.users le nombre de lignes attendu et restauré, compteurs RLS et d'isolation, erreurs de pg_restore réduites à leur première ligne (jamais DETAIL ni CONTEXT, jamais le message d'un COPY) ; restauré dans un Postgres jetable du runner (localhost imposé), effacé avec le job",
+      "nom et taille du dump, durée de restauration, par table de public et pour auth.users le nombre de lignes attendu et restauré, compteurs RLS, comptes de la stack (utilisateurs auth, profils orphelins, tâches visibles en authenticated et en anon, lignes d'une RPC), jamais un email ni un jeton ; erreurs de pg_restore réduites à leur première ligne (jamais DETAIL ni CONTEXT, jamais le message d'un COPY) ; restauré dans une stack Supabase jetable du runner (hôte local imposé), effacé avec le job",
   },
   'restore-drill.yml › drill › Verifier l intention et la cible': {
     affiche: 'hôte, utilisateur, port et base de la cible ; jamais le mot de passe',

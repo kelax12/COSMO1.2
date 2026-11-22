@@ -1,27 +1,19 @@
 // ═══════════════════════════════════════════════════════════════════
 // dump-check.mjs · RELIRE LE DERNIER DUMP CHIFFRE, SANS RIEN RESTAURER
 //
-// Appele par `scripts/restore-drill.mjs` (job `drill-auto` de
-// `.github/workflows/restore-drill.yml`, MENSUEL depuis ROB-01, 2026-11-07),
-// AVANT la restauration. Le job trimestriel `dump-check` (C-86) qui
-// l'appelait seul a ete fondu dans ce drill. L'entree CLI reste, pour une
-// relecture a la main.
+// Appele par `scripts/restore-drill.mjs` (job `drill-auto`, MENSUEL depuis
+// ROB-01), AVANT la restauration. Plus d'entree CLI : rien ne le lance seul.
 //
 // 🔴 POURQUOI UN MODULE NODE, ET PAS LE SHELL QUI LE PRECEDAIT
 //
-// Depuis BK-1 (2026-10-13) le dump est chiffre (gpg AES-256, secret
-// `BACKUP_PASSPHRASE`). Le shell qui le relisait avait trois angles morts,
-// trouves le 2026-10-15 en le relisant avant de reactiver le workflow, et
-// mesures avec gpg 2.4 :
-//   · `gpg -d` sort en 0 sur un fichier OpenPGP NON chiffre (paquet
-//     litteral, `gpg --store`) : un dump en clair habille en `.gpg` etait
-//     « dechiffre ». Son canal d'etat, lui, ne porte ni BEGIN_DECRYPTION ni
-//     DECRYPTION_OKAY : c'est la qu'on juge ;
-//   · un artefact portant un `.dump.gpg` ET un `.dump` en clair passait :
-//     seul le premier fichier chiffre etait regarde ;
-//   · sous `set -euo pipefail`, `X=$(ls absent | head -1)` tue le script
-//     AVANT la ligne `::error::` qui suit : rouge, sans dire pourquoi.
-// Aucun de ces cas n'avait de temoin : du YAML ne se teste pas.
+// Depuis BK-1 le dump est chiffre (gpg AES-256, `BACKUP_PASSPHRASE`). Le shell
+// qui le relisait avait trois angles morts, mesures avec gpg 2.4 :
+//   · `gpg -d` sort en 0 sur un fichier OpenPGP NON chiffre : un dump en clair
+//     habille en `.gpg` etait « dechiffre ». Son canal d'etat ne porte ni
+//     BEGIN_DECRYPTION ni DECRYPTION_OKAY : c'est la qu'on juge ;
+//   · un artefact portant un `.dump.gpg` ET un `.dump` en clair passait ;
+//   · sous `set -euo pipefail`, `X=$(ls absent | head -1)` tue le script AVANT
+//     la ligne `::error::` qui suit : rouge, sans dire pourquoi.
 //
 // CE QUE CE MODULE EXIGE, dans l'ordre ; chaque refus est un exit 1 :
 //   1. l'artefact contient UN `*.dump.gpg` et RIEN d'autre (vide, absent ou
@@ -235,37 +227,4 @@ export function relireDump({ dossier, phrase, attendues = ATTENDUES, executer = 
     // Le clair ne survit pas au controle, sauf s'il est remis au drill.
     if (clair && !garde) rmSync(clair, { force: true });
   }
-}
-
-/** Le resume de job, en Markdown. */
-export function resumeMarkdown(resume, runId) {
-  return [
-    '### Relecture du dump chiffre (trimestriel, sans restauration)',
-    '',
-    '```',
-    `run db-backup : ${runId ?? '?'}`,
-    `fichier       : ${resume.fichier ?? '?'}`,
-    `en clair      : ${resume.taille ?? '?'} octets (efface apres controle)`,
-    `objets        : ${resume.objets ?? '?'}`,
-    `tables        : ${resume.manquantes == null ? '?' : resume.manquantes.length ? `MANQUANTES -> ${resume.manquantes.join(' ')}` : 'toutes presentes'}`,
-    `verdict       : ${resume.verdict}`,
-    '```',
-    '',
-    'Ceci ne remplace PAS le drill : un dump relisible n est pas un dump restaure.',
-    '',
-  ].join('\n');
-}
-
-// Entree CLI. `import.meta.main` n'existe pas en Node 20 : on compare argv.
-if (process.argv[1] && process.argv[1].endsWith('dump-check.mjs')) {
-  const { appendFileSync } = await import('node:fs');
-  const { exit, lines, resume } = relireDump({
-    dossier: process.argv[2] ?? 'dump',
-    phrase: process.env.BACKUP_PASSPHRASE,
-  });
-  for (const l of lines) console.log(l);
-  if (process.env.GITHUB_STEP_SUMMARY) {
-    appendFileSync(process.env.GITHUB_STEP_SUMMARY, resumeMarkdown(resume, process.env.RUN_ID));
-  }
-  process.exit(exit);
 }

@@ -277,7 +277,7 @@ describe('dump-check · le workflow appelle REELLEMENT ce module', () => {
 
   it('le job drill-auto ne touche a aucune base de production', () => {
     expect(job).not.toMatch(/DRILL_DB_URL|SUPABASE_DB_URL/);
-    expect(job).toMatch(/PGHOST: localhost/);
+    expect(job).toMatch(/PGHOST: 127\.0\.0\.1/);
   });
 
   it('le drill manuel garde sa confirmation tapee', () => {
