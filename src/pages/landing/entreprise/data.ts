@@ -43,7 +43,6 @@ export const SHOTS: Record<string, AppShotRef> = {
   tasks: { id: 'tasks', labelKey: 'enterprise.shot.tasks', image: shot('taches'), altKey: 'enterprise.shot.tasksAlt' },
   // Étape 3 : le Tableau par statut (`ExecutionSection`).
   tasksBoard: { id: 'tasksBoard', labelKey: 'enterprise.shot.tasksBoard', image: shot('taches-tableau'), altKey: 'enterprise.shot.tasksBoardAlt' },
-  tasksDeps: { id: 'tasksDeps', labelKey: 'enterprise.shot.tasksDeps', image: shot('taches-dependances'), altKey: 'enterprise.shot.tasksDepsAlt' },
 };
 
 /** Les trois écrans qui défilent dans le hero. */

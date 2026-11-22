@@ -9,7 +9,8 @@ import { SHOTS } from './data';
  *   · l'état déclaré d'une tâche (mig. 204), menu reproduit en HTML : une
  *     capture de 220 px serait floue, et le menu se traduit ;
  *   · les cinq statuts : la vraie capture du Tableau ;
- *   · les dépendances : la vraie capture de la fiche, onglet Dépendances.
+ *   · les dépendances : une chaîne de trois tâches reproduite en HTML
+ *     (terminée → en cours → bloquée), plus lisible qu'une capture de fiche.
  *
  * Une rangée par point, texte à gauche et image à droite : le visiteur lit
  * une affirmation, puis la voit dans le produit.
@@ -23,13 +24,32 @@ const HEALTH = [
   { key: 'healthDone', dot: 'bg-cosmo-400' },
 ] as const;
 
+/** La chaîne de dépendances illustrée : terminée, en cours, bloquée. */
+const DEPS = [
+  {
+    key: 'deps1',
+    status: 'statusDone',
+    tone: { ring: 'border-emerald-500/50', dot: 'bg-emerald-500', text: 'text-slate-400 line-through decoration-slate-600', pill: 'bg-emerald-500/10 text-emerald-300' },
+  },
+  {
+    key: 'deps2',
+    status: 'statusDoing',
+    tone: { ring: 'border-cosmo-300/60', dot: 'bg-cosmo-400', text: 'text-white', pill: 'bg-cosmo-400/15 text-cosmo-200' },
+  },
+  {
+    key: 'deps3',
+    status: 'statusBlocked',
+    tone: { ring: 'border-red-500/50', dot: 'bg-red-500', text: 'text-white', pill: 'bg-red-500/10 text-red-300' },
+  },
+] as const;
+
 const ExecutionSection: React.FC = () => {
   const { t } = useT('landingEnterprise');
   const k = (suffix: string) => t(`enterprise.execution.${suffix}` as 'enterprise.execution.title');
 
   const healthMenu = (
     <figure
-      className="mx-auto w-full max-w-xs overflow-hidden rounded-xl border border-white/[0.08] bg-[#1C1D20] p-2 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.9)]"
+      className="mx-auto w-full max-w-xs overflow-hidden [zoom:0.85] rounded-xl border border-white/[0.08] bg-[#1C1D20] p-2 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.9)]"
       aria-label={k('healthAria')}
     >
       <p className="px-3 pb-1 pt-2 text-sm font-medium text-white">{k('healthLabel')}</p>
@@ -41,6 +61,37 @@ const ExecutionSection: React.FC = () => {
           </li>
         ))}
       </ul>
+    </figure>
+  );
+
+  // La chaîne : chaque tâche attend celle du dessus. La dernière est bloquée
+  // tant que la deuxième n'est pas terminée : c'est tout ce que la règle dit.
+  const depsChain = (
+    <figure
+      className="mx-auto w-full max-w-md rounded-xl border border-white/[0.08] bg-[#1C1D20] p-5 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.9)]"
+      aria-label={k('depsAria')}
+    >
+      <ol>
+        {DEPS.map(({ key, status, tone }, index) => (
+          <li key={key} className="relative pb-6 pl-8 last:pb-0">
+            {index < DEPS.length - 1 && (
+              <span className="absolute left-[7px] top-5 h-[calc(100%-0.75rem)] w-px bg-white/15" aria-hidden="true" />
+            )}
+            <span
+              className={`absolute left-0 top-1 flex h-[15px] w-[15px] items-center justify-center rounded-full border ${tone.ring}`}
+              aria-hidden="true"
+            >
+              <span className={`h-[7px] w-[7px] rounded-full ${tone.dot}`} />
+            </span>
+            <div className="flex items-baseline justify-between gap-4">
+              <span className={`text-sm ${tone.text}`}>{k(key)}</span>
+              <span className={`shrink-0 rounded-md px-2 py-0.5 text-xs ${tone.pill}`}>{k(status)}</span>
+            </div>
+            {index > 0 && <p className="mt-1 text-xs text-slate-500">{k('depsWaits')}</p>}
+          </li>
+        ))}
+      </ol>
+      <p className="mt-5 border-t border-white/[0.06] pt-4 text-xs text-amber-400">{k('depsBlocked')}</p>
     </figure>
   );
 
@@ -58,16 +109,7 @@ const ExecutionSection: React.FC = () => {
         </div>
       ),
     },
-    {
-      id: 'p3',
-      visual: (
-        <AppShot
-          src={SHOTS.tasksDeps.image}
-          alt={t(SHOTS.tasksDeps.altKey)}
-          label={t(SHOTS.tasksDeps.labelKey)}
-        />
-      ),
-    },
+    { id: 'p3', visual: depsChain },
   ];
 
   return (

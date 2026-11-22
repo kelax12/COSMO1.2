@@ -314,6 +314,18 @@ export const PROMISES_ENTREPRISE: LandingPromise[] = [
     },
   },
   {
+    id: 'entreprise-dependances-exemple',
+    kind: 'illustration',
+    claim: 'La chaîne de dépendances de l’étape 2 (trois tâches, la dernière en attente de 1 tâche).',
+    reason: 'Tâches fictives : la chaîne illustre la règle « ce qui bloque quoi », elle ne mesure rien.',
+    anchors: [{ key: 'enterprise.execution.depsBlocked', includes: 'En attente de 1 tâche' }],
+    proofs: [{ file: 'supabase/migration/214_task_status_health.sql', re: 'health' }],
+    figures: {
+      '1': ['enterprise.execution.depsBlocked'],
+      '3': ['enterprise.execution.depsAria'],
+    },
+  },
+  {
     id: 'entreprise-okr-exemple',
     kind: 'illustration',
     claim: 'Les résultats clés de l’exemple « Nova Studio » (8 identités, 12 prospects, 90 jalons…).',

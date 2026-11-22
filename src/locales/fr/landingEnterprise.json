@@ -16,8 +16,6 @@
       "tasksAlt": "Onglet Tâches : les tâches de toute l'organisation, avec listes partagées, préréglages de filtres, tri et vue Liste ou Tableau.",
       "tasksBoard": "Tâches · vue Tableau",
       "tasksBoardAlt": "Onglet Tâches en vue Tableau : une colonne par statut, à faire, en cours, en relecture, bloquée, terminée, avec les retards signalés.",
-      "tasksDeps": "Fiche d'une tâche · Dépendances",
-      "tasksDepsAlt": "Fiche de la tâche « Audit accessibilité WCAG », onglet Dépendances : bloquée par « Intégration du header responsive », en attente d'une tâche non terminée.",
       "projectsPortfolio": "Projets · vue Portefeuille",
       "projectsPortfolioAlt": "Onglet Projets en vue Portefeuille : chaque projet avec son responsable, son statut, sa période, son avancement et ce qui le bloque.",
       "reports": "Rapports d'activité",
@@ -101,7 +99,16 @@
       "healthOnTrack": "Dans les temps",
       "healthAtRisk": "À risque",
       "healthOffTrack": "En difficulté",
-      "healthDone": "Atteint"
+      "healthDone": "Atteint",
+      "depsAria": "Exemple de dépendances : trois tâches reliées, la dernière bloquée par la précédente",
+      "deps1": "Maquettes de l'app",
+      "deps2": "Intégration du header",
+      "deps3": "Audit accessibilité",
+      "statusDone": "Terminée",
+      "statusDoing": "En cours",
+      "statusBlocked": "Bloquée",
+      "depsWaits": "Attend la tâche du dessus",
+      "depsBlocked": "En attente de 1 tâche non terminée"
     },
     "okr": {
       "title": "Posez vos objectifs, à toutes les échelles.",
