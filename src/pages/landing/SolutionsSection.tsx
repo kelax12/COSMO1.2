@@ -1,15 +1,18 @@
-// Section « Solutions » (use cases) de la LandingPage.
-// Desktop (motion OK) : piste HORIZONTALE pinnée scrubbée GSAP — le scroll
-// vertical fait défiler les 4 cartes personas latéralement, watermarks en
-// parallax interne (containerAnimation). Mobile / reduced-motion : grille.
+// Section « Solutions » (profils) de la LandingPage.
+// Desktop (motion OK) : éventail de cartes épinglé, scrubbé par GSAP. Chaque
+// cran de scroll fait partir la carte de devant ; les suivantes avancent d'une
+// place dans l'éventail. Mobile / reduced-motion : cartes empilées, statiques.
 import React, { useRef } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, BarChart2, Calendar, CheckSquare } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import { HabitIcon, OkrIcon } from '@/components/icons/cosmo-icons';
 import { gsap, SplitText, useGSAP } from '@/lib/gsap';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { TAP_AREA_44_Y } from '@/components/mobile';
 import { USE_CASES, ENTRY_OFFSETS } from './data';
 import { useT } from '@/i18n/useT';
+import { useLandingTrack } from './use-landing-track';
 
 interface SolutionsSectionProps {
   handleFeatureClick: (path: string) => void;
@@ -17,103 +20,82 @@ interface SolutionsSectionProps {
 
 type UseCase = (typeof USE_CASES)[number];
 
-/** Contenu d'une carte persona (partagé grille / piste horizontale). */
-const UseCaseCardContent: React.FC<{
-  useCase: UseCase;
-  index: number;
-  onClick: () => void;
-}> = ({ useCase, index, onClick }) => {
+/** Une puce par module, dans l'ordre des `featureKeys` : tâches, agenda, OKR, habitudes, stats. */
+const MODULES: { icon: LucideIcon; fond: string }[] = [
+  { icon: CheckSquare, fond: 'bg-blue-500' },
+  { icon: Calendar, fond: 'bg-red-500' },
+  { icon: OkrIcon, fond: 'bg-green-500' },
+  { icon: HabitIcon, fond: 'bg-yellow-500' },
+  { icon: BarChart2, fond: 'bg-violet-500' },
+];
+
+/** Places de l'éventail : 0 = devant. Valeurs reprises par GSAP et par le rendu initial. */
+const SLOTS = [
+  { x: 0, y: 0, rotate: 0, scale: 1 },
+  { x: -170, y: 40, rotate: -8, scale: 0.92 },
+  { x: 170, y: 40, rotate: 8, scale: 0.92 },
+  { x: 0, y: 80, rotate: 0, scale: 0.86 },
+];
+/** Sortie de la carte de devant : elle part en haut à gauche, en tournant. */
+const EXIT = { x: -760, y: -60, rotate: -18, scale: 0.9, opacity: 0 };
+
+const TEAMS_PROFILE = 'useCases.teams.profile';
+
+const UseCaseCard: React.FC<{ useCase: UseCase; onClick: () => void }> = ({ useCase, onClick }) => {
   const { t } = useT('landing');
-  const num = String(index + 1).padStart(2, '0');
+  const { selectTrack } = useLandingTrack();
+  // Équipes : le CTA bascule vers le parcours entreprise, comme le sélecteur du header.
+  const isTeams = useCase.profileKey === TEAMS_PROFILE;
   return (
     <>
-      {/* Top hairline accent */}
-      <div
-        className="absolute top-0 left-0 right-0 h-px transition-all duration-500 group-hover:h-[3px]"
-        style={{ backgroundColor: useCase.accent, opacity: 0.6 }}
-      />
-
-      {/* Watermark index — parallax interne en mode piste (GSAP) */}
-      <div
-        className="solution-watermark absolute -top-2 -right-2 select-none pointer-events-none font-bold tabular-nums leading-none transition-colors duration-500"
-        style={{
-          fontSize: '8rem',
-          color: 'rgba(15, 23, 42, 0.05)',
-          letterSpacing: '-0.05em',
-        }}
-      >
-        {num}
-      </div>
-
-      {/* Kicker row */}
-      <div className="relative flex items-baseline gap-3 mb-6">
-        <span className="text-xs font-mono tabular-nums tracking-widest" style={{ color: useCase.accent }}>
-          {num}
-        </span>
-        <span className="text-[10px] font-semibold uppercase tracking-[0.2em]" style={{ color: useCase.accent }}>
-          {t(useCase.profileKey)}
-        </span>
-        <span className="flex-1 h-px" style={{ backgroundColor: useCase.accent, opacity: 0.25 }} />
-      </div>
-
-      <h3 className="relative text-3xl lg:text-4xl font-semibold text-slate-900 mb-5 leading-[1.1] tracking-tight">
+      <div className="h-2 rounded-full mb-6" style={{ backgroundColor: useCase.accent }} />
+      <p className="text-xs font-bold uppercase tracking-[0.14em]" style={{ color: useCase.accent }}>
+        {t(useCase.profileKey)}
+      </p>
+      <h3 className="text-3xl font-extrabold text-slate-900 tracking-tight leading-tight mt-2 mb-3">
         {t(useCase.titleKey)}
       </h3>
-
-      <p className="relative text-base text-slate-600 leading-relaxed mb-8 max-w-md">
-        {t(useCase.descriptionKey)}
-      </p>
-
-      <ul className="relative space-y-2.5 mb-10">
-        {useCase.featureKeys.map((featureKey, i) => (
-          <li key={i} className="flex items-start gap-3 text-sm text-slate-700 leading-relaxed">
-            <span className="select-none mt-[2px]" style={{ color: useCase.accent }}>
-              ·
-            </span>
-            <span>{t(featureKey)}</span>
-          </li>
-        ))}
+      <p className="text-[15px] text-slate-600 leading-relaxed mb-5">{t(useCase.descriptionKey)}</p>
+      <ul className="space-y-1">
+        {useCase.featureKeys.map((featureKey, i) => {
+          const { icon: Icon, fond } = MODULES[i] ?? MODULES[0];
+          return (
+            <li key={featureKey} className="flex items-center gap-3 py-1.5 text-[15px] font-medium text-slate-800">
+              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] ${fond}`}>
+                <Icon size={16} className="text-white" aria-hidden="true" />
+              </span>
+              {t(featureKey)}
+            </li>
+          );
+        })}
       </ul>
-
-      {/* `TAP_AREA_44_Y` et pas `min-h-touch` (C-80) : ce bouton est un lien
-          d'action en fin de carte, mesuré 121 x 20 px. Il est déjà LARGE ; ce
-          qui lui manque est de la hauteur, et la lui donner pour de vrai
-          décollerait le texte du bas de la carte de 24 px sur les quatre
-          cartes à la fois. Le débord vit donc dans un pseudo-élément, qui ne
-          prend aucune place dans le flux. Aucune commande ne le jouxte : la
-          réserve d'espacement de `tap-area.ts` est vérifiée. */}
+      {/* `TAP_AREA_44_Y` (C-80) : le lien est large, il ne lui manque que de la hauteur. */}
       <button
-        onClick={onClick}
-        className={`${TAP_AREA_44_Y} inline-flex items-center gap-2 text-sm font-semibold tracking-wide transition-all duration-300 hover:gap-3`}
+        onClick={isTeams ? () => selectTrack('entreprise') : onClick}
+        className={`${TAP_AREA_44_Y} mt-6 inline-flex items-center gap-2 text-sm font-semibold transition-all duration-300 hover:gap-3`}
         style={{ color: useCase.accent }}
       >
-        {t('solutions.learnMore')}
-        <ArrowRight size={14} />
+        {isTeams ? t('useCases.teams.cta') : t('solutions.learnMore')}
+        <ArrowRight size={14} aria-hidden="true" />
       </button>
     </>
   );
 };
 
-const CARD_STYLE: React.CSSProperties = {
-  backgroundColor: '#FFFFFF',
-  border: '1px solid rgba(15, 23, 42, 0.10)',
-  boxShadow: '0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px -24px rgba(15, 23, 42, 0.35)',
-};
+const CARD_CLASS = 'rounded-[36px] bg-white border border-slate-900/[0.08] p-8';
 
 const SolutionsSection: React.FC<SolutionsSectionProps> = ({ handleFeatureClick }) => {
   const { t } = useT('landing');
   const isMobile = useIsMobile();
   const reduceMotion = useReducedMotion();
-  // Grille classique = mobile OU reduced-motion ; sinon piste horizontale.
-  const grid = isMobile || !!reduceMotion;
+  const stacked = isMobile || !!reduceMotion;
 
   const sectionRef = useRef<HTMLElement>(null);
   const pinRef = useRef<HTMLDivElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
+  const fanRef = useRef<HTMLDivElement>(null);
 
   useGSAP(
     () => {
-      // Titre : reveal ligne par ligne (tous modes, gaté reduced-motion).
       const titleMM = gsap.matchMedia();
       titleMM.add('(prefers-reduced-motion: no-preference)', () => {
         const title = sectionRef.current?.querySelector<HTMLElement>('.solutions-title');
@@ -122,127 +104,94 @@ const SolutionsSection: React.FC<SolutionsSectionProps> = ({ handleFeatureClick 
           type: 'lines',
           mask: 'lines',
           autoSplit: true,
-          onSplit: (self) => {
-            // bg-clip-text ne survit pas aux transforms des enfants :
-            // on recopie le gradient du h2 sur chaque ligne.
-            self.lines.forEach((line) => {
-              (line as HTMLElement).classList.add(
-                'bg-gradient-to-r', 'from-slate-900', 'to-slate-700', 'bg-clip-text', 'text-transparent',
-              );
-            });
-            return gsap.from(self.lines, {
+          onSplit: (self) =>
+            gsap.from(self.lines, {
               yPercent: 110,
               duration: 0.85,
               ease: 'power3.out',
               stagger: 0.12,
               scrollTrigger: { trigger: title, start: 'top 85%', once: true },
-            });
-          },
+            }),
         });
       });
 
-      if (grid || !pinRef.current || !trackRef.current) return;
+      if (stacked || !pinRef.current || !fanRef.current) return;
+      const cards = gsap.utils.toArray<HTMLElement>('.solution-card', fanRef.current);
+      const n = cards.length;
+      // `xPercent: -50` remplace le `translateX(-50%)` du rendu initial : GSAP possède le transform.
+      cards.forEach((card, i) => gsap.set(card, { ...SLOTS[i], zIndex: 10 - i, opacity: 1, xPercent: -50 }));
 
-      const track = trackRef.current;
-
-      // Défilement horizontal « fake » : ease none obligatoire (scrub 1:1).
-      const scrollTween = gsap.to(track, {
-        x: () => Math.min(0, window.innerWidth - track.scrollWidth - 96),
-        ease: 'none',
+      const tl = gsap.timeline({
+        defaults: { ease: 'power2.inOut', duration: 1 },
         scrollTrigger: {
           trigger: pinRef.current,
           pin: true,
-          start: 'top top',
-          end: () => `+=${Math.max(1, track.scrollWidth - window.innerWidth + 96)}`,
-          scrub: 0.6,
+          // Sous le header collant : sa hauteur mesurée (`--landing-header-h`, posée par
+          // LandingPage), jamais une valeur en dur.
+          start: () => {
+            const host = sectionRef.current?.closest<HTMLElement>('[style*="--landing-header-h"]');
+            const h = host ? parseFloat(host.style.getPropertyValue('--landing-header-h')) : 0;
+            return `top top+=${Number.isFinite(h) ? h : 0}`;
+          },
+          end: () => `+=${window.innerHeight * (n - 1) * 0.9}`,
+          scrub: 0.7,
           invalidateOnRefresh: true,
         },
       });
-
-      // Watermarks : parallax interne pendant le mouvement horizontal.
-      gsap.utils.toArray<HTMLElement>('.solution-card').forEach((card) => {
-        const mark = card.querySelector('.solution-watermark');
-        if (!mark) return;
-        gsap.fromTo(
-          mark,
-          { x: -60 },
-          {
-            x: 40,
-            ease: 'none',
-            scrollTrigger: {
-              containerAnimation: scrollTween,
-              trigger: card,
-              start: 'left right',
-              end: 'right left',
-              scrub: true,
-            },
-          },
-        );
-      });
+      for (let step = 0; step < n - 1; step++) {
+        tl.addLabel(`s${step}`);
+        tl.to(cards[step], { ...EXIT, xPercent: -50, zIndex: 20 }, `s${step}`);
+        for (let j = step + 1; j < n; j++) {
+          tl.to(cards[j], { ...SLOTS[j - step - 1], zIndex: 10 - (j - step - 1) }, `s${step}`);
+        }
+      }
     },
-    { scope: sectionRef, dependencies: [grid], revertOnUpdate: true },
+    { scope: sectionRef, dependencies: [stacked], revertOnUpdate: true },
   );
 
-  // ⚠️ Pas de backdrop-blur/filter/transform sur cette section : elle
-  // contient un PIN ScrollTrigger (position:fixed) — un filter sur un
-  // ancêtre casse le fixed → pin mort + sections qui se chevauchent.
+  // ⚠️ Pas de backdrop-blur/filter/transform sur cette section : elle contient
+  // un PIN ScrollTrigger (position:fixed), qu'un filter sur un ancêtre casse.
   return (
-    <section ref={sectionRef} id="solutions" className="py-16 bg-slate-50 overflow-hidden">
-      <div ref={pinRef} className={grid ? undefined : 'min-h-screen flex flex-col justify-center'}>
+    <section ref={sectionRef} id="solutions" className="py-16 bg-white overflow-hidden">
+      <div ref={pinRef} className={stacked ? undefined : 'min-h-screen flex flex-col justify-center'}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-          <div className="text-center mb-8">
-            <h2 className="solutions-title text-4xl lg:text-5xl font-bold mb-6 bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+          <div className="text-center mb-10">
+            <h2 className="solutions-title text-4xl lg:text-5xl font-bold mb-6 text-slate-900 tracking-tight">
               {t('features.heading')}
             </h2>
-            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
-              {t('features.subtitle')}
-            </p>
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto">{t('features.subtitle')}</p>
           </div>
         </div>
 
-        {grid ? (
-          /* ── Grille 2×2 (mobile / reduced-motion) ── */
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {USE_CASES.map((useCase, index) => (
-                <motion.div
-                  key={index}
-                  initial={reduceMotion ? false : { opacity: 0, scale: 0.6, ...ENTRY_OFFSETS[index] }}
-                  whileInView={{ opacity: 1, scale: 1, x: 0, y: 0, rotate: 0 }}
-                  viewport={{ once: true, margin: '-80px' }}
-                  transition={{ type: 'spring', stiffness: 65, damping: 14, mass: 1, delay: 0.1 + index * 0.05 }}
-                  whileHover={{ y: -4 }}
-                  className="group relative overflow-hidden p-8 lg:p-10"
-                  style={CARD_STYLE}
-                >
-                  <UseCaseCardContent
-                    useCase={useCase}
-                    index={index}
-                    onClick={() => handleFeatureClick(useCase.path)}
-                  />
-                </motion.div>
-              ))}
-            </div>
+        {stacked ? (
+          <div className="max-w-xl mx-auto px-4 space-y-6">
+            {USE_CASES.map((useCase, index) => (
+              <motion.div
+                key={useCase.profileKey}
+                initial={reduceMotion ? false : { opacity: 0, scale: 0.9, ...ENTRY_OFFSETS[index] }}
+                whileInView={{ opacity: 1, scale: 1, x: 0, y: 0, rotate: 0 }}
+                viewport={{ once: true, margin: '-80px' }}
+                transition={{ type: 'spring', stiffness: 65, damping: 14, mass: 1 }}
+                className={CARD_CLASS}
+              >
+                <UseCaseCard useCase={useCase} onClick={() => handleFeatureClick(useCase.path)} />
+              </motion.div>
+            ))}
           </div>
         ) : (
-          /* ── Piste horizontale pinnée (desktop) ── */
-          <div className="pl-[max(2rem,calc((100vw-80rem)/2+2rem))]">
-            <div ref={trackRef} className="flex w-max items-stretch gap-6 pr-24">
-              {USE_CASES.map((useCase, index) => (
-                <motion.div
-                  key={index}
-                  whileHover={{ y: -4 }}
-                  className="solution-card group relative overflow-hidden p-8 lg:p-10 w-[min(38rem,78vw)] shrink-0"
-                  style={CARD_STYLE}
-                >
-                  <UseCaseCardContent
-                    useCase={useCase}
-                    index={index}
-                    onClick={() => handleFeatureClick(useCase.path)}
-                  />
-                </motion.div>
-              ))}
-            </div>
+          <div ref={fanRef} className="relative mx-auto h-[640px] w-full max-w-5xl">
+            {USE_CASES.map((useCase, index) => (
+              <div
+                key={useCase.profileKey}
+                className={`solution-card absolute left-1/2 top-0 w-[min(30rem,86vw)] origin-[50%_120%] shadow-[0_30px_60px_-34px_rgba(15,23,42,0.35)] ${CARD_CLASS}`}
+                style={{
+                  zIndex: 10 - index,
+                  transform: `translateX(calc(-50% + ${SLOTS[index].x}px)) translateY(${SLOTS[index].y}px) rotate(${SLOTS[index].rotate}deg) scale(${SLOTS[index].scale})`,
+                }}
+              >
+                <UseCaseCard useCase={useCase} onClick={() => handleFeatureClick(useCase.path)} />
+              </div>
+            ))}
           </div>
         )}
       </div>

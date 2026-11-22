@@ -1596,28 +1596,28 @@ a:focus-visible:not([class*="ring-"]):not([class*="focus-visible:"]),
   }
 }
 
-/* ── Blog (.blog-prose) — typographie des articles (BlogArticlePage) ────────
+/* ── Blog (.blog-prose) — typographie des articles et pages métier, en CLAIR ────────
    Contenu injecté depuis src/content/blog/*.mjs ; thème sombre slate fixe
    (pages publiques). ~65ch de largeur de lecture via le conteneur max-w-3xl. */
 .blog-prose {
-  color: #cbd5e1; /* slate-300 */
+  color: #475569; /* slate-600 */
   line-height: 1.75;
   font-size: 1.0625rem;
 }
 .blog-prose .lead {
   font-size: 1.1875rem;
-  color: #e2e8f0; /* slate-200 */
+  color: #334155; /* slate-700 */
 }
 .blog-prose h2 {
-  color: #fff;
+  color: #0f172a;
   font-size: 1.5rem;
   font-weight: 700;
   margin: 2.5rem 0 1rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid rgb(255 255 255 / 0.1);
+  border-bottom: 1px solid rgb(15 23 42 / 0.1);
 }
 .blog-prose h3 {
-  color: #fff;
+  color: #0f172a;
   font-size: 1.125rem;
   font-weight: 600;
   margin: 1.75rem 0 0.5rem;
@@ -1640,26 +1640,26 @@ a:focus-visible:not([class*="ring-"]):not([class*="focus-visible:"]),
   width: 100%;
   height: auto;
   border-radius: 0.75rem;
-  border: 1px solid #334155;
+  border: 1px solid rgb(15 23 42 / 0.1);
 }
 .blog-prose figcaption {
   margin-top: 0.625rem;
   font-size: 0.875rem;
   line-height: 1.5;
-  color: #94a3b8;
+  color: #64748b;
 }
-.blog-prose strong { color: #fff; font-weight: 600; }
-.blog-prose em { color: #e2e8f0; }
+.blog-prose strong { color: #0f172a; font-weight: 600; }
+.blog-prose em { color: #334155; }
 .blog-prose a {
-  color: #60a5fa; /* blue-400 */
+  color: #2563eb; /* blue-600 */
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-.blog-prose a:hover { color: #93c5fd; }
+.blog-prose a:hover { color: #1d4ed8; }
 .blog-prose .table-wrap {
   overflow-x: auto;
   margin: 0 0 1.25rem;
-  border: 1px solid rgb(255 255 255 / 0.1);
+  border: 1px solid rgb(15 23 42 / 0.1);
   border-radius: 0.75rem;
 }
 .blog-prose table {
@@ -1669,17 +1669,17 @@ a:focus-visible:not([class*="ring-"]):not([class*="focus-visible:"]),
 }
 .blog-prose th {
   text-align: left;
-  color: #fff;
+  color: #0f172a;
   font-weight: 600;
-  background: rgb(255 255 255 / 0.05);
+  background: #f8fafc;
   padding: 0.625rem 0.875rem;
 }
 .blog-prose td {
   padding: 0.625rem 0.875rem;
-  border-top: 1px solid rgb(255 255 255 / 0.07);
+  border-top: 1px solid rgb(15 23 42 / 0.07);
   vertical-align: top;
 }
-.blog-prose td:first-child { color: #e2e8f0; font-weight: 500; }
+.blog-prose td:first-child { color: #1e293b; font-weight: 500; }
 
 /* ── Curseur du simulateur de tarif entreprise (landing) ────────────────────
    `input[type=range]` n'a aucun style commun entre navigateurs : sans ces

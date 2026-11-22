@@ -16,7 +16,6 @@ import AgendaShowcase from '@/components/showcase/AgendaShowcase';
 import OKRCardShowcase from '@/components/showcase/OKRCardShowcase';
 import HabitHeatmapShowcase from '@/components/showcase/HabitHeatmapShowcase';
 import ShowcaseTheme from '@/components/showcase/ShowcaseTheme';
-import { useDocumentTheme } from '@/hooks/useDocumentTheme';
 import { CONTACT_EMAIL } from '@/lib/contact.mjs';
 // Audit perf — lazy-load Recharts wrapper (same rationale as LandingPage).
 const StatsShowcase = lazy(() => import('@/components/showcase/StatsShowcase'));
@@ -38,6 +37,7 @@ import {
 import { useT } from '@/i18n/useT';
 import RichText from '@/components/ui/rich-text';
 import { PrerenderCopyContext } from '@/lib/prerender-copy-context';
+import { useForcedLightTheme } from '@/hooks/use-forced-light-theme';
 
 const GuidePage: React.FC = () => {
   const { t } = useT('guide');
@@ -49,7 +49,7 @@ const GuidePage: React.FC = () => {
   useGuideSchemas();
   // Les vitrines suivent le thème de l'app : des captures sombres faisaient
   // des trous dans la page en thème clair.
-  const theme = useDocumentTheme();
+  const theme = useForcedLightTheme();
   // Copie du prérendu (src/prerender/content-copy.tsx) : le TEXTE de toutes les
   // sections (le HTML servi doit porter le guide entier, pas son premier écran),
   // sans les vitrines (170 ko de balisage qui suivent un thème que le build ne

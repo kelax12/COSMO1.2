@@ -8,7 +8,7 @@
   "fichiers": {
     "src/components/AuthForm.tsx": {
       "complexity": [37],
-      "max-lines-per-function": [379]
+      "max-lines-per-function": [376]
     },
     "src/components/BugReportModal.tsx": {
       "max-lines-per-function": [227]
@@ -403,7 +403,7 @@
     },
     "src/pages/LandingPage.tsx": {
       "complexity": [30],
-      "max-lines-per-function": [408]
+      "max-lines-per-function": [405]
     },
     "src/pages/OKRPage.tsx": {
       "complexity": [29],
@@ -430,9 +430,6 @@
     },
     "src/pages/agenda/AgendaCalendarSection.tsx": {
       "max-lines-per-function": [323]
-    },
-    "src/pages/landing/WhySection.tsx": {
-      "max-lines-per-function": [303]
     },
     "src/pages/landing/entreprise/PricingSection.tsx": {
       "max-lines-per-function": [273]

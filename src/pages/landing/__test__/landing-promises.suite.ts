@@ -178,7 +178,7 @@ export const PROMISES_SUITE: LandingPromise[] = [
     kind: 'editorial',
     claim: 'Comparaison avec Notion et Todoist ; références aux méthodes de Google, Intel, Netflix.',
     reason: 'Opinion éditoriale sur des tiers, sans engagement sur le produit.',
-    anchors: [{ key: 'faq.a3', includes: "Todoist est un excellent gestionnaire de tâches mais n'intègre pas les habitudes" }],
+    anchors: [{ key: 'faq.a3', includes: "Todoist est un gestionnaire de tâches mais n'intègre pas les habitudes" }],
     proofs: [],
   },
   {

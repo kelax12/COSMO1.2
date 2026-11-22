@@ -8,6 +8,7 @@ import { useT } from '@/i18n/useT';
 import { useLocalizedPath } from '@/i18n/useLocalizedPath';
 import TurnstileWidget from '@/components/TurnstileWidget';
 import { resetTurnstile } from '@/lib/turnstile';
+import { enterWithTheme } from '@/lib/theme';
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -41,6 +42,13 @@ const STRENGTH_COLORS = ['transparent', '#ef4444', '#eab308', '#22c55e'] as cons
 
 const inputClasses =
   'w-full bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))] rounded-xl pl-9 max-md:pl-3.5 pr-4 py-3 sm:py-2.5 text-sm text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all';
+
+/** La démo s'ouvre en clair (DA du parcours perso), quel que soit le thème du visiteur. */
+function openDemoInLight(loginDemo: () => void, onSuccess: () => void): void {
+  enterWithTheme('light');
+  loginDemo();
+  onSuccess();
+}
 
 /**
  * Formulaire d'authentification partagé entre `LoginModal` (bottom-sheet) et
@@ -156,10 +164,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
     }
   };
 
-  const handleDemoMode = () => {
-    loginDemo();
-    onSuccess();
-  };
+  const handleDemoMode = () => openDemoInLight(loginDemo, onSuccess);
 
   const handleGoogleLogin = async () => {
     if (isGoogleLoading) return;

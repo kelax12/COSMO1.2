@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Section profils, 4 concepts</title>
+<style>
+:root{--ink:#0f172a;--mute:#475569;--line:rgba(15,23,42,.08);--tasks:#3b82f6;--agenda:#ef4444;--okr:#22c55e;--habits:#eab308;--stats:#8b5cf6}
+*{box-sizing:border-box}
+body{margin:0;background:#e9edf3;font-family:Inter,"Segoe UI",system-ui,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased}
+.label{max-width:1180px;margin:56px auto 14px;padding:0 20px;display:flex;align-items:baseline;gap:14px}
+.label b{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#64748b}
+.label span{font-size:22px;font-weight:700}
+.label em{font-style:normal;color:var(--mute);font-size:14px}
+.stage{max-width:1180px;margin:0 auto;background:#fff;border-radius:36px;padding:72px 56px;overflow:hidden;position:relative}
+.h2{font-size:44px;font-weight:800;letter-spacing:-.03em;line-height:1.05;text-align:center;margin:0}
+.hl{background:linear-gradient(#93c5fd,#93c5fd) no-repeat 0 88%/100% .32em}
+.sub{text-align:center;color:var(--mute);font-size:18px;margin:16px auto 0;max-width:620px;line-height:1.55}
+.ico{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff}
+.ico svg{width:18px;height:18px}
+@media(max-width:760px){.stage{padding:44px 18px;border-radius:28px}.h2{font-size:32px}}
+
+/* 1 */
+.seg{display:flex;justify-content:center;gap:6px;margin:36px auto 28px;background:#f1f5f9;padding:6px;border-radius:999px;width:max-content;max-width:100%;flex-wrap:wrap}
+.seg button{border:0;background:transparent;font:inherit;font-size:15px;font-weight:600;color:var(--mute);padding:10px 20px;border-radius:999px;cursor:pointer;transition:.25s}
+.seg button.on{background:var(--ink);color:#fff}
+.duo{display:grid;grid-template-columns:1.05fr 1fr;gap:0;border:1px solid var(--line);border-radius:40px;overflow:hidden}
+.duo .l{padding:44px}
+.duo .r{background:#f8fafc;padding:36px;position:relative}
+.kick{font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#64748b;margin:0}
+.big{font-size:34px;font-weight:800;letter-spacing:-.02em;margin:8px 0 10px;line-height:1.1}
+.desc{color:var(--mute);line-height:1.6;margin:0 0 22px}
+.row{display:flex;align-items:center;gap:14px;padding:11px 0;font-size:15px;font-weight:500;color:#1e293b}
+.fade{animation:f .45s ease}
+@keyframes f{from{opacity:0;transform:translateY(8px)}}
+.app{background:#fff;border-radius:24px;border:1px solid var(--line);padding:18px;height:100%}
+.app .top{display:flex;justify-content:space-between;font-size:12px;color:#64748b;margin-bottom:12px}
+.slot{display:flex;gap:10px;align-items:stretch;margin-bottom:8px}
+.slot .hr{font-size:11px;color:#94a3b8;width:34px;padding-top:6px}
+.slot .ev{flex:1;border-radius:12px;padding:8px 12px;font-size:13px;font-weight:600;color:#fff}
+.mini{display:flex;gap:8px;margin-top:14px}
+.mini div{flex:1;border-radius:14px;background:#f8fafc;padding:10px;font-size:11px;color:#64748b}
+.mini b{display:block;font-size:20px;color:var(--ink)}
+@media(max-width:860px){.duo{grid-template-columns:1fr}.duo .l{padding:28px}}
+
+/* 2 */
+.bento{display:grid;grid-template-columns:1.25fr 1fr 1fr;grid-template-rows:auto auto;gap:16px;margin-top:44px}
+.bc{border-radius:32px;padding:30px;border:1px solid var(--line);background:#fff;transition:.3s;position:relative}
+.bc:hover{transform:translateY(-4px);border-color:rgba(15,23,42,.18)}
+.bc.lead{grid-row:span 2;background:var(--ink);color:#fff;border:0}
+.bc.lead .desc{color:#cbd5e1}
+.dots{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap}
+.chip{display:flex;align-items:center;gap:8px;border-radius:999px;padding:5px;background:#f1f5f9;max-width:44px;overflow:hidden;white-space:nowrap;transition:max-width .45s ease,padding .45s;font-size:13px;font-weight:600}
+.chip .ico{width:30px;height:30px;border-radius:50%}
+.bc:hover .chip,.bc.lead .chip{max-width:420px;padding-right:14px}
+.bc.lead .chip{background:rgba(255,255,255,.08);color:#fff}
+.bc .t{font-size:24px;font-weight:800;letter-spacing:-.02em;margin:6px 0 8px}
+.bc.wide{grid-column:span 2}
+@media(max-width:860px){.bento{grid-template-columns:1fr}.bc.lead{grid-row:auto}.bc.wide{grid-column:auto}}
+
+/* 3 */
+.fan{position:relative;height:600px;margin-top:40px}
+.fc{position:absolute;left:50%;top:20px;width:min(440px,86%);border-radius:36px;background:#fff;border:1px solid var(--line);padding:30px;cursor:pointer;transition:transform .6s cubic-bezier(.22,1,.36,1),box-shadow .4s;transform-origin:50% 120%}
+.fc .band{height:8px;border-radius:999px;margin-bottom:22px}
+.fc .row{padding:8px 0;font-size:14px}
+.fc.front{z-index:5;box-shadow:0 30px 60px -30px rgba(15,23,42,.35)}
+.hint{text-align:center;color:#94a3b8;font-size:13px;margin-top:6px}
+
+/* 4 */
+.lane{display:grid;grid-template-columns:220px 1fr;gap:24px;align-items:center;padding:28px 0;border-top:1px solid var(--line)}
+.lane:first-of-type{border-top:0}
+.lane h4{margin:0;font-size:26px;font-weight:800;letter-spacing:-.02em}
+.lane p{margin:4px 0 0;color:#64748b;font-size:14px}
+.track{position:relative;display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.track svg.ink{position:absolute;left:0;right:0;top:17px;width:100%;height:2px;overflow:visible}
+.track svg.ink line{stroke:var(--ink);stroke-width:2;stroke-dasharray:1200;stroke-dashoffset:1200;transition:stroke-dashoffset 1.2s ease}
+.lane:hover svg.ink line,.lane.drawn svg.ink line{stroke-dashoffset:0}
+.node{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;font-size:13px;font-weight:500;color:#334155;line-height:1.35}
+.node .ico{border-radius:50%;width:36px;height:36px;box-shadow:0 0 0 6px #fff;transition:transform .3s}
+.lane:hover .node .ico{transform:scale(1.08)}
+@media(max-width:860px){.lane{grid-template-columns:1fr}.track{grid-template-columns:1fr;gap:14px}.node{flex-direction:row;text-align:left}.track svg.ink{display:none}}
+</style></head><body>
+
+<div class="label"><b>Concept 1</b><span>Sélecteur et aperçu vivant</span><em>un profil à la fois, la journée type change avec lui</em></div>
+<section class="stage">
+  <h2 class="h2">Une application pour <span class="hl">chaque profil</span></h2>
+  <p class="sub">Étudiant, professionnel ou entrepreneur : Cosmo s'adapte à vos besoins, et non l'inverse.</p>
+  <div class="seg" id="seg"></div>
+  <div class="duo"><div class="l" id="c1l"></div><div class="r"><div class="app" id="c1r"></div></div></div>
+</section>
+
+<div class="label"><b>Concept 2</b><span>Bento à modules dépliables</span><em>les pastilles des modules s'ouvrent au survol et révèlent le bénéfice</em></div>
+<section class="stage">
+  <h2 class="h2">Une application pour <span class="hl">chaque profil</span></h2>
+  <p class="sub">Étudiant, professionnel ou entrepreneur : Cosmo s'adapte à vos besoins, et non l'inverse.</p>
+  <div class="bento" id="bento"></div>
+</section>
+
+<div class="label"><b>Concept 3</b><span>Éventail de cartes</span><em>les cartes flottent comme les tuiles du hero ; cliquer en ramène une devant</em></div>
+<section class="stage">
+  <h2 class="h2">Une application pour <span class="hl">chaque profil</span></h2>
+  <p class="sub">Étudiant, professionnel ou entrepreneur : Cosmo s'adapte à vos besoins, et non l'inverse.</p>
+  <div class="fan" id="fan"></div>
+  <p class="hint">Cliquez une carte pour la mettre devant</p>
+</section>
+
+<div class="label"><b>Concept 4</b><span>Le fil d'encre</span><em>un trait relie les 5 modules de chaque profil et se dessine au survol</em></div>
+<section class="stage">
+  <h2 class="h2">Une application pour <span class="hl">chaque profil</span></h2>
+  <p class="sub">Étudiant, professionnel ou entrepreneur : Cosmo s'adapte à vos besoins, et non l'inverse.</p>
+  <div id="lanes" style="margin-top:40px"></div>
+</section>
+<div style="height:60px"></div>
+
+<script>
+const I={
+tasks:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="m8 12 3 3 5-6"/></svg>',
+agenda:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>',
+okr:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>',
+habits:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 7 2 2 4-4M4 17l2 2 4-4M13 7h7M13 17h7"/></svg>',
+stats:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 20V11M12 20V4M19 20v-6"/></svg>'};
+const M=['tasks','agenda','okr','habits','stats'];
+const P=[
+{id:'s',name:'Étudiants',title:'Excellence académique',acc:'#7c3aed',hl:'#c4b5fd',desc:"Gérez vos cours, devoirs et révisions avec une planification intuitive qui s'adapte à votre rythme.",f:["Notez tout ce que vous avez à faire pour ne rien oublier","Planning de révisions","Suivez l'avancement de vos objectifs","Construisez votre routine","Vision globale + réduction du stress"],
+ day:[['8h','Cours de droit','agenda'],['10h','Réviser le chapitre 4','tasks'],['14h','Séance de sport','habits'],['17h','Mémoire : plan détaillé','okr']],k:[['12','tâches cette semaine'],['21 j','série de révisions']]},
+{id:'p',name:'Professionnels',title:'Performance maximale',acc:'#2563eb',hl:'#93c5fd',desc:"Boostez votre carrière avec des outils qui transforment votre façon de travailler et d'atteindre vos objectifs.",f:["Classez vos priorités, le reste peut attendre","Planifiez vos journées autour de vos priorités","Suivez l'avancement de vos objectifs professionnels","Construisez une routine de travail efficace","Mesurez où passe réellement votre temps"],
+ day:[['9h','Point équipe','agenda'],['10h','Dossier client prioritaire','tasks'],['13h','Lecture 20 min','habits'],['15h','Objectif T4 : 3 contrats','okr']],k:[['3','priorités du jour'],['68 %','temps sur le fond']]},
+{id:'f',name:'Entrepreneurs',title:'Croissance accélérée',acc:'#c2410c',hl:'#fdba74',desc:"Pilotez votre activité sur tous les fronts, sans perdre de vue ce qui fait grandir votre entreprise.",f:["Gérez plusieurs projets sans rien laisser filer","Planifiez chaque journée selon vos priorités du moment","Fixez vos objectifs de croissance et suivez chaque étape","Construisez la routine qui fait avancer votre entreprise","Voyez où passe votre temps, projet par projet"],
+ day:[['8h','Prospection','habits'],['10h','Appel investisseur','agenda'],['13h','Lancer la V2','okr'],['16h','Factures du mois','tasks']],k:[['4','projets actifs'],['+18 %','objectif CA']]},
+{id:'t',name:'Équipes',title:'Collaboration fluide',acc:'#047857',hl:'#6ee7b7',desc:"Synchronisez votre équipe avec des outils collaboratifs qui alignent chacun sur les mêmes objectifs.",f:["Partagez les tâches et voyez qui fait quoi","Coordonnez les échéances dans l'agenda de chacun","Alignez l'équipe sur des objectifs communs","Installez les rituels d'équipe qui comptent","Suivez l'avancement collectif en un coup d'œil"],
+ day:[['9h','Stand-up','habits'],['11h','Revue de sprint','agenda'],['14h','Maquettes à valider','tasks'],['16h','OKR équipe : NPS 50','okr']],k:[['6','membres'],['82 %','objectifs à jour']]}];
+const ic=(m,cls='')=>`<span class="ico ${cls}" style="background:var(--${m})">${I[m]}</span>`;
+const rows=p=>p.f.map((t,i)=>`<div class="row">${ic(M[i])}${t}</div>`).join('');
+
+/* 1 */
+const seg=document.getElementById('seg');
+function show1(i){const p=P[i];[...seg.children].forEach((b,j)=>b.classList.toggle('on',j===i));
+ document.getElementById('c1l').innerHTML=`<div class="fade"><p class="kick" style="color:${p.acc}">${p.name}</p><p class="big"><span style="background:linear-gradient(${p.hl},${p.hl}) no-repeat 0 88%/100% .3em">${p.title}</span></p><p class="desc">${p.desc}</p>${rows(p)}</div>`;
+ document.getElementById('c1r').innerHTML=`<div class="fade"><div class="top"><span>Aujourd'hui</span><span>${p.name}</span></div>${p.day.map(d=>`<div class="slot"><span class="hr">${d[0]}</span><div class="ev" style="background:var(--${d[2]})">${d[1]}</div></div>`).join('')}<div class="mini">${p.k.map(k=>`<div><b>${k[0]}</b>${k[1]}</div>`).join('')}</div></div>`;}
+P.forEach((p,i)=>{const b=document.createElement('button');b.textContent=p.name;b.onclick=()=>show1(i);seg.appendChild(b)});show1(0);
+
+/* 2 */
+document.getElementById('bento').innerHTML=P.map((p,i)=>`<div class="bc ${i===0?'lead':''} ${i===3?'wide':''}"><p class="kick" style="color:${i===0?'#c4b5fd':p.acc}">${p.name}</p><p class="t">${p.title}</p><p class="desc" style="margin:0">${p.desc}</p><div class="dots" style="${i===0?'flex-direction:column;align-items:flex-start':''}">${p.f.map((t,j)=>`<span class="chip">${ic(M[j])}${t}</span>`).join('')}</div></div>`).join('');
+
+/* 3 */
+const fan=document.getElementById('fan');let order=[0,1,2,3];
+const pos=[[0,0,0],[-150,30,-8],[150,30,8],[0,60,0]];
+function layout(){order.forEach((pi,slot)=>{const el=fan.children[pi];const [x,y,r]=slot===0?[0,0,0]:[[-170,40,-9],[170,40,9],[0,80,0]][slot-1];el.style.transform=`translateX(calc(-50% + ${x}px)) translateY(${y}px) rotate(${r}deg) scale(${slot===0?1:.92})`;el.style.zIndex=10-slot;el.classList.toggle('front',slot===0)})}
+fan.innerHTML=P.map(p=>`<div class="fc"><div class="band" style="background:${p.acc}"></div><p class="kick" style="color:${p.acc}">${p.name}</p><p class="big" style="font-size:28px">${p.title}</p>${rows(p)}</div>`).join('');
+[...fan.children].forEach((el,i)=>el.onclick=()=>{order=[i,...order.filter(x=>x!==i)];layout()});layout();
+
+/* 4 */
+document.getElementById('lanes').innerHTML=P.map((p,i)=>`<div class="lane ${i===0?'drawn':''}"><div><h4>${p.name}</h4><p>${p.title}</p></div><div class="track"><svg class="ink" preserveAspectRatio="none"><line x1="10%" y1="1" x2="90%" y2="1"/></svg>${p.f.map((t,j)=>`<div class="node">${ic(M[j])}<span>${t}</span></div>`).join('')}</div></div>`).join('');
+</script>
+</body></html>

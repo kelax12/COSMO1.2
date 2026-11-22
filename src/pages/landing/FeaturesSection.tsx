@@ -156,12 +156,14 @@ const FeatureCopy: React.FC<{ feature: Feature; onCta: () => void }> = ({ featur
   const key = (suffix: string) => `features.${feature.id}.${suffix}` as Parameters<typeof t>[0];
   return (
     <div className="space-y-6">
+      {/* Icône DEVANT le titre, centrée sur ses deux lignes. */}
+      <div className="flex items-center gap-4 lg:gap-5">
       {/* Même flottement que les tuiles du hero (`.hero-tile-idle`, src/index.css). */}
       <div
-        className="hero-tile-idle inline-block"
+        className="hero-tile-idle flex-shrink-0"
         style={{ ['--r' as string]: '0deg', ['--dur' as string]: '8s' }}
       >
-        <div className={`inline-flex items-center justify-center w-14 h-14 ${feature.fond} rounded-2xl ring-1 ring-slate-900/10`}>
+        <div className={`flex items-center justify-center w-14 h-14 ${feature.fond} rounded-2xl ring-1 ring-slate-900/10`}>
           <Icon size={28} className="text-white" />
         </div>
       </div>
@@ -183,6 +185,7 @@ const FeatureCopy: React.FC<{ feature: Feature; onCta: () => void }> = ({ featur
           {t(key('titleAccent'))}
         </motion.span>
       </h3>
+      </div>
       <p className="text-lg text-slate-600 leading-relaxed">{t(key('description'))}</p>
       <div className="space-y-3">
         {(['b1', 'b2', 'b3', 'b4'] as const).map((b, i) => (

@@ -21,7 +21,7 @@ export const PROMISES_PERSO: LandingPromise[] = [
     kind: 'produit',
     claim: 'Le partage de tâches est gratuit, en rôle Lecteur ou Éditeur.',
     anchors: [
-      { key: 'faq.a1', includes: 'Le partage restera gratuit' },
+      { key: 'faq.a1', includes: 'statistiques et partage de tâches' },
     ],
     proofs: [
       { file: 'src/modules/friends/types.ts', has: "role: 'viewer' | 'editor';" },
@@ -48,13 +48,12 @@ export const PROMISES_PERSO: LandingPromise[] = [
       'Le jeu de démo a été réduit à 10 tâches de base (commit 944015ba4) : il ouvre avec 12 tâches, 10 habitudes, 123 événements et 4 OKR (mesuré le 2026-10-24).',
     anchors: [
       { key: 'cta.statsAria', includes: '100 tâches, 100 habitudes, 150 événements' },
-      { key: 'why.demoVolume', includes: '100 tâches · 100 habitudes · 150 events' },
       { key: 'faq.a4', includes: '100 tâches, 100 habitudes, 150 événements agenda et 8 OKRs' },
     ],
     proofs: [{ file: 'src/modules/tasks/local.seed.ts', has: '// 10 tâches' }],
     figures: {
-      '100': ['cta.statsAria', 'why.demoVolume', 'faq.a4'],
-      '150': ['cta.statsAria', 'why.demoVolume', 'faq.a4'],
+      '100': ['cta.statsAria', 'faq.a4'],
+      '150': ['cta.statsAria', 'faq.a4'],
       '8': ['faq.a4'],
     },
   },
@@ -65,7 +64,6 @@ export const PROMISES_PERSO: LandingPromise[] = [
     reason:
       'Durée couverte par des dates relatives au jour d’ouverture, non mesurée : les tâches de base remontent à 28 jours.',
     anchors: [
-      { key: 'why.desc5', includes: '12 mois de données réalistes' },
       { key: 'faq.a4', includes: '12 mois de données réalistes' },
       { key: 'about.principle2', includes: '12 mois de données réalistes' },
       { key: 'seo.root.description', includes: '12 mois de données pré-remplies' },
@@ -73,7 +71,6 @@ export const PROMISES_PERSO: LandingPromise[] = [
     proofs: [],
     figures: {
       '12': [
-        'why.desc5',
         'faq.a4',
         'about.principle2',
         'seo.root.description',
@@ -135,7 +132,6 @@ export const PROMISES_PERSO: LandingPromise[] = [
     claim: 'Glisser une tâche dans l’agenda crée un événement lié à la tâche.',
     anchors: [
       { key: 'features.agenda.b1', includes: 'Glissez une tâche depuis la sidebar' },
-      { key: 'faq.a6', includes: 'glissez simplement une tâche' },
     ],
     proofs: [
       { file: 'src/pages/agenda/AgendaCalendarSection.tsx', has: 'droppable' },
@@ -146,7 +142,7 @@ export const PROMISES_PERSO: LandingPromise[] = [
     id: 'agenda-vues',
     kind: 'produit',
     claim: 'L’agenda a des vues jour, semaine et mois.',
-    anchors: [{ key: 'features.agenda.b4', includes: 'Vues jour / semaine / mois' }],
+    anchors: [{ key: 'features.agenda.b4', includes: '(jour, semaine, mois)' }],
     proofs: [{ file: 'src/pages/agenda/AgendaDesktopHeader.tsx', has: "'timeGridDay', 'timeGridWeek', 'dayGridMonth'" }],
   },
   {
@@ -176,16 +172,12 @@ export const PROMISES_PERSO: LandingPromise[] = [
     kind: 'limite',
     claim: 'La heatmap des habitudes couvre 26 semaines.',
     anchors: [
-      { key: 'features.habits.description', includes: 'heatmap 26 semaines' },
-      { key: 'why.habitsLine2', includes: 'sur 26 semaines' },
       { key: 'faq.a8', includes: 'heatmap 26 semaines' },
       { key: 'prerender:/guide', includes: 'heatmap 26 semaines' },
     ],
     proofs: [{ file: 'src/pages/statistics/HabitHeatmap.tsx', re: '\\b26\\b' }],
     figures: {
       '26': [
-        'features.habits.description',
-        'why.habitsLine2',
         'faq.a8',
         'prerender:/guide',
         'usecase.students.html',
@@ -220,17 +212,25 @@ export const PROMISES_PERSO: LandingPromise[] = [
     proofs: [{ file: 'src/modules/okrs/progress.ts', re: 'export' }],
   },
   {
+    id: 'faq-okr-exemple',
+    kind: 'editorial',
+    claim: 'Exemple d’OKR de la FAQ : 15 séances de sport, 10 jours à 10 000 pas.',
+    reason: 'Exemple pédagogique d’objectif chiffré, pas une capacité ni une limite du produit.',
+    anchors: [{ key: 'faq.a2', includes: 'se remettre au sport' }],
+    proofs: [],
+    figures: { '15': ['faq.a2'], '10': ['faq.a2'], '000': ['faq.a2'] },
+  },
+  {
     id: 'okr-deux-a-cinq-kr',
     kind: 'editorial',
     claim: 'Un OKR = un objectif + 2 à 5 résultats clés.',
     reason:
       'Définition de la méthode, pas une limite du produit : il exige au moins un résultat clé et n’en plafonne aucun.',
     anchors: [
-      { key: 'faq.a2', includes: '2 à 5 résultats clés mesurables' },
       { key: 'prerender:/guide', includes: '2 à 5 résultats clés' },
     ],
     proofs: [],
-    figures: { '2': ['faq.a2', 'prerender:/guide'], '5': ['faq.a2', 'prerender:/guide'] },
+    figures: { '2': ['prerender:/guide'], '5': ['prerender:/guide'] },
   },
   {
     id: 'statistiques-vues',
@@ -240,23 +240,10 @@ export const PROMISES_PERSO: LandingPromise[] = [
     proofs: [{ file: 'src/pages/statistics/types.ts', has: "export type TimePeriod = 'day' | 'week' | 'month' | 'year';" }],
   },
   {
-    id: 'mobile-natif-web',
-    kind: 'produit',
-    claim: 'Interface mobile avec barre de navigation basse, glissé sur les tâches, bottom-sheets et safe area iOS.',
-    anchors: [{ key: 'faq.a5', includes: 'bottom navigation bar, gestes swipe sur les tâches, bottom-sheets fluides et support du safe area iOS' }],
-    proofs: [
-      { file: 'src/components/layout/MobileTabBar.tsx', re: 'export' },
-      { file: 'src/components/task-table/SwipeHintBanner.tsx', re: 'export' },
-      { file: 'src/components/mobile/BottomSheet.tsx', has: 'export default function BottomSheet' },
-      { file: 'src/index.css', has: 'safe-area-inset' },
-    ],
-  },
-  {
     id: 'sans-installation',
     kind: 'produit',
     claim: 'Cosmo est une application web, sans téléchargement.',
     anchors: [
-      { key: 'faq.a5', includes: 'sans téléchargement requis' },
       { key: 'about.namesAfter', includes: 'sans téléchargement' },
     ],
     proofs: [{ file: 'index.html', has: 'id="root"' }],

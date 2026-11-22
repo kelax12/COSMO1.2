@@ -15,7 +15,7 @@ import { TRACK_ANCHORS } from './landing/anchors';
 import { useT } from '@/i18n/useT';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { useLandingSeoMeta } from '@/lib/useSeoMeta';
-import { applyTheme, THEME_STORAGE_KEY } from '@/lib/theme';
+import { enterWithTheme } from '@/lib/theme';
 import { prerenderHeroShown } from '@/lib/prerender-hero';
 
 // Le track entreprise est un parcours entier (10 sections, un shader WebGL) que
@@ -190,22 +190,17 @@ const LandingPage: React.FC = () => {
 
   useFaqSchema();
 
-  // La démo entreprise ouvre toujours en noir (OLED), quel que soit le thème
-  // choisi par le visiteur sur la landing : c'est la DA du track entreprise
-  // (graphite `#08090C`, cyan, or) qui se poursuit dans le produit, pas une
-  // préférence système qui pourrait rouvrir sur `light`.
-  const forceNoirTheme = () => {
-    applyTheme(document.documentElement, 'noir');
-    localStorage.setItem(THEME_STORAGE_KEY, 'noir');
-  };
-
+  // La démo s'ouvre dans la DA de son parcours, quel que soit le thème du
+  // visiteur : clair pour le perso, noir (OLED) pour l'entreprise (graphite
+  // `#08090C`, cyan, or), pas une préférence système.
   const handleDemo = () => {
-    if (isEnterprise) forceNoirTheme();
+    enterWithTheme(isEnterprise ? 'noir' : 'light');
     loginDemo();
     setTimeout(() => navigate(isEnterprise ? '/entreprise' : '/dashboard'), 0);
   };
 
   const handleFeatureClick = (path: string) => {
+    enterWithTheme('light');
     loginDemo();
     navigate(path);
   };

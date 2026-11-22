@@ -11,7 +11,7 @@ export const PROMISES_ENTREPRISE: LandingPromise[] = [
     kind: 'limite',
     claim: 'Une organisation est gratuite jusqu’à 5 membres, sans carte bancaire.',
     anchors: [
-      { key: 'faq.a1', includes: "ne commence qu'au-delà de cinq membres" },
+      { key: 'faq.a1', includes: 'payant, au-delà de cinq membres' },
       { key: 'enterprise.hero.reassurance', includes: "Jusqu'à 5 membres gratuitement · sans carte bancaire" },
       { key: 'enterprise.pricing.ctaNote', includes: 'Gratuit jusqu\'à 5 membres' },
       { key: 'enterprise.cta.note', includes: "Gratuit jusqu'à 5 membres · sans carte bancaire" },
@@ -315,15 +315,6 @@ export const PROMISES_ENTREPRISE: LandingPromise[] = [
       '90': ['enterprise.okr.team3Kr1'],
       '40': ['enterprise.okr.team3Kr2'],
     },
-  },
-  {
-    id: 'habitudes-retention-maquette',
-    kind: 'illustration',
-    claim: 'La pastille « Rétention 71% » de la maquette des habitudes.',
-    reason: 'Valeur de décor d’une maquette d’interface, pas une statistique de produit.',
-    anchors: [{ key: 'why.retention', includes: 'Rétention 71%' }],
-    proofs: [],
-    figures: { '71': ['why.retention'] },
   },
   {
     id: 'entreprise-rapports-quotidiens',

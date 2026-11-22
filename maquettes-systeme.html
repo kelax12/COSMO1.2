@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Système connecté, 10 concepts</title>
+<style>
+:root{--ink:#0f172a;--mute:#475569;--soft:#94a3b8;--line:rgba(15,23,42,.08);--t:#3b82f6;--a:#ef4444;--o:#22c55e;--h:#eab308;--s:#8b5cf6}
+*{box-sizing:border-box}
+body{margin:0;background:#e9edf3;font-family:Inter,"Segoe UI",system-ui,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased}
+.lab{max-width:1180px;margin:60px auto 14px;padding:0 20px}
+.lab b{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#64748b}
+.lab h2{margin:4px 0 2px;font-size:24px;letter-spacing:-.02em}
+.lab p{margin:0;color:var(--mute);font-size:14px;max-width:760px}
+.st{max-width:1180px;margin:0 auto;background:#fff;border-radius:36px;padding:64px 56px;position:relative;overflow:hidden}
+.ttl{font-size:46px;font-weight:800;letter-spacing:-.035em;line-height:1.03;margin:0;text-align:center}
+.ttl.l{text-align:left}
+.sb{color:var(--mute);font-size:18px;line-height:1.55;margin:14px auto 0;max-width:640px;text-align:center}
+.hl{background:linear-gradient(var(--c,#93c5fd),var(--c,#93c5fd)) no-repeat 0 88%/100% .3em}
+.ico{width:34px;height:34px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
+.ico svg{width:18px;height:18px}
+.card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:16px}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600}
+@media(max-width:760px){.st{padding:40px 18px;border-radius:26px}.ttl{font-size:32px}}
+/* 1 constellation */
+.con{position:relative;height:460px;margin-top:30px}
+.con svg.w{position:absolute;inset:0;width:100%;height:100%}
+.con line{stroke:#e2e8f0;stroke-width:2;transition:stroke .3s,stroke-width .3s}
+.con line.on{stroke:var(--ink);stroke-width:2.5}
+.nd{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;font-weight:700;font-size:14px}
+.nd .ico{width:64px;height:64px;border-radius:22px;transition:transform .3s}
+.nd .ico svg{width:28px;height:28px}
+.nd:hover .ico{transform:scale(1.1) rotate(-4deg)}
+.why{position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);text-align:center;width:300px;font-size:14px;color:var(--mute);line-height:1.5;background:#fff;border:1px solid var(--line);border-radius:24px;padding:18px 20px;box-shadow:0 20px 40px -30px rgba(15,23,42,.4)}
+.why b{display:block;color:var(--ink);font-size:18px;margin-bottom:4px}
+/* 2 une tache cinq vies */
+.lives{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:36px;position:relative}
+.life{border-radius:24px;padding:18px;border:1px solid var(--line);position:relative;background:#fff}
+.life .n{font-size:12px;color:var(--soft);font-weight:700}
+.life h4{margin:10px 0 6px;font-size:16px}
+.life p{margin:0;font-size:13px;color:var(--mute);line-height:1.45}
+.life .thing{margin-top:12px;border-radius:12px;padding:8px 10px;font-size:12px;font-weight:600}
+.arrow{position:absolute;right:-12px;top:50%;width:10px;height:10px;border-top:2px solid var(--ink);border-right:2px solid var(--ink);transform:rotate(45deg);z-index:2}
+@media(max-width:900px){.lives{grid-template-columns:1fr}.arrow{display:none}}
+/* 3 drag demo */
+.dd{display:grid;grid-template-columns:280px 1fr;gap:20px;margin-top:34px}
+.task{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:8px;cursor:grab;background:#fff;font-size:14px;font-weight:600;user-select:none}
+.task .bar{width:4px;height:26px;border-radius:4px}
+.task.used{opacity:.35}
+.cal{border:1px solid var(--line);border-radius:22px;padding:14px;display:grid;grid-template-columns:44px repeat(3,1fr);gap:6px;position:relative}
+.cal .h{font-size:11px;color:var(--soft);padding-top:4px}
+.cal .d{font-size:12px;font-weight:700;color:var(--mute);text-align:center;padding-bottom:4px}
+.cal .c{height:46px;border-radius:10px;background:#f8fafc;transition:background .2s;position:relative}
+.cal .c.over{background:#e0e7ff}
+.ev{position:absolute;inset:3px;border-radius:9px;color:#fff;font-size:12px;font-weight:700;padding:5px 8px;animation:pop .45s cubic-bezier(.22,1.4,.36,1)}
+.ev small{display:block;font-weight:500;opacity:.9}
+@keyframes pop{from{transform:scale(.6);opacity:0}}
+.toast{margin-top:12px;font-size:13px;color:var(--mute);min-height:20px}
+@media(max-width:860px){.dd{grid-template-columns:1fr}}
+/* 4 avant apres */
+.ba{position:relative;height:380px;border-radius:28px;overflow:hidden;margin-top:34px;border:1px solid var(--line);user-select:none}
+.ba .side{position:absolute;inset:0;padding:28px}
+.ba .before{background:#f8fafc}
+.ba .after{background:#fff;clip-path:inset(0 0 0 50%)}
+.ba .knob{position:absolute;top:0;bottom:0;left:50%;width:2px;background:var(--ink);cursor:ew-resize}
+.ba .knob span{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800}
+.app{position:absolute;width:150px;border-radius:16px;background:#fff;border:1px dashed #cbd5e1;padding:10px;font-size:12px;color:var(--mute)}
+.app b{display:block;color:var(--ink);font-size:13px;margin-bottom:4px}
+.cap{position:absolute;top:18px;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+/* 5 fil d'une journee */
+.day{position:relative;margin:36px auto 0;max-width:720px}
+.day>svg{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.stop .ico{position:relative;z-index:1;box-shadow:0 0 0 6px #fff}
+.day path{fill:none;stroke:var(--ink);stroke-width:2.5;stroke-linecap:round;stroke-dasharray:2000;stroke-dashoffset:2000;transition:stroke-dashoffset 2.4s ease}
+.day.go path{stroke-dashoffset:0}
+.stop{position:relative;display:flex;align-items:center;gap:14px;width:46%;padding:14px 0}
+.stop:nth-child(odd){margin-left:auto;flex-direction:row-reverse;text-align:right}
+.stop .tm{font-size:12px;font-weight:800;color:var(--soft);width:44px}
+.stop .tx{font-size:14px;font-weight:600}
+.stop .tx small{display:block;color:var(--mute);font-weight:500}
+/* 6 tableau des combinaisons */
+.mx{display:grid;grid-template-columns:120px repeat(5,1fr);gap:8px;margin-top:34px}
+.mx .hd{font-size:13px;font-weight:800;display:flex;align-items:center;gap:8px;justify-content:center}
+.mx .rh{justify-content:flex-start}
+.cell{border-radius:16px;min-height:84px;padding:10px;font-size:12px;line-height:1.35;color:var(--mute);background:#f8fafc;transition:transform .2s}
+.cell b{display:block;color:var(--ink);font-size:13px;margin-bottom:3px}
+.cell.k{background:#fff;border:1px solid var(--line)}
+.cell.k:hover{transform:translateY(-3px)}
+.cell.self{background:transparent}
+@media(max-width:900px){.mx{grid-template-columns:repeat(3,1fr)}.mx .hd,.cell.self,.cell:not(.k){display:none}}
+/* 7 couleur partagee */
+.sw{display:flex;gap:10px;justify-content:center;margin-top:26px}
+.sw button{width:38px;height:38px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px var(--line);cursor:pointer}
+.sw button.on{box-shadow:0 0 0 2px var(--ink)}
+.trip{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:24px}
+.trip .card h5{margin:0 0 10px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--soft)}
+.dyn{transition:background .5s,color .5s,border-color .5s}
+@media(max-width:860px){.trip{grid-template-columns:1fr}}
+/* 8 engrenages */
+.gears{position:relative;height:360px;margin-top:20px}
+.gear{position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.gear svg.g{position:absolute;inset:0;width:100%;height:100%}
+.gear .lbl{position:relative;font-weight:800;font-size:13px;color:#fff;text-align:center}
+/* 9 console */
+.term{margin:34px auto 0;max-width:760px;border-radius:24px;background:var(--ink);color:#e2e8f0;padding:24px 26px;font-family:ui-monospace,Consolas,monospace;font-size:14px;line-height:1.9;min-height:270px}
+.term .p{color:#64748b}
+.term .k{font-weight:700}
+.cur{display:inline-block;width:8px;height:16px;background:#e2e8f0;vertical-align:-3px;animation:bl 1s steps(1) infinite}
+@keyframes bl{50%{opacity:0}}
+/* 10 interrupteurs */
+.sws{display:grid;grid-template-columns:1fr 1.2fr;gap:26px;margin-top:34px;align-items:center}
+.tg{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:18px;padding:12px 14px;margin-bottom:10px;font-weight:700;font-size:14px}
+.tg .l{display:flex;align-items:center;gap:10px}
+.tg input{display:none}
+.tg i{width:46px;height:26px;border-radius:999px;background:#e2e8f0;position:relative;transition:.25s;cursor:pointer}
+.tg i:after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.25s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.tg input:checked+i{background:var(--ink)}
+.tg input:checked+i:after{left:23px}
+.res{border-radius:28px;background:#f8fafc;padding:26px;min-height:300px}
+.res h4{margin:0 0 4px;font-size:26px;letter-spacing:-.02em}
+.res .lnk{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;padding:8px 0;color:#1e293b;animation:pop .35s ease}
+.res .lnk .dot{width:8px;height:8px;border-radius:50%;background:var(--ink)}
+@media(max-width:860px){.sws{grid-template-columns:1fr}}
+</style></head><body>
+
+<div class="lab"><b>Concept 1</b><h2>La constellation</h2><p>Les 5 modules en étoile, reliés par des traits d'encre. Survoler un module allume ses liaisons réelles et explique ce qui circule.</p></div>
+<section class="st">
+  <h2 class="ttl">Pas une app de plus.<br><span class="hl">Un système connecté.</span></h2>
+  <div class="con" id="con"><svg class="w" id="conl"></svg><div class="why" id="why"><b>Survolez un module</b>pour voir ce qu'il échange avec les autres.</div></div>
+</section>
+
+<div class="lab"><b>Concept 2</b><h2>Une tâche, cinq vies</h2><p>On suit une seule tâche de bout en bout. Le visiteur comprend la connexion par une histoire, pas par une liste de fonctions.</p></div>
+<section class="st">
+  <h2 class="ttl">Une tâche. <span class="hl" style="--c:#fde047">Cinq vies.</span></h2>
+  <p class="sb">« Réviser le chapitre 4 » traverse tout Cosmo, sans jamais être ressaisie.</p>
+  <div class="lives" id="lives"></div>
+</section>
+
+<div class="lab"><b>Concept 3</b><h2>Essayez, ici</h2><p>Une vraie mini-démo dans la landing : on glisse une tâche dans l'agenda, l'événement se crée à la couleur de sa catégorie. La preuve par le geste.</p></div>
+<section class="st">
+  <h2 class="ttl">Glissez une tâche.<br><span class="hl" style="--c:#fca5a5">Regardez-la devenir un créneau.</span></h2>
+  <div class="dd"><div id="tasks"></div><div><div class="cal" id="cal"></div><div class="toast" id="toast">Glissez une tâche sur un créneau.</div></div></div>
+</section>
+
+<div class="lab"><b>Concept 4</b><h2>Avant, après</h2><p>Un curseur à tirer : à gauche, cinq apps séparées et la même info recopiée partout ; à droite, Cosmo où tout est relié.</p></div>
+<section class="st">
+  <h2 class="ttl">Tirez le curseur.</h2>
+  <div class="ba" id="ba">
+    <div class="side before"><span class="cap" style="left:28px;color:#94a3b8">Avant · 5 apps</span>
+      <div class="app" style="left:6%;top:70px;transform:rotate(-4deg)"><b>App de tâches</b>Réviser chapitre 4</div>
+      <div class="app" style="left:24%;top:200px;transform:rotate(3deg)"><b>Calendrier</b>Réviser chapitre 4 (recopié)</div>
+      <div class="app" style="left:4%;top:270px;transform:rotate(2deg)"><b>Tableur d'objectifs</b>Partiels : ? %</div>
+      <div class="app" style="left:30%;top:80px;transform:rotate(-2deg)"><b>Tracker d'habitudes</b>Révision quotidienne</div>
+    </div>
+    <div class="side after" id="after"><span class="cap" style="right:28px;color:var(--ink)">Avec Cosmo · 1 système</span>
+      <div style="position:absolute;left:58%;right:6%;top:80px">
+        <div class="card" style="display:flex;align-items:center;gap:12px;border-radius:20px"><span class="ico" style="background:var(--t)" data-i="t"></span><div style="font-weight:700">Réviser le chapitre 4<div style="font-size:12px;color:var(--mute);font-weight:500">Une seule saisie</div></div></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+          <span class="pill" style="background:#fee2e2;color:#991b1b">Mardi 10 h</span>
+          <span class="pill" style="background:#dcfce7;color:#166534">Partiels : résultat clé lié</span>
+          <span class="pill" style="background:#fef9c3;color:#854d0e">Habitude : révision</span>
+          <span class="pill" style="background:#ede9fe;color:#5b21b6">Compté dans vos stats</span>
+        </div>
+      </div>
+    </div>
+    <div class="knob" id="knob"><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6-6 6 6 6M15 6l6 6-6 6"/></svg></span></div>
+  </div>
+</section>
+
+<div class="lab"><b>Concept 5</b><h2>Le fil d'une journée</h2><p>Un seul trait d'encre qui serpente entre les moments d'une journée, d'un module à l'autre. Il se dessine quand la section entre à l'écran.</p></div>
+<section class="st">
+  <h2 class="ttl">Une journée,<br><span class="hl" style="--c:#86efac">un seul fil.</span></h2>
+  <div class="day" id="day"><svg id="dayp"><path id="path"/></svg></div>
+  <div style="text-align:center;margin-top:20px"><button class="pill" style="border:1px solid var(--line);background:#fff;cursor:pointer" onclick="drawDay()">Redessiner le fil</button></div>
+</section>
+
+<div class="lab"><b>Concept 6</b><h2>La table des combinaisons</h2><p>Chaque croisement de deux modules a un nom et un bénéfice. On montre que la valeur est dans les liaisons, pas dans les modules.</p></div>
+<section class="st">
+  <h2 class="ttl">La valeur est<br><span class="hl" style="--c:#c4b5fd">dans les liaisons.</span></h2>
+  <div class="mx" id="mx"></div>
+</section>
+
+<div class="lab"><b>Concept 7</b><h2>Une couleur, partout</h2><p>On change la couleur d'une catégorie : la tâche, l'événement et la statistique changent ensemble, en direct. Simple, immédiat, vrai.</p></div>
+<section class="st">
+  <h2 class="ttl">Changez une couleur.<br><span class="hl">Tout suit.</span></h2>
+  <p class="sb">La catégorie « Études » est la même dans chaque module.</p>
+  <div class="sw" id="sw"></div>
+  <div class="trip">
+    <div class="card"><h5>Tâches</h5><div class="task dyn" style="cursor:default;margin:0" id="d1"><span class="bar dyn" id="d1b"></span>Réviser le chapitre 4</div></div>
+    <div class="card"><h5>Agenda</h5><div class="dyn" id="d2" style="border-radius:12px;color:#fff;padding:12px;font-weight:700;font-size:14px">10:00 · Réviser le chapitre 4</div></div>
+    <div class="card"><h5>Statistiques</h5><div style="display:flex;align-items:flex-end;gap:8px;height:70px"><div class="dyn" id="d3a" style="flex:1;height:70%;border-radius:8px"></div><div style="flex:1;height:40%;border-radius:8px;background:#e2e8f0"></div><div class="dyn" id="d3b" style="flex:1;height:90%;border-radius:8px"></div><div style="flex:1;height:30%;border-radius:8px;background:#e2e8f0"></div></div></div>
+  </div>
+</section>
+
+<div class="lab"><b>Concept 8</b><h2>Les engrenages</h2><p>Cinq roues dentées imbriquées. Le scroll fait tourner l'une, toutes tournent : agir dans un module fait avancer les autres.</p></div>
+<section class="st">
+  <h2 class="ttl">Tournez une roue.<br><span class="hl" style="--c:#fde047">Tout avance.</span></h2>
+  <div class="gears" id="gears"></div>
+  <p class="sb" style="font-size:14px">Faites défiler la page : les roues suivent le scroll.</p>
+</section>
+
+<div class="lab"><b>Concept 9</b><h2>Le journal de bord</h2><p>Une console qui s'écrit seule et montre la réaction en chaîne d'une seule action. Ton technique et précis, qui parle aux profils exigeants.</p></div>
+<section class="st">
+  <h2 class="ttl">Une action.<br><span class="hl" style="--c:#fca5a5">La réaction en chaîne.</span></h2>
+  <div class="term" id="term"></div>
+</section>
+
+<div class="lab"><b>Concept 10</b><h2>Construisez votre système</h2><p>Le visiteur active les modules un à un ; à chaque interrupteur, les liaisons qui s'ouvrent apparaissent. Il assemble lui-même le système, et voit pourquoi le tout vaut plus que les parties.</p></div>
+<section class="st">
+  <h2 class="ttl l">Activez les modules.<br><span class="hl" style="--c:#86efac">Regardez-les se parler.</span></h2>
+  <div class="sws"><div id="tgs"></div><div class="res" id="res"></div></div>
+</section>
+<div style="height:70px"></div>
+
+<script>
+const IC={t:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="m8 12 3 3 5-6"/></svg>',
+a:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>',
+o:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>',
+h:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 7 2 2 4-4M4 17l2 2 4-4M13 7h7M13 17h7"/></svg>',
+s:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 20V11M12 20V4M19 20v-6"/></svg>'};
+const N={t:'Tâches',a:'Agenda',o:'OKR',h:'Habitudes',s:'Statistiques'};
+const ic=(k,st='')=>`<span class="ico" style="background:var(--${k});${st}">${IC[k]}</span>`;
+document.querySelectorAll('[data-i]').forEach(e=>e.innerHTML=IC[e.dataset.i]);
+const LINKS={'t-a':'Une tâche glissée dans l\'agenda devient un événement lié.','t-o':'Une tâche rattachée à un résultat clé le fait progresser.','h-t':'Une habitude crée sa tâche les jours prévus.','t-s':'Le temps des tâches remonte dans vos statistiques.','a-s':'Le temps planifié remonte dans vos statistiques.','o-s':'La progression des objectifs se lit dans les statistiques.','h-s':'La régularité des habitudes se mesure dans les statistiques.'};
+const has=(x,y)=>LINKS[x+'-'+y]||LINKS[y+'-'+x];
+
+/* 1 */
+(()=>{const box=document.getElementById('con'),svg=document.getElementById('conl'),why=document.getElementById('why');
+const P={t:[50,10],a:[88,38],s:[74,88],o:[26,88],h:[12,38]};
+const keys=Object.keys(P);let lines=[];
+keys.forEach((x,i)=>keys.slice(i+1).forEach(y=>{if(!has(x,y))return;const l=document.createElementNS('http://www.w3.org/2000/svg','line');l.setAttribute('x1',P[x][0]+'%');l.setAttribute('y1',P[x][1]+'%');l.setAttribute('x2',P[y][0]+'%');l.setAttribute('y2',P[y][1]+'%');l.dataset.k=x+y;svg.appendChild(l);lines.push(l)}));
+keys.forEach(k=>{const d=document.createElement('div');d.className='nd';d.style.left=P[k][0]+'%';d.style.top=P[k][1]+'%';d.innerHTML=ic(k)+N[k];
+d.onmouseenter=()=>{lines.forEach(l=>l.classList.toggle('on',l.dataset.k.includes(k)));const out=keys.filter(o=>o!==k&&has(k,o)).map(o=>has(k,o));why.innerHTML=`<b>${N[k]}</b>${out.join('<br>')}`};
+box.appendChild(d)});})();
+
+/* 2 */
+document.getElementById('lives').innerHTML=[
+['t','Créée','Notée en dix secondes, catégorie Études.','#dbeafe','#1e40af','Réviser le chapitre 4'],
+['a','Planifiée','Glissée sur mardi 10 h : l\'événement est lié.','#fee2e2','#991b1b','Mar. 10:00 · 1 h'],
+['o','Comptée','Rattachée au résultat clé « Valider les partiels ».','#dcfce7','#166534','Partiels : en progression'],
+['h','Ancrée','Elle nourrit l\'habitude « Réviser chaque jour ».','#fef9c3','#854d0e','Série en cours'],
+['s','Mesurée','Son heure rejoint votre répartition du temps.','#ede9fe','#5b21b6','Études : +1 h']].map((l,i,a)=>`<div class="life">${ic(l[0])}<div class="n" style="margin-top:12px">0${i+1}</div><h4>${l[1]}</h4><p>${l[2]}</p><div class="thing" style="background:${l[3]};color:${l[4]}">${l[5]}</div>${i<a.length-1?'<span class="arrow"></span>':''}</div>`).join('');
+
+/* 3 */
+(()=>{const T=[['Réviser le chapitre 4','Études','#3b82f6'],['Appeler le client','Travail','#ef4444'],['Séance de sport','Santé','#22c55e']];
+const tk=document.getElementById('tasks');tk.innerHTML='<div style="font-size:12px;font-weight:800;letter-spacing:.12em;color:#94a3b8;margin-bottom:10px">VOS TÂCHES</div>'+T.map((t,i)=>`<div class="task" draggable="true" data-i="${i}"><span class="bar" style="background:${t[2]}"></span>${t[0]}</div>`).join('');
+const cal=document.getElementById('cal');let html='<span></span><div class="d">Lun</div><div class="d">Mar</div><div class="d">Mer</div>';
+['9h','10h','11h','14h'].forEach(h=>{html+=`<div class="h">${h}</div>`+[0,1,2].map(()=>`<div class="c"></div>`).join('')});cal.innerHTML=html;
+let drag=null;tk.querySelectorAll('.task').forEach(e=>{e.ondragstart=()=>drag=+e.dataset.i});
+cal.querySelectorAll('.c').forEach(c=>{c.ondragover=e=>{e.preventDefault();c.classList.add('over')};c.ondragleave=()=>c.classList.remove('over');
+c.ondrop=e=>{e.preventDefault();c.classList.remove('over');if(drag==null||c.firstChild)return;const t=T[drag];c.innerHTML=`<div class="ev" style="background:${t[2]}">${t[0]}<small>${t[1]} · liée</small></div>`;tk.querySelector(`[data-i="${drag}"]`).classList.add('used');document.getElementById('toast').textContent=`Événement créé, lié à « ${t[0]} », à la couleur de ${t[1]}.`;drag=null}});})();
+
+/* 4 */
+(()=>{const ba=document.getElementById('ba'),kn=document.getElementById('knob'),af=document.getElementById('after');let on=false;
+const set=x=>{const r=ba.getBoundingClientRect();let p=Math.min(95,Math.max(5,(x-r.left)/r.width*100));kn.style.left=p+'%';af.style.clipPath=`inset(0 0 0 ${p}%)`};
+kn.onpointerdown=e=>{on=true;kn.setPointerCapture(e.pointerId)};kn.onpointermove=e=>on&&set(e.clientX);kn.onpointerup=()=>on=false;ba.onclick=e=>set(e.clientX);})();
+
+/* 5 */
+const STOPS=[['7:30','h','Méditation','Habitude cochée'],['9:00','a','Cours de droit','Agenda'],['10:00','t','Réviser le chapitre 4','Tâche glissée en créneau'],['14:00','o','Partiels : résultat clé','Progression mise à jour'],['18:00','h','Sport','Série prolongée'],['21:00','s','Bilan de la journée','6 h utiles, réparties']];
+(()=>{const d=document.getElementById('day');d.insertAdjacentHTML('beforeend',STOPS.map(s=>`<div class="stop">${ic(s[1])}<span class="tm">${s[0]}</span><span class="tx">${s[2]}<small>${s[3]}</small></span></div>`).join(''));})();
+function drawDay(){const d=document.getElementById('day'),p=document.getElementById('path'),r=d.getBoundingClientRect();
+const pts=[...d.querySelectorAll('.stop .ico')].map(i=>{const b=i.getBoundingClientRect();return [b.left-r.left+b.width/2,b.top-r.top+b.height/2]});
+let s=`M${pts[0][0]},${pts[0][1]}`;for(let i=1;i<pts.length;i++){const [x0,y0]=pts[i-1],[x1,y1]=pts[i],m=(y0+y1)/2;s+=` C${x0},${m} ${x1},${m} ${x1},${y1}`}
+p.setAttribute('d',s);d.classList.remove('go');void d.offsetWidth;d.classList.add('go')}
+new IntersectionObserver(es=>es.forEach(e=>e.isIntersecting&&drawDay()),{threshold:.4}).observe(document.getElementById('day'));
+
+/* 6 */
+(()=>{const K=['t','a','o','h','s'];const NAMES={'t-a':['Time-blocking','La tâche devient un créneau.'],'t-o':['Exécution','Chaque tâche fait avancer un objectif.'],'h-t':['Automatisme','L\'habitude crée sa tâche.'],'t-s':['Clarté','Le temps des tâches se mesure.'],'a-s':['Réalité','Le planifié face au réel.'],'o-s':['Cap','La progression se lit d\'un coup d\'œil.'],'h-s':['Régularité','La constance devient visible.']};
+const nm=(x,y)=>NAMES[x+'-'+y]||NAMES[y+'-'+x];
+let h='<span></span>'+K.map(k=>`<div class="hd">${ic(k,'width:26px;height:26px;border-radius:8px')}</div>`).join('');
+K.forEach((r,ri)=>{h+=`<div class="hd rh">${ic(r,'width:26px;height:26px;border-radius:8px')}${N[r]}</div>`;K.forEach((c,ci)=>{if(ci<=ri){h+='<div class="cell self"></div>';return}const n=nm(r,c);h+=n?`<div class="cell k"><b>${n[0]}</b>${n[1]}</div>`:'<div class="cell"></div>'})});
+document.getElementById('mx').innerHTML=h;})();
+
+/* 7 */
+(()=>{const C=['#3b82f6','#8b5cf6','#ef4444','#22c55e','#eab308','#0f172a'];const sw=document.getElementById('sw');
+const ap=c=>{document.getElementById('d1b').style.background=c;document.getElementById('d1').style.borderColor=c+'55';document.getElementById('d2').style.background=c;document.getElementById('d3a').style.background=c;document.getElementById('d3b').style.background=c;[...sw.children].forEach(b=>b.classList.toggle('on',b.dataset.c===c))};
+C.forEach(c=>{const b=document.createElement('button');b.style.background=c;b.dataset.c=c;b.setAttribute('aria-label','Couleur '+c);b.onclick=()=>ap(c);sw.appendChild(b)});ap(C[0]);})();
+
+/* 8 */
+(()=>{
+/* Engrenages en chaîne, dents de même pas : rayon proportionnel au nombre de dents, centres à R1+R2. */
+const PITCH=11, G=[['h',12],['a',16],['t',22],['o',16],['s',12]];
+const gearPath=(n,R)=>{const r=R-9;let d='';for(let i=0;i<n;i++){const a=i/n*2*Math.PI,w=Math.PI/n;const pts=[[r,a-w*.55],[R,a-w*.28],[R,a+w*.28],[r,a+w*.55]];pts.forEach(([rr,aa],j)=>{d+=(i===0&&j===0?'M':'L')+(rr*Math.cos(aa)).toFixed(1)+','+(rr*Math.sin(aa)).toFixed(1)})}return d+'Z'};
+const box=document.getElementById('gears');const W=box.clientWidth||1000;
+const radii=G.map(g=>g[1]*PITCH/(2*Math.PI)*2.2);
+let x=0;const xs=radii.map((R,i)=>{if(i)x+=radii[i-1]+R-6;return x});
+const off=(W-(xs[xs.length-1]))/2;const cy=170;
+box.innerHTML=G.map((g,i)=>{const R=radii[i];const y=cy+(i%2?28:-10);return `<div class="gear" style="left:${off+xs[i]-R}px;top:${y-R}px;width:${2*R}px;height:${2*R}px" data-dir="${i%2?-1:1}" data-n="${g[1]}" data-ph="${i%2?180/g[1]:0}"><svg class="g" viewBox="${-R} ${-R} ${2*R} ${2*R}"><path d="${gearPath(g[1],R)}" fill="var(--${g[0]})"/><circle r="${R*.32}" fill="#fff"/></svg><span class="lbl" style="position:absolute;top:${2*R+10}px;color:var(--ink);white-space:nowrap">${N[g[0]]}</span></div>`}).join('');
+const gs=[...box.querySelectorAll('.gear')];
+const tick=()=>{const y=scrollY*0.6;gs.forEach(g=>{g.querySelector('svg').style.transform=`rotate(${(+g.dataset.ph)+g.dataset.dir*y*22/g.dataset.n}deg)`});requestAnimationFrame(tick)};tick();})();
+
+/* 9 */
+(()=>{const L=[['›','t','tâche cochée','« Réviser le chapitre 4 »'],['  ↳','a','agenda','l\'événement de mardi 10 h passe en fait'],['  ↳','o','okr','« Valider les partiels » progresse'],['  ↳','h','habitude','« Réviser chaque jour » : série prolongée'],['  ↳','s','stats','Études : +1 h cette semaine'],['›','','','aucune ressaisie.']];
+const term=document.getElementById('term');let li=0,ci=0,buf='';
+const col={t:'#60a5fa',a:'#f87171',o:'#4ade80',h:'#facc15',s:'#a78bfa'};
+const lineHtml=(l,txt)=>`<span class="p">${l[0]}</span> ${l[1]?`<span class="k" style="color:${col[l[1]]}">${l[2]}</span> `:''}${txt}`;
+const step=()=>{if(li>=L.length){term.innerHTML=buf+'<span class="cur"></span>';setTimeout(()=>{li=0;ci=0;buf='';step()},3500);return}
+const l=L[li];ci++;term.innerHTML=buf+lineHtml(l,l[3].slice(0,ci))+'<span class="cur"></span>';
+if(ci>=l[3].length){buf+=lineHtml(l,l[3])+'<br>';li++;ci=0;setTimeout(step,380)}else setTimeout(step,22)};step();})();
+
+/* 10 */
+(()=>{const K=['t','a','o','h','s'];const st={t:true,a:false,o:false,h:false,s:false};const tg=document.getElementById('tgs'),res=document.getElementById('res');
+const render=()=>{const on=K.filter(k=>st[k]);const ls=[];on.forEach((x,i)=>on.slice(i+1).forEach(y=>{const v=has(x,y);if(v)ls.push(v)}));
+res.innerHTML=`<div style="font-size:12px;font-weight:800;letter-spacing:.12em;color:#94a3b8">VOTRE SYSTÈME</div><h4>${on.length} module${on.length>1?'s':''}, ${ls.length} liaison${ls.length>1?'s':''}</h4><div style="display:flex;gap:6px;margin:10px 0 14px">${on.map(k=>ic(k,'width:28px;height:28px;border-radius:9px')).join('')}</div>${ls.length?ls.map(l=>`<div class="lnk"><span class="dot"></span>${l}</div>`).join(''):'<p style="color:#64748b;margin:0">Un module seul ne parle à personne. Activez-en un deuxième.</p>'}`};
+tg.innerHTML=K.map(k=>`<label class="tg"><span class="l">${ic(k,'width:30px;height:30px;border-radius:10px')}${N[k]}</span><input type="checkbox" data-k="${k}" ${st[k]?'checked':''}><i></i></label>`).join('');
+tg.querySelectorAll('input').forEach(i=>i.onchange=()=>{st[i.dataset.k]=i.checked;render()});render();})();
+</script>
+</body></html>
