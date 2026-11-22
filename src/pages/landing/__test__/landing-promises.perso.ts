@@ -93,17 +93,6 @@ export const PROMISES_PERSO: LandingPromise[] = [
     figures: { '30': ['faq.a4', 'prerender:/guide'] },
   },
   {
-    id: 'un-clic',
-    kind: 'indicatif',
-    claim: 'Démo prête en 1 clic ; réorganisation d’un rattachement en 1 clic.',
-    reason: 'Nombre de gestes, non mesurable par le code.',
-    anchors: [
-      { key: 'enterprise.pyramid.b4t', includes: 'Une réorganisation en 1 clic' },
-    ],
-    proofs: [],
-    figures: { '1': ['enterprise.pyramid.b4t'] },
-  },
-  {
     id: 'google-oauth',
     kind: 'produit',
     claim: 'On peut s’inscrire et se connecter avec Google.',

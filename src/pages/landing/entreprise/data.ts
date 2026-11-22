@@ -33,8 +33,6 @@ const shot = (name: string) => `/screenshots/entreprise/${name}.webp`;
  */
 export const SHOTS: Record<string, AppShotRef> = {
   overview: { id: 'overview', labelKey: 'enterprise.shot.overview', image: shot('apercu'), altKey: 'enterprise.shot.overviewAlt' },
-  pyramid: { id: 'pyramid', labelKey: 'enterprise.shot.pyramid', image: shot('pyramide'), altKey: 'enterprise.shot.pyramidAlt' },
-  members: { id: 'members', labelKey: 'enterprise.shot.members', image: shot('membres'), altKey: 'enterprise.shot.membersAlt' },
   projects: { id: 'projects', labelKey: 'enterprise.shot.projects', image: shot('projets'), altKey: 'enterprise.shot.projectsAlt' },
   projectsPlanning: { id: 'projectsPlanning', labelKey: 'enterprise.shot.projectsPlanning', image: shot('projets-planning'), altKey: 'enterprise.shot.projectsPlanningAlt' },
   projectsPortfolio: { id: 'projectsPortfolio', labelKey: 'enterprise.shot.projectsPortfolio', image: shot('projets-portefeuille'), altKey: 'enterprise.shot.projectsPortfolioAlt' },

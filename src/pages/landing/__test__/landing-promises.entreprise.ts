@@ -118,16 +118,20 @@ export const PROMISES_ENTREPRISE: LandingPromise[] = [
 
   // ─── Entreprise : organigramme, périmètres, vie privée ──────────────
   {
-    id: 'entreprise-organigramme',
+    id: 'entreprise-equipes-et-roles',
     kind: 'produit',
-    claim: 'Chaque membre a un seul responsable ; une personne peut être dans plusieurs équipes.',
+    claim: 'Une personne peut être dans plusieurs équipes ; un projet n’est visible que par ses équipes ; les rôles personnalisés règlent les droits.',
     anchors: [
-      { key: 'enterprise.pyramid.g2d', includes: 'Chaque membre a un seul responsable' },
       { key: 'enterprise.pyramid.g3d', includes: 'Une personne peut appartenir à plusieurs équipes' },
+      { key: 'enterprise.pyramid.g3d', includes: "Un projet n'est visible que par ses équipes" },
+      { key: 'enterprise.pyramid.g2d', includes: 'cochez leurs droits' },
+      { key: 'enterprise.pyramid.g1d', includes: "le rôle par défaut" },
     ],
     proofs: [
-      { file: 'supabase/migration/066_org_hierarchy.sql', re: 'manager_id' },
       { file: 'supabase/migration/068_org_teams.sql', re: 'org_team_members' },
+      { file: 'supabase/migration/243_regle_unique_projet_equipe.sql', re: 'my_team_project_ids' },
+      { file: 'src/modules/organizations/roles.types.ts', has: 'grantedKeys: OrgPermissionKey[];' },
+      { file: 'src/modules/organizations/CLAUDE.md', has: 'default_role_id' },
     ],
   },
   {
@@ -165,13 +169,6 @@ export const PROMISES_ENTREPRISE: LandingPromise[] = [
       { file: 'supabase/migration/081_event_privacy_owner_transfer.sql', re: 'private' },
       { file: 'CLAUDE.md', has: '**jamais** les modules perso réutilisés' },
     ],
-  },
-  {
-    id: 'entreprise-agenda-des-reports',
-    kind: 'produit',
-    claim: 'Un responsable crée et modifie les événements de ses reports ; le personnel reste privé.',
-    anchors: [{ key: 'enterprise.pyramid.b3d', includes: 'Un responsable crée, déplace et modifie les événements' }],
-    proofs: [{ file: 'src/modules/events/repository.ts', has: 'createForUser' }],
   },
   {
     id: 'entreprise-droits-reglables',
@@ -294,6 +291,22 @@ export const PROMISES_ENTREPRISE: LandingPromise[] = [
       { key: 'enterprise.okr.b3', includes: "visible par toute l'entreprise" },
     ],
     proofs: [{ file: 'src/modules/team-okrs/types.ts', re: 'cloisonnement de visibilité' }],
+  },
+  {
+    id: 'entreprise-perimetre-exemple',
+    kind: 'illustration',
+    claim: 'Ce que voit « Léa » à l’étape 1 (Lancement v2, 7 tâches, 214 autres tâches).',
+    reason: 'Personne et organisation fictives : ces chiffres illustrent le périmètre, ils ne mesurent rien.',
+    anchors: [
+      { key: 'enterprise.pyramid.sees3', includes: 'tâches de la semaine' },
+      { key: 'enterprise.pyramid.hidden3', includes: 'autres tâches' },
+    ],
+    proofs: [],
+    figures: {
+      '2': ['enterprise.pyramid.sees2'],
+      '7': ['enterprise.pyramid.sees3'],
+      '214': ['enterprise.pyramid.hidden3'],
+    },
   },
   {
     id: 'entreprise-okr-exemple',
