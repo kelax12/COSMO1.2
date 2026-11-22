@@ -16,6 +16,8 @@
       "tasksAlt": "Onglet Tâches : les tâches de toute l'organisation, avec listes partagées, préréglages de filtres, tri et vue Liste ou Tableau.",
       "tasksBoard": "Tâches · vue Tableau",
       "tasksBoardAlt": "Onglet Tâches en vue Tableau : une colonne par statut, à faire, en cours, en relecture, bloquée, terminée, avec les retards signalés.",
+      "tasksDeps": "Fiche d'une tâche · Dépendances",
+      "tasksDepsAlt": "Fiche de la tâche « Audit accessibilité WCAG », onglet Dépendances : bloquée par « Intégration du header responsive », en attente d'une tâche non terminée.",
       "projectsPortfolio": "Projets · vue Portefeuille",
       "projectsPortfolioAlt": "Onglet Projets en vue Portefeuille : chaque projet avec son responsable, son statut, sa période, son avancement et ce qui le bloque.",
       "reports": "Rapports d'activité",
@@ -86,14 +88,20 @@
       "viewPortfolio": "Portefeuille"
     },
     "execution": {
-      "title": "Suivez l'exécution, pas les échéances.",
-      "subtitle": "<hl>Statuts, dépendances, chemin critique.</hl> Vous voyez ce qui avance et ce qui bloque.",
-      "p1t": "Un seul tableau",
-      "p1d": "Toutes les tâches de vos projets. Préréglages, listes partagées, tri, regroupement, en liste ou en kanban.",
+      "title": "Suivez l'exécution.",
+      "subtitle": "<hl>Statuts, état et dépendances.</hl> Vous voyez ce qui avance et ce qui bloque.",
+      "p1t": "4 états",
+      "p1d": "Les responsables d'une tâche modifient son état, pour régler un problème avant qu'il ne soit trop tard.",
       "p2t": "Cinq statuts",
       "p2d": "À faire, en cours, en relecture, bloquée, terminée. Une relecture se valide ou se renvoie en un clic.",
       "p3t": "Ce qui bloque quoi",
-      "p3d": "Reliez les tâches. Cosmo calcule le chemin critique : la chaîne où chaque retard décale la livraison."
+      "p3d": "Reliez les tâches pour montrer ce qui bloque quoi.",
+      "healthAria": "Menu État d'une tâche : dans les temps, à risque, en difficulté, atteint",
+      "healthLabel": "État",
+      "healthOnTrack": "Dans les temps",
+      "healthAtRisk": "À risque",
+      "healthOffTrack": "En difficulté",
+      "healthDone": "Atteint"
     },
     "okr": {
       "title": "Posez vos objectifs, à toutes les échelles.",

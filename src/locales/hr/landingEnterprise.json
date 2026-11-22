@@ -16,6 +16,8 @@
       "tasksAlt": "Kartica Zadaci: svi zadaci u organizaciji, sa zajedničkim popisima, unaprijed postavljenim filtrima, sortiranjem i prikazom Popis ili Ploča.",
       "tasksBoard": "Zadaci · Prikaz ploče",
       "tasksBoardAlt": "Kartica Zadaci u prikazu Ploča: jedan stupac po statusu, za obaviti, u tijeku, na pregledu, blokirano, obavljeno, uz označene zakašnjele zadatke.",
+      "tasksDeps": "Kartica zadatka · Ovisnosti",
+      "tasksDepsAlt": "Kartica zadatka „WCAG revizija pristupačnosti“, kartica Ovisnosti: blokira ga „Integracija responzivnog zaglavlja“, čeka jedan nedovršeni zadatak.",
       "projectsPortfolio": "Projekti · Prikaz portfelja",
       "projectsPortfolioAlt": "Kartica Projekti u prikazu Portfelj: svaki projekt s voditeljem, statusom, razdobljem, napretkom i onim što ga blokira.",
       "reports": "Izvješća o aktivnosti",
@@ -86,14 +88,20 @@
       "viewPortfolio": "Portfelj"
     },
     "execution": {
-      "title": "Pratite izvršenje, ne rokove.",
-      "subtitle": "<hl>Statusi, ovisnosti, kritični put.</hl> Vidite što napreduje, a što blokira.",
-      "p1t": "Jedna tablica",
-      "p1d": "Svi zadaci vaših projekata. Gotovi filtri, zajednički popisi, sortiranje, grupiranje, kao popis ili ploča.",
+      "title": "Pratite izvršenje.",
+      "subtitle": "<hl>Statusi, stanje i ovisnosti.</hl> Vidite što napreduje, a što blokira.",
+      "p1t": "4 stanja",
+      "p1d": "Nositelji zadatka mijenjaju njegovo stanje, kako bi se problem riješio prije nego što bude prekasno.",
       "p2t": "Pet statusa",
       "p2d": "Za obaviti, u tijeku, na pregledu, blokirano, obavljeno. Pregled se odobrava ili vraća jednim klikom.",
       "p3t": "Što blokira što",
-      "p3d": "Povežite zadatke. Cosmo izračunava kritični put: lanac u kojem svako kašnjenje odgađa isporuku."
+      "p3d": "Povežite zadatke kako biste pokazali što blokira što.",
+      "healthAria": "Izbornik Stanje zadatka: u roku, u riziku, u poteškoćama, postignuto",
+      "healthLabel": "Stanje",
+      "healthOnTrack": "U roku",
+      "healthAtRisk": "U riziku",
+      "healthOffTrack": "U poteškoćama",
+      "healthDone": "Postignuto"
     },
     "okr": {
       "title": "Postavite ciljeve na svakoj razini.",

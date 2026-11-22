@@ -250,11 +250,17 @@ export const PROMISES_ENTREPRISE: LandingPromise[] = [
     figures: { '5': ['enterprise.execution.p2t'] },
   },
   {
-    id: 'entreprise-chemin-critique',
+    id: 'entreprise-etat-des-taches',
     kind: 'produit',
-    claim: 'Le planning calcule le chemin critique.',
-    anchors: [{ key: 'enterprise.execution.p3d', includes: 'chemin critique' }],
-    proofs: [{ file: 'src/components/organization/critical-path.helpers.ts', re: 'export' }],
+    claim: 'Une tâche d’équipe porte un état déclaré parmi quatre (dans les temps, à risque, en difficulté, atteint).',
+    anchors: [
+      { key: 'enterprise.execution.p1t', includes: '4 états' },
+      { key: 'enterprise.execution.healthOffTrack', includes: 'En difficulté' },
+    ],
+    proofs: [
+      { file: 'supabase/migration/204_team_task_health.sql', re: "health IN \\('on_track', 'at_risk', 'off_track'\\)" },
+    ],
+    figures: { '4': ['enterprise.execution.p1t'] },
   },
   {
     id: 'entreprise-vues-projets',
@@ -262,7 +268,6 @@ export const PROMISES_ENTREPRISE: LandingPromise[] = [
     claim: 'Les projets se voient en liste, planning ou portefeuille ; les tâches en liste ou kanban.',
     anchors: [
       { key: 'enterprise.projects.p2d', includes: 'La liste pour le détail des tâches' },
-      { key: 'enterprise.execution.p1d', includes: 'en liste ou en kanban' },
     ],
     proofs: [
       { file: 'src/modules/team-projects/portfolio.hooks.ts', re: 'export' },
