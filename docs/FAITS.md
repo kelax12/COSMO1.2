@@ -22,7 +22,7 @@
 | ADR | **22** | fichiers `NNNN-*.md` de `docs/adr/` |
 | Fonctions Vercel | **1** | fichiers `.ts` de `api/` (hors tests et `_*`) |
 | `CLAUDE.md` | **20** | racine et dossiers, hors `node_modules`, `.claude`, `.worktrees` |
-| Docs vivantes de `docs/` | **37** | fichiers `.md` de `docs/`, hors `archive/` et `adr/` |
+| Docs vivantes de `docs/` | **39** | fichiers `.md` de `docs/`, hors `archive/` et `adr/` |
 | Tables du schéma `public` | **93** | `CREATE TABLE public.` dans `supabase/schema.sql` |
 | dont sous RLS | **93** | `ENABLE ROW LEVEL SECURITY` dans `supabase/schema.sql` |
 | Policies RLS | **212** | `CREATE POLICY` dans `supabase/schema.sql` |
