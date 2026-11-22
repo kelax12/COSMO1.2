@@ -75,7 +75,7 @@
     },
     "projects": {
       "title": "Créez vos projets, attribuez-les à l'échelle que vous voulez.",
-      "subtitle": "Les tâches d'un projet suivent son équipe. Assignez-les à qui vous voulez, seul ou à plusieurs : elles s'ajoutent simplement <hl>au Cosmo personnel de chacun</hl>, sans nouvel outil à ouvrir.",
+      "subtitle": "Assignez, c'est tout. <hl>La tâche rejoint le Cosmo personnel de chaque assigné.</hl>",
       "p1t": "À une personne, à plusieurs, à toute une équipe",
       "p1d": "Vous assignez à qui vous voulez dans votre périmètre. Une tâche peut avoir <hl>plusieurs assignés à la fois</hl>, ou se diviser en <hl>sous-tâches</hl> attribuées chacune à quelqu'un.",
       "p2t": "Liste, planning ou portefeuille",
