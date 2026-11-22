@@ -23,7 +23,7 @@
 //
 // ── SEUILS D'ALERTE (ils sonnent, ils ne se relevent pas) ───────────
 //   · `main` sous 80 % de vert ;
-//   · aucun drill vert depuis 35 jours (meme borne que `restore-drill-fraicheur`) ;
+//   · aucun drill vert depuis 35 jours (meme borne que `restore-drill.mjs fraicheur`) ;
 //   · le controle des echeances de rotation releve un ecart
 //     (regle de `check-secrets-age.mjs`, jamais detaillee ici) ;
 //   · une sonde de derive de production rouge ;
@@ -51,7 +51,7 @@ import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-import { verdictFraicheur, JOB as JOB_DRILL, JOURS_MAX as DRILL_JOURS_MAX } from './restore-drill-fraicheur.mjs';
+import { verdictFraicheur, JOB as JOB_DRILL, JOURS_MAX as DRILL_JOURS_MAX } from './restore-drill.mjs';
 import { dateEffective } from './check-secrets-age.mjs';
 
 const JOUR = 86_400_000;

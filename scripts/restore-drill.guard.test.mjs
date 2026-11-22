@@ -384,8 +384,8 @@ describe('restore-drill · le manifeste et sa relecture lisent la MEME requete',
   });
 });
 
-// ── Garde d'absence : restore-drill-fraicheur.mjs ──
-import { verdictFraicheur, lireRuns, JOURS_MAX, JOB } from './restore-drill-fraicheur.mjs';
+// ── Garde d'absence : restore-drill.mjs fraicheur ──
+import { verdictFraicheur, lireRuns, JOURS_MAX, JOB } from './restore-drill.mjs';
 
 const MAINTENANT = new Date('2026-12-20T06:19:00Z');
 const vert = (id, date) => ({ id, date, jobs: [{ name: JOB, conclusion: 'success' }, { name: 'drill', conclusion: 'skipped' }] });
@@ -467,7 +467,7 @@ describe('fraicheur du drill · le workflow et l alerte', () => {
 
   it('planifie, et appelle le module', () => {
     expect(wf).toMatch(/schedule:\s*\n(?:\s*#[^\n]*\n)*\s*- cron:/);
-    expect(wf).toMatch(/node scripts\/restore-drill-fraicheur\.mjs/);
+    expect(wf).toMatch(/node scripts\/restore-drill\.mjs fraicheur/);
   });
 
   it('le drill et sa garde d absence sonnent par ci-alert.yml', () => {

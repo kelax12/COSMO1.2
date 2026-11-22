@@ -11,7 +11,7 @@
 # Ce workflow lit l'historique des runs et ROUGIT si aucun `drill-auto` n'a
 # reussi sur `main` depuis 35 jours. Son rouge part par `ci-alert.yml` (issue
 # `ci-red` + webhook), comme celui du drill.
-# Logique et temoin : `scripts/restore-drill-fraicheur.mjs` et
+# Logique et temoin : `scripts/restore-drill.mjs` (fraicheur) et
 # `scripts/restore-drill.guard.test.mjs`.
 #
 # ⚠️ Volontairement HORS de `restore-drill.yml` : une garde logee dans le
@@ -42,4 +42,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-        run: node scripts/restore-drill-fraicheur.mjs
+        run: node scripts/restore-drill.mjs fraicheur
