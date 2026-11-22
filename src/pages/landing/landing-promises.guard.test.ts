@@ -259,10 +259,10 @@ describe('mesures : les chiffres de limite tiennent', () => {
     expect(ENTERPRISE_YEARLY_DISCOUNT).toBe(0.25);
   });
 
-  it('« 20 fonctionnalités en plus » : vingt cartes, ni dix-neuf ni vingt et une', () => {
+  it('section « Plus » : treize fonctionnalités, ni douze ni quatorze', () => {
     for (const l of ['fr', 'en']) {
       const cards = [...catalog(l, 'landingEnterprise').keys()].filter((k) => /^enterprise\.more\.f\d+t$/.test(k));
-      expect(cards, l).toHaveLength(20);
+      expect(cards, l).toHaveLength(13);
     }
   });
 
@@ -300,7 +300,6 @@ describe('mesures : les chiffres de limite tiennent', () => {
     expect(LANDING_PROMISES.filter((p) => p.verdict === 'fausse').map((p) => p.id).sort()).toEqual([
       'demo-volume',
       'entreprise-demo-effectif',
-      'entreprise-droits-reglables',
       'habitudes-frequence',
     ]);
   });

@@ -30,13 +30,14 @@ export const ENTREPRISE_CONTENT: LocaleContent = {
         <p><img src="/screenshots/entreprise/rapports.webp" width="1600" height="1000" loading="lazy" decoding="async" alt="Rapports d'activité de Cosmo Entreprise : tâches terminées, projets et OKR qui ont avancé, et qui a fait quoi" /></p>
         <p><img src="/screenshots/entreprise/apercu.webp" width="1600" height="1000" loading="lazy" decoding="async" alt="Aperçu de Cosmo Entreprise : tâches à valider, mentions, charge de la semaine, agenda et résultats clés" /></p>
 
-        <h2>Vingt fonctionnalités en plus</h2>
-        <p>Rôles et permissions réglables membre par membre, rôles par projet (responsable, contributeur, lecteur), une page par équipe avec la charge de chaque membre, événements d'équipe, assistant de démarrage. Modèles de projet, dépendances entre projets, actions groupées, listes et préréglages partagés par lien, recherche dans toute l'entreprise. Automatisations, envoi vers Slack ou webhooks signés, export complet en CSV, alertes réglables par type, résultats clés d'entreprise visibles dans vos OKR personnels. Journal d'audit conservé un an, domaines vérifiés, accès à durée limitée, assistant de départ et suspension, corbeille de trente jours pour les tâches et les objectifs.</p>
+        <h2>Quelques fonctionnalités en plus</h2>
+        <p>Une réunion d'équipe calée sur les créneaux où tout le monde est libre, un résumé quotidien par e-mail, une recherche Ctrl K limitée à ce que chacun a le droit de voir. Des relances automatiques, des actions groupées, l'envoi vers Slack. Un assistant de départ qui transmet tâches et objectifs, des rôles à date de fin, des domaines vérifiés. Un fil de discussion par projet, une corbeille de trente jours, un journal d'audit conservé un an et un export CSV complet.</p>
 
         <h2>Sécurité, confidentialité et réversibilité</h2>
         <p>Chaque table est protégée par des politiques d'accès évaluées côté serveur : une requête forgée depuis le navigateur ne rapporte rien de plus qu'une requête légitime. Un manager voit le travail de son périmètre, jamais les tâches, habitudes ou agenda personnels de ses collaborateurs. Effacement du compte réellement exécuté côté serveur, consentement explicite à l'entrée dans une organisation, aucune donnée revendue. Transfert de propriété, départ d'un membre avec transmission de son travail et suppression de l'organisation sont dans l'interface, pas dans un ticket de support.</p>
         ${PRIX_VISIBLES ? `<h2>Tarifs</h2>
-        <p>Un forfait pour toute l'organisation, quel que soit le nombre de projets, et non un tarif par personne : gratuit jusqu'à 5 membres, 70 € par mois de 5 à 10 membres, 150 € de 10 à 20, 350 € de 20 à 50, 700 € de 50 à 100, et 1000 € au-delà de 100. Le forfait s'ajuste tout seul quand l'organisation grandit et redescend si l'effectif baisse. Sans engagement, résiliable à tout moment, sans carte bancaire pour démarrer.</p>` : ''}
+        <p>Un forfait pour toute l'organisation, quel que soit le nombre de projets, et non un tarif par personne : gratuit jusqu'à 5 membres, 70 € par mois de 5 à 10 membres, 150 € de 10 à 20, 350 € de 20 à 50, 700 € de 50 à 100, et 1000 € au-delà de 100. Le forfait s'ajuste tout seul quand l'organisation grandit et redescend si l'effectif baisse. Sans engagement, résiliable à tout moment, sans carte bancaire pour démarrer.</p>
+` : ''}
 
         <p><a href="/">Cosmo pour moi</a> · <a href="/signup">Créer mon organisation</a> · <a href="/guide">Guide d'utilisation</a></p>`,
   en: `<h1>Cosmo for companies: your org chart is your execution engine</h1>
@@ -65,13 +66,14 @@ export const ENTREPRISE_CONTENT: LocaleContent = {
         <p><img src="/screenshots/entreprise/rapports.webp" width="1600" height="1000" loading="lazy" decoding="async" alt="Activity reports in Cosmo for companies: completed tasks, projects and OKRs that moved forward, and who did what" /></p>
         <p><img src="/screenshots/entreprise/apercu.webp" width="1600" height="1000" loading="lazy" decoding="async" alt="The Overview in Cosmo for companies: tasks to approve, mentions, weekly workload, calendar and key results" /></p>
 
-        <h2>Twenty more features</h2>
-        <p>Rights set member by member, project roles (lead, contributor, viewer), a page per team with each member's workload, team events, a getting-started assistant. Project templates, dependencies between projects, bulk actions, lists and presets shared by link, search across the whole company. Automations, delivery to Slack or signed webhooks, full CSV export, alerts set type by type, company key results shown in your personal OKRs. An audit log kept for a year, verified domains, time-limited access, a departure assistant and suspension, a thirty-day trash for tasks and objectives.</p>
+        <h2>A few more features</h2>
+        <p>A team meeting set on the slots where everyone is free, a daily email recap, a Ctrl K search limited to what each person may see. Automatic reminders, bulk actions, delivery to Slack. A departure assistant that hands over tasks and goals, roles with an end date, verified domains. One conversation thread per project, a thirty-day trash, an audit log kept for a year and a full CSV export.</p>
 
         <h2>Security, privacy and reversibility</h2>
         <p>Every table is protected by access policies evaluated server side: a request forged from the browser brings back nothing more than a legitimate one. A manager sees the work in their scope, never the personal tasks, habits or calendar of their colleagues. Account deletion is genuinely executed server side, consent to joining an organisation is explicit, and no data is resold. Transferring ownership, a member's departure with their work handed over, and deleting the organisation are in the interface, not in a support ticket.</p>
         ${PRIX_VISIBLES ? `<h2>Pricing</h2>
-        <p>One plan for the whole organisation, whatever the number of projects, rather than a per-person price: free up to 5 members, 70 € a month from 5 to 10 members, 150 € from 10 to 20, 350 € from 20 to 50, 700 € from 50 to 100, and 1000 € beyond 100. The plan adjusts itself as the organisation grows and comes back down if headcount falls. No commitment, cancellable at any time, no credit card to start.</p>` : ''}
+        <p>One plan for the whole organisation, whatever the number of projects, rather than a per-person price: free up to 5 members, 70 € a month from 5 to 10 members, 150 € from 10 to 20, 350 € from 20 to 50, 700 € from 50 to 100, and 1000 € beyond 100. The plan adjusts itself as the organisation grows and comes back down if headcount falls. No commitment, cancellable at any time, no credit card to start.</p>
+` : ''}
 
         <p><a href="/en/">Cosmo for me</a> · <a href="/en/signup">Create my organisation</a> · <a href="/en/guide">User guide</a></p>`,
   hr: `<h1>Cosmo za tvrtke: vaš organigram je vaš pokretač izvršenja</h1>
@@ -100,8 +102,8 @@ export const ENTREPRISE_CONTENT: LocaleContent = {
         <p><img src="/screenshots/entreprise/rapports.webp" width="1600" height="1000" loading="lazy" decoding="async" alt="Izvještaji o aktivnosti u Cosmu za tvrtke: završeni zadaci, projekti i OKR-ovi koji su napredovali te tko je što napravio" /></p>
         <p><img src="/screenshots/entreprise/apercu.webp" width="1600" height="1000" loading="lazy" decoding="async" alt="Pregled u Cosmu za tvrtke: zadaci za odobriti, spominjanja, tjedno opterećenje, kalendar i ključni rezultati" /></p>
 
-        <h2>Dvadeset dodatnih funkcija</h2>
-        <p>Uloge i dopuštenja podesivi član po član, uloge po projektu (voditelj, suradnik, čitatelj), stranica za svaki tim s opterećenjem svakog člana, timski događaji, pomoćnik za početak. Predlošci projekata, ovisnosti između projekata, skupne radnje, popisi i predlošci filtara dijeljeni poveznicom, pretraga po cijeloj tvrtki. Automatizacije, slanje u Slack ili potpisani webhookovi, potpuni izvoz u CSV, obavijesti podesive po vrsti, ključni rezultati tvrtke vidljivi u vašim osobnim OKR-ovima. Revizijski dnevnik koji se čuva godinu dana, potvrđene domene, vremenski ograničen pristup, pomoćnik za odlazak i suspenziju, koš za smeće od trideset dana za zadatke i ciljeve.</p>
+        <h2>Još nekoliko funkcija</h2>
+        <p>Timski sastanak u terminima kad su svi slobodni, dnevni pregled e-poštom, pretraga Ctrl K ograničena na ono što svatko smije vidjeti. Automatski podsjetnici, skupne radnje, slanje u Slack. Pomoćnik za odlazak koji prenosi zadatke i ciljeve, uloge s datumom završetka, potvrđene domene. Jedna nit razgovora po projektu, koš za smeće od trideset dana, revizijski zapisnik koji se čuva godinu dana i potpuni izvoz u CSV.</p>
 
         <h2>Sigurnost, povjerljivost i reverzibilnost</h2>
         <p>Svaka je tablica zaštićena pravilima pristupa koja se provjeravaju na poslužitelju: krivotvoreni zahtjev iz preglednika ne donosi ništa više od legitimnog. Voditelj vidi rad u svom opsegu, nikad osobne zadatke, navike ili kalendar svojih suradnika. Brisanje računa stvarno se izvršava na poslužitelju, pristanak na ulazak u organizaciju je izričit, a podaci se ne preprodaju. Prijenos vlasništva, odlazak člana uz predaju njegova rada i brisanje organizacije nalaze se u sučelju, a ne u zahtjevu za podršku.</p>

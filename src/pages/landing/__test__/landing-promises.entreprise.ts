@@ -2,7 +2,6 @@
 import type { LandingPromise } from './landing-promises.types';
 
 const ENT = 'prerender:/entreprise-presentation';
-const MORE = 'enterprise.more';
 
 export const PROMISES_ENTREPRISE: LandingPromise[] = [
   // ─── Entreprise : limites chiffrées et facturation ──────────────────
@@ -58,6 +57,7 @@ export const PROMISES_ENTREPRISE: LandingPromise[] = [
     figures: {
       '70': ['enterprise.pricing.title', ENT],
       '10': ['enterprise.pricing.title', ENT],
+      '20': [ENT],
       '150': [ENT],
       '350': [ENT],
       '50': [ENT],
@@ -171,17 +171,6 @@ export const PROMISES_ENTREPRISE: LandingPromise[] = [
     ],
   },
   {
-    id: 'entreprise-droits-reglables',
-    kind: 'limite',
-    claim: 'Treize droits réglables membre par membre.',
-    verdict: 'fausse',
-    constat:
-      'ORG_PERMISSION_KEYS compte 14 droits depuis la mig. 219 (`role.manage` s’est ajouté aux 13 précédents).',
-    anchors: [{ key: `${MORE}.f1d`, includes: 'Treize droits réglables membre par membre' }],
-    proofs: [{ file: 'src/modules/organizations/permissions.ts', has: "'role.manage'," }],
-    figures: { '13': [`${MORE}.f1d`] },
-  },
-  {
     id: 'entreprise-transfert-depart',
     kind: 'produit',
     claim: 'Transfert de propriété, départ avec transmission du travail et suppression de l’organisation sans support.',
@@ -229,7 +218,6 @@ export const PROMISES_ENTREPRISE: LandingPromise[] = [
     ],
     proofs: [{ file: 'src/pages/landing/entreprise/EnterpriseTrack.tsx', re: 'ProgressSection' }],
     figures: {
-      '5': ['enterprise.more.subtitle'],
       '1': [ENT],
       '2': [ENT],
       '3': [ENT],

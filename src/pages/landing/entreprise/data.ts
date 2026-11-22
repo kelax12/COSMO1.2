@@ -49,71 +49,23 @@ export const SHOTS: Record<string, AppShotRef> = {
 export const HERO_SHOTS = [SHOTS.overview, SHOTS.projects, SHOTS.okr];
 
 /**
- * Les vingt fonctionnalités de la section « Plus », en quatre familles de cinq.
+ * Les treize fonctionnalités de la section « Plus », par moment d'usage.
  *
  * Uniquement ce que les cinq étapes ne montrent PAS, et uniquement ce qui est
- * atteignable dans le produit aujourd'hui.
- * Une fonctionnalité qu'on retire du produit sort d'ici le même jour. L'icône
- * est un NOM, résolu par le composant : ce module n'importe rien de lourd.
+ * atteignable dans le produit aujourd'hui (preuves : `landing-promises.suite.ts`).
+ * Une fonctionnalité qu'on retire du produit sort d'ici le même jour.
+ * Les clés sont `enterprise.more.f{n}t` / `f{n}d`.
  */
-export type MoreFeatureIcon =
-  | 'KeyRound' | 'UserCog' | 'UsersRound' | 'CalendarPlus' | 'Rocket'
-  | 'Copy' | 'Link2' | 'ListChecks' | 'Filter' | 'Search'
-  | 'Zap' | 'Webhook' | 'Download' | 'BellRing' | 'Target'
-  | 'ScrollText' | 'BadgeCheck' | 'Timer' | 'UserMinus' | 'ArchiveRestore';
-
-export interface MoreFeature {
-  /** Rang 1 à 20 : les clés sont `enterprise.more.f{n}t` / `f{n}d`. */
-  n: number;
-  icon: MoreFeatureIcon;
-}
-
 export interface MoreFeatureGroup {
   titleKey: KeyOf<'landingEnterprise'>;
-  features: MoreFeature[];
+  features: number[];
 }
 
 export const MORE_FEATURE_GROUPS: MoreFeatureGroup[] = [
-  {
-    titleKey: 'enterprise.more.g1',
-    features: [
-      { n: 1, icon: 'KeyRound' },
-      { n: 2, icon: 'UserCog' },
-      { n: 3, icon: 'UsersRound' },
-      { n: 4, icon: 'CalendarPlus' },
-      { n: 5, icon: 'Rocket' },
-    ],
-  },
-  {
-    titleKey: 'enterprise.more.g2',
-    features: [
-      { n: 6, icon: 'Copy' },
-      { n: 7, icon: 'Link2' },
-      { n: 8, icon: 'ListChecks' },
-      { n: 9, icon: 'Filter' },
-      { n: 10, icon: 'Search' },
-    ],
-  },
-  {
-    titleKey: 'enterprise.more.g3',
-    features: [
-      { n: 11, icon: 'Zap' },
-      { n: 12, icon: 'Webhook' },
-      { n: 13, icon: 'Download' },
-      { n: 14, icon: 'BellRing' },
-      { n: 15, icon: 'Target' },
-    ],
-  },
-  {
-    titleKey: 'enterprise.more.g4',
-    features: [
-      { n: 16, icon: 'ScrollText' },
-      { n: 17, icon: 'BadgeCheck' },
-      { n: 18, icon: 'Timer' },
-      { n: 19, icon: 'UserMinus' },
-      { n: 20, icon: 'ArchiveRestore' },
-    ],
-  },
+  { titleKey: 'enterprise.more.g1', features: [1, 2, 3] },
+  { titleKey: 'enterprise.more.g2', features: [4, 5, 6] },
+  { titleKey: 'enterprise.more.g3', features: [7, 8, 9] },
+  { titleKey: 'enterprise.more.g4', features: [10, 11, 12, 13] },
 ];
 
 /** Les quatre garanties de la section sécurité. */
