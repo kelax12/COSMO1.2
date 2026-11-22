@@ -52,8 +52,8 @@ export default {
 				// Hero de la landing ENTREPRISE (maquette 124, 2026-09-23) : cinq
 				// couleurs nommées. Le cyan n'a que deux rôles, la lumière et le CTA.
 				ent: {
-					nuit: '#08090C', // fond
-					faisceau: '#22D3EE', // lumière + CTA, seul accent
+					nuit: '#161719', // fond : graphite des sections (thème Gris)
+					faisceau: '#388BFD', // lumière + CTA : bleu de l'app (thème Gris, accent-solid)
 					lune: '#EDF2F7', // titres, texte appuyé
 					brume: '#8B96A8', // texte courant : 6,5:1 sur la nuit
 					acier: '#1A1F27', // chrome des fenêtres

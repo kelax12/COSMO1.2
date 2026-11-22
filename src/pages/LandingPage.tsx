@@ -11,7 +11,7 @@ import TrackAnchors from './landing/TrackAnchors';
 import PersoTrack from './landing/PersoTrack';
 import { useActiveAnchor } from './landing/use-active-anchor';
 import { useLandingTrack, type LandingTrack } from './landing/use-landing-track';
-import { TRACK_ANCHORS } from './landing/anchors';
+import { flatAnchors } from './landing/anchors';
 import { useT } from '@/i18n/useT';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { useLandingSeoMeta } from '@/lib/useSeoMeta';
@@ -74,7 +74,7 @@ const LandingPage: React.FC = () => {
     return () => ro.disconnect();
   }, []);
 
-  const anchorIds = TRACK_ANCHORS[track]
+  const anchorIds = flatAnchors(track)
     .filter(({ href }) => href.startsWith('#'))
     .map(({ href }) => href.slice(1));
   const activeAnchor = useActiveAnchor(anchorIds, headerH + 48);
@@ -318,15 +318,13 @@ const LandingPage: React.FC = () => {
                 ancres entreprise n'y tiennent pas (mesuré à 1440 px : « Équipes »
                 mordait sur le sélecteur) : elles vivent dans la capsule collée
                 sous le header, plus bas. */}
-            {!isEnterprise && (
-              <TrackAnchors
-                track={track}
-                label={t('enterprise.gateway.perso.title')}
-                active={activeAnchor}
-                variant="inline"
-                className="hidden min-w-0 flex-1 justify-center lg:flex"
-              />
-            )}
+            <TrackAnchors
+              track={track}
+              label={t(isEnterprise ? 'enterprise.gateway.entreprise.title' : 'enterprise.gateway.perso.title')}
+              active={activeAnchor}
+              variant="inline"
+              className="hidden min-w-0 flex-1 justify-center lg:flex"
+            />
 
             {/* Actions */}
             <div className="ml-auto flex shrink-0 items-center gap-2">
@@ -426,7 +424,7 @@ const LandingPage: React.FC = () => {
                   />
                   {/* Le sommaire du parcours affiché — sous `lg` il n'est pas
                       dans la rangée du header, ce menu le remplace. */}
-                  {TRACK_ANCHORS[track].map(({ href, labelKey }) => (
+                  {flatAnchors(track).map(({ href, labelKey }) => (
                     <a
                       key={href}
                       href={href}
@@ -467,18 +465,6 @@ const LandingPage: React.FC = () => {
       <div className="md:hidden px-3 pt-2">
         <TrackSwitcher track={track} onSelect={handleSelectTrack} size="touch" />
       </div>
-
-      {/* Entreprise : sept ancres ne tiennent pas dans la rangée, elles se
-          collent SOUS le header, calées sur sa hauteur mesurée. */}
-      {isEnterprise && (
-        <TrackAnchors
-          track={track}
-          label={t('enterprise.gateway.entreprise.title')}
-          active={activeAnchor}
-          variant="bar"
-          className="hidden lg:flex"
-        />
-      )}
 
       {/* A11y: wrap entire content in <main> landmark — axe-core flagged
           162 nodes "not contained by landmarks" on this page. */}

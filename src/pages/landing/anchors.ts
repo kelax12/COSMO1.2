@@ -6,6 +6,8 @@ import { ENTERPRISE_PRICES_SHOWN } from './entreprise/free-offer';
 export interface TrackAnchor {
   href: string;
   labelKey: KeyOf<'landing'>;
+  /** Sous-menu ouvert au survol (ex. « Fonctionnalités » en entreprise). */
+  children?: TrackAnchor[];
 }
 
 /**
@@ -24,15 +26,21 @@ export const TRACK_ANCHORS: Record<LandingTrack, TrackAnchor[]> = {
     { href: '#faq', labelKey: 'nav.faq' },
     { href: '/guide', labelKey: 'nav.guide' },
   ],
-  // Les quatre premières ancres SONT les quatre étapes de mise en place, dans
-  // l'ordre : le sommaire doit se lire comme la marche à suivre.
+  // « Fonctionnalités » regroupe les sections produit, dans l'ordre de mise
+  // en place : le sous-menu se lit comme la marche à suivre.
   entreprise: [
-    { href: '#equipes', labelKey: 'enterprise.nav.teams' },
-    { href: '#execution', labelKey: 'enterprise.nav.execution' },
-    { href: '#projets', labelKey: 'enterprise.nav.projects' },
-    { href: '#okr', labelKey: 'enterprise.nav.okr' },
-    { href: '#statistiques', labelKey: 'enterprise.nav.progress' },
-    { href: '#fonctionnalites', labelKey: 'enterprise.nav.more' },
+    {
+      href: '#equipes',
+      labelKey: 'nav.features',
+      children: [
+        { href: '#equipes', labelKey: 'enterprise.nav.teams' },
+        { href: '#execution', labelKey: 'enterprise.nav.execution' },
+        { href: '#projets', labelKey: 'enterprise.nav.projects' },
+        { href: '#okr', labelKey: 'enterprise.nav.okr' },
+        { href: '#statistiques', labelKey: 'enterprise.nav.progress' },
+        { href: '#fonctionnalites', labelKey: 'enterprise.nav.more' },
+      ],
+    },
     { href: '#securite', labelKey: 'enterprise.nav.security' },
     // Retirée du sommaire tant que les prix sont masqués : elle viserait une
     // section absente (`PRICES_VISIBLE`).
@@ -41,3 +49,7 @@ export const TRACK_ANCHORS: Record<LandingTrack, TrackAnchor[]> = {
       : []),
   ],
 };
+
+/** Ancres à plat (sous-menus dépliés), pour le suivi de lecture et le burger. */
+export const flatAnchors = (track: LandingTrack): TrackAnchor[] =>
+  TRACK_ANCHORS[track].flatMap((a) => a.children ?? [a]);
