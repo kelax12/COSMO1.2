@@ -43,7 +43,6 @@ export const PROMISES_ENTREPRISE: LandingPromise[] = [
     kind: 'limite',
     claim: '70 € / mois de 5 à 10 membres, 150 € de 10 à 20, 350 € de 20 à 50, 700 € de 50 à 100, 1000 € au-delà.',
     anchors: [
-      { key: 'enterprise.pricing.title', includes: '70 € par mois pour dix personnes' },
       {
         key: ENT,
         includes: '70 € par mois de 5 à 10 membres, 150 € de 10 à 20, 350 € de 20 à 50, 700 € de 50 à 100, et 1000 € au-delà de 100',
@@ -55,8 +54,8 @@ export const PROMISES_ENTREPRISE: LandingPromise[] = [
       { file: 'src/modules/billing/org-tiers.parity.test.ts', has: 'priceEurPerMonth' },
     ],
     figures: {
-      '70': ['enterprise.pricing.title', ENT],
-      '10': ['enterprise.pricing.title', ENT],
+      '70': [ENT],
+      '10': [ENT],
       '20': [ENT],
       '150': [ENT],
       '350': [ENT],

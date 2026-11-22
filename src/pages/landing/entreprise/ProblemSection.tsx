@@ -41,7 +41,7 @@ const ProblemSection: React.FC = () => {
   );
 
   return (
-    <section ref={rootRef} className="relative border-t border-white/[0.06] py-24 lg:py-28">
+    <section ref={rootRef} className="relative border-t border-white/[0.06] py-16 lg:py-[75px]">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <header className="mb-12 max-w-3xl">
           <h2 className="text-balance text-3xl font-bold leading-[1.1] tracking-[-0.02em] text-white sm:text-4xl">

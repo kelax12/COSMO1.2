@@ -77,7 +77,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
           duration: 0.8,
           ease: 'power3.out',
           stagger: 0.12,
-          delay: 0.5,
+          delay: 0.15,
         });
 
         // W3 : parallax de fond scrubbé (grille lente, aurores moyennes). `ease: none`

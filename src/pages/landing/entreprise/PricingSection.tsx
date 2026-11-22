@@ -55,7 +55,7 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
   return (
     <section
       id="tarifs"
-      className="relative scroll-mt-40 border-t border-white/[0.06] py-24 lg:py-32"
+      className="relative scroll-mt-40 border-t border-white/[0.06] py-16 lg:py-[85px]"
       aria-labelledby="pricing-title"
     >
       <div
@@ -84,8 +84,10 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
         </header>
 
         {/* ── Le message clé, avant le premier prix ── */}
-        <p className="mb-8 inline-flex items-center gap-2.5 rounded-full border border-cosmo-300/30 bg-cosmo-400/10 px-4 py-2 text-sm font-medium text-cosmo-200">
-          <Check size={16} className="shrink-0 text-cosmo-300" aria-hidden="true" />
+        <p className="mb-10 flex items-center gap-4 border-y border-white/[0.08] py-5 text-lg font-medium text-white lg:text-xl">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-cosmo-400" aria-hidden="true">
+            <Check size={18} className="text-white" strokeWidth={2.5} />
+          </span>
           {t('enterprise.pricing.allUnlocked')}
         </p>
 

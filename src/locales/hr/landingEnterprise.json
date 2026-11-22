@@ -192,14 +192,14 @@
       "s4d": "Prijenos vlasništva, odlazak člana uz predaju njegova rada, brisanje organizacije: sve traje nekoliko klikova, <hl>bez zahtjeva podršci</hl>."
     },
     "pricing": {
-      "allUnlocked": "Sve funkcije su otključane, u svakom paketu. Mijenja se samo broj članova.",
-      "title": "70 € mjesečno za deset osoba.",
+      "allUnlocked": "Sve je uključeno, već od besplatnog paketa.",
+      "title": "Jedna cijena za cijeli tim.",
       "promoBadge": "Ponuda za lansiranje",
       "promoTitle": "Besplatno za cijelu vašu organizaciju.",
       "promoSubtitle": "Cosmo za tvrtke danas ne naplaćuje ništa, bez obzira na broj zaposlenih. Cijene u nastavku primjenjivat će se <hl>kad ponuda za lansiranje završi</hl>. Bit ćete obaviješteni unaprijed i ništa se nikad ne naplaćuje ako to sami ne odaberete.",
       "insteadOfShort": "umjesto {{price}} €",
       "ctaNoteFree": "Besplatno tijekom ponude za lansiranje, bez obzira na broj zaposlenih. Bez kreditne kartice.",
-      "subtitle": "Paket pokriva cijelu organizaciju, bez obzira na broj projekata. Cijena prati razinu koju dosegnete: <hl>nema modula za otključavanje, nema ponude za čekanje</hl>.",
+      "subtitle": "Cijena prati broj članova, ništa drugo. <hl>Neograničeni projekti, timovi i OKR-ovi.</hl>",
       "perMonth": "/ mjesečno",
       "vatIncluded": "Sve prikazane cijene uključuju PDV.",
       "intervalAria": "Razdoblje naplate",
@@ -237,9 +237,9 @@
       "a5Free": "Da. Izradite svoju organizaciju besplatno i bez kreditne kartice, bez obzira na broj zaposlenih, dok traje ponuda za lansiranje. To je potpuni proizvod, a ne okrnjena verzija."
     },
     "cta": {
-      "line1": "Vaša organizacija već djeluje.",
-      "line2": "Dajte joj strukturu koja tome odgovara.",
-      "subtitle": "Izradite svoju organizaciju <hl>za minutu</hl>, pozovite prvi tim i dodijelite prvi zadatak.",
+      "line1": "Pokrenite svoju organizaciju",
+      "line2": "za minutu.",
+      "subtitle": "Pozovite prvi tim i dodijelite prvi zadatak.",
       "primary": "Izradi moju organizaciju",
       "secondary": "Otvori demo za tvrtke",
       "note": "Besplatno do 5 članova · bez kreditne kartice",

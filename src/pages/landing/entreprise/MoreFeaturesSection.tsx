@@ -21,7 +21,7 @@ const MoreFeaturesSection: React.FC = () => {
   return (
     <section
       id="fonctionnalites"
-      className="relative scroll-mt-40 border-t border-white/[0.06] py-24 lg:py-32"
+      className="relative scroll-mt-40 border-t border-white/[0.06] py-16 lg:py-[85px]"
       aria-labelledby="more-title"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

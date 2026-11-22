@@ -17,7 +17,7 @@ const EnterpriseFaqSection: React.FC = () => {
 
   return (
     <section
-      className="relative border-t border-white/[0.06] py-24 lg:py-28"
+      className="relative border-t border-white/[0.06] py-16 lg:py-[75px]"
       aria-labelledby="enterprise-faq-title"
     >
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">

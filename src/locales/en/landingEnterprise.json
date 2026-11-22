@@ -192,14 +192,14 @@
       "s4d": "Ownership transfer, a member's departure with their work handed over, deleting the organization: it all takes a few clicks, <hl>no support ticket needed</hl>."
     },
     "pricing": {
-      "allUnlocked": "Every feature is unlocked, in every tier. Only the headcount changes.",
-      "title": "€70 a month for ten people.",
+      "allUnlocked": "Everything is included, from the free tier up.",
+      "title": "One price for the whole team.",
       "promoBadge": "Launch offer",
       "promoTitle": "Free for your whole organization.",
       "promoSubtitle": "Cosmo for Companies charges nothing today, whatever your headcount. The prices below are the ones that will apply <hl>when the launch offer ends</hl>. You will be told beforehand, and nothing is ever charged unless you choose it.",
       "insteadOfShort": "instead of €{{price}}",
       "ctaNoteFree": "Free during the launch offer, whatever your headcount. No credit card.",
-      "subtitle": "The plan covers the whole organization, whatever the number of projects. The price follows the tier you reach: <hl>no module to unlock, no quote to wait for</hl>.",
+      "subtitle": "The price follows your headcount, nothing else. <hl>Unlimited projects, teams and OKRs.</hl>",
       "perMonth": "/ month",
       "vatIncluded": "All prices shown include VAT.",
       "intervalAria": "Billing period",
@@ -237,9 +237,9 @@
       "a5Free": "Yes. Create your organization free and without a credit card, whatever your headcount, for as long as the launch offer runs. It is the complete product, not a crippled version."
     },
     "cta": {
-      "line1": "Your organization already executes.",
-      "line2": "Give it the structure to match.",
-      "subtitle": "Create your organisation <hl>in a minute</hl>, invite your first team, and assign the first task.",
+      "line1": "Launch your organisation",
+      "line2": "in a minute.",
+      "subtitle": "Invite your first team and assign the first task.",
       "primary": "Create my organization",
       "secondary": "Open the company demo",
       "note": "Free up to 5 members · no credit card",

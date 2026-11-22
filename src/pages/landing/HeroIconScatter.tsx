@@ -14,8 +14,8 @@ import { TUILES } from './hero-tuiles';
 
 
 const DEPART = TUILES[2];
-const PREMIER_MS = 250;
-const ECART_MS = 220;
+const PREMIER_MS = 60;
+const ECART_MS = 150;
 
 const HeroIconScatter: React.FC = () => (
   <div className="pointer-events-none absolute inset-0 z-0" aria-hidden="true">

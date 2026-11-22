@@ -12,15 +12,15 @@ interface EnterpriseCtaProps {
 
 /**
  * Les cinq tuiles : les icônes de la barre latérale entreprise (`org-sections.ts`),
- * dans l'ordre de l'app. Le bleu COSMO est la seule couleur du mode entreprise :
- * les tuiles le déclinent en intensité, le centre en plein.
+ * dans l'ordre de l'app, toutes en bleu COSMO (seule couleur du mode
+ * entreprise), le centre un ton plus clair.
  */
 const TUILES: { cle: string; Icone: LucideIcon; fond: string }[] = [
-  { cle: 'overview', Icone: LayoutDashboard, fond: 'bg-[#222428] ring-white/10' },
+  { cle: 'overview', Icone: LayoutDashboard, fond: 'bg-cosmo-500 ring-white/10' },
   { cle: 'tasks', Icone: ListTodo, fond: 'bg-cosmo-500 ring-white/10' },
   { cle: 'okr', Icone: OkrIcon, fond: 'bg-cosmo-400 ring-cosmo-300/40' },
   { cle: 'projects', Icone: FolderKanban, fond: 'bg-cosmo-500 ring-white/10' },
-  { cle: 'teams', Icone: UsersRound, fond: 'bg-[#222428] ring-white/10' },
+  { cle: 'teams', Icone: UsersRound, fond: 'bg-cosmo-500 ring-white/10' },
 ];
 
 /**
@@ -34,7 +34,7 @@ const EnterpriseCta: React.FC<EnterpriseCtaProps> = ({ onDemo, onRegister }) => 
   const reduceMotion = useReducedMotion();
 
   return (
-    <section className="border-t border-white/[0.06] py-28">
+    <section className="border-t border-white/[0.06] py-[75px]">
       <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
         <div className="mb-10 flex justify-center gap-3" aria-hidden="true">
           {TUILES.map(({ cle, Icone, fond }, i) => {

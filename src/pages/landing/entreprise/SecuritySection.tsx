@@ -18,7 +18,7 @@ const SecuritySection: React.FC = () => {
   return (
     <section
       id="securite"
-      className="relative scroll-mt-40 border-t border-white/[0.06] py-24 lg:py-32"
+      className="relative scroll-mt-40 border-t border-white/[0.06] py-16 lg:py-[85px]"
       aria-labelledby="security-title"
     >
       {/* Halo froid : la zone « sérieuse » de la page. */}

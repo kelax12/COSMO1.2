@@ -192,14 +192,14 @@
       "s4d": "Transfert de propriété, départ d'un membre avec transmission de son travail, suppression de l'organisation : tout se fait en quelques clics, <hl>sans passer par le support</hl>."
     },
     "pricing": {
-      "allUnlocked": "Toutes les fonctionnalités sont débloquées, dans chaque palier. Seul l'effectif change.",
-      "title": "70 € par mois pour dix personnes.",
+      "allUnlocked": "Tout est inclus, dès le palier gratuit.",
+      "title": "Un prix pour toute l'équipe.",
       "promoBadge": "Offre de lancement",
       "promoTitle": "Gratuit pour toute votre organisation.",
       "promoSubtitle": "Cosmo Entreprise ne facture rien aujourd'hui, quel que soit votre effectif. Les tarifs ci-dessous sont ceux qui s'appliqueront <hl>quand l'offre de lancement prendra fin</hl>. Vous serez prévenu avant, et rien ne sera jamais débité sans que vous l'ayez choisi.",
       "insteadOfShort": "au lieu de {{price}} €",
       "ctaNoteFree": "Gratuit pendant l'offre de lancement, quel que soit votre effectif. Sans carte bancaire.",
-      "subtitle": "Le forfait couvre toute l'organisation, quel que soit le nombre de projets. Le prix suit le palier atteint : <hl>pas de module à débloquer, pas de devis à attendre</hl>.",
+      "subtitle": "Le prix suit votre effectif, rien d'autre. <hl>Projets, équipes et OKR illimités.</hl>",
       "perMonth": "/ mois",
       "vatIncluded": "Tous les prix sont affichés TTC.",
       "intervalAria": "Périodicité de facturation",
@@ -237,9 +237,9 @@
       "a5Free": "Oui. Créez votre organisation gratuitement et sans carte bancaire — pendant l'offre de lancement, quel que soit votre effectif. C'est le produit complet, pas une version bridée."
     },
     "cta": {
-      "line1": "Votre organisation exécute déjà.",
-      "line2": "Donnez-lui la structure qui va avec.",
-      "subtitle": "Créez votre organisation <hl>en une minute</hl>, invitez votre première équipe, et assignez la première tâche.",
+      "line1": "Lancez votre organisation",
+      "line2": "en une minute.",
+      "subtitle": "Invitez votre première équipe et assignez la première tâche.",
       "primary": "Créer mon organisation",
       "secondary": "Ouvrir la démo entreprise",
       "note": "Gratuit jusqu'à 5 membres · sans carte bancaire",
