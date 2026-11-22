@@ -9,8 +9,8 @@ import StepSection from './StepSection';
  * de hiérarchie. Elle dit deux règles, et les montre au lieu de les décrire :
  *   · les RÔLES personnalisés décident de ce qu'on peut FAIRE (l'éditeur de
  *     rôle, à droite, reprend l'écran réel : un rôle, ses droits cochés) ;
- *   · les ÉQUIPES décident de ce qu'on VOIT (`my_team_project_ids`, mig. 243) :
- *     la comparaison « ce que Léa voit / ce qu'elle ne voit pas » en bas.
+ *   · les ÉQUIPES décident de ce qu'on VOIT (règle unique de visibilité, mig. 243) :
+ *     la comparaison « ce qu'Emma voit / ce qu'elle ne voit pas » en bas.
  *
  * ❌ Pas de grille de cartes à icônes : c'était le gabarit des landings
  * générées. Le récit est une liste à filets, la preuve est un objet produit.

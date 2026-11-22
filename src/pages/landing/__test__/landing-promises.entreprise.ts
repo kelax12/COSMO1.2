@@ -287,7 +287,7 @@ export const PROMISES_ENTREPRISE: LandingPromise[] = [
   {
     id: 'entreprise-perimetre-exemple',
     kind: 'illustration',
-    claim: 'Ce que voit « Léa » à l’étape 1 (Lancement v2, 7 tâches, 214 autres tâches).',
+    claim: 'Ce que voit « Emma » à l’étape 1 (Lancement v2, 7 tâches, 214 autres tâches).',
     reason: 'Personne et organisation fictives : ces chiffres illustrent le périmètre, ils ne mesurent rien.',
     anchors: [
       { key: 'enterprise.pyramid.sees3', includes: 'tâches de la semaine' },
