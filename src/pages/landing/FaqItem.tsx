@@ -24,7 +24,7 @@ const FaqItemBase: React.FC<FaqItemProps> = ({ question, answer, index, theme = 
         <span
           className={
             isDark
-              ? 'text-base font-medium text-white group-hover:text-[#22D3EE] transition-colors leading-snug'
+              ? 'text-base font-medium text-white group-hover:text-[#388BFD] transition-colors leading-snug'
               : 'text-base font-medium text-slate-900 group-hover:text-blue-700 transition-colors leading-snug'
           }
         >

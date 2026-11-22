@@ -48,13 +48,13 @@ const EnterpriseCta: React.FC<EnterpriseCtaProps> = ({ onDemo, onRegister }) => 
   return (
     <section ref={rootRef} className="border-t border-white/[0.06] py-24 lg:py-28">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-        <div className="ent-cta-card relative overflow-hidden rounded-3xl border border-cyan-300/20 bg-gradient-to-br from-cyan-400/[0.07] to-transparent p-10 text-center sm:p-14">
+        <div className="ent-cta-card relative overflow-hidden rounded-3xl border border-cosmo-300/20 bg-gradient-to-br from-cosmo-400/[0.07] to-transparent p-10 text-center sm:p-14">
           <div
             className="ent-cta-halo pointer-events-none absolute -inset-[45%] opacity-30"
             aria-hidden="true"
             style={{
               background:
-                'conic-gradient(from 0deg, rgba(34,211,238,0.4), transparent 30%, rgba(245,185,66,0.22) 55%, transparent 75%, rgba(34,211,238,0.4))',
+                'conic-gradient(from 0deg, rgba(56,139,253,0.4), transparent 30%, rgba(245,185,66,0.22) 55%, transparent 75%, rgba(56,139,253,0.4))',
               filter: 'blur(60px)',
             }}
           />
@@ -65,7 +65,7 @@ const EnterpriseCta: React.FC<EnterpriseCtaProps> = ({ onDemo, onRegister }) => 
                 <span className="ent-cta-line block text-white">{t('enterprise.cta.line1')}</span>
               </span>
               <span className="block overflow-hidden">
-                <span className="ent-cta-line block bg-gradient-to-r from-cyan-200 to-teal-200 bg-clip-text text-transparent">
+                <span className="ent-cta-line block bg-gradient-to-r from-cosmo-200 to-teal-200 bg-clip-text text-transparent">
                   {t('enterprise.cta.line2')}
                 </span>
               </span>
@@ -78,7 +78,7 @@ const EnterpriseCta: React.FC<EnterpriseCtaProps> = ({ onDemo, onRegister }) => 
             <div className="flex flex-col justify-center gap-3.5 sm:flex-row">
               <button
                 onClick={onRegister}
-                className="group flex items-center justify-center gap-2.5 rounded-xl bg-cyan-400 px-7 py-4 text-base font-bold text-[#04141A] shadow-[0_10px_40px_-10px_rgba(34,211,238,0.85)] transition-[background-color,box-shadow] duration-300 hover:bg-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#161719]"
+                className="group flex items-center justify-center gap-2.5 rounded-xl bg-cosmo-400 px-7 py-4 text-base font-bold text-white shadow-[0_10px_40px_-10px_rgba(56,139,253,0.85)] transition-[background-color,box-shadow] duration-300 hover:bg-cosmo-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cosmo-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#161719]"
               >
                 {t('enterprise.cta.primary')}
                 <ArrowRight size={17} className="transition-transform group-hover:translate-x-1" aria-hidden="true" />

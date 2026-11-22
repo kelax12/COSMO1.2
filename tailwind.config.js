@@ -51,6 +51,16 @@ export default {
 			colors: {
 				// Hero de la landing ENTREPRISE (maquette 124, 2026-09-23) : cinq
 				// couleurs nommées. Le cyan n'a que deux rôles, la lumière et le CTA.
+				// Bleu COSMO (thème Gris de l'app : #388BFD plein, #58A6FF survol),
+				// seul bleu de la landing entreprise ; remplace l'ancien cyan.
+				cosmo: {
+					100: '#CAE8FF',
+					200: '#A5D6FF',
+					300: '#58A6FF',
+					400: '#388BFD',
+					500: '#1F6FEB',
+					700: '#1158C7',
+				},
 				ent: {
 					nuit: '#161719', // fond : graphite des sections (thème Gris)
 					faisceau: '#388BFD', // lumière + CTA : bleu de l'app (thème Gris, accent-solid)

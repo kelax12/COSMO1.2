@@ -43,8 +43,8 @@ const avecAppui = (texte: string) =>
  * SOUS l'origine, et la pile remonte vers elle (`HeroStack`). Ne pas revenir à
  * une mise en page en deux colonnes sans déplacer l'origine du faisceau.
  *
- * ❌ Plus de titre en trois couleurs (blanc / gris / dégradé cyan), plus de
- * dégradé sur le texte, plus de liseré, plus de lueur sur le CTA : le cyan n'a
+ * ❌ Plus de titre en trois couleurs (blanc / gris / dégradé cyan d'origine), plus de
+ * dégradé sur le texte, plus de liseré, plus de lueur sur le CTA : le bleu n'a
  * que deux rôles, la lumière et le bouton. C'était le gabarit des landings
  * générées, et deux sources de lumière qui se disputaient la page.
  */
@@ -103,8 +103,10 @@ const EnterpriseHero: React.FC<EnterpriseHeroProps> = ({ onDemo, onCtaRef }) => 
   );
 
   return (
-    <section ref={heroRef} className="relative isolate overflow-hidden pb-16 pt-14 lg:pb-24 lg:pt-20">
-      {/* ── Fond : rayons WebGL + grille d'ingénieur + halo cyan ── */}
+    // Dès `md`, le hero remonte SOUS la nav (îlot flottant au-dessus du
+    // faisceau) ; sous `md`, la rangée du sélecteur est dans le flux.
+    <section ref={heroRef} className="relative isolate overflow-hidden pb-16 pt-14 md:-mt-[var(--landing-header-h,5rem)] md:pt-[calc(var(--landing-header-h,5rem)+3.5rem)] lg:pb-24 lg:pt-[calc(var(--landing-header-h,5rem)+5rem)]">
+      {/* ── Fond : rayons WebGL + grille d'ingénieur + halo bleu ── */}
       <div className="absolute inset-0 -z-10" aria-hidden="true">
         <div className="absolute inset-0 bg-ent-nuit" />
         <div

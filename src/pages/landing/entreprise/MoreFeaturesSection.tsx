@@ -37,8 +37,8 @@ const MoreFeaturesSection: React.FC = () => {
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <header className="mb-14 max-w-3xl">
-          <p className="mb-5 flex items-center gap-3 font-mono text-caption uppercase tracking-[0.25em] text-cyan-400">
-            <span className="h-px w-8 bg-cyan-400/40" aria-hidden="true" />
+          <p className="mb-5 flex items-center gap-3 font-mono text-caption uppercase tracking-[0.25em] text-cosmo-400">
+            <span className="h-px w-8 bg-cosmo-400/40" aria-hidden="true" />
             {t('enterprise.more.eyebrow')}
           </p>
           <h2
@@ -64,7 +64,7 @@ const MoreFeaturesSection: React.FC = () => {
                   return (
                     <li key={n} className="flex gap-4">
                       <span
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-cyan-300/15 bg-cyan-400/[0.06] text-cyan-300"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-cosmo-300/15 bg-cosmo-400/[0.06] text-cosmo-300"
                         aria-hidden="true"
                       >
                         <Icon size={16} />

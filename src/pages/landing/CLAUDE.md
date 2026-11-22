@@ -10,7 +10,7 @@ Après le header, `landing/LandingGateway` aiguille vers l'un des deux :
 | Parcours | Composant | Servi par | DA |
 |---|---|---|---|
 | perso | `landing/PersoTrack` | `/` | blanc, encre `slate-900`, boutons `blue-600`, accents bleu, violet, fuchsia |
-| entreprise | `landing/entreprise/EnterpriseTrack` (lazy) | `/entreprise-presentation` | `#161719` (thème Gris), surfaces `#222428`, cyan `#22D3EE`, or `#F5B942` |
+| entreprise | `landing/entreprise/EnterpriseTrack` (lazy) | `/entreprise-presentation` | `#161719` (thème Gris), surfaces `#222428`, bleu COSMO `#388BFD` (palette `cosmo-*`), or `#F5B942` |
 
 - ✅ Le parcours se dérive de l'URL (`useLandingTrack`), pas d'un état local. Les deux routes rendent le même composant à la même profondeur : basculer ne remonte pas la page.
 - ✅ `TrackSwitcher` et `TrackAnchors` empêchent de rester coincé ; ancres dans `landing/anchors.ts`, une liste par parcours.
@@ -47,7 +47,7 @@ Après le header, `landing/LandingGateway` aiguille vers l'un des deux :
 
 ## Hero entreprise
 
-- 🔴 Un seul axe, celui de la lumière : titre, CTA et pile (`HeroStack`) centrés SOUS l'origine `top-center` du faisceau. ❌ Deux colonnes sans déplacer l'origine ; le cyan n'a que deux rôles (lumière, CTA). Raisons : en-tête d'`EnterpriseHero`.
+- 🔴 Un seul axe, celui de la lumière : titre, CTA et pile (`HeroStack`) centrés SOUS l'origine `top-center` du faisceau. ❌ Deux colonnes sans déplacer l'origine ; le bleu n'a que deux rôles (lumière, CTA). Raisons : en-tête d'`EnterpriseHero`.
 - 🔴 Le shader `LightRays` se règle tout seul (C-68) : il descend d'un palier tant que la frame ne tient pas ; le mouvement se retire, jamais l'image. ❌ Le rendre fixe, le remplacer par une détection de rasteriseur logiciel, relancer l'échelle à pleine résolution. Mesures : `docs/PERFORMANCE.md` § Shader du hero ENTREPRISE.
 - 🔴 La vitrine du hero s'arrête (C-69, WCAG 2.2.2, niveau A) : `HeroAppIcon` est le bouton (96 px, 44 px réels mesurés par `e2e/touch-targets.spec.ts`), trois états `auto` / `pause` / `lecture` de `showcase/rotation-state.ts` (module pur, 13 cas), suspend au survol ET au focus, ne démarre PAS sous `prefers-reduced-motion`.
 - ❌ Déplacer le mouvement d'un composant à l'autre n'annule pas le critère. ❌ `aria-hidden` sur le bouton de pause : il vit sur le cadre décoratif.

@@ -36,8 +36,8 @@ const StepSection: React.FC<StepSectionProps> = ({ id, step, titleKey, subtitleK
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <header className="mb-14 max-w-3xl">
-          <p className="mb-5 flex items-center gap-3 font-mono text-caption uppercase tracking-[0.25em] text-cyan-400">
-            <span className="h-px w-8 bg-cyan-400/40" aria-hidden="true" />
+          <p className="mb-5 flex items-center gap-3 font-mono text-caption uppercase tracking-[0.25em] text-cosmo-400">
+            <span className="h-px w-8 bg-cosmo-400/40" aria-hidden="true" />
             {t('enterprise.steps.of', { step, total: 5 })}
           </p>
           <h2

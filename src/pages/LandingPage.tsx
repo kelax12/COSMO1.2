@@ -234,7 +234,7 @@ const LandingPage: React.FC = () => {
     <div
       ref={rootRef}
       className={`min-h-[100dvh] transition-colors duration-700 ${
-        isEnterprise ? 'bg-[#08090C] text-white' : 'bg-white text-slate-900'
+        isEnterprise ? 'bg-[#161719] text-white' : 'bg-white text-slate-900'
       }`}
       style={{ ['--landing-header-h' as string]: `${headerH}px` }}
     >
@@ -242,7 +242,7 @@ const LandingPage: React.FC = () => {
       <div
         ref={progressRef}
         className={`fixed inset-x-0 top-0 z-[60] h-0.5 origin-left scale-x-0 transition-colors duration-500 ${
-          isEnterprise ? 'bg-cyan-400' : 'bg-blue-600'
+          isEnterprise ? 'bg-cosmo-400' : 'bg-blue-600'
         }`}
         aria-hidden="true"
       />
@@ -282,7 +282,7 @@ const LandingPage: React.FC = () => {
                  change PAS la hauteur de l'en-tête, le CTA « Commencer » de la
                  même rangée étant déjà à 44 px. */
               className={`group flex shrink-0 items-center gap-2.5 min-h-touch cursor-pointer focus-visible:outline-none focus-visible:ring-2 rounded-xl pr-2 ${
-                isEnterprise ? 'focus-visible:ring-cyan-300' : 'focus-visible:ring-blue-500'
+                isEnterprise ? 'focus-visible:ring-cosmo-300' : 'focus-visible:ring-blue-500'
               }`}
               onClick={() => window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' })}
               aria-label={t('nav.backToTop')}
@@ -298,7 +298,7 @@ const LandingPage: React.FC = () => {
                 Cosmo
                 <span
                   className={`absolute inset-x-0 -bottom-0.5 h-px origin-left scale-x-0 transition-transform duration-300 group-hover:scale-x-100 group-focus-visible:scale-x-100 motion-reduce:transition-none ${
-                    isEnterprise ? 'bg-cyan-300' : 'bg-blue-600'
+                    isEnterprise ? 'bg-cosmo-400' : 'bg-blue-600'
                   }`}
                   aria-hidden="true"
                 />
@@ -333,7 +333,7 @@ const LandingPage: React.FC = () => {
                 onClick={(e) => { e.preventDefault(); handleLoginClick(); }}
                 className={`hidden sm:block px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 rounded-lg ${
                   isEnterprise
-                    ? 'text-slate-300 hover:text-white focus-visible:ring-cyan-300'
+                    ? 'text-slate-300 hover:text-white focus-visible:ring-cosmo-300'
                     : 'text-slate-600 hover:text-slate-900 focus-visible:ring-blue-500'
                 }`}
               >
@@ -351,7 +351,7 @@ const LandingPage: React.FC = () => {
                    et pas pour lui (C-80). */
                 className={`group relative inline-flex items-center justify-center overflow-hidden px-4 py-2 min-h-touch xl:px-5 rounded-xl font-semibold transition-[box-shadow,color,background-color] duration-300 text-sm whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
                   isEnterprise
-                    ? 'bg-cyan-400 text-[#04141A] shadow-lg shadow-cyan-500/25 hover:bg-cyan-300 hover:shadow-cyan-400/50 focus-visible:ring-cyan-300 focus-visible:ring-offset-slate-900'
+                    ? 'bg-cosmo-400 text-white shadow-lg shadow-cosmo-500/25 hover:bg-cosmo-300 hover:shadow-cosmo-400/50 focus-visible:ring-cosmo-300 focus-visible:ring-offset-slate-900'
                     : 'bg-blue-600 text-white hover:bg-blue-700 [&>[data-reflet]]:hidden focus-visible:ring-blue-500 focus-visible:ring-offset-white'
                 }`}
               >
@@ -380,7 +380,7 @@ const LandingPage: React.FC = () => {
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
                 className={`md:hidden inline-flex items-center justify-center w-11 h-11 transition-colors focus-visible:outline-none focus-visible:ring-2 rounded-lg ${
                   isEnterprise
-                    ? 'text-slate-300 hover:text-white focus-visible:ring-cyan-300'
+                    ? 'text-slate-300 hover:text-white focus-visible:ring-cosmo-300'
                     : 'text-slate-600 hover:text-slate-900 focus-visible:ring-blue-500'
                 }`}
                 aria-label={showMobileMenu ? t('nav.closeMenu') : t('nav.openMenu')}
@@ -483,7 +483,7 @@ const LandingPage: React.FC = () => {
               animate={{ opacity: 0 }}
               transition={{ duration: 0.55, ease: 'easeOut' }}
               className={`pointer-events-none absolute inset-0 z-40 ${
-                isEnterprise ? 'bg-[#08090C]' : 'bg-white'
+                isEnterprise ? 'bg-[#161719]' : 'bg-white'
               }`}
               aria-hidden="true"
             />
@@ -521,7 +521,7 @@ const LandingPage: React.FC = () => {
  * retrouverait projeté en haut, puis en bas, à l'arrivée du chunk.
  */
 const TrackFallback: React.FC = () => (
-  <div className="min-h-[100dvh] bg-[#08090C]" aria-hidden="true" />
+  <div className="min-h-[100dvh] bg-[#161719]" aria-hidden="true" />
 );
 
 export default LandingPage;

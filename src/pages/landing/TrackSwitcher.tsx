@@ -48,7 +48,7 @@ const TrackSwitcher: React.FC<TrackSwitcherProps> = ({ track, onSelect, classNam
         aria-hidden="true"
         className={`pointer-events-none absolute inset-y-0.5 rounded-[10px] transition-[left,background-color,box-shadow] duration-400 ease-[cubic-bezier(0.22,1,0.36,1)] ${
           isEnterprise
-            ? 'bg-cyan-400'
+            ? 'bg-cosmo-400'
             : 'bg-blue-600'
         }`}
         style={{ left: `calc(${activeIndex * 50}% + 2px)`, width: 'calc(50% - 4px)' }}
@@ -65,7 +65,7 @@ const TrackSwitcher: React.FC<TrackSwitcherProps> = ({ track, onSelect, classNam
             onClick={() => onSelect(id)}
             className={`relative z-10 flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px] px-2.5 ${size === 'touch' ? 'min-h-touch text-sm' : 'py-1.5 text-xs'} font-semibold transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 sm:px-3.5 ${
               isEnterprise
-                ? `focus-visible:ring-white/40 ${active ? 'text-[#04141A]' : 'text-slate-400 hover:text-slate-200'}`
+                ? `focus-visible:ring-white/40 ${active ? 'text-white' : 'text-slate-400 hover:text-slate-200'}`
                 : `focus-visible:ring-blue-500 ${active ? 'text-white' : 'text-slate-500 hover:text-slate-800'}`
             }`}
           >

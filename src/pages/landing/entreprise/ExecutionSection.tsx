@@ -60,12 +60,12 @@ const ExecutionSection: React.FC = () => {
           {/* La fiche bloquée, posée sur les colonnes les plus vides du
               tableau (En relecture, Bloquée, Terminée). Liseré cyan : c'est
               l'élément sur lequel l'étape insiste. */}
-          <figure className="mt-4 overflow-hidden rounded-xl border border-cyan-300/30 bg-[#222428] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.95)] sm:absolute sm:bottom-0 sm:right-[-1rem] sm:mt-0 sm:w-[72%]">
+          <figure className="mt-4 overflow-hidden rounded-xl border border-cosmo-300/30 bg-[#222428] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.95)] sm:absolute sm:bottom-0 sm:right-[-1rem] sm:mt-0 sm:w-[72%]">
             <div className="flex items-center gap-2 border-b border-white/[0.07] px-4 py-2">
               <span className="flex gap-1.5" aria-hidden="true">
                 <span className="h-2 w-2 rounded-full bg-white/10" />
                 <span className="h-2 w-2 rounded-full bg-white/10" />
-                <span className="h-2 w-2 rounded-full bg-cyan-400/60" />
+                <span className="h-2 w-2 rounded-full bg-cosmo-400/60" />
               </span>
               <figcaption className="ml-1 truncate font-mono text-caption uppercase tracking-[0.2em] text-slate-500">
                 {t(deps.labelKey)}

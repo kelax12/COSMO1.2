@@ -94,7 +94,7 @@ const OkrSection: React.FC = () => {
             <ul className="mb-10 space-y-3.5">
               {BULLETS.map((key) => (
                 <li key={key} className="flex gap-3 text-sm leading-relaxed text-slate-400">
-                  <Check size={16} className="mt-0.5 shrink-0 text-cyan-400" aria-hidden="true" />
+                  <Check size={16} className="mt-0.5 shrink-0 text-cosmo-400" aria-hidden="true" />
                   {t(key)}
                 </li>
               ))}
@@ -112,8 +112,8 @@ const OkrSection: React.FC = () => {
           {/* ── La cascade ── */}
           <div className="okr-cascade flex flex-col items-stretch">
             {/* Niveau 1 : l'objectif d'organisation */}
-            <div className="okr-level rounded-xl border border-cyan-300/25 bg-gradient-to-br from-cyan-400/[0.08] to-transparent p-6">
-              <span className="mb-3 block font-mono text-caption uppercase tracking-[0.22em] text-cyan-400">
+            <div className="okr-level rounded-xl border border-cosmo-300/25 bg-gradient-to-br from-cosmo-400/[0.08] to-transparent p-6">
+              <span className="mb-3 block font-mono text-caption uppercase tracking-[0.22em] text-cosmo-400">
                 {t('enterprise.okr.orgLabel')}
               </span>
               <p className="text-base font-semibold leading-snug text-white">
@@ -151,7 +151,7 @@ const OkrSection: React.FC = () => {
                             ne fait que révéler le remplissage par `scaleX`. */}
                         <div className="h-2 overflow-hidden rounded-full bg-white/[0.05]">
                           <div
-                            className={`okr-fill h-full rounded-full ${done ? 'bg-[#F5B942]' : 'bg-cyan-400/80'}`}
+                            className={`okr-fill h-full rounded-full ${done ? 'bg-[#F5B942]' : 'bg-cosmo-400/80'}`}
                             style={{ width: `${progress}%` }}
                           />
                         </div>
@@ -171,7 +171,7 @@ const OkrSection: React.FC = () => {
 /** Trait vertical entre deux niveaux de la cascade. */
 const Connector: React.FC = () => (
   <div className="flex h-10 items-stretch justify-center" aria-hidden="true">
-    <span className="okr-connector w-px bg-gradient-to-b from-cyan-400/50 to-cyan-400/10" />
+    <span className="okr-connector w-px bg-gradient-to-b from-cosmo-400/50 to-cosmo-400/10" />
   </div>
 );
 

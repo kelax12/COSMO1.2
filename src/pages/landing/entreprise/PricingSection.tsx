@@ -150,8 +150,8 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
                      vertical seulement. C'est le choix mensuel / annuel, donc
                      le geste qui décide du montant facturé : le rater doit être
                      difficile. */
-                  className={`${TAP_AREA_44_Y} inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-[background-color,color] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#161719] ${
-                    isSelected ? 'bg-cyan-400/15 text-cyan-300' : 'text-slate-400 hover:text-slate-200'
+                  className={`${TAP_AREA_44_Y} inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-[background-color,color] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cosmo-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#161719] ${
+                    isSelected ? 'bg-cosmo-400/15 text-cosmo-300' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
                   {option === 'monthly'
@@ -186,7 +186,7 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
               {t('enterprise.pricing.sliderLabel')}
             </label>
             <div className="flex items-baseline gap-2">
-              <Users size={16} className="self-center text-cyan-400" aria-hidden="true" />
+              <Users size={16} className="self-center text-cosmo-400" aria-hidden="true" />
               <span className="text-3xl font-bold tabular-nums text-white">
                 {members}
                 {members >= SLIDER_MAX && '+'}
@@ -281,7 +281,7 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
                 key={tier.minMembers}
                 className={`flex h-full flex-col rounded-xl border p-5 transition-[border-color,box-shadow,background-color] duration-300 ${
                   isActive
-                    ? 'border-cyan-300/60 bg-[#282A2E] shadow-[0_0_0_1px_rgba(34,211,238,0.25),0_0_36px_-8px_rgba(34,211,238,0.55)]'
+                    ? 'border-cosmo-300/60 bg-[#282A2E] shadow-[0_0_0_1px_rgba(56,139,253,0.25),0_0_36px_-8px_rgba(56,139,253,0.55)]'
                     : 'border-white/[0.08] bg-[#222428] hover:border-white/15'
                 }`}
               >
@@ -310,7 +310,7 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
                 ) : (
                   <>
                     <span className="flex items-baseline gap-0.5">
-                      <span className={`text-2xl font-bold tabular-nums ${isActive ? 'text-cyan-300' : 'text-white'}`}>
+                      <span className={`text-2xl font-bold tabular-nums ${isActive ? 'text-cosmo-300' : 'text-white'}`}>
                         {formatPrice(price)}
                       </span>
                       <span className="text-xl font-bold text-slate-600">€</span>
@@ -326,7 +326,7 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
                   </>
                 )}
                 {isActive && (
-                  <span className="mt-4 inline-flex w-fit rounded-full bg-cyan-400/15 px-2.5 py-1 font-mono text-caption uppercase tracking-[0.16em] text-cyan-300">
+                  <span className="mt-4 inline-flex w-fit rounded-full bg-cosmo-400/15 px-2.5 py-1 font-mono text-caption uppercase tracking-[0.16em] text-cosmo-300">
                     {t('enterprise.pricing.yourTier')}
                   </span>
                 )}
@@ -342,7 +342,7 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
             <ul className="grid gap-2.5 sm:grid-cols-2">
               {INCLUDED.map((key) => (
                 <li key={key} className="flex gap-2.5 text-sm text-slate-400">
-                  <Check size={15} className="mt-0.5 shrink-0 text-cyan-400" aria-hidden="true" />
+                  <Check size={15} className="mt-0.5 shrink-0 text-cosmo-400" aria-hidden="true" />
                   {t(key)}
                 </li>
               ))}

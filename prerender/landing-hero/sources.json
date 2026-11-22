@@ -1,6 +1,6 @@
 {
-  "src/pages/LandingPage.tsx": "04d19c5779c31218",
-  "src/pages/landing/TrackSwitcher.tsx": "928ddf4c3d497b42",
+  "src/pages/LandingPage.tsx": "9f5b2e5da6928ee1",
+  "src/pages/landing/TrackSwitcher.tsx": "2c8cf64fb313f0d8",
   "src/pages/landing/TrackAnchors.tsx": "c59957dc289b7508",
   "src/pages/landing/anchors.ts": "8155900b8a027902",
   "src/pages/landing/PersoTrack.tsx": "837081f312b75371",
@@ -11,7 +11,7 @@
   "src/locales/fr/landing.json": "7ed4975f81f6524f",
   "src/locales/en/landing.json": "eb33f246ef45fbf7",
   "src/pages/landing/entreprise/EnterpriseTrack.tsx": "e1eb383bf28329b1",
-  "src/pages/landing/entreprise/EnterpriseHero.tsx": "c197b8bf5d4ad155",
+  "src/pages/landing/entreprise/EnterpriseHero.tsx": "7fa54e27a30d7dd3",
   "src/pages/landing/entreprise/HeroStack.tsx": "2f4046ae4ad21651",
   "src/pages/landing/entreprise/free-offer.ts": "a2c663f26b9b51df",
   "src/locales/fr/landingEnterprise.json": "77d37a48e03da372",

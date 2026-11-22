@@ -57,7 +57,7 @@ const LandingFooter: React.FC<LandingFooterProps> = ({ track }) => {
                   permanent, y compris depuis le parcours perso. */}
               <Link
                 to="/entreprise-presentation"
-                className={`transition-colors ${isEnterprise ? 'text-cyan-300 hover:text-cyan-200' : 'text-cyan-700 hover:text-cyan-800'}`}
+                className={`transition-colors ${isEnterprise ? 'text-cosmo-300 hover:text-cosmo-200' : 'text-cosmo-700 hover:text-cosmo-800'}`}
               >
                 {t('footer.enterprise')}
               </Link>

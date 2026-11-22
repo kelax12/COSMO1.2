@@ -161,7 +161,7 @@ const LandingGateway: React.FC<LandingGatewayProps> = ({ track, onSelect }) => {
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/25 to-transparent" />
           <div
             className={`absolute left-1/2 top-1/2 h-40 w-px -translate-x-1/2 -translate-y-1/2 transition-colors duration-500 ${
-              hovered === 'entreprise' ? 'bg-cyan-300/80' : 'bg-blue-300/70'
+              hovered === 'entreprise' ? 'bg-cosmo-300/80' : 'bg-blue-300/70'
             } blur-[2px]`}
           />
         </div>
@@ -185,9 +185,9 @@ const LandingGateway: React.FC<LandingGatewayProps> = ({ track, onSelect }) => {
             t('enterprise.gateway.entreprise.f3'),
           ]}
           enterLabel={t('enterprise.gateway.enter')}
-          accentClass="text-cyan-300"
-          ringClass="focus-visible:ring-cyan-300"
-          ctaClass="bg-cyan-400/10 border-cyan-300/30 text-cyan-100 group-hover/panel:bg-cyan-400/20 group-hover/panel:border-cyan-300/60"
+          accentClass="text-cosmo-300"
+          ringClass="focus-visible:ring-cosmo-300"
+          ctaClass="bg-cosmo-400/10 border-cosmo-300/30 text-cosmo-100 group-hover/panel:bg-cosmo-400/20 group-hover/panel:border-cosmo-300/60"
           background={
             <div className="absolute inset-0 bg-[#08090C]" aria-hidden="true">
               {/* Grille de points réactive au curseur — le fond « instrument »
@@ -197,14 +197,14 @@ const LandingGateway: React.FC<LandingGatewayProps> = ({ track, onSelect }) => {
                   dotSize={2}
                   gap={26}
                   baseColor="#1B2430"
-                  activeColor="#22D3EE"
+                  activeColor="#388BFD"
                   proximity={130}
                   shockRadius={210}
                   shockStrength={4}
                   className="absolute inset-0"
                 />
               )}
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_40%,rgba(34,211,238,0.12),transparent_70%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_40%,rgba(56,139,253,0.12),transparent_70%)]" />
               <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-[#08090C] to-transparent" />
             </div>
           }
