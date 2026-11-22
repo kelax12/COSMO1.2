@@ -1,6 +1,4 @@
-// ═══════════════════════════════════════════════════════════════════
-// C-81 · le catalogue des sabotages rejoués par `npm run check:sabotages`
-// ═══════════════════════════════════════════════════════════════════
+// ═ C-81 · le catalogue des sabotages rejoués par `npm run check:sabotages`
 //
 // Chaque entrée casse UNE chose, dans une COPIE de l'arbre (jamais l'arbre
 // de travail), et nomme ce qui doit rougir.
@@ -69,9 +67,7 @@ const RETENTION = {
 };
 
 export const CATALOGUE = [
-  // ═════════════════════════════════════════════════════════════════
-  // SÉCURITÉ — en-têtes, Edge Functions, migrations
-  // ═════════════════════════════════════════════════════════════════
+  // ═ SÉCURITÉ — en-têtes, Edge Functions, migrations
   {
     id: 'csp-wss',
     famille: 'produit',
@@ -79,9 +75,7 @@ export const CATALOGUE = [
     modifs: [r('vercel.json', ' wss://ykeugqfgklejcdbrmawy.supabase.co', '')],
     attendu: ['autorise le WebSocket Realtime de Supabase (schéma wss, pas seulement https)'],
     pourquoi:
-      'Sans `wss:` dans connect-src, le navigateur bloque TOUTES les connexions '
-      + 'Realtime en production, en silence. Trois canaux d`App.tsx` coupés, et '
-      + 'ils avaient remplacé huit sondages : une tâche partagée n`arrive jamais.',
+      'Sans `wss:` dans connect-src, le navigateur bloque TOUTES les connexions Realtime en production, en silence. Trois canaux d`App.tsx` coupés, et ils avaient remplacé huit sondages : une tâche partagée n`arrive jamais.',
   },
   {
     id: 'csp-unsafe-eval',
@@ -90,8 +84,7 @@ export const CATALOGUE = [
     modifs: [r('vercel.json', "script-src 'self'", "script-src 'self' 'unsafe-eval'")],
     attendu: ["n'autorise pas 'unsafe-eval' ni un joker total dans les scripts"],
     pourquoi:
-      "`'unsafe-eval'` rouvre l'exécution de chaînes arbitraires : la CSP cesse "
-      + "d'être une défense contre le XSS et devient une décoration.",
+      "`'unsafe-eval'` rouvre l'exécution de chaînes arbitraires : la CSP cesse d'être une défense contre le XSS et devient une décoration.",
   },
   {
     id: 'csp-stripe-js',
@@ -100,8 +93,7 @@ export const CATALOGUE = [
     modifs: [r('vercel.json', "script-src 'self' https://challenges.cloudflare.com", "script-src 'self' https://challenges.cloudflare.com https://js.stripe.com")],
     attendu: ['SEC-09 : le seul projet Supabase, et aucun Stripe.js sans SDK client'],
     pourquoi:
-      'Une origine de script autorisée sans aucun usage côté client est une porte '
-      + 'ouverte pour rien (SEC-09, audit du 2026-11-06).',
+      'Une origine de script autorisée sans aucun usage côté client est une porte ouverte pour rien (SEC-09, audit du 2026-11-06).',
   },
   // ── CORS unique des Edge Functions (COD-03, SEC-09) ──────────────
   {
@@ -115,8 +107,7 @@ export const CATALOGUE = [
     )],
     attendu: ['stripe-org-portal/index.ts ne porte aucune valeur par défaut localhost'],
     pourquoi:
-      'Une APP_URL absente ne ferait plus échouer la fonction : elle renverrait les '
-      + 'clients du portail Stripe vers localhost (COD-03).',
+      'Une APP_URL absente ne ferait plus échouer la fonction : elle renverrait les clients du portail Stripe vers localhost (COD-03).',
   },
   {
     id: 'edge-drift-import-type',
@@ -129,8 +120,7 @@ export const CATALOGUE = [
     )],
     attendu: ['TEMOIN : seat-alert n embarque billing-mail-text que si un import de VALEUR y mene'],
     pourquoi:
-      'Un périmètre qui suit un `import type` attend en ligne un fichier que le bundle '
-      + 'n embarque pas : `Edge deploy` rougit sur une fonction déployée à l instant.',
+      'Un périmètre qui suit un `import type` attend en ligne un fichier que le bundle n embarque pas : `Edge deploy` rougit sur une fonction déployée à l instant.',
   },
   // ── Ordre des événements d'abonnement Stripe (SEC-08) ──────────────
   {
@@ -144,8 +134,7 @@ export const CATALOGUE = [
     )],
     attendu: ['relit par stripe.subscriptions.retrieve et décide sur l état relu'],
     pourquoi:
-      'Appliquer la charge de l événement rend un abonnement résilié actif quand '
-      + 'Stripe livre un updated ancien après le deleted (SEC-08).',
+      'Appliquer la charge de l événement rend un abonnement résilié actif quand Stripe livre un updated ancien après le deleted (SEC-08).',
   },
   // ── Collecteur de la mesure d'audience (TR-1, mig. 223) : le SEUL chemin
   //    d'écriture de `track_hit`, donc ses refus et sa clé sont la frontière.
@@ -166,8 +155,7 @@ export const CATALOGUE = [
     modifs: [r('api/collect.ts', '  const key = process.env.SUPABASE_SECRET_KEY;', '  const key = process.env.SUPABASE_SECRET_KEY || process.env.VITE_SUPABASE_ANON_KEY;')],
     attendu: ['503 sans clé secrète, sans repli sur la clé publique'],
     pourquoi:
-      'Un repli sur la clé publique rend la garde conditionnelle à la présence de son '
-      + 'propre secret : la variable perdue, la mesure échoue en silence au lieu de répondre 503.',
+      'Un repli sur la clé publique rend la garde conditionnelle à la présence de son propre secret : la variable perdue, la mesure échoue en silence au lieu de répondre 503.',
   },
   {
     id: 'collect-secret-en-bearer',
@@ -176,8 +164,7 @@ export const CATALOGUE = [
     modifs: [r('api/collect.ts', "  return key.startsWith('sb_') ? { apikey: key } : { apikey: key, Authorization: `Bearer ${key}` };", '  return { apikey: key, Authorization: `Bearer ${key}` };')],
     attendu: ['appelle track_hit avec la clé SECRÈTE, jamais avec la clé publique'],
     pourquoi:
-      'Une clé `sb_secret_` en `Authorization: Bearer` est lue comme un JWT et rejetée '
-      + '(« Invalid JWT ») : chaque visite répondrait 502, aucune ne serait comptée.',
+      'Une clé `sb_secret_` en `Authorization: Bearer` est lue comme un JWT et rejetée (« Invalid JWT ») : chaque visite répondrait 502, aucune ne serait comptée.',
   },
   {
     id: 'collect-origine-null',
@@ -196,8 +183,7 @@ export const CATALOGUE = [
     modifs: [r('api/collect.ts', '  if (new TextEncoder().encode(raw).length > MAX_BODY) return status(413);', '  if (raw.length > MAX_BODY) return status(413);')],
     attendu: ['413 au-delà de 2 Ko, comptés en octets et non en caractères'],
     pourquoi:
-      'Compter des caractères laisse passer jusqu au triple d octets : la borne de 2 Ko '
-      + 'que la RPC suppose ne tiendrait plus.',
+      'Compter des caractères laisse passer jusqu au triple d octets : la borne de 2 Ko que la RPC suppose ne tiendrait plus.',
   },
   {
     id: 'rate-limit-borne',
@@ -232,8 +218,7 @@ export const CATALOGUE = [
     )],
     attendu: ["l'origine CORS est une ALLOWLIST, jamais le joker"],
     pourquoi:
-      "Le joker CORS amplifie la portée d'un JWT qui fuit : rejeu depuis "
-      + "n'importe quelle origine (faille N7).",
+      "Le joker CORS amplifie la portée d'un JWT qui fuit : rejeu depuis n'importe quelle origine (faille N7).",
   },
   {
     id: 'stripe-checkout-upsert',
@@ -242,8 +227,7 @@ export const CATALOGUE = [
     modifs: [r('supabase/functions/stripe-create-checkout/index.ts', '.upsert(', '.update(')],
     attendu: ["l'identifiant client Stripe est persiste par UPSERT, pas par UPDATE (faille U1)"],
     pourquoi:
-      "Un `UPDATE` seul ne matche aucune ligne tant que `subscriptions` n'existe "
-      + "pas : l'identifiant du client Stripe est perdu en silence et chaque "
+      "Un `UPDATE` seul ne matche aucune ligne tant que `subscriptions` n'existe pas : l'identifiant du client Stripe est perdu en silence et chaque "
       + 'reprise crée un client orphelin de plus (faille U1).',
   },
   {
@@ -257,8 +241,7 @@ export const CATALOGUE = [
     )],
     attendu: ['garde — report-bug et renewal-notice (C-36) > renewal-notice > echoue FERME quand un secret manque'],
     pourquoi:
-      "C'est LE motif « on ne se protège que quand on est déjà protégé » : "
-      + "tant que le secret n'est pas posé, la garde laisse passer tout le monde. "
+      "C'est LE motif « on ne se protège que quand on est déjà protégé » : tant que le secret n'est pas posé, la garde laisse passer tout le monde. "
       + 'Introduit puis corrigé le 2026-08-26 dans cette fonction même.',
   },
   {
@@ -268,8 +251,7 @@ export const CATALOGUE = [
     modifs: [r('src/edge-mail-functions.guard.test.ts', String.raw`const GUARD_ON_OWN_SECRET = /if\s*[(]\s*[A-Z_]*SECRET\s*&&/;`, String.raw`const GUARD_ON_OWN_SECRET = /${AVEUGLE}if\s*[(]\s*[A-Z_]*SECRET\s*&&/;`)],
     attendu: ['TEMOIN : les trois detecteurs voient le defaut qu ils cherchent'],
     pourquoi:
-      'Un détecteur de « garde conditionnelle à son propre secret » qui ne voit '
-      + 'plus rien rend les quatre fonctions d`envoi « fermées » sans les avoir lues.',
+      'Un détecteur de « garde conditionnelle à son propre secret » qui ne voit plus rien rend les quatre fonctions d`envoi « fermées » sans les avoir lues.',
   },
   {
     id: 'edge-mail-detecteur-expediteur',
@@ -288,9 +270,7 @@ export const CATALOGUE = [
     modifs: [r('supabase/functions/delete-account/index.ts', 'friend_user_id.eq.', 'user_id.eq.')],
     attendu: ['purge `friends` sur ses DEUX colonnes (user_id + friend_user_id)'],
     pourquoi:
-      '`friends` est symétrique : un compte y apparaît aussi en '
-      + '`friend_user_id`. Purger une seule colonne laisse des lignes portant '
-      + 'les données personnelles du compte supprimé (RGPD art. 17).',
+      '`friends` est symétrique : un compte y apparaît aussi en `friend_user_id`. Purger une seule colonne laisse des lignes portant les données personnelles du compte supprimé (RGPD art. 17).',
   },
   {
     id: 'org-deletion-preuve-append-only',
@@ -315,8 +295,7 @@ export const CATALOGUE = [
     )],
     raison: /policy "sabotage_select" sur sabotage_uid utilise auth\.uid\(\) NU/,
     pourquoi:
-      '`auth.uid()` nu est ré-évalué PAR LIGNE scannée (advisor auth_rls_initplan, '
-      + 'mig. 043). La règle a déjà régressé deux fois (mig. 059, 082).',
+      '`auth.uid()` nu est ré-évalué PAR LIGNE scannée (advisor auth_rls_initplan, mig. 043). La règle a déjà régressé deux fois (mig. 059, 082).',
   },
   {
     id: 'rls-deux-permissives',
@@ -324,13 +303,11 @@ export const CATALOGUE = [
     garde: { commande: 'scripts/check-rls-advisors.mjs' },
     modifs: [c(
       'supabase/migration/999_sabotage_rls_or.sql',
-      'CREATE POLICY "sabotage_a" ON public.sabotage_or FOR SELECT USING (user_id = (select auth.uid()));\n'
-        + 'CREATE POLICY "sabotage_b" ON public.sabotage_or FOR SELECT USING (shared = true);\n',
+      'CREATE POLICY "sabotage_a" ON public.sabotage_or FOR SELECT USING (user_id = (select auth.uid()));\nCREATE POLICY "sabotage_b" ON public.sabotage_or FOR SELECT USING (shared = true);\n',
     )],
     raison: /sabotage_or a 2 policies PERMISSIVE pour SELECT/,
     pourquoi:
-      'Deux policies PERMISSIVE sur le même couple rôle+action sont évaluées '
-      + 'séparément puis OR-ées à chaque requête (mig. 049) ; la mig. 077 en a ajouté deux sur `events`.',
+      'Deux policies PERMISSIVE sur le même couple rôle+action sont évaluées séparément puis OR-ées à chaque requête (mig. 049) ; la mig. 077 en a ajouté deux sur `events`.',
   },
   {
     id: 'rls-fonction-revoquee',
@@ -338,9 +315,7 @@ export const CATALOGUE = [
     garde: { commande: 'scripts/check-rls-advisors.mjs' },
     modifs: [c(
       'supabase/migration/999_sabotage_rls_subtree.sql',
-      'CREATE POLICY "sabotage_subtree" ON public.sabotage_t FOR UPDATE\n'
-        + '  USING (true)\n'
-        + '  WITH CHECK (user_id IN (SELECT public.get_subtree(org_id, (select auth.uid()))));\n',
+      'CREATE POLICY "sabotage_subtree" ON public.sabotage_t FOR UPDATE\n  USING (true)\n  WITH CHECK (user_id IN (SELECT public.get_subtree(org_id, (select auth.uid()))));\n',
     )],
     raison: /policy "sabotage_subtree" sur sabotage_t appelle get_subtree\(\)/,
     pourquoi:
@@ -354,8 +329,7 @@ export const CATALOGUE = [
     modifs: [r('scripts/check-rls-advisors.mjs', '    if (!called.test(p.body)) continue;', '    continue;')],
     attendu: ['ÉCHOUE quand une policy appelle une fonction révoquée à authenticated'],
     pourquoi:
-      'Une règle 3 qui ne compare plus rien laisse revenir la policy de la mig. 107, '
-      + 'qui rappelait `get_subtree` sept jours après sa révocation.',
+      'Une règle 3 qui ne compare plus rien laisse revenir la policy de la mig. 107, qui rappelait `get_subtree` sept jours après sa révocation.',
   },
   {
     id: 'rls-detecteur-commentaires',
@@ -364,8 +338,7 @@ export const CATALOGUE = [
     modifs: [r('scripts/check-rls-advisors.mjs', "    .replace(/--[^\\n]*/g, '');", ';')],
     attendu: ['PASSE quand la seconde policy n’existe que dans un commentaire de retour arrière'],
     pourquoi:
-      'Lu avec ses commentaires, le script ressuscite les policies que les mig. 243 et 244 '
-      + 'sauvegardent en en-tête pour le retour arrière : rouge à tort, donc vite contourné.',
+      'Lu avec ses commentaires, le script ressuscite les policies que les mig. 243 et 244 sauvegardent en en-tête pour le retour arrière : rouge à tort, donc vite contourné.',
   },
 
   // ── validate:migrations · garde statique des `.sql` ────────────────
@@ -380,8 +353,7 @@ export const CATALOGUE = [
     )],
     raison: /fonction de trigger sabotage_touch\(\) jamais REVOKE-ee pour anon/,
     pourquoi:
-      'Une fonction de trigger restée exécutable par `anon` / `authenticated` noie les '
-      + 'advisors (B-3) : c`est ce bruit qui a masqué la vraie anomalie de la mig. 108.',
+      'Une fonction de trigger restée exécutable par `anon` / `authenticated` noie les advisors (B-3) : c`est ce bruit qui a masqué la vraie anomalie de la mig. 108.',
   },
   {
     id: 'migration-validateur-definer',
@@ -389,9 +361,7 @@ export const CATALOGUE = [
     garde: { commande: 'scripts/validate-migrations.mjs' },
     modifs: [c(
       'supabase/migration/999_sabotage_definer.sql',
-      'CREATE OR REPLACE FUNCTION public.validate_sabotage()\nRETURNS TRIGGER\nLANGUAGE plpgsql\n'
-        + 'SECURITY DEFINER\nAS $$ BEGIN RETURN NEW; END; $$;\n'
-        + 'REVOKE ALL ON FUNCTION public.validate_sabotage() FROM PUBLIC, anon, authenticated;\n',
+      'CREATE OR REPLACE FUNCTION public.validate_sabotage()\nRETURNS TRIGGER\nLANGUAGE plpgsql\nSECURITY DEFINER\nAS $$ BEGIN RETURN NEW; END; $$;\nREVOKE ALL ON FUNCTION public.validate_sabotage() FROM PUBLIC, anon, authenticated;\n',
     )],
     raison: /validate_sabotage\(\) en SECURITY DEFINER — une garde qui ne fait que VALIDER/,
     pourquoi:
@@ -418,8 +388,7 @@ export const CATALOGUE = [
     ],
     attendu: ['ÉCHOUE si seul PUBLIC est révoqué'],
     pourquoi:
-      '`REVOKE … FROM PUBLIC` ne retire pas le GRANT par défaut de Supabase (leçon de la '
-      + 'mig. 094b) : un détecteur qui le compte déclarerait fermées des fonctions ouvertes.',
+      '`REVOKE … FROM PUBLIC` ne retire pas le GRANT par défaut de Supabase (leçon de la mig. 094b) : un détecteur qui le compte déclarerait fermées des fonctions ouvertes.',
   },
 
   // ── validate:migrations · la checklist AM-4, règles 6 à 16 (cliquet 227) ──
@@ -433,8 +402,7 @@ export const CATALOGUE = [
     )],
     raison: /table sabotage_sans_rls creee sans ENABLE ROW LEVEL SECURITY/,
     pourquoi:
-      'Une table neuve sans RLS est lisible et écrivable par tout rôle qui a le GRANT par '
-      + 'défaut du schéma public : la frontière de sécurité du dépôt, c est la RLS.',
+      'Une table neuve sans RLS est lisible et écrivable par tout rôle qui a le GRANT par défaut du schéma public : la frontière de sécurité du dépôt, c est la RLS.',
   },
   ...[
     ['search-path', String.raw`if (fn.definer && !/\bSET\s+search_path\s*(?:=|TO)\s*''/i.test(fn.header)) {`, 'if (false) {',
@@ -497,19 +465,14 @@ export const CATALOGUE = [
     pourquoi,
   })),
 
-  // ═════════════════════════════════════════════════════════════════
-  // RGPD — effacement, portabilité, conservation
-  // ═════════════════════════════════════════════════════════════════
+  // ═ RGPD — effacement, portabilité, conservation
   {
     id: 'effacement-table-sans-decision',
     famille: 'produit',
     garde: { commande: 'scripts/check-erasure-coverage.mjs' },
     modifs: [c(
       'supabase/migration/999_sabotage_erasure.sql',
-      'CREATE TABLE IF NOT EXISTS public.sabotage_notes (\n'
-        + '  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n'
-        + '  user_id UUID NOT NULL REFERENCES auth.users(id),\n'
-        + '  contenu TEXT\n);\n',
+      'CREATE TABLE IF NOT EXISTS public.sabotage_notes (\n  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  user_id UUID NOT NULL REFERENCES auth.users(id),\n  contenu TEXT\n);\n',
     )],
     raison: /`sabotage_notes` porte une colonne `user_id` \(999_sabotage_erasure\.sql\) et AUCUNE décision/,
     pourquoi:
@@ -527,8 +490,7 @@ export const CATALOGUE = [
     )],
     raison: /`org_saved_views` est déclarée `cascade` mais sa colonne ne porte PAS/,
     pourquoi:
-      "La déclaration `cascade` affirme que Postgres efface ces lignes : sans la clause, "
-      + "il ne le fait pas, et c'est cette déclaration-là qu'on produirait en contrôle.",
+      "La déclaration `cascade` affirme que Postgres efface ces lignes : sans la clause, il ne le fait pas, et c'est cette déclaration-là qu'on produirait en contrôle.",
   },
   {
     id: 'effacement-purge-oubliee',
@@ -537,8 +499,7 @@ export const CATALOGUE = [
     modifs: [r('supabase/functions/delete-account/index.ts', "'tasks',", '')],
     raison: /`tasks` est déclarée `purge` mais n'est pas dans `USER_OWNED_TABLES`/,
     pourquoi:
-      'La décision écrite et le code de `delete-account` ne disent plus la même chose : '
-      + 'les tâches ne seraient plus purgées explicitement avant la suppression du compte.',
+      'La décision écrite et le code de `delete-account` ne disent plus la même chose : les tâches ne seraient plus purgées explicitement avant la suppression du compte.',
   },
   {
     id: 'portabilite-colonne-neuve',
@@ -547,8 +508,7 @@ export const CATALOGUE = [
     modifs: [c('supabase/migration/999_sabotage_portability.sql', 'ALTER TABLE public.tasks ADD COLUMN sabotage_note TEXT;\n')],
     raison: /`tasks\.sabotage_note` n'est NI exportée NI déclarée exclue/,
     pourquoi:
-      "Une colonne saisie qui n'entre pas dans l'export : le fichier se télécharge, "
-      + "s'ouvre, et il lui manque ce que la personne a fourni (art. 20, C-94).",
+      "Une colonne saisie qui n'entre pas dans l'export : le fichier se télécharge, s'ouvre, et il lui manque ce que la personne a fourni (art. 20, C-94).",
   },
   {
     id: 'portabilite-entete-retire',
@@ -566,10 +526,7 @@ export const CATALOGUE = [
     garde: { commande: 'scripts/check-portability-export.mjs' },
     modifs: [c(
       'supabase/migration/999_sabotage_portability_table.sql',
-      'CREATE TABLE IF NOT EXISTS public.sabotage_journal (\n'
-        + '  id UUID PRIMARY KEY,\n'
-        + '  user_id UUID NOT NULL,\n'
-        + '  texte TEXT\n);\n',
+      'CREATE TABLE IF NOT EXISTS public.sabotage_journal (\n  id UUID PRIMARY KEY,\n  user_id UUID NOT NULL,\n  texte TEXT\n);\n',
     )],
     raison: /La table `sabotage_journal` porte `user_id` et n'est NI exportée NI déclarée/,
     pourquoi:
@@ -582,8 +539,7 @@ export const CATALOGUE = [
     modifs: [c('.sabotages/base-simulee.json', '{ "orphelines": { "tasks.user_id": 3 } }\n')],
     raison: /`tasks` : 3 ligne\(s\) dont le compte n'existe plus/,
     pourquoi:
-      'Une ligne qui survit à son compte est une donnée personnelle conservée SANS BASE '
-      + 'LÉGALE : la forme exacte du défaut RGPD réel de ce dépôt (`shared_tasks`, `friends`).',
+      'Une ligne qui survit à son compte est une donnée personnelle conservée SANS BASE LÉGALE : la forme exacte du défaut RGPD réel de ce dépôt (`shared_tasks`, `friends`).',
   },
   {
     id: 'conservation-duree-depassee',
@@ -596,22 +552,18 @@ export const CATALOGUE = [
       + "registre une pièce fausse, et un registre faux atteste qu'on savait.",
   },
 
-  // ═════════════════════════════════════════════════════════════════
-  // BUDGET — architecture et bundle
-  // ═════════════════════════════════════════════════════════════════
+  // ═ BUDGET — architecture et bundle
   {
     id: 'architecture-from-hors-repository',
     famille: 'produit',
     garde: 'src/architecture.guard.test.ts',
     modifs: [c(
       'src/components/SabotageLectureDirecte.tsx',
-      "import { supabase } from '@/lib/supabase';\n\n"
-        + "export async function lire() {\n  return supabase.from('tasks').select('*');\n}\n",
+      "import { supabase } from '@/lib/supabase';\n\nexport async function lire() {\n  return supabase.from('tasks').select('*');\n}\n",
     )],
     attendu: ['aucune page ni composant ne lit une table en direct'],
     pourquoi:
-      'Le pattern repository est la frontière de données UNIQUE : c`est lui qui rend une '
-      + 'sortie de Supabase envisageable en jours plutôt qu`en mois.',
+      'Le pattern repository est la frontière de données UNIQUE : c`est lui qui rend une sortie de Supabase envisageable en jours plutôt qu`en mois.',
   },
   {
     id: 'architecture-balayage-vide',
@@ -620,8 +572,7 @@ export const CATALOGUE = [
     modifs: [r('src/architecture.guard.test.ts', "const SCAN_ROOTS = ['src', 'prerender'];", "const SCAN_ROOTS = ['src/nexistepas'];")],
     attendu: ['TEMOIN : le balayage voit reellement des fichiers'],
     pourquoi:
-      'Un balayage qui ne trouve plus rien rend toutes les gardes d`architecture vertes '
-      + 'en ne regardant rien : le défaut trouvé par mutation le 2026-09-04.',
+      'Un balayage qui ne trouve plus rien rend toutes les gardes d`architecture vertes en ne regardant rien : le défaut trouvé par mutation le 2026-09-04.',
   },
   {
     id: 'mail-mx-absent-accepte',
@@ -630,8 +581,7 @@ export const CATALOGUE = [
     modifs: [r('scripts/check-mail-reception.mjs', '  if (hotes.length === 0) {', '  if (false) {')],
     attendu: ['TÉMOIN : un domaine sans MX fait échouer'],
     pourquoi:
-      'M-53 : `contact@thecosmo.app` est publiée dans les mentions légales. Un domaine '
-      + 'dont les MX ont disparu ne reçoit plus rien, et la garde le dirait « en état ».',
+      'M-53 : `contact@thecosmo.app` est publiée dans les mentions légales. Un domaine dont les MX ont disparu ne reçoit plus rien, et la garde le dirait « en état ».',
   },
   {
     id: 'mail-rcpt-pousse-jusqu-a-data',
@@ -640,8 +590,7 @@ export const CATALOGUE = [
     modifs: [r('scripts/check-mail-reception.mjs', "      // etape 3 : la réponse à RCPT TO. On s'arrête ICI, jamais de DATA.\n      envoyer('QUIT');", "      // etape 3 : la réponse à RCPT TO. On s'arrête ICI, jamais de DATA.\n      envoyer('DATA');\n      envoyer('QUIT');")],
     attendu: ['TÉMOIN : une adresse acceptée rend « recoit », et AUCUN DATA n est envoyé'],
     pourquoi:
-      'Une sonde de réception qui pousse jusqu`à `DATA` ENVOIE un message à chaque passage : '
-      + 'la garde deviendrait une source de courrier dans la boîte qu`elle vérifie.',
+      'Une sonde de réception qui pousse jusqu`à `DATA` ENVOIE un message à chaque passage : la garde deviendrait une source de courrier dans la boîte qu`elle vérifie.',
   },
   {
     id: 'mail-balayage-aveugle',
@@ -650,8 +599,7 @@ export const CATALOGUE = [
     modifs: [r('scripts/check-mail-reception.mjs', "  'src/locales',\n  'src/pages',\n  'src/components',\n  'src/lib/contact.mjs',\n  'index.html',", "  'src/nexistepas',")],
     attendu: ['TÉMOIN : le balayage du dépôt voit contact@thecosmo.app dans le JSON-LD de index.html'],
     pourquoi:
-      'Un balayage qui ne voit plus les surfaces publiées ne vérifie plus aucune adresse : '
-      + 'la réception serait déclarée saine sur zéro adresse mesurée.',
+      'Un balayage qui ne voit plus les surfaces publiées ne vérifie plus aucune adresse : la réception serait déclarée saine sur zéro adresse mesurée.',
   },
   {
     id: 'bundle-sans-dist',
@@ -660,8 +608,7 @@ export const CATALOGUE = [
     modifs: [r('scripts/check-bundle-budget.mjs', 'if (!existsSync(ASSETS)) {', 'if (!existsSync(ASSETS) && false) {')],
     attendu: ['TEMOIN DU TEMOIN : sans `dist`, la garde ECHOUE au lieu de se taire'],
     pourquoi:
-      '`dist/` n`existe pas dans un checkout frais : une garde qui ne le dit plus '
-      + 'explicitement finit par imprimer « respecté » sur zéro chunk mesuré.',
+      '`dist/` n`existe pas dans un checkout frais : une garde qui ne le dit plus explicitement finit par imprimer « respecté » sur zéro chunk mesuré.',
   },
   {
     id: 'bundle-plafond-propre-ignore',
@@ -670,8 +617,7 @@ export const CATALOGUE = [
     modifs: [r('scripts/check-bundle-budget.mjs', 'const plafond = propre ?? BUDGETS.page;', 'const plafond = BUDGETS.page;')],
     attendu: ['un chunk qui DEPASSE son plafond propre fait rougir la garde'],
     pourquoi:
-      'Avant C-85, `TasksPage` pouvait passer de 35 à 69 ko sans qu`un seul job '
-      + 'bronche : seul le plafond PAR CHUNK l`en empêche.',
+      'Avant C-85, `TasksPage` pouvait passer de 35 à 69 ko sans qu`un seul job bronche : seul le plafond PAR CHUNK l`en empêche.',
   },
   {
     id: 'bundle-maximum-au-lieu-de-somme',
@@ -680,8 +626,7 @@ export const CATALOGUE = [
     modifs: [r('scripts/check-bundle-budget.mjs', '  e.gzip += m.gzip;', '  e.gzip = Math.max(e.gzip, m.gzip);')],
     attendu: ['LA SOMME par nom de base, pas le plus gros fichier'],
     pourquoi:
-      'Vite émet plusieurs fichiers sous un même nom de base : juger le plus gros '
-      + 'laisserait un baril de plus arriver gratuitement.',
+      'Vite émet plusieurs fichiers sous un même nom de base : juger le plus gros laisserait un baril de plus arriver gratuitement.',
   },
   {
     id: 'bundle-hash-gourmand',
@@ -690,9 +635,7 @@ export const CATALOGUE = [
     modifs: [r('scripts/check-bundle-budget.mjs', "name.replace(/-[A-Za-z0-9_-]{8}\\.js$/, '')", "name.replace(/-[A-Za-z0-9_-]{8,}\\.js$/, '')")],
     attendu: ['le decoupage du hash ne mange pas le nom de base'],
     pourquoi:
-      'Le défaut réel documenté dans la garde : `{8,}` transformait `vendor-charts-DMeWk7Ji.js` '
-      + 'en `vendor`, et les exemptions ne matchaient plus rien. Témoin trouvé MORT sur ce '
-      + 'sabotage au premier rejeu du 2026-10-15, et réparé le jour même.',
+      'Le défaut réel documenté dans la garde : `{8,}` transformait `vendor-charts-DMeWk7Ji.js` en `vendor`, et les exemptions ne matchaient plus rien. Témoin trouvé MORT sur ce sabotage au premier rejeu du 2026-10-15, et réparé le jour même.',
   },
   {
     id: 'bundle-hash-sans-tiret',
@@ -701,8 +644,7 @@ export const CATALOGUE = [
     modifs: [r('scripts/check-bundle-budget.mjs', "name.replace(/-[A-Za-z0-9_-]{8}\\.js$/, '')", "name.replace(/-[A-Za-z0-9_]{8}\\.js$/, '')")],
     attendu: ['le decoupage du hash ne mange pas le nom de base'],
     pourquoi:
-      'Le hash Vite est en base64url et peut contenir un tiret (`C-bIaeYw`) : un découpage qui '
-      + 'ne l`admet pas laisse le nom ENTIER, et le chunk échappe à son plafond.',
+      'Le hash Vite est en base64url et peut contenir un tiret (`C-bIaeYw`) : un découpage qui ne l`admet pas laisse le nom ENTIER, et le chunk échappe à son plafond.',
   },
   {
     id: 'bundle-plafond-perime-tolere',
@@ -711,8 +653,7 @@ export const CATALOGUE = [
     modifs: [r('scripts/check-bundle-budget.mjs', '  if (!basesPresentes.has(base)) {', '  if (false) {')],
     attendu: ['un plafond PERIME (chunk disparu) fait rougir la garde'],
     pourquoi:
-      'Une table de plafonds qui décrit des chunks morts cesse d`être relue, et une '
-      + 'liste qu`on ne relit plus est une liste qu`on cesse de croire.',
+      'Une table de plafonds qui décrit des chunks morts cesse d`être relue, et une liste qu`on ne relit plus est une liste qu`on cesse de croire.',
   },
   {
     id: 'bundle-entree-comptee-deux-fois',
@@ -731,8 +672,7 @@ export const CATALOGUE = [
     modifs: [r('scripts/check-bundle-budget.mjs', 'const plafond = propre ?? BUDGETS.page;', 'const plafond = propre ?? Infinity;')],
     attendu: ['un chunk SANS plafond propre reste juge par le budget de page'],
     pourquoi:
-      'Un écran neuf n`a pas à être déclaré pour exister, mais il doit rester sous la '
-      + 'borne générique : sans elle, il est sans borne du tout.',
+      'Un écran neuf n`a pas à être déclaré pour exister, mais il doit rester sous la borne générique : sans elle, il est sans borne du tout.',
   },
   {
     id: 'bundle-rapport-muet',
@@ -741,13 +681,10 @@ export const CATALOGUE = [
     modifs: [r('scripts/check-bundle-budget.mjs', '  if (propre && gzip >= 12_000) {', '  if (false) {')],
     attendu: ['un build sain passe, et la garde dit combien de chunks elle a mesures'],
     pourquoi:
-      'Une garde qui sort 0 sans NOMMER ce qu`elle a mesuré ne se distingue pas d`une '
-      + 'garde qui n`a rien lu.',
+      'Une garde qui sort 0 sans NOMMER ce qu`elle a mesuré ne se distingue pas d`une garde qui n`a rien lu.',
   },
 
-  // ═════════════════════════════════════════════════════════════════
-  // I18N
-  // ═════════════════════════════════════════════════════════════════
+  // ═ I18N
   {
     id: 'i18n-cle-manquante',
     famille: 'produit',
@@ -755,8 +692,7 @@ export const CATALOGUE = [
     modifs: [r('src/locales/en/csv.json', '"krWeight": "KR weight"', '"krWeigth": "KR weight"')],
     raison: /en\/csv: clé manquante : col\.krWeight/,
     pourquoi:
-      'Une clé absente du catalogue `en` affiche la clé brute, ou retombe sur le '
-      + 'français, sans que rien à l`écran ne le signale.',
+      'Une clé absente du catalogue `en` affiche la clé brute, ou retombe sur le français, sans que rien à l`écran ne le signale.',
   },
   {
     id: 'i18n-valeur-recopiee',
@@ -765,8 +701,7 @@ export const CATALOGUE = [
     modifs: [r('src/locales/en/csv.json', '"krWeight": "KR weight"', '"krWeight": "KR Pondération"')],
     raison: /csv\.col\.krWeight = "KR Pondération"/,
     pourquoi:
-      'Une valeur `en` recopiée du `fr` est une traduction manquante que le moteur '
-      + 'ne signalera jamais : il affiche le français, et l`écran a l`air traduit.',
+      'Une valeur `en` recopiée du `fr` est une traduction manquante que le moteur ne signalera jamais : il affiche le français, et l`écran a l`air traduit.',
   },
   {
     id: 'i18n-traduction-fausse',
@@ -775,8 +710,7 @@ export const CATALOGUE = [
     modifs: [r('src/locales/en/csv.json', '"subtasks": "Subtasks"', '"subtasks": "Items"')],
     raison: /csv\.col\.subtasks \[tâche\]/,
     pourquoi:
-      'Une traduction fausse mais différente passe `i18n:check` et `i18n:identical` : '
-      + 'seul le glossaire épinglé voit que « Sous-tâches » ne dit plus « subtask ».',
+      'Une traduction fausse mais différente passe `i18n:check` et `i18n:identical` : seul le glossaire épinglé voit que « Sous-tâches » ne dit plus « subtask ».',
   },
   {
     id: 'i18n-chaine-en-dur',
@@ -788,13 +722,10 @@ export const CATALOGUE = [
     )],
     raison: /src\/components\/SabotageChaineEnDur\.tsx[\s\S]*Votre tâche a été enregistrée avec succès/,
     pourquoi:
-      'Le cliquet est à ZÉRO chaîne en dur : une phrase française écrite dans un '
-      + 'composant reste en français pour tous les anglophones.',
+      'Le cliquet est à ZÉRO chaîne en dur : une phrase française écrite dans un composant reste en français pour tous les anglophones.',
   },
 
-  // ═════════════════════════════════════════════════════════════════
-  // RGPD — les témoins des deux gardes dérivées du schéma (C-92, C-94)
-  // ═════════════════════════════════════════════════════════════════
+  // ═ RGPD — les témoins des deux gardes dérivées du schéma (C-92, C-94)
   ...[
     ['rgpd-alter-premiere-clause', r('scripts/check-erasure-coverage.mjs', String.raw`      for (const clause of m[2].split(/,\s*(?=(?:ADD|DROP|ALTER|RENAME|VALIDATE)\b)/i)) {`, '      for (const clause of [m[2]]) {'),
       '`tablesAvecUserId` lit CHAQUE clause d un `ALTER TABLE`, et rien que la sienne',
@@ -837,8 +768,7 @@ export const CATALOGUE = [
     modifs: [r('supabase/migration/125_payment_journal_inalterable.sql', '  user_id            UUID,', '  user_id            UUID REFERENCES auth.users(id) ON DELETE CASCADE,')],
     attendu: ['le VRAI depot : 22 tables portent `user_id`, toutes decidees'],
     pourquoi:
-      'Le journal fiscal inaltérable (CGI art. 286-I-3° bis) qui cascade avec le compte : la '
-      + 'conservation annoncée au contrôleur n`existerait pas.',
+      'Le journal fiscal inaltérable (CGI art. 286-I-3° bis) qui cascade avec le compte : la conservation annoncée au contrôleur n`existerait pas.',
   },
   {
     id: 'porta-entete-krweight',
@@ -847,8 +777,7 @@ export const CATALOGUE = [
     modifs: [r('src/lib/csv-export.ts', "    'krWeight',", '')],
     attendu: ['les quatre colonnes ajoutees le 2026-09-20 sont bien dans l export'],
     pourquoi:
-      'La pondération des résultats clés, choisie par la personne, sortie de l`export : la '
-      + 'progression réelle ne serait plus recalculable depuis le fichier (art. 20).',
+      'La pondération des résultats clés, choisie par la personne, sortie de l`export : la progression réelle ne serait plus recalculable depuis le fichier (art. 20).',
   },
 
   {
@@ -858,8 +787,7 @@ export const CATALOGUE = [
     modifs: [r('scripts/check-subprocessors.mjs', 'const catalogueDe = (h) => CATALOGUE.find(', 'const catalogueDe = (h) => [].find(')],
     attendu: ['un dépôt cohérent dérive les cinq tiers et passe'],
     pourquoi:
-      'Un catalogue qui ne reconnaît plus aucun hôte dérive zéro tiers : la comparaison au '
-      + 'registre art. 30 passe à vide.',
+      'Un catalogue qui ne reconnaît plus aucun hôte dérive zéro tiers : la comparaison au registre art. 30 passe à vide.',
   },
 
   // ═════════════════════════════════════════════════════════════════
@@ -1049,9 +977,7 @@ export const CATALOGUE = [
     id, famille, garde: 'scripts/check-prod-errors.guard.test.mjs', modifs: [modif], attendu: [attendu], pourquoi,
   })),
 
-  // ═════════════════════════════════════════════════════════════════
-  // COUVERTURE DE L'OUTILLAGE ET DES EDGE FUNCTIONS (C-82)
-  // ═════════════════════════════════════════════════════════════════
+  // ═ COUVERTURE DE L'OUTILLAGE ET DES EDGE FUNCTIONS (C-82)
   ...[
     ['tooling-shebang-aveugle', 'detecteur', r('scripts/check-tooling-coverage.mjs', "  return contenu.startsWith('#!');", "  return contenu.startsWith('#!/usr/local');"),
       ['`porteUnShebang` voit un shebang, et seulement un shebang', 'TEMOIN : un shebang pose a blanc EST vu'],
@@ -1087,9 +1013,7 @@ export const CATALOGUE = [
     id, famille, garde: 'scripts/check-tooling-coverage.guard.test.mjs', modifs: [modif], attendu, pourquoi,
   })),
 
-  // ═════════════════════════════════════════════════════════════════
-  // SEO — sitemap et pages prérendues (C-98)
-  // ═════════════════════════════════════════════════════════════════
+  // ═ SEO — sitemap et pages prérendues (C-98)
   ...[
     ['seo-titre-aveugle', r('scripts/check-seo-pages.mjs', "  const title = /<title>([^<]*)<\\/title>/.exec(html)?.[1]?.trim() ?? '';", "  const title = /<titre>([^<]*)<\\/titre>/.exec(html)?.[1]?.trim() ?? '';"),
       'les fonctions de lecture lisent vraiment', 'Un extracteur qui rend toujours vide transforme chaque page en « sans titre » ou, trop laxiste, chaque page en conforme.'],
@@ -1121,9 +1045,7 @@ export const CATALOGUE = [
     id, famille: 'detecteur', garde: 'scripts/check-seo-pages.guard.test.mjs', modifs: [modif], attendu: [attendu], pourquoi,
   })),
 
-  // ═════════════════════════════════════════════════════════════════
-  // CYCLES D'IMPORTS (C-103)
-  // ═════════════════════════════════════════════════════════════════
+  // ═ CYCLES D'IMPORTS (C-103)
   ...[
     ['cycles-export-ignore', 'detecteur', r('scripts/check-import-cycles.mjs', "  const re = /(?:^|\\n)\\s*(import|export)(\\s[^;]*?)?\\sfrom\\s+['\"]([^'\"]+)['\"]/g;", "  const re = /(?:^|\\n)\\s*(import)(\\s[^;]*?)?\\sfrom\\s+['\"]([^'\"]+)['\"]/g;"),
       '`importsStatiques` voit les imports de VALEUR', 'Un `export … from` est une arête d`exécution : l`ignorer cache les cycles des barils de modules.'],
@@ -1155,9 +1077,7 @@ export const CATALOGUE = [
     pourquoi,
   })),
 
-  // ═════════════════════════════════════════════════════════════════
-  // COUVERTURE DES MIGRATIONS PAR LA PRODUCTION (C-79)
-  // ═════════════════════════════════════════════════════════════════
+  // ═ COUVERTURE DES MIGRATIONS PAR LA PRODUCTION (C-79)
   ...[
     ['mcov-tout-en-base', r('scripts/check-migration-coverage.mjs', '        if (catalogue[kind].has(nom)) { trouves.push(`${kind}: ${nom}`); continue; }', '        trouves.push(`${kind}: ${nom}`); continue;'),
       'TEMOIN : une migration dont l OBJET N EXISTE PAS est ABSENTE DES DEUX', 'Un classeur qui trouve tout en base rend tout vert : une migration jamais appliquée passerait pour faite (C-77, dix-sept jours).'],
@@ -1179,9 +1099,7 @@ export const CATALOGUE = [
     id, famille: 'detecteur', garde: 'scripts/check-migration-coverage.guard.test.mjs', modifs: [modif], attendu: [attendu].flat(), pourquoi,
   })),
 
-  // ═════════════════════════════════════════════════════════════════
-  // LES TÉMOINS DES GARDES DE `src/` — un détecteur rendu aveugle
-  // ═════════════════════════════════════════════════════════════════
+  // ═ LES TÉMOINS DES GARDES DE `src/` — un détecteur rendu aveugle
   ...[
     ['src/date-picker.guard.test.ts', 'dp-detecteur-aveugle', 'detecteur',
       r('src/date-picker.guard.test.ts', `const NATIVE_DATE_INPUT = /type="date"|type={'date'}|type={"date"}/;`, `const NATIVE_DATE_INPUT = /${AVEUGLE}type="date"|${AVEUGLE}type={'date'}|${AVEUGLE}type={"date"}/;`),
@@ -1337,9 +1255,7 @@ export const CATALOGUE = [
       'Un harnais qui monte le hook dans les DEUX variantes prouve tout et ne compare rien : les mesures du piège de focus passeraient sur n`importe quelle modale.'],
   ].map(([garde, id, famille, modif, attendu, pourquoi]) => ({ id, famille, garde, modifs: [modif], attendu, pourquoi })),
 
-  // ═════════════════════════════════════════════════════════════════
-  // LES TÉMOINS DE LOGIQUE PRODUIT — la fonction gardée, cassée
-  // ═════════════════════════════════════════════════════════════════
+  // ═ LES TÉMOINS DE LOGIQUE PRODUIT — la fonction gardée, cassée
   ...[
     ['src/components/color-settings-save-order.test.ts', 'cs-creations-non-triees',
       r('src/components/ColorSettingsModal.tsx', "  return orderByDepth(drafts.filter((c) => c.id.startsWith('temp-')));", "  return drafts.filter((c) => c.id.startsWith('temp-'));"),
@@ -1409,9 +1325,7 @@ export const CATALOGUE = [
     id, famille: garde.includes('.guard.') ? 'detecteur' : 'produit', garde, modifs: [modif], attendu, pourquoi,
   })),
 
-  // ═════════════════════════════════════════════════════════════════
-  // BK-1 · AUCUNE DONNÉE DE PROD PUBLIÉE EN CLAIR PAR UN WORKFLOW
-  // ═════════════════════════════════════════════════════════════════
+  // ═ BK-1 · AUCUNE DONNÉE DE PROD PUBLIÉE EN CLAIR PAR UN WORKFLOW
   ...[
     ['art-depot-tolere', r('scripts/artefacts-donnees-prod.guard.test.mjs', "      v.push(`${cle} : dépôt d'artefact absent de la liste ARTEFACTS.", "      [].push(`${cle} : dépôt d'artefact absent de la liste ARTEFACTS."),
       ['A · un dépôt non déclaré rougit', 'le parseur ne rate pas un dépôt écrit entre guillemets ; un upload hors job est signalé'],
@@ -1468,13 +1382,10 @@ export const CATALOGUE = [
     modifs: [r('scripts/fixtures/db-backup.avant-8c6a971d.yml', '# Export QUOTIDIEN de la base, HORS du fournisseur.', '# Export quotidien de la base, hors du fournisseur.')],
     attendu: ['le fixture est le fichier du commit parent de 8c6a971d, à la reformulation neutre près du commentaire de rythme (empreinte recalée avec elle)'],
     pourquoi:
-      'Le témoin rejoue la garde sur le fichier fautif RÉEL : retouché, il deviendrait un exemple '
-      + 'écrit pour passer, et ne prouverait plus que la garde voit BK-1.',
+      'Le témoin rejoue la garde sur le fichier fautif RÉEL : retouché, il deviendrait un exemple écrit pour passer, et ne prouverait plus que la garde voit BK-1.',
   },
 
-  // ═════════════════════════════════════════════════════════════════
-  // CI · CHAQUE GARDE JOUE APRÈS UN PREMIER ROUGE
-  // ═════════════════════════════════════════════════════════════════
+  // ═ CI · CHAQUE GARDE JOUE APRÈS UN PREMIER ROUGE
   {
     id: 'citg-continue-tolere',
     famille: 'detecteur',
@@ -1482,8 +1393,7 @@ export const CATALOGUE = [
     modifs: [r('scripts/ci-toutes-les-gardes.mjs', "    if (e['continue-on-error'] !== undefined) {", '    if (false) {')],
     attendu: ['un continue-on-error'],
     pourquoi:
-      'Une garde en `continue-on-error` ne rougit plus le job : son rouge disparaît du verdict, '
-      + 'la classe de défaut qui a masqué dix gardes pendant trois jours (2026-10-12).',
+      'Une garde en `continue-on-error` ne rougit plus le job : son rouge disparaît du verdict, la classe de défaut qui a masqué dix gardes pendant trois jours (2026-10-12).',
   },
   {
     id: 'citg-conforme-accuse',
@@ -1492,8 +1402,7 @@ export const CATALOGUE = [
     modifs: [r('scripts/ci-toutes-les-gardes.mjs', '    if (e.if !== CONDITION) {', '    if (e.if === CONDITION) {')],
     attendu: ['le job conforme passe'],
     pourquoi:
-      'Une garde qui refuse le job conforme est désarmée au premier rouge : on la fait taire, '
-      + 'et avec elle la vérification de toutes les autres.',
+      'Une garde qui refuse le job conforme est désarmée au premier rouge : on la fait taire, et avec elle la vérification de toutes les autres.',
   },
   {
     id: 'citg-job-motif',
@@ -1509,8 +1418,7 @@ export const CATALOGUE = [
     ],
     attendu: ['`--job .*` : TÉMOIN, échec qui nomme l’identifiant, jamais la lecture d’un autre job'],
     pourquoi:
-      'L’état exact de CodeQL n° 14 (2026-10-15) : `--job` entre dans une `RegExp`, `.*` y vaut '
-      + '« n’importe quel job », et le résumé juge les étapes d’un autre job que celui demandé.',
+      'L’état exact de CodeQL n° 14 (2026-10-15) : `--job` entre dans une `RegExp`, `.*` y vaut « n’importe quel job », et le résumé juge les étapes d’un autre job que celui demandé.',
   },
   {
     id: 'codeql-porte-aveugle',
@@ -1531,13 +1439,10 @@ export const CATALOGUE = [
     )],
     attendu: ['concurrency (ci.yml) : TÉMOIN, un run de main n’est jamais annulé, une PR l’est encore'],
     pourquoi:
-      'Un groupe par ref sur `main` : chaque push annule le run en cours. Le 2026-10-16, 108 runs '
-      + 'de `main` sur 141 annulés, `e2e` le premier, et quatre PR brouillon jetables pour un verdict.',
+      'Un groupe par ref sur `main` : chaque push annule le run en cours. Le 2026-10-16, 108 runs de `main` sur 141 annulés, `e2e` le premier, et quatre PR brouillon jetables pour un verdict.',
   },
 
-  // ═════════════════════════════════════════════════════════════════
-  // CI ALERT · UN ROUGE DÉJÀ RÉPARÉ NE RÉVEILLE PERSONNE (2026-10-16)
-  // ═════════════════════════════════════════════════════════════════
+  // ═ CI ALERT · UN ROUGE DÉJÀ RÉPARÉ NE RÉVEILLE PERSONNE (2026-10-16)
   {
     id: 'perime-rouge-repare',
     famille: 'produit',
@@ -1545,8 +1450,7 @@ export const CATALOGUE = [
     modifs: [r('scripts/ci-alert-perime.mjs', "runs.find((r) => r.conclusion === 'success'", 'runs.find((r) => true')],
     attendu: ['un run plus récent mais ROUGE ne répare rien'],
     pourquoi:
-      'Un run plus récent ROUGE compté comme réparateur : l’alerte d’un `main` qui reste rouge '
-      + 'serait avalée, exactement le silence que `ci-alert.yml` existe pour empêcher.',
+      'Un run plus récent ROUGE compté comme réparateur : l’alerte d’un `main` qui reste rouge serait avalée, exactement le silence que `ci-alert.yml` existe pour empêcher.',
   },
   {
     id: 'perime-fork-repare',
@@ -1558,8 +1462,7 @@ export const CATALOGUE = [
     ],
     attendu: ['TÉMOIN : une PR depuis la branche `main` d’un fork ne répare rien'],
     pourquoi:
-      '`head_branch` vaut `main` pour une PR ouverte depuis la branche `main` d’un fork : sans '
-      + 'les filtres push et dépôt, un tiers tait une vraie alerte avec le vert de sa PR.',
+      '`head_branch` vaut `main` pour une PR ouverte depuis la branche `main` d’un fork : sans les filtres push et dépôt, un tiers tait une vraie alerte avec le vert de sa PR.',
   },
   {
     id: 'perime-doute-tait',
@@ -1572,8 +1475,7 @@ export const CATALOGUE = [
     )],
     attendu: ['API en panne : `perime=false`, et la ligne dit que la vérification n’a pas eu lieu'],
     pourquoi:
-      'Une API en panne qui tait l’alerte : un jeton sans `actions: read` suffirait à rendre '
-      + 'toute la CI muette, sans un mot dans le run.',
+      'Une API en panne qui tait l’alerte : un jeton sans `actions: read` suffirait à rendre toute la CI muette, sans un mot dans le run.',
   },
   {
     id: 'ci-alert-webhook-sourd',
@@ -1582,13 +1484,10 @@ export const CATALOGUE = [
     modifs: [r('.github/workflows/ci-alert.yml', "        if: always() && steps.perime.outputs.perime != 'true'", '        if: always()')],
     attendu: ['le webhook respecte le contrôle, et part encore si le contrôle a planté'],
     pourquoi:
-      'Le webhook qui ignore le contrôle : l’issue se tait, Discord sonne quand même des heures '
-      + 'après la réparation, et deux canaux qui se contredisent apprennent à en ignorer un.',
+      'Le webhook qui ignore le contrôle : l’issue se tait, Discord sonne quand même des heures après la réparation, et deux canaux qui se contredisent apprennent à en ignorer un.',
   },
 
-  // ═════════════════════════════════════════════════════════════════
-  // AUDIT SERVEUR DU 2026-10-24 (SV-1, SV-5, SV-6)
-  // ═════════════════════════════════════════════════════════════════
+  // ═ AUDIT SERVEUR DU 2026-10-24 (SV-1, SV-5, SV-6)
   {
     id: 'membre-expire-actif',
     famille: 'produit',
@@ -1600,8 +1499,7 @@ export const CATALOGUE = [
     )],
     attendu: ['membershipIsActive suit `is_org_member` (mig. 161) : suspendu ou expiré = inactif'],
     pourquoi:
-      'Un admin dont l accès a expiré enverrait encore des invitations au nom de l organisation '
-      + 'et vérifierait ses domaines (SV-1).',
+      'Un admin dont l accès a expiré enverrait encore des invitations au nom de l organisation et vérifierait ses domaines (SV-1).',
   },
   {
     id: 'avis-l215-html-brut',
@@ -1616,8 +1514,7 @@ export const CATALOGUE = [
     )],
     attendu: ['aucune balise du nom n arrive dans le HTML, le texte reste lisible'],
     pourquoi:
-      'Un admin glisserait un lien dans le nom de l organisation, reçu par le propriétaire dans '
-      + 'un courriel signé par notre domaine (SV-5).',
+      'Un admin glisserait un lien dans le nom de l organisation, reçu par le propriétaire dans un courriel signé par notre domaine (SV-5).',
   },
   {
     id: 'webhook-stripe-secret-muet',
@@ -1630,13 +1527,10 @@ export const CATALOGUE = [
     )],
     attendu: ['503 et alerte avant la vérification de signature'],
     pourquoi:
-      'Sans secret, chaque event repartirait en 400 comme une requête forgée : aucune alerte, '
-      + 'et des paiements jamais appliqués (SV-6).',
+      'Sans secret, chaque event repartirait en 400 comme une requête forgée : aucune alerte, et des paiements jamais appliqués (SV-6).',
   },
 
-  // ═════════════════════════════════════════════════════════════════
-  // SIGNAUX SEO (SEO.md AM-4, ACQUISITION-BACKLINKS.md AM-1 et AM-2)
-  // ═════════════════════════════════════════════════════════════════
+  // ═ SIGNAUX SEO (SEO.md AM-4, ACQUISITION-BACKLINKS.md AM-1 et AM-2)
   {
     id: 'seo-lien-tout-hote',
     famille: 'detecteur',
@@ -1651,8 +1545,7 @@ export const CATALOGUE = [
       'TÉMOIN : page disparue, page sans lien, page injoignable, source absente : quatre liens PERDUS',
     ],
     pourquoi:
-      'Un lien vers N’IMPORTE QUEL site compté comme un backlink : une fiche dont le lien a été '
-      + 'retiré reste « présente », et AM-1 redevient invisible avec un run vert.',
+      'Un lien vers N’IMPORTE QUEL site compté comme un backlink : une fiche dont le lien a été retiré reste « présente », et AM-1 redevient invisible avec un run vert.',
   },
   {
     id: 'seo-marque-comptee',
@@ -1661,8 +1554,7 @@ export const CATALOGUE = [
     modifs: [r('scripts/seo-signals.mjs', '    .filter((r) => r.requete && !MARQUE.test(r.requete))', '    .filter((r) => r.requete)')],
     attendu: ['TÉMOIN : une requête marque renvoyée par le serveur ne compte pas dans le non-marque'],
     pourquoi:
-      'Les requêtes « cosmo » dans le non-marque : la série montre un trafic éditorial qui '
-      + 'n’existe pas, le défaut exact de la position 15,5 relevée le 2026-08-19.',
+      'Les requêtes « cosmo » dans le non-marque : la série montre un trafic éditorial qui n’existe pas, le défaut exact de la position 15,5 relevée le 2026-08-19.',
   },
   {
     id: 'seo-domaine-perdu-muet',
@@ -1689,8 +1581,7 @@ export const CATALOGUE = [
       'TÉMOIN : sans aucun secret, le relevé est ROUGE, deux fois, et ne touche ni Google ni Bing',
     ],
     pourquoi:
-      'Une clé absente qui rend « 0 domaine référent » : la mesure la plus rassurante possible '
-      + 'pour un domaine neuf, et elle serait fausse.',
+      'Une clé absente qui rend « 0 domaine référent » : la mesure la plus rassurante possible pour un domaine neuf, et elle serait fausse.',
   },
   {
     id: 'seo-alerte-debranchee',
@@ -1699,13 +1590,10 @@ export const CATALOGUE = [
     modifs: [r('.github/workflows/ci-alert.yml', '      - Signaux SEO\n', '')],
     attendu: ['est écouté par ci-alert.yml sous son nom exact'],
     pourquoi:
-      'Un relevé hebdomadaire sans déclencheur humain dont le rouge ne part sur aucun webhook : '
-      + 'un backlink perdu redevient une page que personne n’ouvre.',
+      'Un relevé hebdomadaire sans déclencheur humain dont le rouge ne part sur aucun webhook : un backlink perdu redevient une page que personne n’ouvre.',
   },
 
-  // ═════════════════════════════════════════════════════════════════
-  // LE REJEU LUI-MÊME (C-81) — qui garde la garde des gardes
-  // ═════════════════════════════════════════════════════════════════
+  // ═ LE REJEU LUI-MÊME (C-81) — qui garde la garde des gardes
   ...[
     ['moteur-marque-minuscule', r('scripts/replay-sabotages.mjs', String.raw`    || /^\s*t[ée]moins?\b/i.test(titre)`, String.raw`    || /t[ée]moins?\b/i.test(titre)`),
       'ne compte PAS un titre qui PARLE des témoins sans en être un', 'Un compteur qui prend « aucune Edge Function n est sans témoin » pour un témoin gonfle le total, et le ratio publié ment.'],
@@ -1748,8 +1636,7 @@ export const CATALOGUE = [
     modifs: [r('scripts/edge-deploy-select.mjs', 'if (perimetres.get(slug).has(rel) || sources.get(slug).includes(module)) {', 'if (sources.get(slug).includes(module)) {')],
     attendu: ['selectionne un importeur TRANSITIF d un _shared (W-2)'],
     pourquoi:
-      'Un selecteur reduit au `grep` de l`import direct oublie la fonction qui embarque '
-      + 'un `_shared` par un autre `_shared` : la derive W-2, deployee en automatique.',
+      'Un selecteur reduit au `grep` de l`import direct oublie la fonction qui embarque un `_shared` par un autre `_shared` : la derive W-2, deployee en automatique.',
   },
   {
     id: 'edge-deploy-retour-arriere',
@@ -1758,8 +1645,7 @@ export const CATALOGUE = [
     modifs: [r('scripts/edge-deploy-select.mjs', "  if (estAncetre(tete, base)) return { mode: 'deja-deploye', changes: [] };", "  // (sabotage) plus de garde anti-retour-arriere")],
     attendu: ['ne deploie rien quand la tete est deja contenue dans la base'],
     pourquoi:
-      'Un run ancien qui finit apres un recent redeploierait un code plus vieux '
-      + 'par-dessus celui de `main` : la prod reculerait sur un run vert.',
+      'Un run ancien qui finit apres un recent redeploierait un code plus vieux par-dessus celui de `main` : la prod reculerait sur un run vert.',
   },
   // CI-03 (2026-11-06) · le deploiement ne depend que du noyau.
   {
@@ -1769,8 +1655,7 @@ export const CATALOGUE = [
     modifs: [r('.github/workflows/edge-deploy.yml', '    workflows: [CI noyau]', '    workflows: [CI]')],
     attendu: ['ne part qu apres un CI noyau vert, sur un push de main'],
     pourquoi:
-      'Le deploiement suspendu a un `CI` entierement vert : un e2e ou une garde de document '
-      + 'rouge bloque les Edge Functions, cinq fonctions de facturation en retard le 2026-11-03.',
+      'Le deploiement suspendu a un `CI` entierement vert : un e2e ou une garde de document rouge bloque les Edge Functions, cinq fonctions de facturation en retard le 2026-11-03.',
   },
 
   // Vague 2.3 (2026-11-06) · plus aucun moyen de pousser sur un noyau rouge.
@@ -1781,8 +1666,7 @@ export const CATALOGUE = [
     modifs: [r('scripts/pre-push-main-red.mjs', '  return block ? 1 : 0;', '  return 0;')],
     attendu: ['TÉMOIN : noyau rouge + ancienne variable de contournement posée = refus (code 1)'],
     pourquoi:
-      'Un hook qui sort en 0 quoi qu’il décide : la poussée sur un noyau rouge repasse, '
-      + 'exactement le contournement banalisé que la vague 2.3 retire (CI-01).',
+      'Un hook qui sort en 0 quoi qu’il décide : la poussée sur un noyau rouge repasse, exactement le contournement banalisé que la vague 2.3 retire (CI-01).',
   },
   {
     id: 'pre-push-illisible-ouvert',
@@ -1791,13 +1675,17 @@ export const CATALOGUE = [
     modifs: [r('scripts/pre-push-main-red.mjs', '  if (runs === null) {', "  if (runs === null) return { block: false, message: '' };\n  if (false) {")],
     attendu: ['TÉMOIN : gh illisible REFUSE, il ne laisse plus passer'],
     pourquoi:
-      'Un état illisible traité comme un vert : un `gh` déconnecté suffirait à pousser '
-      + 'sur un noyau rouge, un contournement par omission.',
+      'Un état illisible traité comme un vert : un `gh` déconnecté suffirait à pousser sur un noyau rouge, un contournement par omission.',
   },
 
-  // ═════════════════════════════════════════════════════════════════
-  // SEC-01 · SEC-05 (2026-11-06) · AUCUN FICHIER DE DONNÉES SUR LE DÉPÔT PUBLIC
-  // ═════════════════════════════════════════════════════════════════
+  // PRO-03 · le nettoyage des worktrees ne perd ni le travail ni node_modules.
+  {
+    id: 'worktrees-nettoyer-sans-garde', famille: 'detecteur', garde: 'scripts/pre-push-main-red.test.mjs',
+    modifs: [r('scripts/pre-push-main-red.mjs', "if (!fusion) r.push('non fusionnée');", '')],
+    attendu: ['TÉMOIN worktrees : seule la fusionnée, propre, ancienne et libre part ; la junction part avant, la cible reste'],
+    pourquoi: 'Une worktree non fusionnée supprimée : le travail d une session disparaît sans trace.',
+  },
+  // ═ SEC-01 · SEC-05 (2026-11-06) · AUCUN FICHIER DE DONNÉES SUR LE DÉPÔT PUBLIC
   {
     id: 'fichiers-sensibles-csv-aveugle',
     famille: 'detecteur',
@@ -1808,8 +1696,7 @@ export const CATALOGUE = [
       'TÉMOIN : un .csv indexé fait échouer `git commit`, un .ts passe',
     ],
     pourquoi:
-      'L incident du 2026-10-30 : `leads-50.csv`, cinquante prospects nommés, poussé sur le '
-      + 'dépôt public sans que le hook ni la CI ne bronchent.',
+      'L incident du 2026-10-30 : `leads-50.csv`, cinquante prospects nommés, poussé sur le dépôt public sans que le hook ni la CI ne bronchent.',
   },
   {
     id: 'fichiers-sensibles-prive-aveugle',
@@ -1821,8 +1708,7 @@ export const CATALOGUE = [
       'TÉMOIN : un fichier de `prive/` indexé fait échouer `git commit`',
     ],
     pourquoi:
-      '`prive/` porte `faille.md` (findings ouverts), les procédures internes et la prospection, '
-      + 'dans le checkout d un dépôt PUBLIC : un `git add -f` le publierait sans un mot (SEC-02).',
+      '`prive/` porte `faille.md` (findings ouverts), les procédures internes et la prospection, dans le checkout d un dépôt PUBLIC : un `git add -f` le publierait sans un mot (SEC-02).',
   },
   {
     id: 'message-commit-attente-aveugle',
@@ -1842,8 +1728,7 @@ export const CATALOGUE = [
     modifs: [r('.githooks/pre-commit', '  exit 1\n', '  exit 0\n')],
     attendu: ['TÉMOIN : un hook privé de sa garde refuse le commit, jamais un vert muet'],
     pourquoi:
-      'Un hook qui laisse passer quand il ne trouve pas sa garde n a rien vérifié : le motif de la '
-      + 'garde conditionnelle à la présence de son propre secret, interdit par `CLAUDE.md`.',
+      'Un hook qui laisse passer quand il ne trouve pas sa garde n a rien vérifié : le motif de la garde conditionnelle à la présence de son propre secret, interdit par `CLAUDE.md`.',
   },
   { id: 'preprod-ephemere-cible-prod', famille: 'produit', garde: 'src/preprod-ephemere.test.mjs', // CI-04
     modifs: [r('.github/workflows/schema-prod.yml', '@127.0.0.1:54322/postgres', '@db.ykeugqfgklejcdbrmawy.supabase.co:5432/postgres')],

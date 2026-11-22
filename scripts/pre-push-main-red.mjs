@@ -10,7 +10,8 @@
 // - Ne regarde QUE `refs/heads/main`. `gh` absent, hors ligne ou non authentifié : REFUSE.
 // Installé par `git config core.hooksPath .githooks` (cf. scripts/CLAUDE.md).
 import { execFileSync, spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, lstatSync, readFileSync, rmdirSync, statSync, unlinkSync } from 'node:fs';
+import { join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const RED = new Set(['failure', 'timed_out', 'startup_failure']);
@@ -162,14 +163,90 @@ export async function pousser({ git, runs, attendre, log, delai = 20_000, limite
   log('pousser · poussée sur main refusée : lire le message du hook.');
   return 1;
 }
+// ── PRO-03 · `npm run worktrees:nettoyer` (à sec sans `--appliquer`) : supprimable = fusionnée dans origin/main (ancêtre ou
+// `git cherry` sans `+`), propre, de plus de 2 h, ni principale, ni courante, ni verrouillée. 🔴 La junction `node_modules`
+// part (`rmdir`) AVANT `git worktree remove`, sinon le contenu du principal est effacé. Jamais `--force`, jamais `branch -D`.
+const AGE_MIN = 2 * 3600 * 1000;
+const norm = (p) => (process.platform === 'win32' ? resolve(p).toLowerCase() : resolve(p));
+const lancer = (cwd, args) => {
+  const r = spawnSync('git', args, { cwd, encoding: 'utf8', maxBuffer: 1 << 26 });
+  return { code: r.status ?? 1, out: (r.stdout ?? '').trim() };
+};
+const lien = (p) => existsSync(p) && lstatSync(p).isSymbolicLink();
 
+/** Les worktrees : le premier est le principal. */
+export function lister(racine) {
+  return lancer(racine, ['worktree', 'list', '--porcelain']).out.split(/\r?\n\r?\n/).map((b) => {
+    const l = b.split(/\r?\n/);
+    const v = (k) => l.find((x) => x.startsWith(k + ' '))?.slice(k.length + 1);
+    return { chemin: v('worktree'), tete: v('HEAD'), branche: v('branch')?.replace('refs/heads/', ''), verrou: l.some((x) => x.startsWith('locked')) };
+  }).filter((w) => w.chemin);
+}
+
+/** Raisons de GARDER une worktree ; vide = supprimable. */
+export function raisons(w, { principal, courante, maintenant }) {
+  const git = (...a) => lancer(w.chemin, a);
+  const r = [];
+  if (norm(w.chemin) === norm(principal)) r.push('principale');
+  if (norm(w.chemin) === norm(courante)) r.push('courante');
+  if (w.verrou) r.push('verrouillée');
+  if (r.length) return r;
+  const fusion = git('merge-base', '--is-ancestor', w.tete, 'origin/main').code === 0
+    || (git('cherry', 'origin/main', w.tete).code === 0 && !/^\+/m.test(git('cherry', 'origin/main', w.tete).out));
+  if (!fusion) r.push('non fusionnée');
+  const sale = git('status', '--porcelain').out.split(/\r?\n/).filter((x) => x && !(lien(join(w.chemin, 'node_modules')) && /node_modules\/?$/.test(x)));
+  if (sale.length) r.push('sale');
+  const t = Number(git('log', '-1', '--format=%ct').out) * 1000;
+  const fichiers = git('ls-files').out.split(/\r?\n/).filter(Boolean);
+  const mtime = (f) => { try { return statSync(join(w.chemin, f)).mtimeMs; } catch { return 0; } };
+  if (maintenant - t < AGE_MIN || fichiers.some((f) => maintenant - mtime(f) < AGE_MIN)) r.push('récente');
+  return r;
+}
+
+/** Balaye `.claude/worktrees/` du principal ; `appliquer` supprime les supprimables. */
+export function balayer({ cwd, appliquer = false, maintenant = Date.now() }) {
+  const tous = lister(cwd);
+  const principal = tous[0].chemin;
+  const courante = lancer(cwd, ['rev-parse', '--show-toplevel']).out;
+  const zone = norm(join(principal, '.claude', 'worktrees')) + sep;
+  const nm = join(principal, 'node_modules');
+  const bilan = tous.slice(1).filter((w) => (norm(w.chemin) + sep).startsWith(zone)).map((w) => {
+    const gardee = raisons(w, { principal, courante, maintenant });
+    return { ...w, gardee, fait: false, note: '' };
+  });
+  for (const w of bilan.filter((x) => appliquer && !x.gardee.length)) {
+    const lnk = join(w.chemin, 'node_modules');
+    if (lien(lnk)) { try { rmdirSync(lnk); } catch { unlinkSync(lnk); } } // le lien seul, jamais la cible
+    if (!existsSync(nm)) throw new Error('node_modules du principal a disparu : arrêt.');
+    const rm = lancer(principal, ['worktree', 'remove', w.chemin]);
+    w.fait = rm.code === 0;
+    if (!w.fait) w.note = rm.out || 'git worktree remove a refusé';
+    else if (w.branche) w.note = lancer(principal, ['branch', '-d', w.branche]).code === 0 ? '' : 'branche gardée (-d refuse)';
+  }
+  if (appliquer && !existsSync(nm)) throw new Error('node_modules du principal a disparu.');
+  return bilan;
+}
 const lance = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
-if (lance && process.argv.includes('--pousser')) {
+if (lance && process.argv.includes('--worktrees')) {
+  const [court, appliquer] = ['--court', '--appliquer'].map((f) => process.argv.includes(f));
+  if (!court) lancer('.', ['fetch', 'origin']);
+  const bilan = balayer({ cwd: process.cwd(), appliquer });
+  const bons = bilan.filter((w) => !w.gardee.length);
+  if (court) {
+    if (bons.length) console.log(`worktrees · ${bons.length} supprimable(s) : npm run worktrees:nettoyer -- --appliquer (la courante reste).`);
+  } else {
+    for (const w of bilan) console.log(`${w.fait ? 'supprimée' : w.gardee.length ? 'gardée' : 'supprimable'} ${w.chemin} ${w.gardee.join(', ')} ${w.note}`.trimEnd());
+    console.log(`${bilan.length} worktree(s), ${bons.length} supprimable(s)${appliquer ? '' : ' (à sec : --appliquer pour supprimer)'}.`);
+  }
+} else if (lance && process.argv.includes('--pousser')) {
   const git = (args, voir = false) => {
     const r = spawnSync('git', args, { encoding: 'utf8', stdio: voir ? 'inherit' : ['ignore', 'pipe', 'pipe'] });
     return { code: r.status ?? 1, out: r.stdout ?? '' };
   };
-  process.exit(await pousser({ git, runs: lireRuns, attendre: (ms) => new Promise((r) => setTimeout(r, ms)), log: console.log }));
+  const code = await pousser({ git, runs: lireRuns, attendre: (ms) => new Promise((r) => setTimeout(r, ms)), log: console.log });
+  // PRO-03 : propose seulement, ne supprime rien (la courante reste).
+  if (code === 0) spawnSync(process.execPath, [fileURLToPath(import.meta.url), '--worktrees', '--court'], { stdio: 'inherit' });
+  process.exit(code);
 } else if (lance) {
   let stdin = '';
   try {

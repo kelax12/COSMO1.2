@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, symlinkSync, utimesSync, existsSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { decide, main, shasVersMain, lireRuns, WORKFLOW, pousser, brancheDeVerif } from './pre-push-main-red.mjs';
+import { decide, main, shasVersMain, lireRuns, WORKFLOW, pousser, brancheDeVerif, balayer } from './pre-push-main-red.mjs';
 
 const red = { status: 'completed', conclusion: 'failure', headSha: 'abcdef123456', url: 'u' };
 const green = { status: 'completed', conclusion: 'success' };
@@ -181,5 +182,41 @@ describe('pousser (npm run pousser, ADR 0022)', () => {
     const casse = deps({}, ['rebase']);
     expect(await pousser(casse.d)).toBe(1);
     expect(casse.l.join()).toMatch(/rebase en échec/);
+  });
+});
+
+describe('worktrees-nettoyer (PRO-03)', () => {
+  const sh = (cwd, ...a) => spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', ...a], { cwd, encoding: 'utf8' });
+  it('TÉMOIN worktrees : seule la fusionnée, propre, ancienne et libre part ; la junction part avant, la cible reste', () => {
+    const tmp = mkdtempSync(join(tmpdir(), 'wt-'));
+    const [origin, main] = [join(tmp, 'o.git'), join(tmp, 'main')];
+    sh(tmp, 'init', '--bare', '-b', 'main', origin);
+    sh(tmp, 'clone', origin, main);
+    sh(main, 'checkout', '-B', 'main');
+    writeFileSync(join(main, 'a.txt'), '1');
+    sh(main, 'add', '.'); sh(main, 'commit', '-m', 'init'); sh(main, 'push', '-u', 'origin', 'main');
+    mkdirSync(join(main, 'node_modules')); writeFileSync(join(main, 'node_modules', 'sentinelle'), 'x');
+    const ajouter = (nom, commit) => {
+      const chemin = join(main, '.claude', 'worktrees', nom);
+      sh(main, 'worktree', 'add', '-b', nom, chemin);
+      symlinkSync(join(main, 'node_modules'), join(chemin, 'node_modules'), 'junction');
+      if (commit) { writeFileSync(join(chemin, nom), nom); sh(chemin, 'add', nom); sh(chemin, 'commit', '-m', nom); }
+      return chemin;
+    };
+    const [fusionnee, neuve] = [ajouter('fusionnee', false), ajouter('non-fusionnee', true)];
+    const sale = ajouter('sale', false); writeFileSync(join(sale, 'a.txt'), 'modifie');
+    const [recente, courante] = [ajouter('recente', false), ajouter('courante', false)];
+    const verrouillee = ajouter('verrouillee', false); sh(main, 'worktree', 'lock', verrouillee);
+    const maintenant = Date.now() + 3 * 3600e3;
+    const fraiche = new Date(maintenant - 600e3); utimesSync(join(recente, 'a.txt'), fraiche, fraiche);
+    const etat = (a) => Object.fromEntries(balayer({ cwd: courante, maintenant, appliquer: a }).map((w) => [w.chemin.split('/').pop(), w.gardee.join()]));
+    expect(etat(false)).toEqual({ fusionnee: '', 'non-fusionnee': 'non fusionnée', sale: 'sale', recente: 'récente', courante: 'courante', verrouillee: 'verrouillée' });
+    expect(existsSync(fusionnee)).toBe(true);
+    etat(true);
+    expect(existsSync(fusionnee)).toBe(false);
+    expect(sh(main, 'branch', '--list', 'fusionnee').stdout).toBe('');
+    for (const w of [neuve, sale, recente, courante, verrouillee]) expect(existsSync(w)).toBe(true);
+    expect(existsSync(join(main, 'node_modules', 'sentinelle'))).toBe(true);
+    rmSync(tmp, { recursive: true, force: true, maxRetries: 3 });
   });
 });

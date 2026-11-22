@@ -19,6 +19,7 @@
     "test:changed": "node scripts/test-changed.mjs",
     "verif:rapide": "node scripts/test-changed.mjs --rapide",
     "pousser": "node scripts/pre-push-main-red.mjs --pousser",
+    "worktrees:nettoyer": "node scripts/pre-push-main-red.mjs --worktrees",
     "test:coverage": "vitest run --coverage",
     "test:mutation": "stryker run",
     "validate:migrations": "node scripts/validate-migrations.mjs",
