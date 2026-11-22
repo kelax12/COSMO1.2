@@ -265,7 +265,7 @@ const LandingPage: React.FC = () => {
           className={`mx-auto max-w-6xl rounded-2xl transition-all duration-300 ${
             scrolled
               ? isEnterprise
-                ? 'bg-slate-950/75 backdrop-blur-2xl border border-white/10 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.7)]'
+                ? 'bg-[#1C1D20]/80 backdrop-blur-2xl border border-white/[0.08] shadow-[0_12px_40px_-12px_rgba(0,0,0,0.7)]'
                 : 'bg-white/85 backdrop-blur-2xl border border-slate-900/10'
               : isEnterprise
                 ? 'bg-white/[0.03] backdrop-blur-md border border-white/[0.06]'
