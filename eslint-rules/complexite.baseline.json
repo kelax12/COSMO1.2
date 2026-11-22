@@ -402,8 +402,8 @@
       "max-lines-per-function": [247]
     },
     "src/pages/LandingPage.tsx": {
-      "complexity": [30],
-      "max-lines-per-function": [405]
+      "complexity": [29],
+      "max-lines-per-function": [392]
     },
     "src/pages/OKRPage.tsx": {
       "complexity": [29],
