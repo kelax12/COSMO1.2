@@ -27,7 +27,7 @@ const OUT_WIDTH = 1600;
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// Thème noir AVANT la démo (la landing entreprise est graphite), et tout ce qui
+// Thème gris AVANT la démo (la landing entreprise suit la palette Gris), et tout ce qui
 // s'affiche une seule fois neutralisé : glossaire au premier affichage d'un
 // rôle, carte « Gardez votre organisation », bandeau démo, consentement.
 const PRESET = `
@@ -36,7 +36,7 @@ const PRESET = `
     localStorage.setItem('cosmo_onboarding_modules_done', '1');
     localStorage.setItem('cosmo_demo_banner_dismissed', '1');
     localStorage.removeItem('cosmo_onboarding_pending');
-    localStorage.setItem('theme', 'noir');
+    localStorage.setItem('theme', 'gris');
     localStorage.setItem('cosmo_org_terms_seen_v1', JSON.stringify(['owner','admin','manager','teamLead','member','team','project','category']));
     localStorage.setItem('cosmo_demo_bridge_snooze', String(Date.now() + 30 * 24 * 3600 * 1000));
   } catch {}
@@ -100,11 +100,14 @@ const run = async () => {
   await page.addInitScript(PRESET);
 
   await page.goto(`${BASE}/entreprise-presentation`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-  const btn = page.getByRole('button', { name: /^Ouvrir la démo entreprise$/ }).first();
+  const btn = page.getByRole('button', { name: /^Ouvrir la démonstration du mode entreprise/ }).first();
   await btn.waitFor({ state: 'visible', timeout: 60000 });
   await btn.click();
   await page.waitForURL(/\/entreprise/, { timeout: 30000 });
   await wait(2500);
+  // Vidéo d'accueil (premier passage, drapeau remis à zéro à chaque démo) : on la ferme.
+  await page.keyboard.press('Escape');
+  await wait(600);
 
   // Barre latérale de l'app repliée : on ne montre que l'espace entreprise.
   const collapse = page.getByRole('button', { name: 'Réduire la barre latérale' }).first();
