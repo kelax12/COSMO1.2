@@ -11,7 +11,7 @@ export const PROMISES_ENTREPRISE: LandingPromise[] = [
     kind: 'limite',
     claim: 'Une organisation est gratuite jusqu’à 5 membres, sans carte bancaire.',
     anchors: [
-      { key: 'faq.a1', includes: "ne commence qu'au-delà de cinq membres" },
+      { key: 'faq.a1', includes: 'payant, au-delà de cinq membres' },
       { key: 'enterprise.hero.reassurance', includes: "Jusqu'à 5 membres gratuitement · sans carte bancaire" },
       { key: 'enterprise.pricing.ctaNote', includes: 'Gratuit jusqu\'à 5 membres' },
       { key: 'enterprise.cta.note', includes: "Gratuit jusqu'à 5 membres · sans carte bancaire" },

@@ -21,7 +21,7 @@ export const PROMISES_PERSO: LandingPromise[] = [
     kind: 'produit',
     claim: 'Le partage de tâches est gratuit, en rôle Lecteur ou Éditeur.',
     anchors: [
-      { key: 'faq.a1', includes: 'Le partage restera gratuit' },
+      { key: 'faq.a1', includes: 'statistiques et partage de tâches' },
     ],
     proofs: [
       { file: 'src/modules/friends/types.ts', has: "role: 'viewer' | 'editor';" },
@@ -132,7 +132,6 @@ export const PROMISES_PERSO: LandingPromise[] = [
     claim: 'Glisser une tâche dans l’agenda crée un événement lié à la tâche.',
     anchors: [
       { key: 'features.agenda.b1', includes: 'Glissez une tâche depuis la sidebar' },
-      { key: 'faq.a6', includes: 'glissez simplement une tâche' },
     ],
     proofs: [
       { file: 'src/pages/agenda/AgendaCalendarSection.tsx', has: 'droppable' },
@@ -213,17 +212,25 @@ export const PROMISES_PERSO: LandingPromise[] = [
     proofs: [{ file: 'src/modules/okrs/progress.ts', re: 'export' }],
   },
   {
+    id: 'faq-okr-exemple',
+    kind: 'editorial',
+    claim: 'Exemple d’OKR de la FAQ : 15 séances de sport, 10 jours à 10 000 pas.',
+    reason: 'Exemple pédagogique d’objectif chiffré, pas une capacité ni une limite du produit.',
+    anchors: [{ key: 'faq.a2', includes: 'se remettre au sport' }],
+    proofs: [],
+    figures: { '15': ['faq.a2'], '10': ['faq.a2'], '000': ['faq.a2'] },
+  },
+  {
     id: 'okr-deux-a-cinq-kr',
     kind: 'editorial',
     claim: 'Un OKR = un objectif + 2 à 5 résultats clés.',
     reason:
       'Définition de la méthode, pas une limite du produit : il exige au moins un résultat clé et n’en plafonne aucun.',
     anchors: [
-      { key: 'faq.a2', includes: '2 à 5 résultats clés mesurables' },
       { key: 'prerender:/guide', includes: '2 à 5 résultats clés' },
     ],
     proofs: [],
-    figures: { '2': ['faq.a2', 'prerender:/guide'], '5': ['faq.a2', 'prerender:/guide'] },
+    figures: { '2': ['prerender:/guide'], '5': ['prerender:/guide'] },
   },
   {
     id: 'statistiques-vues',
@@ -233,23 +240,10 @@ export const PROMISES_PERSO: LandingPromise[] = [
     proofs: [{ file: 'src/pages/statistics/types.ts', has: "export type TimePeriod = 'day' | 'week' | 'month' | 'year';" }],
   },
   {
-    id: 'mobile-natif-web',
-    kind: 'produit',
-    claim: 'Interface mobile avec barre de navigation basse, glissé sur les tâches, bottom-sheets et safe area iOS.',
-    anchors: [{ key: 'faq.a5', includes: 'bottom navigation bar, gestes swipe sur les tâches, bottom-sheets fluides et support du safe area iOS' }],
-    proofs: [
-      { file: 'src/components/layout/MobileTabBar.tsx', re: 'export' },
-      { file: 'src/components/task-table/SwipeHintBanner.tsx', re: 'export' },
-      { file: 'src/components/mobile/BottomSheet.tsx', has: 'export default function BottomSheet' },
-      { file: 'src/index.css', has: 'safe-area-inset' },
-    ],
-  },
-  {
     id: 'sans-installation',
     kind: 'produit',
     claim: 'Cosmo est une application web, sans téléchargement.',
     anchors: [
-      { key: 'faq.a5', includes: 'sans téléchargement requis' },
       { key: 'about.namesAfter', includes: 'sans téléchargement' },
     ],
     proofs: [{ file: 'index.html', has: 'id="root"' }],
