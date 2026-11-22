@@ -5,6 +5,7 @@ import { RichText } from '@/components/ui/rich-text';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
 import ManageCookiesButton from '@/components/ManageCookiesButton';
+import { useForcedLightTheme } from '@/hooks/use-forced-light-theme';
 
 /**
  * Coquille commune aux trois documents contractuels (CGU, confidentialité,
@@ -52,16 +53,16 @@ export interface LegalSection<K extends LegalKey = LegalKey> {
   blocks: LegalBlock<K>[];
 }
 
-const STRONG = 'text-white font-semibold';
+const STRONG = 'text-slate-900 font-semibold';
 // Soulignement PERMANENT : sur un document contractuel, un lien reconnaissable
 // à sa seule couleur est un échec WCAG 1.4.1 (le bandeau cookies porte déjà
 // cette règle en commentaire).
-const LINK = 'text-blue-300 underline underline-offset-2 hover:text-blue-200';
+const LINK = 'text-blue-600 underline underline-offset-2 hover:text-blue-700';
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <div className="mb-10">
-    <h2 className="text-xl font-bold text-white mb-4 pb-2 border-b border-white/10">{title}</h2>
-    <div className="text-slate-300 space-y-3 leading-relaxed">{children}</div>
+    <h2 className="text-xl font-bold text-slate-900 mb-4 pb-2 border-b border-slate-900/10">{title}</h2>
+    <div className="text-slate-600 space-y-3 leading-relaxed">{children}</div>
   </div>
 );
 
@@ -81,6 +82,7 @@ export function LegalDocument<K extends LegalKey>({
   sections,
   text,
 }: LegalDocumentProps<K>) {
+  useForcedLightTheme();
   // Libellés communs aux trois documents : retour, « mis à jour le ».
   const { t } = useT('legal');
   const navigate = useNavigate();
@@ -108,7 +110,7 @@ export function LegalDocument<K extends LegalKey>({
         </ul>
       );
     }
-    const className = block.kind === 'note' ? 'mt-3 text-slate-400 text-sm' : undefined;
+    const className = block.kind === 'note' ? 'mt-3 text-slate-500 text-sm' : undefined;
     return (
       <p key={i} className={className}>
         <RichText strongClassName={STRONG} linkClassName={LINK}>{text(block.key)}</RichText>
@@ -117,18 +119,18 @@ export function LegalDocument<K extends LegalKey>({
   };
 
   return (
-    <div className="min-h-[100dvh] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+    <div className="min-h-[100dvh] bg-white text-slate-900">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
         <button
           onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-10 group"
+          className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors mb-10 group"
         >
           <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
           {t('back')}
         </button>
 
-        <h1 className="text-3xl sm:text-4xl font-bold mb-2 text-white">{text(titleKey)}</h1>
-        <p className="text-slate-400 mb-10">{t('updated', { date: text(updatedAtKey) })}</p>
+        <h1 className="text-3xl sm:text-4xl font-bold mb-2 text-slate-900">{text(titleKey)}</h1>
+        <p className="text-slate-500 mb-10">{t('updated', { date: text(updatedAtKey) })}</p>
 
         {sections.map((section) => (
           <Section key={section.title} title={text(section.title)}>

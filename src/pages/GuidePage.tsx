@@ -38,8 +38,10 @@ import {
 import { useT } from '@/i18n/useT';
 import RichText from '@/components/ui/rich-text';
 import { PrerenderCopyContext } from '@/lib/prerender-copy-context';
+import { useForcedLightTheme } from '@/hooks/use-forced-light-theme';
 
 const GuidePage: React.FC = () => {
+  useForcedLightTheme();
   const { t } = useT('guide');
   useSeoMeta({
     title: t('meta.title'),

@@ -6,11 +6,13 @@ import { canonicalUrl } from '@/i18n/routes';
 import { getArticle, relatedArticles } from '@/content/blog/index.mjs';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
+import { useForcedLightTheme } from '@/hooks/use-forced-light-theme';
 
 const formatArticleDate = (iso: string) =>
   formatDate(new Date(iso + 'T00:00:00'), { day: 'numeric', month: 'long', year: 'numeric' });
 
 const BlogArticlePage: React.FC = () => {
+  useForcedLightTheme();
   const { t, locale } = useT('landing');
   const { slug } = useParams<{ slug: string }>();
   // Le slug ne se traduit pas : /en/blog/<slug> est la version anglaise du MÊME
@@ -29,20 +31,20 @@ const BlogArticlePage: React.FC = () => {
   if (!article) return <Navigate to="/blog" replace />;
 
   return (
-    <div className="min-h-[100dvh] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
-      <header className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-xl border-b border-white/10">
+    <div className="min-h-[100dvh] bg-white text-slate-900">
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-900/10">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
-            <Link to="/" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm shrink-0">
+            <Link to="/" className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors text-sm shrink-0">
               <img src="/logo-128.webp" alt="Cosmo" className="w-7 h-7 rounded-lg object-contain" />
-              <span className="font-semibold text-white">Cosmo</span>
+              <span className="font-semibold text-slate-900">Cosmo</span>
             </Link>
-            <ChevronRight size={14} className="text-slate-600 shrink-0" />
-            <Link to="/blog" className="text-sm text-slate-400 hover:text-white transition-colors truncate">
+            <ChevronRight size={14} className="text-slate-400 shrink-0" />
+            <Link to="/blog" className="text-sm text-slate-500 hover:text-slate-900 transition-colors truncate">
               Blog
             </Link>
           </div>
-          <Link to="/signup" className="text-sm text-slate-400 hover:text-white transition-colors items-center gap-1.5 hidden sm:flex shrink-0">
+          <Link to="/signup" className="text-sm text-slate-500 hover:text-slate-900 transition-colors items-center gap-1.5 hidden sm:flex shrink-0">
             {t('blog.createFreeAccount')}
             <ArrowRight size={14} />
           </Link>
@@ -53,7 +55,7 @@ const BlogArticlePage: React.FC = () => {
         <article>
           <header className="mb-10">
             <h1
-              className="text-3xl sm:text-4xl font-bold leading-tight mb-4 text-white [text-wrap:balance]"
+              className="text-3xl sm:text-4xl font-bold leading-tight mb-4 text-slate-900 [text-wrap:balance]"
               lang={article.contentLocale}
             >
               {article.title}
@@ -79,15 +81,15 @@ const BlogArticlePage: React.FC = () => {
         </article>
 
         <nav aria-label={t('blog.readNext')} className="mt-16">
-          <h2 className="text-lg font-bold text-white mb-4">{t('blog.readNext')}</h2>
+          <h2 className="text-lg font-bold text-slate-900 mb-4">{t('blog.readNext')}</h2>
           <div className="space-y-3">
             {relatedArticles(article, locale).map((a) => (
               <Link
                 key={a.slug}
                 to={`/blog/${a.slug}`}
-                className="block rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors px-5 py-4"
+                className="block rounded-xl border border-slate-900/10 bg-slate-50 hover:bg-slate-100 transition-colors px-5 py-4"
               >
-                <span className="font-medium text-white" lang={a.contentLocale}>
+                <span className="font-medium text-slate-900" lang={a.contentLocale}>
                   {a.title}
                 </span>
                 <span className="block text-xs text-slate-500 mt-1">
@@ -98,14 +100,14 @@ const BlogArticlePage: React.FC = () => {
           </div>
         </nav>
 
-        <aside className="mt-10 rounded-2xl border border-white/10 bg-white/5 p-6 sm:p-8 text-center">
+        <aside className="mt-10 rounded-2xl border border-slate-900/10 bg-slate-50 p-6 sm:p-8 text-center">
           <p className="text-lg font-semibold mb-2">{t('blog.tryFree')}</p>
-          <p className="text-slate-400 text-sm mb-5">
+          <p className="text-slate-500 text-sm mb-5">
             {t('blog.ctaPitch')}
           </p>
           <Link
             to="/signup"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-slate-900 font-semibold hover:bg-slate-200 transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors"
           >
             {t('blog.startFree')}
             <ArrowRight size={16} />

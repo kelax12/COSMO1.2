@@ -6,10 +6,12 @@ import { getUseCase } from '@/content/use-cases.mjs';
 import { canonicalUrl, routeIdFromSlug, routeSlug } from '@/i18n/routes';
 import { DEFAULT_LOCALE } from '@/i18n/locale';
 import { useT } from '@/i18n/useT';
+import { useForcedLightTheme } from '@/hooks/use-forced-light-theme';
 
 // Page use-case commerciale (/pour-freelances, /pour-etudiants, /pour-managers).
 // Contenu dans src/content/use-cases.mjs — même pattern que le blog.
 const UseCasePage: React.FC = () => {
+  useForcedLightTheme();
   const { t, locale } = useT('landing');
   // ⚠️ La barre FINALE se retire aussi, et ce n'est pas de la coquetterie.
   // React Router fait bien correspondre `/pour-freelances/` à la route
@@ -46,14 +48,14 @@ const UseCasePage: React.FC = () => {
   if (!useCase || !content) return <Navigate to="/" replace />;
 
   return (
-    <div className="min-h-[100dvh] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
-      <header className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-xl border-b border-white/10">
+    <div className="min-h-[100dvh] bg-white text-slate-900">
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-900/10">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm">
+          <Link to="/" className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors text-sm">
             <img src="/logo-128.webp" alt="Cosmo" className="w-7 h-7 rounded-lg object-contain" />
-            <span className="font-semibold text-white">Cosmo</span>
+            <span className="font-semibold text-slate-900">Cosmo</span>
           </Link>
-          <Link to="/signup" className="text-sm text-slate-400 hover:text-white transition-colors flex items-center gap-1.5">
+          <Link to="/signup" className="text-sm text-slate-500 hover:text-slate-900 transition-colors flex items-center gap-1.5">
             {t('useCasePage.signupCta')}
             <ArrowRight size={14} />
           </Link>
@@ -62,12 +64,12 @@ const UseCasePage: React.FC = () => {
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
         <h1
-          className="text-3xl sm:text-4xl font-bold leading-tight mb-5 text-white [text-wrap:balance]"
+          className="text-3xl sm:text-4xl font-bold leading-tight mb-5 text-slate-900 [text-wrap:balance]"
           lang={contentLocale}
         >
           {content.title}
         </h1>
-        <p className="text-lg text-slate-300 leading-relaxed mb-10" lang={contentLocale}>
+        <p className="text-lg text-slate-600 leading-relaxed mb-10" lang={contentLocale}>
           {content.lead}
         </p>
 
@@ -78,14 +80,14 @@ const UseCasePage: React.FC = () => {
           dangerouslySetInnerHTML={{ __html: content.html }}
         />
 
-        <aside className="mt-14 rounded-2xl border border-white/10 bg-white/5 p-6 sm:p-8 text-center">
-          <p className="text-lg font-semibold text-white mb-2">{t('useCasePage.ctaTitle')}</p>
-          <p className="text-slate-400 text-sm mb-5">
+        <aside className="mt-14 rounded-2xl border border-slate-900/10 bg-slate-50 p-6 sm:p-8 text-center">
+          <p className="text-lg font-semibold text-slate-900 mb-2">{t('useCasePage.ctaTitle')}</p>
+          <p className="text-slate-500 text-sm mb-5">
             {t('useCase.demoNote')}
           </p>
           <Link
             to="/signup"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-slate-900 font-semibold hover:bg-slate-200 transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors"
           >
             {t('blog.startFree')}
             <ArrowRight size={16} />

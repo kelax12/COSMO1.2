@@ -8,6 +8,7 @@ import { useT } from '@/i18n/useT';
 import { useLocalizedPath } from '@/i18n/useLocalizedPath';
 import TurnstileWidget from '@/components/TurnstileWidget';
 import { resetTurnstile } from '@/lib/turnstile';
+import { enterWithTheme } from '@/lib/theme';
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -157,6 +158,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
   };
 
   const handleDemoMode = () => {
+    // La démo s'ouvre en clair (DA du parcours perso), quel que soit le thème du visiteur.
+    enterWithTheme('light');
     loginDemo();
     onSuccess();
   };

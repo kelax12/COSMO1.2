@@ -58,6 +58,19 @@ export function resolveInitialTheme(): Theme {
 }
 
 /**
+ * Thème imposé par un point d'entrée (démo perso en clair, démo entreprise en noir) :
+ * appliqué tout de suite et enregistré, pour que l'app s'ouvre dessus.
+ */
+export function enterWithTheme(theme: Theme): void {
+  applyTheme(document.documentElement, theme);
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch {
+    /* localStorage inaccessible : le thème vaut pour la session en cours */
+  }
+}
+
+/**
  * Pose les classes du thème sur `<html>`.
  *
  * - `dark` : variants Tailwind `dark:` + bloc `.dark` de src/index.css
