@@ -126,7 +126,7 @@ const OkrSection: React.FC = () => {
             {/* Niveau 2 : trois OKR d'équipe, chacun avec ses propres résultats clés */}
             <div className="okr-level space-y-3">
               {TEAM_OKRS.map(({ dotClassName, teamKey, objectiveKey, keyResults }) => (
-                <div key={teamKey} className="rounded-xl border border-white/[0.08] bg-[#0A0C11] p-5">
+                <div key={teamKey} className="rounded-xl border border-white/[0.08] bg-[#222428] p-5">
                   <span className="mb-2.5 flex items-center gap-2 font-mono text-caption uppercase tracking-[0.22em] text-slate-500">
                     <span className={`h-1.5 w-1.5 rounded-full ${dotClassName}`} aria-hidden="true" />
                     {t(teamKey)}

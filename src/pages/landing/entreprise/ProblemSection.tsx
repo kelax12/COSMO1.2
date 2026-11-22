@@ -51,7 +51,7 @@ const ProblemSection: React.FC = () => {
 
         <div className="problem-grid grid gap-px overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.06] md:grid-cols-3">
           {PROBLEMS.map(({ titleKey, bodyKey }) => (
-            <article key={titleKey} className="problem-card bg-[#0A0C11] p-7 lg:p-9">
+            <article key={titleKey} className="problem-card bg-[#222428] p-7 lg:p-9">
               <h3 className="mb-3 text-lg font-semibold text-white">{t(titleKey)}</h3>
               <p className="text-sm leading-relaxed text-slate-500">
                 <ScrollHighlight text={t(bodyKey)} />

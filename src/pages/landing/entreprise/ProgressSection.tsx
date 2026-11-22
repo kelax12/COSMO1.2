@@ -51,7 +51,7 @@ const ProgressSection: React.FC = () => {
 
       {/* L'aperçu clôt le parcours : c'est l'écran d'accueil quotidien, celui
           sur lequel le visiteur retombera tous les matins. */}
-      <div className="mt-10 grid gap-6 rounded-2xl border border-white/[0.08] bg-[#0A0C11] p-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-center lg:p-8">
+      <div className="mt-10 grid gap-6 rounded-2xl border border-white/[0.08] bg-[#222428] p-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-center lg:p-8">
         <div>
           <h3 className="mb-2 text-lg font-semibold text-white">{t('enterprise.progress.overviewTitle')}</h3>
           <p className="text-sm leading-relaxed text-slate-400">

@@ -37,13 +37,13 @@ interface EnterpriseTrackProps {
  * convaincu : la sécurité, puis le prix. Les tarifs arrivent en avant-dernier, une fois seulement que
  * la valeur a été montrée.
  *
- * La direction artistique — graphite `#08090C`, cyan, or réservé à l'argent —
+ * La direction artistique — graphite `#161719`, cyan, or réservé à l'argent —
  * est portée ici, à la racine du track : les sections héritent du fond et ne
  * repeignent que leurs propres surfaces.
  */
 const EnterpriseTrack: React.FC<EnterpriseTrackProps> = ({ onDemo, onRegister, onHeroCtaRef }) => {
   return (
-    <div className="bg-[#08090C] text-white">
+    <div className="bg-[#161719] text-white">
       {/* Le sommaire du parcours vit dans le header de `LandingPage`. */}
       <EnterpriseHero onDemo={onDemo} onCtaRef={onHeroCtaRef} />
 

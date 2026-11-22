@@ -45,7 +45,7 @@ const SecuritySection: React.FC = () => {
             <SpotlightCard
               key={titleKey}
               spotlightColor="rgba(34, 211, 238, 0.12)"
-              className="!rounded-xl !border-white/[0.08] !bg-[#0A0C11] !p-7 transition-colors duration-300 hover:!border-cyan-300/25"
+              className="!rounded-xl !border-white/[0.08] !bg-[#222428] !p-7 transition-colors duration-300 hover:!border-cyan-300/25"
             >
               <h3 className="mb-2.5 text-base font-semibold text-white">{t(titleKey)}</h3>
               <p className="text-sm leading-relaxed text-slate-500">

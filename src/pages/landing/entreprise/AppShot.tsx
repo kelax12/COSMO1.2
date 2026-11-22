@@ -27,7 +27,7 @@ interface AppShotProps {
  */
 const AppShot: React.FC<AppShotProps> = ({ src, alt, label, loading = 'lazy', className = '' }) => (
   <figure
-    className={`flex h-full flex-col overflow-hidden rounded-xl border border-white/[0.09] bg-[#0A0C11] shadow-[0_24px_70px_-30px_rgba(0,0,0,0.9)] ${className}`}
+    className={`flex h-full flex-col overflow-hidden rounded-xl border border-white/[0.09] bg-[#222428] shadow-[0_24px_70px_-30px_rgba(0,0,0,0.9)] ${className}`}
   >
     {/* Barre de fenêtre : signale « ceci est un écran de l'app », pas une
         illustration. */}
