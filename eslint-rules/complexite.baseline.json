@@ -20,7 +20,7 @@
       "max-lines-per-function": [325]
     },
     "src/components/CommandPalette.tsx": {
-      "max-lines-per-function": [221]
+      "max-lines-per-function": [219]
     },
     "src/components/EventModal.tsx": {
       "complexity": [39, 23],
