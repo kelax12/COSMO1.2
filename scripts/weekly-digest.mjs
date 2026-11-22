@@ -1,7 +1,7 @@
 // Résumés envoyés sur le canal d'alerte (Discord) : quotidien (la veille,
 // comparée à l'avant-veille) et hebdomadaire (les 7 derniers jours, comparés
-// aux 7 précédents). Workflows : daily-digest.yml (`--days=1`) et
-// weekly-digest.yml (7 jours, par défaut).
+// aux 7 précédents). Workflows : digest.yml (`--days=1`, quotidien ;
+// 7 jours le lundi, par défaut).
 //
 // Lecture SEULE, dans une transaction READ ONLY : ce script ne peut rien
 // écrire, même par erreur. Totaux uniquement, aucune donnée personnelle dans

@@ -1,0 +1,39 @@
+name: Digest
+
+# Résumé posté sur le canal d'alerte (inscriptions, actifs, trafic, organisations,
+# abonnements payants). Lecture seule (transaction READ ONLY).
+# Deux créneaux, un seul script (scripts/weekly-digest.mjs) : chaque jour 06:00 UTC,
+# la veille comparée à l'avant-veille (`--days=1`) ; chaque lundi 07:00 UTC, la
+# semaine (7 jours, par défaut). Lancement manuel : la semaine.
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+    - cron: '0 7 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Envoyer le résumé
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          WEBHOOK: ${{ secrets.OPS_ALERT_WEBHOOK_URL }}
+          CRENEAU: ${{ github.event.schedule }}
+        run: |
+          if [ "$CRENEAU" = "0 6 * * *" ]; then
+            node scripts/weekly-digest.mjs --days=1
+          else
+            node scripts/weekly-digest.mjs
+          fi
