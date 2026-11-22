@@ -134,7 +134,7 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
           <div
             role="radiogroup"
             aria-label={t('enterprise.pricing.intervalAria')}
-            className="inline-flex items-center gap-1 rounded-full border border-white/[0.08] bg-[#0A0C11] p-1"
+            className="inline-flex items-center gap-1 rounded-full border border-white/[0.08] bg-[#222428] p-1"
           >
             {INTERVALS.map((option) => {
               const isSelected = billingInterval === option;
@@ -150,7 +150,7 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
                      vertical seulement. C'est le choix mensuel / annuel, donc
                      le geste qui décide du montant facturé : le rater doit être
                      difficile. */
-                  className={`${TAP_AREA_44_Y} inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-[background-color,color] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090C] ${
+                  className={`${TAP_AREA_44_Y} inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-[background-color,color] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#161719] ${
                     isSelected ? 'bg-cyan-400/15 text-cyan-300' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
@@ -180,7 +180,7 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
         </div>
 
         {/* ── Le curseur : « combien êtes-vous ? » ── */}
-        <div className="mb-10 rounded-2xl border border-white/[0.08] bg-[#0A0C11] p-6 sm:p-8">
+        <div className="mb-10 rounded-2xl border border-white/[0.08] bg-[#222428] p-6 sm:p-8">
           <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
             <label htmlFor={sliderId} className="text-sm font-medium text-slate-300">
               {t('enterprise.pricing.sliderLabel')}
@@ -281,8 +281,8 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
                 key={tier.minMembers}
                 className={`flex h-full flex-col rounded-xl border p-5 transition-[border-color,box-shadow,background-color] duration-300 ${
                   isActive
-                    ? 'border-cyan-300/60 bg-[#0D1117] shadow-[0_0_0_1px_rgba(34,211,238,0.25),0_0_36px_-8px_rgba(34,211,238,0.55)]'
-                    : 'border-white/[0.08] bg-[#0A0C11] hover:border-white/15'
+                    ? 'border-cyan-300/60 bg-[#282A2E] shadow-[0_0_0_1px_rgba(34,211,238,0.25),0_0_36px_-8px_rgba(34,211,238,0.55)]'
+                    : 'border-white/[0.08] bg-[#222428] hover:border-white/15'
                 }`}
               >
                 {/* Le palier gratuit n'a pas de ligne de nom : « Gratuit » est
@@ -336,7 +336,7 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
         </div>
 
         {/* ── Ce qui est inclus partout, et l'appel à l'action ── */}
-        <div className="grid gap-4 rounded-2xl border border-white/[0.08] bg-[#0A0C11] p-6 sm:p-8 lg:grid-cols-[1.4fr_1fr] lg:gap-10">
+        <div className="grid gap-4 rounded-2xl border border-white/[0.08] bg-[#222428] p-6 sm:p-8 lg:grid-cols-[1.4fr_1fr] lg:gap-10">
           <div>
             <h3 className="mb-5 text-sm font-semibold text-white">{t('enterprise.pricing.includedTitle')}</h3>
             <ul className="grid gap-2.5 sm:grid-cols-2">
@@ -355,7 +355,7 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
           <div className="flex flex-col justify-center gap-3 lg:border-l lg:border-white/[0.06] lg:pl-10">
             <button
               onClick={onRegister}
-              className="group flex items-center justify-center gap-2.5 rounded-xl bg-[#F5B942] px-6 py-4 text-base font-bold text-[#1A1204] shadow-[0_10px_36px_-10px_rgba(245,185,66,0.75)] transition-[background-color,box-shadow] duration-300 hover:bg-[#FFC95C] hover:shadow-[0_14px_44px_-8px_rgba(245,185,66,0.9)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5B942] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0C11]"
+              className="group flex items-center justify-center gap-2.5 rounded-xl bg-[#F5B942] px-6 py-4 text-base font-bold text-[#1A1204] shadow-[0_10px_36px_-10px_rgba(245,185,66,0.75)] transition-[background-color,box-shadow] duration-300 hover:bg-[#FFC95C] hover:shadow-[0_14px_44px_-8px_rgba(245,185,66,0.9)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5B942] focus-visible:ring-offset-2 focus-visible:ring-offset-[#222428]"
             >
               {t('enterprise.pricing.cta')}
               <ArrowRight size={17} className="transition-transform group-hover:translate-x-1" aria-hidden="true" />

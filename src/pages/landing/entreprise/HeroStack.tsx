@@ -50,12 +50,12 @@ interface FenetreProps {
 
 /** Une fenêtre produit : barre en casse de phrase (plus de capitales espacées). */
 const Fenetre: React.FC<FenetreProps> = ({ shot, label, alt, devant, eager }) => (
-  <figure className="relative overflow-hidden rounded-[14px] border border-white/[0.09] bg-[#0d1015] shadow-[0_40px_80px_-30px_rgba(0,0,0,0.9)]">
+  <figure className="relative overflow-hidden rounded-[14px] border border-white/[0.09] bg-[#222428] shadow-[0_40px_80px_-30px_rgba(0,0,0,0.9)]">
     <div className="flex h-10 items-center gap-2 border-b border-white/[0.06] bg-ent-acier px-3.5 text-label text-ent-brume">
       <span className="flex gap-2" aria-hidden="true">
-        <span className="h-2.5 w-2.5 rounded-full bg-[#3a414c]" />
-        <span className="h-2.5 w-2.5 rounded-full bg-[#3a414c]" />
-        <span className="h-2.5 w-2.5 rounded-full bg-[#3a414c]" />
+        <span className="h-2.5 w-2.5 rounded-full bg-[#444C56]" />
+        <span className="h-2.5 w-2.5 rounded-full bg-[#444C56]" />
+        <span className="h-2.5 w-2.5 rounded-full bg-[#444C56]" />
       </span>
       <figcaption className="ml-2 font-medium text-ent-lune">{label}</figcaption>
       <span className="ml-auto hidden truncate font-data text-caption text-[#5d6778] sm:block" aria-hidden="true">

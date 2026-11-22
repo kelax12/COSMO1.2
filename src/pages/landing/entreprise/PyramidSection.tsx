@@ -48,7 +48,7 @@ const PyramidSection: React.FC = () => {
           rattache, on regroupe. Trois gestes, pas une configuration. */}
       <ol className="mb-8 grid gap-px overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.06] sm:grid-cols-3">
         {(['g1', 'g2', 'g3'] as const).map((key, index) => (
-          <li key={key} className="bg-[#0A0C11] p-6">
+          <li key={key} className="bg-[#222428] p-6">
             <span className="mb-3 block font-mono text-caption tabular-nums text-slate-600">
               {String(index + 1).padStart(2, '0')}
             </span>
@@ -77,7 +77,7 @@ const PyramidSection: React.FC = () => {
         {PYRAMID_BENEFITS.map(({ titleKey, bodyKey }) => (
           <div
             key={titleKey}
-            className="rounded-xl border border-white/[0.08] bg-[#0A0C11] p-6 transition-colors duration-300 hover:border-cyan-300/25"
+            className="rounded-xl border border-white/[0.08] bg-[#222428] p-6 transition-colors duration-300 hover:border-cyan-300/25"
           >
             <h3 className="mb-2 text-sm font-semibold text-white">{t(titleKey)}</h3>
             <p className="text-sm leading-relaxed text-slate-500">{t(bodyKey)}</p>

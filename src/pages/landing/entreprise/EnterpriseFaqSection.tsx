@@ -28,7 +28,7 @@ const EnterpriseFaqSection: React.FC = () => {
           {t('enterprise.faq.title')}
         </h2>
 
-        <div className="rounded-2xl border border-white/[0.08] bg-[#0A0C11] px-6 sm:px-8">
+        <div className="rounded-2xl border border-white/[0.08] bg-[#222428] px-6 sm:px-8">
           {ENTERPRISE_FAQ.map(({ questionKey, answerKey }, index) => (
             <FaqItem key={questionKey} index={index} theme="dark" question={t(questionKey)} answer={t(answerKey)} />
           ))}
