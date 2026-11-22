@@ -1,14 +1,12 @@
 {
   "_lire": "Cliquet de la convention des docs (docs/README.md § Convention, ADR 0021), lu par npm run check:docs (regle 8). fichiers : la MESURE d'un fichier qui ne tient pas encore une regle (lignes, dates, numerosDeLigne, entete false) ; une mesure ne peut que baisser, une entree inutile rougit jusqu'a son retrait ; ne JAMAIS ajouter un fichier ni relever une valeur. datesLues : un doc dont les dates sont des DONNEES lues par une garde (script cite), valable seulement si ce script cite le doc. Mesurer : npm run check:docs -- --mesurer.",
   "_motifs": {
-    "docs/LEGAL.md": "tableau de conformite, DPA et annexe lus par check:legal, check:subprocessors, check:stripe-prices, third-party-notices et landing-promises : les decouper deplace des sections que ces scripts lisent.",
-    "docs/AUDIT-VOICEOVER-IOS.md": "check-list a jouer d'une traite, dont check:lecteurs-ecran compte les etapes : la couper perd l'ordre de la seance.",
     "docs/MARQUE-COSMO.md": "dates de depot et d'expiration de marques tierces (releve d'anteriorite) : une donnee juridique, pas un recit ; aucune garde ne la lit."
   },
   "fichiers": {
-    "docs/AUDIT-VOICEOVER-IOS.md": {"lignes":343},
-    "docs/LEGAL.md": {"lignes":342},
-    "docs/MARQUE-COSMO.md": {"dates":26}
+    "docs/MARQUE-COSMO.md": {
+      "dates": 26
+    }
   },
   "datesLues": {
     "docs/AUDIT-NVDA-WINDOWS.md": "scripts/check-calendrier.mjs",

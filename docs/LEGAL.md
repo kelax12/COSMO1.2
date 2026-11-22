@@ -46,7 +46,7 @@ Légende : ✅ bon · 🟡 partiellement bon · ❌ à faire · ⬜ sans objet a
 | A6 | Transferts hors UE (chap. V) | 🟡 | ✅ Supabase en `eu-west-1`, donc dans l'Union, et l'information due à la personne est faite (section 7 bis de la politique, art. 13.1.f). ❌ Reste la preuve contractuelle : les clauses types vivent dans les DPA de Vercel et Sentry, à accepter et archiver (dépend de A5). |
 | A7 | Notification de violation sous 72 h (art. 33) | ✅ | Vérifié le 2026-08-26 : `RGPD-VIOLATION.md` (hors dépôt) qualifie les trois types d'atteinte, donne la marche à suivre sur six heures, l'arbre de décision, les sources et le registre des violations (obligatoire même sans notification, art. 33.5). Exercice à blanc et gabarits : [`RGPD-VIOLATION-EXERCICES.md`](./RGPD-VIOLATION-EXERCICES.md), [`RGPD-VIOLATION-GABARITS.md`](./RGPD-VIOLATION-GABARITS.md). Manques recensés : pas d'astreinte, pas d'exercice de restauration, pas de DPA pour être alerté d'une violation chez un sous-traitant. |
 | A8 | Droits des personnes (art. 15 à 22) | ✅ | Vérifié le 2026-08-26 : export CSV (profil, catégories et listes compris ; périmètre exact annoncé dans la politique, détail : [`RGPD.md`](./RGPD.md)), effacement par `delete-account`, délai d'un mois documenté, prolongation de deux mois prévue. |
-| A9 | Sécurité du traitement (art. 32) | 🟡 | Revu le 2026-10-13 : mesures formalisées en [annexe](#annexe--mesures-techniques-et-organisationnelles-art-32), vérifiées dans `vercel.json`, `src/main.tsx` et les migrations ; sauvegardes chiffrées avant dépôt ; jetons retirés des adresses de page Sentry (`src/lib/sentry-scrub.ts`). 🔴 Des sauvegardes sont déjà parties en clair dans un dépôt public (violation au registre privé) : ❌ ne jamais déposer un dump en clair. Restent : révoquer les sessions et changer le mot de passe de la base (gestes d'Axel). |
+| A9 | Sécurité du traitement (art. 32) | 🟡 | Revu le 2026-10-13 : mesures formalisées en [annexe](./LEGAL-ANNEXE-ART32.md), vérifiées dans `vercel.json`, `src/main.tsx` et les migrations ; sauvegardes chiffrées avant dépôt ; jetons retirés des adresses de page Sentry (`src/lib/sentry-scrub.ts`). 🔴 Des sauvegardes sont déjà parties en clair dans un dépôt public (violation au registre privé) : ❌ ne jamais déposer un dump en clair. Restent : révoquer les sessions et changer le mot de passe de la base (gestes d'Axel). |
 | A11 | Information au point de collecte (art. 13) | ✅ | Vérifié le 2026-10-13 : le formulaire d'inscription lie la politique et les CGU (nouvel onglet) sous le bouton, Google compris ; une mention dédiée existe en mode connexion (`auth.legalConsentLogin`), test `AuthForm.legal.test.tsx`. |
 | A12 | Mineurs (RGPD art. 8, loi I&L art. 45) | ✅ | Vérifié le 2026-09-24 : âge minimum de 15 ans dans les CGU (3.3), accord parental conjoint pour la mesure d'audience en dessous (politique, section 5). Aucun contrôle d'âge technique, usage pour un service non destiné aux enfants. |
 | A13 | COSMO sous-traitant des organisations clientes (art. 28) | 🟡 | Revu le 2026-09-24 : clause CGU 6.3 couvrant les huit éléments de l'art. 28.3 (le mode entreprise traite des données de salariés pour le compte de l'employeur). Reste : relecture juridique et un DPA séparé et signable, que réclamera un acheteur B2B. Préavis de 30 jours dû pour cette clause (`LEGAL-JOURNAL.md`). |
@@ -239,8 +239,6 @@ Médiateur : Société Médiation Professionnelle, membre de la CPMN. Texte four
 
 - ✅ `npm run check:subprocessors` compare ce tableau et celui du registre aux tiers appelés par le code, dans les deux sens : ne pas renommer le titre « Sous-traitants et transferts » ni la colonne « Prestataire » ; ajouter une ligne ici ET au registre quand un tiers apparaît.
 
----
-
 ## Garde-fous techniques
 
 - ❌ Ne pas ouvrir de bouton de paiement réel avant l'obtention du SIREN.
@@ -250,39 +248,6 @@ Médiateur : Société Médiation Professionnelle, membre de la CPMN. Texte four
 - ❌ Ne pas laisser une purge RGPD atteindre les données de facturation (dix ans).
 - ❌ Ne pas signer l'attestation de conformité d'encaissement sans le journal inaltérable.
 - ❌ Ne pas promettre sur la landing une fonctionnalité non livrée : défaut de conformité opposable par un consommateur.
-
-## Annexe : mesures techniques et organisationnelles (art. 32)
-
-Pièce réclamée en contrôle CNIL et dans les questionnaires d'achat B2B. Détail d'implémentation : [`SECURITY.md`](./SECURITY.md), non dupliqué ici.
-
-### Mesures en place
-
-| Mesure | Mise en œuvre | Source |
-|---|---|---|
-| Chiffrement en transit | HSTS `max-age=63072000`, `includeSubDomains`, `preload`. Aucun accès en clair. | `vercel.json` |
-| Localisation des données | Supabase `eu-west-1` (Irlande). Aucun transfert hors UE pour la base. | console Supabase |
-| Cloisonnement par utilisateur | RLS activée sur toutes les tables, une seule policy permissive par rôle et action (mig. `049`). Isolation prouvée par test d'intégration. | `supabase/migration/`, `e2e/rls/` |
-| Contrôle d'accès | Supabase Auth. `ProtectedRoute` est une défense en profondeur, la frontière est la RLS. | `src/App.tsx` |
-| Moindre privilège | `service_role` jamais exposé au navigateur. Helpers sensibles : `EXECUTE` révoqué à `authenticated` (mig. `100`). | `.env.example`, migrations |
-| Maîtrise des écritures | Whitelist `mapToDb` côté repository ; `zod` est une garde UX, la whitelist est la barrière. | `src/lib/validation/` |
-| Anti-XSS et injection | CSP stricte : `default-src 'self'`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, `frame-ancestors 'none'`. | `vercel.json` |
-| Anti-clickjacking | `X-Frame-Options: DENY` et `frame-ancestors 'none'`. | `vercel.json` |
-| Durcissement navigateur | `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` fermant caméra, micro, géolocalisation. | `vercel.json` |
-| Minimisation dans le monitoring | `sendDefaultPii: false` ; `beforeSend` retire emails et UUID des messages, exceptions et breadcrumbs. | `src/main.tsx` |
-| Réduction de surface tierce | Aucun script tiers de mesure : audience maison, revérifiée avant chaque envoi (consentement, page publique, hors session), postée à la même origine. | `src/lib/traffic.ts`, `api/collect.ts` |
-| Traçabilité des versions | `release` Sentry = SHA du commit. | `src/main.tsx` |
-| Contrôle continu | Gates CI bloquantes : `check:rls`, `validate:migrations`, `test:rls`, `i18n:check`, `check:bundle`. | `package.json` |
-| Effacement | Edge Function `delete-account`, export CSV au titre de la portabilité. | `supabase/functions/delete-account`, `src/lib/csv-export.ts` |
-
-### Limites assumées
-
-Un document art. 32 qui ne recense que ses forces ne vaut rien en contrôle.
-
-- ⚠️ `style-src 'unsafe-inline'` reste nécessaire à la chaîne de styles : assouplissement conscient de la CSP.
-- ❌ Réintroduire un script publicitaire rouvrirait la question du consentement (A4) : la publicité n'en est JAMAIS exemptée. Les origines publicitaires sont retirées de la CSP.
-- ⚠️ Aucun exercice de restauration n'a été conduit : les sauvegardes dépendent du plan Supabase souscrit, leur existence et leur délai de restauration restent à vérifier.
-- ⚠️ Pas de journal d'accès applicatif distinct des logs d'infrastructure.
-- ✅ Sauvegardes chez GitHub : chiffrées (AES-256) avant dépôt, phrase secrète en secret GitHub et copie hors dépôt chez Axel. Elles ont été publiques et en clair : violation consignée au registre privé.
 
 ## Engagements
 
@@ -316,15 +281,6 @@ Chaque ligne au vert est une promesse tenue publiquement, vérifiable par un cli
 | Informer avant chaque reconduction annuelle | E6 (secrets `CRON_SECRET` et `RESEND_API_KEY` posés). | Le client peut résilier à tout moment sans frais |
 | Ne jamais retirer un membre en cas de baisse de palier | Annoncé en FAQ : on bloque la croissance, on ne retire rien. | Contradiction avec une promesse écrite |
 | Livrer ce que la landing annonce | Voir E9. | Réduction de prix ou résolution du contrat |
-
-### Découlant des décisions d'Axel
-
-| Décision | Engagement |
-|---|---|
-| Un particulier peut acheter | Tout le droit de la consommation s'applique à toute l'offre, y compris l'adhésion à un médiateur. |
-| Micro-entreprise | Franchise en base, livre des recettes, affiliation travailleur indépendant, et autoliquidation de la TVA sur les achats étrangers (même en franchise). |
-| Société de domiciliation | Coût mensuel récurrent, adresse personnelle hors du registre public. |
-| Journal d'encaissement construit | Attestation individuelle signable honnêtement. |
 
 ## Décisions encore ouvertes
 
