@@ -291,7 +291,6 @@ describe('check:edge · temoin de perimetre', () => {
   });
 });
 
-
 // ═══════════════════════════════════════════════════════════════════
 // TEMOIN DE MENAGE
 //
@@ -411,7 +410,6 @@ describe('check:edge · temoin de menage', () => {
   );
 });
 
-
 // ═══════════════════════════════════════════════════════════════════
 // TEMOIN DE PERIMETRE DE LECTURE
 //
@@ -454,7 +452,6 @@ describe('check:edge · temoin de perimetre de lecture', () => {
     expect(estFichierDuBundle('supabase/functions/delete-account/README.md')).toBe(false);
   });
 });
-
 
 // ═══════════════════════════════════════════════════════════════════
 // TEMOIN DE LISIBILITE

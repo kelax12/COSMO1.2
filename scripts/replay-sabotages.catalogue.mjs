@@ -1834,4 +1834,8 @@ export const CATALOGUE = [
       'Un hook qui laisse passer quand il ne trouve pas sa garde n a rien vérifié : le motif de la '
       + 'garde conditionnelle à la présence de son propre secret, interdit par `CLAUDE.md`.',
   },
+  { id: 'preprod-ephemere-cible-prod', famille: 'produit', garde: 'src/preprod-ephemere.test.mjs', // CI-04
+    modifs: [r('.github/workflows/schema-prod.yml', '@127.0.0.1:54322/postgres', '@db.ykeugqfgklejcdbrmawy.supabase.co:5432/postgres')],
+    attendu: ['TEMOIN : main seul, preuve APRES la comparaison a la prod, sans secret, sur le Postgres local'],
+    pourquoi: 'Une preuve visant la prod, même annulée, est ce que CI-04 interdit.' },
 ];

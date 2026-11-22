@@ -5,6 +5,9 @@
 // Préprod : migrations < n appliquées dans l'ordre (suivi dans preprod_outil.ledger, car
 // certaines ne se rejouent pas), puis la preuve, qui doit rendre `PREUVE-ANNULEE 0 ECHEC |`.
 // `--avancer` applique ensuite la migration n à la préprod (après son application en prod).
+// `--schema-rejoue` : la cible porte DÉJÀ le dépôt rejoué (préprod éphémère de la CI, job
+// `depot-egal-prod` de schema-prod.yml, base jugée identique à la prod dans le même job) :
+// le ledger est inscrit sans rien rejouer, la preuve se joue sur le schéma complet.
 import { readdirSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { join, dirname } from 'node:path'
@@ -31,6 +34,16 @@ export function trouverPreuve(dossier, num) {
   throw new Error(`Aucune preuve pour ${num} dans supabase/proofs/.`)
 }
 
+/** Ce que l'outil fait du dossier : rien à rejouer si le schéma l'est déjà, sinon les migrations < début encore absentes du ledger. */
+export function planifier({ tous, faits, debut, schemaRejoue }) {
+  if (schemaRejoue) return { aInscrire: tous.filter((f) => !faits.has(f)), aAppliquer: [], dejaAuDela: [] }
+  return {
+    aInscrire: [],
+    aAppliquer: tous.filter((x) => numero(x) < debut && !faits.has(x)),
+    dejaAuDela: [...faits].filter((f) => numero(f) >= debut),
+  }
+}
+
 async function main() {
   const num = Number(process.argv[2])
   if (!Number.isInteger(num)) throw new Error('Usage : npm run preuve:preprod -- <num> [--avancer]')
@@ -44,7 +57,7 @@ async function main() {
     const faits = new Set((await c.query('select f from preprod_outil.ledger')).rows.map((r) => r.f))
     const dossier = join(RACINE, 'migration')
     const tous = readdirSync(dossier).filter((f) => f.endsWith('.sql')).sort()
-    const dejaAuDela = [...faits].filter((f) => numero(f) >= preuve.debut)
+    const { aInscrire, aAppliquer, dejaAuDela } = planifier({ tous, faits, debut: preuve.debut, schemaRejoue: process.argv.includes('--schema-rejoue') })
     if (dejaAuDela.length) throw new Error(`Préprod déjà au-delà de ${preuve.debut} (${dejaAuDela[0]}) : la recréer (docs/DEPLOYMENT.md § Préproduction).`)
     const appliquer = async (f) => {
       process.stdout.write(`→ ${f} ... `)
@@ -52,7 +65,8 @@ async function main() {
       await c.query('insert into preprod_outil.ledger values ($1) on conflict do nothing', [f])
       console.log('ok')
     }
-    for (const f of tous.filter((x) => numero(x) < preuve.debut && !faits.has(x))) await appliquer(f)
+    for (const f of aInscrire) await c.query('insert into preprod_outil.ledger values ($1) on conflict do nothing', [f])
+    for (const f of aAppliquer) await appliquer(f)
     let verdict = ''
     try {
       await c.query(readFileSync(join(RACINE, 'proofs', preuve.fichier), 'utf8'))

@@ -46,6 +46,7 @@
 - ⚠️ En PL/pgSQL, `N` et `n`, `OK` et `ok` sont le même identifiant (« duplicate declaration »).
 - 🔴 Une preuve se joue sur la PRÉPRODUCTION, jamais sur la production (CI-04) : `npm run preuve:preprod -- <NNN>` (cible `SUPABASE_PREPROD_DB_URL`, refus si absente ou si elle vise la prod ; `docs/DEPLOYMENT.md` § Préproduction). Attendu : `PREUVE-ANNULEE 0 ECHEC |`. Un `ECHEC` : on n'applique pas. ❌ Jamais `supabase db query --linked` ni le MCP pour une preuve.
 - ✅ Après application en prod, `npm run preuve:preprod -- <NNN> --avancer` fait suivre la préprod.
+- ✅ Sans projet préprod : `Schema prod` à la main (`preuve: <NNN>`) joue la preuve sur le dépôt rejoué, jugé identique à la prod dans le même job ; son verdict `PREUVE-ANNULEE 0 ECHEC |` tient lieu de préprod.
 
 ## Interdits
 

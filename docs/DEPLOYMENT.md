@@ -52,6 +52,7 @@ Après application :
 - Cible : `SUPABASE_PREPROD_DB_URL` (URI Postgres du projet, avec `?sslmode=require`), seule variable ; secret GitHub du même nom si une CI la lit un jour. Absente, ou contenant la référence de la production : échec (`supabase/proofs/preuve-preprod.mjs`), jamais de repli.
 - L'outil applique les migrations < `NNN` encore absentes de `preprod_outil.ledger`, joue la preuve (verdict attendu `PREUVE-ANNULEE 0 ECHEC |`) ; `--avancer` applique ensuite `NNN`, une fois la migration en prod. Préprod déjà en avance : la recréer (supprimer le projet, en créer un neuf).
 - ✅ Un projet Free suffit (ADR 0009) : la préprod ne porte aucune donnée réelle. Limite Free : 2 projets actifs par organisation, mettre en pause le surnuméraire.
+- ✅ Préprod ÉPHÉMÈRE (Free plein, deux projets pris) : `Schema prod` lancé à la main sur `main` avec `preuve: <NNN>` rejoue le dépôt sur la stack locale du runner, le juge identique au catalogue de prod (rouge sinon), puis y joue `preuve:preprod -- <NNN> --schema-rejoue`. Vaut preuve du SQL et du schéma, pas des volumes ni de la plateforme réelle ; la relecture des données de prod reste celle de l'en-tête de la preuve.
 
 ## 2bis. Déployer les Edge Functions
 

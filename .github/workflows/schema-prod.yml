@@ -19,6 +19,13 @@
 # requete que `migration-coverage.yml`), session `read only`,
 # `pg_dump --schema-only`. Aucun artefact : le journal (public) porte la
 # liste des objets en ecart et leur definition, masquee.
+#
+# PREPROD EPHEMERE (CI-04, 2026-11-22). Lancee a la main avec `preuve: <NNN>`,
+# la meme base rejouee, DEJA jugee identique a la prod par l'etape precedente,
+# recoit ensuite `npm run preuve:preprod -- <NNN> --schema-rejoue`. Pas de
+# second projet Supabase (Free : deux projets, pris), pas de donnee : le schema
+# vient du depot, juge contre le catalogue de prod. Ce que ca prouve et ne
+# prouve pas : `docs/DEPLOYMENT.md` § Preproduction. Ne tourne que sur `main`.
 # ⚠️ Pas de `if: secrets.X != ''` : sans secret, le job ROUGIT (scripts/CLAUDE.md).
 # ──────────────────────────────────────────────────────────────────────
 name: Schema prod
@@ -27,6 +34,11 @@ on:
   schedule:
     - cron: '41 5 * * *' # tous les jours, 05:41 UTC (decale des autres crons)
   workflow_dispatch:
+    inputs:
+      preuve:
+        description: 'Preproduction ephemere : numero de la migration dont jouer la preuve (ex. 253). Vide = comparaison seule.'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -39,6 +51,10 @@ jobs:
   depot-egal-prod:
     runs-on: ubuntu-latest
     steps:
+      # Le job lit SUPABASE_DB_URL : jamais le code d'une autre branche (CodeQL 37).
+      - name: Refuser tout autre ref que main
+        run: |
+          [ "$GITHUB_REF" = "refs/heads/main" ] || { echo "::error::Ce job lit la production : main seulement (ref $GITHUB_REF)."; exit 1; }
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -87,6 +103,20 @@ jobs:
         env:
           PROD_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: node scripts/schema-prod.mjs comparer
+
+      # La base est identique a la prod (etape precedente verte) : la preuve s'y joue,
+      # sans secret, la cible est le Postgres local (`cible()` refuse la prod).
+      - name: Preuve sur la preproduction ephemere
+        if: ${{ inputs.preuve != '' }}
+        env:
+          PREUVE: ${{ inputs.preuve }}
+          SUPABASE_PREPROD_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: |
+          set -euo pipefail
+          echo "$PREUVE" | grep -Eq '^[0-9]{3}$' || { echo "::error::preuve : un numero de migration a trois chiffres."; exit 1; }
+          set -o pipefail
+          npm run preuve:preprod -- "$PREUVE" --schema-rejoue | tee "$RUNNER_TEMP/preuve.txt"
+          grep -q 'PREUVE-ANNULEE 0 ECHEC |' "$RUNNER_TEMP/preuve.txt" || { echo "::error::verdict de la preuve non vert."; exit 1; }
 
       - name: Temoin · le comparateur voit-il encore un ecart ?
         if: ${{ always() }}

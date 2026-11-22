@@ -89,7 +89,6 @@ export function verifierEtudes(racine = RACINE) {
   return { ecarts, absents, docsManquants, comparaisons };
 }
 
-
 // ── M-52 · séances lecteur d'écran ─────────────────────────────
 export const REPORT_MAX_JOURS = 30;
 export const PREAVIS_JOURS = 14;
@@ -99,7 +98,6 @@ export const CHECKLISTS = [
   { doc: 'docs/AUDIT-VOICEOVER-IOS.md', nom: 'VoiceOver iOS', minEtapes: 90 },
   { doc: 'docs/AUDIT-NVDA-WINDOWS.md', nom: 'NVDA et revue humaine WCAG', minEtapes: 30 },
 ];
-
 
 export function lireMarqueur(texte) {
   const m = /<!--\s*echeance-lecteur-ecran:\s*(\S+)\s+initiale=(\S+)\s*-->/.exec(texte);
@@ -192,12 +190,10 @@ export function verifierLecteurs(racine = RACINE, maintenant = new Date()) {
   return { erreurs, avis, resume };
 }
 
-
 // ── AM-2 · péremption des chantiers ──────────────────────────────
 export const DELAI_JOURS = 90;
 export const DOC = 'docs/POST-AUDIT-GUIDE.md';
 export const MIN_CHANTIERS = 5;
-
 
 /** Les chantiers : titre, marqueur (ou null). Le marqueur doit suivre le titre à 3 lignes près. */
 export function chantiers(texte) {
@@ -243,7 +239,6 @@ export function verifierChantiers(racine = RACINE, maintenant = new Date()) {
   }
   return { erreurs, total: liste.length };
 }
-
 
 // ── Ligne de commande ────────────────────────────────────────────
 function cliEtudes() {
