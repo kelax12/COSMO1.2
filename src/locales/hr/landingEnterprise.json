@@ -44,7 +44,7 @@
       "p3d": "Bez uvida u to tko što radi, projekt počinje <hl>bez znanja je li uopće izvediv</hl>. To otkrijete na pola puta, kad je već prekasno."
     },
     "pyramid": {
-      "title": "Pozovite svoj tim. Svatko vidi ono što ga se tiče.",
+      "title": "Pozovite svoj tim.",
       "subtitle": "Svatko se pridružuje računom za Cosmo koji već ima. Vi mu dodjeljujete ulogu i timove: <hl>vidi samo svoj opseg</hl>, ni više, ni manje.",
       "g1t": "Pozovite",
       "g1d": "E-poštom, kodom, poveznicom ili iz svojih kontakata u Cosmu. Svatko zadržava svoj račun i odmah dobiva zadanu ulogu.",
@@ -86,14 +86,14 @@
       "viewPortfolio": "Portfelj"
     },
     "execution": {
-      "title": "Pratite izvršenje, ne samo rokove.",
-      "subtitle": "<hl>Svaki zadatak ima status</hl> i može blokirati drugi. Vremenska crta izračunava kritični put: lanac u kojem i najmanje kašnjenje odgađa isporuku.",
-      "p1t": "Svi timski zadaci u jednoj tablici",
-      "p1d": "Kartica Zadaci okuplja zadatke svih projekata u vašem opsegu: unaprijed postavljeni filtri (kasni, ovaj tjedan, blokirano), zajednički popisi, sortiranje i grupiranje, kao popis ili ploča.",
-      "p2t": "Pet statusa, ne dva",
-      "p2d": "Za obaviti, u tijeku, na pregledu, blokirano, obavljeno. Oznaka statusa vidi se svugdje: u tablici, na ploči, na vremenskoj crti. Zadatak na pregledu odobrava se ili vraća jednim klikom.",
-      "p3t": "Navedite što blokira što",
-      "p3d": "Povežite zadatak s onima koji moraju završiti prije njega. Cosmo izračunava kritični put: lanac zadataka u kojem i najmanje kašnjenje odgađa isporuku. Sve ostalo ima rezervu."
+      "title": "Pratite izvršenje, ne rokove.",
+      "subtitle": "<hl>Statusi, ovisnosti, kritični put.</hl> Vidite što napreduje, a što blokira.",
+      "p1t": "Jedna tablica",
+      "p1d": "Svi zadaci vaših projekata. Gotovi filtri, zajednički popisi, sortiranje, grupiranje, kao popis ili ploča.",
+      "p2t": "Pet statusa",
+      "p2d": "Za obaviti, u tijeku, na pregledu, blokirano, obavljeno. Pregled se odobrava ili vraća jednim klikom.",
+      "p3t": "Što blokira što",
+      "p3d": "Povežite zadatke. Cosmo izračunava kritični put: lanac u kojem svako kašnjenje odgađa isporuku."
     },
     "okr": {
       "title": "Postavite ciljeve na svakoj razini.",

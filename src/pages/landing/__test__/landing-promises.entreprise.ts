@@ -247,7 +247,7 @@ export const PROMISES_ENTREPRISE: LandingPromise[] = [
         has: "export type TeamTaskStatus = 'todo' | 'in_progress' | 'review' | 'blocked' | 'done';",
       },
     ],
-    figures: { '5': ['enterprise.execution.p2t'], '2': ['enterprise.execution.p2t'] },
+    figures: { '5': ['enterprise.execution.p2t'] },
   },
   {
     id: 'entreprise-chemin-critique',

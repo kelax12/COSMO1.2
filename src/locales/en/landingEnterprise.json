@@ -44,7 +44,7 @@
       "p3d": "Without visibility into who's doing what, a project starts <hl>without knowing if it's even feasible</hl>. You find out midway, once it's too late."
     },
     "pyramid": {
-      "title": "Invite your team. Everyone sees what concerns them.",
+      "title": "Invite your team.",
       "subtitle": "Everyone joins with the Cosmo account they already have. You give them a role and teams: <hl>they only see their own scope</hl>, no more, no less.",
       "g1t": "Invite",
       "g1d": "By email, by code, by link or from your Cosmo contacts. Everyone keeps their account and gets the default role straight away.",
@@ -86,14 +86,14 @@
       "viewPortfolio": "Portfolio"
     },
     "execution": {
-      "title": "Track execution, not just deadlines.",
-      "subtitle": "<hl>Every task carries a status</hl> and can block another. The timeline computes the critical path: the chain where the slightest delay pushes back delivery.",
-      "p1t": "Every team task, in one table",
-      "p1d": "The Tasks tab gathers the tasks of every project in your scope: presets (overdue, this week, blocked), shared lists, sorting and grouping, as a list or a board.",
-      "p2t": "Five statuses, not two",
-      "p2d": "To do, in progress, in review, blocked, done. The status pill shows everywhere: in the table, the board, the timeline. A task in review is approved or sent back in one click.",
-      "p3t": "Declare what blocks what",
-      "p3d": "Link a task to the ones that must finish before it. Cosmo computes the critical path: the chain of tasks where the smallest delay pushes back delivery. Everything else has slack."
+      "title": "Track execution, not deadlines.",
+      "subtitle": "<hl>Statuses, dependencies, critical path.</hl> You see what moves and what blocks.",
+      "p1t": "One table",
+      "p1d": "Every task from your projects. Presets, shared lists, sorting, grouping, as a list or a board.",
+      "p2t": "Five statuses",
+      "p2d": "To do, in progress, in review, blocked, done. A review is approved or sent back in one click.",
+      "p3t": "What blocks what",
+      "p3d": "Link tasks. Cosmo computes the critical path: the chain where every delay pushes back delivery."
     },
     "okr": {
       "title": "Set your objectives, at every scale.",

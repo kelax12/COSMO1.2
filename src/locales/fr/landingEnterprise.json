@@ -44,7 +44,7 @@
       "p3d": "Sans vue sur qui fait quoi, un projet démarre <hl>sans savoir s'il est faisable</hl>. On le découvre en cours de route, une fois que c'est trop tard."
     },
     "pyramid": {
-      "title": "Invitez votre équipe. Chacun voit ce qui le concerne.",
+      "title": "Invitez votre équipe.",
       "subtitle": "Chacun rejoint avec le compte Cosmo qu'il a déjà. Vous lui donnez un rôle et des équipes : <hl>il ne voit que son périmètre</hl>, ni plus, ni moins.",
       "g1t": "Invitez",
       "g1d": "Par e-mail, par code, par lien ou parmi vos contacts Cosmo. Chacun garde son compte, et reçoit d'office le rôle par défaut.",
@@ -86,14 +86,14 @@
       "viewPortfolio": "Portefeuille"
     },
     "execution": {
-      "title": "Suivez l'exécution, pas seulement les échéances.",
-      "subtitle": "<hl>Chaque tâche porte un statut</hl> de flux et peut en bloquer une autre. Le planning calcule le chemin critique : la chaîne dont le moindre retard décale la livraison.",
-      "p1t": "Toutes les tâches d'équipe, dans un seul tableau",
-      "p1d": "L'onglet Tâches réunit les tâches de tous les projets de votre périmètre : préréglages (en retard, cette semaine, bloquées), listes partagées, tri et regroupement, en liste ou en kanban.",
-      "p2t": "Cinq statuts, pas deux",
-      "p2d": "À faire, en cours, en relecture, bloquée, terminée. La pastille de statut est visible partout : dans le tableau, le kanban, le planning. Une tâche en relecture se valide ou se renvoie d'un clic.",
-      "p3t": "Déclarez ce qui bloque quoi",
-      "p3d": "Reliez une tâche à celles qui doivent finir avant elle. Cosmo calcule le chemin critique : la chaîne de tâches dont le moindre retard décale la livraison. Les autres ont de la marge."
+      "title": "Suivez l'exécution, pas les échéances.",
+      "subtitle": "<hl>Statuts, dépendances, chemin critique.</hl> Vous voyez ce qui avance et ce qui bloque.",
+      "p1t": "Un seul tableau",
+      "p1d": "Toutes les tâches de vos projets. Préréglages, listes partagées, tri, regroupement, en liste ou en kanban.",
+      "p2t": "Cinq statuts",
+      "p2d": "À faire, en cours, en relecture, bloquée, terminée. Une relecture se valide ou se renvoie en un clic.",
+      "p3t": "Ce qui bloque quoi",
+      "p3d": "Reliez les tâches. Cosmo calcule le chemin critique : la chaîne où chaque retard décale la livraison."
     },
     "okr": {
       "title": "Posez vos objectifs, à toutes les échelles.",
