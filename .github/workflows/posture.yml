@@ -11,7 +11,7 @@
 #
 # Items fermés ici : C-87 (coût serveur et sa PENTE), C-88 (advisors Supabase
 # et réglages d'auth), C-93 (durées de conservation confrontées aux données),
-# C-105 (variables d'environnement Vercel).
+# C-105 (variables d'environnement Vercel), C-106 (grille Stripe).
 #
 # ⚠️ AUCUN de ces jobs n'écrit dans la base. Les requêtes de `check:retention`
 # et `check:db-cost` sont des `SELECT`, et les `EXPLAIN` tournent dans une
@@ -181,6 +181,49 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           tail -n 20 env.log | while IFS= read -r LIGNE; do
             echo "::error title=env-vercel::${LIGNE}"
+          done
+          exit 1
+
+  # ── C-106 · la grille Stripe, confrontée au code ─────────────────
+  # Les prix enregistrés chez Stripe ne sont pas dans le dépôt : un DOUBLON de
+  # prix coupe l'encaissement annuel en silence (`yearly_unavailable`). Ex-
+  # workflow `Grille Stripe`, fondu ici (MAI-02) : même canal (`ci-alert.yml`),
+  # même cadence quotidienne, même lecture d'un réglage hors dépôt.
+  stripe-grille:
+    if: ${{ !inputs.regenerer }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      # 🔴 PAS de `if: secrets.X != ''` : si ce job tourne, il mesure ou il échoue.
+      - name: Comparer la grille Stripe au code
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+        run: |
+          set -o pipefail
+          if npm run check:stripe-prices 2>&1 | tee stripe.log; then
+            {
+              echo '### Grille Stripe'
+              echo ''
+              echo '```'
+              cat stripe.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          {
+            echo '### ✖ Grille Stripe'
+            echo ''
+            echo '```'
+            tail -n 60 stripe.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          tail -n 25 stripe.log | while IFS= read -r LIGNE; do
+            echo "::error title=stripe-grille::${LIGNE}"
           done
           exit 1
 

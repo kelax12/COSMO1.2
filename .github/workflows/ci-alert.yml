@@ -34,8 +34,7 @@ on:
     # création. Les six ajoutés le 2026-09-20 sont ceux du § 12
     # d'`a-faire-code.md` : ils tournent tous SANS déclencheur humain, donc
     # leur rouge n'a aucun autre chemin pour se faire voir.
-    # `Grille Stripe` y est entré avec la bascule live du 2026-10-20, le jour
-    # où il a été planifié (cf. son en-tête).
+    # La grille Stripe (bascule live du 2026-10-20) est un job de `Posture`.
     # `Signaux SEO` (2026-10-23) : hebdomadaire, sans déclencheur humain ; un
     # backlink perdu ou un secret absent n'a pas d'autre chemin vers un humain.
     #
@@ -70,7 +69,6 @@ on:
       # declencheur humain : leur rouge n'a pas d'autre chemin.
       - restore-drill
       - Fraicheur du drill
-      - Grille Stripe
       # `Erreurs de prod` (2026-10-23, OBSERVABILITE AM-1 à AM-3) : son
       # métier est de lire la production, son rouge n'a pas d'autre chemin.
       - Erreurs de prod

@@ -43,7 +43,7 @@ La table ne porte que la commande, sa classe et ce qu'elle regarde ; ❌ elle ne
 | `check:subprocessors` | N | tiers **dérivés** du code vs registre art. 30 et `LEGAL.md` § 6 | `AM-3` | `docs/RGPD-REGISTRE.md` |
 | `check:erasure` | N | couverture d'effacement, sans liste en dur | `C-92` | `docs/RGPD.md` |
 | `check:portability` | N | export art. 20 vs inventaire des colonnes | `C-94` | `docs/RGPD.md` |
-| `check:stripe-prices` | P | grille **Stripe** vs code | `C-106` | `docs/STRIPE-LIVE.md` |
+| `check:stripe-prices` | P | grille **Stripe** vs code, job `stripe-grille` de `posture.yml` | `C-106` | `docs/STRIPE-LIVE.md` |
 | `check:prod-errors` | P | erreurs Sentry de production | | `docs/OBSERVABILITE.md` |
 | `check:secrets-age` | P | âge des secrets vs `.github/secrets-registry.json` | `AM-3` | `docs/SECURITY.md` |
 | `check:coffre` | P | coffre vérifié sous 92 j | `V4.2` | `docs/SECURITY.md` |

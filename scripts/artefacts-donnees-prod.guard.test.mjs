@@ -265,7 +265,7 @@ export const CONTACTS_PROD = {
   'edge-deploy.yml › deploy › Sondes de fumee apres deploiement': {
     affiche: 'codes HTTP et verdicts des sondes',
   },
-  'stripe-prices.yml › grille › Comparer la grille Stripe au code': {
+  'posture.yml › stripe-grille › Comparer la grille Stripe au code': {
     affiche: 'grille de prix : montants et identifiants de prix, aucun client',
   },
   'renewal-notice.yml › notify › Declencher les avis de reconduction': {

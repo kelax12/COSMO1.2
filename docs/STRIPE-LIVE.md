@@ -23,7 +23,7 @@
 - Montants : `ENTERPRISE_PRICING_TIERS` et `yearlyTotalEur()` de `src/modules/billing/premium-config.ts`, jamais recopiés ici. EUR.
 - Palier porté par `product.metadata.cosmo_tier`.
 - 🔴 Un produit porte UN seul prix annuel actif : sinon la dérivation refuse (`yearly_unavailable`) et l'annuel cesse d'encaisser en silence.
-- `check:stripe-prices` (planifié, `Grille Stripe` dans `ci-alert.yml`) vérifie grille, doublons, `tax_behavior` et les six events du webhook ; il compare des prix enregistrés, jamais un encaissement.
+- `check:stripe-prices` (planifié, job `stripe-grille` de `posture.yml`) vérifie grille, doublons, `tax_behavior` et les six events du webhook ; il compare des prix enregistrés, jamais un encaissement.
 
 ## `tax_behavior: inclusive`, définitif
 

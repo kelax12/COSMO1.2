@@ -36,8 +36,7 @@
 //
 // 🔴 LE JOUR DE LA BASCULE, DEUX GESTES, PAS UN :
 //   1. poser `STRIPE_SECRET_KEY` dans les secrets Actions ;
-//   2. DÉCOMMENTER le `schedule:` de `.github/workflows/stripe-prices.yml`.
-//   Le second est celui qu'on oublie. Il est écrit ici pour cette raison.
+//   2. le job `stripe-grille` de `.github/workflows/posture.yml` tourne chaque jour.
 //
 // ⚠️ La facturation entreprise est DÉSACTIVÉE (décision 2026-08-24, pas de
 // micro-entreprise), et la prod tourne sur une clé Stripe de TEST. Ce script
