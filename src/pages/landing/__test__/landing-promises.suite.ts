@@ -134,7 +134,6 @@ export const PROMISES_SUITE: LandingPromise[] = [
         `${MORE}.f3t`,
         'enterprise.gateway.eyebrow',
         'enterprise.faq.q3',
-        'enterprise.faq.a3',
         'about.ctaTitle',
         'useCasePage.ctaTitle',
         'faq.a8',
