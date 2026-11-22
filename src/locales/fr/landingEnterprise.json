@@ -26,15 +26,15 @@
       "reportsAlt": "Rapports d'activité : tâches terminées, projets et OKR qui ont avancé, et qui a fait quoi, par jour, semaine ou mois."
     },
     "hero": {
-      "line1": "Qui fait quoi.",
-      "line2": "Où on en est.",
-      "subtitle": "Organigramme, projets, OKR et rapports d'équipe, dans le Cosmo que chacun utilise déjà. En place en <hl>cinq étapes</hl>.",
+      "line1": "Toute votre entreprise",
+      "line2": "en un seul endroit.",
+      "subtitle": "Gérez toutes vos tâches, projets, OKR et équipes.",
       "stackLabel": "Trois écrans du mode entreprise",
       "showView": "Afficher l'écran {{name}}",
       "cta": "Ouvrir la démo entreprise",
       "ctaAria": "Ouvrir la démonstration du mode entreprise, sans inscription",
       "ctaSecondary": "Voir les tarifs",
-      "reassurance": "Jusqu'à 5 membres gratuitement · sans carte bancaire · réversible à tout moment",
+      "reassurance": "Gratuit jusqu'à 5 membres · résiliable à tout moment",
       "reassuranceFree": "Gratuit pendant l'offre de lancement · sans carte bancaire · réversible à tout moment",
       "scroll": "Dérouler"
     },

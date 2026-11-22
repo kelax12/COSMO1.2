@@ -191,10 +191,10 @@ const LandingPage: React.FC = () => {
   useFaqSchema();
 
   // La démo s'ouvre dans la DA de son parcours, quel que soit le thème du
-  // visiteur : clair pour le perso, noir (OLED) pour l'entreprise (graphite
-  // `#08090C`, cyan, or), pas une préférence système.
+  // visiteur : clair pour le perso, Gris pour l'entreprise (graphite et bleu
+  // COSMO, comme sa landing), pas une préférence système.
   const handleDemo = () => {
-    enterWithTheme(isEnterprise ? 'noir' : 'light');
+    enterWithTheme(isEnterprise ? 'gris' : 'light');
     loginDemo();
     setTimeout(() => navigate(isEnterprise ? '/entreprise' : '/dashboard'), 0);
   };

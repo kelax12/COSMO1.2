@@ -12,7 +12,7 @@ export const PROMISES_ENTREPRISE: LandingPromise[] = [
     claim: 'Une organisation est gratuite jusqu’à 5 membres, sans carte bancaire.',
     anchors: [
       { key: 'faq.a1', includes: 'payant, au-delà de cinq membres' },
-      { key: 'enterprise.hero.reassurance', includes: "Jusqu'à 5 membres gratuitement · sans carte bancaire" },
+      { key: 'enterprise.hero.reassurance', includes: "Gratuit jusqu'à 5 membres" },
       { key: 'enterprise.pricing.ctaNote', includes: 'Gratuit jusqu\'à 5 membres' },
       { key: 'enterprise.cta.note', includes: "Gratuit jusqu'à 5 membres · sans carte bancaire" },
       { key: 'enterprise.faq.a5', includes: "jusqu'à cinq membres, gratuitement et sans carte bancaire" },
@@ -91,7 +91,7 @@ export const PROMISES_ENTREPRISE: LandingPromise[] = [
     anchors: [
       { key: 'enterprise.pricing.i5', includes: 'Sans engagement, résiliable à tout moment' },
       { key: ENT, includes: 'résiliable à tout moment' },
-      { key: 'enterprise.hero.reassurance', includes: 'réversible à tout moment' },
+      { key: 'enterprise.hero.reassurance', includes: 'résiliable à tout moment' },
     ],
     proofs: [
       { file: 'supabase/functions/stripe-org-portal/index.ts', re: 'billingPortal' },
@@ -228,12 +228,11 @@ export const PROMISES_ENTREPRISE: LandingPromise[] = [
     kind: 'produit',
     claim: 'La mise en place tient en cinq étapes (équipe, exécution, projets, objectifs, suivi).',
     anchors: [
-      { key: 'enterprise.hero.subtitle', includes: 'cinq étapes' },
       { key: ENT, includes: 'Étape 5 : suivez la progression de chacun' },
     ],
     proofs: [{ file: 'src/pages/landing/entreprise/EnterpriseTrack.tsx', re: 'ProgressSection' }],
     figures: {
-      '5': ['enterprise.hero.subtitle', 'enterprise.more.subtitle'],
+      '5': ['enterprise.more.subtitle'],
       '1': [ENT],
       '2': [ENT],
       '3': [ENT],

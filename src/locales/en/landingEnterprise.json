@@ -26,15 +26,15 @@
       "reportsAlt": "Activity reports: completed tasks, projects and OKRs that moved forward, and who did what, by day, week or month."
     },
     "hero": {
-      "line1": "Who does what.",
-      "line2": "Where things stand.",
-      "subtitle": "Org chart, projects, OKRs and team reports, inside the Cosmo everyone already uses. Set up in <hl>five steps</hl>.",
+      "line1": "Your whole company",
+      "line2": "in one place.",
+      "subtitle": "Manage all your tasks, projects, OKRs and teams.",
       "stackLabel": "Three screens of the company mode",
       "showView": "Show the {{name}} screen",
       "cta": "Open the company demo",
       "ctaAria": "Open the company mode demonstration, no sign-up",
       "ctaSecondary": "See pricing",
-      "reassurance": "Up to 5 members free · no credit card · reversible at any time",
+      "reassurance": "Free up to 5 members · cancel at any time",
       "reassuranceFree": "Free during the launch offer · no credit card · reversible at any time",
       "scroll": "Scroll"
     },

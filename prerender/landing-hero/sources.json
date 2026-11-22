@@ -1,5 +1,5 @@
 {
-  "src/pages/LandingPage.tsx": "9f5b2e5da6928ee1",
+  "src/pages/LandingPage.tsx": "0a5f4c3fa2238694",
   "src/pages/landing/TrackSwitcher.tsx": "2c8cf64fb313f0d8",
   "src/pages/landing/TrackAnchors.tsx": "c59957dc289b7508",
   "src/pages/landing/anchors.ts": "8155900b8a027902",
@@ -14,6 +14,6 @@
   "src/pages/landing/entreprise/EnterpriseHero.tsx": "b2f2586876162a72",
   "src/pages/landing/entreprise/HeroStack.tsx": "09a7d0a69b4a74b0",
   "src/pages/landing/entreprise/free-offer.ts": "a2c663f26b9b51df",
-  "src/locales/fr/landingEnterprise.json": "bfe52227725e26a0",
-  "src/locales/en/landingEnterprise.json": "1cc45e223529bc60"
+  "src/locales/fr/landingEnterprise.json": "c27e0df636cfca67",
+  "src/locales/en/landingEnterprise.json": "a88924dc0e2e72e2"
 }

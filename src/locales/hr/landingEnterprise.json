@@ -26,15 +26,15 @@
       "reportsAlt": "Izvješća o aktivnosti: obavljeni zadaci, projekti i OKR-ovi koji su napredovali te tko je što napravio, po danu, tjednu ili mjesecu."
     },
     "hero": {
-      "line1": "Tko što radi.",
-      "line2": "Dokle se stiglo.",
-      "subtitle": "Organigram, projekti, OKR-ovi i timska izvješća, unutar Cosma koji svi već koriste. Postavljanje u <hl>pet koraka</hl>.",
+      "line1": "Cijela vaša tvrtka",
+      "line2": "na jednom mjestu.",
+      "subtitle": "Upravljajte svim zadacima, projektima, OKR-ovima i timovima.",
       "stackLabel": "Tri zaslona načina rada za tvrtke",
       "showView": "Prikaži zaslon {{name}}",
       "cta": "Otvori demo za tvrtke",
       "ctaAria": "Otvorite demonstraciju načina rada za tvrtke, bez registracije",
       "ctaSecondary": "Pogledajte cijene",
-      "reassurance": "Do 5 članova besplatno · bez kreditne kartice · poništivo u bilo kojem trenutku",
+      "reassurance": "Besplatno do 5 članova · otkazivo u bilo kojem trenutku",
       "reassuranceFree": "Besplatno tijekom ponude za lansiranje · bez kreditne kartice · poništivo u bilo kojem trenutku",
       "scroll": "Pomaknite se"
     },
