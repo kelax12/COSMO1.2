@@ -40,10 +40,10 @@
     },
     "problem": {
       "title": "Tri razloga zašto se timski alati nikad ne prime.",
-      "p1t": "Plosnati su",
-      "p1d": "Zajednička ploča ne zna tko je kome nadređen. Na kraju <hl>ručno gradite hijerarhiju</hl> kroz prava pristupa, a ona je pogrešna već dan nakon prve reorganizacije.",
-      "p2t": "Ne prilagođavaju se",
-      "p2d": "Uloga se mijenja, tim se dijeli, projekt prelazi drugome. <hl>S krutim alatima svaka promjena znači ponovno konfiguriranje.</hl> Na kraju prilagođavate alat promjeni umjesto da jednostavno idete naprijed.",
+      "p1t": "Svi na istoj razini",
+      "p1d": "U zajedničkom alatu pripravnik i direktor vide isto. <hl>Hijerarhija postoji samo u glavama</hl>, nikad u alatu.",
+      "p2t": "Alat ne prati vaše potrebe",
+      "p2d": "Tim se dijeli, voditelj odlazi. Treba <hl>ponovno postaviti pristupe, prostore i prikaze</hl>, umjesto da se nastavi raditi.",
       "p3t": "Nitko ne vidi tko što radi",
       "p3d": "Bez uvida u to tko što radi, projekt počinje <hl>bez znanja je li uopće izvediv</hl>. To otkrijete na pola puta, kad je već prekasno."
     },

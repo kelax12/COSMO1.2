@@ -40,10 +40,10 @@
     },
     "problem": {
       "title": "Trois raisons pour lesquelles vos outils d'équipe ne tiennent pas.",
-      "p1t": "Ils sont plats",
-      "p1d": "Un tableau partagé ne sait pas qui manage qui. On rejoue <hl>la hiérarchie à la main</hl>, en droits d'accès, et elle est fausse dès la première réorganisation.",
-      "p2t": "Manque de flexibilité",
-      "p2d": "Un rôle change, une équipe se scinde, un projet passe à quelqu'un d'autre. <hl>Avec des outils rigides, chaque évolution impose de revoir la configuration.</hl> Vous adaptez l'outil au changement, au lieu de simplement avancer.",
+      "p1t": "Tout le monde au même niveau",
+      "p1d": "Dans un outil partagé, un stagiaire et un directeur voient la même chose. <hl>La hiérarchie n'existe que dans les têtes</hl>, jamais dans l'outil.",
+      "p2t": "L'outil ne suit pas vos besoins",
+      "p2d": "Une équipe se divise, un responsable part. Il faut <hl>refaire les accès, les espaces et les vues</hl>, au lieu de continuer à travailler.",
       "p3t": "Personne ne voit qui fait quoi",
       "p3d": "Sans vue sur qui fait quoi, un projet démarre <hl>sans savoir s'il est faisable</hl>. On le découvre en cours de route, une fois que c'est trop tard."
     },

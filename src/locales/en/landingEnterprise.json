@@ -40,10 +40,10 @@
     },
     "problem": {
       "title": "Three reasons your team tools never stick.",
-      "p1t": "They are flat",
-      "p1d": "A shared board has no idea who reports to whom. You end up rebuilding <hl>the hierarchy by hand</hl> as access rights, and it's wrong the day after the first reorg.",
-      "p2t": "They don't bend",
-      "p2d": "A role changes, a team splits, a project moves to someone else. <hl>With rigid tools, every change means reconfiguring.</hl> You end up adapting the tool to the change, instead of just moving forward.",
+      "p1t": "Everyone on the same level",
+      "p1d": "In a shared tool, an intern and a director see the same thing. <hl>The hierarchy only exists in people's heads</hl>, never in the tool.",
+      "p2t": "The tool doesn't keep up with your needs",
+      "p2d": "A team splits, a manager leaves. You have to <hl>redo access, spaces and views</hl> instead of getting on with the work.",
       "p3t": "No one can see who's doing what",
       "p3d": "Without visibility into who's doing what, a project starts <hl>without knowing if it's even feasible</hl>. You find out midway, once it's too late."
     },
