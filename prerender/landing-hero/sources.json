@@ -11,8 +11,8 @@
   "src/locales/fr/landing.json": "7ed4975f81f6524f",
   "src/locales/en/landing.json": "eb33f246ef45fbf7",
   "src/pages/landing/entreprise/EnterpriseTrack.tsx": "e1eb383bf28329b1",
-  "src/pages/landing/entreprise/EnterpriseHero.tsx": "7fa54e27a30d7dd3",
-  "src/pages/landing/entreprise/HeroStack.tsx": "2f4046ae4ad21651",
+  "src/pages/landing/entreprise/EnterpriseHero.tsx": "b2f2586876162a72",
+  "src/pages/landing/entreprise/HeroStack.tsx": "09a7d0a69b4a74b0",
   "src/pages/landing/entreprise/free-offer.ts": "a2c663f26b9b51df",
   "src/locales/fr/landingEnterprise.json": "bfe52227725e26a0",
   "src/locales/en/landingEnterprise.json": "1cc45e223529bc60"

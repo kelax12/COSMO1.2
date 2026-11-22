@@ -73,7 +73,7 @@ const ScrollHighlight: React.FC<ScrollHighlightProps> = ({ text, delay = 0.2 }) 
             className="scroll-highlight rounded-[0.2em] bg-no-repeat px-0.5 text-white"
             style={{
               backgroundColor: 'transparent',
-              backgroundImage: 'linear-gradient(120deg, rgba(56,139,253,0.55), rgba(56,139,253,0.55))',
+              backgroundImage: 'linear-gradient(120deg, rgba(31,111,235,0.55), rgba(31,111,235,0.55))',
               backgroundPosition: '0 88%',
               backgroundSize: '0% 100%',
             }}

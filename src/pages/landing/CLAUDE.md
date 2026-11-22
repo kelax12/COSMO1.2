@@ -10,7 +10,7 @@ Après le header, `landing/LandingGateway` aiguille vers l'un des deux :
 | Parcours | Composant | Servi par | DA |
 |---|---|---|---|
 | perso | `landing/PersoTrack` | `/` | blanc, encre `slate-900`, boutons `blue-600`, accents bleu, violet, fuchsia |
-| entreprise | `landing/entreprise/EnterpriseTrack` (lazy) | `/entreprise-presentation` | `#161719` (thème Gris), surfaces `#222428`, bleu COSMO `#388BFD` (palette `cosmo-*`), or `#F5B942` |
+| entreprise | `landing/entreprise/EnterpriseTrack` (lazy) | `/entreprise-presentation` | `#161719` (thème Gris), surfaces `#222428`, bleu COSMO `#1F6FEB` (palette `cosmo-*`), or `#F5B942` |
 
 - ✅ Le parcours se dérive de l'URL (`useLandingTrack`), pas d'un état local. Les deux routes rendent le même composant à la même profondeur : basculer ne remonte pas la page.
 - ✅ `TrackSwitcher` et `TrackAnchors` empêchent de rester coincé ; ancres dans `landing/anchors.ts`, une liste par parcours.

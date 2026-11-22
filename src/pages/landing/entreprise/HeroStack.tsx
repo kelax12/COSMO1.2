@@ -85,7 +85,7 @@ const Fenetre: React.FC<FenetreProps> = ({ shot, label, alt, devant, eager }) =>
     <motion.span
       aria-hidden="true"
       className="pointer-events-none absolute inset-0"
-      style={{ background: 'linear-gradient(180deg, rgba(56,139,253,0.12), transparent 28%)' }}
+      style={{ background: 'linear-gradient(180deg, rgba(31,111,235,0.12), transparent 28%)' }}
       initial={false}
       animate={{ opacity: devant ? 1 : 0 }}
       transition={{ duration: 0.5 }}

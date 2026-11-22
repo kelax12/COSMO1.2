@@ -54,7 +54,7 @@ const EnterpriseCta: React.FC<EnterpriseCtaProps> = ({ onDemo, onRegister }) => 
             aria-hidden="true"
             style={{
               background:
-                'conic-gradient(from 0deg, rgba(56,139,253,0.4), transparent 30%, rgba(245,185,66,0.22) 55%, transparent 75%, rgba(56,139,253,0.4))',
+                'conic-gradient(from 0deg, rgba(31,111,235,0.4), transparent 30%, rgba(245,185,66,0.22) 55%, transparent 75%, rgba(31,111,235,0.4))',
               filter: 'blur(60px)',
             }}
           />
@@ -78,7 +78,7 @@ const EnterpriseCta: React.FC<EnterpriseCtaProps> = ({ onDemo, onRegister }) => 
             <div className="flex flex-col justify-center gap-3.5 sm:flex-row">
               <button
                 onClick={onRegister}
-                className="group flex items-center justify-center gap-2.5 rounded-xl bg-cosmo-400 px-7 py-4 text-base font-bold text-white shadow-[0_10px_40px_-10px_rgba(56,139,253,0.85)] transition-[background-color,box-shadow] duration-300 hover:bg-cosmo-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cosmo-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#161719]"
+                className="group flex items-center justify-center gap-2.5 rounded-xl bg-cosmo-400 px-7 py-4 text-base font-bold text-white shadow-[0_10px_40px_-10px_rgba(31,111,235,0.85)] transition-[background-color,box-shadow] duration-300 hover:bg-cosmo-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cosmo-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#161719]"
               >
                 {t('enterprise.cta.primary')}
                 <ArrowRight size={17} className="transition-transform group-hover:translate-x-1" aria-hidden="true" />

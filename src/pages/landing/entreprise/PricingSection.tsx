@@ -281,7 +281,7 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
                 key={tier.minMembers}
                 className={`flex h-full flex-col rounded-xl border p-5 transition-[border-color,box-shadow,background-color] duration-300 ${
                   isActive
-                    ? 'border-cosmo-300/60 bg-[#282A2E] shadow-[0_0_0_1px_rgba(56,139,253,0.25),0_0_36px_-8px_rgba(56,139,253,0.55)]'
+                    ? 'border-cosmo-300/60 bg-[#282A2E] shadow-[0_0_0_1px_rgba(31,111,235,0.25),0_0_36px_-8px_rgba(31,111,235,0.55)]'
                     : 'border-white/[0.08] bg-[#222428] hover:border-white/15'
                 }`}
               >

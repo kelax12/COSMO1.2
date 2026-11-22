@@ -197,14 +197,14 @@ const LandingGateway: React.FC<LandingGatewayProps> = ({ track, onSelect }) => {
                   dotSize={2}
                   gap={26}
                   baseColor="#1B2430"
-                  activeColor="#388BFD"
+                  activeColor="#1F6FEB"
                   proximity={130}
                   shockRadius={210}
                   shockStrength={4}
                   className="absolute inset-0"
                 />
               )}
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_40%,rgba(56,139,253,0.12),transparent_70%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_40%,rgba(31,111,235,0.12),transparent_70%)]" />
               <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-[#08090C] to-transparent" />
             </div>
           }

@@ -23,7 +23,7 @@ const SecuritySection: React.FC = () => {
     >
       {/* Halo froid : la zone « sérieuse » de la page. */}
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-96 bg-[radial-gradient(ellipse_50%_100%_at_50%_0%,rgba(56,139,253,0.06),transparent_70%)]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-96 bg-[radial-gradient(ellipse_50%_100%_at_50%_0%,rgba(31,111,235,0.06),transparent_70%)]"
         aria-hidden="true"
       />
 
@@ -44,7 +44,7 @@ const SecuritySection: React.FC = () => {
           {SECURITY_POINTS.map(({ titleKey, bodyKey }) => (
             <SpotlightCard
               key={titleKey}
-              spotlightColor="rgba(56, 139, 253, 0.12)"
+              spotlightColor="rgba(31, 111, 235, 0.12)"
               className="!rounded-xl !border-white/[0.08] !bg-[#222428] !p-7 transition-colors duration-300 hover:!border-cosmo-300/25"
             >
               <h3 className="mb-2.5 text-base font-semibold text-white">{t(titleKey)}</h3>

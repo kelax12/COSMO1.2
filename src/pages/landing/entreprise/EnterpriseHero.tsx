@@ -129,7 +129,7 @@ const EnterpriseHero: React.FC<EnterpriseHeroProps> = ({ onDemo, onCtaRef }) => 
             <Suspense fallback={null}>
               <LightRays
                 raysOrigin="top-center"
-                raysColor="#388BFD"
+                raysColor="#1F6FEB"
                 raysSpeed={0.9}
                 lightSpread={0.85}
                 rayLength={1.35}
@@ -141,7 +141,7 @@ const EnterpriseHero: React.FC<EnterpriseHeroProps> = ({ onDemo, onCtaRef }) => 
             </Suspense>
           </div>
         )}
-        <div className="absolute inset-x-0 top-0 h-[36rem] bg-[radial-gradient(ellipse_50%_50%_at_50%_0%,rgba(56,139,253,0.18),transparent_70%)]" />
+        <div className="absolute inset-x-0 top-0 h-[36rem] bg-[radial-gradient(ellipse_50%_50%_at_50%_0%,rgba(31,111,235,0.18),transparent_70%)]" />
         <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-ent-nuit" />
       </div>
 
@@ -165,7 +165,7 @@ const EnterpriseHero: React.FC<EnterpriseHeroProps> = ({ onDemo, onCtaRef }) => 
             ref={magneticDemo}
             onClick={onDemo}
             aria-label={t('enterprise.hero.ctaAria')}
-            className="group flex w-full items-center justify-center gap-2.5 rounded-[11px] bg-ent-faisceau px-6 py-4 text-base font-semibold text-white transition-colors duration-300 hover:bg-[#58A6FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#58A6FF] focus-visible:ring-offset-2 focus-visible:ring-offset-ent-nuit sm:w-auto"
+            className="group flex w-full items-center justify-center gap-2.5 rounded-[11px] bg-ent-faisceau px-6 py-4 text-base font-semibold text-white transition-colors duration-300 hover:bg-[#388BFD] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#58A6FF] focus-visible:ring-offset-2 focus-visible:ring-offset-ent-nuit sm:w-auto"
           >
             {t('enterprise.hero.cta')}
             <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" aria-hidden="true" />
