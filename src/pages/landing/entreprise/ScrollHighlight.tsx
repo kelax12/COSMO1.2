@@ -18,7 +18,7 @@ interface ScrollHighlightProps {
 /**
  * Surlignage progressif au scroll (track entreprise uniquement).
  *
- * Chaque segment `<hl>` reçoit un vrai trait de surligneur violet qui se
+ * Chaque segment `<hl>` reçoit un vrai trait de surligneur bleu COSMO qui se
  * dessine de gauche à droite en 0,5 s quand il entre dans le viewport — pas
  * un simple changement de couleur. `background-size` anime la largeur du
  * dégradé posé derrière le texte ; `<mark>` garde le sens sémantique.
@@ -73,7 +73,7 @@ const ScrollHighlight: React.FC<ScrollHighlightProps> = ({ text, delay = 0.2 }) 
             className="scroll-highlight rounded-[0.2em] bg-no-repeat px-0.5 text-white"
             style={{
               backgroundColor: 'transparent',
-              backgroundImage: 'linear-gradient(120deg, rgba(168,85,247,0.55), rgba(168,85,247,0.55))',
+              backgroundImage: 'linear-gradient(120deg, rgba(56,139,253,0.55), rgba(56,139,253,0.55))',
               backgroundPosition: '0 88%',
               backgroundSize: '0% 100%',
             }}

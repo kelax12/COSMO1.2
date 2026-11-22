@@ -44,7 +44,7 @@ const SecuritySection: React.FC = () => {
           {SECURITY_POINTS.map(({ titleKey, bodyKey }) => (
             <SpotlightCard
               key={titleKey}
-              spotlightColor="rgba(56,139,253, 0.12)"
+              spotlightColor="rgba(56, 139, 253, 0.12)"
               className="!rounded-xl !border-white/[0.08] !bg-[#222428] !p-7 transition-colors duration-300 hover:!border-cosmo-300/25"
             >
               <h3 className="mb-2.5 text-base font-semibold text-white">{t(titleKey)}</h3>

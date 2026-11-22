@@ -16,20 +16,10 @@ const POINTS: { titleKey: KeyOf<'landingEnterprise'>; bodyKey: KeyOf<'landingEnt
  * Étape 2 : l'exécution. Le tableau de tâches transverse, les cinq statuts de
  * flux, les dépendances et le chemin critique.
  *
- * Deux VRAIES captures, plus de mockup : l'onglet Tâches en vue
- * Tableau, une colonne par statut, et en surimpression la fiche d'une tâche
- * bloquée ouverte sur son onglet Dépendances. Les deux viennent de la même
- * démo : « Audit accessibilité WCAG », dans la colonne Bloquée du tableau, est
- * la tâche dont la fiche dit « Bloquée par Intégration du header responsive ».
- * Si le seed démo change cette chaîne (`DEMO_TASK_DEPENDENCIES`), recapturer.
- *
- * La fiche est une image à part et pas un recadrage du tableau : un détail lu
- * à 40 % de sa taille resterait illisible. Sous `sm`, elle passe sous le
- * tableau au lieu de le recouvrir.
+ * Une VRAIE capture : l'onglet Tâches en vue Tableau, une colonne par statut.
  */
 const ExecutionSection: React.FC = () => {
   const { t } = useT('landingEnterprise');
-  const deps = SHOTS.tasksDeps;
 
   return (
     <StepSection
@@ -48,7 +38,7 @@ const ExecutionSection: React.FC = () => {
           ))}
         </ul>
 
-        <div className="relative sm:pb-24">
+        <div className="relative">
           <div className="aspect-[16/10]">
             <AppShot
               src={SHOTS.tasksBoard.image}
@@ -56,31 +46,6 @@ const ExecutionSection: React.FC = () => {
               label={t(SHOTS.tasksBoard.labelKey)}
             />
           </div>
-
-          {/* La fiche bloquée, posée sur les colonnes les plus vides du
-              tableau (En relecture, Bloquée, Terminée). Liseré cyan : c'est
-              l'élément sur lequel l'étape insiste. */}
-          <figure className="mt-4 overflow-hidden rounded-xl border border-cosmo-300/30 bg-[#222428] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.95)] sm:absolute sm:bottom-0 sm:right-[-1rem] sm:mt-0 sm:w-[72%]">
-            <div className="flex items-center gap-2 border-b border-white/[0.07] px-4 py-2">
-              <span className="flex gap-1.5" aria-hidden="true">
-                <span className="h-2 w-2 rounded-full bg-white/10" />
-                <span className="h-2 w-2 rounded-full bg-white/10" />
-                <span className="h-2 w-2 rounded-full bg-cosmo-400/60" />
-              </span>
-              <figcaption className="ml-1 truncate font-mono text-caption uppercase tracking-[0.2em] text-slate-500">
-                {t(deps.labelKey)}
-              </figcaption>
-            </div>
-            <img
-              src={deps.image}
-              alt={t(deps.altKey)}
-              width={1152}
-              height={516}
-              loading="lazy"
-              decoding="async"
-              className="block h-auto w-full"
-            />
-          </figure>
         </div>
       </div>
     </StepSection>

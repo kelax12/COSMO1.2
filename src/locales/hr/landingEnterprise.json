@@ -20,8 +20,6 @@
       "tasksAlt": "Kartica Zadaci: svi zadaci u organizaciji, sa zajedničkim popisima, unaprijed postavljenim filtrima, sortiranjem i prikazom Popis ili Ploča.",
       "tasksBoard": "Zadaci · Prikaz ploče",
       "tasksBoardAlt": "Kartica Zadaci u prikazu Ploča: jedan stupac po statusu, za obaviti, u tijeku, na pregledu, blokirano, obavljeno, uz označene zakašnjele zadatke.",
-      "tasksDeps": "Kartica zadatka · Ovisnosti",
-      "tasksDepsAlt": "Kartica zadatka „WCAG revizija pristupačnosti“, kartica Ovisnosti: blokira ga „Integracija responzivnog zaglavlja“, čeka jedan nedovršeni zadatak.",
       "projectsPortfolio": "Projekti · Prikaz portfelja",
       "projectsPortfolioAlt": "Kartica Projekti u prikazu Portfelj: svaki projekt s voditeljem, statusom, razdobljem, napretkom i onim što ga blokira.",
       "reports": "Izvješća o aktivnosti",
