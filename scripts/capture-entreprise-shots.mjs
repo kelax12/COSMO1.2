@@ -7,11 +7,6 @@
  * (`dev-landing-shots` dans .claude/launch.json vide les variables Supabase,
  * donc la démo est forcée). Défaut : http://localhost:3000.
  * Jetable : script d'appoint, pas branché à un `npm run`.
- *
- * Refait le 2026-10-02 : la navigation est passée en une route par section
- * avec un panneau à droite (2026-09-23), le cadrage « depuis la barre
- * d'onglets » n'a plus d'ancre. On cadre désormais la colonne principale ET le
- * panneau de navigation, barre latérale de l'app repliée, en 16/10.
  */
 import { chromium } from 'playwright';
 import { mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
