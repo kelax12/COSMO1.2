@@ -348,6 +348,90 @@
         "tronque": false
       },
       "rouges": []
+    },
+    {
+      "date": "2026-11-23",
+      "periode": {
+        "debut": "2026-10-24",
+        "fin": "2026-11-20"
+      },
+      "gsc": {
+        "propriete": "sc-domain:thecosmo.app",
+        "toutes": {
+          "clics": 12,
+          "impressions": 314,
+          "ctr": 0.0382,
+          "position": 9.6
+        },
+        "non_marque": {
+          "clics": 0,
+          "impressions": 8,
+          "ctr": 0,
+          "position": 7.4
+        },
+        "requetes_non_marque": [
+          {
+            "requete": "### triples",
+            "clics": 0,
+            "impressions": 1,
+            "position": 3
+          },
+          {
+            "requete": "how did the voting work",
+            "clics": 0,
+            "impressions": 1,
+            "position": 5
+          },
+          {
+            "requete": "idntt kpop group",
+            "clics": 0,
+            "impressions": 1,
+            "position": 2
+          },
+          {
+            "requete": "okr en pratique",
+            "clics": 0,
+            "impressions": 1,
+            "position": 37
+          },
+          {
+            "requete": "triples",
+            "clics": 0,
+            "impressions": 1,
+            "position": 3
+          },
+          {
+            "requete": "triples concept",
+            "clics": 0,
+            "impressions": 1,
+            "position": 3
+          },
+          {
+            "requete": "triples member profile",
+            "clics": 0,
+            "impressions": 1,
+            "position": 3
+          },
+          {
+            "requete": "triples members",
+            "clics": 0,
+            "impressions": 1,
+            "position": 3
+          }
+        ]
+      },
+      "backlinks": {
+        "declares_faits": 0,
+        "verifies": []
+      },
+      "autorite": {
+        "source": "bing-webmaster",
+        "liens_entrants": 0,
+        "domaines_referents": 0,
+        "domaines": [],
+        "tronque": false
+      },
+      "rouges": []
     }
   ]
 }
