@@ -17,8 +17,7 @@
 //     rien, et chaque règle gagne le même poids, donc l'ordre de la cascade
 //     entre elles est celui de la feuille d'origine ;
 //   · `@keyframes` est jeté : la copie ne s'anime pas, elle doit être
-//     identique à l'état FINAL du hero ; sauf l'entrée des tuiles perso
-//     (`KEYFRAMES_GARDEES`), qui joue dès la première image ;
+//     identique à l'état FINAL du hero (sauf l'entrée des tuiles perso) ;
 //   · `@font-face` passe, mais en `font-display: block` (2026-10-21). En
 //     `swap`, la copie se peignait d'abord en police système, plus étroite :
 //     moins de lignes, donc un bloc PLUS PETIT que celui de React, qui
@@ -132,27 +131,18 @@ function scoper(selector, classes, scope, tags, themeSurHtml = false) {
  * La CSS de `cssText` utile à `html`, confinée sous `scope`.
  * `themeSurHtml` : voir `scoper` (copie d'une page de contenu à thème).
  */
-const KEYFRAMES_GARDEES = new Set(['hero-scatter', 'hero-tile-idle']);
-
 export function scopedCssFor(html, cssText, scope = '#lp-hero', { themeSurHtml = false } = {}) {
   const classes = classesIn(html);
   const tags = tagsIn(html);
   const root = postcss.parse(cssText);
-  // Seules exceptions : l'entree des tuiles du hero perso, que la copie joue des
-  // la premiere image (React la reprend au meme instant, cf. `HeroIconScatter`).
-  root.walkAtRules('keyframes', (at) => {
-    if (!KEYFRAMES_GARDEES.has(at.params)) at.remove();
-  });
+  root.walkAtRules('keyframes', (at) => void (/^hero-(scatter|tile-idle)$/.test(at.params) || at.remove())); // sauf tuiles perso
   root.walkAtRules('font-face', (at) => {
     at.walkDecls('font-display', (decl) => {
       decl.value = 'block';
     });
   });
   root.walkRules((rule) => {
-    // Etapes d'un @keyframes garde : pas un selecteur, elles restent telles quelles.
-    if (rule.parent?.type === 'atrule' && rule.parent.name === 'keyframes') return;
-    // Les règles internes des autres @keyframes sont déjà parties ; un @font-face
-    // n'a pas de règle enfant. Tout le reste passe par le filtre.
+    if (rule.parent?.name === 'keyframes') return; // etapes d'un @keyframes garde ; le reste passe le filtre
     const gardes = rule.selectors.map((s) => scoper(s, classes, scope, tags, themeSurHtml)).filter(Boolean);
     if (gardes.length === 0) rule.remove();
     else rule.selector = gardes.join(', ');
