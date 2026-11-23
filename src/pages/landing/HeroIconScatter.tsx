@@ -9,18 +9,38 @@
 // - Entree en CSS (`.hero-scatter`, `src/index.css`) : un seul `from`, l'etat
 //   final est l'etat par defaut, donc sous mouvement reduit les tuiles sont
 //   simplement posees. Aucune boucle : rien a mettre en pause (C-69).
-import React from 'react';
+import React, { useState } from 'react';
 import { TUILES } from './hero-tuiles';
+
+/**
+ * Temps deja ecoule de l'entree jouee par la copie prerendue (`#lp-hero`), en ms.
+ * La copie peint les tuiles des la premiere image et lance leur entree en CSS ;
+ * React, qui arrive plus tard, reprend l'animation au meme instant par un retard
+ * negatif, au lieu de la rejouer une fois le visiteur deja descendu. A lire au
+ * premier rendu, avant que `usePrerenderHeroTakeover` retire la copie.
+ */
+function ecouleDansLaCopie(): number {
+  if (typeof document === 'undefined') return 0;
+  const tuile = document.querySelector('#lp-hero .hero-scatter');
+  const debut = tuile?.getAnimations?.()[0]?.startTime;
+  const maintenant = document.timeline?.currentTime;
+  // Pas `currentTime` de l'animation : il plafonne a la fin de CETTE tuile,
+  // alors que les suivantes jouent encore.
+  if (typeof debut !== 'number' || typeof maintenant !== 'number') return 0;
+  return Math.max(0, Math.round(maintenant - debut));
+}
 
 
 const DEPART = TUILES[2];
 const PREMIER_MS = 60;
 const ECART_MS = 150;
 
-const HeroIconScatter: React.FC = () => (
+const HeroIconScatter: React.FC = () => {
+  const [ecoule] = useState(ecouleDansLaCopie);
+  return (
   <div className="pointer-events-none absolute inset-0 z-0" aria-hidden="true">
     {TUILES.map(({ cle, Icone, degrade, x, y, r }, i) => {
-      const d = PREMIER_MS + i * ECART_MS;
+      const d = PREMIER_MS + i * ECART_MS - ecoule;
       return (
         <div
           key={cle}
@@ -55,6 +75,7 @@ const HeroIconScatter: React.FC = () => (
       );
     })}
   </div>
-);
+  );
+};
 
 export default HeroIconScatter;

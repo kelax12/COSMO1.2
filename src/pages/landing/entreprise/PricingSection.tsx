@@ -27,7 +27,7 @@ const INCLUDED: KeyOf<'landingEnterprise'>[] = [
 ];
 
 /**
- * Section tarifs : les six paliers, nommés comme dans l'app.
+ * Section tarifs : les six paliers, nommés comme dans l'app (tranche d'effectif).
  *
  * Plus de curseur « combien êtes-vous ? » : le visiteur lit d'un coup d'œil
  * tous les paliers et se place lui-même. Les montants et les noms viennent de
@@ -139,8 +139,14 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
                 key={tier.key}
                 className="flex flex-col rounded-xl border border-white/[0.08] bg-[#222428] p-6 transition-colors duration-300 hover:border-cosmo-300/40"
               >
-                <span className="text-base font-semibold text-white">{tc(ORG_TIER_LABEL_KEYS[tier.key])}</span>
-                <span className="mb-5 mt-1 text-sm text-slate-500">{tierRange(tier)}</span>
+                {/* Nom du palier tel que l'app l'affiche (`useTierRangeLabel`) :
+                    la tranche d'effectif, et « Illimité » pour le dernier. */}
+                <span className="text-base font-semibold text-white">
+                  {tier.maxMembers === null ? tc(ORG_TIER_LABEL_KEYS[tier.key]) : tierRange(tier)}
+                </span>
+                <span className="mb-5 mt-1 min-h-5 text-sm text-slate-500">
+                  {tier.maxMembers === null ? tierRange(tier) : null}
+                </span>
                 {isFree ? (
                   <>
                     <span className="text-3xl font-bold text-cosmo-300">{t('enterprise.pricing.free')}</span>

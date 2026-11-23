@@ -34,6 +34,8 @@ export const HERO_SOURCES = [
   'src/pages/landing/HeroModuleDock.tsx',
   'src/pages/landing/HeroBackdrop.tsx',
   'src/pages/landing/hero-modules.ts',
+  'src/pages/landing/HeroIconScatter.tsx',
+  'src/pages/landing/hero-tuiles.ts',
   'src/locales/fr/landing.json',
   'src/locales/en/landing.json',
   // Parcours entreprise (copie peinte par `/entreprise-presentation/`).

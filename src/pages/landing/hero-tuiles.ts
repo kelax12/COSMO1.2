@@ -1,5 +1,6 @@
 // Les cinq tuiles de modules de la landing perso (hero et CTA finale).
-import { BarChart2, Calendar, CheckSquare, Repeat, Target, type LucideIcon } from 'lucide-react';
+import { BarChart2, Calendar, CheckSquare, type LucideIcon } from 'lucide-react';
+import { HabitIcon, OkrIcon } from '@/components/icons/cosmo-icons';
 
 export interface Tuile {
   cle: string;
@@ -20,7 +21,7 @@ export interface Tuile {
 export const TUILES: Tuile[] = [
   { cle: 'tasks', Icone: CheckSquare, degrade: 'bg-blue-500', x: -35, y: 250, r: -38 },
   { cle: 'agenda', Icone: Calendar, degrade: 'bg-red-500', x: -18, y: 110, r: -20 },
-  { cle: 'okr', Icone: Target, degrade: 'bg-green-500', x: 0, y: 90, r: 0 },
-  { cle: 'habits', Icone: Repeat, degrade: 'bg-yellow-500', x: 18, y: 110, r: 20 },
+  { cle: 'okr', Icone: OkrIcon, degrade: 'bg-green-500', x: 0, y: 90, r: 0 },
+  { cle: 'habits', Icone: HabitIcon, degrade: 'bg-yellow-500', x: 18, y: 110, r: 20 },
   { cle: 'stats', Icone: BarChart2, degrade: 'bg-violet-500', x: 35, y: 250, r: 38 },
 ];

@@ -72,7 +72,10 @@ function extraire(track) {
   if (track === 'perso') {
     const tuile = hero.querySelector('button[aria-pressed], button[aria-label*="ause"], button[aria-label*="ecture"]');
     // Les cinq tuiles du hero entrent à l'ouverture (`HeroIconScatter`).
-    aMasquer.push(tuile?.parentElement, ...hero.querySelectorAll('.hero-chip, .hero-link, .hero-dock-settle, .hero-scatter'));
+    // Les cinq tuiles (`HeroIconScatter`) restent VISIBLES et gardent leur entree
+    // (`--d`, `--tx`, `--ty`) : la copie la joue des la premiere image, et React
+    // la reprend au meme instant (retard negatif) au lieu de la lancer apres le JS.
+    aMasquer.push(tuile?.parentElement, ...hero.querySelectorAll('.hero-chip, .hero-link, .hero-dock-settle'));
   }
   // Entreprise : RIEN de masqué. La pile garde son image : même URL que celle
   // de React (aucun octet perdu), et le plus grand élément du hero. Masquée,
@@ -100,9 +103,11 @@ function extraire(track) {
       }
     }
     for (const c of ENTREES) el.classList.remove(c);
-    el.style?.removeProperty('--d');
-    el.style?.removeProperty('--tx');
-    el.style?.removeProperty('--ty');
+    if (!el.classList?.contains('hero-scatter')) {
+      el.style?.removeProperty('--d');
+      el.style?.removeProperty('--tx');
+      el.style?.removeProperty('--ty');
+    }
     if (el.getAttribute('style') === '') el.removeAttribute('style');
   }
   return coque.outerHTML;
