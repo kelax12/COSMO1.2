@@ -76,9 +76,6 @@
     "src/components/TodayTasks.tsx": {
       "max-lines-per-function": [202]
     },
-    "src/components/WeeklyCheckinModal.tsx": {
-      "max-lines-per-function": [218]
-    },
     "src/components/add-to-list/DesktopAddToList.tsx": {
       "max-lines-per-function": [278]
     },
@@ -217,18 +214,6 @@
       "complexity": [24],
       "max-lines-per-function": [201]
     },
-    "src/components/organization/PyramidNodeCard.tsx": {
-      "complexity": [76],
-      "max-lines-per-function": [351]
-    },
-    "src/components/organization/PyramidPlacementSheet.tsx": {
-      "complexity": [24],
-      "max-lines-per-function": [210]
-    },
-    "src/components/organization/PyramidTab.tsx": {
-      "complexity": [44],
-      "max-lines-per-function": [355]
-    },
     "src/components/organization/TeamCategoryTreeManager.tsx": {
       "max-lines-per-function": [213]
     },
@@ -300,14 +285,8 @@
       "complexity": [28],
       "max-depth": [5]
     },
-    "src/components/organization/usePyramidDnd.ts": {
-      "max-lines-per-function": [281]
-    },
     "src/components/organization/visibility.helpers.ts": {
       "complexity": [25]
-    },
-    "src/components/reactbits/DotGrid.tsx": {
-      "max-lines-per-function": [208]
     },
     "src/components/reactbits/LightRays.tsx": {
       "max-lines-per-function": [325, 216, 202]
@@ -340,10 +319,6 @@
     "src/components/task-table/TaskCard.tsx": {
       "complexity": [52],
       "max-lines-per-function": [383]
-    },
-    "src/components/task-table/TasksInboxMenu.tsx": {
-      "complexity": [23],
-      "max-lines-per-function": [277]
     },
     "src/components/task-table/list.tsx": {
       "complexity": [57],
@@ -392,7 +367,7 @@
       "max-lines-per-function": [393]
     },
     "src/pages/DashboardPage.tsx": {
-      "max-lines-per-function": [328]
+      "max-lines-per-function": [290]
     },
     "src/pages/GuidePage.tsx": {
       "max-lines-per-function": [474]
@@ -412,9 +387,6 @@
     "src/pages/OrganizationPage.tsx": {
       "complexity": [107],
       "max-lines-per-function": [306]
-    },
-    "src/pages/PremiumPage.tsx": {
-      "max-lines-per-function": [389]
     },
     "src/pages/SettingsPage.tsx": {
       "complexity": [58],
