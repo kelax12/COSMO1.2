@@ -30,6 +30,10 @@ Cosmo se différencie de Notion (espace de notes flexible mais sans structure de
 
 ## Articles du blog
 
+- [Objectifs 2027 : fixer ses objectifs de l'année avec la méthode OKR (modèle rempli)](https://thecosmo.app/blog/objectifs-de-l-annee) : Une liste de résolutions ne tient pas jusqu'en février. Fixez vos objectifs 2027 avec la méthode OKR : 3 objectifs, des résultats mesurables, un exemple rempli.
+- [Habit tracker 2027 à imprimer : 12 mois gratuits en PDF (et comment bien s'en servir)](https://thecosmo.app/blog/habit-tracker-a-imprimer) : Téléchargez un habit tracker 2027 gratuit à imprimer : une page par mois, 6 habitudes, sans inscription. Et les 5 règles qui font qu'on le remplit encore en mars.
+- [Bilan de l'année : le modèle en 10 questions pour préparer 2027](https://thecosmo.app/blog/bilan-de-l-annee) : Faire le bilan de son année en une heure : 10 questions à se poser, dans l'ordre, pour comprendre ce qui a marché et choisir ses objectifs 2027 en connaissance de cause.
+- [Bonnes résolutions : pourquoi elles échouent, et comment tenir les vôtres en 2027](https://thecosmo.app/blog/tenir-ses-resolutions) : Les bonnes résolutions ne sont pas condamnées : la recherche montre ce qui fait la différence. 6 raisons d'échec et ce qui marche vraiment pour tenir en 2027.
 - [Tableau de bord de productivité : quoi y mettre (et quoi en retirer)](https://thecosmo.app/blog/tableau-de-bord-productivite) : Que doit afficher un tableau de bord de productivité personnel ? Les 6 indicateurs qui font agir, ceux qui ne servent à rien, et comment le construire.
 - [Gestion du temps efficace : 7 principes qui tiennent dans la durée](https://thecosmo.app/blog/gestion-du-temps-efficace) : Les 7 principes de gestion du temps qui survivent à une semaine chargée, sans méthode compliquée : arbitrage, créneaux, unité de travail, revue hebdomadaire.
 - [Suivi des habitudes : ce qu'il faut mesurer (et ce qui décourage)](https://thecosmo.app/blog/suivi-des-habitudes) : Streak, taux de complétion, heatmap : quels indicateurs de suivi des habitudes aident vraiment, lesquels sabotent la régularité, et comment bien démarrer.

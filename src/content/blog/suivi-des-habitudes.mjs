@@ -77,6 +77,8 @@ export const article = {
 <p>Dans <a href="/">Cosmo</a>, une habitude se crée avec sa fréquence (quotidienne, hebdomadaire ou jours précis) et se coche en un geste. Les trois indicateurs de cet article sont fournis d'office : heatmap 26 semaines, streak et taux de complétion sur la période choisie, avec le taux mis en avant plutôt que le streak, exactement pour la raison décrite plus haut.</p>
 <p>Le reste vient de l'intégration : vos habitudes apparaissent sur le même <a href="/blog/tableau-de-bord-productivite">tableau de bord</a> que vos tâches du jour et vos objectifs, ce qui évite l'application de suivi supplémentaire qu'on oublie d'ouvrir au bout d'un mois. <a href="/signup">C'est gratuit</a>, et la démo s'ouvre sans inscription avec 100 habitudes et plusieurs mois d'historique pour voir à quoi ressemblent ces courbes une fois remplies.</p>
 
+<p>Pour un support papier, téléchargez le <a href="/blog/habit-tracker-a-imprimer">habit tracker 2027 à imprimer</a> (PDF gratuit, une page par mois).</p>
+
 <h2 id="faq">Questions fréquentes</h2>
 <h3>Faut-il suivre ses habitudes sur papier ou dans une application ?</h3>
 <p>Le papier suffit pour deux ou trois habitudes et a l'avantage d'être immédiat. L'application devient nettement supérieure dès qu'on veut comparer des périodes ou repérer des motifs, le calcul manuel du taux de complétion est exactement le genre de corvée qui fait abandonner un suivi.</p>
@@ -143,6 +145,8 @@ export const article = {
 <h2 id="pratique">Habit tracking in Cosmo</h2>
 <p>In <a href="/en/">Cosmo</a>, a habit is created with its frequency (daily, weekly or specific days) and ticked in one gesture. The three indicators in this article come as standard: a 26-week heatmap, the streak and the completion rate over the chosen period, with the rate given prominence rather than the streak, for exactly the reason described above.</p>
 <p>The rest comes from the integration: your habits appear on the same <a href="/en/blog/tableau-de-bord-productivite">dashboard</a> as your tasks for the day and your goals, which avoids the extra tracking app that everybody forgets to open after a month. <a href="/en/signup">It is free</a>, and the demo opens with no sign-up, with 100 habits and several months of history so you can see what these curves look like once filled in.</p>
+
+<p>For a paper version, download the <a href="/en/blog/habit-tracker-a-imprimer">printable 2027 habit tracker</a> (free PDF, one page per month).</p>
 
 <h2 id="faq">Frequently asked questions</h2>
 <h3>Should you track habits on paper or in an app?</h3>

@@ -77,6 +77,8 @@ export const article = {
 <p>La règle pratique : <strong>ne suivez à la main que ce qu'aucun outil ne peut calculer seul.</strong> Tout ce qui découle de vos tâches, de vos habitudes ou de votre agenda doit se remplir automatiquement, sinon vous finirez par arrêter.</p>
 <p>C'est précisément ce que fait <a href="/">Cosmo</a> : le dashboard affiche l'avancement du jour, les habitudes à cocher, les prochains événements et la courbe des résultats clés atteints, et la page Statistiques donne le temps investi par catégorie et son évolution. Les cinq premiers indicateurs de cet article s'y lisent sans aucune saisie supplémentaire, ils tombent de l'usage normal de l'application. <a href="/signup">C'est gratuit</a>, et la démo s'ouvre sans inscription avec 12 mois de données pour voir à quoi ressemble le tableau de bord une fois rempli.</p>
 
+<p>En fin d'année, ce tableau de bord nourrit directement <a href="/blog/bilan-de-l-annee">le bilan de l'année en 10 questions</a>, et en particulier la question « où est passé mon temps ? ».</p>
+
 <h2 id="faq">Questions fréquentes</h2>
 <h3>Combien d'indicateurs au maximum ?</h3>
 <p>Six, sept si vraiment nécessaire. Au-delà, on ne lit plus : on balaie. Un tableau de bord qui ne tient pas sur un écran a déjà échoué.</p>
@@ -143,6 +145,8 @@ export const article = {
 <p>Plenty of people build their dashboard in a spreadsheet. It works, and it is an excellent exercise for clarifying what you want to track, but manual entry is a debt: after six weeks the data is out of date, and a stale dashboard is worse than no dashboard, because it gives false confidence.</p>
 <p>The practical rule: <strong>only track by hand what no tool can compute on its own.</strong> Everything that follows from your tasks, your habits or your calendar should fill itself in, otherwise you will end up stopping.</p>
 <p>That is precisely what <a href="/en/">Cosmo</a> does: the dashboard shows the day's progress, the habits to tick, the next events and the curve of key results achieved, and the Statistics page gives time invested per category and how it evolves. The first five indicators in this article are readable there with no extra data entry, they fall out of normal use of the app. <a href="/en/signup">It is free</a>, and the demo opens with no sign-up and 12 months of data, so you can see what the dashboard looks like once it is full.</p>
+
+<p>At the end of the year, this dashboard feeds straight into <a href="/en/blog/bilan-de-l-annee">a year in review in 10 questions</a>, especially the question "where did my time go?".</p>
 
 <h2 id="faq">Frequently asked questions</h2>
 <h3>How many indicators at most?</h3>

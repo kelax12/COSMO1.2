@@ -70,6 +70,8 @@ export const article = {
 <h2 id="mesurer">Rendre la régularité visible</h2>
 <p>C'est tout le principe du suivi d'habitudes dans <a href="/">Cosmo</a> : chaque habitude affiche une <strong>heatmap de 26 semaines</strong> (style GitHub) où chaque jour coché colore une case, plus votre <strong>streak</strong> en cours et votre taux de complétion. La chaîne de cases vertes matérialise exactement ce que la traversée du désert vous cache : vous avancez. Et parce que rater un jour isolé est scientifiquement anodin, c'est la tendance sur 26 semaines qui compte, pas la perfection. Sur le choix des indicateurs à regarder, et sur ceux qui découragent au lieu d'aider, l'article <a href="/blog/suivi-des-habitudes">suivi des habitudes</a> tranche. Créez vos 2-3 premières habitudes <a href="/signup">gratuitement</a>, ou testez la démo sans inscription avec des habitudes pré-remplies.</p>
 
+<p>Vous préparez vos bonnes résolutions ? Voici <a href="/blog/tenir-ses-resolutions">pourquoi la plupart échouent, et comment tenir les vôtres</a>, avec un <a href="/blog/habit-tracker-a-imprimer">habit tracker 2027 à imprimer</a> pour cocher vos premiers jours.</p>
+
 <h2 id="faq">Questions fréquentes</h2>
 <h3>Alors, 21, 30, 66 ou 90 jours ?</h3>
 <p>66 jours en médiane, 18 à 254 selon les cas. Retenez plutôt : « environ 2 à 3 mois, plus si c'est ambitieux », et planifiez votre système pour tenir cette durée, pas trois semaines.</p>
@@ -129,6 +131,8 @@ export const article = {
 
 <h2 id="mesurer">Making consistency visible</h2>
 <p>That is the whole principle of habit tracking in <a href="/en/">Cosmo</a>: every habit shows a <strong>26-week heatmap</strong> in the GitHub style, where each day ticked colours a cell, plus your current <strong>streak</strong> and your completion rate. The chain of green cells makes visible exactly what crossing the desert hides from you: you are moving forward. And because missing an isolated day is scientifically harmless, what counts is the trend over 26 weeks, not perfection. On which indicators are worth watching, and which discourage instead of helping, the article on <a href="/en/blog/suivi-des-habitudes">habit tracking</a> takes a position. Create your first two or three habits <a href="/en/signup">for free</a>, or try the demo with no sign-up and habits already filled in.</p>
+
+<p>Planning your New Year's resolutions? Here is <a href="/en/blog/tenir-ses-resolutions">why most of them fail, and how to keep yours</a>, with a <a href="/en/blog/habit-tracker-a-imprimer">printable 2027 habit tracker</a> to tick off your first days.</p>
 
 <h2 id="faq">Frequently asked questions</h2>
 <h3>So is it 21, 30, 66 or 90 days?</h3>

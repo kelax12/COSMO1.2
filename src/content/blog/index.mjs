@@ -27,6 +27,10 @@ import { article as glossaire } from './glossaire-productivite.mjs';
 import { article as tableauDeBord } from './tableau-de-bord-productivite.mjs';
 import { article as gestionDuTemps } from './gestion-du-temps-efficace.mjs';
 import { article as suiviHabitudes } from './suivi-des-habitudes.mjs';
+import { article as objectifsAnnee } from './objectifs-de-l-annee.mjs';
+import { article as habitTracker } from './habit-tracker-a-imprimer.mjs';
+import { article as bilanAnnee } from './bilan-de-l-annee.mjs';
+import { article as resolutions } from './tenir-ses-resolutions.mjs';
 
 // Miroir de `DEFAULT_LOCALE` (src/i18n/locale.ts). Recopié et non importé parce
 // que ce module doit rester chargeable par Node brut depuis prerender/, donc
@@ -35,6 +39,10 @@ const DEFAULT_LOCALE = 'fr';
 
 // Ordre = du plus récent au plus ancien (affichage index + sitemap).
 export const ARTICLES = [
+  objectifsAnnee,
+  habitTracker,
+  bilanAnnee,
+  resolutions,
   tableauDeBord,
   gestionDuTemps,
   suiviHabitudes,

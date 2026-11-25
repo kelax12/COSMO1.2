@@ -128,6 +128,12 @@ export const EXCEPTIONS = [
     motif: 'vidéo d accueil de l onboarding entreprise (4,6 Mo), servie par Vercel et lue par '
       + '`OrgWelcomeVideo.tsx` : un média public, pas une donnée.',
   },
+  {
+    chemin: 'public/downloads/habit-tracker-2027.pdf',
+    blob: '2bb0e9830651f4481f48407be49d85108aabbfea',
+    motif: 'grille vierge de suivi d habitudes offerte par l article `habit-tracker-a-imprimer` '
+      + '(plan SEO C1, généré par jsPDF, aucune donnée réelle).',
+  },
 ];
 
 /**

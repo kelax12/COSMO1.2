@@ -8,6 +8,8 @@ Historique mesuré (audit du prérendu, Search Console, bascule de l'anglais, r�
 
 - 🔴 Le facteur limitant est l'autorité de domaine (liens entrants), pas la technique ni la longueur des articles : un domaine sans lien entrant ne se classe sur rien. Cible : 20 domaines référents ; kit et suivi : [`ACQUISITION-BACKLINKS.md`](./ACQUISITION-BACKLINKS.md).
 - ❌ Ne publier ni approfondir un article tant que cette cible n'est pas approchée. Premier signal : une page sous la position 30 sur une requête non-marque.
+- ⚠️ Exception saisonnière unique : les 4 pages Nouvel An (`objectifs-de-l-annee`, `habit-tracker-a-imprimer`, `bilan-de-l-annee`, `tenir-ses-resolutions`). Slug sans année ; chaque décembre, mettre à jour l'année, `dateModified` et le PDF `public/downloads/habit-tracker-<année>.pdf` (nouveau blob = nouvelle entrée dans `check-fichiers-sensibles.mjs`).
+- ✅ IndexNow : le job `indexnow` de `smoke-prod.yml` soumet après chaque mise en ligne les URL du sitemap au `lastmod` récent (`node scripts/seo-signals.mjs indexnow [--tout]`).
 - ❌ Ne pas « optimiser les titles pour le CTR » : le CTR non-marque est nul faute d'impressions, et la position moyenne toutes requêtes est un artefact du mot « cosmo » (générique). Toujours refiltrer en non-marque.
 - ⚠️ Hors de portée du dépôt (Search Console, Ahrefs Webmaster Tools, PageSpeed Insights) : pages réellement indexées, type de propriété GSC (domaine, pas préfixe d'URL), domaines référents, Core Web Vitals terrain.
 

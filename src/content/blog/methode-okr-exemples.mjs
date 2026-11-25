@@ -126,6 +126,8 @@ export const article = {
 <h2 id="demarrer">Suivre ses OKR sans tableur</h2>
 <p>Pour démarrer aujourd'hui, nous proposons un <a href="/blog/template-okr-gratuit">template OKR Excel gratuit</a> (exemples pré-remplis, progression automatique, sans email). Mais le vrai point de friction des OKR n'est pas l'écriture, c'est le <strong>suivi hebdomadaire</strong>. Un tableur fonctionne, mais personne ne l'ouvre. <a href="/">Cosmo</a> intègre les OKR nativement : vous créez vos objectifs et résultats clés, la progression se calcule automatiquement à mesure que vous mettez à jour vos KR, et le graphique du dashboard montre vos KR réalisés semaine après semaine, à côté de vos <a href="/guide">tâches, habitudes et agenda</a>, pour que le suivi se fasse au même endroit que l'action. <a href="/signup">C'est gratuit</a>, et le mode démo permet d'essayer avec 8 OKR pré-remplis, sans inscription.</p>
 
+<p>Vous préparez l'année qui vient ? Voir <a href="/blog/objectifs-de-l-annee">comment fixer ses objectifs 2027 avec la méthode OKR</a>, avec un exemple entièrement rempli.</p>
+
 <h2 id="faq">Questions fréquentes</h2>
 <h3>Combien d'OKR faut-il définir ?</h3>
 <p>2 à 4 objectifs maximum par cycle, avec 2 à 5 résultats clés chacun. Moins vous en avez, plus la méthode fonctionne.</p>
@@ -241,6 +243,8 @@ export const article = {
 
 <h2 id="demarrer">Tracking your OKRs without a spreadsheet</h2>
 <p>To start today, we offer a <a href="/en/blog/template-okr-gratuit">free OKR spreadsheet template</a>, with pre-filled examples, automatic progress and no email required. But the real friction point of OKRs is not the writing, it is the <strong>weekly follow-up</strong>. A spreadsheet works, but nobody opens it. <a href="/en/">Cosmo</a> has OKRs built in: you create your objectives and key results, progress is computed as you update the key results, and the dashboard chart shows the key results you have achieved week after week, next to your <a href="/en/guide">tasks, habits and calendar</a>, so that follow-up happens in the same place as the action. <a href="/en/signup">It is free</a>, and demo mode lets you try it with 8 pre-filled OKRs and no sign-up.</p>
+
+<p>Planning the year ahead? See <a href="/en/blog/objectifs-de-l-annee">how to set your 2027 goals with the OKR method</a>, with a fully filled-in example.</p>
 
 <h2 id="faq">Frequently asked questions</h2>
 <h3>How many OKRs should you set?</h3>

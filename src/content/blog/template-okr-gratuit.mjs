@@ -133,6 +133,8 @@ export const article = {
 </ol>
 <p>Si ces limites vous freinent, <a href="/">Cosmo</a> intègre les OKR nativement : progression mise à jour au fil de vos actions, graphique des résultats clés réalisés sur le dashboard, et vos objectifs vivent à côté de vos <a href="/blog/time-blocking-guide">tâches planifiées</a> et de vos habitudes. <a href="/signup">Gratuit</a>, démo sans inscription.</p>
 
+<p>Avant de remplir le template pour l'année, prenez une heure pour faire <a href="/blog/bilan-de-l-annee">le bilan de l'année en 10 questions</a>, puis <a href="/blog/objectifs-de-l-annee">fixez vos objectifs 2027</a>.</p>
+
 <h2 id="faq">Questions fréquentes</h2>
 <h3>Le template fonctionne-t-il sur Google Sheets ?</h3>
 <p>Oui : importez le fichier .xlsx dans Google Sheets (Fichier → Importer), les formules de progression sont conservées. Compatible aussi avec LibreOffice Calc et Numbers.</p>
@@ -261,6 +263,8 @@ export const article = {
 <li><strong>No visual history.</strong> A cell at 40 % does not tell you your trajectory: steady progress, or a last-minute sprint?</li>
 </ol>
 <p>If those limits are holding you back, <a href="/en/">Cosmo</a> has OKRs built in: progress updated as you act, a chart of key results achieved on the dashboard, and your goals living next to your <a href="/en/blog/time-blocking-guide">scheduled tasks</a> and your habits. <a href="/en/signup">Free</a>, with a demo and no sign-up.</p>
+
+<p>Before filling in the template for the year, take an hour for <a href="/en/blog/bilan-de-l-annee">a year in review in 10 questions</a>, then <a href="/en/blog/objectifs-de-l-annee">set your 2027 goals</a>.</p>
 
 <h2 id="faq">Frequently asked questions</h2>
 <h3>Does the template work in Google Sheets?</h3>
