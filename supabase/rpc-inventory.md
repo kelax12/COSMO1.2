@@ -280,7 +280,7 @@ Aucune.
 | `track_hit(p jsonb)` | INVOKER | `""` | - | - | oui | ~`api/collect.ts` |
 | `transfer_org_ownership(p_org uuid, p_new_owner uuid)` | DEFINER | `""` | - | oui | oui | `src/modules/organizations/supabase.repository.ts` |
 | `trash_team_okr(p_okr uuid)` | DEFINER | `""` | - | oui | oui | `src/modules/team-okrs/supabase.repository.ts` |
-| `trash_team_task(p_task uuid)` | DEFINER | `""` | - | oui | oui | `src/modules/team-projects/supabase.repository.ts`<br>~`src/components/organization/team-task-rights.ts` |
+| `trash_team_task(p_task uuid)` | DEFINER | `""` | - | oui | oui | `src/modules/team-projects/supabase.repository.ts` |
 | `update_updated_at_column()` (trigger) | INVOKER | `public, pg_temp` | - | - | oui | - |
 | `validate_org_manager()` (trigger) | DEFINER | `""` | - | - | oui | - |
 | `validate_project_team()` (trigger) | DEFINER | `""` | - | - | oui | - |
