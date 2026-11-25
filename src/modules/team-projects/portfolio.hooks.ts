@@ -11,7 +11,6 @@ import { toast } from '@/lib/toast';
 import { getTeamProjectsRepository } from '@/lib/repository.factory';
 import { validateAsync } from '@/lib/validation/lazy';
 import { translator } from '@/i18n/useT';
-import { dependencyErrorCode } from '@/modules/tasks/dependency-errors';
 import { teamProjectKeys } from './constants';
 import type {
   CreateTeamProjectInput,
@@ -55,36 +54,6 @@ export const useTeamProjectDependencies = (orgId: string | undefined) => {
     enabled: !!orgId,
     staleTime: 1000 * 60,
     refetchOnWindowFocus: true,
-  });
-};
-
-/** Le refus le plus courant est un CYCLE : il se dit avec son identifiant (mig. 137). */
-const projectDependencyError = (error: Error) => {
-  const code = dependencyErrorCode(error);
-  toast.error(code
-    ? translator('errors').t(`api.${code}` as never)
-    : translator('org').t('projects.dependencyFailed', { message: error.message }));
-};
-
-export const useAddProjectDependency = (orgId: string) => {
-  const queryClient = useQueryClient();
-  const repository = useRepo();
-  return useMutation({
-    mutationFn: ({ projectId, dependsOnId }: { projectId: string; dependsOnId: string }) =>
-      repository.addProjectDependency(projectId, dependsOnId, orgId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: teamProjectKeys.projectDependencies(orgId) }),
-    onError: projectDependencyError,
-  });
-};
-
-export const useRemoveProjectDependency = (orgId: string) => {
-  const queryClient = useQueryClient();
-  const repository = useRepo();
-  return useMutation({
-    mutationFn: ({ projectId, dependsOnId }: { projectId: string; dependsOnId: string }) =>
-      repository.removeProjectDependency(projectId, dependsOnId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: teamProjectKeys.projectDependencies(orgId) }),
-    onError: projectDependencyError,
   });
 };
 

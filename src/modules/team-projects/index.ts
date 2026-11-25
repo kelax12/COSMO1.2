@@ -82,8 +82,6 @@ export {
 export {
   useCreateTeamProjectWithTasks,
   useTeamProjectDependencies,
-  useAddProjectDependency,
-  useRemoveProjectDependency,
   // Mig. 164 : équipes associées, purge d'un projet archivé.
   useTeamProjectTeams,
   useAddProjectTeam,
@@ -97,7 +95,6 @@ export {
   useSetProjectMember,
   useRemoveProjectMember,
   useTeamProjectTaskStats,
-  useTeamMemberWorkload,
 } from './access.hooks';
 
 // Restauration d'un commentaire supprime (« Annuler », C-42).

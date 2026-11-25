@@ -114,7 +114,7 @@ export default tseslint.config(
   // lancé à la racine rendait les erreurs des arbres VOISINS. La règle
   // « 0 erreur avant chaque commit » devient inapplicable quand la sortie est
   // polluée par le travail des autres.
-  { ignores: ['dist', 'coverage', 'coverage-tooling', 'src/__test__/**', 'src/generated/**', '.agents/**', '.claude/**', '.worktrees/**'] },
+  { ignores: ['dist', 'coverage', 'coverage-tooling', 'src/__test__/**', 'src/generated/**', '.agents/**', '.claude/**', '.worktrees/**', 'code-mort/**'] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],

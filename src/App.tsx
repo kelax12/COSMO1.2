@@ -26,7 +26,6 @@ import { useCookieConsent } from '@/lib/use-cookie-consent';
 import { AuthProvider } from '@/modules/auth/AuthContext';
 import { ActiveOrgProvider, useActiveOrganization } from '@/modules/organizations';
 import { BillingProvider } from '@/modules/billing/billing.context';
-import { PREMIUM_ENFORCED } from '@/modules/billing/premium-config';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import CookieBanner from '@/components/CookieBanner';
 import NewVersionBanner from '@/components/NewVersionBanner';
@@ -71,7 +70,6 @@ const OKRPage = lazyWithRetry(() => import('@/pages/OKRPage'), ['eventModal', 'o
 const StatisticsPage = lazyWithRetry(() => import('@/pages/StatisticsPage'), ['dashboard', 'overlays', 'premium', 'statistics']);
 // `tasks` : DataTab et `csv-export.ts` importent le BARREL `@/modules/lists` (`listKeys`), qui charge `delete-flow.hooks.ts` et `translator('tasks')` (`npm run i18n:namespaces -- --pages`).
 const SettingsPage = lazyWithRetry(() => import('@/pages/SettingsPage'), ['csv', 'org', 'overlays', 'settings', 'tasks']);
-const PremiumPage = lazyWithRetry(() => import('@/pages/PremiumPage'), ['overlays', 'premium']);
 const GuidePage = lazyWithRetry(() => import('@/pages/GuidePage'), ['guide', 'seo']);
 const MentionsLegalesPage = lazyWithRetry(() => import('@/pages/MentionsLegalesPage'), ['legal', 'seo']);
 const PolitiqueConfidentialitePage = lazyWithRetry(() => import('@/pages/PolitiqueConfidentialitePage'), ['legal', 'legalPrivacy', 'seo']);
@@ -341,9 +339,8 @@ const AppRoutes = () => {
         {/* Admin — URL non référencée (aucun lien dans l'UI), gating réel
             côté serveur : la RPC get_admin_stats rejette les non-admins. */}
         <Route path="admin" element={<PageWithSuspense><AdminPage /></PageWithSuspense>} />
-        {/* Premium masqué tant que PREMIUM_ENFORCED=false : la route redirige
-            vers le dashboard. Page + import conservés (réactivation via le flag). */}
-        <Route path="premium" element={PREMIUM_ENFORCED ? <PageWithSuspense><PremiumPage /></PageWithSuspense> : <Navigate to="/" replace />} />
+        {/* Page premium déplacée dans code-mort/ : la route redirige toujours. */}
+        <Route path="premium" element={<Navigate to="/" replace />} />
       </Route>
     </Route>
 

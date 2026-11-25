@@ -37,16 +37,6 @@ export const useSetKRProjects = (orgId: string) => {
   });
 };
 
-export const useKRCheckins = (krId: string | undefined) => {
-  const repository = useRepo();
-  return useQuery({
-    queryKey: keys.checkins(krId ?? ''),
-    queryFn: () => repository.getCheckins(krId as string),
-    enabled: !!krId,
-    staleTime: 1000 * 60,
-  });
-};
-
 export const usePostKRCheckin = (orgId: string) => {
   const repository = useRepo();
   const queryClient = useQueryClient();

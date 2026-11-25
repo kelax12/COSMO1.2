@@ -264,21 +264,6 @@ test('MESURE · LoginModal (« Se connecter », landing)', async ({ page }) => {
   await mesurerSurface(page, 'LoginModal', page.getByRole('dialog', { name: /^connexion ou inscription$/i }));
 });
 
-test('MESURE · WeeklyCheckinModal (check-in hebdo, carte d accueil)', async ({ demoPage: page }) => {
-  // Le bouton « Check-in hebdo » de la page OKR est retiré (2026-10-29) : le
-  // check-in s'ouvre depuis la carte de l'accueil, qui ne paraît que le lundi
-  // et le mardi. On cale l'horloge du navigateur sur le prochain lundi midi.
-  const lundi = new Date();
-  lundi.setDate(lundi.getDate() + ((8 - lundi.getDay()) % 7 || 7));
-  lundi.setHours(12, 0, 0, 0);
-  await page.clock.install({ time: lundi });
-  await page.goto('/dashboard');
-  const declencheur = visible(page.getByRole('button', { name: /^faire le point$/i }));
-  await expect(declencheur).toBeVisible({ timeout: 90_000 });
-  await ouvrirAuClavier(page, declencheur);
-  await mesurerSurface(page, 'WeeklyCheckinModal', page.locator('[role="dialog"][aria-labelledby="weekly-checkin-title"]'));
-});
-
 test('MESURE · OKRDeadlineReviewModal (objectif échu, page OKR)', async ({ demoPage: page }) => {
   // La revue s'ouvre D'ELLE-MÊME dès qu'un objectif non terminé a dépassé son
   // échéance : on avance l'horloge du navigateur de deux ans APRÈS le semis de la

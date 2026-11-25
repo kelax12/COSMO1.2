@@ -18,7 +18,6 @@ const ROUTE_IMPORTS: Record<string, () => Promise<unknown>> = {
   '/okr': () => import('@/pages/OKRPage'),
   '/habits': () => import('@/pages/HabitsPage'),
   '/statistics': () => import('@/pages/StatisticsPage'),
-  '/premium': () => import('@/pages/PremiumPage'),
   '/settings': () => import('@/pages/SettingsPage'),
   '/entreprise': () => import('@/pages/OrganizationPage'),
 };

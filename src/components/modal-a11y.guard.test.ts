@@ -40,7 +40,6 @@ const EXEMPTS: Record<string, string> = {
     "le `fixed inset-0` est le voile du panneau lateral mobile, pas une boite de dialogue.",
   'components/InboxMenu.tsx':
     "POPOVER ancre au declencheur, non modal : pas de voile, pas d'aria-modal. Piéger le focus dans un popover empêcherait d'en sortir en tabulant, ce qui est justement sa maniere de se fermer.",
-  'components/task-table/TasksInboxMenu.tsx': 'meme popover, cote page Taches.',
   'components/organization/OrgNotificationsPanel.tsx':
     'popover de notifications ancre a la cloche, non modal (sorti de OrgNotificationsBell le 2026-09-25, charge a l ouverture).',
   'components/organization/TeamCategoryTreeSelect.tsx':
@@ -142,7 +141,6 @@ const RADIX_SURFACES = [
   'components/organization/AssignMembersDialog.tsx',
   'components/organization/ConfirmProjectAudienceDialog.tsx',
   'components/organization/DeleteTeamDialog.tsx',
-  'components/organization/KRExecutionDialog.tsx',
   'components/organization/MemberAccessDialog.tsx',
   'components/organization/OrgConfirmDialog.tsx',
   'components/organization/OrgNotificationSettingsDialog.tsx',

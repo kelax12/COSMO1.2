@@ -43,7 +43,6 @@ export type { OKRProgress } from './progress';
 
 export {
   useOkrs,
-  useActiveOkrs,
 } from './hooks';
 
 // ═══════════════════════════════════════════════════════════════════

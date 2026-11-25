@@ -71,15 +71,3 @@ export const useTeamProjectTaskStats = (orgId: string | undefined) => {
     staleTime: 1000 * 30,
   });
 };
-
-/** Charge de chaque membre (tâches ouvertes, en retard, à 7 jours), comptée par le serveur. */
-export const useTeamMemberWorkload = (orgId: string | undefined) => {
-  const repository = useRepo();
-  const today = todayKeyInTz();
-  return useQuery({
-    queryKey: [...teamProjectKeys.tasks(orgId ?? ''), 'member-workload', today],
-    queryFn: () => repository.getMemberWorkload(orgId as string, today),
-    enabled: !!orgId,
-    staleTime: 1000 * 30,
-  });
-};

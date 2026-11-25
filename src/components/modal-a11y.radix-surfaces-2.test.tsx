@@ -59,7 +59,6 @@ vi.mock('@/modules/team-okrs', async (orig) => ({
   useTeamOKRTrash: () => nothing,
   useRestoreTeamOKR: mut,
   usePurgeTeamOKR: mut,
-  useKRCheckins: () => nothing,
   usePostKRCheckin: mut,
   useSetKRProjects: mut,
   useUpdateTeamKR: mut,
@@ -72,7 +71,6 @@ import { measureSurfaces, WithTrigger, type Surface } from './__test__/modal-a11
 import AssignMembersDialog from './organization/AssignMembersDialog';
 import TeamTrashDialog from './organization/TeamTrashDialog';
 import { ProjectRolesDialog, ProjectAddDialog } from './organization/ProjectPeopleDialogs';
-import KRExecutionDialog from './organization/KRExecutionDialog';
 import TeamEventDialog from './organization/TeamEventDialog';
 import TeamTaskDependencyPicker from './organization/TeamTaskDependencyPicker';
 import TeamOKRModal from './organization/TeamOKRModal';
@@ -88,7 +86,6 @@ const member = { id: 'm1', userId: 'u2', displayName: 'Membre', name: 'Membre', 
 const project = { id: 'p1', orgId: 'o1', name: 'Projet', archivedAt: null, isTemplate: false } as never;
 const team = { id: 'tm1', name: 'Equipe', parentId: null } as never;
 const task = { id: 't1', projectId: 'p1', orgId: 'o1', name: 'Tache', title: 'Tache', assigneeIds: [], status: 'todo', priority: 3 } as never;
-const kr = { id: 'k1', title: 'KR', currentValue: 1, targetValue: 10, unit: '', progressMode: 'manual', health: 'on_track' } as never;
 const viewer = {
   can: Object.fromEntries(ORG_PERMISSION_KEYS.map((k) => [k, true])),
   isAdmin: true, isOwner: true, customRolesAvailable: true,
@@ -110,11 +107,6 @@ const SURFACES: Surface[] = [
   )],
   ['ProjectAddDialog', () => (
     <WithTrigger>{(close) => <ProjectAddDialog mode="person" onClose={close} project={project} projectMembers={[]} orgMembers={[member]} teams={[team]} />}</WithTrigger>
-  )],
-  ['KRExecutionDialog', () => (
-    <WithTrigger>{(close) => (
-      <KRExecutionDialog orgId="o1" kr={kr} links={[]} projects={[project]} statsById={new Map()} members={[member]} canEditStructure onClose={close} />
-    )}</WithTrigger>
   )],
   ['TeamEventDialog', () => (
     <WithTrigger>{(close) => <TeamEventDialog open onClose={close} members={[member]} currentUserId="u1" isAdmin />}</WithTrigger>

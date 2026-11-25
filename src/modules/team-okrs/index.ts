@@ -49,6 +49,5 @@ export type {
 export {
   useKRProjects,
   useSetKRProjects,
-  useKRCheckins,
   usePostKRCheckin,
 } from './execution.hooks';

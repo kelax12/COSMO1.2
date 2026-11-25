@@ -1,6 +1,5 @@
 import React, { useMemo, useState, Suspense } from 'react';
 import { Link } from 'react-router';
-import { X } from 'lucide-react';
 import { PageHeading } from '@/components/ui/typography';
 import { MobileHeader, SectionDivider } from '@/components/mobile';
 import { useRevealVariants } from '@/components/mobile/mobile-motion';
@@ -36,7 +35,6 @@ import MiniBarChart from '@/components/MiniBarChart';
 import TextType from '@/components/TextType';
 import MobileCollapsible from '@/components/MobileCollapsible';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
-import WeeklyCheckinModal, { useWeeklyCheckin } from '@/components/WeeklyCheckinModal';
 import { formatDate, formatTime } from '@/i18n/format';
 import { useStatCards } from './dashboard/useStatCards';
 import { deadlineDayKey } from '@/lib/deadline';
@@ -104,12 +102,7 @@ const DashboardPage: React.FC = () => {
   const { activeOrg } = useActiveOrganization();
   const isMobile = useIsMobile();
   const [viewMode, setViewMode] = useState<ViewMode>('day');
-  const weeklyCheckin = useWeeklyCheckin();
-  const [checkinOpen, setCheckinOpen] = useState(false);
   const [widgetToolbarSlot, setWidgetToolbarSlot] = useState<HTMLDivElement | null>(null);
-  // #31 — plus d'auto-ouverture du modal check-in : une carte inline
-  // dismissible invite à le faire volontairement (l'interstitiel d'entrée est
-  // l'anti-pattern rétention n°1 — le réflexe devient « fermer sans lire »).
   const [playTyping] = useState(shouldPlayTypingToday);
 
   const { data: tasks = [], isLoading: isLoadingTasks } = useTasks();
@@ -466,37 +459,6 @@ const DashboardPage: React.FC = () => {
             </div>
           </motion.div>
 
-        {/* Carte check-in hebdo (#31) — invitation inline, jamais imposée.
-            `flex-wrap` + plancher du texte (WCAG 1.4.4) : la carte ne paraît que
-            le lundi et le mardi, et à 200 % de police le ✕ sortait de 13 px de
-            l'écran (C-97). À 100 % la ligne est inchangée. */}
-        {weeklyCheckin.shouldShow && !checkinOpen && (
-          <motion.div variants={itemVariants}>
-            <div className="flex flex-wrap items-center gap-3 p-4 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl">
-              <div className="flex-1 min-w-[min(100%,8rem)]">
-                <p className="text-label sm:text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('checkin.title')}</p>
-                <p className="text-caption sm:text-xs text-[rgb(var(--color-text-muted))]">{t('checkin.subtitle')}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setCheckinOpen(true)}
-                className="shrink-0 min-h-touch sm:min-h-0 px-4 py-2 rounded-xl text-label sm:text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] transition-colors"
-              >
-                {t('checkin.cta')}
-              </button>
-              <button
-                type="button"
-                onClick={() => weeklyCheckin.dismiss()}
-                aria-label={t('checkin.dismiss')}
-                className="shrink-0 min-w-touch min-h-touch sm:min-w-0 sm:min-h-0 sm:p-2 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] transition-colors"
-              >
-                <X size={16} className="md:hidden" aria-hidden="true" />
-                <span className="hidden md:inline">✕</span>
-              </button>
-            </div>
-          </motion.div>
-        )}
-
         {/* ── Mobile : le fil découpé en trois moments (maquette 28) ──
             Rendez-vous et tâches mélangés, rendu pour TOUT LE MONDE, puis
             Habitudes et OKR sans carte. Le mobile n'a pas de widgets. */}
@@ -527,14 +489,6 @@ const DashboardPage: React.FC = () => {
 
       </motion.div>
 
-      {/* Modal check-in hebdo OKR — auto-déclenché lundi/mardi, 1×/semaine */}
-      <WeeklyCheckinModal
-        isOpen={checkinOpen}
-        onClose={() => {
-          setCheckinOpen(false);
-          weeklyCheckin.dismiss();
-        }}
-      />
     </div>
   );
 };
