@@ -376,9 +376,58 @@ export function resume({ point, rouges }) {
   return l.join('\n');
 }
 
+// ─── IndexNow (plan SEO T1) ────────────────────────────────────────
+// Prévient Bing, Yandex et les autres moteurs IndexNow dès qu'une page change,
+// au lieu d'attendre leur passage (Bing alimente aussi ChatGPT, Copilot et
+// DuckDuckGo). La clé est PUBLIQUE par conception : servie à la racine
+// (`public/<clé>.txt`), elle prouve seulement qu'on contrôle le domaine.
+// Lancé par le job `indexnow` de `smoke-prod.yml` après chaque mise en ligne.
+export const INDEXNOW_CLE = 'ea44e90cb409eb919d1e11047c02bf7f';
+
+/** URL du sitemap dont le `lastmod` est postérieur ou égal à `depuis` (AAAA-MM-JJ) ; toutes si `depuis` est nul. */
+export function urlsModifiees(sitemapXml, depuis) {
+  const urls = [];
+  for (const [, bloc] of sitemapXml.matchAll(/<url>([\s\S]*?)<\/url>/g)) {
+    const loc = bloc.match(/<loc>([^<]+)<\/loc>/)?.[1]?.trim();
+    const lastmod = bloc.match(/<lastmod>([^<]+)<\/lastmod>/)?.[1]?.trim();
+    if (!loc || !loc.startsWith(`https://${DOMAINE}`)) continue;
+    if (!depuis || (lastmod && lastmod.slice(0, 10) >= depuis)) urls.push(loc);
+  }
+  return [...new Set(urls)];
+}
+
+export const corpsIndexNow = (urls) => ({
+  host: DOMAINE,
+  key: INDEXNOW_CLE,
+  keyLocation: `https://${DOMAINE}/${INDEXNOW_CLE}.txt`,
+  urlList: urls.slice(0, 10000),
+});
+
+/** `--tout` soumet tout le sitemap ; sinon les pages modifiées depuis `--jours N` (2 par défaut). */
+export async function soumettreIndexNow({ argv = [], fetchFn = globalThis.fetch, maintenant = new Date() } = {}) {
+  const i = argv.indexOf('--jours');
+  const jours = i >= 0 ? Number(argv[i + 1]) : 2;
+  const depuis = argv.includes('--tout') ? null : new Date(maintenant.getTime() - jours * 86400000).toISOString().slice(0, 10);
+  const rep = await fetchFn(`https://${DOMAINE}/sitemap.xml`);
+  if (!rep.ok) throw new Error(`sitemap illisible : HTTP ${rep.status}`);
+  const urls = urlsModifiees(await rep.text(), depuis);
+  if (!urls.length) return { urls, statut: null };
+  const envoi = await fetchFn('https://api.indexnow.org/indexnow', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json; charset=utf-8' },
+    body: JSON.stringify(corpsIndexNow(urls)),
+  });
+  // 200 et 202 = reçu. 403 (clé introuvable) ou 422 (URL hors domaine) : rouge.
+  if (envoi.status !== 200 && envoi.status !== 202) throw new Error(`IndexNow a répondu HTTP ${envoi.status}`);
+  return { urls, statut: envoi.status };
+}
+
 const estLanceDirectement = estLance(import.meta.url);
 
-if (estLanceDirectement) {
+if (estLanceDirectement && process.argv[2] === 'indexnow') {
+  const { urls, statut } = await soumettreIndexNow({ argv: process.argv.slice(3) });
+  console.log(statut ? `IndexNow : ${urls.length} URL soumise(s), HTTP ${statut}.\n${urls.join('\n')}` : 'IndexNow : aucune page modifiée, rien à soumettre.');
+} else if (estLanceDirectement) {
   // Lecture directe, sans `existsSync` avant : vérifier puis lire laisse une
   // fenêtre où le fichier change (CodeQL, js/file-system-race). Seul un
   // fichier ABSENT donne une série vide ; un JSON abîmé fait planter.

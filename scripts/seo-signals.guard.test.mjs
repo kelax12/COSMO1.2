@@ -22,6 +22,7 @@ import {
   fenetre, lireCompteDeService, assertionJwt, corpsRequete, totaux, requetesNonMarque,
   backlinksDeclares, liensVersNous, estSuivi, verifierBacklink, agregerDomaines,
   releverAutorite, comparer, ajouterPoint, run, resume, PROPRIETE_DEFAUT,
+  urlsModifiees, soumettreIndexNow, INDEXNOW_CLE,
 } from './seo-signals.mjs';
 
 const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
@@ -282,5 +283,39 @@ describe('seo-signals.yml · TÉMOIN : le job mesure ou échoue, et son rouge es
   it('le verdict rougit aussi quand la mesure n a rien écrit (sortie vide)', () => {
     const verdict = etapes.find((e) => e.name === 'Verdict');
     expect(verdict.run).toContain('steps.mesure.outputs.rouge }}" != "false"');
+  });
+});
+
+describe('seo-signals · IndexNow', () => {
+  const SITEMAP = `<urlset>
+<url><loc>https://thecosmo.app/blog/a</loc><lastmod>2026-11-25</lastmod></url>
+<url><loc>https://thecosmo.app/blog/b</loc><lastmod>2026-10-01</lastmod></url>
+<url><loc>https://ailleurs.example/x</loc><lastmod>2026-11-25</lastmod></url>
+</urlset>`;
+
+  it('ne garde que les pages du domaine modifiées depuis la date', () => {
+    expect(urlsModifiees(SITEMAP, '2026-11-24')).toEqual(['https://thecosmo.app/blog/a']);
+    expect(urlsModifiees(SITEMAP, null)).toEqual(['https://thecosmo.app/blog/a', 'https://thecosmo.app/blog/b']);
+  });
+
+  it('la clé soumise est celle servie dans public/', () => {
+    expect(readFileSync(join(process.cwd(), 'public', `${INDEXNOW_CLE}.txt`), 'utf8').trim()).toBe(INDEXNOW_CLE);
+  });
+
+  it('un refus IndexNow fait échouer (jamais un vert muet)', async () => {
+    const fetchFn = async (url) => (String(url).endsWith('sitemap.xml') ? html(SITEMAP) : new Response('', { status: 422 }));
+    await expect(soumettreIndexNow({ fetchFn, maintenant: new Date('2026-11-25T12:00:00Z') })).rejects.toThrow(/422/);
+  });
+
+  it('soumet le corps attendu et rend le statut', async () => {
+    let corps;
+    const fetchFn = async (url, init) => {
+      if (String(url).endsWith('sitemap.xml')) return html(SITEMAP);
+      corps = JSON.parse(init.body);
+      return new Response('', { status: 202 });
+    };
+    const res = await soumettreIndexNow({ fetchFn, maintenant: new Date('2026-11-25T12:00:00Z') });
+    expect(res.statut).toBe(202);
+    expect(corps).toMatchObject({ host: 'thecosmo.app', key: INDEXNOW_CLE, urlList: ['https://thecosmo.app/blog/a'] });
   });
 });
