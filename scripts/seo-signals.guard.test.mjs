@@ -1,18 +1,7 @@
-// ═══════════════════════════════════════════════════════════════════
-// seo-signals.guard.test.mjs · LE TÉMOIN DES SIGNAUX SEO
-//
-// 🔴 POURQUOI CE FICHIER EXISTE (2026-10-23)
-//
-// `scripts/seo-signals.mjs` ferme trois angles morts (SEO.md AM-4,
-// ACQUISITION-BACKLINKS.md AM-1 et AM-2). Il peut mentir de quatre façons,
-// toutes dans le sens rassurant :
-//   · lire une page sans lien vers thecosmo.app comme un backlink présent ;
-//   · compter une requête « cosmo » dans le non-marque ;
-//   · ne pas voir un domaine référent disparu entre deux points ;
-//   · sortir en 0 sans secret, une moitié du travail sautée en silence.
-// Chaque cas TÉMOIN soumet au code RÉEL un de ces états, avec un `fetch`
-// injecté : aucun appel réseau.
-// ═══════════════════════════════════════════════════════════════════
+// seo-signals.guard.test.mjs · témoin des signaux SEO (2026-10-23). Le script peut
+// mentir dans le sens rassurant : page sans lien lue comme backlink, requête
+// « cosmo » comptée non marque, domaine référent disparu invisible, sortie 0
+// sans secret. Chaque cas soumet ces états au code réel, `fetch` injecté.
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -287,35 +276,18 @@ describe('seo-signals.yml · TÉMOIN : le job mesure ou échoue, et son rouge es
 });
 
 describe('seo-signals · IndexNow', () => {
-  const SITEMAP = `<urlset>
-<url><loc>https://thecosmo.app/blog/a</loc><lastmod>2026-11-25</lastmod></url>
-<url><loc>https://thecosmo.app/blog/b</loc><lastmod>2026-10-01</lastmod></url>
-<url><loc>https://ailleurs.example/x</loc><lastmod>2026-11-25</lastmod></url>
-</urlset>`;
-
-  it('ne garde que les pages du domaine modifiées depuis la date', () => {
-    expect(urlsModifiees(SITEMAP, '2026-11-24')).toEqual(['https://thecosmo.app/blog/a']);
-    expect(urlsModifiees(SITEMAP, null)).toEqual(['https://thecosmo.app/blog/a', 'https://thecosmo.app/blog/b']);
-  });
-
-  it('la clé soumise est celle servie dans public/', () => {
+  const SITEMAP = ['a/2026-11-25', 'b/2026-10-01'].map((x) => `<url><loc>https://thecosmo.app/${x.split('/')[0]}</loc><lastmod>${x.split('/')[1]}</lastmod></url>`).join('') + '<url><loc>https://ailleurs.example/x</loc><lastmod>2026-11-25</lastmod></url>';
+  const avec = (statut, vu = {}) => async (url, init) => (String(url).endsWith('sitemap.xml') ? html(SITEMAP) : ((vu.corps = JSON.parse(init.body)), new Response('', { status: statut })));
+  const maintenant = new Date('2026-11-25T12:00:00Z');
+  it('filtre domaine et lastmod ; la clé est celle servie dans public/', () => {
+    expect(urlsModifiees(SITEMAP, '2026-11-24')).toEqual(['https://thecosmo.app/a']);
+    expect(urlsModifiees(SITEMAP, null)).toEqual(['https://thecosmo.app/a', 'https://thecosmo.app/b']);
     expect(readFileSync(join(process.cwd(), 'public', `${INDEXNOW_CLE}.txt`), 'utf8').trim()).toBe(INDEXNOW_CLE);
   });
-
-  it('un refus IndexNow fait échouer (jamais un vert muet)', async () => {
-    const fetchFn = async (url) => (String(url).endsWith('sitemap.xml') ? html(SITEMAP) : new Response('', { status: 422 }));
-    await expect(soumettreIndexNow({ fetchFn, maintenant: new Date('2026-11-25T12:00:00Z') })).rejects.toThrow(/422/);
-  });
-
-  it('soumet le corps attendu et rend le statut', async () => {
-    let corps;
-    const fetchFn = async (url, init) => {
-      if (String(url).endsWith('sitemap.xml')) return html(SITEMAP);
-      corps = JSON.parse(init.body);
-      return new Response('', { status: 202 });
-    };
-    const res = await soumettreIndexNow({ fetchFn, maintenant: new Date('2026-11-25T12:00:00Z') });
-    expect(res.statut).toBe(202);
-    expect(corps).toMatchObject({ host: 'thecosmo.app', key: INDEXNOW_CLE, urlList: ['https://thecosmo.app/blog/a'] });
+  it('un refus IndexNow fait échouer, un 202 rend le corps attendu', async () => {
+    await expect(soumettreIndexNow({ fetchFn: avec(422), maintenant })).rejects.toThrow(/422/);
+    const vu = {};
+    expect((await soumettreIndexNow({ fetchFn: avec(202, vu), maintenant })).statut).toBe(202);
+    expect(vu.corps).toMatchObject({ host: 'thecosmo.app', key: INDEXNOW_CLE, urlList: ['https://thecosmo.app/a'] });
   });
 });

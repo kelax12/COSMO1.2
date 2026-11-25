@@ -1,40 +1,13 @@
-// ═══════════════════════════════════════════════════════════════════
 // Signaux SEO hebdomadaires · SEO.md AM-4, ACQUISITION-BACKLINKS.md AM-1, AM-2
-// ═══════════════════════════════════════════════════════════════════
-//
-// 🔴 POURQUOI CE FICHIER EXISTE (2026-10-23)
-//
-// Les audits SEO mesuraient la CONFORMITÉ (balises, sitemap, Lighthouse) et
-// jamais le RÉSULTAT : note 80 et 0 clic non marqué ont coexisté depuis le
-// 2026-08-19, et la Search Console n'a été relue qu'une fois, à la main.
-// Trois choses n'étaient regardées par rien :
-//
-//   1 · le résultat Search Console : requêtes NON MARQUE (sans « cosmo »),
-//       clics, impressions, position, sur 28 jours (SEO.md AM-4) ;
-//   2 · les backlinks déclarés `fait` dans ACQUISITION-BACKLINKS.md : un lien
-//       retiré était invisible (AM-1, `M-55`) ;
-//   3 · l'autorité de domaine : domaines référents, mesurés par rien (AM-2).
-//
-// Ce script relève les trois, ajoute UN point daté à
-// `docs/seo-signals-series.json`, et échoue (exit 1) :
-//   · sur un secret absent : jamais de moitié sautée en silence ;
-//   · sur un backlink `fait` perdu (page disparue, lien retiré, `rel` dégradé),
-//     ou `fait` sans page source déclarée ;
-//   · sur un domaine référent présent au point précédent et absent de celui-ci.
-//
-// Le point est ÉCRIT même quand le verdict est rouge : c'est ce jour-là que
-// la série a de la valeur. Le workflow le commite, puis rend le verdict.
-//
-// ⚠️ CE QU'IL NE PROUVE PAS. La Search Console exclut les requêtes rares
-// (anonymisées) : un total non marque est un PLANCHER. Bing ne voit que les
-// liens que Bing a explorés : ses domaines référents ne sont pas ceux de
-// Google, c'est une mesure gratuite et reproductible, pas « la » vérité. Une
-// page source rendue en JavaScript peut ne pas montrer son lien au `fetch` :
-// le rouge le dira, la relecture humaine tranchera.
-//
-// Aucune dépendance hors bibliothèque standard. Pas de shebang (cf.
-// `check-tooling-coverage.mjs`). Témoin : `seo-signals.guard.test.mjs`.
-// ═══════════════════════════════════════════════════════════════════
+// Relève 1 · Search Console non marque (28 j), 2 · les backlinks `fait`
+// d'ACQUISITION-BACKLINKS.md, 3 · les domaines référents vus par Bing ; ajoute
+// un point daté à `docs/seo-signals-series.json` (écrit même en rouge) et sort
+// en 1 sur : secret absent, backlink `fait` perdu ou sans source, domaine
+// référent disparu depuis le point précédent.
+// ⚠️ Ne prouve pas : la GSC masque les requêtes rares (total = plancher) ; Bing
+// ne voit que ce qu'il a exploré ; une page rendue en JS peut cacher son lien.
+// Sous-commande `indexnow` : soumission après mise en ligne (plan SEO T1).
+// Bibliothèque standard seule, pas de shebang. Témoin : seo-signals.guard.test.mjs.
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -140,11 +113,7 @@ export function totaux(reponse) {
   return { clics: l.clicks ?? 0, impressions: l.impressions ?? 0, ctr: arrondi(l.ctr ?? 0, 4), position: arrondi(l.position, 1) };
 }
 
-/**
- * Les requêtes d'une réponse par `query`, refiltrées côté client : le filtre
- * serveur est une regex RE2 qu'on ne voit pas tourner, une requête marque qui
- * passerait gonflerait le non-marque, le sens rassurant.
- */
+/** Requêtes par `query`, refiltrées côté client : une marque passée par la regex RE2 serveur gonflerait le non-marque. */
 export function requetesNonMarque(reponse, max = TOP_REQUETES) {
   return (reponse?.rows ?? [])
     .map((l) => ({ requete: String(l.keys?.[0] ?? ''), clics: l.clicks ?? 0, impressions: l.impressions ?? 0, position: arrondi(l.position, 1) }))
@@ -181,11 +150,7 @@ export async function releverSearchConsole({ brut, propriete, periode, fetchFn }
 
 const estNotreHote = (hote) => hote === DOMAINE || hote.endsWith(`.${DOMAINE}`);
 
-/**
- * Les lignes du tableau des annuaires, cellule par cellule. La page source
- * est la première URL de la colonne « Note » qui n'est PAS sur thecosmo.app :
- * le tableau n'a pas de colonne dédiée, et l'ajouter changerait sa forme.
- */
+/** Lignes du tableau des annuaires ; page source = 1re URL de « Note » hors thecosmo.app (pas de colonne dédiée). */
 export function backlinksDeclares(texte) {
   const out = [];
   for (const ligne of texte.split(/\r?\n/)) {
@@ -376,50 +341,25 @@ export function resume({ point, rouges }) {
   return l.join('\n');
 }
 
-// ─── IndexNow (plan SEO T1) ────────────────────────────────────────
-// Prévient Bing, Yandex et les autres moteurs IndexNow dès qu'une page change,
-// au lieu d'attendre leur passage (Bing alimente aussi ChatGPT, Copilot et
-// DuckDuckGo). La clé est PUBLIQUE par conception : servie à la racine
-// (`public/<clé>.txt`), elle prouve seulement qu'on contrôle le domaine.
-// Lancé par le job `indexnow` de `smoke-prod.yml` après chaque mise en ligne.
+// IndexNow : la clé est publique par conception (`public/<clé>.txt`).
 export const INDEXNOW_CLE = 'ea44e90cb409eb919d1e11047c02bf7f';
-
-/** URL du sitemap dont le `lastmod` est postérieur ou égal à `depuis` (AAAA-MM-JJ) ; toutes si `depuis` est nul. */
-export function urlsModifiees(sitemapXml, depuis) {
-  const urls = [];
-  for (const [, bloc] of sitemapXml.matchAll(/<url>([\s\S]*?)<\/url>/g)) {
-    const loc = bloc.match(/<loc>([^<]+)<\/loc>/)?.[1]?.trim();
-    const lastmod = bloc.match(/<lastmod>([^<]+)<\/lastmod>/)?.[1]?.trim();
-    if (!loc || !loc.startsWith(`https://${DOMAINE}`)) continue;
-    if (!depuis || (lastmod && lastmod.slice(0, 10) >= depuis)) urls.push(loc);
-  }
-  return [...new Set(urls)];
-}
-
-export const corpsIndexNow = (urls) => ({
-  host: DOMAINE,
-  key: INDEXNOW_CLE,
-  keyLocation: `https://${DOMAINE}/${INDEXNOW_CLE}.txt`,
-  urlList: urls.slice(0, 10000),
-});
-
-/** `--tout` soumet tout le sitemap ; sinon les pages modifiées depuis `--jours N` (2 par défaut). */
+/** URL du domaine au `lastmod` >= `depuis` (AAAA-MM-JJ) ; toutes si `depuis` est nul. */
+export const urlsModifiees = (xml, depuis) => [...new Set([...xml.matchAll(/<url>([\s\S]*?)<\/url>/g)]
+  .map(([, b]) => [b.match(/<loc>([^<]+)</)?.[1]?.trim(), b.match(/<lastmod>([^<]+)</)?.[1]?.trim()])
+  .filter(([loc, mod]) => loc?.startsWith(`https://${DOMAINE}`) && (!depuis || (mod && mod.slice(0, 10) >= depuis)))
+  .map(([loc]) => loc))];
+/** `--tout` soumet tout le sitemap ; sinon les pages modifiées depuis `--jours N` (2). 200/202 seuls acceptés. */
 export async function soumettreIndexNow({ argv = [], fetchFn = globalThis.fetch, maintenant = new Date() } = {}) {
   const i = argv.indexOf('--jours');
-  const jours = i >= 0 ? Number(argv[i + 1]) : 2;
-  const depuis = argv.includes('--tout') ? null : new Date(maintenant.getTime() - jours * 86400000).toISOString().slice(0, 10);
+  const depuis = argv.includes('--tout') ? null : new Date(maintenant - (i >= 0 ? Number(argv[i + 1]) : 2) * 864e5).toISOString().slice(0, 10);
   const rep = await fetchFn(`https://${DOMAINE}/sitemap.xml`);
   if (!rep.ok) throw new Error(`sitemap illisible : HTTP ${rep.status}`);
   const urls = urlsModifiees(await rep.text(), depuis);
   if (!urls.length) return { urls, statut: null };
-  const envoi = await fetchFn('https://api.indexnow.org/indexnow', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json; charset=utf-8' },
-    body: JSON.stringify(corpsIndexNow(urls)),
-  });
-  // 200 et 202 = reçu. 403 (clé introuvable) ou 422 (URL hors domaine) : rouge.
-  if (envoi.status !== 200 && envoi.status !== 202) throw new Error(`IndexNow a répondu HTTP ${envoi.status}`);
-  return { urls, statut: envoi.status };
+  const body = JSON.stringify({ host: DOMAINE, key: INDEXNOW_CLE, keyLocation: `https://${DOMAINE}/${INDEXNOW_CLE}.txt`, urlList: urls.slice(0, 1e4) });
+  const { status } = await fetchFn('https://api.indexnow.org/indexnow', { method: 'POST', headers: { 'content-type': 'application/json; charset=utf-8' }, body });
+  if (status !== 200 && status !== 202) throw new Error(`IndexNow a répondu HTTP ${status}`);
+  return { urls, statut: status };
 }
 
 const estLanceDirectement = estLance(import.meta.url);
@@ -428,9 +368,7 @@ if (estLanceDirectement && process.argv[2] === 'indexnow') {
   const { urls, statut } = await soumettreIndexNow({ argv: process.argv.slice(3) });
   console.log(statut ? `IndexNow : ${urls.length} URL soumise(s), HTTP ${statut}.\n${urls.join('\n')}` : 'IndexNow : aucune page modifiée, rien à soumettre.');
 } else if (estLanceDirectement) {
-  // Lecture directe, sans `existsSync` avant : vérifier puis lire laisse une
-  // fenêtre où le fichier change (CodeQL, js/file-system-race). Seul un
-  // fichier ABSENT donne une série vide ; un JSON abîmé fait planter.
+  // Lecture directe sans `existsSync` (CodeQL js/file-system-race) : seul ENOENT donne une série vide.
   let serie = { points: [] };
   try {
     serie = JSON.parse(readFileSync(SERIE, 'utf8'));

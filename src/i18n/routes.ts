@@ -19,6 +19,7 @@ import {
 } from './locale';
 
 import routeSlugs from './route-slugs.json';
+import articleSlugs from './article-slugs.json';
 
 export { localeFromPathname };
 
@@ -60,6 +61,28 @@ const SLUG_TO_ROUTE: ReadonlyMap<string, RouteId> = (() => {
   }
   return map;
 })();
+
+/**
+ * Slugs d'articles traduits (plan SEO T4), par slug canonique (français).
+ * Même `.json` que `src/i18n/seo-urls.mjs`, pour la même raison que ROUTE_SLUGS.
+ */
+const ARTICLE_SLUGS: Record<string, Partial<Record<Locale, string>>> = articleSlugs;
+const ARTICLE_TO_CANON: ReadonlyMap<string, string> = new Map(
+  Object.entries(ARTICLE_SLUGS).flatMap(([canon, byLocale]) =>
+    Object.values(byLocale).map((slug) => [slug, canon] as [string, string])
+  )
+);
+
+/** Slug canonique (français) d'un article, quelle que soit la langue du slug reçu. */
+export function canonicalArticleSlug(slug: string): string {
+  return ARTICLE_TO_CANON.get(slug) ?? slug;
+}
+
+/** Slug d'un article dans une locale (le français si aucune traduction). */
+export function articleSlug(slug: string, locale: Locale): string {
+  const canon = canonicalArticleSlug(slug);
+  return ARTICLE_SLUGS[canon]?.[locale] ?? canon;
+}
 
 /** `routeId` correspondant à un slug, quelle que soit sa langue. */
 export function routeIdFromSlug(slug: string): RouteId | null {
@@ -116,6 +139,7 @@ export function localizePath(pathname: string, locale: Locale): string {
     const routeId = routeIdFromSlug(segments[0]);
     if (routeId) segments[0] = routeSlug(routeId, locale);
   }
+  if (segments[0] === 'blog' && segments[1]) segments[1] = articleSlug(segments[1], locale);
 
   const prefix = locale === DEFAULT_LOCALE ? '' : `/${locale}`;
   const body = segments.length > 0 ? `/${segments.join('/')}` : '';

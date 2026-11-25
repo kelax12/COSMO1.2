@@ -197,3 +197,27 @@ describe('slug d’une autre langue : redirection 301 (vercel.json)', () => {
     expect(cible.get('/es/:path*')).toBe('/:path*');
   });
 });
+
+// ──────────────────────────────────────────────────────────────────
+// Slugs d'articles traduits (plan SEO T4)
+// ──────────────────────────────────────────────────────────────────
+describe('slugs d articles traduits', () => {
+  it('traduit le slug d article dans les deux sens, identique côté app', () => {
+    expect(localizePath('/blog/matrice-eisenhower', 'hr')).toBe('/hr/blog/eisenhowerova-matrica');
+    expect(localizePath('/hr/blog/eisenhowerova-matrica', 'fr')).toBe('/blog/matrice-eisenhower');
+    expect(localizePath('/hr/blog/eisenhowerova-matrica', 'en')).toBe('/en/blog/matrice-eisenhower');
+    for (const p of ['/blog/matrice-eisenhower', '/hr/blog/eisenhowerova-matrica', '/blog/objectifs-de-l-annee']) {
+      for (const l of ALL) expect(appLocalizePath(p, l)).toBe(localizePath(p, l));
+    }
+  });
+
+  it('chaque ancien slug croate a sa redirection 301 vers le nouveau', async () => {
+    const { readFileSync } = await import('node:fs');
+    const slugs = JSON.parse(readFileSync(new URL('./article-slugs.json', import.meta.url), 'utf8'));
+    const { redirects } = JSON.parse(readFileSync(new URL('../../vercel.json', import.meta.url), 'utf8'));
+    for (const [canon, byLocale] of Object.entries(slugs)) {
+      if (!byLocale.hr) continue;
+      expect(redirects).toContainEqual({ source: `/hr/blog/${canon}`, destination: `/hr/blog/${byLocale.hr}`, permanent: true });
+    }
+  });
+});

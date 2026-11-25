@@ -5,6 +5,7 @@ import { useSeoMeta } from '@/lib/useSeoMeta';
 import { servedArticles } from '@/content/blog/index.mjs';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
+import { articleSlug } from '@/i18n/routes';
 import { useForcedLightTheme } from '@/hooks/use-forced-light-theme';
 
 const formatArticleDate = (iso: string) =>
@@ -52,7 +53,7 @@ const BlogIndexPage: React.FC = () => {
           {articles.map((article) => (
             <Link
               key={article.slug}
-              to={`/blog/${article.slug}`}
+              to={`/blog/${articleSlug(article.slug, locale)}`}
               className="block rounded-2xl border border-slate-900/10 bg-slate-50 hover:bg-slate-100 transition-colors p-6 group"
             >
               <h2

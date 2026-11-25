@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, Navigate, useParams } from 'react-router';
 import { ArrowRight, ChevronRight, Clock } from 'lucide-react';
 import { useSeoMeta } from '@/lib/useSeoMeta';
-import { canonicalUrl } from '@/i18n/routes';
+import { articleSlug, canonicalArticleSlug, canonicalUrl } from '@/i18n/routes';
 import { getArticle, relatedArticles } from '@/content/blog/index.mjs';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
@@ -15,10 +15,10 @@ const BlogArticlePage: React.FC = () => {
   useForcedLightTheme();
   const { t, locale } = useT('landing');
   const { slug } = useParams<{ slug: string }>();
-  // Le slug ne se traduit pas : /en/blog/<slug> est la version anglaise du MÊME
+  // Le slug peut être traduit (article-slugs.json) : on revient au slug canonique. MÊME
   // article. `getArticle` sert la langue demandée, ou le français si l'article
   // n'est pas encore traduit, et dit laquelle par `contentLocale`.
-  const article = slug ? getArticle(slug, locale) : undefined;
+  const article = slug ? getArticle(canonicalArticleSlug(slug), locale) : undefined;
 
   useSeoMeta({
     // Sans suffixe de marque — doit rester identique au prérendu
@@ -86,7 +86,7 @@ const BlogArticlePage: React.FC = () => {
             {relatedArticles(article, locale).map((a) => (
               <Link
                 key={a.slug}
-                to={`/blog/${a.slug}`}
+                to={`/blog/${articleSlug(a.slug, locale)}`}
                 className="block rounded-xl border border-slate-900/10 bg-slate-50 hover:bg-slate-100 transition-colors px-5 py-4"
               >
                 <span className="font-medium text-slate-900" lang={a.contentLocale}>

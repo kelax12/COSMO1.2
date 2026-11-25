@@ -59,6 +59,28 @@ export const ROUTE_SLUGS = JSON.parse(
   readFileSync(join(HERE, 'route-slugs.json'), 'utf8')
 );
 
+/**
+ * Slugs d'articles traduits (plan SEO T4), par slug canonique (français).
+ * Une langue absente garde le slug français. Miroir lu par src/i18n/routes.ts.
+ */
+export const ARTICLE_SLUGS = JSON.parse(
+  readFileSync(join(HERE, 'article-slugs.json'), 'utf8')
+);
+
+const ARTICLE_TO_CANON = new Map();
+for (const [canon, byLocale] of Object.entries(ARTICLE_SLUGS)) {
+  for (const slug of Object.values(byLocale)) ARTICLE_TO_CANON.set(slug, canon);
+}
+
+/** Slug canonique (français) d'un article, quelle que soit la langue du slug reçu. */
+export const canonicalArticleSlug = (slug) => ARTICLE_TO_CANON.get(slug) ?? slug;
+
+/** Slug d'un article dans une locale. */
+export const articleSlug = (slug, locale) => {
+  const canon = canonicalArticleSlug(slug);
+  return ARTICLE_SLUGS[canon]?.[locale] ?? canon;
+};
+
 /** Index inverse `slug → routeId`, toutes langues confondues. */
 const SLUG_TO_ROUTE = new Map();
 for (const [routeId, byLocale] of Object.entries(ROUTE_SLUGS)) {
@@ -87,6 +109,7 @@ export function localizePath(pathname, locale) {
     const routeId = SLUG_TO_ROUTE.get(segments[0]);
     if (routeId) segments[0] = routeSlug(routeId, locale);
   }
+  if (segments[0] === 'blog' && segments[1]) segments[1] = articleSlug(segments[1], locale);
 
   const prefix = locale === DEFAULT_LOCALE ? '' : `/${locale}`;
   const body = segments.length > 0 ? `/${segments.join('/')}` : '';

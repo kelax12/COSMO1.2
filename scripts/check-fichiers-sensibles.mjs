@@ -131,8 +131,7 @@ export const EXCEPTIONS = [
   {
     chemin: 'public/downloads/habit-tracker-2027.pdf',
     blob: '2bb0e9830651f4481f48407be49d85108aabbfea',
-    motif: 'grille vierge de suivi d habitudes offerte par l article `habit-tracker-a-imprimer` '
-      + '(plan SEO C1, généré par jsPDF, aucune donnée réelle).',
+    motif: 'grille vierge offerte par l article `habit-tracker-a-imprimer` (jsPDF, aucune donnée).',
   },
 ];
 
