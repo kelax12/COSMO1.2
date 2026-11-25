@@ -45,8 +45,8 @@ export const ROUTES: Route[] = [
     ],
     content: GUIDE_CONTENT,
   },
-  { path: '/signup', meta: fromCatalog('signup'), content: SIGNUP_CONTENT },
-  { path: '/login', meta: fromCatalog('login'), content: LOGIN_CONTENT },
+  { path: '/signup', noindex: true, meta: fromCatalog('signup'), content: SIGNUP_CONTENT },
+  { path: '/login', noindex: true, meta: fromCatalog('login'), content: LOGIN_CONTENT },
   {
     path: '/a-propos',
     copy: 'about',
@@ -72,7 +72,7 @@ export const ROUTES: Route[] = [
   BLOG_INDEX_ROUTE,
   ...ARTICLE_ROUTES,
   ...USE_CASE_ROUTES,
-  { path: '/cgu', copy: 'terms', meta: fromCatalog('terms'), content: TERMS_CONTENT },
-  { path: '/mentions-legales', copy: 'legalNotice', meta: fromCatalog('legalNotice'), content: LEGAL_NOTICE_CONTENT },
-  { path: '/politique-confidentialite', copy: 'privacy', meta: fromCatalog('privacy'), content: PRIVACY_CONTENT },
+  { path: '/cgu', noindex: true, copy: 'terms', meta: fromCatalog('terms'), content: TERMS_CONTENT },
+  { path: '/mentions-legales', noindex: true, copy: 'legalNotice', meta: fromCatalog('legalNotice'), content: LEGAL_NOTICE_CONTENT },
+  { path: '/politique-confidentialite', noindex: true, copy: 'privacy', meta: fromCatalog('privacy'), content: PRIVACY_CONTENT },
 ];

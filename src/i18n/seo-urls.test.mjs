@@ -1,10 +1,12 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
 import {
   BCP47_TAG,
   INDEXABLE_LOCALES,
   ROUTE_SLUGS,
   SITE_ORIGIN,
   canonicalUrl,
+  HREFLANG,
   hreflangLinks,
   localizePath,
   routeSlug,
@@ -109,7 +111,7 @@ describe('hreflangLinks', () => {
     // Google ignore silencieusement tout le groupe si une version ne se déclare
     // pas elle-même.
     const links = hreflangLinks('/a-propos');
-    expect(links).toContain(`hreflang="${BCP47_TAG.fr}" href="${SITE_ORIGIN}/a-propos"`);
+    expect(links).toContain(`hreflang="${HREFLANG.fr}" href="${SITE_ORIGIN}/a-propos"`);
   });
 
   it('n’annonce jamais une locale non indexable', () => {
@@ -118,7 +120,7 @@ describe('hreflangLinks', () => {
     const links = hreflangLinks('/a-propos', ALL);
     for (const locale of ALL) {
       if (INDEXABLE_LOCALES.includes(locale)) continue;
-      expect(links).not.toContain(`hreflang="${BCP47_TAG[locale]}"`);
+      expect(links).not.toContain(`hreflang="${HREFLANG[locale]}"`);
     }
   });
 
@@ -133,6 +135,16 @@ describe('hreflangLinks', () => {
 });
 
 describe('sitemapAlternates', () => {
+  it('porte x-default, comme le <head>', () => {
+    expect(sitemapAlternates('/a-propos', ['fr', 'en'])).toContain(`hreflang="x-default" href="${SITE_ORIGIN}/a-propos"`);
+  });
+
+  it('déclare la langue seule, sans région', () => {
+    // Le contenu ne vise aucun pays : `en-US` n'annoncerait rien au Royaume-Uni.
+    const out = hreflangLinks('/a-propos', ['fr', 'en']) + sitemapAlternates('/a-propos', ['fr', 'en']);
+    expect(out).not.toMatch(/hreflang="[a-z]{2}-[A-Z]{2}"/);
+  });
+
   it('n’émet rien pour une page mono-langue', () => {
     // Les articles de blog restent français : un groupe d'alternates à une
     // seule entrée n'a aucun sens.
@@ -147,7 +159,7 @@ describe('sitemapAlternates', () => {
       return;
     }
     for (const locale of expected) {
-      expect(out).toContain(`hreflang="${BCP47_TAG[locale]}"`);
+      expect(out).toContain(`hreflang="${HREFLANG[locale]}"`);
     }
   });
 });
@@ -159,5 +171,28 @@ describe('cohérence avec le module applicatif', () => {
     for (const locale of INDEXABLE_LOCALES) {
       expect(SUPPORTED_LOCALES).toContain(locale);
     }
+  });
+});
+
+describe('slug d’une autre langue : redirection 301 (vercel.json)', () => {
+  // Sans elle, `/en/a-propos` rendait la coquille SPA en HTTP 200 (soft 404).
+  const vercel = JSON.parse(readFileSync(new URL('../../vercel.json', import.meta.url), 'utf8'));
+  const cible = new Map(vercel.redirects.map((r) => [r.source, r.destination]));
+  const PREFIXE = { fr: '', en: '/en', hr: '/hr' };
+
+  it('chaque slug étranger sous chaque préfixe servi redirige vers le bon slug', () => {
+    for (const parLocale of Object.values(ROUTE_SLUGS)) {
+      for (const [locale, prefixe] of Object.entries(PREFIXE)) {
+        for (const slug of Object.values(parLocale)) {
+          if (slug === parLocale[locale]) continue;
+          expect(cible.get(`${prefixe}/${slug}`)).toBe(`${prefixe}/${parLocale[locale]}`);
+        }
+      }
+    }
+  });
+
+  it('une locale non servie (`es`) redirige vers le français', () => {
+    expect(cible.get('/es')).toBe('/');
+    expect(cible.get('/es/:path*')).toBe('/:path*');
   });
 });

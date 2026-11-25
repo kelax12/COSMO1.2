@@ -34,6 +34,12 @@ export interface Route {
   meta: LocaleMeta;
   content: LocaleContent;
   extraLd?: (locale: Locale) => LdEntry[];
+  /**
+   * Page prérendue mais hors index (auth, documents contractuels) : sort en
+   * `noindex, follow`, SANS hreflang. Un groupe hreflang ne lie que des pages
+   * indexables ; la meta reprend l'en-tête `X-Robots-Tag` de vercel.json.
+   */
+  noindex?: boolean;
 }
 
 /** Valeur d'une locale, ou une erreur NOMMÉE : un `undefined` ne se glisse pas dans une page. */

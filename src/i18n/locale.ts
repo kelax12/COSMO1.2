@@ -21,7 +21,7 @@ export const ALL_LOCALES: readonly Locale[] = ['fr', 'en', 'es', 'hr'];
  *
  * `fr`, `en` et `hr`. `vercel.json` ne pose de `noindex` sur l'anglais que pour les
  * trois pages légales (`/en/(terms|legal-notice|privacy-policy)`) et sur les
- * pages d'invitation et de mot de passe. `hr` est servi mais pas indexable (`noindex` sur `/hr/` dans `vercel.json`) ; `es` n'est pas servi.
+ * pages d'invitation et de mot de passe. `hr` est servi et indexable ; `es` n'est pas servi (`/es/*` redirige vers le français).
  */
 export const SUPPORTED_LOCALES: readonly Locale[] = ['fr', 'en', 'hr'];
 

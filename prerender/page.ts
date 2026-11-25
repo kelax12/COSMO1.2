@@ -96,8 +96,14 @@ export function buildPage(html: string, route: Route, locale: Locale, alternates
   // `inLanguage` des JSON-LD génériques d'index.html (Organization, WebSite…).
   out = out.replace(/"inLanguage":\s*"[^"]*"/g, `"inLanguage": "${BCP47_TAG[locale]}"`);
 
+  // Hors index : la meta suit l'en-tête X-Robots-Tag, et pas de hreflang
+  // (un groupe hreflang ne lie que des pages indexables).
+  if (route.noindex) {
+    out = out.replace(/<meta name="robots" content="[^"]*" \/>/, '<meta name="robots" content="noindex, follow" />');
+  }
+
   // hreflang : alternates réciproques + x-default.
-  const links = hreflangLinks(route.path, alternates);
+  const links = route.noindex ? '' : hreflangLinks(route.path, alternates);
   if (links) out = out.replace('</head>', `    ${links}\n  </head>`);
 
   // JSON-LD spécifique à la route, injecté avant </head>.

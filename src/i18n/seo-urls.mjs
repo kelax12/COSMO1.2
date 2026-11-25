@@ -13,7 +13,7 @@
 // au sitemap. Tant qu'une locale n'est pas ici, `vercel.json` la met en
 // `noindex`, et `npm run i18n:check` échoue si les deux se contredisent.
 //
-// `en` est indexable depuis le 2026-09-08 (chantier C-20). La condition de
+// Indexables : `fr`, `en` et `hr`. `en` est indexable depuis le 2026-09-08 (chantier C-20). La condition de
 // sortie était le CONTENU, pas la config : le corps anglais a été mesuré page
 // par page avant la bascule : accueil, guide, à-propos, entreprise, les 4 pages
 // métier (579-815 mots) et les 11 articles (657-1985 mots). Aucune page ne
@@ -40,6 +40,14 @@ export const DEFAULT_LOCALE = 'fr';
 
 /** Locales réellement indexables. Voir l'en-tête pour la distinction. */
 export const INDEXABLE_LOCALES = ['fr', 'en', 'hr'];
+
+/**
+ * Code `hreflang` : la LANGUE seule (ISO 639-1), sans région. Le contenu ne
+ * vise aucun pays : `en-US` n'annonçait rien aux anglophones du Royaume-Uni ou
+ * d'Inde, `fr-FR` rien à la Belgique ni au Québec. `BCP47_TAG` reste pour
+ * `og:locale` et `inLanguage`.
+ */
+export const HREFLANG = { fr: 'fr', en: 'en', es: 'es', hr: 'hr' };
 
 /** Étiquettes BCP 47 — miroir de `BCP47_TAG` dans src/i18n/locale.ts. */
 export const BCP47_TAG = { fr: 'fr-FR', en: 'en-US', es: 'es-ES', hr: 'hr-HR' };
@@ -110,7 +118,7 @@ export function hreflangLinks(pathname, availableLocales = INDEXABLE_LOCALES) {
 
   const links = locales.map(
     (locale) =>
-      `<link rel="alternate" hreflang="${BCP47_TAG[locale]}" href="${canonicalUrl(pathname, locale)}" />`
+      `<link rel="alternate" hreflang="${HREFLANG[locale]}" href="${canonicalUrl(pathname, locale)}" />`
   );
   links.push(
     `<link rel="alternate" hreflang="x-default" href="${canonicalUrl(pathname, DEFAULT_LOCALE)}" />`
@@ -128,10 +136,14 @@ export function sitemapAlternates(pathname, availableLocales = INDEXABLE_LOCALES
   const locales = availableLocales.filter((l) => INDEXABLE_LOCALES.includes(l));
   if (locales.length < 2) return '';
 
-  return locales
-    .map(
-      (locale) =>
-        `    <xhtml:link rel="alternate" hreflang="${BCP47_TAG[locale]}" href="${canonicalUrl(pathname, locale)}" />`
-    )
-    .join('\n');
+  // Même jeu que le <head>, x-default compris : les deux déclarations sont
+  // identiques.
+  const links = locales.map(
+    (locale) =>
+      `    <xhtml:link rel="alternate" hreflang="${HREFLANG[locale]}" href="${canonicalUrl(pathname, locale)}" />`
+  );
+  links.push(
+    `    <xhtml:link rel="alternate" hreflang="x-default" href="${canonicalUrl(pathname, DEFAULT_LOCALE)}" />`
+  );
+  return links.join('\n');
 }

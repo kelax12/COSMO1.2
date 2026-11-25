@@ -6,6 +6,7 @@ export declare const SITE_ORIGIN: string;
 export declare const DEFAULT_LOCALE: Locale;
 /** Locales reellement indexables (l'ensemble des locales servies peut etre plus large). */
 export declare const INDEXABLE_LOCALES: Locale[];
+export declare const HREFLANG: Record<Locale, string>;
 export declare const BCP47_TAG: Record<Locale, string>;
 export declare const OG_LOCALE: Record<Locale, string>;
 export declare const ROUTE_SLUGS: Record<string, Partial<Record<Locale, string>>>;
