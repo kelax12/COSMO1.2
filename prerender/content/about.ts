@@ -21,7 +21,8 @@ export const ABOUT_CONTENT: LocaleContent = {
         <h2>Cosmo, The Cosmo App ou thecosmo ?</h2>
         <p>Les trois désignent la même application : Cosmo, accessible à l'adresse thecosmo.app. On nous cherche aussi sous « Cosmo app », « The Cosmo » ou « thecosmo app », c'est toujours nous. Plusieurs autres produits sans rapport portent le nom « Cosmo » (une radio allemande, des applications mobiles diverses) : Cosmo est une application web de productivité, sans téléchargement, et son seul site officiel est thecosmo.app.</p>
 
-        <h2>Nous écrire</h2>
+        <h2 id="fondateur">Nous écrire</h2>
+        <p>Cosmo a été fondé par Axel Longatte, qui en est l'éditeur et le directeur de la publication : les articles du blog sont publiés sous sa responsabilité.</p>
         <p>Le projet est développé par une équipe indépendante, en France. Une question, un bug, une idée de fonctionnalité, une demande presse : écrivez à contact@thecosmo.app : les retours d'utilisateurs orientent réellement la feuille de route.</p>
         <p><a href="/">Accueil</a> · <a href="/signup">Créer un compte gratuit</a> · <a href="/blog">Blog</a> · <a href="/guide">Guide d'utilisation</a></p>`,
   en: `<h1>About Cosmo</h1>
@@ -42,7 +43,8 @@ export const ABOUT_CONTENT: LocaleContent = {
         <h2>Cosmo, The Cosmo App or thecosmo?</h2>
         <p>All three refer to the same application: Cosmo, available at thecosmo.app. People also look for us as "Cosmo app", "The Cosmo" or "thecosmo app", and that is always us. Several unrelated products carry the name Cosmo (a German radio station, various mobile apps): Cosmo is a web productivity application, with nothing to download, and its only official site is thecosmo.app.</p>
 
-        <h2>Write to us</h2>
+        <h2 id="fondateur">Write to us</h2>
+        <p>Cosmo was founded by Axel Longatte, who is its publisher and editor-in-chief: the blog articles are published under his responsibility.</p>
         <p>The project is developed by an independent team, in France. A question, a bug, a feature idea, a press request: write to contact@thecosmo.app, because user feedback genuinely steers the roadmap.</p>
         <p><a href="/en/">Home</a> · <a href="/en/signup">Create a free account</a> · <a href="/en/blog">Blog</a> · <a href="/en/guide">User guide</a></p>`,
   hr: `<h1>O Cosmu</h1>
@@ -63,7 +65,8 @@ export const ABOUT_CONTENT: LocaleContent = {
         <h2>Cosmo, The Cosmo App ili thecosmo?</h2>
         <p>Sva tri naziva označavaju istu aplikaciju: Cosmo, dostupan na adresi thecosmo.app. Traže nas i kao „Cosmo app“, „The Cosmo“ ili „thecosmo app“, i to smo uvijek mi. Nekoliko drugih nepovezanih proizvoda nosi ime „Cosmo“ (njemačka radijska postaja, razne mobilne aplikacije): Cosmo je web-aplikacija za produktivnost, bez preuzimanja, a njegova jedina službena stranica je thecosmo.app.</p>
 
-        <h2>Pišite nam</h2>
+        <h2 id="fondateur">Pišite nam</h2>
+        <p>Cosmo je osnovao Axel Longatte, koji je ujedno njegov izdavač i glavni urednik: članci na blogu objavljuju se pod njegovom odgovornošću.</p>
         <p>Projekt razvija neovisan tim u Francuskoj. Pitanje, greška, ideja za funkciju, upit medija: pišite na contact@thecosmo.app, jer povratne informacije korisnika zaista usmjeravaju plan razvoja.</p>
         <p><a href="/hr/">Početna</a> · <a href="/hr/signup">Izradite besplatni račun</a> · <a href="/hr/blog">Blog</a> · <a href="/hr/guide">Vodič za korištenje</a></p>`,
 };

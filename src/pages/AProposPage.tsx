@@ -6,8 +6,8 @@ import { useT } from '@/i18n/useT';
 import { CONTACT_EMAIL } from '@/lib/contact.mjs';
 import { useForcedLightTheme } from '@/hooks/use-forced-light-theme';
 
-const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-  <div className="mb-10">
+const Section: React.FC<{ title: string; id?: string; children: React.ReactNode }> = ({ title, id, children }) => (
+  <div id={id} className="mb-10 scroll-mt-20">
     <h2 className="text-xl font-bold text-slate-900 mb-4 pb-2 border-b border-slate-900/10">{title}</h2>
     <div className="text-slate-600 space-y-3 leading-relaxed">{children}</div>
   </div>
@@ -60,8 +60,9 @@ const AProposPage: React.FC = () => {
           </p>
         </Section>
 
-        <Section title={t('about.whoTitle')}>
+        <Section title={t('about.whoTitle')} id="fondateur">
           <p>{t('about.whoP')}</p>
+          <p>{t('about.founderP')}</p>
           <p>
             {t('about.contactP')}{' '}
             <a href={`mailto:${CONTACT_EMAIL}`} className="text-blue-600 hover:underline">

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import './content/all-locales.mjs';
 import { ARTICLES, articleLocales } from './content/blog/index.mjs';
 import { isSupportedLocale } from './i18n/locale';
 import { localizePath } from './i18n/routes';

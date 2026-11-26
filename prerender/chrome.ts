@@ -19,6 +19,7 @@ export interface UiChrome {
   readArticle: string;
   readingTime: (n: number) => string;
   readNext: string;
+  byAuthor: string;
   allArticles: string;
   tryFree: string;
   home: string;
@@ -36,6 +37,7 @@ const UI: Partial<Record<Locale, UiChrome>> = {
     readArticle: "Lire l'article",
     readingTime: (n) => `${n} min de lecture`,
     readNext: 'À lire ensuite',
+    byAuthor: 'Par',
     allArticles: '← Tous les articles',
     tryFree: 'Essayer Cosmo gratuitement',
     home: 'Accueil',
@@ -51,6 +53,7 @@ const UI: Partial<Record<Locale, UiChrome>> = {
     readArticle: 'Read the article',
     readingTime: (n) => `${n} min read`,
     readNext: 'Read next',
+    byAuthor: 'By',
     allArticles: '← All articles',
     tryFree: 'Try Cosmo for free',
     home: 'Home',
@@ -66,6 +69,7 @@ const UI: Partial<Record<Locale, UiChrome>> = {
     readArticle: 'Pročitajte članak',
     readingTime: (n) => `${n} min čitanja`,
     readNext: 'Pročitajte i ovo',
+    byAuthor: 'Autor:',
     allArticles: '← Svi članci',
     tryFree: 'Isprobajte Cosmo besplatno',
     home: 'Početna',

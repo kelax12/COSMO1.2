@@ -31,14 +31,33 @@ import { article as objectifsAnnee } from './objectifs-de-l-annee.mjs';
 import { article as habitTracker } from './habit-tracker-a-imprimer.mjs';
 import { article as bilanAnnee } from './bilan-de-l-annee.mjs';
 import { article as resolutions } from './tenir-ses-resolutions.mjs';
+import { article as vsTicktick } from './cosmo-vs-ticktick.mjs';
+import { article as vsNotion } from './cosmo-vs-notion.mjs';
+import { article as vsTrello } from './cosmo-vs-trello.mjs';
+import { article as vsGoogleTasks } from './cosmo-vs-google-tasks.mjs';
+import { article as vsClickup } from './cosmo-vs-clickup.mjs';
+import { article as vsHabitica } from './cosmo-vs-habitica.mjs';
+import { article as vsMicrosoftToDo } from './cosmo-vs-microsoft-to-do.mjs';
+import { article as vsAnyDo } from './cosmo-vs-any-do.mjs';
 
 // Miroir de `DEFAULT_LOCALE` (src/i18n/locale.ts). Recopié et non importé parce
 // que ce module doit rester chargeable par Node brut depuis prerender/, donc
 // sans TypeScript. La parité est tenue par src/content/content-locales.test.ts.
 const DEFAULT_LOCALE = 'fr';
 
+/** Auteur des articles (plan SEO T2) : une personne identifiable, l'organisation reste éditrice. */
+export const BLOG_AUTHOR = { name: 'Axel Longatte' };
+
 // Ordre = du plus récent au plus ancien (affichage index + sitemap).
 export const ARTICLES = [
+  vsClickup,
+  vsHabitica,
+  vsMicrosoftToDo,
+  vsAnyDo,
+  vsTicktick,
+  vsNotion,
+  vsTrello,
+  vsGoogleTasks,
   objectifsAnnee,
   habitTracker,
   bilanAnnee,

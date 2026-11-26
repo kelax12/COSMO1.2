@@ -3,7 +3,8 @@ import { Link, Navigate, useParams } from 'react-router';
 import { ArrowRight, ChevronRight, Clock } from 'lucide-react';
 import { useSeoMeta } from '@/lib/useSeoMeta';
 import { articleSlug, canonicalArticleSlug, canonicalUrl } from '@/i18n/routes';
-import { getArticle, relatedArticles } from '@/content/blog/index.mjs';
+import { BLOG_AUTHOR, getArticle, relatedArticles } from '@/content/blog/index.mjs';
+import { useLocalizedPath } from '@/i18n/useLocalizedPath';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import { useForcedLightTheme } from '@/hooks/use-forced-light-theme';
@@ -15,6 +16,7 @@ const BlogArticlePage: React.FC = () => {
   useForcedLightTheme();
   const { t, locale } = useT('landing');
   const { slug } = useParams<{ slug: string }>();
+  const aboutPath = useLocalizedPath();
   // Le slug peut être traduit (article-slugs.json) : on revient au slug canonique. MÊME
   // article. `getArticle` sert la langue demandée, ou le français si l'article
   // n'est pas encore traduit, et dit laquelle par `contentLocale`.
@@ -61,6 +63,10 @@ const BlogArticlePage: React.FC = () => {
               {article.title}
             </h1>
             <div className="flex items-center gap-4 text-sm text-slate-500">
+              <span>
+                {t('blog.byAuthor')}{' '}
+                <Link to={`${aboutPath('about')}#fondateur`} className="text-slate-700 hover:underline">{BLOG_AUTHOR.name}</Link>
+              </span>
               <time dateTime={article.datePublished}>{formatArticleDate(article.datePublished)}</time>
               <span className="flex items-center gap-1">
                 <Clock size={14} />

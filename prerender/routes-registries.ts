@@ -6,7 +6,7 @@
 // page qui n'existe pas (erreur Search Console), ni une page anglaise au corps
 // français. Le slug, lui, est celui de la publication et ne se traduit pas.
 import type { Locale } from '@/i18n/locale';
-import { ARTICLES, articlesFor, relatedArticles } from '../src/content/blog/index.mjs';
+import { ARTICLES, BLOG_AUTHOR, articlesFor, relatedArticles } from '../src/content/blog/index.mjs';
 import type { BlogArticle } from '../src/content/blog/index.mjs';
 import { USE_CASES } from '../src/content/use-cases.mjs';
 import type { UseCase } from '../src/content/use-cases.mjs';
@@ -139,7 +139,7 @@ function articleLd(a: BlogArticle, locale: Locale): LdEntry[] {
         inLanguage: BCP47_TAG[locale],
         datePublished: a.datePublished,
         dateModified: a.dateModified,
-        author: ORGANISATION,
+        author: { '@type': 'Person', name: BLOG_AUTHOR.name, url: `${canonicalUrl('/a-propos', locale)}#fondateur` },
         publisher: ORGANISATION,
         mainEntityOfPage: url,
       },
@@ -155,6 +155,7 @@ function articleContent(a: BlogArticle): LocaleContent {
     const at = (path: string) => localizePath(path, locale);
     return `<p><a href="${at('/')}">${u.home}</a> › <a href="${at('/blog')}">${u.blog}</a></p>
         <h1>${c.title}</h1>
+        <p>${u.byAuthor} <a href="${at('/a-propos')}#fondateur">${BLOG_AUTHOR.name}</a></p>
         ${c.html}
         <h2>${u.readNext}</h2>
         <ul>
