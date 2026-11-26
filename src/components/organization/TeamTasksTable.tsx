@@ -43,7 +43,7 @@ interface TeamTasksTableProps {
   onSort: (field: 'name' | 'priority' | 'deadline' | 'estimatedTime') => void;
 }
 
-const ESTIMATED_ROW = 58;
+const ESTIMATED_ROW = 63;
 const NO_STATUSES: ProjectStatus[] = [];
 
 const TeamTasksTable = ({
@@ -60,9 +60,18 @@ const TeamTasksTable = ({
   useLayoutEffect(() => {
     const el = tableRef.current;
     if (!el) return;
-    const top = el.getBoundingClientRect().top + window.scrollY;
-    if (Math.abs(top - scrollMargin) > 1) setScrollMargin(top);
-  }, [lines.length, columns.length, scrollMargin]);
+    const sync = () => {
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      setScrollMargin((prev) => (Math.abs(top - prev) > 1 ? top : prev));
+    };
+    sync();
+    // Ce qui est AU-DESSUS du tableau (bandeaux, filtres) peut changer de
+    // hauteur sans re-rendre le tableau : une marge périmée laissait un
+    // espaceur bas jusqu'au bout de la page.
+    const ro = new ResizeObserver(sync);
+    ro.observe(document.body);
+    return () => ro.disconnect();
+  }, [lines.length, columns.length]);
 
   const virtualizer = useWindowVirtualizer({
     count: lines.length,
@@ -73,7 +82,11 @@ const TeamTasksTable = ({
   });
   const items = virtualizer.getVirtualItems();
   const padTop = items.length ? items[0].start - scrollMargin : 0;
-  const padBottom = items.length ? virtualizer.getTotalSize() - (items[items.length - 1].end - scrollMargin) : 0;
+  // Dernière ligne montée = dernière ligne tout court : aucun espaceur bas.
+  const lastItem = items[items.length - 1];
+  const padBottom = lastItem && lastItem.index < lines.length - 1
+    ? Math.max(0, virtualizer.getTotalSize() - (lastItem.end - scrollMargin))
+    : 0;
   const show = (c: TaskColumnId) => columns.includes(c);
   const colCount = 4 + columns.length;
 

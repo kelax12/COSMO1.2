@@ -7,6 +7,7 @@ import {
   type TeamTask, type TeamTaskStatus, type TeamProjectHealth, type CreateTeamTaskInput, type UpdateTeamTaskInput,
 } from '@/modules/team-projects';
 import { useTeamCategories, descendantIdSet, categoryPath, formatPath } from '@/modules/team-categories';
+import { categoryOptionsOf } from './team-tasks-table.helpers';
 import { useOrgSettings, useProjectStatuses } from '@/modules/org-config';
 import { showUndoToast } from '@/lib/undo-toast';
 import { filterByStatus, useProjectsUiPrefs, STATUS_META, STATUS_ORDER, PRIORITY_META, priorityLabelOf } from './team-projects.helpers';
@@ -362,7 +363,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, canEditDependencies, isAd
     setHealth: (task: TeamTask, health: TeamProjectHealth) =>
       updateTask.mutate({ taskId: task.id, input: { health } }),
     setPriority,
-    setDeadline,
+    setDeadline, update: (task, input) => updateTask.mutate({ taskId: task.id, input }), projectOptions: projects, categoryOptions: categoryOptionsOf(categories),
     assign: canAssignSomeone ? setAssigningTask : undefined,
     schedule: setSchedulingTask,
     remove: removeWithUndo,

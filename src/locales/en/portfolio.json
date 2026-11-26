@@ -320,7 +320,16 @@
       "createdAt": "Created on"
     },
     "priorityAria": "Change the priority of {{name}}",
-    "deadlineAria": "Change the due date of {{name}}"
+    "deadlineAria": "Change the due date of {{name}}",
+    "editNameAria": "Rename {{name}}",
+    "nameLabel": "Task name",
+    "save": "Save",
+    "editProjectAria": "Change the project of {{name}}",
+    "editCategoryAria": "Change the category of {{name}}",
+    "noCategory": "No category",
+    "editDurationAria": "Change the time estimate of {{name}}",
+    "durationMinutes": "Duration in minutes",
+    "editAssigneesAria": "Change the collaborators of {{name}}"
   },
   "okrFilters": {
     "barAria": "Filter objectives",

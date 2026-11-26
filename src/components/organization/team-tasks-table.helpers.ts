@@ -7,6 +7,11 @@
 import type { TeamTask } from '@/modules/team-projects';
 import { isGroupableSort, deadlineBucketOf, DEADLINE_BUCKETS, type TaskSortCriterion } from './task-filters';
 import { STATUS_ORDER } from './team-projects.helpers';
+import { categoryPath, formatPath, type TeamCategory } from '@/modules/team-categories';
+
+/** Options du panneau « Catégorie » : chaque catégorie avec son chemin complet. */
+export const categoryOptionsOf = (categories: readonly TeamCategory[]) =>
+  categories.map((c) => ({ id: c.id, label: formatPath(categoryPath(c.id, categories as TeamCategory[])) }));
 
 /** Date locale du jour, convention en-CA du projet (`YYYY-MM-DD`). */
 const todayIsoDefault = (): string => new Date().toLocaleDateString('en-CA');

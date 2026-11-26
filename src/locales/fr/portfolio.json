@@ -328,7 +328,16 @@
       "createdAt": "Créée le"
     },
     "priorityAria": "Changer la priorité de {{name}}",
-    "deadlineAria": "Changer l'échéance de {{name}}"
+    "deadlineAria": "Changer l'échéance de {{name}}",
+    "editNameAria": "Renommer {{name}}",
+    "nameLabel": "Nom de la tâche",
+    "save": "Enregistrer",
+    "editProjectAria": "Changer le projet de {{name}}",
+    "editCategoryAria": "Changer la catégorie de {{name}}",
+    "noCategory": "Aucune catégorie",
+    "editDurationAria": "Changer le temps de réalisation de {{name}}",
+    "durationMinutes": "Durée en minutes",
+    "editAssigneesAria": "Changer les collaborateurs de {{name}}"
   },
   "okrFilters": {
     "barAria": "Filtrer les objectifs",

@@ -1,5 +1,5 @@
 import { forwardRef, memo, useState } from 'react';
-import { Pencil, Trash2, MoreHorizontal, UserPlus, CalendarPlus, MessageSquare, ListPlus } from 'lucide-react';
+import { Pencil, Trash2, MoreHorizontal, UserPlus, CalendarPlus, MessageSquare, ListPlus, ChevronDown } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -15,16 +15,18 @@ import { resolveListColor } from '@/pages/tasks/list-colors';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DateCalendarPanel, DATE_PANEL_CLASS } from '@/components/ui/date-picker';
 import type { OrgMember } from '@/modules/organizations';
-import type { TeamProject, TeamProjectHealth, TeamTask, TeamTaskStatus } from '@/modules/team-projects';
+import type { TeamProject, TeamProjectHealth, TeamTask, TeamTaskStatus, UpdateTeamTaskInput } from '@/modules/team-projects';
+import { NameCell, ProjectCell, CategoryCell, DurationCell } from './TeamTasksInlineCells';
 import HealthStateMenu from './HealthStateMenu';
 import type { ProjectStatus } from '@/modules/org-config';
 import { formatDeadlineSmart } from '@/components/task-table/helpers';
 import { useT } from '@/i18n/useT';
 import {
-  projectColor, isTaskOverdue, formatDuration, STATUS_ORDER, STATUS_META, taskDisplayStatus,
+  projectColor, isTaskOverdue, STATUS_ORDER, STATUS_META, taskDisplayStatus,
   PRIORITY_META, priorityLabelOf,
 } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
+import CosmoTooltip from '@/components/ui/cosmo-tooltip';
 import { TeamBlockedLock } from '@/components/task-table/BlockedLock';
 import TaskSelectCheckbox from './TaskSelectCheckbox';
 import type { TaskColumnId } from './team-tasks-table.helpers';
@@ -39,6 +41,10 @@ export interface TeamTasksRowHandlers {
   setHealth: (task: TeamTask, health: TeamProjectHealth) => void;
   setPriority: (task: TeamTask, priority: number) => void;
   setDeadline: (task: TeamTask, deadline: string) => void;
+  /** Édition en ligne des autres champs (nom, projet, durée, catégorie). */
+  update: (task: TeamTask, input: UpdateTeamTaskInput) => void;
+  projectOptions: readonly { id: string; name: string; color: string }[];
+  categoryOptions: readonly { id: string; label: string }[];
   assign?: (task: TeamTask) => void;
   schedule: (task: TeamTask) => void;
   remove: (task: TeamTask) => void;
@@ -86,7 +92,7 @@ const AssigneesCell = ({ task, memberById, currentUserId }: Pick<TeamTasksTableR
   }
   const names = [mine ? t('taskTable.you') : null, ...others.map((id) => memberById.get(id)?.displayName)].filter(Boolean).join(', ');
   return (
-    <span className="inline-flex items-center gap-1.5 min-w-0" title={names}>
+    <span className="inline-flex items-center gap-1.5 min-w-0" aria-label={names}>
       {mine && (
         <span className="shrink-0 rounded-full px-2 py-0.5 text-caption font-semibold bg-[rgb(var(--color-accent)/0.12)] text-[rgb(var(--color-accent))]">
           {t('taskTable.you')}
@@ -97,9 +103,11 @@ const AssigneesCell = ({ task, memberById, currentUserId }: Pick<TeamTasksTableR
           {others.slice(0, 3).map((id) => {
             const m = memberById.get(id);
             return m ? (
-              <span key={id} className="rounded-full ring-2 ring-[rgb(var(--color-surface))]">
-                <MemberAvatar avatar={m.avatar} name={m.displayName} size={23} />
-              </span>
+              <CosmoTooltip key={id} label={m.displayName}>
+                <span className="rounded-full ring-2 ring-[rgb(var(--color-surface))]">
+                  <MemberAvatar avatar={m.avatar} name={m.displayName} size={23} />
+                </span>
+              </CosmoTooltip>
             ) : null;
           })}
           {others.length > 3 && (
@@ -163,7 +171,7 @@ const TeamTasksTableRow = forwardRef<HTMLTableRowElement, TeamTasksTableRowProps
       ref={ref}
       data-index={index}
       data-guide-item
-      className="transition-colors cursor-pointer hover:bg-[rgb(var(--color-hover))]"
+      className="h-[53px] transition-colors cursor-pointer hover:bg-[rgb(var(--color-hover))]"
       onClick={() => (selectMode ? handlers.toggleSelect(task) : handlers.open(task))}
       style={selectMode ? {
         backgroundColor: selected ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
@@ -206,7 +214,7 @@ const TeamTasksTableRow = forwardRef<HTMLTableRowElement, TeamTasksTableRowProps
       <td className={`font-medium px-2 py-1 text-base ${task.completed ? 'line-through' : ''}`}
           style={{ color: task.completed ? 'rgb(var(--color-text-muted))' : 'rgb(var(--color-text-primary))' }}>
         <div className="flex items-center gap-2 min-w-0">
-          <span className="truncate" title={task.name}>{task.name}</span>{blocked && <TeamBlockedLock task={task} />}
+          <span className="min-w-0 flex" onClick={(e) => e.stopPropagation()}><NameCell task={task} disabledReason={editReason} onSave={(name) => handlers.update(task, { name })} /></span>{blocked && <TeamBlockedLock task={task} />}
           {/* Commentaires non lus (mig. 109). */}
           {unreadComments > 0 && (
             <span
@@ -230,10 +238,8 @@ const TeamTasksTableRow = forwardRef<HTMLTableRowElement, TeamTasksTableRowProps
         </div>
       </td>
       {show('project') && (
-        <td className="px-2 py-1 whitespace-nowrap">
-          <span className="inline-flex items-center gap-2 text-sm truncate" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-            {project?.name ?? '—'}
-          </span>
+        <td onClick={(e) => e.stopPropagation()} className="px-2 py-1 whitespace-nowrap">
+          <ProjectCell task={task} projects={handlers.projectOptions} disabledReason={editReason} onPick={(projectId) => handlers.update(task, { projectId, customStatusId: null })} />
         </td>
       )}
       {show('status') && (
@@ -242,10 +248,10 @@ const TeamTasksTableRow = forwardRef<HTMLTableRowElement, TeamTasksTableRowProps
             <DropdownMenuTrigger
               disabled={!!editReason}
               title={editReason}
-              className="inline-flex items-center gap-1.5 min-h-9 px-2.5 text-xs rounded-full font-semibold border transition-colors hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-secondary))' }}
-              aria-label={t('projects.tasksTabStatusAria', { name: task.name })}
+              className="group inline-flex items-center gap-1.5 min-h-9 px-1.5 text-xs rounded-md font-semibold transition-colors hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ color: 'rgb(var(--color-text-secondary))' }} aria-label={t('projects.tasksTabStatusAria', { name: task.name })}
             >
+              <ChevronDown size={14} className="shrink-0 text-[rgb(var(--color-text-muted))] group-disabled:hidden" aria-hidden="true" />
               {custom ? (
                 <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: custom.color }} aria-hidden="true" />
               ) : (
@@ -272,8 +278,10 @@ const TeamTasksTableRow = forwardRef<HTMLTableRowElement, TeamTasksTableRowProps
         </td>
       )}
       {show('assignees') && (
-        <td className="px-2 py-1 whitespace-nowrap">
-          <AssigneesCell task={task} memberById={memberById} currentUserId={currentUserId} />
+        <td onClick={(e) => e.stopPropagation()} className="px-2 py-1 whitespace-nowrap">
+          <button type="button" disabled={!handlers.assign} onClick={() => handlers.assign?.(task)} aria-label={pf.t('taskTable.editAssigneesAria', { name: task.name })} className={cellBtn}>
+            <AssigneesCell task={task} memberById={memberById} currentUserId={currentUserId} />
+          </button>
         </td>
       )}
       {show('priority') && (
@@ -306,13 +314,13 @@ const TeamTasksTableRow = forwardRef<HTMLTableRowElement, TeamTasksTableRowProps
         </td>
       )}
       {show('duration') && (
-        <td className="text-center px-1 py-1 whitespace-nowrap text-base font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>
-          {formatDuration(task.estimatedTime ?? 0)}
+        <td onClick={(e) => e.stopPropagation()} className="text-center px-1 py-1 whitespace-nowrap">
+          <DurationCell task={task} disabledReason={editReason} onPick={(estimatedTime) => handlers.update(task, { estimatedTime })} />
         </td>
       )}
       {show('category') && (
-        <td className="px-2 py-1 whitespace-nowrap text-sm text-[rgb(var(--color-text-secondary))] max-w-[160px] truncate" title={categoryName}>
-          {categoryName ?? '—'}
+        <td onClick={(e) => e.stopPropagation()} className="px-2 py-1 whitespace-nowrap max-w-[160px]">
+          <CategoryCell task={task} categoryName={categoryName} categories={handlers.categoryOptions} disabledReason={editReason} onPick={(categoryId) => handlers.update(task, { categoryId })} />
         </td>
       )}
       <td onClick={(e) => e.stopPropagation()} className="px-2 py-1 whitespace-nowrap text-center">

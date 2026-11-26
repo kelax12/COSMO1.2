@@ -328,7 +328,16 @@
       "createdAt": "Izrađeno"
     },
     "priorityAria": "Promijenite prioritet zadatka {{name}}",
-    "deadlineAria": "Promijenite rok zadatka {{name}}"
+    "deadlineAria": "Promijenite rok zadatka {{name}}",
+    "editNameAria": "Preimenujte {{name}}",
+    "nameLabel": "Naziv zadatka",
+    "save": "Spremi",
+    "editProjectAria": "Promijenite projekt zadatka {{name}}",
+    "editCategoryAria": "Promijenite kategoriju zadatka {{name}}",
+    "noCategory": "Bez kategorije",
+    "editDurationAria": "Promijenite procijenjeno vrijeme zadatka {{name}}",
+    "durationMinutes": "Trajanje u minutama",
+    "editAssigneesAria": "Promijenite suradnike zadatka {{name}}"
   },
   "okrFilters": {
     "barAria": "Filtrirajte ciljeve",
