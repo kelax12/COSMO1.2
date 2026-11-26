@@ -321,8 +321,8 @@
       "max-lines-per-function": [383]
     },
     "src/components/task-table/list.tsx": {
-      "complexity": [57],
-      "max-lines-per-function": [326]
+      "complexity": [51],
+      "max-lines-per-function": [311]
     },
     "src/components/tutorial/PageTutorial.tsx": {
       "complexity": [28],

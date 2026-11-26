@@ -27,12 +27,12 @@ import { addDaysToKey, getTimezonePref, todayKeyInTz } from "@/lib/timezone";
 import { Friend } from "@/modules/friends";
 import { TaskCard } from "./TaskCard";
 import { TeamTaskCardLite } from "./TeamTaskCardLite";
-import { isTaskOverdue, formatDeadlineSmart, formatDuration } from "./helpers";
+import { isTaskOverdue, formatDeadlineSmart } from "./helpers";
 import { useT } from '@/i18n/useT';
 import TaskStateBadges from './TaskStateBadges';
 import TaskHealthCell from './TaskHealthCell';
+import { PersoNameCell, PersoCategoryCell, PersoPriorityCell, PersoDeadlineCell, PersoDurationCell } from './PersoInlineCells';
 import type { TeamProject, TeamTask } from "@/modules/team-projects";
-import { NO_CATEGORY_COLOR } from '@/lib/category-colors';
 
 // Ligne unifiée perso/entreprise — même liste, deux rendus distincts.
 export type UnifiedTaskRow =
@@ -223,7 +223,6 @@ export const TaskRow = React.memo(({
   const [snoozeCalendar, setSnoozeCalendar] = useState(false);
   const getCategoryById = useCategoryLookup();
   const category = getCategoryById(task.category);
-  const categoryColor = category?.color || NO_CATEGORY_COLOR;
   const overdue = isTaskOverdue(task.deadline, task.completed);
 
   // Micro-animation de complétion (#47) : check dessiné (draw 200 ms) +
@@ -383,7 +382,9 @@ export const TaskRow = React.memo(({
       <td className={`font-medium ${addToListMode ? 'px-1' : 'px-2'} py-4 text-base transition-all duration-200 ${showChecked ? 'line-through' : ''}`}
           style={{ color: showChecked ? 'rgb(var(--color-text-muted))' : 'rgb(var(--color-text-primary))' }}>
         <div className="flex items-center gap-2">
-          <span className="truncate" title={task.name}>{task.name}</span>
+          {addToListMode
+            ? <span className="truncate" title={task.name}>{task.name}</span>
+            : <span className="min-w-0 flex" onClick={(e) => e.stopPropagation()}><PersoNameCell task={task} /></span>}
           <TaskStateBadges task={task} withHealth={false} />
           {/* Compteur sous-tâches (#12) : « 2/5 » quand la checklist existe */}
           {(task.subtasks?.length ?? 0) > 0 && (
@@ -399,7 +400,8 @@ export const TaskRow = React.memo(({
           {task.sharedBy ? (
             <span className="text-xs bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] px-2 py-0.5 rounded-full shrink-0">{task.sharedBy}</span>
           ) : task.isCollaborative && (collaboratorsByTask.get(task.id)?.length ?? 0) > 0 ? (
-            <span className="flex items-center gap-1 shrink-0">
+            <button type="button" onClick={(e) => { e.stopPropagation(); onOpenCollaborator(task.id); }} aria-label={t('rowMenu.collaborator')}
+              className="flex items-center gap-1 shrink-0 rounded-full p-0.5 transition-colors hover:bg-[rgb(var(--color-hover))]">
               {(collaboratorsByTask.get(task.id) ?? [])
                 // Masque les utilisateurs supprimés (id non résolu en ami) au
                 // lieu d'afficher leur UUID brut dans le tableau.
@@ -423,7 +425,7 @@ export const TaskRow = React.memo(({
                   />
                 </span>
               )}
-            </span>
+            </button>
           ) : null}
         </div>
       </td>
@@ -436,38 +438,21 @@ export const TaskRow = React.memo(({
           onMarkDone={() => onToggleComplete(task.id)}
         />
       </td>
-      <td className="px-2 py-4 whitespace-nowrap">
-        <span className="inline-flex items-center gap-2 text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-          <span className="inline-block w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: categoryColor }} />
-          <span className="truncate">{category?.name ?? '—'}</span>
-        </span>
+      {/* Édition en ligne (PersoInlineCells) : chaque cellule a son panneau. */}
+      <td className="px-2 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+        <PersoCategoryCell task={task} category={category} />
       </td>
-      <td className={`text-center ${addToListMode ? 'px-0' : 'px-1'} py-4 whitespace-nowrap`}>
-        {task.priority === 0 ? (
-          <span
-            className="inline-flex justify-center items-center w-8 h-8 text-base font-medium"
-            style={{ color: 'rgb(var(--color-text-muted))' }}
-            title={t('card.noPriority')}
-            aria-label={t('card.noPriority')}
-          >
-            —
-          </span>
-        ) : (
-          <span className={`inline-flex justify-center items-center w-8 h-8 rounded-full task-priority-${task.priority} text-base font-bold`}>
-            {task.priority}
-          </span>
-        )}
+      <td className={`text-center ${addToListMode ? 'px-0' : 'px-1'} py-4 whitespace-nowrap`} onClick={(e) => e.stopPropagation()}>
+        <PersoPriorityCell task={task} />
       </td>
-      <td className={`${addToListMode ? 'px-0' : 'px-2'} py-4 whitespace-nowrap text-base font-medium text-center`}>
+      <td className={`${addToListMode ? 'px-0' : 'px-2'} py-4 whitespace-nowrap text-base font-medium text-center`} onClick={(e) => e.stopPropagation()}>
         {activeQuickFilter === 'completed'
           // `<time>` : une date relative à aujourd'hui (« dimanche », « 8 octobre »),
           // que la garde visuelle masque (`MASQUES`, e2e/visual-regression.spec.ts).
           ? (task.completedAt ? <time dateTime={task.completedAt}>{formatDeadlineSmart(task.completedAt)}</time> : '—')
-          : (task.deadline
-              ? <time dateTime={task.deadline} className={overdue ? 'text-[rgb(var(--color-danger-text))] font-semibold' : ''}>{formatDeadlineSmart(task.deadline)}</time>
-              : <span className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>{t('card.noDeadline')}</span>)}
+          : <PersoDeadlineCell task={task} />}
       </td>
-      <td className="text-center px-1 py-4 whitespace-nowrap text-base font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>{formatDuration(task.estimatedTime)}</td>
+      <td className="text-center px-1 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}><PersoDurationCell task={task} /></td>
       <td onClick={e => e.stopPropagation()} className="px-2 py-4 whitespace-nowrap text-center">
         <DropdownMenu onOpenChange={(open) => { if (!open) setSnoozeCalendar(false); }}>
           <DropdownMenuTrigger asChild>
