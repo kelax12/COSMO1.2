@@ -227,7 +227,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                 // (`bg-[rgb(var(--color-surface))]`) juste en dessous. Desktop
                 // inchangé.
                 // Maquette 338 : le nom sans cadre, en titre.
-                className="no-input-chrome sm:h-11 sm:rounded-xl sm:!border sm:!border-[rgb(var(--color-border))] max-sm:!bg-transparent max-sm:!border-0 max-sm:!shadow-none max-sm:px-1 max-sm:h-12 max-sm:!text-title max-sm:font-semibold"
+                className={`${isMobile ? 'no-input-chrome ' : ''}sm:h-11 sm:rounded-xl max-sm:!bg-transparent max-sm:!border-0 max-sm:!shadow-none max-sm:px-1 max-sm:h-12 max-sm:!text-title max-sm:font-semibold`}
               />
             </div>
 
