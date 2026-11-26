@@ -1041,21 +1041,21 @@ body {
   background-color: rgb(var(--table-row-hover));
 }
 
-/* Page Tâches, tous thèmes : le bloc listes + filtres + tableau se fond dans
+/* Page Tâches, thèmes sombres seuls (le clair garde son bloc encadré) : le bloc listes + filtres + tableau se fond dans
    le fond de page (un seul arrière-plan, sans bordure ni ombre). Les
    séparateurs de lignes et le survol restent. */
-.tasks-flat,
-.tasks-flat .table-container {
+.dark .tasks-flat,
+.dark .tasks-flat .table-container {
   background-color: transparent;
   border-color: transparent;
   box-shadow: none;
 }
-.tasks-flat .data-table,
-.tasks-flat .data-table thead,
-.tasks-flat .data-table tbody tr:nth-child(n) {
+.dark .tasks-flat .data-table,
+.dark .tasks-flat .data-table thead,
+.dark .tasks-flat .data-table tbody tr:nth-child(n) {
   background-color: transparent;
 }
-.tasks-flat .data-table tbody tr:hover {
+.dark .tasks-flat .data-table tbody tr:hover {
   background-color: rgb(var(--table-row-hover));
 }
 
