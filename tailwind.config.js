@@ -129,7 +129,7 @@ export default {
 				// Titre du hero ENTREPRISE uniquement. Auto-hébergée (CSP
 				// `font-src 'self'`), cf. `src/index.css` § polices d'affichage.
 				// Titre du hero PERSO. Auto-hébergée, cf. `src/index.css`.
-				hero: ['Sora', 'Inter', 'system-ui', 'sans-serif'],
+				hero: ['"Albert Sans"', 'Inter', 'system-ui', 'sans-serif'],
 				display: ['"Instrument Serif"', 'Georgia', '"Times New Roman"', 'serif'],
 				// Petites mentions « données » du même hero (réassurance, adresses).
 				data: ['"Geist Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
