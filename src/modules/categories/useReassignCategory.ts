@@ -78,30 +78,3 @@ export function useReassignCategory() {
   );
 }
 
-/**
- * Repose une catégorie sur des éléments désignés — le retour d'« Annuler ».
- *
- * Prend des IDENTIFIANTS et non une catégorie d'origine : au moment où l'on
- * annule, ces éléments ne portent plus la catégorie supprimée, donc rien dans
- * les données ne permettrait plus de les retrouver. C'est l'appelant qui les a
- * gardés, entre la réaffectation et l'annulation.
- *
- * ⚠️ À n'appeler qu'APRÈS avoir restauré la catégorie elle-même : écrire un
- * identifiant de catégorie qui n'existe pas recréerait des orphelins.
- */
-export function useAssignCategory() {
-  const updateTask = useUpdateTask();
-  const updateOkr = useUpdateOkr();
-
-  return useCallback(
-    async (taskIds: readonly string[], okrIds: readonly string[], categoryId: string): Promise<void> => {
-      for (const id of taskIds) {
-        await updateTask.mutateAsync({ id, updates: { category: categoryId } });
-      }
-      for (const id of okrIds) {
-        await updateOkr.mutateAsync({ id, updates: { category: categoryId } });
-      }
-    },
-    [updateTask, updateOkr],
-  );
-}

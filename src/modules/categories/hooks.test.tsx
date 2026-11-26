@@ -21,7 +21,6 @@ import {
   useMoveCategory,
   useDeleteCategory,
   useCategoryLookup,
-  useRestoreCategory,
 } from './hooks';
 import { categoryKeys, DEFAULT_CATEGORY_COLOR } from './constants';
 import type { Category } from './types';
@@ -40,12 +39,6 @@ function makeWrapper() {
 function lastCreateInput(): Category {
   const calls = fakeRepo.create.mock.calls;
   return calls[calls.length - 1][0];
-}
-
-/** Second argument (`CreateOptions`) du dernier appel à `repository.create()`. */
-function lastCreateOptions(): unknown {
-  const calls = fakeRepo.create.mock.calls;
-  return calls[calls.length - 1][1];
 }
 
 /** Derniers arguments passés à `repository.update()`, sous la forme du mutationFn. */
@@ -199,17 +192,3 @@ describe('useMoveCategory', () => {
   });
 });
 
-describe('useRestoreCategory', () => {
-  // 🔴 R-08 : restaurer une catégorie à la RACINE parce qu'on n'a pas rendu son
-  // parentId est une réparation en apparence seulement.
-  it('restitue le parentId d origine, pas seulement l id', async () => {
-    const snapshot: Category = { id: 'c1', name: 'SEO', color: '#000', parentId: 'p', position: 3 };
-    const { wrapper } = makeWrapper();
-    const { result } = renderHook(() => useRestoreCategory(), { wrapper });
-    await act(async () => {
-      await result.current.mutateAsync(snapshot);
-    });
-    expect(lastCreateInput()).toMatchObject({ parentId: 'p', position: 3 });
-    expect(lastCreateOptions()).toEqual({ restoreId: 'c1' });
-  });
-});

@@ -23,6 +23,7 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { CENTERED_SHEET } from '@/components/ui/centered-sheet';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useCreateTeamOKR,
@@ -286,7 +287,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose, onDelete }: T
 
   return (
     <Sheet open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
-      <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-lg md:max-w-[863px] xl:max-w-[971px] rounded-l-2xl border-l-0 overflow-hidden">
+      <SheetContent className={`flex w-full flex-col gap-0 p-0 rounded-l-2xl border-l-0 overflow-hidden ${CENTERED_SHEET}`}>
         <SheetHeader className="border-b border-[rgb(var(--color-border-muted))]">
           <SheetTitle>{isEdit ? tOrgAdmin('okrModal.edit') : tOrgAdmin('okrModal.new')}</SheetTitle>
           <SheetDescription className="sr-only">{tOrgAdmin('okrModal.description')}</SheetDescription>

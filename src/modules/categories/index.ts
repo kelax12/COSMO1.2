@@ -65,5 +65,4 @@ export {
   useUpdateCategory,
   useMoveCategory,
   useDeleteCategory,
-  useRestoreCategory,
 } from './hooks';

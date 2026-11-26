@@ -263,24 +263,16 @@ const OKRPage: React.FC = () => {
         </div>
 
         {/* Bouton "OKR terminés" — cible de l'animation fly-to du popup deadline (pattern Calendrier de TasksPage). Desktop uniquement : équivalent mobile dans `MobileHeader.actions` ci-dessus. */}
-        <motion.button
+        {/* Cible de l'animation fly-to du popup d'échéance. Desktop seulement :
+            l'équivalent mobile vit dans `MobileHeader.actions`. */}
+        <button
           ref={isMobile ? undefined : finishedButtonRef}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          type="button"
           onClick={() => setShowCompletedModal(true)}
-          // Pas d'aria-label : le bouton AFFICHE « OKR terminés » et le nombre, son nom
-          // vient de ce contenu. Un libellé qui l'enrobait échouait encore axe-core 4.14
-          // (label-content-name-mismatch, WCAG 2.5.3) selon le rendu du compteur.
-          className="shrink-0 flex items-center justify-center gap-2 rounded-lg min-w-11 min-h-11 px-3 sm:px-4 py-2 transition-all shadow-sm border font-medium text-sm bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] border-[rgb(var(--color-border))] hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 dark:hover:bg-emerald-900/20"
+          className="shrink-0 min-h-11 text-sm font-medium text-[rgb(var(--color-accent))] hover:underline underline-offset-4"
         >
-          <CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-400" />
-          <span className="hidden sm:inline">{t('page.completedOkrs')}</span>
-          {completedCount > 0 && (
-            <span className="text-caption md:text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
-              {completedCount}
-            </span>
-          )}
-        </motion.button>
+          {t('page.seeCompletedLink')}{completedCount > 0 ? ` (${completedCount})` : ''}
+        </button>
       </div>
 
       <div className="hidden sm:flex justify-end mb-8 gap-3">
@@ -290,10 +282,10 @@ const OKRPage: React.FC = () => {
           onClick={() => setShowAddObjective(true)}
           data-tutorial-id="okr-create-button"
           data-guide-id="perso-okr-new"
-          className="flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg font-semibold text-sm text-[rgb(var(--color-accent-solid-foreground))] shadow-sm bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] transition-all"
+          className="flex items-center justify-center gap-2 min-w-11 min-h-11 px-4 py-2 rounded-lg font-semibold text-sm text-[rgb(var(--color-accent-solid-foreground))] shadow-sm bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] transition-all"
           aria-label={t('page.createObjective')}
         >
-          <Plus size={15} />
+          <Plus size={18} />
           <span>{t('page.newObjective')}</span>
         </motion.button>
       </div>
