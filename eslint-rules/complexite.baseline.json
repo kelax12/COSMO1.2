@@ -51,7 +51,7 @@
       "max-lines-per-function": [236]
     },
     "src/components/OKRModalSheet.tsx": {
-      "max-lines-per-function": [373]
+      "max-lines-per-function": [359]
     },
     "src/components/QuickAddBar.tsx": {
       "max-lines-per-function": [214]

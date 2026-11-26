@@ -6,7 +6,7 @@ import { Plus, Trash2, ArrowUpDown } from 'lucide-react';
 import ColorSettingsModal from './ColorSettingsModal';
 import AddCategoryButton from './AddCategoryButton';
 import OKRSheetMobileBar, { KrAdvancedMobile } from './OKRSheetMobileBar';
-import KrDesktopFields from './OKRKrDesktopFields';
+import KrDetails from './OKRKrDesktopFields';
 import {
   Sheet,
   SheetContent,
@@ -23,7 +23,6 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { CENTERED_SHEET } from '@/components/ui/centered-sheet';
-import { Slider } from '@/components/ui/slider';
 import CategoryTreeSelect from '@/components/category/CategoryTreeSelect';
 import { SectionCard, CellSeparator, Cell } from '@/components/task-modal/primitives';
 import type { Category } from '@/modules/categories';
@@ -201,7 +200,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
         />
         <SheetHeader className="max-sm:pt-0 max-sm:-mt-12 max-sm:pointer-events-none max-sm:items-center sm:border-b sm:border-[rgb(var(--color-border-muted))]">
           {/* Titre agrandi sur mobile (redesign), desktop inchangé. */}
-          <SheetTitle className="max-sm:text-body max-sm:font-semibold">{isEdit ? t('card.editObjective') : t('page.newObjective')}</SheetTitle>
+          <SheetTitle className="sm:text-xl max-sm:text-body max-sm:font-semibold">{isEdit ? t('card.editObjective') : t('page.newObjective')}</SheetTitle>
           <SheetDescription className="max-sm:sr-only">{t('modal.description')}</SheetDescription>
         </SheetHeader>
 
@@ -228,7 +227,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                 // (`bg-[rgb(var(--color-surface))]`) juste en dessous. Desktop
                 // inchangé.
                 // Maquette 338 : le nom sans cadre, en titre.
-                className="no-input-chrome sm:h-11 sm:rounded-xl max-sm:!bg-transparent max-sm:!border-0 max-sm:!shadow-none max-sm:px-1 max-sm:h-12 max-sm:!text-title max-sm:font-semibold"
+                className="no-input-chrome sm:h-11 sm:rounded-xl sm:!border sm:!border-[rgb(var(--color-border))] max-sm:!bg-transparent max-sm:!border-0 max-sm:!shadow-none max-sm:px-1 max-sm:h-12 max-sm:!text-title max-sm:font-semibold"
               />
             </div>
 
@@ -244,7 +243,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
               </div>
               <div className="grid gap-2" data-guide-id="perso-okr-form-deadline">
                 <Label>{t('modal.deadline')}</Label>
-                <DatePicker value={endDate} onChange={setEndDate} displayFormat="d MMMM yyyy" allowClear={false} />
+                <DatePicker value={endDate} onChange={setEndDate} displayFormat="d MMMM yyyy" allowClear={false} className="w-full min-h-11 rounded-xl" />
               </div>
             </div>
 
@@ -283,7 +282,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
               <Label htmlFor="okr-desc">{t('modal.descriptionLabel')}</Label>
               <Textarea
                 id="okr-desc"
-                rows={2}
+                rows={5}
                 value={description}
                 placeholder="Facultatif…"
                 onChange={(e) => setDescription(e.target.value)}
@@ -367,7 +366,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
 
             <div className="grid gap-3">
               {keyResults.map((kr, index) => (
-                <div key={kr.id} className="border-border grid gap-3 rounded-lg border p-3 sm:rounded-xl sm:border-[rgb(var(--color-border))] sm:bg-[rgb(var(--color-surface))] sm:transition-shadow sm:hover:border-[rgb(var(--color-accent)/0.35)] sm:hover:shadow-md">
+                <div key={kr.id} className="group border-border grid gap-3 rounded-lg border p-3 sm:rounded-xl sm:border-[rgb(var(--color-border))] sm:bg-[rgb(var(--color-surface))] sm:transition-shadow sm:hover:border-[rgb(var(--color-accent)/0.35)] sm:hover:shadow-md">
                   {/* Desktop (sm+, inchangé) : nom seul sur sa ligne. */}
                   <div className="hidden sm:flex items-end gap-2">
                     <Input value={kr.title} aria-label={t('modal.keyResultPlaceholder')} placeholder={t('modal.keyResultPlaceholder')} className="h-9 min-w-0 border-transparent px-1 text-sm font-medium shadow-none hover:border-[rgb(var(--color-border))] focus-visible:border-[rgb(var(--color-border))]" onChange={(e) => setKR(kr.id, { title: e.target.value })} />
@@ -459,23 +458,8 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                     )}
                   </div>
 
-                  {/* Maquette 340 : à la création, on part de 0 ; pas de curseur sur mobile. */}
-                  <div className={`grid gap-1.5 ${isEdit ? '' : 'max-sm:hidden'}`}>
-                    <div className="text-muted-foreground flex items-center justify-between text-xs">
-                      <span>{t('modal.progress')}</span>
-                      <span className="tabular-nums">{kr.currentValue} / {kr.targetValue} {kr.unit}</span>
-                    </div>
-                    <Slider
-                      min={0}
-                      max={Math.max(kr.targetValue, 1)}
-                      step={1}
-                      value={[Math.min(kr.currentValue, kr.targetValue)]}
-                      onValueChange={(v) => setKR(kr.id, { currentValue: v[0] })}
-                      className="[&_[data-slot=slider-track]]:bg-blue-200 dark:[&_[data-slot=slider-track]]:bg-blue-900/40 [&_[data-slot=slider-range]]:bg-blue-500 [&_[data-slot=slider-thumb]]:border-blue-500 [&_[data-slot=slider-thumb]]:bg-blue-500"
-                    />
-                  </div>
-
-                  <KrDesktopFields kr={kr} onChange={(patch) => setKR(kr.id, patch)} />
+                  {/* Avancement, cible, unité, durée, coef. : repliés hors survol (sm+), comme l'entreprise. */}
+                  <KrDetails kr={kr} isEdit={isEdit} onChange={(patch) => setKR(kr.id, patch)} />
 
                   <KrAdvancedMobile
                     kr={kr}
