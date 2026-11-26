@@ -261,7 +261,6 @@ const OKRPage: React.FC = () => {
             {t('page.title')}
           </PageHeading>
         </div>
-
         {/* Bouton "OKR terminés" — cible de l'animation fly-to du popup deadline (pattern Calendrier de TasksPage). Desktop uniquement : équivalent mobile dans `MobileHeader.actions` ci-dessus. */}
         {/* Cible de l'animation fly-to du popup d'échéance. Desktop seulement :
             l'équivalent mobile vit dans `MobileHeader.actions`. */}
@@ -274,10 +273,7 @@ const OKRPage: React.FC = () => {
           {t('page.seeCompletedLink')}{completedCount > 0 ? ` (${completedCount})` : ''}
         </button>
       </div>
-
-      {/* Mode clair : un bloc encadre tous les elements, comme la page Taches. En sombre, `.dark .okr-flat` le fond dans la page. */}
-      <div className="card card-plain-mobile okr-flat p-0 sm:p-6">
-      <div className="hidden sm:flex justify-end mb-8 gap-3">
+      <div className="card card-plain-mobile okr-flat p-0 sm:p-10"><div className="hidden sm:flex justify-end mb-8 gap-3">
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -370,8 +366,7 @@ const OKRPage: React.FC = () => {
               />
             ))}
         </AnimatePresence>
-      </div>
-      </div>
+      </div></div>
 
       <OKRModalSheet
         isOpen={showAddObjective}
