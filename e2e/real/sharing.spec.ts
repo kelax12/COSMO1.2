@@ -31,7 +31,7 @@ test('partager une tâche entre deux comptes', async ({ page, browser, baseURL, 
   const taskName = `Tâche partagée ${Date.now()}`;
   await seedTask(alice, taskName);
   await goto(page, '/tasks');
-  await tasksList(page).getByText(taskName, { exact: true }).filter({ visible: true }).first().click();
+  await tasksList(page).getByRole('row', { name: taskName, exact: true }).first().press('Enter'); // un clic sur le nom le renomme en ligne
   const modal = page.getByRole('dialog', { name: /modifier la tâche/i });
   await expect(modal).toBeVisible({ timeout: 15_000 });
   await modal.getByRole('tab', { name: /^partager/i }).click();
@@ -47,7 +47,7 @@ test('partager une tâche entre deux comptes', async ({ page, browser, baseURL, 
 
   // Rechargée, la tâche d'Alice porte toujours son partage.
   await reload(page);
-  await tasksList(page).getByText(taskName, { exact: true }).filter({ visible: true }).first().click();
+  await tasksList(page).getByRole('row', { name: taskName, exact: true }).first().press('Enter');
   await expect(
     page.getByRole('dialog', { name: /modifier la tâche/i }).getByRole('tab', { name: /^partager \(1\)/i }),
   ).toBeVisible({ timeout: 15_000 });

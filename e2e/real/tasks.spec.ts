@@ -32,7 +32,7 @@ test('créer, modifier puis terminer une tâche', async ({ page, makeAccount }) 
   }
 
   // ── Modifier ──────────────────────────────────────────────────────
-  await tasksList(page).getByText(created, { exact: true }).filter({ visible: true }).first().click();
+  await tasksList(page).getByRole('row', { name: created, exact: true }).first().press('Enter'); // un clic sur le nom le renomme en ligne
   const edit = page.getByRole('dialog', { name: /modifier la tâche/i });
   await expect(edit).toBeVisible({ timeout: 15_000 });
   await edit.locator('#task-name').fill(renamed);

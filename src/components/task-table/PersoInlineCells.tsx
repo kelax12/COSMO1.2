@@ -28,7 +28,7 @@ export const PersoNameCell = ({ task }: { task: Task }) => {
   );
 };
 
-export const PersoCategoryCell = ({ task, category }: { task: Task; category?: Category }) => {
+export const PersoCategoryCell = ({ task, category }: { task: Task; category?: Category | null }) => {
   const { t } = useT('tasks');
   const save = useSave(task);
   const { data: categories = [] } = useCategories();
@@ -55,7 +55,7 @@ export const PersoPriorityCell = ({ task }: { task: Task }) => {
   return (
     <InlineShell label={t('card.inlinePriorityAria', { name: task.name })} triggerClassName="!p-0 rounded-full" panelClassName="w-48 p-1.5 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] shadow-lg"
       trigger={task.priority === 0
-        ? <span className="inline-flex justify-center items-center w-8 h-8 text-base font-medium text-[rgb(var(--color-text-muted))]">—</span>
+        ? <span className="inline-flex justify-center items-center w-8 h-8 text-base font-medium text-[rgb(var(--color-text-muted))]" aria-label={t('card.noPriority')}>—</span>
         : <span className={`inline-flex justify-center items-center w-8 h-8 rounded-full task-priority-${task.priority} text-base font-bold`}>{task.priority}</span>}>
       {(close) => (
         <OptionList
