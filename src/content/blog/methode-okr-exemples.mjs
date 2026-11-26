@@ -31,6 +31,9 @@ export const article = {
       ],
       html: `
 <p class="lead">La méthode OKR (Objectives &amp; Key Results) est le système de définition d'objectifs utilisé par Google, Intel, Netflix ou Spotify. Son principe tient en une phrase : un <strong>objectif</strong> ambitieux et qualitatif, mesuré par 2 à 5 <strong>résultats clés</strong> chiffrés. Ce guide vous explique comment elle fonctionne, comment écrire de bons OKR, et vous donne 15 exemples concrets (personnels et professionnels) à adapter directement.</p>
+
+<h2 id="en-bref">Qu'est-ce que la méthode OKR ?</h2>
+<p class="answer">OKR signifie Objectives and Key Results. On fixe un objectif qualitatif et motivant, puis deux à cinq résultats clés chiffrés, avec une valeur de départ et une cible, qui prouvent qu'on l'a atteint. Le cycle dure en général un trimestre, avec une revue courte chaque semaine. Atteindre environ 70 % est considéré comme une réussite.</p>
 <figure><img src="/screenshots/okr.webp" srcset="/screenshots/okr-800.webp 800w, /screenshots/okr.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="Les OKR dans Cosmo : chaque objectif affiche ses résultats clés, sa progression et le temps écoulé sur la période." /><figcaption>Les OKR dans Cosmo : chaque objectif affiche ses résultats clés, sa progression et le temps écoulé sur la période. Capture du mode démo, données fictives.</figcaption></figure>
 
 <h2 id="definition">Qu'est-ce qu'un OKR ? Définition simple</h2>

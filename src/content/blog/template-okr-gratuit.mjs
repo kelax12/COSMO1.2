@@ -33,6 +33,9 @@ export const article = {
       ],
       html: `
 <p class="lead">Vous connaissez la méthode, il ne manque que le support. Voici un <strong>template OKR gratuit au format Excel</strong> (compatible Google Sheets et LibreOffice) : deux feuilles prêtes à remplir (OKR personnels et OKR équipe/startup), avec des exemples concrets et la progression calculée automatiquement. Téléchargement direct, <strong>sans email demandé</strong>.</p>
+
+<h2 id="en-bref">Comment remplir un template OKR ?</h2>
+<p class="answer">Écrivez deux à quatre objectifs sans chiffre pour les douze prochaines semaines. Sous chacun, ajoutez deux à cinq résultats clés mesurables, avec leur valeur de départ et leur cible. Chaque semaine, mettez à jour la seule valeur actuelle : la progression se calcule seule. Visez une réussite d'environ 70 % en fin de cycle.</p>
 <figure><img src="/screenshots/okr.webp" srcset="/screenshots/okr-800.webp 800w, /screenshots/okr.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="Les OKR dans Cosmo : chaque objectif affiche ses résultats clés, sa progression et le temps écoulé sur la période." /><figcaption>Les OKR dans Cosmo : chaque objectif affiche ses résultats clés, sa progression et le temps écoulé sur la période. Capture du mode démo, données fictives.</figcaption></figure>
 
 <p><a href="/downloads/template-okr-cosmo.xlsx" download><strong>Télécharger le template OKR (.xlsx, 9 Ko)</strong></a></p>

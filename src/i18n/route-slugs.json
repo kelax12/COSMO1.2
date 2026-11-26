@@ -52,5 +52,17 @@
     "en": "terms",
     "es": "condiciones",
     "hr": "uvjeti-koristenja"
+  },
+  "templates": {
+    "fr": "modeles",
+    "en": "templates",
+    "es": "plantillas",
+    "hr": "predlosci"
+  },
+  "eisenhowerTool": {
+    "fr": "matrice-eisenhower-en-ligne",
+    "en": "eisenhower-matrix-online",
+    "es": "matriz-eisenhower-online",
+    "hr": "eisenhowerova-matrica-online"
   }
 }

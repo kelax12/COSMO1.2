@@ -20,6 +20,9 @@ export const article = {
       html: `
 <p class="lead">On se fixe des objectifs chaque janvier, mais on fait rarement le bilan de l'année qui précède. Résultat : on reprend les mêmes résolutions, qui échoueront pour les mêmes raisons. Un bon bilan de l'année prend <strong>une heure</strong>, tient sur une page et change la qualité de tout ce que vous déciderez ensuite. Voici un modèle en 10 questions, à suivre dans l'ordre.</p>
 
+<h2 id="en-bref">Comment faire le bilan de son année ?</h2>
+<p class="answer">Prenez une heure au calme, avec votre agenda et vos notes. Répondez par écrit à dix questions en trois temps : ce qui s'est passé (moments marquants, fiertés, échecs et leurs causes), ce que vous en retenez (énergie, temps, habitudes, leçon principale), puis ce que vous arrêtez, continuez et commencez l'année suivante.</p>
+
 <h2 id="preparer">Avant de commencer : 3 conseils</h2>
 <ul>
 <li><strong>Rassemblez vos traces.</strong> Agenda, photos, notes, relevés de compte, liste de tâches terminées. La mémoire retient les trois derniers mois et quelques moments forts : les traces rendent les dix autres mois.</li>

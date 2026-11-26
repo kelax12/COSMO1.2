@@ -51,5 +51,13 @@
   "notFound": {
     "title": "Stranica nije pronađena – Cosmo",
     "description": "Ova stranica ne postoji ili je premještena."
+  },
+  "templates": {
+    "title": "Besplatni predlošci: OKR, rutine i planeri | Cosmo",
+    "description": "Besplatni predlošci za ispunjavanje: OKR za freelancere, studente ili startupe, jutarnja rutina, raspored učenja, tjedni pregled. Bez registracije."
+  },
+  "eisenhowerTool": {
+    "title": "Eisenhowerova matrica online: besplatan alat | Cosmo",
+    "description": "Rasporedite zadatke u Eisenhowerovu matricu online, besplatno i bez registracije: hitno, važno, planirati, delegirati. Može se ispisati."
   }
 }

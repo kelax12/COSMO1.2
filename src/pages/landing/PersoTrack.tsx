@@ -215,6 +215,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
               <div ref={onHeroCtaRef} data-hero-fade className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 {/* CTA principal : démo sans inscription (friction zéro) */}
                 <button
+                  data-cta="demo-hero"
                   onClick={onDemo}
                   className="group relative overflow-hidden bg-blue-600 hover:bg-blue-700 text-white px-7 py-3.5 rounded-full font-semibold text-[15px] tracking-[-0.01em] transition-[box-shadow,color,background-color] duration-300 shadow-[0_8px_30px_-8px_rgba(37,99,235,0.55)] hover:shadow-[0_12px_38px_-8px_rgba(37,99,235,0.7)] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
                   aria-label={t('hero.demoAria')}
@@ -223,6 +224,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
                   <span className="relative">{t('hero.demoCta')}</span>
                 </button>
                 <button
+                  data-cta="signup-hero"
                   onClick={onRegister}
                   className="group bg-white hover:bg-slate-50 text-slate-900 border border-slate-300 px-7 py-3.5 rounded-full font-semibold text-[15px] tracking-[-0.01em] shadow-sm transition-[box-shadow,color,background-color] duration-300 flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 >

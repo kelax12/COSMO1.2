@@ -31,6 +31,9 @@ export const article = {
       ],
       html: `
 <p class="lead">Trois acronymes, trois promesses de « mieux atteindre ses objectifs », et beaucoup de confusion. La réalité est plus simple : <strong>OKR, SMART et KPI ne répondent pas à la même question</strong>. SMART formule un objectif, KPI surveille une métrique, OKR organise un cycle d'ambition. Une fois cette distinction posée, savoir lequel utiliser devient évident.</p>
+
+<h2 id="en-bref">Quelle différence entre OKR, objectif SMART et KPI ?</h2>
+<p class="answer">Un objectif SMART est un objectif unique bien formulé (spécifique, mesurable, atteignable, réaliste, temporel). Un OKR relie une ambition qualitative à plusieurs résultats clés chiffrés, sur un cycle court, pour changer quelque chose. Un KPI est un indicateur qu'on surveille en continu pour vérifier qu'une activité reste en bonne santé.</p>
 <figure><img src="/screenshots/okr.webp" srcset="/screenshots/okr-800.webp 800w, /screenshots/okr.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="Les OKR dans Cosmo : chaque objectif affiche ses résultats clés, sa progression et le temps écoulé sur la période." /><figcaption>Les OKR dans Cosmo : chaque objectif affiche ses résultats clés, sa progression et le temps écoulé sur la période. Capture du mode démo, données fictives.</figcaption></figure>
 
 <h2 id="definitions">Les trois méthodes en une phrase chacune</h2>

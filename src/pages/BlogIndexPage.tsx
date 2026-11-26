@@ -36,7 +36,7 @@ const BlogIndexPage: React.FC = () => {
             <img src="/logo-128.webp" alt="Cosmo" className="w-7 h-7 rounded-lg object-contain" />
             <span className="font-semibold text-slate-900">Cosmo</span>
           </Link>
-          <Link to="/signup" className="text-sm text-slate-500 hover:text-slate-900 transition-colors flex items-center gap-1.5">
+          <Link to="/signup" data-cta="blog-index-signup-entete" className="text-sm text-slate-500 hover:text-slate-900 transition-colors flex items-center gap-1.5">
             {t('blog.createFreeAccount')}
             <ArrowRight size={14} />
           </Link>

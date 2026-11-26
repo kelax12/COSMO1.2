@@ -178,7 +178,8 @@
     "privacy": "Confidentialité",
     "terms": "CGU",
     "enterprise": "Cosmo Entreprise",
-    "contact": "Nous écrire"
+    "contact": "Nous écrire",
+    "templates": "Modèles"
   },
   "about": {
     "metaTitle": "À propos de Cosmo : qui sommes-nous ?",
@@ -222,6 +223,8 @@
     "metaTitle": "Blog Cosmo : productivité, OKR, habitudes et time-blocking",
     "metaDescription": "Guides pratiques sur la méthode OKR, le suivi d'habitudes, le time-blocking et la productivité personnelle. Par l'équipe de Cosmo.",
     "title": "Le blog Cosmo",
+    "demoPitch": "Testez ce que décrit cet article dans Cosmo : démo complète, sans inscription.",
+    "demoCta": "Ouvrir la démo",
     "byAuthor": "Par",
     "readNext": "À lire ensuite",
     "tryFree": "Essayez Cosmo gratuitement",
@@ -277,5 +280,54 @@
   },
   "useCase": {
     "demoNote": "Démo instantanée pré-remplie, sans inscription ni carte bancaire."
+  },
+  "templates": {
+    "title": "Modèles gratuits",
+    "intro": "Des modèles prêts à remplir, avec un exemple complet et les erreurs à éviter. Gratuits, sans inscription, à recopier ou à utiliser directement dans Cosmo.",
+    "category": {
+      "okr": "Modèles OKR",
+      "habitudes": "Routines et habitudes",
+      "planning": "Plannings",
+      "methode": "Méthodes"
+    }
+  },
+  "tools": {
+    "eisenhower": {
+      "title": "Matrice d'Eisenhower en ligne",
+      "intro": "Classez vos tâches dans les quatre cases, gratuitement et sans inscription. Tout reste dans votre navigateur : imprimez la matrice ou retrouvez-la dans Cosmo.",
+      "taskLabel": "Tâche",
+      "quadrantLabel": "Case",
+      "moveLabel": "Déplacer vers",
+      "placeholder": "Ex. : préparer la réunion de jeudi",
+      "add": "Ajouter",
+      "remove": "Retirer la tâche",
+      "empty": "Aucune tâche pour l’instant.",
+      "print": "Imprimer la matrice",
+      "clear": "Tout effacer",
+      "privacy": "Vos tâches sont enregistrées dans ce navigateur uniquement. Rien n’est envoyé à Cosmo.",
+      "q1": {
+        "title": "Urgent et important",
+        "action": "À faire tout de suite"
+      },
+      "q2": {
+        "title": "Important, pas urgent",
+        "action": "À planifier dans l’agenda"
+      },
+      "q3": {
+        "title": "Urgent, pas important",
+        "action": "À déléguer ou regrouper"
+      },
+      "q4": {
+        "title": "Ni urgent ni important",
+        "action": "À abandonner"
+      },
+      "ctaTitle": "Transformez la case 2 en créneaux réels",
+      "ctaText": "Dans Cosmo, vos tâches importantes reçoivent un créneau dans l'agenda, à côté de vos habitudes et de vos objectifs.",
+      "howTitle": "Comment bien utiliser la matrice",
+      "how1": "Commencez par vider votre tête : toutes les tâches de la semaine, sans trier. Puis, pour chacune, posez deux questions : est-ce que cela me rapproche de mes objectifs ? Est-ce que cela doit être fait aujourd'hui ou demain ?",
+      "how2": "La case qui compte le plus est la deuxième : important mais pas urgent. C'est là que se trouvent les projets qui changent votre trimestre. Donnez-leur un créneau dans l'agenda avant que la semaine ne se remplisse.",
+      "moreBefore": "Pour aller plus loin :",
+      "moreLink": "la matrice d'Eisenhower expliquée, avec des exemples"
+    }
   }
 }

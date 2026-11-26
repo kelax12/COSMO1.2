@@ -39,6 +39,14 @@ import { article as vsClickup } from './cosmo-vs-clickup.mjs';
 import { article as vsHabitica } from './cosmo-vs-habitica.mjs';
 import { article as vsMicrosoftToDo } from './cosmo-vs-microsoft-to-do.mjs';
 import { article as vsAnyDo } from './cosmo-vs-any-do.mjs';
+import { article as modModeleOkrFreelance } from './modele-okr-freelance.mjs';
+import { article as modModeleOkrEtudiant } from './modele-okr-etudiant.mjs';
+import { article as modModeleOkrEquipeMarketing } from './modele-okr-equipe-marketing.mjs';
+import { article as modModeleOkrStartup } from './modele-okr-startup.mjs';
+import { article as modRoutineDuMatin } from './routine-du-matin.mjs';
+import { article as modPlanningRevisionsExamens } from './planning-revisions-examens.mjs';
+import { article as modPlanningSemaineTimeBlocking } from './planning-semaine-time-blocking.mjs';
+import { article as modRevueHebdomadaire } from './revue-hebdomadaire.mjs';
 
 // Miroir de `DEFAULT_LOCALE` (src/i18n/locale.ts). Recopié et non importé parce
 // que ce module doit rester chargeable par Node brut depuis prerender/, donc
@@ -50,6 +58,14 @@ export const BLOG_AUTHOR = { name: 'Axel Longatte' };
 
 // Ordre = du plus récent au plus ancien (affichage index + sitemap).
 export const ARTICLES = [
+  modModeleOkrFreelance,
+  modModeleOkrEtudiant,
+  modModeleOkrEquipeMarketing,
+  modModeleOkrStartup,
+  modRoutineDuMatin,
+  modPlanningRevisionsExamens,
+  modPlanningSemaineTimeBlocking,
+  modRevueHebdomadaire,
   vsClickup,
   vsHabitica,
   vsMicrosoftToDo,

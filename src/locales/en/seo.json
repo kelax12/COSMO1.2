@@ -51,5 +51,13 @@
   "notFound": {
     "title": "Page not found – Cosmo",
     "description": "This page does not exist or has been moved."
+  },
+  "templates": {
+    "title": "Free templates: OKRs, routines and planners | Cosmo",
+    "description": "Free templates to fill in: OKRs for freelancers, students or startups, morning routine, revision timetable, weekly review. Full examples, no sign-up."
+  },
+  "eisenhowerTool": {
+    "title": "Eisenhower matrix online: free tool | Cosmo",
+    "description": "Sort your tasks in an online Eisenhower matrix, free and with no sign-up: urgent, important, schedule, delegate. Printable."
   }
 }

@@ -31,6 +31,9 @@ export const article = {
       ],
       html: `
 <p class="lead">« Ce qui est important est rarement urgent, et ce qui est urgent est rarement important. » La phrase attribuée au président Eisenhower a donné son nom à l'outil de priorisation le plus simple qui existe : deux questions, quatre cases, une décision par tâche. Voici comment l'utiliser correctement, et surtout comment éviter le piège dans lequel tombe la majorité de ses utilisateurs.</p>
+
+<h2 id="en-bref">Qu'est-ce que la matrice d'Eisenhower ?</h2>
+<p class="answer">C'est une méthode de priorisation qui classe chaque tâche selon deux critères, l'urgence et l'importance, dans quatre cases : urgent et important (à faire tout de suite), important mais pas urgent (à planifier), urgent mais pas important (à déléguer) et ni l'un ni l'autre (à abandonner). La case à protéger est la deuxième.</p>
 <figure><img src="/screenshots/taches.webp" srcset="/screenshots/taches-800.webp 800w, /screenshots/taches.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="Le gestionnaire de tâches de Cosmo : listes d'accès rapide, filtres par priorité et par catégorie, tâches en retard signalées." /><figcaption>Le gestionnaire de tâches de Cosmo : listes d'accès rapide, filtres par priorité et par catégorie, tâches en retard signalées. Capture du mode démo, données fictives.</figcaption></figure>
 
 <h2 id="principe">Le principe : deux questions, quatre quadrants</h2>
@@ -65,6 +68,8 @@ export const article = {
 
 <h2 id="pratique">La mettre en pratique dans Cosmo</h2>
 <p>Dans <a href="/">Cosmo</a>, la matrice se traduit naturellement : les <strong>priorités 1 à 5</strong> encodent l'importance, la <strong>deadline</strong> porte l'urgence, et les listes filtrées vous montrent votre « Q1 » réel du jour. Les tâches Q2 se glissent dans l'agenda en time-blocking (l'événement lié se crée tout seul), et vos <a href="/blog/methode-okr-exemples">OKR</a> définissent ce que « important » veut dire ce trimestre. <a href="/signup">Gratuit</a>, démo sans inscription.</p>
+
+<p>Pour classer vos tâches tout de suite, utilisez la <a href="/matrice-eisenhower-en-ligne">matrice d'Eisenhower en ligne</a> : gratuite, sans inscription, imprimable.</p>
 
 <h2 id="faq">Questions fréquentes</h2>
 <h3>Quelle différence entre urgent et important ?</h3>

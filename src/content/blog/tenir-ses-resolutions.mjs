@@ -19,6 +19,9 @@ export const article = {
       ],
       html: `
 <p class="lead">On lit partout que « 92 % des résolutions échouent ». Le chiffre est invérifiable, et la réalité est plus encourageante : dans une étude de suivi menée par le psychologue John Norcross (2002), <strong>environ 46 % des personnes qui avaient pris une résolution la tenaient encore six mois plus tard</strong>, contre 4 % de celles qui voulaient changer la même chose sans s'être fixé de résolution. Prendre une résolution aide donc. Ce qui fait la différence, c'est la façon de s'y prendre.</p>
+
+<h2 id="en-bref">Comment tenir ses bonnes résolutions ?</h2>
+<p class="answer">Formulez une ou trois résolutions au plus, comme un but positif plutôt qu'un interdit, avec un chiffre et une échéance. Écrivez un plan « si… alors… » pour chaque obstacle prévisible, commencez par une version minimale, suivez-les chaque jour et relisez-les chaque semaine. Après un écart, reprenez le lendemain sans attendre lundi.</p>
 <figure><img src="/screenshots/habitudes.webp" srcset="/screenshots/habitudes-800.webp 800w, /screenshots/habitudes.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="Le suivi d'habitudes de Cosmo : tableau hebdomadaire des habitudes cochées, avec la série de jours consécutifs de chacune." /><figcaption>Le suivi d'habitudes de Cosmo : tableau hebdomadaire des habitudes cochées, avec la série de jours consécutifs de chacune. Capture du mode démo, données fictives.</figcaption></figure>
 
 <h2 id="raisons">Les 6 raisons pour lesquelles les résolutions échouent</h2>

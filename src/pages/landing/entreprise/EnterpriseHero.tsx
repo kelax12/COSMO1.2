@@ -163,6 +163,7 @@ const EnterpriseHero: React.FC<EnterpriseHeroProps> = ({ onDemo, onCtaRef }) => 
         >
           <button
             ref={magneticDemo}
+            data-cta="entreprise-demo-hero"
             onClick={onDemo}
             aria-label={t('enterprise.hero.ctaAria')}
             className="group flex w-full items-center justify-center gap-2.5 rounded-[11px] bg-ent-faisceau px-6 py-4 text-base font-semibold text-white transition-colors duration-300 hover:bg-[#388BFD] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#58A6FF] focus-visible:ring-offset-2 focus-visible:ring-offset-ent-nuit sm:w-auto"

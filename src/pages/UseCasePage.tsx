@@ -55,7 +55,7 @@ const UseCasePage: React.FC = () => {
             <img src="/logo-128.webp" alt="Cosmo" className="w-7 h-7 rounded-lg object-contain" />
             <span className="font-semibold text-slate-900">Cosmo</span>
           </Link>
-          <Link to="/signup" className="text-sm text-slate-500 hover:text-slate-900 transition-colors flex items-center gap-1.5">
+          <Link to="/signup" data-cta="cas-usage-signup-entete" className="text-sm text-slate-500 hover:text-slate-900 transition-colors flex items-center gap-1.5">
             {t('useCasePage.signupCta')}
             <ArrowRight size={14} />
           </Link>
@@ -87,6 +87,7 @@ const UseCasePage: React.FC = () => {
           </p>
           <Link
             to="/signup"
+            data-cta="cas-usage-signup-bas"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors"
           >
             {t('blog.startFree')}

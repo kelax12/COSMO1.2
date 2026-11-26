@@ -1,10 +1,12 @@
 import React from 'react';
-import { Link, Navigate, useParams } from 'react-router';
+import { Link, Navigate, useNavigate, useParams } from 'react-router';
 import { ArrowRight, ChevronRight, Clock } from 'lucide-react';
 import { useSeoMeta } from '@/lib/useSeoMeta';
 import { articleSlug, canonicalArticleSlug, canonicalUrl } from '@/i18n/routes';
 import { BLOG_AUTHOR, getArticle, relatedArticles } from '@/content/blog/index.mjs';
 import { useLocalizedPath } from '@/i18n/useLocalizedPath';
+import { useOptionalAuth } from '@/modules/auth/AuthContext';
+import { enterWithTheme } from '@/lib/theme';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import { useForcedLightTheme } from '@/hooks/use-forced-light-theme';
@@ -17,6 +19,14 @@ const BlogArticlePage: React.FC = () => {
   const { t, locale } = useT('landing');
   const { slug } = useParams<{ slug: string }>();
   const aboutPath = useLocalizedPath();
+  const auth = useOptionalAuth();
+  const navigate = useNavigate();
+  // Même geste que la landing : la démo s'ouvre en clair, sur le tableau de bord.
+  const openDemo = () => {
+    enterWithTheme('light');
+    auth?.loginDemo();
+    setTimeout(() => navigate('/dashboard'), 0);
+  };
   // Le slug peut être traduit (article-slugs.json) : on revient au slug canonique. MÊME
   // article. `getArticle` sert la langue demandée, ou le français si l'article
   // n'est pas encore traduit, et dit laquelle par `contentLocale`.
@@ -46,7 +56,7 @@ const BlogArticlePage: React.FC = () => {
               Blog
             </Link>
           </div>
-          <Link to="/signup" className="text-sm text-slate-500 hover:text-slate-900 transition-colors items-center gap-1.5 hidden sm:flex shrink-0">
+          <Link to="/signup" data-cta="article-signup-entete" className="text-sm text-slate-500 hover:text-slate-900 transition-colors items-center gap-1.5 hidden sm:flex shrink-0">
             {t('blog.createFreeAccount')}
             <ArrowRight size={14} />
           </Link>
@@ -73,6 +83,18 @@ const BlogArticlePage: React.FC = () => {
                 {t('blog.readingTime', { minutes: String(article.readingMinutes) })}
               </span>
             </div>
+            <p className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-blue-600/15 bg-blue-50/60 px-4 py-3 text-sm text-slate-600">
+              <span>{t('blog.demoPitch')}</span>
+              <button
+                type="button"
+                data-cta="article-demo-haut"
+                onClick={openDemo}
+                className="inline-flex items-center gap-1.5 font-semibold text-blue-700 hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
+              >
+                {t('blog.demoCta')}
+                <ArrowRight size={14} aria-hidden="true" />
+              </button>
+            </p>
           </header>
 
           {/* Contenu maison (src/content/blog/*.mjs), pas de données utilisateur */}
@@ -113,6 +135,7 @@ const BlogArticlePage: React.FC = () => {
           </p>
           <Link
             to="/signup"
+            data-cta="article-signup-bas"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors"
           >
             {t('blog.startFree')}

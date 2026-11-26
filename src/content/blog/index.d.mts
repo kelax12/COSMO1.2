@@ -19,6 +19,9 @@ export interface BlogArticleContent {
  * même article.
  */
 export interface BlogArticle {
+  /** `modele` : page de la galerie /modeles (plan SEO C5). */
+  kind?: "modele";
+  categorie?: "okr" | "habitudes" | "planning" | "methode";
   slug: string;
   datePublished: string;
   dateModified: string;

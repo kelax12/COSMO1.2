@@ -456,3 +456,9 @@ export const useAuth = () => {
   if (context === undefined) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };
+
+/**
+ * Comme `useAuth`, sans lever hors `AuthProvider` : pour une page publique aussi
+ * rendue par le prérendu (`src/prerender/content-copy.tsx`), qui n'a pas de provider.
+ */
+export const useOptionalAuth = () => useContext(AuthContext);

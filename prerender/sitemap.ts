@@ -49,6 +49,8 @@ function generatedUrls(): string {
     // L'index du blog change quand un article change : sa date EST la plus
     // récente des `dateModified` du registre.
     sitemapGroup('/blog', localesOf('/blog'), BLOG_LASTMOD, 'weekly', '0.8') +
+    sitemapGroup('/matrice-eisenhower-en-ligne', localesOf('/matrice-eisenhower-en-ligne'), '2026-11-26', 'monthly', '0.8') +
+    sitemapGroup('/modeles', localesOf('/modeles'), ARTICLES.filter((a) => a.kind === 'modele').reduce((max: string, a) => (a.dateModified > max ? a.dateModified : max), ''), 'weekly', '0.8') +
     ARTICLES.map((a) => sitemapGroup(`/blog/${a.slug}`, localesOf(`/blog/${a.slug}`), a.dateModified, 'monthly', '0.7')).join('') +
     USE_CASES.map((u) => {
       const path = `/${routeSlug(u.routeId, DEFAULT_LOCALE)}`;

@@ -31,6 +31,9 @@ export const article = {
       ],
       html: `
 <p class="lead">La gestion du temps souffre d'un malentendu : on la présente comme un problème de technique, alors que c'est d'abord un problème d'arbitrage. Aucune méthode ne fait entrer soixante heures de travail dans une semaine de trente-cinq. Ce qu'une bonne méthode fait, en revanche, c'est rendre visible ce qui ne rentre pas, assez tôt pour décider quoi abandonner. Voici sept principes qui survivent à une semaine chargée, du plus structurant au plus fin.</p>
+
+<h2 id="en-bref">Qu'est-ce qu'une gestion du temps efficace ?</h2>
+<p class="answer">C'est décider à l'avance de ce qui mérite votre temps, puis le protéger. Concrètement : clarifier vos priorités, donner un créneau dans l'agenda aux tâches importantes plutôt que de les laisser dans une liste, regrouper les tâches courtes, limiter les interruptions et faire une revue chaque semaine pour corriger le tir.</p>
 <figure><img src="/screenshots/agenda.webp" srcset="/screenshots/agenda-800.webp 800w, /screenshots/agenda.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="L'agenda de Cosmo en vue semaine : les tâches à planifier sont listées à gauche et se glissent dans un créneau." /><figcaption>L'agenda de Cosmo en vue semaine : les tâches à planifier sont listées à gauche et se glissent dans un créneau. Capture du mode démo, données fictives.</figcaption></figure>
 
 <h2 id="arbitrage">1. Accepter que gérer son temps, c'est renoncer</h2>

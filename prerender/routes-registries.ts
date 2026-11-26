@@ -90,6 +90,77 @@ export const BLOG_INDEX_ROUTE: Route = {
   content: blogIndexContent(),
 };
 
+// ── Galerie des modèles (plan SEO C5) ───────────────────────────────
+
+const GALERIE = {
+  fr: { titre: 'Modèles gratuits : OKR, routines et plannings', intro: 'Des modèles prêts à remplir, avec un exemple complet et les erreurs à éviter. Gratuits, sans inscription, à recopier ou à utiliser directement dans Cosmo.', cat: { okr: 'Modèles OKR', habitudes: 'Routines et habitudes', planning: 'Plannings', methode: 'Méthodes' } },
+  en: { titre: 'Free templates: OKRs, routines and planners', intro: 'Ready-to-fill templates, each with a complete example and the mistakes to avoid. Free, no sign-up, to copy or to use directly in Cosmo.', cat: { okr: 'OKR templates', habitudes: 'Routines and habits', planning: 'Planners', methode: 'Methods' } },
+} as const;
+
+function templatesIndexContent(): LocaleContent {
+  return Object.fromEntries(
+    (Object.keys(GALERIE) as (keyof typeof GALERIE)[])
+      .map((locale): [Locale, string | null] => {
+        const modeles = articlesFor(locale).filter((a) => a.kind === 'modele');
+        if (modeles.length === 0) return [locale, null];
+        const g = GALERIE[locale];
+        const at = (path: string) => localizePath(path, locale);
+        const sections = (Object.keys(g.cat) as (keyof typeof g.cat)[])
+          .map((c) => {
+            const liste = modeles.filter((a) => a.categorie === c);
+            if (!liste.length) return '';
+            return `<h2>${g.cat[c]}</h2>
+        ${liste.map((a) => `<h3><a href="${at(`/blog/${a.slug}`)}">${a.title}</a></h3>
+        <p>${a.description}</p>`).join('\n        ')}`;
+          })
+          .filter(Boolean)
+          .join('\n        ');
+        return [locale, `<h1>${g.titre}</h1>
+        <p>${g.intro}</p>
+        ${sections}
+        <p><a href="${at('/')}">${uiFor(locale).home}</a> · <a href="${at('/blog')}">${uiFor(locale).blog}</a> · <a href="${at('/signup')}">${uiFor(locale).signup}</a></p>`];
+      })
+      .filter(([, content]) => content)
+  );
+}
+
+export const TEMPLATES_INDEX_ROUTE: Route = {
+  path: '/modeles',
+  copy: 'templates',
+  meta: fromCatalog('templates'),
+  extraLd: (locale) => [{ obj: breadcrumb(GALERIE[locale as keyof typeof GALERIE]?.titre ?? 'Modèles', '/modeles', locale), id: 'modeles-breadcrumb' }],
+  content: templatesIndexContent(),
+};
+
+// ── Outils gratuits (plan SEO C7) ────────────────────────────────────
+
+export const EISENHOWER_TOOL_ROUTE: Route = {
+  path: '/matrice-eisenhower-en-ligne',
+  copy: 'eisenhowerTool',
+  meta: fromCatalog('eisenhowerTool'),
+  extraLd: (locale) => [
+    { obj: breadcrumb(locale === 'en' ? 'Eisenhower matrix online' : "Matrice d'Eisenhower en ligne", '/matrice-eisenhower-en-ligne', locale), id: 'outil-eisenhower-breadcrumb' },
+    {
+      obj: {
+        '@context': 'https://schema.org',
+        '@type': 'WebApplication',
+        name: locale === 'en' ? 'Eisenhower matrix online' : "Matrice d'Eisenhower en ligne",
+        url: canonicalUrl('/matrice-eisenhower-en-ligne', locale),
+        applicationCategory: 'ProductivityApplication',
+        operatingSystem: 'Web',
+        inLanguage: BCP47_TAG[locale],
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
+        publisher: ORGANISATION,
+      },
+      id: 'outil-eisenhower-app',
+    },
+  ],
+  content: {
+  "fr": "<h1>Matrice d'Eisenhower en ligne</h1>\n        <p>Un outil gratuit, sans inscription, pour classer vos tâches dans les quatre cases de la matrice d'Eisenhower : urgent et important, important mais pas urgent, urgent mais pas important, ni urgent ni important. Vos tâches restent dans votre navigateur ; vous pouvez imprimer la matrice ou l'enregistrer dans Cosmo.</p>\n        <h2>Comment utiliser la matrice</h2>\n        <p>Écrivez une tâche, choisissez sa case, ajoutez-la. Commencez par vider votre tête : toutes les tâches de la semaine, sans trier. Puis demandez-vous pour chacune : est-ce que cela me rapproche de mes objectifs (important) ? Est-ce que cela doit être fait aujourd'hui ou demain (urgent) ?</p>\n        <h2>Que faire de chaque case</h2>\n        <p>Urgent et important : à faire tout de suite. Important mais pas urgent : à planifier dans l'agenda, c'est la case qui fait avancer vos objectifs. Urgent mais pas important : à déléguer ou à traiter en bloc. Ni urgent ni important : à abandonner.</p>\n        <p>Pour aller plus loin : <a href=\"/blog/matrice-eisenhower\">la matrice d'Eisenhower expliquée, avec des exemples</a> · <a href=\"/modeles\">modèles gratuits</a> · <a href=\"/signup\">créer un compte gratuit</a></p>",
+  "en": "<h1>Eisenhower matrix online</h1>\n        <p>A free tool, no sign-up, to sort your tasks into the four boxes of the Eisenhower matrix: urgent and important, important but not urgent, urgent but not important, neither urgent nor important. Your tasks stay in your browser; you can print the matrix or save it in Cosmo.</p>\n        <h2>How to use the matrix</h2>\n        <p>Type a task, pick its box, add it. Start by emptying your head: every task for the week, without sorting. Then ask of each one: does this move me towards my goals (important)? Does it have to be done today or tomorrow (urgent)?</p>\n        <h2>What to do with each box</h2>\n        <p>Urgent and important: do it now. Important but not urgent: schedule it in your calendar, this is the box that moves your goals forward. Urgent but not important: delegate it or handle it in a batch. Neither urgent nor important: drop it.</p>\n        <p>Go further: <a href=\"/en/blog/matrice-eisenhower\">the Eisenhower matrix explained, with examples</a> · <a href=\"/en/templates\">free templates</a> · <a href=\"/en/signup\">create a free account</a></p>"
+},
+};
+
 // ── Articles de blog ─────────────────────────────────────────────────────
 
 /** FAQPage de l'article, s'il a une section FAQ (rich results). */

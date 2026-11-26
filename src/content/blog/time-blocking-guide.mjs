@@ -31,6 +31,9 @@ export const article = {
       ],
       html: `
 <p class="lead">Une todo-list dit ce que vous avez à faire. Elle ne dit jamais <em>quand</em>. C'est exactement pour ça que la vôtre déborde : sans rendez-vous dans le calendrier, une tâche reste un vœu. Le <strong>time-blocking</strong> corrige ce défaut structurel en donnant un créneau horaire à chaque chose importante. Cal Newport, auteur de <em>Deep Work</em>, estime qu'une semaine de 40 heures time-blockée produit autant qu'une semaine de 60 heures menée au fil de l'eau. Voici comment vous y mettre, concrètement.</p>
+
+<h2 id="en-bref">Qu'est-ce que le time-blocking ?</h2>
+<p class="answer">C'est une méthode qui consiste à réserver dans son agenda des créneaux dédiés à des tâches précises, au lieu de travailler à partir d'une simple liste. Chaque bloc a un objectif. On place d'abord les tâches importantes aux heures où l'on est le plus efficace, on laisse des marges, puis on ajuste chaque soir le plan du lendemain.</p>
 <figure><img src="/screenshots/agenda.webp" srcset="/screenshots/agenda-800.webp 800w, /screenshots/agenda.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="L'agenda de Cosmo en vue semaine : les tâches à planifier sont listées à gauche et se glissent dans un créneau." /><figcaption>L'agenda de Cosmo en vue semaine : les tâches à planifier sont listées à gauche et se glissent dans un créneau. Capture du mode démo, données fictives.</figcaption></figure>
 
 <h2 id="definition">Le time-blocking, c'est quoi exactement ?</h2>

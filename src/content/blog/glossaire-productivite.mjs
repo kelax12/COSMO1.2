@@ -26,6 +26,9 @@ export const article = {
       readingMinutes: 8,
       html: `
 <p class="lead">Le monde de la productivité adore le jargon. Voici les 20 termes que vous croiserez partout, définis clairement et sans mystique, avec pour chacun ce qu'il faut vraiment en retenir.</p>
+
+<h2 id="en-bref">Quels sont les termes de productivité à connaître ?</h2>
+<p class="answer">Les plus utiles : OKR (un objectif qualitatif et deux à cinq résultats clés chiffrés), KPI (un indicateur suivi en continu), time-blocking (réserver des créneaux dans l'agenda pour ses tâches), matrice d'Eisenhower (trier selon l'urgence et l'importance), GTD (vider sa tête dans un système fiable) et habitude (un comportement devenu automatique).</p>
 <figure><img src="/screenshots/dashboard.webp" srcset="/screenshots/dashboard-800.webp 800w, /screenshots/dashboard.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="Le tableau de bord de Cosmo : tâches du jour, événements d'agenda, résultats clés et habitudes réunis sur un seul écran." /><figcaption>Le tableau de bord de Cosmo : tâches du jour, événements d'agenda, résultats clés et habitudes réunis sur un seul écran. Capture du mode démo, données fictives.</figcaption></figure>
 
 <h2 id="objectifs">Objectifs &amp; mesure</h2>

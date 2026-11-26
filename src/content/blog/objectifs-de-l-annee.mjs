@@ -20,6 +20,9 @@ export const article = {
       ],
       html: `
 <p class="lead">Chaque année, la même liste : faire du sport, lire plus, mieux gérer son argent. Et chaque année, la même pente : motivée le 2 janvier, oubliée vers le 15 février. Le problème n'est presque jamais la volonté. C'est la forme : une liste d'intentions n'a ni mesure, ni échéance, ni moment pour vérifier où l'on en est. La méthode OKR règle ces trois manques avec une page et dix minutes par semaine. Voici comment fixer vos <strong>objectifs 2027</strong> avec, en exemple, un modèle entièrement rempli.</p>
+
+<h2 id="en-bref">Comment fixer ses objectifs de l'année ?</h2>
+<p class="answer">Partez d'un bilan de l'année écoulée, choisissez trois domaines au plus, écrivez pour chacun un objectif sans chiffre, puis deux à quatre résultats clés mesurables avec une valeur de départ et une cible. Fixez ces résultats pour le premier trimestre seulement, et relisez-les dix minutes chaque semaine.</p>
 <figure><img src="/screenshots/okr.webp" srcset="/screenshots/okr-800.webp 800w, /screenshots/okr.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="Les OKR dans Cosmo : chaque objectif affiche ses résultats clés, leur progression et le temps écoulé de la période." /><figcaption>Les OKR dans Cosmo : chaque objectif affiche ses résultats clés, leur progression et le temps écoulé de la période. Capture du mode démo, données fictives.</figcaption></figure>
 
 <h2 id="pourquoi">Pourquoi une liste de résolutions ne tient pas</h2>

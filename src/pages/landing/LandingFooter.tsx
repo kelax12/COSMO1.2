@@ -62,6 +62,7 @@ const LandingFooter: React.FC<LandingFooterProps> = ({ track }) => {
                 {t('footer.enterprise')}
               </Link>
               <Link to="/blog" className={`${hover} transition-colors`}>{t('footer.blog')}</Link>
+              <Link to={localizedPath('templates')} className={`${hover} transition-colors`}>{t('footer.templates')}</Link>
               <Link to="/pour-freelances" className={`${hover} transition-colors`}>{t('footer.freelancers')}</Link>
               <Link to="/pour-etudiants" className={`${hover} transition-colors`}>{t('footer.students')}</Link>
               <Link to="/pour-managers" className={`${hover} transition-colors`}>{t('footer.managers')}</Link>

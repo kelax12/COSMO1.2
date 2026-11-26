@@ -20,6 +20,9 @@ export const article = {
       html: `
 <p class="lead">Un habit tracker, c'est la version la plus simple du suivi d'habitudes : une grille, une case par jour, une croix quand c'est fait. Sa force tient en une phrase : <strong>il rend visible une régularité que vous ne sentez pas encore</strong>. Voici un habit tracker 2027 gratuit à imprimer, une page par mois, et la façon de s'en servir pour qu'il soit encore rempli en mars.</p>
 
+<h2 id="en-bref">Comment utiliser un habit tracker ?</h2>
+<p class="answer">Inscrivez deux ou trois habitudes dans leur version minimale, accrochez chacune à un moment précis de la journée, puis cochez une case par jour réussi, au moment même où c'est fait. Placez la feuille là où vous la voyez. À la fin du mois, notez les totaux et changez un seul réglage pour le mois suivant.</p>
+
 <p><a href="/downloads/habit-tracker-2027.pdf" download><strong>Télécharger l'habit tracker 2027 (PDF, 12 pages A4)</strong></a></p>
 
 <h2 id="contenu">Ce que contient le PDF</h2>

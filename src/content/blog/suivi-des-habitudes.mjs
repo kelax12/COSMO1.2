@@ -31,6 +31,9 @@ export const article = {
       ],
       html: `
 <p class="lead">Suivre ses habitudes, c'est cocher des cases, la partie facile. La difficulté est ailleurs : choisir <em>quoi</em> regarder. Selon l'indicateur mis en avant, le même suivi produit soit une régularité qui s'installe, soit un abandon au premier accroc. Voici ce que chaque indicateur mesure réellement, celui qu'il faut mettre au centre, et la façon de démarrer un suivi qui tienne au-delà de trois semaines.</p>
+
+<h2 id="en-bref">Que faut-il mesurer pour suivre ses habitudes ?</h2>
+<p class="answer">La régularité sur plusieurs semaines, pas la perfection. Les indicateurs utiles sont le taux de réussite sur 30 jours, la tendance d'une semaine à l'autre et les jours où l'habitude décroche. La série de jours consécutifs motive mais devient décourageante quand elle casse : un oubli isolé ne compte pas, deux de suite si.</p>
 <figure><img src="/screenshots/habitudes.webp" srcset="/screenshots/habitudes-800.webp 800w, /screenshots/habitudes.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="Le suivi d'habitudes de Cosmo : tableau hebdomadaire des habitudes cochées, avec la série de jours consécutifs de chacune." /><figcaption>Le suivi d'habitudes de Cosmo : tableau hebdomadaire des habitudes cochées, avec la série de jours consécutifs de chacune. Capture du mode démo, données fictives.</figcaption></figure>
 
 <h2 id="pourquoi">Pourquoi suivre, plutôt que simplement faire</h2>

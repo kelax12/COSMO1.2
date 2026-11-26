@@ -51,5 +51,13 @@
   "notFound": {
     "title": "Page introuvable – Cosmo",
     "description": "Cette page n'existe pas ou a été déplacée."
+  },
+  "templates": {
+    "title": "Modèles gratuits : OKR, routines et plannings | Cosmo",
+    "description": "Modèles gratuits à remplir : OKR pour freelance, étudiant ou startup, routine du matin, planning de révisions, revue hebdomadaire. Exemples complets, sans inscription."
+  },
+  "eisenhowerTool": {
+    "title": "Matrice d'Eisenhower en ligne : outil gratuit | Cosmo",
+    "description": "Classez vos tâches dans la matrice d'Eisenhower en ligne, gratuitement et sans inscription : urgent, important, à planifier, à déléguer. Imprimable."
   }
 }

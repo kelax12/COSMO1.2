@@ -178,7 +178,8 @@
     "privacy": "Privatnost",
     "terms": "Uvjeti",
     "enterprise": "Cosmo za tvrtke",
-    "contact": "Pišite nam"
+    "contact": "Pišite nam",
+    "templates": "Predlošci"
   },
   "about": {
     "metaTitle": "O Cosmu: tko smo mi?",
@@ -222,6 +223,8 @@
     "metaTitle": "Cosmo blog: produktivnost, OKR-ovi, navike i blokiranje vremena",
     "metaDescription": "Praktični vodiči o OKR metodi, praćenju navika, blokiranju vremena i osobnoj produktivnosti. Od tima Cosmo.",
     "title": "Cosmo blog",
+    "demoPitch": "Isprobajte ono što opisuje ovaj članak u Cosmu: puni demo, bez registracije.",
+    "demoCta": "Otvori demo",
     "byAuthor": "Autor:",
     "readNext": "Pročitajte i",
     "tryFree": "Isprobajte Cosmo besplatno",
@@ -277,5 +280,54 @@
   },
   "useCase": {
     "demoNote": "Trenutačni unaprijed popunjen demo. Bez registracije, bez kartice."
+  },
+  "templates": {
+    "title": "Besplatni predlošci",
+    "intro": "Predlošci spremni za ispunjavanje, svaki s potpunim primjerom i pogreškama koje treba izbjegavati. Besplatno, bez registracije.",
+    "category": {
+      "okr": "OKR predlošci",
+      "habitudes": "Rutine i navike",
+      "planning": "Planeri",
+      "methode": "Metode"
+    }
+  },
+  "tools": {
+    "eisenhower": {
+      "title": "Eisenhowerova matrica online",
+      "intro": "Rasporedite zadatke u četiri polja, besplatno i bez registracije. Sve ostaje u vašem pregledniku: ispišite matricu ili je nastavite u Cosmu.",
+      "taskLabel": "Zadatak",
+      "quadrantLabel": "Polje",
+      "moveLabel": "Premjesti u",
+      "placeholder": "Npr. pripremiti sastanak u četvrtak",
+      "add": "Dodaj",
+      "remove": "Ukloni zadatak",
+      "empty": "Još nema zadataka.",
+      "print": "Ispiši matricu",
+      "clear": "Obriši sve",
+      "privacy": "Zadaci se spremaju samo u ovom pregledniku. Ništa se ne šalje Cosmu.",
+      "q1": {
+        "title": "Hitno i važno",
+        "action": "Odmah napraviti"
+      },
+      "q2": {
+        "title": "Važno, nije hitno",
+        "action": "Isplanirati u kalendaru"
+      },
+      "q3": {
+        "title": "Hitno, nije važno",
+        "action": "Delegirati ili grupirati"
+      },
+      "q4": {
+        "title": "Ni hitno ni važno",
+        "action": "Odustati"
+      },
+      "ctaTitle": "Pretvorite polje 2 u stvarne termine",
+      "ctaText": "U Cosmu važni zadaci dobivaju termin u kalendaru, uz vaše navike i ciljeve.",
+      "howTitle": "Kako dobro koristiti matricu",
+      "how1": "Najprije ispraznite glavu: svi zadaci za tjedan, bez razvrstavanja. Zatim za svaki postavite dva pitanja: približava li me to mojim ciljevima? Mora li se to napraviti danas ili sutra?",
+      "how2": "Najvažnije je drugo polje: važno, ali nije hitno. Tu su projekti koji mijenjaju vaše tromjesečje. Dajte im termin u kalendaru prije nego što se tjedan popuni.",
+      "moreBefore": "Saznajte više:",
+      "moreLink": "Eisenhowerova matrica objašnjena, s primjerima"
+    }
   }
 }

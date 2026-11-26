@@ -28,6 +28,8 @@ import { routeSlug } from '@/i18n/routes';
 import AProposPage from '@/pages/AProposPage';
 import BlogArticlePage from '@/pages/BlogArticlePage';
 import BlogIndexPage from '@/pages/BlogIndexPage';
+import TemplatesIndexPage from '@/pages/TemplatesIndexPage';
+import EisenhowerToolPage from '@/pages/EisenhowerToolPage';
 import CGUPage from '@/pages/CGUPage';
 import GuidePage from '@/pages/GuidePage';
 import MentionsLegalesPage from '@/pages/MentionsLegalesPage';
@@ -41,6 +43,8 @@ import UseCasePage from '@/pages/UseCasePage';
 const PAGES: Record<string, { namespaces: readonly Namespace[]; element: React.ReactElement; path: (locale: Locale) => string }> = {
   guide: { namespaces: ['guide', 'seo'], element: <GuidePage />, path: () => 'guide' },
   blog: { namespaces: ['landing', 'seo'], element: <BlogIndexPage />, path: () => 'blog' },
+  templates: { namespaces: ['landing', 'seo'], element: <TemplatesIndexPage />, path: (l) => routeSlug('templates', l) },
+  eisenhowerTool: { namespaces: ['landing', 'seo', 'overlays'], element: <EisenhowerToolPage />, path: (l) => routeSlug('eisenhowerTool', l) },
   article: { namespaces: ['landing', 'seo'], element: <BlogArticlePage />, path: () => 'blog/:slug' },
   about: { namespaces: ['landing', 'seo'], element: <AProposPage />, path: (l) => routeSlug('about', l) },
   freelancers: { namespaces: ['landing', 'seo'], element: <UseCasePage />, path: (l) => routeSlug('freelancers', l) },

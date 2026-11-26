@@ -14,6 +14,9 @@ export const EN = {
       html: `
 <p class="lead">We set goals every January, but we rarely review the year that came before. The result: we pick up the same resolutions, which fail for the same reasons. A good year in review takes <strong>one hour</strong>, fits on one page and improves everything you decide afterwards. Here is a 10-question template to follow in order.</p>
 
+<h2 id="en-bref">How do you review your year?</h2>
+<p class="answer">Take an hour somewhere quiet, with your calendar and notes. Answer ten questions in writing, in three parts: what happened (defining moments, pride, failures and their causes), what you take from it (energy, time, habits, main lesson), then what you will stop, continue and start next year.</p>
+
 <h2 id="preparer">Before you start: 3 tips</h2>
 <ul>
 <li><strong>Gather your traces.</strong> Calendar, photos, notes, bank statements, completed task lists. Memory keeps the last three months and a few highlights: the traces give you back the other ten.</li>
@@ -82,6 +85,9 @@ export const EN = {
       ],
       html: `
 <p class="lead">"It takes 21 days to build a habit." You have read that number everywhere, and it is wrong. The research gives an answer that is both less marketable and far more useful: <strong>66 days on average, with enormous variation depending on the habit and the person, from 18 to 254 days</strong>. Understanding why changes how you go about it entirely, and above all it explains why you were never "bad at this": you just had the wrong number in your head.</p>
+
+<h2 id="en-bref">How many days does it take to build a habit?</h2>
+<p class="answer">66 days on average, according to Phillippa Lally's landmark study (University College London, 2009), with a real range of 18 to 254 days depending on the habit and the person. The 21-day figure is a myth. Missing a single day has no measurable effect: what matters is never missing twice in a row.</p>
 <figure><img src="/screenshots/habitudes.webp" srcset="/screenshots/habitudes-800.webp 800w, /screenshots/habitudes.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="Cosmo's habit tracker: a weekly grid of checked habits, with each habit's streak of consecutive days." /><figcaption>Cosmo's habit tracker: a weekly grid of checked habits, with each habit's streak of consecutive days. Screenshot of the demo mode, sample data.</figcaption></figure>
 
 <h2 id="mythe">Where does the 21-day myth come from?</h2>
@@ -409,6 +415,9 @@ export const EN = {
       ],
       html: `
 <p class="lead">Time management suffers from a misunderstanding: it is presented as a problem of technique, when it is first of all a problem of trade-offs. No method fits sixty hours of work into a thirty-five hour week. What a good method does instead is make visible what does not fit, early enough for you to decide what to drop. Here are seven principles that survive a busy week, from the most structural to the most granular.</p>
+
+<h2 id="en-bref">What is effective time management?</h2>
+<p class="answer">Deciding in advance what deserves your time, then protecting it. In practice: clarify your priorities, give important tasks a slot in your calendar rather than leaving them on a list, batch short tasks, limit interruptions and review your week every week to correct course.</p>
 <figure><img src="/screenshots/agenda.webp" srcset="/screenshots/agenda-800.webp 800w, /screenshots/agenda.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="Cosmo's calendar in week view: tasks waiting to be scheduled are listed on the left and dragged into a time slot." /><figcaption>Cosmo's calendar in week view: tasks waiting to be scheduled are listed on the left and dragged into a time slot. Screenshot of the demo mode, sample data.</figcaption></figure>
 
 <h2 id="arbitrage">1. Accept that managing your time means giving things up</h2>
@@ -470,6 +479,9 @@ export const EN = {
       readingMinutes: 8,
       html: `
 <p class="lead">Productivity culture loves its jargon. Here are the 20 terms you will run into everywhere, defined plainly and without mystique, each with the part actually worth remembering.</p>
+
+<h2 id="en-bref">Which productivity terms should you know?</h2>
+<p class="answer">The most useful ones: OKR (a qualitative objective with two to five numbered key results), KPI (an indicator tracked continuously), time blocking (reserving calendar slots for your tasks), Eisenhower matrix (sorting by urgency and importance), GTD (emptying your head into a trusted system) and habit (a behaviour that has become automatic).</p>
 <figure><img src="/screenshots/dashboard.webp" srcset="/screenshots/dashboard-800.webp 800w, /screenshots/dashboard.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="Cosmo's dashboard: today's tasks, calendar events, key results and habits on a single screen." /><figcaption>Cosmo's dashboard: today's tasks, calendar events, key results and habits on a single screen. Screenshot of the demo mode, sample data.</figcaption></figure>
 
 <h2 id="objectifs">Goals &amp; measurement</h2>
@@ -536,6 +548,9 @@ export const EN = {
       ],
       html: `
 <p class="lead">A habit tracker is the simplest form of habit tracking: a grid, one box per day, a cross when it is done. Its strength fits in one sentence: <strong>it makes visible a consistency you cannot feel yet</strong>. Here is a free printable 2027 habit tracker, one page per month, and how to use it so it is still being filled in come March.</p>
+
+<h2 id="en-bref">How do you use a habit tracker?</h2>
+<p class="answer">Write down two or three habits in their minimal version, attach each one to a specific moment of the day, then tick one box for every successful day, right when it is done. Keep the sheet where you will see it. At the end of the month, note the totals and change a single thing for the next month.</p>
 
 <p><a href="/downloads/habit-tracker-2027.pdf" download><strong>Download the 2027 habit tracker (PDF, 12 A4 pages)</strong></a> (month and day labels are in French)</p>
 
@@ -611,6 +626,9 @@ export const EN = {
       ],
       html: `
 <p class="lead">"What is important is seldom urgent, and what is urgent is seldom important." The sentence attributed to President Eisenhower gave its name to the simplest prioritisation tool there is: two questions, four boxes, one decision per task. Here is how to use it properly, and above all how to avoid the trap most of its users fall into.</p>
+
+<h2 id="en-bref">What is the Eisenhower matrix?</h2>
+<p class="answer">A prioritisation method that sorts each task by two criteria, urgency and importance, into four boxes: urgent and important (do now), important but not urgent (schedule), urgent but not important (delegate) and neither (drop). The box worth protecting is the second one.</p>
 <figure><img src="/screenshots/taches.webp" srcset="/screenshots/taches-800.webp 800w, /screenshots/taches.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="Cosmo's task manager: quick-access lists, filters by priority and category, overdue tasks flagged." /><figcaption>Cosmo's task manager: quick-access lists, filters by priority and category, overdue tasks flagged. Screenshot of the demo mode, sample data.</figcaption></figure>
 
 <h2 id="principe">The principle: two questions, four quadrants</h2>
@@ -646,6 +664,8 @@ export const EN = {
 <h2 id="pratique">Putting it into practice in Cosmo</h2>
 <p>In <a href="/en/">Cosmo</a>, the matrix translates naturally: <strong>priorities 1 to 5</strong> encode importance, the <strong>deadline</strong> carries urgency, and filtered lists show you your real Q1 for the day. Q2 tasks are dragged into the calendar as time blocks (the linked event is created for you), and your <a href="/en/blog/methode-okr-exemples">OKRs</a> define what "important" means this quarter. <a href="/en/signup">Free</a>, with a demo and no sign-up.</p>
 
+<p>To sort your tasks right away, use the <a href="/en/eisenhower-matrix-online">online Eisenhower matrix</a>: free, no sign-up, printable.</p>
+
 <h2 id="faq">Frequently asked questions</h2>
 <h3>What is the difference between urgent and important?</h3>
 <p>Urgent means it demands immediate action. Important means it contributes to your underlying goals. Separating the two is exactly what the matrix forces you to do.</p>
@@ -667,6 +687,9 @@ export const EN = {
       ],
       html: `
 <p class="lead">The OKR method (Objectives &amp; Key Results) is the goal-setting system used by Google, Intel, Netflix and Spotify. Its principle fits in one sentence: an ambitious, qualitative <strong>objective</strong>, measured by 2 to 5 numeric <strong>key results</strong>. This guide explains how it works, how to write good OKRs, and gives you 15 concrete examples, personal and professional, to adapt directly.</p>
+
+<h2 id="en-bref">What is the OKR method?</h2>
+<p class="answer">OKR stands for Objectives and Key Results. You set one qualitative, motivating objective, then two to five numbered key results, each with a starting value and a target, that prove you got there. A cycle usually lasts a quarter, with a short review every week. Reaching about 70% is considered a success.</p>
 <figure><img src="/screenshots/okr.webp" srcset="/screenshots/okr-800.webp 800w, /screenshots/okr.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="OKRs in Cosmo: each objective shows its key results, its progress and how much of the period has elapsed." /><figcaption>OKRs in Cosmo: each objective shows its key results, its progress and how much of the period has elapsed. Screenshot of the demo mode, sample data.</figcaption></figure>
 
 <h2 id="definition">What is an OKR? A simple definition</h2>
@@ -785,6 +808,9 @@ export const EN = {
       ],
       html: `
 <p class="lead">Every year, the same list: exercise, read more, sort out your money. And every year, the same slope: fired up on January 2nd, forgotten by mid-February. The problem is almost never willpower. It is the format: a list of intentions has no measure, no deadline and no moment to check where you stand. The OKR method fixes all three with one page and ten minutes a week. Here is how to set your <strong>2027 goals</strong>, with a fully filled-in example.</p>
+
+<h2 id="en-bref">How do you set your goals for the year?</h2>
+<p class="answer">Start from a review of the past year, pick three areas at most, write one objective per area with no number in it, then two to four measurable key results with a starting value and a target. Set those results for the first quarter only, and review them for ten minutes every week.</p>
 <figure><img src="/screenshots/okr.webp" srcset="/screenshots/okr-800.webp 800w, /screenshots/okr.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="OKRs in Cosmo: each objective shows its key results, their progress and how much of the period has elapsed." /><figcaption>OKRs in Cosmo: each objective shows its key results, their progress and how much of the period has elapsed. Screenshot of the demo mode, sample data.</figcaption></figure>
 
 <h2 id="pourquoi">Why a list of resolutions does not last</h2>
@@ -875,6 +901,9 @@ export const EN = {
       ],
       html: `
 <p class="lead">Three acronyms, three promises to help you "reach your goals", and a lot of confusion. The reality is simpler: <strong>OKRs, SMART goals and KPIs do not answer the same question</strong>. SMART words a goal, a KPI watches a metric, OKRs organise a cycle of ambition. Once that distinction is clear, knowing which to use becomes obvious.</p>
+
+<h2 id="en-bref">What is the difference between OKRs, SMART goals and KPIs?</h2>
+<p class="answer">A SMART goal is a single well-worded goal (specific, measurable, achievable, realistic, time-bound). An OKR ties a qualitative ambition to several numbered key results over a short cycle, to change something. A KPI is an indicator you monitor continuously to check that an activity stays healthy.</p>
 <figure><img src="/screenshots/okr.webp" srcset="/screenshots/okr-800.webp 800w, /screenshots/okr.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="OKRs in Cosmo: each objective shows its key results, its progress and how much of the period has elapsed." /><figcaption>OKRs in Cosmo: each objective shows its key results, its progress and how much of the period has elapsed. Screenshot of the demo mode, sample data.</figcaption></figure>
 
 <h2 id="definitions">The three methods, one sentence each</h2>
@@ -936,6 +965,9 @@ export const EN = {
       ],
       html: `
 <p class="lead">Tracking habits means ticking boxes, and that is the easy part. The difficulty lies elsewhere: choosing <em>what</em> to look at. Depending on which indicator you put front and centre, the same tracking produces either consistency that settles in, or abandonment at the first slip. Here is what each indicator actually measures, which one belongs at the centre, and how to start a tracking practice that lasts beyond three weeks.</p>
+
+<h2 id="en-bref">What should you measure when tracking habits?</h2>
+<p class="answer">Consistency over several weeks, not perfection. The useful numbers are your completion rate over 30 days, the trend from week to week and the days when the habit slips. A streak motivates but becomes discouraging when it breaks: a single miss does not count, two in a row do.</p>
 <figure><img src="/screenshots/habitudes.webp" srcset="/screenshots/habitudes-800.webp 800w, /screenshots/habitudes.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="Cosmo's habit tracker: a weekly grid of checked habits, with each habit's streak of consecutive days." /><figcaption>Cosmo's habit tracker: a weekly grid of checked habits, with each habit's streak of consecutive days. Screenshot of the demo mode, sample data.</figcaption></figure>
 
 <h2 id="pourquoi">Why track, rather than simply do</h2>
@@ -1005,6 +1037,9 @@ export const EN = {
       ],
       html: `
 <p class="lead">A productivity dashboard is a tempting promise: your life on one screen. In practice, most of the ones people build end up as decoration. Pretty, consulted for three weeks, then ignored. The reason is almost always the same: they show what is easy to measure rather than what triggers a decision. Here is what deserves a place, what to take off, and how to build one without spending a weekend on it.</p>
+
+<h2 id="en-bref">What should a productivity dashboard include?</h2>
+<p class="answer">A few indicators, each tied to a decision: progress on your goals relative to elapsed time, the consistency of your habits, the time actually spent on your priorities and the tasks that keep slipping week after week. Remove any number that never makes you change anything.</p>
 <figure><img src="/screenshots/dashboard.webp" srcset="/screenshots/dashboard-800.webp 800w, /screenshots/dashboard.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="Cosmo's dashboard: today's tasks, calendar events, key results and habits on a single screen." /><figcaption>Cosmo's dashboard: today's tasks, calendar events, key results and habits on a single screen. Screenshot of the demo mode, sample data.</figcaption></figure>
 
 <h2 id="critere">The only criterion that counts: does it change a decision?</h2>
@@ -1076,6 +1111,9 @@ export const EN = {
       ],
       html: `
 <p class="lead">You know the method, all that is missing is the support. Here is a <strong>free OKR template in Excel format</strong> (compatible with Google Sheets and LibreOffice): two sheets ready to fill in, personal OKRs and team or startup OKRs, with concrete examples and progress computed for you. Direct download, <strong>no email required</strong>.</p>
+
+<h2 id="en-bref">How do you fill in an OKR template?</h2>
+<p class="answer">Write two to four objectives with no numbers for the next twelve weeks. Under each one, add two to five measurable key results with their starting value and target. Every week, update the current value only: progress calculates itself. Aim for about 70% achievement at the end of the cycle.</p>
 <figure><img src="/screenshots/okr.webp" srcset="/screenshots/okr-800.webp 800w, /screenshots/okr.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="OKRs in Cosmo: each objective shows its key results, its progress and how much of the period has elapsed." /><figcaption>OKRs in Cosmo: each objective shows its key results, its progress and how much of the period has elapsed. Screenshot of the demo mode, sample data.</figcaption></figure>
 
 <p><a href="/downloads/template-okr-cosmo.xlsx" download><strong>Download the OKR template (.xlsx, 9 KB)</strong></a> (the sheet labels are in French)</p>
@@ -1205,6 +1243,9 @@ export const EN = {
       ],
       html: `
 <p class="lead">You read everywhere that "92% of resolutions fail". The figure cannot be verified, and the reality is more encouraging: in a follow-up study led by psychologist John Norcross (2002), <strong>about 46% of people who made a resolution were still keeping it six months later</strong>, compared with 4% of those who wanted to change the same thing without making a resolution. So making a resolution helps. What makes the difference is how you go about it.</p>
+
+<h2 id="en-bref">How do you keep your New Year's resolutions?</h2>
+<p class="answer">Make one to three resolutions at most, phrased as a positive goal rather than a ban, with a number and a deadline. Write an "if... then..." plan for each foreseeable obstacle, start with a minimal version, track them daily and review them weekly. After a slip, restart the next day without waiting for Monday.</p>
 <figure><img src="/screenshots/habitudes.webp" srcset="/screenshots/habitudes-800.webp 800w, /screenshots/habitudes.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="Cosmo's habit tracker: a weekly grid of checked habits, with each habit's streak of consecutive days." /><figcaption>Cosmo's habit tracker: a weekly grid of checked habits, with each habit's streak of consecutive days. Screenshot of the demo mode, sample data.</figcaption></figure>
 
 <h2 id="raisons">The 6 reasons resolutions fail</h2>
@@ -1277,6 +1318,9 @@ export const EN = {
       ],
       html: `
 <p class="lead">A to-do list tells you what you have to do. It never tells you <em>when</em>. That is exactly why yours is overflowing: without an appointment in the calendar, a task stays a wish. <strong>Time-blocking</strong> fixes that structural flaw by giving every important thing a slot. Cal Newport, the author of <em>Deep Work</em>, reckons a time-blocked 40-hour week produces as much as a 60-hour week run as things come. Here is how to get started, concretely.</p>
+
+<h2 id="en-bref">What is time blocking?</h2>
+<p class="answer">A method that reserves calendar slots for specific tasks, instead of working from a plain list. Each block has a purpose. You place important tasks first, at the hours when you work best, leave buffers, then adjust tomorrow's plan each evening.</p>
 <figure><img src="/screenshots/agenda.webp" srcset="/screenshots/agenda-800.webp 800w, /screenshots/agenda.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="Cosmo's calendar in week view: tasks waiting to be scheduled are listed on the left and dragged into a time slot." /><figcaption>Cosmo's calendar in week view: tasks waiting to be scheduled are listed on the left and dragged into a time slot. Screenshot of the demo mode, sample data.</figcaption></figure>
 
 <h2 id="definition">What exactly is time-blocking?</h2>
@@ -1498,4 +1542,367 @@ export const EN = {
 <p>Any.do is an excellent task and calendar app. Cosmo adds habits and goals. <a href="/en/signup">Try Cosmo for free</a> or open the demo without sign-up. See also <a href="/en/blog/cosmo-vs-todoist">Cosmo vs Todoist</a> and <a href="/en/blog/cosmo-vs-ticktick">Cosmo or TickTick</a>.</p>
 `,
     },
+  "modele-okr-freelance": {
+    title: "OKR template for freelancers: quarterly goals ready to fill in (full example)",
+    metaTitle: "Freelancer OKR template: goals and a worked example",
+    description: "An OKR template built for freelancers: revenue, prospecting, billable time. Three quarterly objectives, numbered key results and a filled-in example.",
+    readingMinutes: 3,
+    faq: [["How many objectives for a freelancer?","Three at most, one per job (deliver, sell, run the business), with two or three key results each."],["How do I measure billable time?","Block your client work sessions in your calendar: their share of the week is a good enough measure."]],
+    html: `
+<p class="lead">A freelancer does three jobs: delivering, selling and running the business. Delivery always spills over the other two, and that is often where the business stalls. This OKR template sets one objective per job, for a quarter, with key results you can measure on your own in ten minutes a week.</p>
+
+<h2 id="en-bref">What OKRs should a freelancer set?</h2>
+<p class="answer">One objective per job: delivery (quality and deadlines), sales (prospecting and new clients) and running the business (revenue, billable time, cash). Each carries two or three numbered key results with a starting value, over a quarter, plus a ten-minute review every week to decide the next action.</p>
+
+<h2 id="modele">The template</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Objective</th><th>Key result</th><th>Start</th><th>Target</th></tr></thead>
+<tbody>
+<tr><td>Fill my pipeline</td><td>Qualified outreach contacts per week</td><td>0</td><td>5</td></tr>
+<tr><td></td><td>New clients signed</td><td>0</td><td>2</td></tr>
+<tr><td>Earn a better living</td><td>Average monthly revenue</td><td>current</td><td>+20%</td></tr>
+<tr><td></td><td>Share of billable time (%)</td><td>measured</td><td>65%</td></tr>
+<tr><td>Deliver without burning out</td><td>On-time deliveries (%)</td><td>measured</td><td>95%</td></tr>
+<tr><td></td><td>Weeks over 45 hours worked</td><td>measured</td><td>0</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="exemple">Filled-in example: a freelance designer, Q1</h2>
+<p>Starting point: 3 recurring clients, average monthly revenue of 4,200, no regular prospecting. Her key results: 5 outreach contacts a week (tracked as a habit), 2 new clients, 5,000 average monthly revenue and 60% billable time. In week 6, prospecting is at 3 a week: the action for the week becomes a fixed 45-minute slot on Tuesday mornings.</p>
+
+<h2 id="erreurs">Mistakes to avoid</h2>
+<ul>
+<li>Setting "work more" as an objective: time is not a result, it is a cost.</li>
+<li>Forgetting the starting value for revenue: without it, progress means nothing.</li>
+<li>Tracking only delivery: today's prospecting is what fills next quarter.</li>
+</ul>
+
+<h2 id="cosmo">Using this template in Cosmo</h2>
+<p>Copy this template on paper or into a spreadsheet, or use it directly in <a href="/en">Cosmo</a>, where objectives, their key results and the tasks that move them forward live in one place. It is <a href="/en/signup">free</a>, and the demo opens without sign-up.</p>
+<p>See also: <a href="/en/templates">all templates</a>.</p>
+
+<h2 id="faq">Frequently asked questions</h2>
+<h3>How many objectives for a freelancer?</h3>
+<p>Three at most, one per job (deliver, sell, run the business), with two or three key results each.</p>
+<h3>How do I measure billable time?</h3>
+<p>Block your client work sessions in your calendar: their share of the week is a good enough measure.</p>
+`,
+  },
+  "modele-okr-etudiant": {
+    title: "OKR template for students: ace your semester with measurable goals",
+    metaTitle: "Student OKR template: semester goals and example",
+    description: "An OKR template for students: grades, revision, internship and balance. Semester objectives, numbered key results and a filled-in example, free.",
+    readingMinutes: 3,
+    faq: [["Do I need one OKR per subject?","No: one overall success objective with key results for the hardest subjects is enough."],["What about exam season?","Keep the same key results, but review them twice a week."]],
+    html: `
+<p class="lead">"Get better grades" does not tell you what to do on Monday morning. A semester OKR turns that wish into a few numbers tracked weekly: revision hours, practice papers done, applications sent. Here is a ready-to-fill template and a complete example.</p>
+
+<h2 id="en-bref">How can a student use OKRs?</h2>
+<p class="answer">By setting two or three objectives for the semester (academic results, career plans, life balance), each with two to four measurable key results: target average, revision hours per week, applications sent, nights of enough sleep. A ten-minute review on Sundays is enough to stay on course.</p>
+
+<h2 id="modele">The template</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Objective</th><th>Key result</th><th>Start</th><th>Target</th></tr></thead>
+<tbody>
+<tr><td>Pass my semester without a final rush</td><td>Overall average</td><td>current</td><td>+1.5 points</td></tr>
+<tr><td></td><td>Revision hours per week</td><td>measured</td><td>8</td></tr>
+<tr><td></td><td>Past papers done per subject</td><td>0</td><td>3</td></tr>
+<tr><td>Land my internship</td><td>Tailored applications sent</td><td>0</td><td>20</td></tr>
+<tr><td></td><td>Interviews obtained</td><td>0</td><td>3</td></tr>
+<tr><td>Keep the pace</td><td>Nights of at least 7 h per week</td><td>measured</td><td>5</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="exemple">Filled-in example: a second-year economics student</h2>
+<p>Starting point: an 11.2 average, revision crammed into the last week, no internship applications. Key results: a 12.5 average, 8 revision hours a week from September, 3 past papers per subject, 20 applications and 3 interviews, 5 nights of 7 hours a week. In week 4, revision tops out at 5 hours: he moves it into two fixed slots after Tuesday and Thursday classes.</p>
+
+<h2 id="erreurs">Mistakes to avoid</h2>
+<ul>
+<li>Targeting a grade without targeting the work behind it: the average is a result, revision hours are the lever.</li>
+<li>Forgetting sleep: it is the first thing sacrificed and the costliest during exams.</li>
+<li>Setting targets for the whole year: a semester is the right cycle.</li>
+</ul>
+
+<h2 id="cosmo">Using this template in Cosmo</h2>
+<p>Copy this template on paper or into a spreadsheet, or use it directly in <a href="/en">Cosmo</a>, where objectives, their key results and the tasks that move them forward live in one place. It is <a href="/en/signup">free</a>, and the demo opens without sign-up.</p>
+<p>See also: <a href="/en/templates">all templates</a>.</p>
+
+<h2 id="faq">Frequently asked questions</h2>
+<h3>Do I need one OKR per subject?</h3>
+<p>No: one overall success objective with key results for the hardest subjects is enough.</p>
+<h3>What about exam season?</h3>
+<p>Keep the same key results, but review them twice a week.</p>
+`,
+  },
+  "modele-okr-equipe-marketing": {
+    title: "OKR template for a marketing team: example objectives and key results",
+    metaTitle: "Marketing OKR template: team goals and a worked example",
+    description: "An OKR template for marketing teams: acquisition, conversion, content and brand. Quarterly objectives, numbered key results, owners and a filled-in example.",
+    readingMinutes: 3,
+    faq: [["How many key results per person?","One to three at most, so they fit into the week next to day-to-day work."],["Team or individual OKRs?","Team first: individual OKRs multiply tracking without improving alignment."]],
+    html: `
+<p class="lead">Marketing has numbers everywhere, and that is exactly the risk: tracking twenty indicators means steering none. A team OKR picks, for one quarter, the two or three changes that matter, and leaves the rest to the KPI dashboard. Here is a template ready to adapt.</p>
+
+<h2 id="en-bref">What OKRs suit a marketing team?</h2>
+<p class="answer">Two or three objectives per quarter, each tied to a business priority: more qualified leads, better conversion, stronger awareness. Every key result has an owner, a starting value and a target. Routine indicators stay as KPIs tracked separately, not as OKRs.</p>
+
+<h2 id="modele">The template</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Objective</th><th>Key result</th><th>Owner</th><th>Start → target</th></tr></thead>
+<tbody>
+<tr><td>Fill the sales pipeline</td><td>Qualified demo requests per month</td><td>Acquisition</td><td>40 → 70</td></tr>
+<tr><td></td><td>Cost per qualified request</td><td>Acquisition</td><td>current → −20%</td></tr>
+<tr><td>Convert our visitors better</td><td>Visit to sign-up rate</td><td>Product / web</td><td>1.8% → 3%</td></tr>
+<tr><td></td><td>Key pages with a call to action visible without scrolling</td><td>Web</td><td>3 → 10</td></tr>
+<tr><td>Become the reference on our topic</td><td>Third-party sites linking to us</td><td>Content</td><td>5 → 15</td></tr>
+<tr><td></td><td>Articles on page one for target queries</td><td>Content</td><td>0 → 3</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="exemple">Filled-in example: a four-person team in a B2B SME</h2>
+<p>In Q1 the team keeps only two objectives: fill the pipeline and convert better. The third (awareness) is postponed. In week 5, qualified requests are at 48 a month against a target of 70, but conversion is improving faster than expected: the review moves one person from content to landing page optimisation.</p>
+
+<h2 id="erreurs">Mistakes to avoid</h2>
+<ul>
+<li>Turning every KPI into an OKR: an OKR is for changing something, a KPI for monitoring.</li>
+<li>A key result with no owner: it does not move.</li>
+<li>Tying bonuses to OKR attainment: targets turn cautious within two quarters.</li>
+</ul>
+
+<h2 id="cosmo">Using this template in Cosmo</h2>
+<p>Copy this template on paper or into a spreadsheet, or use it directly in <a href="/en">Cosmo</a>, where objectives, their key results and the tasks that move them forward live in one place. It is <a href="/en/signup">free</a>, and the demo opens without sign-up.</p>
+<p>See also: <a href="/en/templates">all templates</a>.</p>
+
+<h2 id="faq">Frequently asked questions</h2>
+<h3>How many key results per person?</h3>
+<p>One to three at most, so they fit into the week next to day-to-day work.</p>
+<h3>Team or individual OKRs?</h3>
+<p>Team first: individual OKRs multiply tracking without improving alignment.</p>
+`,
+  },
+  "modele-okr-startup": {
+    title: "OKR template for startups: align a small team on three priorities",
+    metaTitle: "Startup OKR template: team priorities and an example",
+    description: "An OKR template for startups: traction, product and team. Three quarterly objectives, numbered key results, a review ritual and a filled-in example.",
+    readingMinutes: 3,
+    faq: [["Do two founders need OKRs?","Yes, in a short version: two objectives, a few key results, a review on Mondays."],["How do you score an OKR at the end of a quarter?","The average progress of its key results: 60 to 80% is a good score."]],
+    html: `
+<p class="lead">In a startup everything feels like a priority and everything changes fast. OKRs serve one purpose: making sure the five or ten people on the team know, every Monday, what the three priorities for the quarter are. This template fits on one page and is reread in the team meeting.</p>
+
+<h2 id="en-bref">How do you set OKRs for a startup?</h2>
+<p class="answer">Pick three objectives per quarter at most, often traction, product and team. Each gets two to four numbered key results, an owner and a measured starting value. The team reviews progress weekly in fifteen minutes, and an honest score at the end of the quarter calibrates the next one.</p>
+
+<h2 id="modele">The template</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Objective</th><th>Key result</th><th>Owner</th><th>Start → target</th></tr></thead>
+<tbody>
+<tr><td>Prove the market wants the product</td><td>Active paying customers</td><td>Founders</td><td>12 → 30</td></tr>
+<tr><td></td><td>3-month retention (%)</td><td>Product</td><td>45 → 60</td></tr>
+<tr><td>Make the product indispensable</td><td>Weekly active users / sign-ups (%)</td><td>Product</td><td>20 → 35</td></tr>
+<tr><td></td><td>Average time to first value (minutes)</td><td>Product</td><td>15 → 5</td></tr>
+<tr><td>Build a team that holds</td><td>Key hires signed</td><td>Founders</td><td>0 → 2</td></tr>
+<tr><td></td><td>Weekly rituals held (%)</td><td>Whole team</td><td>— → 90</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="exemple">Filled-in example: a six-person SaaS startup</h2>
+<p>End of Q1: 26 paying customers out of 30, 3-month retention at 57%, time to first value down to 7 minutes, one hire out of two. Average score: 78%, within the target zone. The end-of-quarter review concludes that retention, not acquisition, becomes next quarter's main objective.</p>
+
+<h2 id="erreurs">Mistakes to avoid</h2>
+<ul>
+<li>Using tasks as key results ("launch v2"): a launch is not a result, its usage is.</li>
+<li>Ten objectives for ten people: alignment disappears.</li>
+<li>Dropping OKRs mid-quarter at the first pivot: adjust them openly instead.</li>
+</ul>
+
+<h2 id="cosmo">Using this template in Cosmo</h2>
+<p>Copy this template on paper or into a spreadsheet, or use it directly in <a href="/en">Cosmo</a>, where objectives, their key results and the tasks that move them forward live in one place. It is <a href="/en/signup">free</a>, and the demo opens without sign-up.</p>
+<p>See also: <a href="/en/templates">all templates</a>.</p>
+
+<h2 id="faq">Frequently asked questions</h2>
+<h3>Do two founders need OKRs?</h3>
+<p>Yes, in a short version: two objectives, a few key results, a review on Mondays.</p>
+<h3>How do you score an OKR at the end of a quarter?</h3>
+<p>The average progress of its key results: 60 to 80% is a good score.</p>
+`,
+  },
+  "routine-du-matin": {
+    title: "Morning routine: a simple 5-step template (and how to stick to it)",
+    metaTitle: "Morning routine: a simple 5-step template to follow",
+    description: "A 5-step morning routine template, 20 to 45 minutes, with a minimal version for busy days. Example, mistakes to avoid and habit tracking.",
+    readingMinutes: 3,
+    faq: [["Do I have to get up at 5 am?","No. The time matters less than consistency and how much you sleep."],["How long before it is automatic?","About two months on average, longer for demanding actions."]],
+    html: `
+<p class="lead">A good morning routine is not a list of ten rituals found online. It is a short sequence of habits that gets you going without thinking, and that holds up on the days you are running late. Here is a five-step template, with its minimal version.</p>
+
+<h2 id="en-bref">How do you build an effective morning routine?</h2>
+<p class="answer">Choose three to five short actions, in a fixed order, attached to waking up: hydrate, move, get ready, plan your day. Keep a five-minute minimal version for busy days, tick each morning off and add an action only once the others are automatic, which often takes two months.</p>
+
+<h2 id="modele">The template</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Step</th><th>Full version</th><th>Minimal version</th><th>Time</th></tr></thead>
+<tbody>
+<tr><td>1. Wake up</td><td>Get up without snoozing, curtains open</td><td>Same</td><td>1 min</td></tr>
+<tr><td>2. Hydrate</td><td>A large glass of water</td><td>Same</td><td>1 min</td></tr>
+<tr><td>3. Move</td><td>15 min of walking, stretching or exercise</td><td>2 min of stretching</td><td>2 to 15 min</td></tr>
+<tr><td>4. Get ready</td><td>Shower, dress, screen-free breakfast</td><td>Get dressed</td><td>10 to 20 min</td></tr>
+<tr><td>5. Plan</td><td>Reread the day's 3 priorities in the calendar</td><td>1 priority</td><td>2 to 5 min</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="exemple">Filled-in example: a week of routine for someone working from home</h2>
+<p>Up at 7, a glass of water, a 15-minute walk around the block, shower, breakfast, then five minutes to pick the day's three priorities before opening email. On Wednesday there is an 8 am meeting: he uses the minimal version (water, 2 minutes of stretching, one priority). Over the week the full routine is kept 4 days out of 5 and the minimal one on the fifth: the streak never breaks.</p>
+
+<h2 id="erreurs">Mistakes to avoid</h2>
+<ul>
+<li>Copying someone else's routine: start from your real constraints (children, commute, hours).</li>
+<li>Starting with the wake-up time: moving bedtime comes first.</li>
+<li>All or nothing: without a minimal version, the routine breaks on the first busy morning.</li>
+</ul>
+
+<h2 id="cosmo">Using this template in Cosmo</h2>
+<p>Copy this template on paper or into a spreadsheet, or use it directly in <a href="/en">Cosmo</a>, where each step becomes a habit ticked daily, with its streak and heatmap live in one place. It is <a href="/en/signup">free</a>, and the demo opens without sign-up.</p>
+<p>See also: <a href="/en/templates">all templates</a>.</p>
+
+<h2 id="faq">Frequently asked questions</h2>
+<h3>Do I have to get up at 5 am?</h3>
+<p>No. The time matters less than consistency and how much you sleep.</p>
+<h3>How long before it is automatic?</h3>
+<p>About two months on average, longer for demanding actions.</p>
+`,
+  },
+  "planning-revisions-examens": {
+    title: "Revision timetable: a 4-week template to prepare for your exams",
+    metaTitle: "Revision timetable: a 4-week exam template",
+    description: "A 4-week revision timetable template: split by subject, time slots, past papers and buffers. Filled-in example and mistakes to avoid before exams.",
+    readingMinutes: 3,
+    faq: [["How many hours of revision a day?","Three to five hours of genuinely focused work, in slots with breaks, is enough most of the time."],["When should I start revising?","Four weeks ahead for a standard exam, longer for a competitive one."]],
+    html: `
+<p class="lead">A revision timetable rarely fails for lack of hours. It fails because it is overloaded from day one, with no buffer, and collapses at the first surprise. This four-week template starts from the time you really have and keeps half a day for catching up every week.</p>
+
+<h2 id="en-bref">How do you make an effective revision timetable?</h2>
+<p class="answer">First count the hours you really have, then split them by subject according to weighting and your level. Put revision into fixed 45 to 90-minute slots, alternate subjects, keep the last week for past papers and leave half a day each week to catch up. Review the plan every Sunday.</p>
+
+<h2 id="modele">The 4-week template</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Week</th><th>Goal</th><th>Content</th><th>Buffer</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Cover everything</td><td>Reread and summarise each chapter once</td><td>½ day</td></tr>
+<tr><td>2</td><td>Understand</td><td>Exercises per chapter, weak points first</td><td>½ day</td></tr>
+<tr><td>3</td><td>Consolidate</td><td>Mixed revision, explaining topics out loud</td><td>½ day</td></tr>
+<tr><td>4</td><td>Practise</td><td>Past papers in exam conditions, marking</td><td>1 evening</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="exemple">Filled-in example: 4 subjects, 20 hours a week</h2>
+<p>A student has 20 hours a week outside classes. She gives 7 hours to the most heavily weighted subject, 5 hours each to two others and 3 hours to the easiest. Each slot lasts 75 minutes, two different subjects per half-day. Saturday afternoon stays free for catching up. In week 2 one subject falls behind: Saturday's buffer absorbs the gap without touching the rest.</p>
+
+<h2 id="erreurs">Mistakes to avoid</h2>
+<ul>
+<li>Scheduling 100% of available time: the first surprise brings everything down.</li>
+<li>Rereading without practising: only exercises and past papers show what you know.</li>
+<li>Leaving hard subjects until the end: they come first from week 1.</li>
+</ul>
+
+<h2 id="cosmo">Using this template in Cosmo</h2>
+<p>Copy this template on paper or into a spreadsheet, or use it directly in <a href="/en">Cosmo</a>, where tasks go into a time-blocking calendar, next to your habits and goals live in one place. It is <a href="/en/signup">free</a>, and the demo opens without sign-up.</p>
+<p>See also: <a href="/en/templates">all templates</a>.</p>
+
+<h2 id="faq">Frequently asked questions</h2>
+<h3>How many hours of revision a day?</h3>
+<p>Three to five hours of genuinely focused work, in slots with breaks, is enough most of the time.</p>
+<h3>When should I start revising?</h3>
+<p>Four weeks ahead for a standard exam, longer for a competitive one.</p>
+`,
+  },
+  "planning-semaine-time-blocking": {
+    title: "Weekly planner with time blocking: a template ready to copy",
+    metaTitle: "Weekly time-blocking planner: a template to copy",
+    description: "A typical-week time-blocking template: deep work blocks, short tasks, meetings and buffers. Filled-in example, simple rules and mistakes to avoid.",
+    readingMinutes: 3,
+    faq: [["How long should a block be?","60 to 120 minutes for deep work, 30 minutes for short tasks."],["What if my calendar is full of meetings?","Block at least two mornings a week as meetings with yourself."]],
+    html: `
+<p class="lead">Time blocking means giving each kind of work a slot instead of picking from a list. The easiest way to start is not to plan everything but to begin with a typical week: a few fixed blocks that you then fill each week with your real tasks.</p>
+
+<h2 id="en-bref">How do you plan your week with time blocking?</h2>
+<p class="answer">Start with a typical week: two to four deep work blocks in the morning, a daily block for short tasks and messages, meetings grouped in the afternoon and a buffer every day. On Sunday or Monday morning, place your important tasks in those blocks, then adjust the next day every evening.</p>
+
+<h2 id="modele">The typical week</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Slot</th><th>Monday to Thursday</th><th>Friday</th></tr></thead>
+<tbody>
+<tr><td>9 - 11 am</td><td>Deep work: the most important task</td><td>Deep work</td></tr>
+<tr><td>11 - 11:30 am</td><td>Messages and short tasks</td><td>Messages</td></tr>
+<tr><td>11:30 am - 12:30 pm</td><td>Deep work, continued</td><td>Weekly review (30 min)</td></tr>
+<tr><td>2 - 4 pm</td><td>Meetings and calls grouped</td><td>Catch-up</td></tr>
+<tr><td>4 - 5 pm</td><td>Short tasks, admin</td><td>Prepare next week</td></tr>
+<tr><td>5 - 5:30 pm</td><td>Buffer and tomorrow's plan</td><td>Buffer</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="exemple">Filled-in example: a project manager's week</h2>
+<p>On Monday morning she puts into the deep work blocks the specification to finish (Tuesday and Wednesday), preparation for a steering meeting (Thursday) and the project schedule update (Monday). The week's five meetings are grouped between 2 and 4 pm. On Thursday a client incident eats the morning: Friday afternoon's catch-up block absorbs the delay.</p>
+
+<h2 id="erreurs">Mistakes to avoid</h2>
+<ul>
+<li>Filling every minute: without buffers, the plan is wrong by Tuesday.</li>
+<li>Putting deep work in the afternoon by default: place it at your most productive hours.</li>
+<li>Never comparing plan and reality: the Friday review is what improves next week.</li>
+</ul>
+
+<h2 id="cosmo">Using this template in Cosmo</h2>
+<p>Copy this template on paper or into a spreadsheet, or use it directly in <a href="/en">Cosmo</a>, where tasks go into a time-blocking calendar, next to your habits and goals live in one place. It is <a href="/en/signup">free</a>, and the demo opens without sign-up.</p>
+<p>See also: <a href="/en/templates">all templates</a>.</p>
+
+<h2 id="faq">Frequently asked questions</h2>
+<h3>How long should a block be?</h3>
+<p>60 to 120 minutes for deep work, 30 minutes for short tasks.</p>
+<h3>What if my calendar is full of meetings?</h3>
+<p>Block at least two mornings a week as meetings with yourself.</p>
+`,
+  },
+  "revue-hebdomadaire": {
+    title: "Weekly review: a 30-minute template to steer your week",
+    metaTitle: "Weekly review: a 30-minute template",
+    description: "A 30-minute weekly review template: empty, review, decide, plan. The questions to ask, a filled-in example and the mistakes that make people give it up.",
+    readingMinutes: 3,
+    faq: [["Friday or Monday?","Friday closes the week with a clear head; Monday morning works if you genuinely use it to decide, not to catch up."],["What if I miss a review?","Do the next one as usual, without catching up on the old one: consistency is what counts."]],
+    html: `
+<p class="lead">The weekly review is the appointment that keeps every other system working: your task list, your goals, your calendar. Without it, everything drifts within three weeks. With it, thirty minutes on Friday is enough to start Monday knowing what to do.</p>
+
+<h2 id="en-bref">How do you do a weekly review?</h2>
+<p class="answer">Block thirty minutes at the same time every week, often Friday afternoon. In four steps: empty whatever is lying around (notes, messages, ideas) into your list, review the past week and your goals, decide next week's three priorities, then place them in your calendar. Finish with one question: what do I change?</p>
+
+<h2 id="modele">The 4-step template</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Step</th><th>Question</th><th>Time</th></tr></thead>
+<tbody>
+<tr><td>1. Empty</td><td>What is sitting outside my list (notes, messages, ideas)?</td><td>8 min</td></tr>
+<tr><td>2. Review</td><td>What moved, slipped, got dropped? Where are my goals?</td><td>8 min</td></tr>
+<tr><td>3. Decide</td><td>What are next week's 3 priorities?</td><td>7 min</td></tr>
+<tr><td>4. Plan</td><td>When, exactly, will I do them?</td><td>7 min</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="exemple">Filled-in example: a consultant's review, Friday at 4:30 pm</h2>
+<p>He empties three notebooks and a dozen emails into tasks. Review: two deliverables done, the sales proposal slipped for the second week, the prospecting goal is at 40% with 50% of the quarter gone. Decision: the proposal becomes priority number one, placed on Monday from 9 to 11, and a 30-minute prospecting habit is set for Tuesday and Thursday.</p>
+
+<h2 id="erreurs">Mistakes to avoid</h2>
+<ul>
+<li>Doing it "when I have time": without a fixed slot it disappears within three weeks.</li>
+<li>Turning the review into a work session: you decide, you do not execute.</li>
+<li>Leaving with fifteen priorities: three at most, placed in the calendar.</li>
+</ul>
+
+<h2 id="cosmo">Using this template in Cosmo</h2>
+<p>Copy this template on paper or into a spreadsheet, or use it directly in <a href="/en">Cosmo</a>, where tasks go into a time-blocking calendar, next to your habits and goals live in one place. It is <a href="/en/signup">free</a>, and the demo opens without sign-up.</p>
+<p>See also: <a href="/en/templates">all templates</a>.</p>
+
+<h2 id="faq">Frequently asked questions</h2>
+<h3>Friday or Monday?</h3>
+<p>Friday closes the week with a clear head; Monday morning works if you genuinely use it to decide, not to catch up.</p>
+<h3>What if I miss a review?</h3>
+<p>Do the next one as usual, without catching up on the old one: consistency is what counts.</p>
+`,
+  },
 };

@@ -76,12 +76,14 @@ const EnterpriseCta: React.FC<EnterpriseCtaProps> = ({ onDemo, onRegister }) => 
           </p>
           <div className="flex flex-col justify-center gap-3 sm:flex-row">
             <button
+              data-cta="entreprise-demo-bas"
               onClick={onDemo}
               className="flex items-center justify-center rounded-full bg-cosmo-400 px-7 py-3.5 text-[15px] font-semibold tracking-[-0.01em] text-white transition-colors duration-300 hover:bg-[#388BFD] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cosmo-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#161719]"
             >
               {t('enterprise.cta.secondary')}
             </button>
             <button
+              data-cta="entreprise-signup-bas"
               onClick={onRegister}
               className="group flex items-center justify-center gap-2 rounded-full border border-white/20 bg-white/[0.04] px-7 py-3.5 text-[15px] font-semibold tracking-[-0.01em] text-white transition-colors duration-300 hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cosmo-300"
             >

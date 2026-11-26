@@ -119,12 +119,14 @@ const PersoCta: React.FC<{ onDemo: () => void; onRegister: () => void }> = ({ on
               en blanc avec la seule flèche. */}
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
+              data-cta="demo-bas"
               onClick={onDemo}
               className="bg-blue-600 hover:bg-blue-700 text-white px-7 py-3.5 rounded-full font-semibold text-[15px] tracking-[-0.01em] transition-colors duration-300 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
             >
               {t('cta.tryDemo')}
             </button>
             <button
+              data-cta="signup-bas"
               onClick={onRegister}
               className="group bg-white hover:bg-slate-50 text-slate-900 border border-slate-300 px-7 py-3.5 rounded-full font-semibold text-[15px] tracking-[-0.01em] transition-colors duration-300 flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             >

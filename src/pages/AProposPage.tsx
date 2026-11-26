@@ -77,6 +77,7 @@ const AProposPage: React.FC = () => {
           <p className="text-slate-500 text-sm mb-5">{t('about.ctaSubtitle')}</p>
           <Link
             to="/signup"
+            data-cta="a-propos-signup-bas"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors"
           >
             Commencer gratuitement

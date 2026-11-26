@@ -178,7 +178,8 @@
     "privacy": "Privacy",
     "terms": "Terms",
     "enterprise": "Cosmo for Companies",
-    "contact": "Email us"
+    "contact": "Email us",
+    "templates": "Templates"
   },
   "about": {
     "metaTitle": "About Cosmo: who are we?",
@@ -222,6 +223,8 @@
     "metaTitle": "Cosmo blog: productivity, OKRs, habits and time-blocking",
     "metaDescription": "Practical guides on the OKR method, habit tracking, time-blocking and personal productivity. By the Cosmo team.",
     "title": "The Cosmo blog",
+    "demoPitch": "Try what this article describes in Cosmo: full demo, no sign-up.",
+    "demoCta": "Open the demo",
     "byAuthor": "By",
     "readNext": "Read next",
     "tryFree": "Try Cosmo for free",
@@ -277,5 +280,54 @@
   },
   "useCase": {
     "demoNote": "Instant pre-filled demo. No sign-up, no card."
+  },
+  "templates": {
+    "title": "Free templates",
+    "intro": "Ready-to-fill templates, each with a complete example and the mistakes to avoid. Free, no sign-up, to copy or to use directly in Cosmo.",
+    "category": {
+      "okr": "OKR templates",
+      "habitudes": "Routines and habits",
+      "planning": "Planners",
+      "methode": "Methods"
+    }
+  },
+  "tools": {
+    "eisenhower": {
+      "title": "Eisenhower matrix online",
+      "intro": "Sort your tasks into the four boxes, free and with no sign-up. Everything stays in your browser: print the matrix or pick it up in Cosmo.",
+      "taskLabel": "Task",
+      "quadrantLabel": "Box",
+      "moveLabel": "Move to",
+      "placeholder": "E.g. prepare Thursday's meeting",
+      "add": "Add",
+      "remove": "Remove task",
+      "empty": "No tasks yet.",
+      "print": "Print the matrix",
+      "clear": "Clear all",
+      "privacy": "Your tasks are saved in this browser only. Nothing is sent to Cosmo.",
+      "q1": {
+        "title": "Urgent and important",
+        "action": "Do it now"
+      },
+      "q2": {
+        "title": "Important, not urgent",
+        "action": "Schedule it in your calendar"
+      },
+      "q3": {
+        "title": "Urgent, not important",
+        "action": "Delegate or batch it"
+      },
+      "q4": {
+        "title": "Neither urgent nor important",
+        "action": "Drop it"
+      },
+      "ctaTitle": "Turn box 2 into real time slots",
+      "ctaText": "In Cosmo, your important tasks get a slot in the calendar, next to your habits and goals.",
+      "howTitle": "How to use the matrix well",
+      "how1": "Start by emptying your head: every task for the week, without sorting. Then ask two questions of each: does this move me towards my goals? Does it have to be done today or tomorrow?",
+      "how2": "The box that matters most is the second one: important but not urgent. That is where the projects that change your quarter live. Give them a slot in your calendar before the week fills up.",
+      "moreBefore": "Go further:",
+      "moreLink": "the Eisenhower matrix explained, with examples"
+    }
   }
 }

@@ -31,6 +31,9 @@ export const article = {
       ],
       html: `
 <p class="lead">Un tableau de bord de productivité est une promesse tentante : voir sa vie en un écran. En pratique, la plupart de ceux qu'on construit finissent en décoration, jolis, consultés trois semaines, puis ignorés. La raison est presque toujours la même : ils affichent ce qui est facile à mesurer plutôt que ce qui déclenche une décision. Voici ce qui mérite d'y figurer, ce qu'il faut en retirer, et comment le monter sans y passer un week-end.</p>
+
+<h2 id="en-bref">Que mettre dans un tableau de bord de productivité ?</h2>
+<p class="answer">Peu d'indicateurs, tous reliés à une décision : la progression de vos objectifs par rapport au temps écoulé, la régularité de vos habitudes, le temps réellement passé sur vos priorités et les tâches qui glissent de semaine en semaine. Retirez tout chiffre qui ne vous fait jamais changer quoi que ce soit.</p>
 <figure><img src="/screenshots/dashboard.webp" srcset="/screenshots/dashboard-800.webp 800w, /screenshots/dashboard.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="Le tableau de bord de Cosmo : tâches du jour, événements d'agenda, résultats clés et habitudes réunis sur un seul écran." /><figcaption>Le tableau de bord de Cosmo : tâches du jour, événements d'agenda, résultats clés et habitudes réunis sur un seul écran. Capture du mode démo, données fictives.</figcaption></figure>
 
 <h2 id="critere">Le seul critère qui compte : est-ce que ça change une décision ?</h2>

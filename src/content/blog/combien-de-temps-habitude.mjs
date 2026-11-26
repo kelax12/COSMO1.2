@@ -31,6 +31,9 @@ export const article = {
       ],
       html: `
 <p class="lead">« Il faut 21 jours pour prendre une habitude. » Vous avez lu ce chiffre partout, et il est faux. La recherche donne une réponse à la fois moins vendeuse et beaucoup plus utile : <strong>en moyenne 66 jours, avec d'énormes variations selon l'habitude et la personne (de 18 à 254 jours)</strong>. Comprendre pourquoi change complètement la façon de s'y prendre, et surtout, ça explique pourquoi vous n'avez jamais été « nul » : vous aviez juste un mauvais chiffre en tête.</p>
+
+<h2 id="en-bref">Combien de jours faut-il pour prendre une habitude ?</h2>
+<p class="answer">En moyenne 66 jours, selon l'étude de référence de Phillippa Lally (University College London, 2009), avec une fourchette réelle de 18 à 254 jours selon l'habitude et la personne. Le chiffre de 21 jours est un mythe. Rater un jour isolé n'a pas d'effet mesurable : l'important est de ne pas rater deux fois de suite.</p>
 <figure><img src="/screenshots/habitudes.webp" srcset="/screenshots/habitudes-800.webp 800w, /screenshots/habitudes.webp 2560w" sizes="(max-width: 48rem) calc(100vw - 2rem), 45rem" width="1280" height="800" loading="lazy" decoding="async" alt="Le suivi d'habitudes de Cosmo : tableau hebdomadaire des habitudes cochées, avec la série de jours consécutifs de chacune." /><figcaption>Le suivi d'habitudes de Cosmo : tableau hebdomadaire des habitudes cochées, avec la série de jours consécutifs de chacune. Capture du mode démo, données fictives.</figcaption></figure>
 
 <h2 id="mythe">D'où vient le mythe des 21 jours ?</h2>
