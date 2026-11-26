@@ -144,7 +144,7 @@ const TaskQuickFilters: React.FC<Props> = ({
           <Button
             variant="outline"
             onClick={onToggleSelectMode}
-            className={`flex items-center gap-2 ${CHIP} ${selectMode ? ACTIF : ''}`}
+            className={`flex items-center gap-2 ${CHIP} ${selectMode ? ACTIF : CHIP_CLAIR}`}
           >
             <CheckSquare size={20} data-icon="inline-start" />
             <span>{selectMode ? t('table.cancelSelect') : t('table.select')}</span>
