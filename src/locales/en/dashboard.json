@@ -10,12 +10,6 @@
     "habitLeft_one": "{{count}} habit left",
     "habitLeft_other": "{{count}} habits left"
   },
-  "checkin": {
-    "title": "Your week is waiting",
-    "subtitle": "Take stock of your objectives, two minutes is enough.",
-    "cta": "Check in",
-    "dismiss": "Skip this week's check-in"
-  },
   "viewMode": {
     "day": "Day",
     "week": "Week",
