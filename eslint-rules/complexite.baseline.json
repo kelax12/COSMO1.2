@@ -398,7 +398,7 @@
     },
     "src/pages/TasksPage.tsx": {
       "complexity": [25],
-      "max-lines-per-function": [413]
+      "max-lines-per-function": [409]
     },
     "src/pages/agenda/AgendaCalendarSection.tsx": {
       "max-lines-per-function": [323]
