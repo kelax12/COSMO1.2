@@ -31,6 +31,9 @@ import BlogIndexPage from '@/pages/BlogIndexPage';
 import TemplatesIndexPage from '@/pages/TemplatesIndexPage';
 import EisenhowerToolPage from '@/pages/EisenhowerToolPage';
 import OkrGeneratorPage from '@/pages/OkrGeneratorPage';
+import HabitTrackerToolPage from '@/pages/tools/HabitTrackerToolPage';
+import WeeklyPlannerToolPage from '@/pages/tools/WeeklyPlannerToolPage';
+import PomodoroToolPage from '@/pages/tools/PomodoroToolPage';
 import CGUPage from '@/pages/CGUPage';
 import GuidePage from '@/pages/GuidePage';
 import MentionsLegalesPage from '@/pages/MentionsLegalesPage';
@@ -45,6 +48,9 @@ const PAGES: Record<string, { namespaces: readonly Namespace[]; element: React.R
   guide: { namespaces: ['guide', 'seo'], element: <GuidePage />, path: () => 'guide' },
   blog: { namespaces: ['landing', 'seo'], element: <BlogIndexPage />, path: () => 'blog' },
   templates: { namespaces: ['landing', 'seo'], element: <TemplatesIndexPage />, path: (l) => routeSlug('templates', l) },
+  habitTrackerTool: { namespaces: ['landing', 'seo', 'overlays', 'tools'], element: <HabitTrackerToolPage />, path: (l) => routeSlug('habitTrackerTool', l) },
+  weeklyPlannerTool: { namespaces: ['landing', 'seo', 'overlays', 'tools'], element: <WeeklyPlannerToolPage />, path: (l) => routeSlug('weeklyPlannerTool', l) },
+  pomodoroTool: { namespaces: ['landing', 'seo', 'overlays', 'tools'], element: <PomodoroToolPage />, path: (l) => routeSlug('pomodoroTool', l) },
   okrGeneratorTool: { namespaces: ['landing', 'seo', 'overlays', 'tools'], element: <OkrGeneratorPage />, path: (l) => routeSlug('okrGeneratorTool', l) },
   eisenhowerTool: { namespaces: ['landing', 'seo', 'overlays', 'tools'], element: <EisenhowerToolPage />, path: (l) => routeSlug('eisenhowerTool', l) },
   article: { namespaces: ['landing', 'seo'], element: <BlogArticlePage />, path: () => 'blog/:slug' },

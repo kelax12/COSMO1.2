@@ -63,5 +63,17 @@
   "okrGeneratorTool": {
     "title": "Besplatni generator OKR-ova: ciljevi i ključni rezultati | Cosmo",
     "description": "Besplatni generator OKR-ova bez registracije: odaberite područje, formulirajte cilj i dobijte ključne rezultate za prilagodbu. Može se kopirati i ispisati."
+  },
+  "habitTrackerTool": {
+    "title": "Prilagođeni pratitelj navika za ispis: besplatan alat | Cosmo",
+    "description": "Izradite vlastiti pratitelj navika: odaberite mjesec i navike, zatim ispišite tablicu spremnu za označavanje. Besplatno, bez registracije."
+  },
+  "weeklyPlannerTool": {
+    "title": "Tjedni planer online: besplatni time-blocking | Cosmo",
+    "description": "Organizirajte tjedan time-blockingom: tablica od ponedjeljka do nedjelje koju ispunjavate i ispisujete, besplatno i bez registracije."
+  },
+  "pomodoroTool": {
+    "title": "Pomodoro mjerač vremena online: besplatno | Cosmo",
+    "description": "Pomodoro mjerač vremena online: sesije usredotočenog rada, kratke pauze i duga pauza nakon svakog ciklusa. Besplatno, bez registracije."
   }
 }

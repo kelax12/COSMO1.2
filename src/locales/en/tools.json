@@ -60,5 +60,60 @@
     "howTitle": "How to write a good OKR",
     "how1": "The objective says where you want to go, in words and without numbers. The key results say how you will know you got there: a number, a unit, a starting value and a target you think you have a 50 to 70% chance of hitting.",
     "how2": "Two to four key results per objective are enough, over a quarter. Review them for ten minutes every week: that appointment is what makes the difference."
+  },
+  "habit": {
+    "title": "Custom printable habit tracker",
+    "intro": "Pick the month, write your habits, print: your grid is ready to tick. Free, no sign-up, everything stays in your browser.",
+    "month": "Month",
+    "year": "Year",
+    "habits": "Your habits",
+    "habitLabel": "Habit",
+    "placeholder": "E.g. ten minutes of reading",
+    "addHabit": "+ Add a habit",
+    "hint": "Start with two or three habits: the grid takes up to eight.",
+    "print": "Print the grid",
+    "habitColumn": "Habit",
+    "total": "Total",
+    "rule": "Golden rule: never miss two days in a row.",
+    "ctaTitle": "Track your habits on your phone too",
+    "ctaText": "In Cosmo, each habit has its streak, a six-month heatmap and reminders, next to your tasks and objectives.",
+    "howTitle": "How to use your habit tracker well",
+    "how1": "Write each habit in its minimal version (\"ten minutes of reading\" rather than \"read for an hour\") and attach it to a specific moment of your day.",
+    "how2": "Keep the sheet where you will see it and tick right away. At the end of the month, look at the days that slip and change a single thing for next month.",
+    "monthYear": "{{month}} {{year}}"
+  },
+  "planner": {
+    "title": "Weekly planner online",
+    "intro": "Fill the grid block by block: deep work, meetings, breaks. Free, no sign-up, everything stays in your browser.",
+    "print": "Print the planner",
+    "clear": "Clear all",
+    "hint": "Click a slot and type the planned block.",
+    "hour": "{{h}}:00",
+    "ctaTitle": "Place your real tasks in the calendar",
+    "ctaText": "In Cosmo, your tasks slide into the calendar as time slots, next to your habits and objectives.",
+    "howTitle": "How to fill your week well",
+    "how1": "Start with deep work blocks, at the hours when you work best, then group meetings and calls into one stretch.",
+    "how2": "Keep a buffer every day: a plan filled to the minute is wrong by Tuesday. Each evening, adjust the next day in ten minutes."
+  },
+  "pomodoro": {
+    "title": "Online Pomodoro timer",
+    "intro": "25 minutes on a single task, a 5-minute break, a long break every four sessions. Free, no sign-up.",
+    "taskLabel": "Current task",
+    "taskPlaceholder": "What are you working on?",
+    "start": "Start",
+    "pause": "Pause",
+    "reset": "Restart this phase",
+    "skip": "Skip to the next phase",
+    "sessions": "Sessions completed today: {{n}}",
+    "phase": {
+      "travail": "Work",
+      "pause": "Short break",
+      "longue": "Long break"
+    },
+    "ctaTitle": "Link your sessions to your priorities",
+    "ctaText": "In Cosmo, the task at hand comes from your prioritised list and your calendar, next to your objectives.",
+    "howTitle": "How to get the most from the Pomodoro method",
+    "how1": "One session, one task. If an idea or a request comes up, write it down and get back to the task: you will handle it at the break.",
+    "how2": "During the break, step away from the screen. After four sessions, take the long break: it is what keeps you going all day."
   }
 }

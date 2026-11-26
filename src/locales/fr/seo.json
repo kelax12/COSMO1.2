@@ -63,5 +63,17 @@
   "okrGeneratorTool": {
     "title": "Générateur d'OKR gratuit : objectifs et résultats clés | Cosmo",
     "description": "Générateur d'OKR gratuit et sans inscription : choisissez un domaine, formulez votre objectif et obtenez des résultats clés à ajuster. Copiable et imprimable."
+  },
+  "habitTrackerTool": {
+    "title": "Habit tracker personnalisé à imprimer : outil gratuit | Cosmo",
+    "description": "Créez votre habit tracker personnalisé : choisissez le mois et vos habitudes, puis imprimez une grille prête à cocher. Gratuit, sans inscription."
+  },
+  "weeklyPlannerTool": {
+    "title": "Planning de semaine en ligne : time-blocking gratuit | Cosmo",
+    "description": "Organisez votre semaine en time-blocking : une grille du lundi au dimanche à remplir et imprimer, gratuite et sans inscription. Blocs de travail, réunions, marges."
+  },
+  "pomodoroTool": {
+    "title": "Minuteur Pomodoro en ligne : gratuit et sans inscription | Cosmo",
+    "description": "Minuteur Pomodoro en ligne : sessions de travail concentré, pauses courtes et pause longue après chaque cycle. Gratuit, sans inscription, avec la tâche en cours."
   }
 }

@@ -51,6 +51,9 @@ function generatedUrls(): string {
     sitemapGroup('/blog', localesOf('/blog'), BLOG_LASTMOD, 'weekly', '0.8') +
     sitemapGroup('/matrice-eisenhower-en-ligne', localesOf('/matrice-eisenhower-en-ligne'), '2026-11-26', 'monthly', '0.8') +
     sitemapGroup('/generateur-okr', localesOf('/generateur-okr'), '2026-11-26', 'monthly', '0.8') +
+    sitemapGroup('/habit-tracker-personnalise', localesOf('/habit-tracker-personnalise'), '2026-11-26', 'monthly', '0.8') +
+    sitemapGroup('/planning-semaine-en-ligne', localesOf('/planning-semaine-en-ligne'), '2026-11-26', 'monthly', '0.8') +
+    sitemapGroup('/minuteur-pomodoro', localesOf('/minuteur-pomodoro'), '2026-11-26', 'monthly', '0.8') +
     sitemapGroup('/modeles', localesOf('/modeles'), ARTICLES.filter((a) => a.kind === 'modele').reduce((max: string, a) => (a.dateModified > max ? a.dateModified : max), ''), 'weekly', '0.8') +
     ARTICLES.map((a) => sitemapGroup(`/blog/${a.slug}`, localesOf(`/blog/${a.slug}`), a.dateModified, 'monthly', '0.7')).join('') +
     USE_CASES.map((u) => {

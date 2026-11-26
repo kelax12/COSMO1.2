@@ -63,5 +63,17 @@
   "okrGeneratorTool": {
     "title": "Free OKR generator: objectives and key results | Cosmo",
     "description": "A free OKR generator with no sign-up: pick an area, phrase your objective and get key results to adjust. Copy or print the result."
+  },
+  "habitTrackerTool": {
+    "title": "Custom printable habit tracker: free tool | Cosmo",
+    "description": "Build your own habit tracker: pick the month and your habits, then print a grid ready to tick. Free, no sign-up."
+  },
+  "weeklyPlannerTool": {
+    "title": "Weekly planner online: free time blocking | Cosmo",
+    "description": "Plan your week with time blocking: a Monday-to-Sunday grid to fill in and print, free and with no sign-up. Work blocks, meetings, buffers."
+  },
+  "pomodoroTool": {
+    "title": "Online Pomodoro timer: free, no sign-up | Cosmo",
+    "description": "Online Pomodoro timer: focused work sessions, short breaks and a long break after each cycle. Free, no sign-up, with your current task."
   }
 }

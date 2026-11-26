@@ -22,7 +22,7 @@ import {
   TERMS_CONTENT,
 } from './content/short-pages.ts';
 import { breadcrumb, guideArticle } from './ld.ts';
-import { ARTICLE_ROUTES, BLOG_INDEX_ROUTE, EISENHOWER_TOOL_ROUTE, OKR_GENERATOR_ROUTE, TEMPLATES_INDEX_ROUTE, USE_CASE_ROUTES } from './routes-registries.ts';
+import { ARTICLE_ROUTES, BLOG_INDEX_ROUTE, EISENHOWER_TOOL_ROUTE, HABITTRACKERTOOL_ROUTE, WEEKLYPLANNERTOOL_ROUTE, POMODOROTOOL_ROUTE, OKR_GENERATOR_ROUTE, TEMPLATES_INDEX_ROUTE, USE_CASE_ROUTES } from './routes-registries.ts';
 import type { Route } from './types.ts';
 
 /** La home est écrite à part : elle porte aussi le FAQPage (cf. generate.ts). */
@@ -73,6 +73,9 @@ export const ROUTES: Route[] = [
   TEMPLATES_INDEX_ROUTE,
   EISENHOWER_TOOL_ROUTE,
   OKR_GENERATOR_ROUTE,
+  HABITTRACKERTOOL_ROUTE,
+  WEEKLYPLANNERTOOL_ROUTE,
+  POMODOROTOOL_ROUTE,
   ...ARTICLE_ROUTES,
   ...USE_CASE_ROUTES,
   { path: '/cgu', noindex: true, copy: 'terms', meta: fromCatalog('terms'), content: TERMS_CONTENT },

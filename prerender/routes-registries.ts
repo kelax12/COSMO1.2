@@ -134,6 +134,87 @@ export const TEMPLATES_INDEX_ROUTE: Route = {
 
 // ── Outils gratuits (plan SEO C7) ────────────────────────────────────
 
+export const HABITTRACKERTOOL_ROUTE: Route = {
+  path: '/habit-tracker-personnalise',
+  copy: 'habitTrackerTool',
+  meta: fromCatalog('habitTrackerTool'),
+  extraLd: (locale) => [
+    { obj: breadcrumb(locale === 'en' ? "Custom printable habit tracker" : "Habit tracker personnalisé à imprimer", '/habit-tracker-personnalise', locale), id: 'habitTrackerTool-breadcrumb' },
+    {
+      obj: {
+        '@context': 'https://schema.org',
+        '@type': 'WebApplication',
+        name: locale === 'en' ? "Custom printable habit tracker" : "Habit tracker personnalisé à imprimer",
+        url: canonicalUrl('/habit-tracker-personnalise', locale),
+        applicationCategory: 'ProductivityApplication',
+        operatingSystem: 'Web',
+        inLanguage: BCP47_TAG[locale],
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
+        publisher: ORGANISATION,
+      },
+      id: 'habitTrackerTool-app',
+    },
+  ],
+  content: {
+  "fr": "<h1>Habit tracker personnalisé à imprimer</h1>\n        <p>Un outil gratuit, sans inscription, pour créer votre propre habit tracker : choisissez le mois, écrivez jusqu'à huit habitudes, et imprimez une grille prête à cocher, avec les week-ends repérés et une colonne de total.</p>\n        <h2>Comment s'en servir</h2>\n        <p>Commencez avec deux ou trois habitudes dans leur version minimale, accrochées à un moment précis de la journée. Cochez une case par jour réussi, au moment même. À la fin du mois, notez les totaux et changez un seul réglage pour le mois suivant. Ne ratez jamais deux jours de suite.</p>\n        <p>Pour aller plus loin : <a href=\"/blog/habit-tracker-a-imprimer\">le habit tracker 2027 en PDF</a> · <a href=\"/blog/suivi-des-habitudes\">ce qu'il faut mesurer</a> · <a href=\"/signup\">créer un compte gratuit</a></p>",
+  "en": "<h1>Custom printable habit tracker</h1>\n        <p>A free tool, no sign-up, to build your own habit tracker: pick the month, write up to eight habits, and print a grid ready to tick, with weekends marked and a total column.</p>\n        <h2>How to use it</h2>\n        <p>Start with two or three habits in their minimal version, attached to a specific moment of the day. Tick one box for every successful day, right when it happens. At the end of the month, note the totals and change a single thing for next month. Never miss two days in a row.</p>\n        <p>Go further: <a href=\"/en/blog/habit-tracker-a-imprimer\">the 2027 habit tracker PDF</a> · <a href=\"/en/blog/suivi-des-habitudes\">what to measure</a> · <a href=\"/en/signup\">create a free account</a></p>"
+},
+};
+
+export const WEEKLYPLANNERTOOL_ROUTE: Route = {
+  path: '/planning-semaine-en-ligne',
+  copy: 'weeklyPlannerTool',
+  meta: fromCatalog('weeklyPlannerTool'),
+  extraLd: (locale) => [
+    { obj: breadcrumb(locale === 'en' ? "Weekly planner online" : "Planning de semaine en ligne", '/planning-semaine-en-ligne', locale), id: 'weeklyPlannerTool-breadcrumb' },
+    {
+      obj: {
+        '@context': 'https://schema.org',
+        '@type': 'WebApplication',
+        name: locale === 'en' ? "Weekly planner online" : "Planning de semaine en ligne",
+        url: canonicalUrl('/planning-semaine-en-ligne', locale),
+        applicationCategory: 'ProductivityApplication',
+        operatingSystem: 'Web',
+        inLanguage: BCP47_TAG[locale],
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
+        publisher: ORGANISATION,
+      },
+      id: 'weeklyPlannerTool-app',
+    },
+  ],
+  content: {
+  "fr": "<h1>Planning de semaine en ligne</h1>\n        <p>Un outil gratuit, sans inscription, pour organiser votre semaine en time-blocking : une grille de sept jours de 7 h à 19 h, où chaque case reçoit un bloc de travail, une réunion ou une pause. Imprimable, et enregistré dans votre navigateur.</p>\n        <h2>Comment s'en servir</h2>\n        <p>Placez d'abord les blocs de travail profond aux heures où vous êtes le plus efficace, regroupez les réunions, gardez une marge chaque jour, puis remplissez les créneaux restants avec les tâches courtes. Chaque soir, ajustez le lendemain.</p>\n        <p>Pour aller plus loin : <a href=\"/blog/time-blocking-guide\">le guide du time-blocking</a> · <a href=\"/blog/planning-semaine-time-blocking\">une semaine type à copier</a> · <a href=\"/signup\">créer un compte gratuit</a></p>",
+  "en": "<h1>Weekly planner online</h1>\n        <p>A free tool, no sign-up, to plan your week with time blocking: a seven-day grid from 7 am to 7 pm, where each slot takes a work block, a meeting or a break. Printable, and saved in your browser.</p>\n        <h2>How to use it</h2>\n        <p>Place deep work blocks first, at the hours when you work best, group your meetings, keep a buffer every day, then fill the remaining slots with short tasks. Each evening, adjust the next day.</p>\n        <p>Go further: <a href=\"/en/blog/time-blocking-guide\">the time blocking guide</a> · <a href=\"/en/blog/planning-semaine-time-blocking\">a typical week to copy</a> · <a href=\"/en/signup\">create a free account</a></p>"
+},
+};
+
+export const POMODOROTOOL_ROUTE: Route = {
+  path: '/minuteur-pomodoro',
+  copy: 'pomodoroTool',
+  meta: fromCatalog('pomodoroTool'),
+  extraLd: (locale) => [
+    { obj: breadcrumb(locale === 'en' ? "Pomodoro timer" : "Minuteur Pomodoro", '/minuteur-pomodoro', locale), id: 'pomodoroTool-breadcrumb' },
+    {
+      obj: {
+        '@context': 'https://schema.org',
+        '@type': 'WebApplication',
+        name: locale === 'en' ? "Pomodoro timer" : "Minuteur Pomodoro",
+        url: canonicalUrl('/minuteur-pomodoro', locale),
+        applicationCategory: 'ProductivityApplication',
+        operatingSystem: 'Web',
+        inLanguage: BCP47_TAG[locale],
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
+        publisher: ORGANISATION,
+      },
+      id: 'pomodoroTool-app',
+    },
+  ],
+  content: {
+  "fr": "<h1>Minuteur Pomodoro en ligne</h1>\n        <p>Un minuteur Pomodoro gratuit, sans inscription : 25 minutes de travail sur une seule tâche, 5 minutes de pause, et une pause longue de 15 minutes toutes les quatre sessions. Indiquez la tâche en cours, le minuteur compte vos sessions de la journée.</p>\n        <h2>Comment s'en servir</h2>\n        <p>Choisissez une seule tâche, lancez le minuteur et ne faites rien d'autre jusqu'à la sonnerie. Pendant la pause, levez-vous. Notez les interruptions au lieu d'y céder, et traitez-les à la pause suivante.</p>\n        <p>Pour aller plus loin : <a href=\"/blog/gestion-du-temps-efficace\">gestion du temps efficace</a> · <a href=\"/blog/time-blocking-guide\">le time-blocking</a> · <a href=\"/signup\">créer un compte gratuit</a></p>",
+  "en": "<h1>Online Pomodoro timer</h1>\n        <p>A free Pomodoro timer, no sign-up: 25 minutes of work on a single task, a 5-minute break, and a 15-minute long break every four sessions. Note the current task and the timer counts your sessions for the day.</p>\n        <h2>How to use it</h2>\n        <p>Pick a single task, start the timer and do nothing else until it rings. During the break, get up. Write interruptions down instead of giving in to them, and handle them at the next break.</p>\n        <p>Go further: <a href=\"/en/blog/gestion-du-temps-efficace\">effective time management</a> · <a href=\"/en/blog/time-blocking-guide\">time blocking</a> · <a href=\"/en/signup\">create a free account</a></p>"
+},
+};
+
 export const OKR_GENERATOR_ROUTE: Route = {
   path: '/generateur-okr',
   copy: 'okrGeneratorTool',

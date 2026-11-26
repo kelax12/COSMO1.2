@@ -135,8 +135,8 @@ describe('copie du hero : visible pour le seul visiteur sans session', () => {
     expect(copies).toMatch(/async function injectContentCopy[\s\S]{0,1600}out\.replace\(\/<html\(\?!\[\^>\]\*data-prerendered\)\/, '<html data-prerendered'\)/);
     expect((routes.match(/heroTrack: '/g) ?? []).length).toBe(2);
     // Guide, à-propos, blog, articles, cas d'usage, trois pages légales, galerie
-    // des modèles, matrice d'Eisenhower et générateur d'OKR (plan SEO C5, C7).
-    expect((routes.match(/\bcopy: (?:'[a-zA-Z]+'|u\.routeId),/g) ?? []).length).toBe(11);
+    // des modèles et cinq outils gratuits (plan SEO C5, C7).
+    expect((routes.match(/\bcopy: (?:'[a-zA-Z]+'|u\.routeId),/g) ?? []).length).toBe(14);
     expect(index).toMatch(/html\[data-prerendered\] #lp-hero\[data-track=entreprise\]\{background:#08090C\}/);
   });
 

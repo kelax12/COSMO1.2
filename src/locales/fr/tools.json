@@ -60,5 +60,60 @@
     "howTitle": "Comment écrire un bon OKR",
     "how1": "L'objectif dit où vous voulez aller, en mots et sans chiffre. Les résultats clés disent comment vous saurez que vous y êtes : un nombre, une unité, une valeur de départ et une cible que vous pensez atteindre avec 50 à 70 % de chances.",
     "how2": "Deux à quatre résultats clés par objectif suffisent, sur un trimestre. Relisez-les dix minutes chaque semaine : c’est ce rendez-vous qui fait la différence."
+  },
+  "habit": {
+    "title": "Habit tracker personnalisé à imprimer",
+    "intro": "Choisissez le mois, écrivez vos habitudes, imprimez : votre grille est prête à cocher. Gratuit, sans inscription, tout reste dans votre navigateur.",
+    "month": "Mois",
+    "year": "Année",
+    "habits": "Vos habitudes",
+    "habitLabel": "Habitude",
+    "placeholder": "Ex. : 10 minutes de lecture",
+    "addHabit": "+ Ajouter une habitude",
+    "hint": "Commencez avec deux ou trois habitudes : la grille en accepte jusqu’à huit.",
+    "print": "Imprimer la grille",
+    "habitColumn": "Habitude",
+    "total": "Total",
+    "rule": "Règle d’or : ne jamais rater deux jours de suite.",
+    "ctaTitle": "Suivez vos habitudes aussi sur votre téléphone",
+    "ctaText": "Dans Cosmo, chaque habitude a sa série, sa heatmap sur six mois et ses rappels, à côté de vos tâches et de vos objectifs.",
+    "howTitle": "Comment bien utiliser votre habit tracker",
+    "how1": "Écrivez chaque habitude dans sa version minimale (« dix minutes de lecture » plutôt que « lire une heure ») et accrochez-la à un moment précis de votre journée.",
+    "how2": "Placez la feuille là où vous la voyez et cochez au moment même. À la fin du mois, regardez les jours qui décrochent et changez un seul réglage pour le mois suivant.",
+    "monthYear": "{{month}} {{year}}"
+  },
+  "planner": {
+    "title": "Planning de semaine en ligne",
+    "intro": "Remplissez la grille bloc par bloc : travail profond, réunions, pauses. Gratuit, sans inscription, tout reste dans votre navigateur.",
+    "print": "Imprimer le planning",
+    "clear": "Tout effacer",
+    "hint": "Cliquez dans une case et écrivez le bloc prévu.",
+    "hour": "{{h}} h",
+    "ctaTitle": "Placez vos vraies tâches dans l’agenda",
+    "ctaText": "Dans Cosmo, vos tâches se glissent dans l’agenda en créneaux, à côté de vos habitudes et de vos objectifs.",
+    "howTitle": "Comment bien remplir votre semaine",
+    "how1": "Commencez par les blocs de travail profond, aux heures où vous êtes le plus efficace, puis regroupez réunions et appels sur une même plage.",
+    "how2": "Gardez une marge chaque jour : un planning rempli à chaque minute est faux dès le mardi. Chaque soir, ajustez le lendemain en dix minutes."
+  },
+  "pomodoro": {
+    "title": "Minuteur Pomodoro en ligne",
+    "intro": "25 minutes sur une seule tâche, 5 minutes de pause, une pause longue toutes les quatre sessions. Gratuit, sans inscription.",
+    "taskLabel": "Tâche en cours",
+    "taskPlaceholder": "Sur quoi travaillez-vous ?",
+    "start": "Démarrer",
+    "pause": "Pause",
+    "reset": "Recommencer cette phase",
+    "skip": "Passer à la phase suivante",
+    "sessions": "Sessions terminées aujourd’hui : {{n}}",
+    "phase": {
+      "travail": "Travail",
+      "pause": "Pause courte",
+      "longue": "Pause longue"
+    },
+    "ctaTitle": "Reliez vos sessions à vos priorités",
+    "ctaText": "Dans Cosmo, la tâche du moment vient de votre liste priorisée et de votre agenda, à côté de vos objectifs.",
+    "howTitle": "Comment tirer le meilleur de la méthode Pomodoro",
+    "how1": "Une session, une tâche. Si une idée ou une demande surgit, notez-la et revenez à la tâche : vous la traiterez à la pause.",
+    "how2": "Pendant la pause, quittez l’écran. Après quatre sessions, prenez la pause longue : c’est elle qui permet de tenir sur la journée."
   }
 }

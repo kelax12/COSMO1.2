@@ -208,6 +208,60 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://thecosmo.app/habit-tracker-personnalise</loc>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://thecosmo.app/habit-tracker-personnalise" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://thecosmo.app/en/custom-habit-tracker" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://thecosmo.app/habit-tracker-personnalise" />
+    <lastmod>2026-11-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://thecosmo.app/en/custom-habit-tracker</loc>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://thecosmo.app/habit-tracker-personnalise" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://thecosmo.app/en/custom-habit-tracker" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://thecosmo.app/habit-tracker-personnalise" />
+    <lastmod>2026-11-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://thecosmo.app/planning-semaine-en-ligne</loc>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://thecosmo.app/planning-semaine-en-ligne" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://thecosmo.app/en/weekly-planner-online" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://thecosmo.app/planning-semaine-en-ligne" />
+    <lastmod>2026-11-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://thecosmo.app/en/weekly-planner-online</loc>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://thecosmo.app/planning-semaine-en-ligne" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://thecosmo.app/en/weekly-planner-online" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://thecosmo.app/planning-semaine-en-ligne" />
+    <lastmod>2026-11-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://thecosmo.app/minuteur-pomodoro</loc>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://thecosmo.app/minuteur-pomodoro" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://thecosmo.app/en/pomodoro-timer" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://thecosmo.app/minuteur-pomodoro" />
+    <lastmod>2026-11-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://thecosmo.app/en/pomodoro-timer</loc>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://thecosmo.app/minuteur-pomodoro" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://thecosmo.app/en/pomodoro-timer" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://thecosmo.app/minuteur-pomodoro" />
+    <lastmod>2026-11-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://thecosmo.app/modeles</loc>
     <xhtml:link rel="alternate" hreflang="fr" href="https://thecosmo.app/modeles" />
     <xhtml:link rel="alternate" hreflang="en" href="https://thecosmo.app/en/templates" />

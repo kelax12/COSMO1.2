@@ -463,6 +463,8 @@ export const EN = {
 
 <p>To choose the tool that will carry your method, our comparisons: <a href="/en/blog/cosmo-vs-google-tasks">Cosmo or Google Tasks</a>, <a href="/en/blog/cosmo-vs-trello">Cosmo or Trello</a>, <a href="/en/blog/cosmo-vs-ticktick">Cosmo or TickTick</a>, <a href="/en/blog/cosmo-vs-notion">Cosmo or Notion</a>.</p>
 
+<p>To put it into practice: <a href="/en/pomodoro-timer">an online Pomodoro timer</a>, free and with no sign-up.</p>
+
 <h2 id="faq">Frequently asked questions</h2>
 <h3>Which principle should you start with?</h3>
 <p>The second one: bring everything into a single list. It requires no method and produces the most immediate relief. The others get added afterwards, one a week.</p>
@@ -602,6 +604,8 @@ export const EN = {
 
 <h2 id="papier-ou-app">Paper or app?</h2>
 <p>Paper has two real strengths: you see it without opening anything, and ticking a box with a pen feels good. Its limits show over time: no reminders, no history beyond the month, and the sheet stays at home when you travel. <a href="/en">Cosmo</a> keeps the grid idea (a 26-week heatmap per habit, your current streak, your completion rate) and adds reminders and the link to your goals. Many people combine both: paper on the fridge, the app in their pocket. It is <a href="/en/signup">free</a>, and the demo opens without sign-up.</p>
+
+<p>To put it into practice: <a href="/en/custom-habit-tracker">a custom habit tracker</a>, free and with no sign-up.</p>
 
 <h2 id="faq">Frequently asked questions</h2>
 <h3>Is the PDF really free?</h3>
@@ -1386,6 +1390,8 @@ export const EN = {
 <h2 id="outils">Which tool for time-blocking?</h2>
 <p>Paper, Google Calendar, anything works as long as friction stays low. That is precisely the weak point of the "separate to-do list plus calendar" pairing: copying each task into the calendar, twice a day, every day. If that is exactly where your hesitation lies, our <a href="/en/blog/cosmo-vs-todoist">Cosmo and Todoist comparison</a> makes it its main angle.</p>
 <p>In <a href="/en/">Cosmo</a>, time-blocking is native: your tasks appear in a panel beside the calendar, and <strong>dragging a task onto a slot creates the linked event</strong>, duration, category and colour included. A completed task updates your time-invested statistics, and if it feeds an <a href="/en/blog/methode-okr-exemples">OKR</a>, the progress follows. Planning your day takes two minutes, <a href="/en/signup">for free</a>, and the demo can be tried without signing up.</p>
+
+<p>To put it into practice: <a href="/en/weekly-planner-online">an online weekly planner</a>, free and with no sign-up.</p>
 
 <h2 id="faq">Frequently asked questions</h2>
 <h3>How long does it take to get the hang of it?</h3>

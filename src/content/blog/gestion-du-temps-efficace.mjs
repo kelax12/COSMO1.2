@@ -79,6 +79,8 @@ export const article = {
 
 <p>Pour choisir l'outil qui portera votre méthode, nos comparatifs : <a href="/blog/cosmo-vs-google-tasks">Cosmo ou Google Tasks</a>, <a href="/blog/cosmo-vs-trello">Cosmo ou Trello</a>, <a href="/blog/cosmo-vs-ticktick">Cosmo ou TickTick</a>, <a href="/blog/cosmo-vs-notion">Cosmo ou Notion</a>.</p>
 
+<p>Pour passer à la pratique : <a href="/minuteur-pomodoro">un minuteur Pomodoro en ligne</a>, gratuit et sans inscription.</p>
+
 <h2 id="faq">Questions fréquentes</h2>
 <h3>Par quel principe commencer ?</h3>
 <p>Le deuxième : regrouper tout dans une liste unique. Il ne demande aucune méthode et produit le soulagement le plus immédiat. Les autres s'ajoutent ensuite, un par semaine.</p>

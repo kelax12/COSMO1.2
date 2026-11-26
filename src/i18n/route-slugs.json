@@ -70,5 +70,23 @@
     "en": "okr-generator",
     "es": "generador-okr",
     "hr": "generator-okr"
+  },
+  "habitTrackerTool": {
+    "fr": "habit-tracker-personnalise",
+    "en": "custom-habit-tracker",
+    "es": "habit-tracker-personalizado",
+    "hr": "prilagodeni-pratitelj-navika"
+  },
+  "weeklyPlannerTool": {
+    "fr": "planning-semaine-en-ligne",
+    "en": "weekly-planner-online",
+    "es": "planificador-semanal-online",
+    "hr": "tjedni-planer-online"
+  },
+  "pomodoroTool": {
+    "fr": "minuteur-pomodoro",
+    "en": "pomodoro-timer",
+    "es": "temporizador-pomodoro",
+    "hr": "pomodoro-mjerac-vremena"
   }
 }

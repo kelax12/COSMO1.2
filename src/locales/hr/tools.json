@@ -60,5 +60,60 @@
     "howTitle": "Kako napisati dobar OKR",
     "how1": "Cilj kaže kamo želite stići, riječima i bez brojki. Ključni rezultati kažu kako ćete znati da ste stigli: broj, jedinica, početna vrijednost i cilj koji mislite dosegnuti s 50 do 70 % vjerojatnosti.",
     "how2": "Dva do četiri ključna rezultata po cilju dovoljna su, u jednom tromjesečju. Pregledajte ih deset minuta svaki tjedan: taj sastanak čini razliku."
+  },
+  "habit": {
+    "title": "Prilagođeni pratitelj navika za ispis",
+    "intro": "Odaberite mjesec, upišite navike, ispišite: tablica je spremna za označavanje. Besplatno, bez registracije, sve ostaje u pregledniku.",
+    "month": "Mjesec",
+    "year": "Godina",
+    "habits": "Vaše navike",
+    "habitLabel": "Navika",
+    "placeholder": "Npr. deset minuta čitanja",
+    "addHabit": "+ Dodaj naviku",
+    "hint": "Počnite s dvije ili tri navike: tablica ih prima najviše osam.",
+    "print": "Ispiši tablicu",
+    "habitColumn": "Navika",
+    "total": "Ukupno",
+    "rule": "Zlatno pravilo: nikad ne propustiti dva dana zaredom.",
+    "ctaTitle": "Pratite navike i na mobitelu",
+    "ctaText": "U Cosmu svaka navika ima svoj niz, toplinsku kartu za šest mjeseci i podsjetnike, uz zadatke i ciljeve.",
+    "howTitle": "Kako dobro koristiti pratitelj navika",
+    "how1": "Svaku naviku napišite u minimalnoj verziji („deset minuta čitanja“ umjesto „čitati sat vremena“) i vežite je uz točan trenutak u danu.",
+    "how2": "Držite list ondje gdje ga vidite i označite odmah. Na kraju mjeseca pogledajte dane kad popušta i promijenite samo jednu stvar za sljedeći mjesec.",
+    "monthYear": "{{month}} {{year}}"
+  },
+  "planner": {
+    "title": "Tjedni planer online",
+    "intro": "Ispunite tablicu blok po blok: dubinski rad, sastanci, pauze. Besplatno, bez registracije, sve ostaje u pregledniku.",
+    "print": "Ispiši planer",
+    "clear": "Obriši sve",
+    "hint": "Kliknite polje i upišite planirani blok.",
+    "hour": "{{h}} h",
+    "ctaTitle": "Smjestite stvarne zadatke u kalendar",
+    "ctaText": "U Cosmu zadaci ulaze u kalendar kao termini, uz vaše navike i ciljeve.",
+    "howTitle": "Kako dobro ispuniti tjedan",
+    "how1": "Počnite blokovima dubinskog rada, u satima kad ste najučinkovitiji, a zatim grupirajte sastanke i pozive u jedan dio dana.",
+    "how2": "Ostavite rezervu svaki dan: planer ispunjen do minute netočan je već u utorak. Svake večeri za deset minuta prilagodite sljedeći dan."
+  },
+  "pomodoro": {
+    "title": "Pomodoro mjerač vremena online",
+    "intro": "25 minuta na jednom zadatku, 5 minuta pauze, duga pauza svake četiri sesije. Besplatno, bez registracije.",
+    "taskLabel": "Trenutačni zadatak",
+    "taskPlaceholder": "Na čemu radite?",
+    "start": "Pokreni",
+    "pause": "Pauza",
+    "reset": "Ponovno pokreni ovu fazu",
+    "skip": "Prijeđi na sljedeću fazu",
+    "sessions": "Završene sesije danas: {{n}}",
+    "phase": {
+      "travail": "Rad",
+      "pause": "Kratka pauza",
+      "longue": "Duga pauza"
+    },
+    "ctaTitle": "Povežite sesije s prioritetima",
+    "ctaText": "U Cosmu trenutačni zadatak dolazi s vašeg popisa prioriteta i iz kalendara, uz vaše ciljeve.",
+    "howTitle": "Kako najbolje iskoristiti Pomodoro metodu",
+    "how1": "Jedna sesija, jedan zadatak. Ako se pojavi ideja ili zahtjev, zapišite ga i vratite se zadatku: riješit ćete ga u pauzi.",
+    "how2": "Tijekom pauze maknite se od zaslona. Nakon četiri sesije uzmite dugu pauzu: ona vam omogućuje da izdržite cijeli dan."
   }
 }
