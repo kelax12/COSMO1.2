@@ -1,83 +1,121 @@
-# Audit SEO pour l'IA générative de Google (Aperçu IA, Mode IA)
+# Audit SEO pour la recherche Google et son IA générative (Aperçu IA, Mode IA)
 
-**Date** : 2026-11-16. **Grille** : skill `seo-google-ia` (doctrine Google Search Central, maj 2026-07-13), sections « À faire », « Inutile pour Google » et « Utilisation en audit ». **Périmètre** : la recherche Google seulement ; ChatGPT, Perplexity ou Claude relèvent d'une autre grille.
+**Dates** : audit initial 2026-11-16, mis à jour le 2026-11-26 après le chantier SEO mené du 2026-11-23 au 2026-11-26 (plan tenu hors dépôt). **Grille** : skill `seo-google-ia` (doctrine Google Search Central, maj 2026-07-13), inchangée entre les deux passes pour que les notes se comparent. **Périmètre** : la recherche Google ; ChatGPT, Perplexity ou Claude relèvent d'une autre grille.
 
-**Méthode** : lecture seule. `npm run build` non lancé : `dist/` local date du 2026-11-06 et ne contient que `vite build` (aucune page prérendue). La source retenue pour le HTML servi est `prerender/instantanes/` (50 pages, comparées à chaque CI par `npm run check:prerender`), recoupée en ligne le 2026-11-16 sur `https://thecosmo.app/`, `/blog/matrice-eisenhower`, `/cgu`, `/robots.txt`, `/llms.txt` (en-têtes et `<title>`, `meta robots`, `<h1>` identiques aux instantanés).
+**Méthode (2026-11-26)** : HTML servi lu dans `prerender/instantanes/` (127 pages, comparées à chaque CI par `npm run check:prerender`) et recoupé en ligne sur `https://thecosmo.app/` (production `336a1d3`) ; contenu compté depuis les registres (`src/content/`) ; Search Console lue dans `docs/seo-signals-series.json` (relevé hebdomadaire, dernier point du 2026-11-23) ; vitesse mobile mesurée une fois sur PageSpeed Insights (accueil, 2026-11-26).
 
-## Note : 72/100 (2026-11-16)
+## Note : 80/100 (2026-11-26), contre 72/100 (2026-11-16)
 
-| Critère (skill) | Poids | Note | Motif |
-|---|---|---|---|
-| 1. Indexabilité et extraits (robots, `nosnippet`, canonical, noindex) | 20 | 18 | Extraits ouverts partout (`max-snippet:-1`), canonical et hreflang propres ; signaux contradictoires sur les pages légales, pages de connexion minces indexables |
-| 2. Contenu original, expérience propre | 25 | 12 | Articles soignés mais sur des sujets saturés (Eisenhower, OKR, time-blocking, glossaire) traités de façon encyclopédique ; aucun auteur nommé, aucune donnée ni expérience exclusive |
-| 3. Structure et médias | 15 | 12 | Un `<h1>` par page (garde de build), `<h2>` clairs, `alt` + `width`/`height` sur toutes les images ; vidéo absente du HTML, pages cas d'usage sans image |
-| 4. Technique (rendu JS, doublons, expérience de page) | 20 | 15 | Prérendu complet et hreflang réciproques ; sur l'accueil, le texte prérendu est masqué puis effacé par React, Google indexe donc la landing rendue, qui dépend d'un montage différé |
-| 5. Pas de pages en masse par variante de requête | 10 | 10 | 25 URL par locale, 4 pages cas d'usage distinctes : aucun risque d'abus à grande échelle |
-| 6. Mesure et inclusion (Search Console) | 10 | 5 | Hors dépôt, non vérifiable ici : note neutre par défaut (voir § Hors dépôt) |
-| **Total** | **100** | **72** | |
+| Critère (skill) | Poids | 2026-11-16 | 2026-11-26 | Ce qui a bougé |
+|---|---|---|---|---|
+| 1. Indexabilité et extraits | 20 | 18 | **20** | `noindex` dans le HTML des pages légales et de `/login`, hreflang en langue seule avec `x-default`, et surtout plus de redirection de `/` selon la langue du navigateur |
+| 2. Contenu original, expérience propre | 25 | 12 | **16** | Auteur nommé (`Person`), 5 outils gratuits utilisables, 8 modèles avec exemple rempli, 9 comparatifs honnêtes ; le fond des articles reste du savoir commun, sans données ni cas réels |
+| 3. Structure et médias | 15 | 12 | **12** | Réponse directe sous l'introduction de 22 pages ; toujours une image au plus par article, aucune vidéo publique |
+| 4. Technique | 20 | 15 | **16** | Redirection par langue retirée, slugs croates traduits, IndexNow ; LCP mobile de l'accueil à 4,8 s et texte prérendu de l'accueil toujours remplacé par React |
+| 5. Pas de pages en masse | 10 | 10 | **9** | 8 modèles au même gabarit, de 350 à 450 mots : pas un abus, mais sous la règle des 600 mots que le plan fixe pour la galerie à grande échelle |
+| 6. Mesure et inclusion | 10 | 5 | **7** | Série Search Console hebdomadaire lue, clics CTA mesurés (`data-cta`), vitesse mesurée ; pages réellement indexées toujours inconnues |
+| **Total** | **100** | **72** | **80** | |
 
-Le facteur limitant déclaré par `docs/SEO.md` (§ Priorité : l'autorité de domaine) reste valable pour l'IA de Google : Aperçu IA et Mode IA récupèrent des pages déjà bien classées par les systèmes classiques. Aucune optimisation « pour l'IA » ne compense l'absence de liens entrants.
+Le facteur limitant ne change pas : **l'autorité de domaine**. Le site est désormais propre et fourni, mais Google et son IA récupèrent des pages déjà bien classées, et presque aucun site ne pointe vers thecosmo.app (`docs/SEO.md` § Priorité). Les 8 points gagnés rendent le site prêt à se classer ; ils ne le font pas se classer seuls.
+
+## Ce qui a été fait (2026-11-23 au 2026-11-26)
+
+| Domaine | Changement | Où |
+|---|---|---|
+| Exploration | IndexNow : soumission des pages au `lastmod` récent après chaque mise en ligne (Bing, Yandex, et par Bing : ChatGPT, Copilot, DuckDuckGo) | job `indexnow` de `smoke-prod.yml`, `scripts/seo-signals.mjs indexnow` |
+| Langues | Plus de redirection de `/` selon la langue du navigateur ; un bandeau propose la langue à la place | `src/i18n/bootstrap.ts`, `LocaleSuggestionBanner` |
+| Langues | Slugs d'articles croates traduits, ancien slug en 301 | `src/i18n/article-slugs.json`, `vercel.json` |
+| Saison | 4 pages Nouvel An fr + en (objectifs de l'année, habit tracker à imprimer avec PDF de 12 mois, bilan en 10 questions, tenir ses résolutions) | `src/content/blog/` |
+| Intention commerciale | 9 comparatifs « alternative à X » (Todoist, TickTick, Notion, Trello, Google Tasks, ClickUp, Habitica, Microsoft To Do, Any.do) | `src/content/blog/cosmo-vs-*.mjs` |
+| Modèles | Galerie `/modeles` (`/en/templates`), 8 modèles (OKR freelance, étudiant, marketing, startup ; routine du matin ; révisions ; semaine en time-blocking ; revue hebdomadaire) | `TemplatesIndexPage`, articles `kind: "modele"` |
+| Outils gratuits | Matrice d'Eisenhower, générateur d'OKR, habit tracker personnalisé, planning de semaine, minuteur Pomodoro ; sans compte, `WebApplication` en JSON-LD | `src/pages/tools/`, `EisenhowerToolPage`, `OkrGeneratorPage` |
+| E-E-A-T | Articles signés Axel Longatte (`BlogPosting.author` = `Person`), ancre `#fondateur` sur À propos | `prerender/routes-registries.ts`, `BlogArticlePage` |
+| Extraits | Question en `<h2 id="en-bref">` et réponse de 40 à 60 mots sous l'introduction (14 articles et 8 modèles) | registres du blog |
+| Conversion | `data-cta` sur les boutons publics (aucun n'était mesuré) ; accès à la démo sous le titre de chaque article | `src/lib/traffic.ts` (`kind = 'cta'`) |
+| Distribution | Extension « Ajouter à Cosmo » (Manifest V3), prête à publier | `extension/` |
+| Poids | Corps anglais des articles chargé à part, pour les seuls visiteurs `en` | `src/content/blog/en.mjs` |
+
+## État actuel (mesuré le 2026-11-26)
+
+| Mesure | 2026-11-16 | 2026-11-26 |
+|---|---|---|
+| Pages prérendues (instantanés) | 50 | 127 |
+| URL du sitemap | 40 | 112 (fr 46, en 46, hr 20) |
+| Pages éditoriales du blog | 11 | 31 (14 articles, 9 comparatifs, 8 modèles), ~24 000 mots en fr, toutes traduites en anglais, 11 en croate |
+| Outils gratuits | 0 | 5 |
+| Images Open Graph par page | partielles | 111 |
+| Clics Google hors marque (28 j, relevé du 2026-11-23) | 0 | 0 (8 impressions, dont 7 sur des requêtes K-pop sans rapport ; « okr en pratique » en position 37) |
+| Clics Google toutes requêtes (28 j) | non relevé | 12 (314 impressions, position moyenne 9,6, quasi tout sur la marque) |
+| Visiteurs des pages publiques (`traffic_hits`, 30 j au 2026-11-23) | non relevé | ~21, dont ~6 venus d'un moteur |
+| PageSpeed mobile, accueil (labo) | non relevé | performance 77, LCP 4,8 s, TBT 150 ms, CLS 0 ; aucune donnée terrain (trafic trop faible) |
+
+Les pages publiées du 25 au 26 novembre ne sont pas encore dans le relevé Search Console : leurs effets commencent au relevé du 2026-11-30 au plus tôt.
 
 ## Constats
 
-### 1. Indexabilité et extraits
+### Réglés depuis le 2026-11-16
 
-- ✅ Toutes les pages prérendues portent `index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1` (`index.html:31`, hérité par chaque page, ex. `prerender/instantanes/pages/index.html:31`). Aucun `nosnippet`, `data-nosnippet` ni `max-snippet` restrictif dans le dépôt : chaque page indexée est éligible à l'extrait, donc à l'Aperçu IA.
-- ✅ `canonical` absolu qui suit la locale (`prerender/instantanes/pages/index.html:33`, `.../en__blog__matrice-eisenhower.html` → `/en/blog/matrice-eisenhower`). hreflang `fr-FR` / `en-US` / `x-default` réciproques (`prerender/instantanes/pages/index.html:222-224`), repris dans le sitemap (40 URL, `prerender/instantanes/fichiers/sitemap.xml`).
-- ✅ `robots.txt` (`public/robots.txt:1-55`) : `User-agent: *`, `Allow: /`, routes applicatives bloquées dans les deux locales, `/entreprise$` en ancre de fin pour ne pas bloquer `/entreprise-presentation`, sitemap déclaré. Les pages à désindexer restent explorables pour que le `noindex` soit lu.
-- ℹ️ Aucune règle `Google-Extended` : comportement par défaut (autorisé). Pour mémoire, Google documente que `Google-Extended` ne retire pas un site de l'Aperçu IA ni du Mode IA ; il n'y a rien à ajouter pour la recherche.
-- ⚠️ Signaux contradictoires sur les pages légales : l'en-tête `X-Robots-Tag: noindex, follow` (`vercel.json:41-43`, vérifié en ligne sur `/cgu`) coexiste avec un `meta robots` « index, follow » dans le HTML (`prerender/instantanes/pages/cgu.html`, idem `mentions-legales`, `politique-confidentialite`, `en__terms`…). Google applique la règle la plus restrictive, donc l'effet voulu est obtenu ; c'est un risque de maintenance, pas une perte.
-- ⚠️ `/login`, `/signup`, `/en/login`, `/en/signup` sont prérendues et indexables (`index, follow`) avec 141 à 153 mots, essentiellement du maillage (`prerender/instantanes/pages/login.html`). Absentes du sitemap, donc cohérent avec une indexation non souhaitée, mais rien ne l'empêche. Faible enjeu.
+- ✅ Pages légales et `/login`, `/signup` : `noindex, follow` dans le HTML (`prerender/instantanes/pages/cgu.html`, `login.html`), cohérent avec l'en-tête `X-Robots-Tag`.
+- ✅ Redirection de `/` vers `/en/` selon la langue du navigateur retirée : Googlebot, qui rend en en-US, voyait l'accueil français en anglais (Lighthouse : canonical vers une autre alternative hreflang). Seule une préférence choisie au sélecteur redirige encore.
+- ✅ Auteur humain : `Person` dans le JSON-LD et signature visible sur chaque article.
+- ✅ Slugs : articles croates traduits ; les URL anglaises gardent le slug français, choix assumé (une seule publication, traduite).
+- ✅ Contenu propre au produit, que les concurrents n'ont pas : 5 outils utilisables sans compte, modèles avec exemple rempli, comparatifs qui disent pour qui l'autre outil est meilleur.
 
-### 2. Contenu : original ou générique
+### Restants
 
-- ✅ Volume sain : 11 articles de 871 à 2 245 mots (fr), 4 pages cas d'usage de 744 à 1 027 mots, accueil 895 mots (comptes sur `#seo-fallback` des instantanés). Traduction anglaise réelle du corps, pas seulement des méta (`en__blog__*` ≈ même volume).
-- ✅ Éléments propres au produit, donc non génériques : la démo pré-remplie (12 mois, 100 tâches, 100 habitudes, 8 OKR), le comparatif `cosmo-vs-todoist`, le template OKR téléchargeable, les sections « La mettre en pratique dans Cosmo », les partis pris de `/a-propos` (gratuité du partage, RLS, mobile d'abord).
-- ❌ Le cœur des articles est du savoir commun reformulé. Exemple : `src/content/blog/matrice-eisenhower.mjs` déroule les quatre quadrants, le piège Q1/Q3 et une FAQ courte, sans chiffre, cas vécu ni observation qu'un LLM ne produirait pas seul. Même profil pour `glossaire-productivite`, `methode-okr-exemples`, `time-blocking-guide`. C'est exactement le contenu que le skill classe en premier risque (« résumé de ce qui existe déjà »), et ce sont des requêtes où les concurrents ont l'autorité.
-- ❌ Aucun auteur humain : `author` est l'organisation Cosmo dans tout `BlogPosting` (`prerender/ld.ts:49`), pas de signature visible, et `/a-propos` parle d'une « équipe indépendante » anonyme (`prerender/content/about.ts:25`). L'expérience et l'expertise ne sont attribuables à personne.
-- ✅ Pas de pages en masse : les 4 cas d'usage (`src/content/use-cases.mjs`) ciblent des publics distincts avec une copie propre à chacun ; aucune page par ville, métier ou variante de mot-clé.
+- ❌ **Autorité** : aucun domaine référent mesurable. C'est le seul blocage du classement ; tout le reste est prêt.
+- ❌ **Fond des articles générique** (Eisenhower, OKR, time-blocking, glossaire) : savoir commun reformulé, sans donnée, cas vécu ni retour d'utilisateur. La signature existe, la bio et la photo du fondateur non.
+- ⚠️ **Accueil** : le texte prérendu (`#seo-fallback`) est masqué puis remplacé par React ; Google indexe la landing rendue. À vérifier dans l'inspection d'URL de la Search Console.
+- ⚠️ **LCP mobile de l'accueil à 4,8 s** (cible 2,5 s) : c'est le plus gros écart technique restant.
+- ⚠️ **Médias** : une image au plus par article, aucune sur les pages cas d'usage, la vidéo d'onboarding entreprise toujours absente des pages publiques.
+- ⚠️ **Modèles courts** (350 à 450 mots) : suffisants pour une première vague, à étoffer avant d'en publier davantage.
+- ⚠️ **Mesure** : pages réellement indexées et domaines référents inconnus depuis le dépôt.
 
-### 3. Structure et médias
+## Estimation du trafic une fois les changements pris en compte
 
-- ✅ Un seul `<h1>` par page, imposé au build (`prerender/verify.ts`, garde `src/prerender-h1.guard.test.ts`) ; hiérarchie `<h2>` lisible (accueil : `prerender/instantanes/pages/index.html:236-273`). Paragraphes, listes et tableau HTML réel dans les articles.
-- ✅ Images : 0 image sans `alt` sur les 50 pages ; `width`/`height`, `srcset`, `loading="lazy"` (ex. capture des tâches dans l'article Eisenhower, `prerender/instantanes/pages/blog__matrice-eisenhower.html`). `alt` descriptifs et honnêtes (« Capture du mode démo, données fictives »).
-- ⚠️ Une seule image par article, la même capture produit souvent réutilisée : peu d'illustration du sujet lui-même (schéma de la matrice, exemple d'OKR rempli…).
-- ⚠️ Les pages cas d'usage (`pour-*`, `for-*`) n'ont aucune image dans le HTML prérendu.
-- ⚠️ Une vidéo existe (`public/videos/onboarding-entreprise-v2.mp4`, poster `.webp`, sous-titres `.fr.vtt`) mais n'est montée que dans l'onboarding de l'app (`src/components/onboarding/enterprise/OrgWelcomeVideo.tsx`) : 0 balise `<video>` dans les pages publiques, aucun `VideoObject`. Média de qualité non exploité pour la recherche.
+### Délais de prise en compte
 
-### 4. Technique
+- Bing et ses dérivés (ChatGPT, Copilot, DuckDuckGo) : quelques jours, grâce à IndexNow.
+- Google : exploration des nouvelles pages en 1 à 4 semaines (sitemap à jour, maillage interne) ; classement stabilisé en 2 à 3 mois. Un lien entrant met 4 à 12 semaines à compter.
+- Pages Nouvel An : leur intérêt tient au pic de recherches de fin décembre et janvier ; indexées avant le 10 décembre, elles peuvent capter une partie de ce pic.
 
-- ✅ Contenu présent sans JS : chaque page publique sort en HTML complet (`prerender/generate.ts`), lu tel quel par les robots qui n'exécutent pas le JS. Les ressources ne sont pas bloquées par `robots.txt` (`/assets/` explorable).
-- ✅ Doublons fr/en traités : hreflang réciproques, `lang` et `og:locale` par locale, pages légales anglaises en `noindex` (le français fait foi, `vercel.json`), `es` déclarée mais non servie et en `noindex`.
-- ⚠️ Accueil (et `/entreprise-presentation`) : le texte riche du prérendu est masqué à l'affichage (`html[data-prerendered] #lp-hero ~ #root #seo-fallback{display:none}`, `index.html:172`) puis effacé par `createRoot`. Googlebot rend le JS : ce qu'il indexe est la landing React, pas les 895 mots de `#seo-fallback`. Or la suite de la landing ne se monte qu'au premier geste ou quand un emplacement de `200vh` croise la moitié du viewport (`src/pages/landing/BelowFold.tsx:46` et `:68`). Le rendu de Google agrandit le viewport et gère `IntersectionObserver`, donc le montage a toutes les chances d'avoir lieu, mais c'est une hypothèse : à vérifier dans l'outil d'inspection d'URL (HTML rendu). Ce n'est pas du cloaking (même HTML pour tous), mais le texte de repli est invisible pour l'utilisateur et doit rester fidèle à la landing (`docs/SEO.md` § Ajouter une page le rappelle pour l'entreprise).
-- ⚠️ Les URL anglaises du blog gardent le slug français (`/en/blog/matrice-eisenhower`, `/en/blog/combien-de-temps-prendre-habitude`, `prerender/instantanes/fichiers/sitemap.xml`). Sans effet de classement notable, mais moins lisible dans un résultat anglais.
-- ✅ Expérience de page soignée côté dépôt : peinture du prérendu avant React pour le LCP (`src/lib/prerender-hero.ts`), montage différé du bas de landing pour le TBT mobile (`BelowFold.tsx`), cache immuable `/assets/*` (`vercel.json`). Les Core Web Vitals terrain ne sont pas lisibles ici.
-- ℹ️ `SoftwareApplication`, `Organization` et `WebSite` sont en JSON-LD statique dans le gabarit (`index.html:188-280`), donc présents sur toutes les pages prérendues, articles compris. Sans gravité.
+### Clics Google hors marque par jour (moyenne sur 28 jours)
 
-## Tactiques AEO / GEO trouvées
+Point de départ : ~0 (0 clic, 8 impressions en 28 jours).
 
-| Tactique | Où | Verdict Google (skill) | Recommandation |
+| Horizon | A. Sans nouveaux liens entrants | B. Plan backlinks exécuté (~20 domaines en 8 semaines) | Ce qui joue |
 |---|---|---|---|
-| `llms.txt` (description du site, liste des articles et cas d'usage) | `prerender/feeds.ts:44-50`, `prerender/instantanes/fichiers/llms.txt` | Ignoré par la recherche Google | Garder : coût nul, peut servir ChatGPT, Perplexity, Claude. Ne rien en attendre sur Google |
-| Prérendu justifié pour les robots IA sans JS (commentaire « GPTBot, ClaudeBot ») | `prerender/instantanes/pages/*.html:98` | Neutre pour Google, qui rend le JS | Garder : utile aux autres moteurs, et socle SEO classique |
-| FAQ courtes en fin d'article + `FAQPage` JSON-LD sur 10 articles et l'accueil | `prerender/routes-registries.ts:95-103`, `prerender/ld.ts:75` | Pas un balisage « pour l'IA » ; les données structurées restent utiles en général, mais Google n'affiche plus l'extrait enrichi FAQ que pour des sites gouvernementaux ou de santé | Garder (balisage conforme au contenu visible, sans risque), ne pas en attendre de résultat enrichi ni de citation IA |
-| Désambiguïsation de marque écrite pour les modèles (« Cosmo, The Cosmo App ou thecosmo ? », « À ne pas confondre… ») | `prerender/content/about.ts:21`, `llms.txt` | Pas une tactique IA pour Google : c'est un contenu lisible par un humain, légitime pour une marque au nom générique | Garder |
-| Glossaire de 20 définitions courtes | `src/content/blog/glossaire-productivite.mjs` | Proche du « découpage en petits blocs » : inutile pour Google en tant que tel, et contenu générique | Ne pas étendre ; s'il évolue, y mettre des exemples tirés de Cosmo |
-| Schema.org spécial IA | absent | Pas requis | Rien à faire |
-| Mentions fabriquées sur le Web | absent du dépôt (`docs/ACQUISITION-BACKLINKS.md` vise des liens éditoriaux) | Peu efficace, filtré par l'anti-spam | Rester sur des liens et citations réels |
+| Fin décembre 2026 (J+30) | 0,2 à 1 | 0,5 à 2 | Indexation des 72 nouvelles URL, premières impressions de longue traîne, pages croates peu concurrentielles |
+| Fin janvier 2027 (J+60) | 0,5 à 2 | 1 à 5 | Pic du Nouvel An ; en B, les premiers liens commencent à compter |
+| Fin février 2027 (J+90) | 0,5 à 2 | 2 à 6 | Fin du pic ; en B, comparatifs et modèles entrent dans le top 20 sur des requêtes de niche |
+| Mai 2027 (J+180) | 1 à 3 | 5 à 12 | En B, le palier 1 du plan (10 clics par jour) devient atteignable ; en A, le site plafonne faute d'autorité |
+
+### À côté de Google
+
+| Source | Effet attendu | Ordre de grandeur |
+|---|---|---|
+| Outils gratuits (5) | Requêtes à fort volume (« minuteur pomodoro », « matrice eisenhower en ligne », « générateur okr ») mais très disputées : en A, quasi rien ; en B, ce sont les pages les plus susceptibles d'attirer des liens spontanés | 0 à 3 clics par jour à J+180 en B, compris dans le tableau ci-dessus |
+| Bing et assistants IA (IndexNow) | Moins de concurrence que Google, mais part de marché faible en France | quelques visites par semaine |
+| Annuaires, Product Hunt, listes « meilleures applications » (gestes d'Axel) | Trafic direct, indépendant du classement | 100 à 600 visites sur les deux premiers mois si le plan est exécuté |
+
+### Inscriptions
+
+Avec une conversion visite vers inscription de 2 à 5 % (SaaS gratuit avec démo), le scénario B à J+180 donne de l'ordre de **5 à 20 inscriptions par mois** venues de la recherche ; le scénario A, **1 à 4**. Les boutons désormais mesurés (`data-cta`) diront quelle page convertit, une fois quelques centaines de visites accumulées.
+
+Ce sont des ordres de grandeur, pas une promesse : l'écart entre A et B tient presque entièrement aux liens entrants, que seul le plan d'acquisition (gestes d'Axel) peut produire.
 
 ## Priorités (par impact)
 
-1. **Autorité de domaine** : poursuivre la cible de 20 domaines référents (`docs/ACQUISITION-BACKLINKS.md`). L'IA de Google cite des pages déjà classées ; sans liens entrants, aucune page n'entre dans le lot récupéré.
-2. **Rendre 3 ou 4 articles non génériques** (Eisenhower, OKR, time-blocking, suivi des habitudes) : un auteur nommé avec une courte bio et une page auteur, un cas vécu ou des retours d'utilisateurs réels, des captures montrant la méthode appliquée dans Cosmo. Retoucher plutôt que publier, conformément à `docs/SEO.md` § Priorité.
-3. **Vérifier ce que Google indexe sur l'accueil** : inspection d'URL en direct sur `/` et `/en/`, contrôle que le HTML rendu contient la suite de la landing (montée par `BelowFold`) et que le texte de `#seo-fallback` reste fidèle à ce que la landing affiche.
-4. **Médias utiles au sujet** : publier la vidéo d'onboarding entreprise sur `/entreprise-presentation` (balise `<video>` avec poster et sous-titres, `VideoObject`), ajouter une illustration propre au sujet par article et une capture par page cas d'usage.
-5. **Signaux d'indexation cohérents** : poser `noindex` dans le HTML des pages légales (aujourd'hui seul l'en-tête le dit) et trancher le sort de `/login` et `/signup` (noindex ou contenu réel).
+1. **Autorité de domaine** : annuaires (Appvizer, Capterra, AlternativeTo…), listes « meilleures applications », réseau du fondateur ; cible 20 domaines référents (`docs/ACQUISITION-BACKLINKS.md`).
+2. **Relire et indexer les pages Nouvel An avant le 10 décembre** : relecture, puis demande d'indexation dans la Search Console.
+3. **LCP mobile de l'accueil** (4,8 s vers 2,5 s).
+4. **Rendre 3 ou 4 articles non génériques** : bio et photo du fondateur sur la page auteur, un cas vécu ou des retours d'utilisateurs, des captures de la méthode appliquée dans Cosmo.
+5. **Médias** : vidéo d'onboarding entreprise sur `/entreprise-presentation` (`<video>`, `VideoObject`), une illustration propre au sujet par article, une capture par page cas d'usage.
+6. **Publier l'extension** sur le Chrome Web Store (domaine très puissant, lien vers le site).
 
 ## Hors dépôt, à vérifier par Axel
 
-- Search Console : propriété de type domaine ; pages réellement indexées (rapport Pages) parmi les 40 du sitemap ; inspection d'URL en direct de `/` et `/en/` (HTML rendu).
-- Search Console : inclusion du site dans les fonctionnalités d'IA générative, et rapport « performances dans l'IA générative » (Recherche et Discover), filtré en non-marque.
-- Core Web Vitals terrain (rapport Signaux Web essentiels, PageSpeed Insights).
-- Domaines référents réels (Search Console § Liens, Ahrefs Webmaster Tools).
-- Fiche d'établissement Google : non pertinente pour une app web sans adresse d'accueil du public, sauf si une présence locale est voulue. Merchant Center : sans objet.
+- Search Console : rapport Pages (combien des 112 URL du sitemap sont indexées, et pourquoi les autres ne le sont pas) ; inspection d'URL en direct de `/` et `/en/` (HTML rendu, langue de l'accueil après la correction de la redirection).
+- Search Console : inclusion dans l'IA générative et rapport de performances associé, filtré en non-marque.
+- Domaines référents réels (Search Console § Liens, Ahrefs Webmaster Tools) ; clé `BING_WEBMASTER_API_KEY` pour que `seo-signals` les suive chaque lundi.
+- Core Web Vitals terrain, dès que le trafic suffit à en produire.
