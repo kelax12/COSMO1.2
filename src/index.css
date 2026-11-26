@@ -2071,3 +2071,14 @@ a:focus-visible:not([class*="ring-"]):not([class*="focus-visible:"]),
     min-height: 12.35rem;
   }
 }
+
+/* Tableau des tâches, mode clair seul : fond blanc uni pour se détacher de la page (2026-11-26). */
+html:not(.dark) .tasks-table-clair,
+html:not(.dark) .tasks-table-clair .data-table,
+html:not(.dark) .tasks-table-clair .data-table thead,
+html:not(.dark) .tasks-table-clair .data-table tbody tr:nth-child(n) {
+  background-color: rgb(255 255 255);
+}
+html:not(.dark) .tasks-table-clair .data-table tbody tr:hover {
+  background-color: rgb(var(--table-row-hover));
+}
