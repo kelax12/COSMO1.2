@@ -26,8 +26,6 @@ export default {
 			// Utiliser `text-display/title/headline/body/label/caption` sur mobile
 			// plutôt que `text-[Npx]` : c'est ce qui garantit la cohérence.
 			fontSize: {
-				// Titre du hero PERSO. Auto-hébergée, cf. `src/index.css`.
-				hero: ['"Fira Sans"', 'Inter', 'system-ui', 'sans-serif'],
 				display: ['var(--t-display)', { lineHeight: '1.15', letterSpacing: '-0.02em' }],
 				title: ['var(--t-title)', { lineHeight: '1.25', letterSpacing: '-0.015em' }],
 				headline: ['var(--t-headline)', { lineHeight: '1.3', letterSpacing: '-0.01em' }],
@@ -130,6 +128,8 @@ export default {
 				sans: ['Inter', 'system-ui', 'sans-serif'],
 				// Titre du hero ENTREPRISE uniquement. Auto-hébergée (CSP
 				// `font-src 'self'`), cf. `src/index.css` § polices d'affichage.
+				// Titre du hero PERSO. Auto-hébergée, cf. `src/index.css`.
+				hero: ['"Fira Sans"', 'Inter', 'system-ui', 'sans-serif'],
 				display: ['"Instrument Serif"', 'Georgia', '"Times New Roman"', 'serif'],
 				// Petites mentions « données » du même hero (réassurance, adresses).
 				data: ['"Geist Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
