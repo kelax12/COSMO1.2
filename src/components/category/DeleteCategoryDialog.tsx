@@ -58,8 +58,8 @@ interface DeleteCategoryDialogProps {
    * d'édition pour suivre correctement les liens `parentId`.
    *
    * ⚠️ Un appelant qui ne SAIT PAS supprimer une branche doit n'y passer que le
-   * nœud visé. `OKRPage` est dans ce cas : `useDeleteCategoryFlow` ne supprime
-   * qu'un nœud. Lui donner l'arbre entier ferait apparaître le choix
+   * nœud visé : un flux qui ne supprime
+   * qu'un nœud, à qui l'arbre entier ferait apparaître le choix
    * « remonter / supprimer la branche » pour une catégorie qui a des enfants,
    * sans que le flux sache l'honorer — on annoncerait un geste qu'on ne fait
    * pas. Restreint au seul nœud, `branchImpact` n'y voit aucun descendant et le

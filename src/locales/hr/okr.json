@@ -1,7 +1,16 @@
 {
+  "filters": {
+    "searchLabel": "Pretraži ciljeve",
+    "searchPlaceholder": "Pretraži ciljeve",
+    "clearSearch": "Očisti pretragu",
+    "categoryAria": "Filtriraj po kategoriji",
+    "scopeAria": "Prikaži osobne ciljeve, ciljeve tvrtke ili oboje",
+    "scopeAll": "Sve",
+    "scopePerso": "Osobno",
+    "scopeEntreprise": "Tvrtka"
+  },
   "pro": {
     "sectionTitle": "Poslovni OKR-ovi",
-    "sectionSubtitle": "Ciljevi tvrtke {{org}} kojima doprinosite",
     "you": "Vi",
     "openInOrg": "Otvori u prostoru tvrtke",
     "personalSectionTitle": "Osobni OKR-ovi"

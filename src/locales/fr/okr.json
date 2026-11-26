@@ -1,7 +1,16 @@
 {
+  "filters": {
+    "searchLabel": "Rechercher un objectif",
+    "searchPlaceholder": "Rechercher un objectif",
+    "clearSearch": "Effacer la recherche",
+    "categoryAria": "Filtrer par catégorie",
+    "scopeAria": "Afficher les objectifs perso, entreprise ou les deux",
+    "scopeAll": "Tout",
+    "scopePerso": "Perso",
+    "scopeEntreprise": "Entreprise"
+  },
   "pro": {
     "sectionTitle": "OKR pro",
-    "sectionSubtitle": "Objectifs de {{org}} sur lesquels vous contribuez",
     "you": "Vous",
     "openInOrg": "Ouvrir dans l'espace entreprise",
     "personalSectionTitle": "OKR perso"

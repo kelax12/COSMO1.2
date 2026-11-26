@@ -1,7 +1,16 @@
 {
+  "filters": {
+    "searchLabel": "Search objectives",
+    "searchPlaceholder": "Search objectives",
+    "clearSearch": "Clear search",
+    "categoryAria": "Filter by category",
+    "scopeAria": "Show personal objectives, company objectives or both",
+    "scopeAll": "All",
+    "scopePerso": "Personal",
+    "scopeEntreprise": "Company"
+  },
   "pro": {
     "sectionTitle": "Work OKRs",
-    "sectionSubtitle": "{{org}} objectives you contribute to",
     "you": "You",
     "openInOrg": "Open in the company space",
     "personalSectionTitle": "Personal OKRs"

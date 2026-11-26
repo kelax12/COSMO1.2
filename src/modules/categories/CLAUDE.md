@@ -1,12 +1,12 @@
 # Catégories perso (`src/modules/categories`)
 
-**Quand lire** : en touchant `src/modules/categories/**`, `components/category/**`, `pages/okr/useDeleteCategoryFlow.ts`. Versant entreprise : [`../team-categories/CLAUDE.md`](../team-categories/CLAUDE.md). **Fait foi** : le code.
+**Quand lire** : en touchant `src/modules/categories/**`, `components/category/**`. Versant entreprise : [`../team-categories/CLAUDE.md`](../team-categories/CLAUDE.md). **Fait foi** : le code.
 Règles transversales : [`../CLAUDE.md`](../CLAUDE.md). Migrations : [`supabase/migration/CLAUDE.md`](../../../supabase/migration/CLAUDE.md).
 
 ## Supprimer une catégorie annonce son impact (R-02)
 
 - ✅ L'intégrité est tenue par la base : `categories_parent_id_fkey` (NO ACTION, mig. `143`), `tasks_category_fkey` et `okrs_category_fkey` (SET NULL, mig. `145`). La réaffectation est un choix offert, pas un filet.
-- ✅ `categoryImpact()` (`impact.ts`) compte les dépendants, `useReassignCategory` les déplace. `ColorSettingsModal` et `OKRPage` (`pages/okr/useDeleteCategoryFlow.ts`) réaffectent AVANT de supprimer.
+- ✅ `categoryImpact()` (`impact.ts`) compte les dépendants, `useReassignCategory` les déplace. `ColorSettingsModal` (seul chemin de suppression, `OKRPage` y renvoie) réaffecte AVANT de supprimer.
 - ⚠️ Supprimer une catégorie à enfants emporte la BRANCHE : `branchImpact()`, jamais `categoryImpact()` seul.
 - ❌ Inverser l'ordre (supprimer puis reclasser) : si le reclassement échoue, plus rien ne dit quels éléments portaient la catégorie.
 - ⚠️ `components/category/DeleteCategoryDialog` (perso, réaffecte) ≠ `components/organization/DeleteTeamCategoryConfirm` (équipe, annonce seulement, trois FK en `SET NULL`).

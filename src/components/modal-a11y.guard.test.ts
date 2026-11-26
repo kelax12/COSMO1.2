@@ -162,7 +162,6 @@ const BOTTOMSHEET_CONSUMERS = [
   'components/task-board/MoveTaskSheet.tsx',
   'pages/agenda/MobileScheduleSheet.tsx',
   'pages/okr/OKRCard.tsx',
-  'pages/okr/OKRCategorySelect.tsx',
   'pages/settings/ImportTasksDialog.tsx',
   'pages/tasks/MobileDisplaySheet.tsx',
   'pages/tasks/MobileSortButton.tsx',

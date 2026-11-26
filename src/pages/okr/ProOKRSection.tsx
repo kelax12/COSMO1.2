@@ -27,12 +27,10 @@ const ProOKRSection: React.FC<ProOKRSectionProps> = ({ okrs, orgNames, userId, o
   const { t } = useT('okr');
   const navigate = useNavigate();
   if (okrs.length === 0) return null;
-  const orgList = [...new Set(okrs.map((o) => orgNames[o.orgId]).filter(Boolean))].join(', ');
 
   return (
     <section aria-labelledby="pro-okr-heading" className="mb-10">
-      <div className="flex items-center gap-2 mb-1">
-        <Briefcase size={18} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
+      <div className="flex items-center gap-2 mb-4">
         <h2 id="pro-okr-heading" className="text-lg font-bold text-[rgb(var(--color-text-primary))]">
           {t('pro.sectionTitle')}
         </h2>
@@ -40,9 +38,6 @@ const ProOKRSection: React.FC<ProOKRSectionProps> = ({ okrs, orgNames, userId, o
           {okrs.length}
         </span>
       </div>
-      <p className="text-sm mb-4 text-[rgb(var(--color-text-secondary))]">
-        {t('pro.sectionSubtitle', { org: orgList })}
-      </p>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {okrs.map((okr) => {

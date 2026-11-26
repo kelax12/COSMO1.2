@@ -15,14 +15,15 @@ import { myProOkrs } from './pro-okrs';
  * profonds). Dans la page, elle la poussait à 617 lignes (budget 600,
  * `architecture.guard`) et son chunk au-dessus de son cliquet (`check:bundle`).
  */
-const ProOKRBlock: React.FC<{ hasPersonal: boolean }> = ({ hasPersonal }) => {
+/** `query` : recherche de la page, déjà en minuscules (vide = tout). */
+const ProOKRBlock: React.FC<{ hasPersonal: boolean; query?: string; hidden?: boolean }> = ({ hasPersonal, query = '', hidden = false }) => {
   const { t } = useT('okr');
   const { user } = useAuth();
   // Toutes mes organisations, pas seulement l'active.
   const { organizations, setActiveOrgId } = useActiveOrganization();
   const teamOkrs = useTeamOKRsAcrossOrgs(organizations.map((o) => o.id));
-  if (!user) return null;
-  const proOkrs = myProOkrs(teamOkrs, user.id);
+  if (!user || hidden) return null;
+  const proOkrs = myProOkrs(teamOkrs, user.id).filter((o) => !query || o.title.toLocaleLowerCase().includes(query));
   const orgNames = Object.fromEntries(organizations.map((o) => [o.id, o.name]));
 
   return (

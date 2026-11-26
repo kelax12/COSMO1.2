@@ -381,8 +381,8 @@
       "max-lines-per-function": [392]
     },
     "src/pages/OKRPage.tsx": {
-      "complexity": [29],
-      "max-lines-per-function": [411]
+      "complexity": [27],
+      "max-lines-per-function": [345]
     },
     "src/pages/OrganizationPage.tsx": {
       "complexity": [107],

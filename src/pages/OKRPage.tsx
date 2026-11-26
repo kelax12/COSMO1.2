@@ -11,7 +11,7 @@ import { useCreateEvent } from '@/modules/events';
 import { useOkrs, useCreateOkr, useUpdateOkr, useDeleteOkr, useRestoreOkrWithJournal, useUpdateKeyResult, KeyResult } from '@/modules/okrs';
 import { useKRCompletions, useLoadOkrJournal } from '@/modules/kr-completions';
 import { showUndoToast } from '@/lib/undo-toast';
-import { useCategories, useCreateCategory } from '@/modules/categories';
+import { useCategories } from '@/modules/categories';
 import PageErrorState from '@/components/PageErrorState';
 import TaskModal from '@/components/TaskModal';
 import EventModal from '@/components/EventModal';
@@ -22,17 +22,14 @@ import { useTutorial } from '@/components/tutorial/useTutorial';
 import { okrTutorialStepsDesktop } from '@/tutorials/okr.desktop';
 import { okrTutorialStepsMobile } from '@/tutorials/okr.mobile';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
-import { filterObjectivesByCategories, shouldReopenOnDeadlineExtension, type Objective } from './okr/okr-page-logic';
+import { shouldReopenOnDeadlineExtension, type Objective } from './okr/okr-page-logic';
 import OKRCard from './okr/OKRCard';
 import { OKRListSkeleton } from '@/components/skeletons';
 import { DeleteObjectiveConfirm, OKRModalSheet } from './okr/lazy-dialogs';
-import DeleteCategoryDialog from '@/components/category/DeleteCategoryDialog';
-import CategoryFilterBar from './okr/CategoryFilterBar';
-import OKRCategorySelect from './okr/OKRCategorySelect';
+import OKRFilterBar from './okr/OKRFilterBar';
+import { useOKRFilters } from './okr/useOKRFilters';
 import { useT } from '@/i18n/useT';
 import { useDeadlineReview } from './okr/useDeadlineReview';
-import { useDeleteCategoryFlow } from './okr/useDeleteCategoryFlow';
-import { useInlineCategoryEdit } from './okr/useInlineCategoryEdit';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { formatDurationMinutes } from '@/lib/duration';
 
@@ -65,57 +62,18 @@ const OKRPage: React.FC = () => {
   const updateKeyResultMutation = useUpdateKeyResult();
   const createEventMutation = useCreateEvent();
   const { data: categories = [] } = useCategories();
-  // Sert au décompte d'impact d'une suppression de catégorie (R-02).
-  const createCategoryMutation = useCreateCategory();
-  // Restauration d'un « Annuler » : recree la categorie sous SON identifiant,
-  // sinon les taches et objectifs qui la portaient restent orphelins (R-08).
-  const [showCreateCategory, setShowCreateCategory] = useState(false);
-  // Popup de gestion des catégories — seul chemin mobile pour ajouter,
-  // modifier ou supprimer une catégorie. Desktop garde
-  // le formulaire inline + la barre flottante crayon/corbeille.
+  // Popup de gestion des catégories : créer, renommer, recolorer, supprimer
+  // (le filtre n'est plus qu'un menu déroulant, `OKRFilterBar`).
   const [showCategoryManage, setShowCategoryManage] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const [newCategoryColor, setNewCategoryColor] = useState('blue');
   const [showAddTaskModal, setShowAddTaskModal] = useState(false);
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [selectedKeyResultForModal, setSelectedKeyResultForModal] = useState<{kr: KeyResult;obj: Objective;} | null>(null);
   const [editingObjective, setEditingObjective] = useState<Objective | null>(null);
   const [showAddObjective, setShowAddObjective] = useState(false);
-  // Filtre multi-select hiérarchique (cf. CategoryFilterBar) : vide = tous.
-  const [activeCategoryIds, setActiveCategoryIds] = useState<Set<string>>(new Set());
   const [deletingObjective, setDeletingObjective] = useState<string | null>(null);
-  const [hoveredCategoryId, setHoveredCategoryId] = useState<string | null>(null);
-  // Édition inline d'une catégorie (nom + couleur), via le crayon de la barre
-  // flottante au-dessus d'une pastille : cf. useInlineCategoryEdit.
-  const categoryEdit = useInlineCategoryEdit(() => setHoveredCategoryId(null));
-
-  // ── Deadline review popup ───────────────────────────────────────────
-  // À l'ouverture de la page : si un OKR non complété a une deadline atteinte
-  // (endDate <= today), on affiche un popup centré demandant de faire le point
-  // avant clôture. Au clic Valider, la carte s'anime vers le bouton « OKR
-  // terminés » en haut à droite, puis l'OKR est marqué completed.
+  // « OKR terminés » : cible de l'animation du popup d'échéance.
   const [showCompletedModal, setShowCompletedModal] = useState(false);
   const finishedButtonRef = useRef<HTMLButtonElement>(null);
-
-  // Suppression d'une catégorie : réaffecter, supprimer, savoir annuler les
-  // DEUX. La séquence vit dans son propre module (cf. useDeleteCategoryFlow).
-  const {
-    categoryToDeleteId,
-    setCategoryToDeleteId,
-    isDeleting: isDeletingCategory,
-    confirmDelete: confirmDeleteCategory,
-  } = useDeleteCategoryFlow({
-    categories,
-    objectives,
-    onDeleted: (deletedId) => {
-      setActiveCategoryIds((prev) => {
-        if (!prev.has(deletedId)) return prev;
-        const next = new Set(prev);
-        next.delete(deletedId);
-        return next;
-      });
-    },
-  });
 
   const updateKeyResult = (objectiveId: string, keyResultId: string, newValue: number) => {
     const obj = objectives.find((o) => o.id === objectiveId);
@@ -186,18 +144,7 @@ const OKRPage: React.FC = () => {
     setEditingObjective(null);
   };
 
-  const filteredObjectives = filterObjectivesByCategories(objectives, activeCategoryIds);
-
-  const colorOptions = [
-    { value: 'blue', color: '#3B82F6' },
-    { value: 'red', color: '#EF4444' },
-    { value: 'green', color: '#10B981' },
-    { value: 'purple', color: '#8B5CF6' },
-    { value: 'orange', color: '#F97316' },
-    { value: 'yellow', color: '#F59E0B' },
-    { value: 'pink', color: '#EC4899' },
-    { value: 'indigo', color: '#6366F1' },
-  ];
+  const filters = useOKRFilters(objectives, categories);
 
   const getCategoryById = (id: string) => categories.find((cat: { id: string }) => cat.id === id);
 
@@ -351,38 +298,17 @@ const OKRPage: React.FC = () => {
         </motion.button>
       </div>
 
-      {/* Mobile (demande d'Axel) : un sélecteur unique au lieu
-          du libellé « Catégorie : » et de la rangée de pastilles. */}
-      <OKRCategorySelect
+      <OKRFilterBar
+        query={filters.query}
+        onQuery={filters.setQuery}
         categories={categories}
-        activeCategoryIds={activeCategoryIds}
-        setActiveCategoryIds={setActiveCategoryIds}
+        activeCategoryIds={filters.liveCategoryIds}
+        setActiveCategoryIds={filters.setActiveCategoryIds}
         resolveColor={resolveColor}
         onManageCategories={() => setShowCategoryManage(true)}
+        scope={filters.scope}
+        onScope={filters.setScope}
       />
-      <div className="hidden md:block">
-      <CategoryFilterBar
-        categories={categories}
-        activeCategoryIds={activeCategoryIds}
-        setActiveCategoryIds={setActiveCategoryIds}
-        hoveredCategoryId={hoveredCategoryId}
-        setHoveredCategoryId={setHoveredCategoryId}
-        {...categoryEdit}
-        setCategoryToDeleteId={setCategoryToDeleteId}
-        colorOptions={colorOptions}
-        resolveColor={resolveColor}
-        showCreateCategory={showCreateCategory}
-        setShowCreateCategory={setShowCreateCategory}
-        newCategoryName={newCategoryName}
-        setNewCategoryName={setNewCategoryName}
-        newCategoryColor={newCategoryColor}
-        setNewCategoryColor={setNewCategoryColor}
-        createCategoryMutation={createCategoryMutation}
-        large
-        accentAllActive
-        onManageCategories={() => setShowCategoryManage(true)}
-      />
-      </div>
 
       <ColorSettingsModal
         isOpen={showCategoryManage}
@@ -397,7 +323,7 @@ const OKRPage: React.FC = () => {
 
       {isLoadingOkrs && objectives.length === 0 && <OKRListSkeleton count={4} />}
 
-      {!isLoadingOkrs && filteredObjectives.length === 0 && (
+      {!isLoadingOkrs && filters.personalEmpty && (
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -408,12 +334,12 @@ const OKRPage: React.FC = () => {
             <OkrIcon className="w-10 h-10 text-green-500 dark:text-green-400" strokeWidth={1.75} />
           </div>
           <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-            {activeCategoryIds.size === 0
+            {filters.unfiltered
               ? t('page.empty.allTitle')
               : t('page.empty.filteredTitle')}
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mb-6">
-            {activeCategoryIds.size === 0
+            {filters.unfiltered
               ? t('page.empty.noneDescription')
               : t('page.empty.filteredDescription')}
           </p>
@@ -428,12 +354,12 @@ const OKRPage: React.FC = () => {
       )}
 
       <Suspense fallback={null}>
-        <ProOKRBlock hasPersonal={filteredObjectives.length > 0} />
+        <ProOKRBlock hidden={!filters.showPro} hasPersonal={filters.hasPersonal} query={filters.needle} />
       </Suspense>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <AnimatePresence mode="popLayout">
-            {filteredObjectives.map((objective, index) => (
+            {filters.visibleObjectives.map((objective, index) => (
               <OKRCard
                 key={objective.id}
                 objective={objective}
@@ -502,19 +428,6 @@ const OKRPage: React.FC = () => {
           }}
         />
       }
-
-      {/* Dialog suppression catégorie. `categoriesTree` ne porte QUE le nœud
-          visé : ce flux ne sait pas supprimer une branche (voir la doc de la
-          prop dans `DeleteCategoryDialog`). */}
-      <DeleteCategoryDialog
-        open={!!categoryToDeleteId}
-        category={categories.find(c => c.id === categoryToDeleteId) ?? null}
-        categories={categories}
-        categoriesTree={categoryToDeleteId ? categories.filter(c => c.id === categoryToDeleteId) : []}
-        onCancel={() => setCategoryToDeleteId(null)}
-        onConfirm={confirmDeleteCategory}
-        isWorking={isDeletingCategory}
-      />
 
       {/* FAB Nouvel objectif — mobile only */}
       <motion.button

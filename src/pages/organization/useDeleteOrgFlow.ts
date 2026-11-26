@@ -14,7 +14,7 @@
 // et sa règle est explicite : « un fichier se découpe quand on a de toute
 // façon à le modifier ». C'est exactement ce cas, et c'est une frontière
 // réelle — ce flux ne connaît rien de la page, seulement un identifiant
-// d'organisation. Même patron que `pages/okr/useDeleteCategoryFlow.ts`.
+// d'organisation.
 //
 // ── L'ORDRE, ET CE QUI SE PASSE QUAND UNE ÉTAPE ÉCHOUE ──────────────
 //
