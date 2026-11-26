@@ -12,12 +12,6 @@
     "habitLeft_few": "Preostale su {{count}} navike",
     "habitLeft_other": "Preostalo je {{count}} navika"
   },
-  "checkin": {
-    "title": "Vaš tjedan čeka",
-    "subtitle": "Osvrnite se na svoje ciljeve, dovoljne su dvije minute.",
-    "cta": "Provjera",
-    "dismiss": "Preskočite ovotjednu provjeru"
-  },
   "viewMode": {
     "day": "Dan",
     "week": "Tjedan",

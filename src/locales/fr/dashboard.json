@@ -12,12 +12,6 @@
     "habitLeft_many": "{{count}} d'habitudes restantes",
     "habitLeft_other": "{{count}} habitudes restantes"
   },
-  "checkin": {
-    "title": "Votre semaine vous attend",
-    "subtitle": "Faites le point sur vos objectifs, 2 minutes suffisent.",
-    "cta": "Faire le point",
-    "dismiss": "Ignorer le check-in cette semaine"
-  },
   "viewMode": {
     "day": "Jour",
     "week": "Semaine",
