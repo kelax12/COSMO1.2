@@ -193,6 +193,7 @@ describe('slug d’une autre langue : redirection 301 (vercel.json)', () => {
 
   it('une locale non servie (`es`) redirige vers le français', () => {
     expect(cible.get('/es')).toBe('/');
+    expect(cible.get('/es/')).toBe('/');
     expect(cible.get('/es/:path*')).toBe('/:path*');
   });
 });
