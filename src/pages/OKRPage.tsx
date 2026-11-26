@@ -273,7 +273,7 @@ const OKRPage: React.FC = () => {
           {t('page.seeCompletedLink')}{completedCount > 0 ? ` (${completedCount})` : ''}
         </button>
       </div>
-      <div className="card card-plain-mobile okr-flat p-0 sm:p-10"><div className="hidden sm:flex justify-end mb-8 gap-3">
+      <div className="okr-toolbar"><div className="hidden sm:flex justify-end mb-8 gap-3">
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -298,7 +298,7 @@ const OKRPage: React.FC = () => {
         onManageCategories={() => setShowCategoryManage(true)}
         scope={filters.scope}
         onScope={filters.setScope}
-      />
+      /></div>
 
       <ColorSettingsModal
         isOpen={showCategoryManage}
@@ -366,7 +366,7 @@ const OKRPage: React.FC = () => {
               />
             ))}
         </AnimatePresence>
-      </div></div>
+      </div>
 
       <OKRModalSheet
         isOpen={showAddObjective}
