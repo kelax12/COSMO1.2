@@ -2082,10 +2082,3 @@ html:not(.dark) .tasks-table-clair .data-table tbody tr:nth-child(n) {
 html:not(.dark) .tasks-table-clair .data-table tbody tr:hover {
   background-color: rgb(var(--table-row-hover));
 }
-/* Mode clair : bordures du tableau des tâches marquées (slate-300 au lieu de slate-200). */
-html:not(.dark) .tasks-table-clair {
-  border-color: rgb(203 213 225);
-}
-html:not(.dark) .tasks-table-clair .data-table tr {
-  border-bottom-color: rgb(203 213 225);
-}
