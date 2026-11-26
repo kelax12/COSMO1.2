@@ -27,10 +27,13 @@
 // la racine ; elle ne repeint jamais une URL non préfixée. Sans cet invariant,
 // un lien français partagé s'afficherait en anglais chez un utilisateur
 // anglophone, et l'URL ne décrirait plus son propre contenu.
+//
+// ❌ Jamais de redirection selon la langue du NAVIGATEUR : Googlebot rend en
+// en-US, il verrait l'accueil français en anglais. La langue du navigateur ne
+// sert qu'à PROPOSER l'autre version (`LocaleSuggestionBanner`).
 
 import {
   DEFAULT_LOCALE,
-  detectLocale,
   isSupportedLocale,
   localeFromPathname,
   readStoredLocale,
@@ -60,14 +63,11 @@ export interface BootstrapInput {
   hash?: string;
   /** Préférence enregistrée. Injectable pour les tests. */
   storedLocale?: Locale | null;
-  /** Locale déduite du navigateur. Injectable pour les tests. */
-  navigatorLocale?: Locale;
 }
 
 export function resolveRouterBootstrap(input: BootstrapInput): RouterBootstrap {
   const { pathname, search = '', hash = '' } = input;
   const stored = input.storedLocale !== undefined ? input.storedLocale : readStoredLocale();
-  const navigatorLocale = input.navigatorLocale ?? detectLocale();
   const suffix = `${search}${hash}`;
 
   const prefix = localeFromPathname(pathname);
@@ -96,11 +96,10 @@ export function resolveRouterBootstrap(input: BootstrapInput): RouterBootstrap {
   //
   // ── Aucun préfixe : la racine est le SEUL endroit où l'on redirige.
   if (!prefix && isRoot(pathname)) {
-    // Priorité à la préférence explicite ; sinon détection automatique de la
-    // langue du navigateur — c'est ici, et nulle part ailleurs, que
-    // « traduction automatique selon la langue de l'utilisateur » se produit.
-    const preferred = stored ?? navigatorLocale;
-    if (isSupportedLocale(preferred) && preferred !== DEFAULT_LOCALE) {
+    // Seule la préférence EXPLICITE (choisie au sélecteur de langue) redirige.
+    // La langue du navigateur ne redirige pas : cf. l'en-tête de ce fichier.
+    const preferred = stored;
+    if (preferred && isSupportedLocale(preferred) && preferred !== DEFAULT_LOCALE) {
       return {
         locale: preferred,
         basename: `/${preferred}`,
@@ -110,6 +109,17 @@ export function resolveRouterBootstrap(input: BootstrapInput): RouterBootstrap {
   }
 
   return { locale: DEFAULT_LOCALE, basename: '/', replaceUrl: null };
+}
+
+/**
+ * Locale à PROPOSER par le bandeau (`LocaleSuggestionBanner`), `null` sinon :
+ * page servie dans une autre langue que celle du navigateur, et aucune
+ * préférence explicite enregistrée (le visiteur n'a pas encore choisi).
+ */
+export function suggestedLocale(current: Locale, stored: Locale | null, navigatorLocale: Locale): Locale | null {
+  if (stored) return null;
+  if (!isSupportedLocale(navigatorLocale) || navigatorLocale === current) return null;
+  return navigatorLocale;
 }
 
 /** `/fr/tasks` → `/tasks` · `/fr` → `/` */
