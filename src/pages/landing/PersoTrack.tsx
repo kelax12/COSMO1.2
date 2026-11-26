@@ -173,7 +173,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
                   son `padding-bottom` de 0,14em. Ne pas le retirer. */}
               <h1
                 ref={headingRef}
-                className="text-[2.35rem] sm:text-[3.25rem] lg:text-[3.75rem] xl:text-[4.25rem] font-bold tracking-[-0.045em] mb-5 leading-[0.98]"
+                className="font-hero text-[2.35rem] sm:text-[3.25rem] lg:text-[3.75rem] xl:text-[4.25rem] font-bold tracking-[-0.045em] mb-5 leading-[0.98]"
               >
                 <span className="hero-line-mask">
                   <span
