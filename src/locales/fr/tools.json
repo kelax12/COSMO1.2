@@ -1,0 +1,64 @@
+{
+  "eisenhower": {
+    "title": "Matrice d'Eisenhower en ligne",
+    "intro": "Classez vos tâches dans les quatre cases, gratuitement et sans inscription. Tout reste dans votre navigateur : imprimez la matrice ou retrouvez-la dans Cosmo.",
+    "taskLabel": "Tâche",
+    "quadrantLabel": "Case",
+    "moveLabel": "Déplacer vers",
+    "placeholder": "Ex. : préparer la réunion de jeudi",
+    "add": "Ajouter",
+    "remove": "Retirer la tâche",
+    "empty": "Aucune tâche pour l’instant.",
+    "print": "Imprimer la matrice",
+    "clear": "Tout effacer",
+    "privacy": "Vos tâches sont enregistrées dans ce navigateur uniquement. Rien n’est envoyé à Cosmo.",
+    "q1": {
+      "title": "Urgent et important",
+      "action": "À faire tout de suite"
+    },
+    "q2": {
+      "title": "Important, pas urgent",
+      "action": "À planifier dans l’agenda"
+    },
+    "q3": {
+      "title": "Urgent, pas important",
+      "action": "À déléguer ou regrouper"
+    },
+    "q4": {
+      "title": "Ni urgent ni important",
+      "action": "À abandonner"
+    },
+    "ctaTitle": "Transformez la case 2 en créneaux réels",
+    "ctaText": "Dans Cosmo, vos tâches importantes reçoivent un créneau dans l'agenda, à côté de vos habitudes et de vos objectifs.",
+    "howTitle": "Comment bien utiliser la matrice",
+    "how1": "Commencez par vider votre tête : toutes les tâches de la semaine, sans trier. Puis, pour chacune, posez deux questions : est-ce que cela me rapproche de mes objectifs ? Est-ce que cela doit être fait aujourd'hui ou demain ?",
+    "how2": "La case qui compte le plus est la deuxième : important mais pas urgent. C'est là que se trouvent les projets qui changent votre trimestre. Donnez-leur un créneau dans l'agenda avant que la semaine ne se remplisse.",
+    "moreBefore": "Pour aller plus loin :",
+    "moreLink": "la matrice d'Eisenhower expliquée, avec des exemples"
+  },
+  "okr": {
+    "title": "Générateur d'OKR gratuit",
+    "intro": "Écrivez vos OKR en trois étapes : un domaine, un objectif, puis des résultats clés proposés que vous ajustez. Gratuit, sans inscription, tout reste dans votre navigateur.",
+    "step1": "1. Choisissez un domaine",
+    "step2": "2. Formulez votre objectif",
+    "step3": "3. Choisissez vos résultats clés",
+    "step3Hint": "Jusqu’à 5. Vous ajusterez le départ et la cible à droite.",
+    "objective": "Objectif",
+    "objectiveEmpty": "Votre objectif apparaîtra ici",
+    "krEmpty": "Cochez des résultats clés à gauche.",
+    "krLabel": "Résultat clé",
+    "hintNumber": "Un objectif se formule sans chiffre : les chiffres vont dans les résultats clés.",
+    "start": "Départ",
+    "target": "Cible",
+    "remove": "Retirer ce résultat clé",
+    "result": "Votre OKR",
+    "copy": "Copier",
+    "copied": "Copié",
+    "print": "Imprimer",
+    "ctaTitle": "Suivez cet OKR chaque semaine",
+    "ctaText": "Dans Cosmo, vos résultats clés progressent à côté des tâches et des habitudes qui les font avancer.",
+    "howTitle": "Comment écrire un bon OKR",
+    "how1": "L'objectif dit où vous voulez aller, en mots et sans chiffre. Les résultats clés disent comment vous saurez que vous y êtes : un nombre, une unité, une valeur de départ et une cible que vous pensez atteindre avec 50 à 70 % de chances.",
+    "how2": "Deux à quatre résultats clés par objectif suffisent, sur un trimestre. Relisez-les dix minutes chaque semaine : c’est ce rendez-vous qui fait la différence."
+  }
+}

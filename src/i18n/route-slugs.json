@@ -64,5 +64,11 @@
     "en": "eisenhower-matrix-online",
     "es": "matriz-eisenhower-online",
     "hr": "eisenhowerova-matrica-online"
+  },
+  "okrGeneratorTool": {
+    "fr": "generateur-okr",
+    "en": "okr-generator",
+    "es": "generador-okr",
+    "hr": "generator-okr"
   }
 }

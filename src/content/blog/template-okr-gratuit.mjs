@@ -138,6 +138,8 @@ export const article = {
 
 <p>Avant de remplir le template pour l'année, prenez une heure pour faire <a href="/blog/bilan-de-l-annee">le bilan de l'année en 10 questions</a>, puis <a href="/blog/objectifs-de-l-annee">fixez vos objectifs 2027</a>.</p>
 
+<p>Pas encore d'idée de résultats clés ? Le <a href="/generateur-okr">générateur d'OKR gratuit</a> en propose par domaine, à recopier ensuite dans ce template.</p>
+
 <h2 id="faq">Questions fréquentes</h2>
 <h3>Le template fonctionne-t-il sur Google Sheets ?</h3>
 <p>Oui : importez le fichier .xlsx dans Google Sheets (Fichier → Importer), les formules de progression sont conservées. Compatible aussi avec LibreOffice Calc et Numbers.</p>

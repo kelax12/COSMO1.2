@@ -20,6 +20,7 @@ import frErrors from '@/locales/fr/errors.json';
 type Shape<P extends string> = P extends keyof FrModules ? FrModules[P] : never;
 interface FrModules {
   admin: typeof import('@/locales/fr/admin.json');
+  tools: typeof import('@/locales/fr/tools.json');
   portfolio: typeof import('@/locales/fr/portfolio.json');
   orgAccount: typeof import('@/locales/fr/orgAccount.json');
   orgAdmin: typeof import('@/locales/fr/orgAdmin.json');
@@ -89,6 +90,7 @@ interface CatalogShapes {
   premium: Shape<'premium'>;
   /** Landing publique + pages marketing (à propos, cas d'usage, blog). */
   landing: Shape<'landing'>;
+  tools: Shape<'tools'>;
   /** Parcours entreprise de la landing, chargé avec `EnterpriseTrack` (lazy). */
   landingEnterprise: Shape<'landingEnterprise'>;
   /**
@@ -187,7 +189,7 @@ const NAMESPACES: readonly Namespace[] = [
   'habits', 'invite', 'landing', 'landingEnterprise', 'legal', 'legalPrivacy', 'legalTerms', 'okr', 'org', 'orgAccount', 'orgAdmin', 'orgConfig', 'orgGuide', 'persoGuide', 'portfolio', 'premium', 'seo',
   'onboarding',
   'overlays',
-  'settings', 'statistics', 'taskModal', 'tasks', 'tutorials',
+  'settings', 'statistics', 'taskModal', 'tasks', 'tools', 'tutorials',
 ];
 
 function isNamespace(value: string): value is Namespace {

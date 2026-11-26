@@ -59,5 +59,9 @@
   "eisenhowerTool": {
     "title": "Eisenhowerova matrica online: besplatan alat | Cosmo",
     "description": "Rasporedite zadatke u Eisenhowerovu matricu online, besplatno i bez registracije: hitno, važno, planirati, delegirati. Može se ispisati."
+  },
+  "okrGeneratorTool": {
+    "title": "Besplatni generator OKR-ova: ciljevi i ključni rezultati | Cosmo",
+    "description": "Besplatni generator OKR-ova bez registracije: odaberite područje, formulirajte cilj i dobijte ključne rezultate za prilagodbu. Može se kopirati i ispisati."
   }
 }

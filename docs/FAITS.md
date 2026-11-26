@@ -17,7 +17,7 @@
 | Lignes de `scripts/` | **39765** | lignes des fichiers suivis de `scripts/` |
 | Tests de garde | **113** | fichiers `*.guard.test.*` du dépôt |
 | Modules applicatifs | **23** | dossiers de `src/modules/` |
-| Namespaces i18n | **34** | fichiers de `src/locales/fr/` |
+| Namespaces i18n | **35** | fichiers de `src/locales/fr/` |
 | Gardes `check:` / `i18n:` / `validate:` | **45** | scripts de `package.json` |
 | ADR | **22** | fichiers `NNNN-*.md` de `docs/adr/` |
 | Fonctions Vercel | **1** | fichiers `.ts` de `api/` (hors tests et `_*`) |

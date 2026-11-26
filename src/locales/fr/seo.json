@@ -59,5 +59,9 @@
   "eisenhowerTool": {
     "title": "Matrice d'Eisenhower en ligne : outil gratuit | Cosmo",
     "description": "Classez vos tâches dans la matrice d'Eisenhower en ligne, gratuitement et sans inscription : urgent, important, à planifier, à déléguer. Imprimable."
+  },
+  "okrGeneratorTool": {
+    "title": "Générateur d'OKR gratuit : objectifs et résultats clés | Cosmo",
+    "description": "Générateur d'OKR gratuit et sans inscription : choisissez un domaine, formulez votre objectif et obtenez des résultats clés à ajuster. Copiable et imprimable."
   }
 }

@@ -134,6 +134,33 @@ export const TEMPLATES_INDEX_ROUTE: Route = {
 
 // ── Outils gratuits (plan SEO C7) ────────────────────────────────────
 
+export const OKR_GENERATOR_ROUTE: Route = {
+  path: '/generateur-okr',
+  copy: 'okrGeneratorTool',
+  meta: fromCatalog('okrGeneratorTool'),
+  extraLd: (locale) => [
+    { obj: breadcrumb(locale === 'en' ? 'OKR generator' : "Générateur d'OKR", '/generateur-okr', locale), id: 'outil-okr-breadcrumb' },
+    {
+      obj: {
+        '@context': 'https://schema.org',
+        '@type': 'WebApplication',
+        name: locale === 'en' ? 'Free OKR generator' : "Générateur d'OKR gratuit",
+        url: canonicalUrl('/generateur-okr', locale),
+        applicationCategory: 'ProductivityApplication',
+        operatingSystem: 'Web',
+        inLanguage: BCP47_TAG[locale],
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
+        publisher: ORGANISATION,
+      },
+      id: 'outil-okr-app',
+    },
+  ],
+  content: {
+  "fr": "<h1>Générateur d'OKR gratuit</h1>\n        <p>Un outil gratuit, sans inscription, pour écrire vos OKR en quelques minutes : choisissez un domaine (forme, études, freelance, carrière, argent, marketing, produit, management), formulez votre objectif, puis choisissez jusqu'à cinq résultats clés proposés, avec leur valeur de départ et leur cible. Vous pouvez copier ou imprimer le résultat, ou le suivre dans Cosmo.</p>\n        <h2>Comment écrire un bon OKR</h2>\n        <p>L'objectif dit où vous voulez aller, en mots et sans chiffre. Les résultats clés disent comment vous saurez que vous y êtes : chacun est un nombre, avec une unité, une valeur de départ et une cible que vous pensez atteindre avec 50 à 70 % de chances. Deux à quatre résultats clés suffisent, sur un trimestre.</p>\n        <h2>D'où viennent les propositions</h2>\n        <p>Les résultats clés proposés sont rédigés à la main à partir d'exemples d'OKR réels, domaine par domaine. Ce sont des points de départ : ajustez le libellé, le départ et la cible à votre situation.</p>\n        <p>Pour aller plus loin : <a href=\"/blog/methode-okr-exemples\">la méthode OKR, avec 15 exemples</a> · <a href=\"/blog/template-okr-gratuit\">template OKR gratuit (Excel)</a> · <a href=\"/modeles\">modèles gratuits</a> · <a href=\"/signup\">créer un compte gratuit</a></p>",
+  "en": "<h1>Free OKR generator</h1>\n        <p>A free tool, no sign-up, to write your OKRs in a few minutes: pick an area (fitness, studies, freelancing, career, money, marketing, product, management), phrase your objective, then choose up to five suggested key results, with their starting value and target. Copy or print the result, or track it in Cosmo.</p>\n        <h2>How to write a good OKR</h2>\n        <p>The objective says where you want to go, in words and without numbers. The key results say how you will know you got there: each one is a number, with a unit, a starting value and a target you think you have a 50 to 70% chance of hitting. Two to four key results are enough, over a quarter.</p>\n        <h2>Where the suggestions come from</h2>\n        <p>The suggested key results are written by hand from real OKR examples, area by area. They are starting points: adjust the wording, starting value and target to your situation.</p>\n        <p>Go further: <a href=\"/en/blog/methode-okr-exemples\">the OKR method, with 15 examples</a> · <a href=\"/en/blog/template-okr-gratuit\">free OKR template (Excel)</a> · <a href=\"/en/templates\">free templates</a> · <a href=\"/en/signup\">create a free account</a></p>"
+},
+};
+
 export const EISENHOWER_TOOL_ROUTE: Route = {
   path: '/matrice-eisenhower-en-ligne',
   copy: 'eisenhowerTool',

@@ -1,0 +1,64 @@
+{
+  "eisenhower": {
+    "title": "Eisenhower matrix online",
+    "intro": "Sort your tasks into the four boxes, free and with no sign-up. Everything stays in your browser: print the matrix or pick it up in Cosmo.",
+    "taskLabel": "Task",
+    "quadrantLabel": "Box",
+    "moveLabel": "Move to",
+    "placeholder": "E.g. prepare Thursday's meeting",
+    "add": "Add",
+    "remove": "Remove task",
+    "empty": "No tasks yet.",
+    "print": "Print the matrix",
+    "clear": "Clear all",
+    "privacy": "Your tasks are saved in this browser only. Nothing is sent to Cosmo.",
+    "q1": {
+      "title": "Urgent and important",
+      "action": "Do it now"
+    },
+    "q2": {
+      "title": "Important, not urgent",
+      "action": "Schedule it in your calendar"
+    },
+    "q3": {
+      "title": "Urgent, not important",
+      "action": "Delegate or batch it"
+    },
+    "q4": {
+      "title": "Neither urgent nor important",
+      "action": "Drop it"
+    },
+    "ctaTitle": "Turn box 2 into real time slots",
+    "ctaText": "In Cosmo, your important tasks get a slot in the calendar, next to your habits and objectives.",
+    "howTitle": "How to use the matrix well",
+    "how1": "Start by emptying your head: every task for the week, without sorting. Then ask two questions of each: does this move me towards my objectives? Does it have to be done today or tomorrow?",
+    "how2": "The box that matters most is the second one: important but not urgent. That is where the projects that change your quarter live. Give them a slot in your calendar before the week fills up.",
+    "moreBefore": "Go further:",
+    "moreLink": "the Eisenhower matrix explained, with examples"
+  },
+  "okr": {
+    "title": "Free OKR generator",
+    "intro": "Write your OKRs in three steps: an area, an objective, then suggested key results you adjust. Free, no sign-up, everything stays in your browser.",
+    "step1": "1. Pick an area",
+    "step2": "2. Phrase your objective",
+    "step3": "3. Choose your key results",
+    "step3Hint": "Up to 5. Adjust the start and target on the right.",
+    "objective": "Objective",
+    "objectiveEmpty": "Your objective will appear here",
+    "krEmpty": "Tick key results on the left.",
+    "krLabel": "Key result",
+    "hintNumber": "An objective has no number in it: numbers belong in the key results.",
+    "start": "Start",
+    "target": "Target",
+    "remove": "Remove this key result",
+    "result": "Your OKR",
+    "copy": "Copy",
+    "copied": "Copied",
+    "print": "Print",
+    "ctaTitle": "Track this OKR every week",
+    "ctaText": "In Cosmo, your key results move forward next to the tasks and habits that drive them.",
+    "howTitle": "How to write a good OKR",
+    "how1": "The objective says where you want to go, in words and without numbers. The key results say how you will know you got there: a number, a unit, a starting value and a target you think you have a 50 to 70% chance of hitting.",
+    "how2": "Two to four key results per objective are enough, over a quarter. Review them for ten minutes every week: that appointment is what makes the difference."
+  }
+}

@@ -190,6 +190,24 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://thecosmo.app/generateur-okr</loc>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://thecosmo.app/generateur-okr" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://thecosmo.app/en/okr-generator" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://thecosmo.app/generateur-okr" />
+    <lastmod>2026-11-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://thecosmo.app/en/okr-generator</loc>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://thecosmo.app/generateur-okr" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://thecosmo.app/en/okr-generator" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://thecosmo.app/generateur-okr" />
+    <lastmod>2026-11-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://thecosmo.app/modeles</loc>
     <xhtml:link rel="alternate" hreflang="fr" href="https://thecosmo.app/modeles" />
     <xhtml:link rel="alternate" hreflang="en" href="https://thecosmo.app/en/templates" />

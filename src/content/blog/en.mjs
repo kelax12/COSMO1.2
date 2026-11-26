@@ -787,6 +787,8 @@ export const EN = {
 
 <p>Planning the year ahead? See <a href="/en/blog/objectifs-de-l-annee">how to set your 2027 goals with the OKR method</a>, with a fully filled-in example.</p>
 
+<p>To write yours in a few minutes, try the <a href="/en/okr-generator">free OKR generator</a>: an area, an objective, suggested key results to adjust.</p>
+
 <h2 id="faq">Frequently asked questions</h2>
 <h3>How many OKRs should you set?</h3>
 <p>Two to four objectives per cycle at most, with 2 to 5 key results each. The fewer you have, the better the method works.</p>
@@ -1215,6 +1217,8 @@ export const EN = {
 <p>If those limits are holding you back, <a href="/en/">Cosmo</a> has OKRs built in: progress updated as you act, a chart of key results achieved on the dashboard, and your goals living next to your <a href="/en/blog/time-blocking-guide">scheduled tasks</a> and your habits. <a href="/en/signup">Free</a>, with a demo and no sign-up.</p>
 
 <p>Before filling in the template for the year, take an hour for <a href="/en/blog/bilan-de-l-annee">a year in review in 10 questions</a>, then <a href="/en/blog/objectifs-de-l-annee">set your 2027 goals</a>.</p>
+
+<p>No key results in mind yet? The <a href="/en/okr-generator">free OKR generator</a> suggests some by area, to copy into this template.</p>
 
 <h2 id="faq">Frequently asked questions</h2>
 <h3>Does the template work in Google Sheets?</h3>

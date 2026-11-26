@@ -131,6 +131,8 @@ export const article = {
 
 <p>Vous préparez l'année qui vient ? Voir <a href="/blog/objectifs-de-l-annee">comment fixer ses objectifs 2027 avec la méthode OKR</a>, avec un exemple entièrement rempli.</p>
 
+<p>Pour écrire le vôtre en quelques minutes, essayez le <a href="/generateur-okr">générateur d'OKR gratuit</a> : un domaine, un objectif, des résultats clés proposés à ajuster.</p>
+
 <h2 id="faq">Questions fréquentes</h2>
 <h3>Combien d'OKR faut-il définir ?</h3>
 <p>2 à 4 objectifs maximum par cycle, avec 2 à 5 résultats clés chacun. Moins vous en avez, plus la méthode fonctionne.</p>

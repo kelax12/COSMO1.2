@@ -85,7 +85,8 @@ const NotFoundPage = lazyWithRetry(() => import('@/pages/NotFoundPage'), ['seo']
 const withContentLocale = <T,>(page: Promise<T>): Promise<T> =>
   Promise.all([page, loadContentLocale(localeStore.locale)]).then(([m]) => m);
 const BlogIndexPage = lazyWithRetry(() => withContentLocale(import('@/pages/BlogIndexPage')), ['landing', 'seo']);
-const EisenhowerToolPage = lazyWithRetry(() => import('@/pages/EisenhowerToolPage'), ['landing', 'seo', 'overlays']);
+const OkrGeneratorPage = lazyWithRetry(() => import('@/pages/OkrGeneratorPage'), ['landing', 'seo', 'overlays', 'tools']);
+const EisenhowerToolPage = lazyWithRetry(() => import('@/pages/EisenhowerToolPage'), ['landing', 'seo', 'overlays', 'tools']);
 const TemplatesIndexPage = lazyWithRetry(() => withContentLocale(import('@/pages/TemplatesIndexPage')), ['landing', 'seo']);
 const BlogArticlePage = lazyWithRetry(() => withContentLocale(import('@/pages/BlogArticlePage')), ['landing', 'seo']);
 const AProposPage = lazyWithRetry(() => import('@/pages/AProposPage'), ['landing', 'seo']);
@@ -291,6 +292,7 @@ const AppRoutes = () => {
     <Route path="reset-password" element={<PublicPageWithSuspense><ResetPasswordPage /></PublicPageWithSuspense>} />
     <Route path="guide" element={<PublicPageWithSuspense><GuidePage /></PublicPageWithSuspense>} />
     <Route path="blog" element={<PublicPageWithSuspense><BlogIndexPage /></PublicPageWithSuspense>} />
+    <Route path={routeSlug('okrGeneratorTool', activeLocale)} element={<PublicPageWithSuspense><OkrGeneratorPage /></PublicPageWithSuspense>} />
     <Route path={routeSlug('eisenhowerTool', activeLocale)} element={<PublicPageWithSuspense><EisenhowerToolPage /></PublicPageWithSuspense>} />
     <Route path={routeSlug('templates', activeLocale)} element={<PublicPageWithSuspense><TemplatesIndexPage /></PublicPageWithSuspense>} />
     <Route path="blog/:slug" element={<PublicPageWithSuspense><BlogArticlePage /></PublicPageWithSuspense>} />

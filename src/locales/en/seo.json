@@ -59,5 +59,9 @@
   "eisenhowerTool": {
     "title": "Eisenhower matrix online: free tool | Cosmo",
     "description": "Sort your tasks in an online Eisenhower matrix, free and with no sign-up: urgent, important, schedule, delegate. Printable."
+  },
+  "okrGeneratorTool": {
+    "title": "Free OKR generator: objectives and key results | Cosmo",
+    "description": "A free OKR generator with no sign-up: pick an area, phrase your objective and get key results to adjust. Copy or print the result."
   }
 }

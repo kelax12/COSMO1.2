@@ -290,44 +290,5 @@
       "planning": "Planeri",
       "methode": "Metode"
     }
-  },
-  "tools": {
-    "eisenhower": {
-      "title": "Eisenhowerova matrica online",
-      "intro": "Rasporedite zadatke u četiri polja, besplatno i bez registracije. Sve ostaje u vašem pregledniku: ispišite matricu ili je nastavite u Cosmu.",
-      "taskLabel": "Zadatak",
-      "quadrantLabel": "Polje",
-      "moveLabel": "Premjesti u",
-      "placeholder": "Npr. pripremiti sastanak u četvrtak",
-      "add": "Dodaj",
-      "remove": "Ukloni zadatak",
-      "empty": "Još nema zadataka.",
-      "print": "Ispiši matricu",
-      "clear": "Obriši sve",
-      "privacy": "Zadaci se spremaju samo u ovom pregledniku. Ništa se ne šalje Cosmu.",
-      "q1": {
-        "title": "Hitno i važno",
-        "action": "Odmah napraviti"
-      },
-      "q2": {
-        "title": "Važno, nije hitno",
-        "action": "Isplanirati u kalendaru"
-      },
-      "q3": {
-        "title": "Hitno, nije važno",
-        "action": "Delegirati ili grupirati"
-      },
-      "q4": {
-        "title": "Ni hitno ni važno",
-        "action": "Odustati"
-      },
-      "ctaTitle": "Pretvorite polje 2 u stvarne termine",
-      "ctaText": "U Cosmu važni zadaci dobivaju termin u kalendaru, uz vaše navike i ciljeve.",
-      "howTitle": "Kako dobro koristiti matricu",
-      "how1": "Najprije ispraznite glavu: svi zadaci za tjedan, bez razvrstavanja. Zatim za svaki postavite dva pitanja: približava li me to mojim ciljevima? Mora li se to napraviti danas ili sutra?",
-      "how2": "Najvažnije je drugo polje: važno, ali nije hitno. Tu su projekti koji mijenjaju vaše tromjesečje. Dajte im termin u kalendaru prije nego što se tjedan popuni.",
-      "moreBefore": "Saznajte više:",
-      "moreLink": "Eisenhowerova matrica objašnjena, s primjerima"
-    }
   }
 }

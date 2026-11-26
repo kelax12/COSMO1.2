@@ -30,6 +30,7 @@ import BlogArticlePage from '@/pages/BlogArticlePage';
 import BlogIndexPage from '@/pages/BlogIndexPage';
 import TemplatesIndexPage from '@/pages/TemplatesIndexPage';
 import EisenhowerToolPage from '@/pages/EisenhowerToolPage';
+import OkrGeneratorPage from '@/pages/OkrGeneratorPage';
 import CGUPage from '@/pages/CGUPage';
 import GuidePage from '@/pages/GuidePage';
 import MentionsLegalesPage from '@/pages/MentionsLegalesPage';
@@ -44,7 +45,8 @@ const PAGES: Record<string, { namespaces: readonly Namespace[]; element: React.R
   guide: { namespaces: ['guide', 'seo'], element: <GuidePage />, path: () => 'guide' },
   blog: { namespaces: ['landing', 'seo'], element: <BlogIndexPage />, path: () => 'blog' },
   templates: { namespaces: ['landing', 'seo'], element: <TemplatesIndexPage />, path: (l) => routeSlug('templates', l) },
-  eisenhowerTool: { namespaces: ['landing', 'seo', 'overlays'], element: <EisenhowerToolPage />, path: (l) => routeSlug('eisenhowerTool', l) },
+  okrGeneratorTool: { namespaces: ['landing', 'seo', 'overlays', 'tools'], element: <OkrGeneratorPage />, path: (l) => routeSlug('okrGeneratorTool', l) },
+  eisenhowerTool: { namespaces: ['landing', 'seo', 'overlays', 'tools'], element: <EisenhowerToolPage />, path: (l) => routeSlug('eisenhowerTool', l) },
   article: { namespaces: ['landing', 'seo'], element: <BlogArticlePage />, path: () => 'blog/:slug' },
   about: { namespaces: ['landing', 'seo'], element: <AProposPage />, path: (l) => routeSlug('about', l) },
   freelancers: { namespaces: ['landing', 'seo'], element: <UseCasePage />, path: (l) => routeSlug('freelancers', l) },
