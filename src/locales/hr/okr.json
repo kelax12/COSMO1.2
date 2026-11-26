@@ -144,20 +144,6 @@
     "close": "Zatvori",
     "validate": "Dovrši"
   },
-  "checkin": {
-    "close": "Zatvori",
-    "question": "Kako stoje stvari?",
-    "previous": "Prethodno",
-    "next": "Sljedeće",
-    "finish": "Završi",
-    "saved": "Provjera je spremljena! Ugodan tjedan 🚀",
-    "savedCount_one": "{{count}} KR ažuriran",
-    "savedCount_few": "{{count}} KR-a ažurirana",
-    "savedCount_other": "{{count}} KR-ova ažurirano",
-    "error": "Došlo je do pogreške pri ažuriranju",
-    "saving": "Spremanje…",
-    "krProgress": "KR {{index}} od {{total}}"
-  },
   "modalSheet": {
     "titlePlaceholder": "npr. Pokrenuti proizvod v2",
     "pickPlaceholder": "Odaberite…"
