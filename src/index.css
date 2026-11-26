@@ -1045,6 +1045,7 @@ body {
    le fond de page (un seul arrière-plan, sans bordure ni ombre). Les
    séparateurs de lignes et le survol restent. */
 .dark .tasks-flat,
+.dark .okr-flat,
 .dark .tasks-flat .table-container {
   background-color: transparent;
   border-color: transparent;

@@ -275,6 +275,8 @@ const OKRPage: React.FC = () => {
         </button>
       </div>
 
+      {/* Mode clair : un bloc encadre tous les elements, comme la page Taches. En sombre, `.dark .okr-flat` le fond dans la page. */}
+      <div className="card card-plain-mobile okr-flat p-0 sm:p-6">
       <div className="hidden sm:flex justify-end mb-8 gap-3">
         <motion.button
           whileHover={{ scale: 1.05 }}
@@ -368,6 +370,7 @@ const OKRPage: React.FC = () => {
               />
             ))}
         </AnimatePresence>
+      </div>
       </div>
 
       <OKRModalSheet
