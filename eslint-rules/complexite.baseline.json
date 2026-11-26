@@ -268,7 +268,7 @@
       "max-lines-per-function": [416]
     },
     "src/components/organization/TeamTasksTableRow.tsx": {
-      "complexity": [38],
+      "complexity": [34],
       "max-lines-per-function": [233]
     },
     "src/components/organization/TeamsSection.tsx": {
