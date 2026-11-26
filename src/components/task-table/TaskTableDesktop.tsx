@@ -54,7 +54,7 @@ const TaskTableDesktop = ({
     activeSort === field ? <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span> : null;
 
   return (
-    <div className="hidden md:block table-container shadow-sm overflow-x-auto">
+    <div className="hidden md:block table-container tasks-table-clair shadow-sm overflow-x-auto">
       <table className="data-table w-full" style={{ minWidth: '1000px' }}>
         <thead>
           <tr className="">
