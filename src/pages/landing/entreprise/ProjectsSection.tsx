@@ -220,7 +220,7 @@ const ProjectsSection: React.FC = () => {
                        poserait « Planning » par-dessus « Liste ». Et leur donner
                        44 px pour de vrai ferait une rangée d'onglets plus haute
                        que la capture qu'elle légende. */
-                    className={`${TAP_AREA_44_Y} inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 font-mono text-caption uppercase tracking-[0.16em] transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cosmo-300 ${
+                    className={`${TAP_AREA_44_Y} inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cosmo-300 ${
                       index === viewIndex
                         ? 'border-cosmo-300/40 bg-cosmo-400/10 text-cosmo-200'
                         : 'border-white/[0.08] text-slate-500 hover:text-slate-300'
@@ -235,7 +235,7 @@ const ProjectsSection: React.FC = () => {
               {/* L'invite ne s'affiche que là où le scroll fait réellement
                   quelque chose — donc conditionnée au pin, pas à la motion. */}
               {pinned && (
-                <p className="mt-2 text-center font-mono text-caption uppercase tracking-[0.2em] text-slate-600">
+                <p className="mt-2 text-center text-xs font-medium text-slate-600">
                   {t('enterprise.projects.scrollHint')}
                 </p>
               )}

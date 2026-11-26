@@ -49,7 +49,7 @@ const UseCaseCard: React.FC<{ useCase: UseCase; onClick: () => void }> = ({ useC
   return (
     <>
       <div className="h-2 rounded-full mb-6" style={{ backgroundColor: useCase.accent }} />
-      <p className="text-xs font-bold uppercase tracking-[0.14em]" style={{ color: useCase.accent }}>
+      <p className="text-sm font-semibold" style={{ color: useCase.accent }}>
         {t(useCase.profileKey)}
       </p>
       <h3 className="text-3xl font-extrabold text-slate-900 tracking-tight leading-tight mt-2 mb-3">

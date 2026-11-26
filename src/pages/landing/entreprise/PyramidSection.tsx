@@ -100,7 +100,7 @@ const PyramidSection: React.FC = () => {
       {/* ── La preuve du périmètre : ce que voit une personne, et le reste ── */}
       <div className="mt-14 grid border-t border-white/[0.08] sm:grid-cols-2">
         <div className="pt-6 sm:pr-8">
-          <p className="font-mono text-caption uppercase tracking-[0.14em] text-cosmo-300">{k('seesTitle')}</p>
+          <p className="text-xs font-medium text-cosmo-300">{k('seesTitle')}</p>
           <ul className="mt-4 space-y-2 text-sm text-slate-200">
             {SEES.map((key) => (
               <li key={key}>{k(key)}</li>
@@ -108,7 +108,7 @@ const PyramidSection: React.FC = () => {
           </ul>
         </div>
         <div className="pt-6 sm:border-l sm:border-white/[0.08] sm:pl-8">
-          <p className="font-mono text-caption uppercase tracking-[0.14em] text-slate-500">{k('hiddenTitle')}</p>
+          <p className="text-xs font-medium text-slate-500">{k('hiddenTitle')}</p>
           <ul className="mt-4 space-y-2 text-sm text-slate-500 line-through decoration-slate-600">
             {HIDDEN.map((key) => (
               <li key={key}>{k(key)}</li>
