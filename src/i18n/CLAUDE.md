@@ -20,6 +20,7 @@ const { t, tp } = useT('org');   // tp = pluriel ; clé plate dans le namespace
 
 - ✅ `src/i18n/routes.ts` + `route-slugs.json` : une URL canonique par langue et par page (`/en/about` répond ; un slug d'une autre langue, `/en/a-propos`, redirige en 301 vers `/en/about` par `vercel.json`, témoin `seo-urls.test.mjs`).
 - ✅ Le préfixe de locale est le `basename` du routeur, figé au montage : changer de langue recharge la page (`src/i18n/bootstrap.ts`).
+- ❌ Rediriger selon la langue du NAVIGATEUR : Googlebot rend en en-US et verrait l'accueil français en anglais. Seule la préférence choisie au sélecteur redirige `/` ; la langue du navigateur est seulement PROPOSÉE (`LocaleSuggestionBanner`, textes dans `src/content/locale-suggestion.mjs`).
 - ❌ Un slug localisé en dur dans un `to=` : `<Link to="/politique-confidentialite">` devient `/en/politique-confidentialite`, une 404. Passer par `useLocalizedPath()` (`src/i18n/useLocalizedPath.ts`).
 - ✅ Dates par `src/i18n/format.ts`. Garde `date-format.guard.test.ts` (AM-3) : refuse `toLocale*String()` sans locale, `Intl` en dur, `{ locale: fr }`, noms de jours à la main. ❌ Une entrée d'allowlist sans raison.
 

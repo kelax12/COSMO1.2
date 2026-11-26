@@ -56,14 +56,18 @@ test.describe('préfixe de locale', () => {
     expect(new URL(page.url()).pathname).toBe('/');
   });
 
-  test('un visiteur anglophone est redirigé vers /en/ depuis la racine', async ({ page }) => {
-    // C'est LE point de détection automatique : la racine, au premier passage.
+  test('un visiteur anglophone reste sur la racine française, avec une proposition en anglais', async ({ page }) => {
+    // Pas de redirection selon la langue du navigateur : Googlebot rend en en-US
+    // et verrait l'accueil français en anglais. Le bandeau propose, sans imposer.
     await withoutStoredLocale(page);
     await withNavigatorLanguage(page, 'en-US');
     await page.goto('/');
 
+    await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
+    expect(new URL(page.url()).pathname).toBe('/');
+    await page.getByRole('button', { name: 'Switch to English' }).click();
+    await expect(page).toHaveURL(/\/en\/$/);
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-    expect(new URL(page.url()).pathname).toBe('/en/');
   });
 
   test('/fr/... est canonicalisé sans préfixe', async ({ page }) => {

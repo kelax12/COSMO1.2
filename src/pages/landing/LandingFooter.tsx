@@ -5,6 +5,7 @@ import { useT } from '@/i18n/useT';
 import { CONTACT_EMAIL } from '@/lib/contact.mjs';
 import { useLocalizedPath } from '@/i18n/useLocalizedPath';
 import ManageCookiesButton from '@/components/ManageCookiesButton';
+import LocaleSuggestionBanner from '@/components/LocaleSuggestionBanner';
 import { TAP_AREA_44_Y } from '@/components/mobile/tap-area';
 import type { LandingTrack } from './use-landing-track';
 
@@ -29,6 +30,8 @@ const LandingFooter: React.FC<LandingFooterProps> = ({ track }) => {
   const localizedPath = useLocalizedPath();
   return (
       <footer className={`backdrop-blur-xl border-t py-10 ${shell}`}>
+        {/* Propose la langue du navigateur au lieu d'y rediriger (src/i18n/bootstrap.ts). */}
+        <LocaleSuggestionBanner />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex flex-col items-center md:items-start gap-2">

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { localeSwitchTarget, resolveRouterBootstrap } from './bootstrap';
+import { localeSwitchTarget, resolveRouterBootstrap, suggestedLocale } from './bootstrap';
 import { ALL_LOCALES, DEFAULT_LOCALE, SUPPORTED_LOCALES, type Locale } from './locale';
 
 /** Une locale servie qui n'est pas celle par défaut (l'anglais en phase 2). */
@@ -12,7 +12,6 @@ const at = (pathname: string, extra: Partial<Parameters<typeof resolveRouterBoot
   resolveRouterBootstrap({
     pathname,
     storedLocale: null,
-    navigatorLocale: DEFAULT_LOCALE,
     ...extra,
   });
 
@@ -72,29 +71,28 @@ describe('resolveRouterBootstrap — préfixe d’une locale servie', () => {
   });
 });
 
-describe('resolveRouterBootstrap — détection automatique à la racine', () => {
-  it('redirige vers la langue du navigateur pour un premier visiteur', () => {
-    // C'est LE seul endroit où la détection automatique opère.
-    const result = at('/', { navigatorLocale: SECONDARY });
+describe('resolveRouterBootstrap — racine : préférence explicite seulement', () => {
+  it('ne redirige JAMAIS selon la langue du navigateur (Googlebot rend en en-US)', () => {
+    // Une redirection par langue du navigateur ferait voir l'accueil français
+    // en anglais aux robots : la racine reste française sans préférence choisie.
+    const result = at('/');
+    expect(result.locale).toBe(DEFAULT_LOCALE);
+    expect(result.replaceUrl).toBeNull();
+  });
+
+  it('redirige vers la préférence enregistrée au sélecteur de langue', () => {
+    const result = at('/', { storedLocale: SECONDARY });
     expect(result.locale).toBe(SECONDARY);
     expect(result.basename).toBe(`/${SECONDARY}`);
     expect(result.replaceUrl).toBe(`/${SECONDARY}/`);
   });
 
-  it('donne priorité à la préférence enregistrée sur le navigateur', () => {
-    expect(at('/', { storedLocale: DEFAULT_LOCALE, navigatorLocale: SECONDARY }).locale).toBe(
-      DEFAULT_LOCALE
-    );
-  });
-
-  it('utilise la préférence enregistrée quand le navigateur dit autre chose', () => {
-    expect(at('/', { storedLocale: SECONDARY, navigatorLocale: DEFAULT_LOCALE }).locale).toBe(
-      SECONDARY
-    );
+  it('reste en français si la préférence enregistrée est le français', () => {
+    expect(at('/', { storedLocale: DEFAULT_LOCALE }).replaceUrl).toBeNull();
   });
 
   it('préserve query string et fragment lors de la redirection', () => {
-    expect(at('/', { navigatorLocale: SECONDARY, search: '?ref=x' }).replaceUrl).toBe(
+    expect(at('/', { storedLocale: SECONDARY, search: '?ref=x' }).replaceUrl).toBe(
       `/${SECONDARY}/?ref=x`
     );
   });
@@ -102,7 +100,7 @@ describe('resolveRouterBootstrap — détection automatique à la racine', () =>
   it('ne redirige PAS un chemin profond non préfixé', () => {
     // Un lien français partagé reste français, même chez un anglophone :
     // l'absence de préfixe signifie toujours « locale par défaut ».
-    const result = at('/a-propos', { navigatorLocale: SECONDARY, storedLocale: SECONDARY });
+    const result = at('/a-propos', { storedLocale: SECONDARY });
     expect(result.locale).toBe(DEFAULT_LOCALE);
     expect(result.basename).toBe('/');
     expect(result.replaceUrl).toBeNull();
@@ -159,5 +157,18 @@ describe('localeSwitchTarget', () => {
 
   it('reste stable si la langue est déjà la bonne', () => {
     expect(localeSwitchTarget(SECONDARY, url(`/${SECONDARY}/tasks`))).toBe(`/${SECONDARY}/tasks`);
+  });
+});
+
+describe('suggestedLocale — bandeau à la place de la redirection', () => {
+  it('propose la langue du navigateur au visiteur qui n’a rien choisi', () => {
+    expect(suggestedLocale(DEFAULT_LOCALE, null, SECONDARY)).toBe(SECONDARY);
+  });
+  it('ne propose rien si la page est déjà dans cette langue, ou si une préférence existe', () => {
+    expect(suggestedLocale(DEFAULT_LOCALE, null, DEFAULT_LOCALE)).toBeNull();
+    expect(suggestedLocale(DEFAULT_LOCALE, DEFAULT_LOCALE, SECONDARY)).toBeNull();
+  });
+  it('ne propose jamais une locale non servie', () => {
+    if (UNOPENED) expect(suggestedLocale(DEFAULT_LOCALE, null, UNOPENED)).toBeNull();
   });
 });
