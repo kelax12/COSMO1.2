@@ -100,18 +100,18 @@
   "useCases": {
     "students": {
       "profile": "Étudiants",
-      "title": "Excellence académique",
-      "description": "Gérez vos cours, devoirs et révisions avec une planification intuitive qui s'adapte à votre rythme.",
+      "title": "Chaque révision a son créneau",
+      "description": "Vos cours et devoirs en liste, vos révisions posées dans l'agenda, votre semaine visible d'un coup d'œil.",
       "f1": "Notez tout ce que vous avez à faire pour ne rien oublier",
       "f2": "Planning de révisions",
       "f3": "Suivez l'avancement de vos objectifs",
       "f4": "Construisez votre routine",
-      "f5": "Vision globale + réduction du stress"
+      "f5": "Voyez où en est chaque matière"
     },
     "professionals": {
       "profile": "Professionnels",
-      "title": "Performance maximale",
-      "description": "Boostez votre carrière avec des outils qui transforment votre façon de travailler et d'atteindre vos objectifs.",
+      "title": "Les priorités d'abord",
+      "description": "Classez ce qui compte, posez-le dans l'agenda, et voyez en fin de semaine où votre temps est vraiment passé.",
       "f1": "Classez vos priorités, le reste peut attendre",
       "f2": "Planifiez vos journées autour de vos priorités",
       "f3": "Suivez l'avancement de vos objectifs professionnels",
@@ -120,8 +120,8 @@
     },
     "founders": {
       "profile": "Entrepreneurs",
-      "title": "Croissance accélérée",
-      "description": "Pilotez votre activité sur tous les fronts, sans perdre de vue ce qui fait grandir votre entreprise.",
+      "title": "Plusieurs projets, un seul cap",
+      "description": "Chaque projet a ses tâches, chaque objectif ses résultats chiffrés, et l'agenda tient le tout dans la même semaine.",
       "f1": "Gérez plusieurs projets sans rien laisser filer",
       "f2": "Planifiez chaque journée selon vos priorités du moment",
       "f3": "Fixez vos objectifs de croissance et suivez chaque étape",
@@ -130,8 +130,8 @@
     },
     "teams": {
       "profile": "Équipes",
-      "title": "Collaboration fluide",
-      "description": "Synchronisez votre équipe avec des outils collaboratifs qui alignent chacun sur les mêmes objectifs.",
+      "title": "Qui fait quoi, et pour quand",
+      "description": "Partagez une tâche, chacun la retrouve dans sa liste et son agenda, et l'avancement se lit sans réunion.",
       "f1": "Partagez les tâches et voyez qui fait quoi",
       "f2": "Coordonnez les échéances dans l'agenda de chacun",
       "f3": "Alignez l'équipe sur des objectifs communs",

@@ -40,7 +40,7 @@ const MoreFeaturesSection: React.FC = () => {
         <div className="divide-y divide-white/[0.08] border-t border-white/[0.08]">
           {MORE_FEATURE_GROUPS.map(({ titleKey, features }) => (
             <div key={titleKey} className="grid gap-6 py-10 lg:grid-cols-[0.6fr_1.4fr] lg:gap-16">
-              <h3 className="font-mono text-caption uppercase tracking-[0.2em] text-cosmo-300">{t(titleKey)}</h3>
+              <h3 className="text-xs font-medium text-cosmo-300">{t(titleKey)}</h3>
               <ul className="grid gap-x-10 gap-y-7 sm:grid-cols-2">
                 {features.map((n) => (
                   <li key={n}>

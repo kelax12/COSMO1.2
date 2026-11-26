@@ -22,7 +22,7 @@ const TEAM_OKRS: {
   keyResults: { progress: number; done: boolean; labelKey: KeyOf<'landingEnterprise'> }[];
 }[] = [
   {
-    dotClassName: 'bg-fuchsia-500',
+    dotClassName: 'bg-cosmo-300',
     teamKey: 'enterprise.okr.team1Team',
     objectiveKey: 'enterprise.okr.team1Objective',
     keyResults: [
@@ -112,8 +112,8 @@ const OkrSection: React.FC = () => {
           {/* ── La cascade ── */}
           <div className="okr-cascade flex flex-col items-stretch">
             {/* Niveau 1 : l'objectif d'organisation */}
-            <div className="okr-level rounded-xl border border-cosmo-300/25 bg-gradient-to-br from-cosmo-400/[0.08] to-transparent p-6">
-              <span className="mb-3 block font-mono text-caption uppercase tracking-[0.22em] text-cosmo-400">
+            <div className="okr-level rounded-xl border border-cosmo-300/30 bg-[#1a1d23] p-6">
+              <span className="mb-3 block text-xs font-medium text-cosmo-400">
                 {t('enterprise.okr.orgLabel')}
               </span>
               <p className="text-base font-semibold leading-snug text-white">
@@ -127,13 +127,13 @@ const OkrSection: React.FC = () => {
             <div className="okr-level space-y-3">
               {TEAM_OKRS.map(({ dotClassName, teamKey, objectiveKey, keyResults }) => (
                 <div key={teamKey} className="rounded-xl border border-white/[0.08] bg-[#222428] p-5">
-                  <span className="mb-2.5 flex items-center gap-2 font-mono text-caption uppercase tracking-[0.22em] text-slate-500">
+                  <span className="mb-2.5 flex items-center gap-2 text-xs font-medium text-slate-500">
                     <span className={`h-1.5 w-1.5 rounded-full ${dotClassName}`} aria-hidden="true" />
                     {t(teamKey)}
                   </span>
                   <p className="mb-4 text-sm font-medium leading-snug text-slate-200">{t(objectiveKey)}</p>
 
-                  <span className="mb-3 block font-mono text-[0.65rem] uppercase tracking-[0.22em] text-slate-600">
+                  <span className="mb-3 block text-xs font-medium text-slate-600">
                     {t('enterprise.okr.krLabel')}
                   </span>
                   <div className="space-y-3">
@@ -171,7 +171,7 @@ const OkrSection: React.FC = () => {
 /** Trait vertical entre deux niveaux de la cascade. */
 const Connector: React.FC = () => (
   <div className="flex h-10 items-stretch justify-center" aria-hidden="true">
-    <span className="okr-connector w-px bg-gradient-to-b from-cosmo-400/50 to-cosmo-400/10" />
+    <span className="okr-connector w-px bg-cosmo-400/35" />
   </div>
 );
 
