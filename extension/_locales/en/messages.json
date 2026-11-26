@@ -1,0 +1,7 @@
+{
+  "nom": { "message": "Add to Cosmo" },
+  "description": { "message": "Turn a page, a link or selected text into a Cosmo task, in one click." },
+  "action": { "message": "Add this page to my Cosmo tasks" },
+  "menuSelection": { "message": "Add \"%s\" to Cosmo" },
+  "menuPage": { "message": "Add this page to Cosmo" }
+}

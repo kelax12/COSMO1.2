@@ -1,0 +1,7 @@
+{
+  "nom": { "message": "Ajouter à Cosmo" },
+  "description": { "message": "Transformez une page, un lien ou un texte sélectionné en tâche Cosmo, en un clic." },
+  "action": { "message": "Ajouter cette page à mes tâches Cosmo" },
+  "menuSelection": { "message": "Ajouter « %s » à Cosmo" },
+  "menuPage": { "message": "Ajouter cette page à Cosmo" }
+}

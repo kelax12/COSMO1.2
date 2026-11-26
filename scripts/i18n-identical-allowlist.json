@@ -111,6 +111,8 @@
       "tasks.card.options": {"categorie": "mot-identique", "valeur": "Options"},
       "tasks.subtasks.progress": {"categorie": "symbole-ou-format", "valeur": "{{done}}/{{total}}"},
       "tasks.table.colActions": {"categorie": "mot-identique", "valeur": "Actions"},
+      "tools.habit.total": {"categorie": "mot-identique", "valeur": "Total"},
+      "tools.pomodoro.pause": {"categorie": "mot-identique", "valeur": "Pause"},
       "tutorials.habitsMobile.step5Title": {"categorie": "anglicisme-fr", "valeur": "Mini heatmap"}
     },
     "hr": {

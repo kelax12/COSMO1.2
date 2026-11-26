@@ -572,5 +572,8 @@
     "blockedBy": "Blokira ga",
     "blockedByNone": "Nema zabilježenih zadataka koji blokiraju.",
     "blockedLockAria": "Blokirani zadatak: pogledajte što ga blokira"
+  },
+  "fromExtension": {
+    "source": "Dodano s: {{url}}"
   }
 }

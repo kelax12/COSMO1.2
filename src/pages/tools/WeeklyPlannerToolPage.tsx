@@ -39,7 +39,8 @@ const WeeklyPlannerToolPage: React.FC = () => {
     description: tSeo('weeklyPlannerTool.description'),
     canonical: canonicalUrl(`/${routeSlug('weeklyPlannerTool', 'fr')}`, locale),
   });
-  // 2026-11-02 est un lundi : sert seulement à nommer les jours dans la langue.
+  // Une date connue pour tomber un lundi, qui sert seulement à nommer les jours dans la langue.
+  const nomHeure = (h: number) => formatDate(new Date(2026, 0, 1, h), { hour: 'numeric' });
   const nomJour = (j: number) => formatDate(new Date(Date.UTC(2026, 10, 2 + j, 12)), { weekday: 'short' });
   const ecrire = (cle: string, v: string) =>
     setGrille((g) => {
@@ -83,12 +84,12 @@ const WeeklyPlannerToolPage: React.FC = () => {
           <tbody>
             {HEURES.map((h) => (
               <tr key={h}>
-                <th scope="row" className="text-right pr-2 font-normal text-slate-400 align-top pt-1">{t('planner.hour', { h: String(h) })}</th>
+                <th scope="row" className="text-right pr-2 font-normal text-slate-400 align-top pt-1">{nomHeure(h)}</th>
                 {Array.from({ length: JOURS }, (_, j) => {
                   const cle = `${j}-${h}`;
                   return (
                     <td key={cle} className={`border border-slate-200 p-0 ${grille[cle] ? 'bg-blue-50' : ''}`}>
-                      <label className="sr-only" htmlFor={`pl-${cle}`}>{`${nomJour(j)} ${t('planner.hour', { h: String(h) })}`}</label>
+                      <label className="sr-only" htmlFor={`pl-${cle}`}>{`${nomJour(j)} ${nomHeure(h)}`}</label>
                       <input
                         id={`pl-${cle}`}
                         value={grille[cle] ?? ''}

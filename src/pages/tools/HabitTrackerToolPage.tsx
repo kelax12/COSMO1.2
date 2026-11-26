@@ -95,7 +95,7 @@ const HabitTrackerToolPage: React.FC = () => {
         </div>
 
         <section aria-labelledby="ht-grille" className="overflow-x-auto">
-          <h2 id="ht-grille" className="text-xl font-bold mb-3 capitalize">{t('habit.monthYear', { month: nomMois(etat.mois), year: String(etat.annee) })}</h2>
+          <h2 id="ht-grille" className="text-xl font-bold mb-3 capitalize">{formatDate(new Date(Date.UTC(etat.annee, etat.mois, 15)), { month: 'long', year: 'numeric' })}</h2>
           <table className="border-collapse text-[11px] w-full">
             <thead>
               <tr>

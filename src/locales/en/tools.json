@@ -79,8 +79,7 @@
     "ctaText": "In Cosmo, each habit has its streak, a six-month heatmap and reminders, next to your tasks and objectives.",
     "howTitle": "How to use your habit tracker well",
     "how1": "Write each habit in its minimal version (\"ten minutes of reading\" rather than \"read for an hour\") and attach it to a specific moment of your day.",
-    "how2": "Keep the sheet where you will see it and tick right away. At the end of the month, look at the days that slip and change a single thing for next month.",
-    "monthYear": "{{month}} {{year}}"
+    "how2": "Keep the sheet where you will see it and tick right away. At the end of the month, look at the days that slip and change a single thing for next month."
   },
   "planner": {
     "title": "Weekly planner online",
@@ -88,7 +87,6 @@
     "print": "Print the planner",
     "clear": "Clear all",
     "hint": "Click a slot and type the planned block.",
-    "hour": "{{h}}:00",
     "ctaTitle": "Place your real tasks in the calendar",
     "ctaText": "In Cosmo, your tasks slide into the calendar as time slots, next to your habits and objectives.",
     "howTitle": "How to fill your week well",

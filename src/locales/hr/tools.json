@@ -79,8 +79,7 @@
     "ctaText": "U Cosmu svaka navika ima svoj niz, toplinsku kartu za šest mjeseci i podsjetnike, uz zadatke i ciljeve.",
     "howTitle": "Kako dobro koristiti pratitelj navika",
     "how1": "Svaku naviku napišite u minimalnoj verziji („deset minuta čitanja“ umjesto „čitati sat vremena“) i vežite je uz točan trenutak u danu.",
-    "how2": "Držite list ondje gdje ga vidite i označite odmah. Na kraju mjeseca pogledajte dane kad popušta i promijenite samo jednu stvar za sljedeći mjesec.",
-    "monthYear": "{{month}} {{year}}"
+    "how2": "Držite list ondje gdje ga vidite i označite odmah. Na kraju mjeseca pogledajte dane kad popušta i promijenite samo jednu stvar za sljedeći mjesec."
   },
   "planner": {
     "title": "Tjedni planer online",
@@ -88,7 +87,6 @@
     "print": "Ispiši planer",
     "clear": "Obriši sve",
     "hint": "Kliknite polje i upišite planirani blok.",
-    "hour": "{{h}} h",
     "ctaTitle": "Smjestite stvarne zadatke u kalendar",
     "ctaText": "U Cosmu zadaci ulaze u kalendar kao termini, uz vaše navike i ciljeve.",
     "howTitle": "Kako dobro ispuniti tjedan",

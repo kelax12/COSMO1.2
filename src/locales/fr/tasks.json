@@ -572,5 +572,8 @@
       "status": "Statut",
       "health": "État"
     }
+  },
+  "fromExtension": {
+    "source": "Ajouté depuis : {{url}}"
   }
 }

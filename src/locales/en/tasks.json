@@ -543,5 +543,8 @@
       "status": "Status",
       "health": "Health"
     }
+  },
+  "fromExtension": {
+    "source": "Added from: {{url}}"
   }
 }

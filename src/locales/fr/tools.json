@@ -79,8 +79,7 @@
     "ctaText": "Dans Cosmo, chaque habitude a sa série, sa heatmap sur six mois et ses rappels, à côté de vos tâches et de vos objectifs.",
     "howTitle": "Comment bien utiliser votre habit tracker",
     "how1": "Écrivez chaque habitude dans sa version minimale (« dix minutes de lecture » plutôt que « lire une heure ») et accrochez-la à un moment précis de votre journée.",
-    "how2": "Placez la feuille là où vous la voyez et cochez au moment même. À la fin du mois, regardez les jours qui décrochent et changez un seul réglage pour le mois suivant.",
-    "monthYear": "{{month}} {{year}}"
+    "how2": "Placez la feuille là où vous la voyez et cochez au moment même. À la fin du mois, regardez les jours qui décrochent et changez un seul réglage pour le mois suivant."
   },
   "planner": {
     "title": "Planning de semaine en ligne",
@@ -88,7 +87,6 @@
     "print": "Imprimer le planning",
     "clear": "Tout effacer",
     "hint": "Cliquez dans une case et écrivez le bloc prévu.",
-    "hour": "{{h}} h",
     "ctaTitle": "Placez vos vraies tâches dans l’agenda",
     "ctaText": "Dans Cosmo, vos tâches se glissent dans l’agenda en créneaux, à côté de vos habitudes et de vos objectifs.",
     "howTitle": "Comment bien remplir votre semaine",

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import TaskTable from '@/components/TaskTable';
 import TaskFilter from '@/components/TaskFilter';
-import TaskModal from '@/components/TaskModal';
 import TasksSummary from '@/components/TasksSummary';
 import DeadlineCalendar from '@/components/DeadlineCalendar';
 import ListActionsSheet from '@/components/ListActionsSheet';
@@ -9,6 +8,7 @@ import { Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router';
 import { useLazyMount } from '@/hooks/use-lazy-mount';
+import { CreateTaskModal } from '@/pages/tasks-prefill';
 
 // Module tasks - Hooks indépendants
 import { useTasks, useUpdateTask } from '@/modules/tasks';
@@ -419,11 +419,7 @@ const TasksPage: React.FC = () => {
                 />
               )}
 
-              <TaskModal
-                isOpen={showAddTaskForm}
-                onClose={() => setShowAddTaskForm(false)}
-                isCreating={true}
-              />
+              <CreateTaskModal isOpen={showAddTaskForm} setOpen={setShowAddTaskForm} />
             
               <motion.div
                 initial={{ opacity: 0, y: 20 }}

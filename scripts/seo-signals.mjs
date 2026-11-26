@@ -341,8 +341,7 @@ export function resume({ point, rouges }) {
   return l.join('\n');
 }
 
-// IndexNow : la clé est publique par conception (`public/<clé>.txt`).
-export const INDEXNOW_CLE = 'ea44e90cb409eb919d1e11047c02bf7f';
+export const INDEXNOW_CLE = 'ea44e90cb409eb919d1e11047c02bf7f'; // IndexNow : publique par conception (`public/<clé>.txt`)
 /** URL du domaine au `lastmod` >= `depuis` (AAAA-MM-JJ) ; toutes si `depuis` est nul. */
 export const urlsModifiees = (xml, depuis) => [...new Set([...xml.matchAll(/<url>([\s\S]*?)<\/url>/g)]
   .map(([, b]) => [b.match(/<loc>([^<]+)</)?.[1]?.trim(), b.match(/<lastmod>([^<]+)</)?.[1]?.trim()])
@@ -350,9 +349,8 @@ export const urlsModifiees = (xml, depuis) => [...new Set([...xml.matchAll(/<url
   .map(([loc]) => loc))];
 /** `--tout` soumet tout le sitemap ; sinon les pages modifiées depuis `--jours N` (2). 200/202 seuls acceptés. */
 export async function soumettreIndexNow({ argv = [], fetchFn = globalThis.fetch, maintenant = new Date() } = {}) {
-  const i = argv.indexOf('--jours');
+  const i = argv.indexOf('--jours'), rep = await fetchFn(`https://${DOMAINE}/sitemap.xml`);
   const depuis = argv.includes('--tout') ? null : new Date(maintenant - (i >= 0 ? Number(argv[i + 1]) : 2) * 864e5).toISOString().slice(0, 10);
-  const rep = await fetchFn(`https://${DOMAINE}/sitemap.xml`);
   if (!rep.ok) throw new Error(`sitemap illisible : HTTP ${rep.status}`);
   const urls = urlsModifiees(await rep.text(), depuis);
   if (!urls.length) return { urls, statut: null };
