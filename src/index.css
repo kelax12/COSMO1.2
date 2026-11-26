@@ -1065,7 +1065,6 @@ body {
    le fond de page (un seul arrière-plan, sans bordure ni ombre). Les
    séparateurs de lignes et le survol restent. */
 .dark .tasks-flat,
-.dark .okr-flat,
 .dark .tasks-flat .table-container {
   background-color: transparent;
   border-color: transparent;
@@ -2104,10 +2103,15 @@ html:not(.dark) .tasks-table-clair .data-table tbody tr:hover {
   background-color: rgb(var(--table-row-hover));
 }
 
-/* Page OKR, mode clair seul : le bloc s'élargit sur les côtés (dans la marge de page, puis au-delà sur grand écran) ; le contenu garde sa largeur. */
+/* Page OKR, mode clair seul : recherche, filtres et « Nouvel objectif » dans une barre blanche ; les cartes blanches restent sur le fond de page. */
 @media (min-width: 640px) {
-  html:not(.dark) .okr-flat { margin-inline: -1.5rem; padding-inline: 4rem; }
-}
-@media (min-width: 1440px) {
-  html:not(.dark) .okr-flat { margin-inline: -4rem; padding-inline: 6.5rem; }
+  html:not(.dark) .okr-toolbar {
+    margin-bottom: 2rem;
+    padding: 1rem 1.25rem;
+    border: 1px solid rgb(var(--color-border));
+    border-radius: 0.75rem;
+    background-color: rgb(255 255 255);
+  }
+  html:not(.dark) .okr-toolbar > div:first-child { margin-bottom: 1rem; }
+  html:not(.dark) .okr-toolbar > div:last-child { margin-bottom: 0; }
 }
