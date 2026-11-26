@@ -216,10 +216,9 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
                 {/* CTA principal : démo sans inscription (friction zéro) */}
                 <button
                   onClick={onDemo}
-                  className="group relative overflow-hidden bg-blue-600 hover:bg-blue-700 text-white px-7 py-3.5 rounded-full font-semibold text-[15px] tracking-[-0.01em] transition-[box-shadow,color,background-color] duration-300 shadow-[0_8px_30px_-8px_rgba(37,99,235,0.55)] hover:shadow-[0_12px_38px_-8px_rgba(37,99,235,0.7)] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-7 py-3.5 rounded-full font-semibold text-[15px] tracking-[-0.01em] transition-colors duration-300 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
                   aria-label={t('hero.demoAria')}
                 >
-                  <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700" aria-hidden="true" />
                   <span className="relative">{t('hero.demoCta')}</span>
                 </button>
                 <button

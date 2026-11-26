@@ -37,7 +37,7 @@ const AppShot: React.FC<AppShotProps> = ({ src, alt, label, loading = 'lazy', cl
         <span className="h-2 w-2 rounded-full bg-white/10" />
         <span className="h-2 w-2 rounded-full bg-cosmo-400/60" />
       </span>
-      <figcaption className="ml-1 truncate font-mono text-caption uppercase tracking-[0.2em] text-slate-500">
+      <figcaption className="ml-1 truncate text-xs font-medium text-slate-500">
         {label}
       </figcaption>
     </div>

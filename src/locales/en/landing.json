@@ -100,18 +100,18 @@
   "useCases": {
     "students": {
       "profile": "Students",
-      "title": "Academic excellence",
-      "description": "Manage classes, homework and revision with intuitive planning that fits your pace.",
+      "title": "Every revision gets a slot",
+      "description": "Classes and homework in one list, revision blocked in the calendar, your week visible at a glance.",
       "f1": "Write down everything you have to do so nothing slips",
       "f2": "Revision schedule",
       "f3": "Track progress on your objectives",
       "f4": "Build your routine",
-      "f5": "The big picture, less stress"
+      "f5": "See where each subject stands"
     },
     "professionals": {
       "profile": "Professionals",
-      "title": "Peak performance",
-      "description": "Boost your career with tools that change how you work and reach your objectives.",
+      "title": "Priorities first",
+      "description": "Rank what matters, put it in your calendar, and see at the end of the week where your time really went.",
       "f1": "Rank your priorities, the rest can wait",
       "f2": "Plan your days around your priorities",
       "f3": "Track progress on your professional objectives",
@@ -120,8 +120,8 @@
     },
     "founders": {
       "profile": "Founders",
-      "title": "Faster growth",
-      "description": "Run your business on every front without losing sight of what makes it grow.",
+      "title": "Many projects, one direction",
+      "description": "Each project has its tasks, each objective its measurable key results, and the calendar holds it all in one week.",
       "f1": "Handle several projects without dropping anything",
       "f2": "Plan each day around what matters right now",
       "f3": "Set growth objectives and track every step",
@@ -130,8 +130,8 @@
     },
     "teams": {
       "profile": "Teams",
-      "title": "Smooth collaboration",
-      "description": "Keep your team in sync with collaborative tools that align everyone on the same objectives.",
+      "title": "Who does what, and by when",
+      "description": "Share a task and everyone finds it in their list and calendar, so progress reads without a meeting.",
       "f1": "Share tasks and see who does what",
       "f2": "Coordinate deadlines in everyone's calendar",
       "f3": "Align the team on shared objectives",

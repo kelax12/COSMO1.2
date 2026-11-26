@@ -66,7 +66,7 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <header className="mb-10 max-w-3xl">
           {ENTERPRISE_FREE_OFFER && (
-            <span className="mb-5 inline-flex items-center rounded-full border border-cosmo-300/40 bg-cosmo-400/10 px-3 py-1 font-mono text-caption uppercase tracking-[0.16em] text-cosmo-300">
+            <span className="mb-5 inline-flex items-center rounded-full border border-cosmo-300/40 bg-cosmo-400/10 px-3 py-1 text-xs font-medium text-cosmo-300">
               {t('enterprise.pricing.promoBadge')}
             </span>
           )}
