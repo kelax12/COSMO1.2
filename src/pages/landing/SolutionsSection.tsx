@@ -10,7 +10,7 @@ import { HabitIcon, OkrIcon } from '@/components/icons/cosmo-icons';
 import { gsap, SplitText, useGSAP } from '@/lib/gsap';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { TAP_AREA_44_Y } from '@/components/mobile';
-import { USE_CASES, ENTRY_OFFSETS } from './data';
+import { USE_CASES } from './data';
 import { useT } from '@/i18n/useT';
 import { useLandingTrack } from './use-landing-track';
 
@@ -165,12 +165,16 @@ const SolutionsSection: React.FC<SolutionsSectionProps> = ({ handleFeatureClick 
 
         {stacked ? (
           <div className="max-w-xl mx-auto px-4 space-y-6">
-            {USE_CASES.map((useCase, index) => (
+            {USE_CASES.map((useCase) => (
               <motion.div
                 key={useCase.profileKey}
-                initial={reduceMotion ? false : { opacity: 0, scale: 0.9, ...ENTRY_OFFSETS[index] }}
-                whileInView={{ opacity: 1, scale: 1, x: 0, y: 0, rotate: 0 }}
-                viewport={{ once: true, margin: '-80px' }}
+                // Entrée VERTICALE seule : un décalage horizontal (±400 px)
+                // sortait la carte de la section `overflow-hidden` sur un
+                // téléphone, l'observateur ne la voyait jamais entrer et elle
+                // restait à opacité 0 (grand vide).
+                initial={reduceMotion ? false : { opacity: 0, y: 32 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.15 }}
                 transition={{ type: 'spring', stiffness: 65, damping: 14, mass: 1 }}
                 className={CARD_CLASS}
               >

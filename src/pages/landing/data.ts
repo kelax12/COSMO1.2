@@ -22,12 +22,6 @@ export const USE_CASES: UseCase[] = [
   { profileKey: 'useCases.teams.profile', accent: '#047857', titleKey: 'useCases.teams.title', descriptionKey: 'useCases.teams.description', featureKeys: ['useCases.teams.f1', 'useCases.teams.f2', 'useCases.teams.f3', 'useCases.teams.f4', 'useCases.teams.f5'], path: '/okr' },
 ];
 
-export const ENTRY_OFFSETS = [
-  { x: -400, y: -300, rotate: -15 },
-  { x:  400, y: -300, rotate:  15 },
-  { x: -400, y:  300, rotate: -15 },
-  { x:  400, y:  300, rotate:  15 },
-];
 
 export interface FaqItemData {
   questionKey: KeyOf<'landing'>;
