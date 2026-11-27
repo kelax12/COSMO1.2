@@ -48,8 +48,9 @@ const DEFAULT_DROP_MINUTES = 60;
  * Remplace le tiroir latéral de 220 px qui tronquait tout (« Préparer pr… »,
  * sélecteurs « Toute: », dates « 13/10/2026 ») et ne s'utilisait qu'en
  * glissant une carte au-dessus d'un calendrier qu'il recouvrait. Ici : des
- * lignes comme sur Tâches, on touche une tâche, on choisit son créneau dans
- * `TaskToEventModal`, la modale d'événement préremplie (la même que « Planifier » depuis la liste des tâches).
+ * lignes comme sur Tâches ; un appui long pose la tâche sur un créneau. Un
+ * toucher simple ne fait rien ; au clavier, la ligne ouvre `TaskToEventModal`,
+ * la modale d'événement préremplie (la même que « Planifier » depuis la liste des tâches).
  *
  * Mêmes tâches que le panneau desktop (`TaskSidebar`) : perso non terminées
  * dans la plage de priorité, plus les tâches d'équipe qui me sont assignées.
@@ -110,8 +111,8 @@ const MobileScheduleSheet: React.FC<Props> = ({ open, onClose }) => {
   }, [search, tasks, categories, teamTasks, teamCategories, user, priorityRange]);
 
   // Appui long → la feuille se ferme, la tâche suit le doigt → on la lâche sur
-  // un créneau (demande d'Axel). Le toucher simple garde le
-  // formulaire de créneau : jamais un geste comme seul chemin (C-111).
+  // un créneau (demande d'Axel). Le clavier garde le formulaire de créneau
+  // (cf. `onClick` de la ligne) : jamais un geste comme seul chemin (C-111).
   const createEvent = useCreateEvent();
   // La feuille reste montée mais invisible pendant le glisser (cf. `concealed`).
   const [lifted, setLifted] = useState(false);
@@ -165,7 +166,11 @@ const MobileScheduleSheet: React.FC<Props> = ({ open, onClose }) => {
               <li key={row.key} className="border-b border-[rgb(var(--color-border))] last:border-b-0">
                 <button
                   type="button"
-                  onClick={() => setPicked(row)}
+                  // Toucher simple : rien (demande d'Axel), seul l'appui long
+                  // place la tâche. Entrée/Espace au clavier (`detail === 0`)
+                  // garde le formulaire de créneau : jamais un geste comme
+                  // seul chemin (WCAG 2.1.1, C-111).
+                  onClick={(e) => { if (e.detail === 0) setPicked(row); }}
                   {...bind(row)}
                   className="w-full flex items-center gap-3 min-h-touch py-2 text-left select-none [-webkit-touch-callout:none] active:bg-[rgb(var(--color-hover))]"
                 >

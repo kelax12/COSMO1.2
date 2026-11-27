@@ -50,7 +50,7 @@
   "sidebar": {
     "title": "Dostupni zadaci",
     "scheduleTitle": "Zakažite zadatak",
-    "scheduleHint": "Držite zadatak da ga povučete na kalendar ili ga dodirnite da odaberete termin.",
+    "scheduleHint": "Pritisnite i držite zadatak da ga postavite u kalendar.",
     "dropHere": "Ispustite na termin",
     "addTask": "Dodaj zadatak",
     "close": "Zatvori ploču zadataka",

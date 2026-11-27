@@ -4,7 +4,7 @@
 const SectionDivider = () => (
   <div
     aria-hidden="true"
-    className="md:hidden h-px mx-1 bg-[rgb(var(--color-border))] opacity-60"
+    className="md:hidden h-px mx-1 bg-[rgb(var(--color-text-muted)/0.22)]"
   />
 );
 

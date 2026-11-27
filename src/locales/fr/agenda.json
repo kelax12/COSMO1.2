@@ -50,7 +50,7 @@
   "sidebar": {
     "title": "Tâches disponibles",
     "scheduleTitle": "Planifier une tâche",
-    "scheduleHint": "Maintenez une tâche pour la glisser dans l'agenda, ou touchez-la pour choisir un créneau.", "dropHere": "Lâchez sur un créneau",
+    "scheduleHint": "Maintenez une tâche appuyée pour la placer dans l'agenda.", "dropHere": "Lâchez sur un créneau",
     "addTask": "Ajouter une tâche",
     "close": "Fermer le panneau des tâches",
     "search": "Rechercher une tâche...",
