@@ -65,8 +65,12 @@ test.describe('préfixe de locale', () => {
 
     await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
     expect(new URL(page.url()).pathname).toBe('/');
-    await page.getByRole('button', { name: 'Switch to English' }).click();
-    await expect(page).toHaveURL(/\/en\/$/);
+    // Le bandeau se monte APRÈS le premier rendu ; sur WebKit mobile, un clic pendant le remontage des
+    // sections différées de la landing tombait sur un nœud remplacé. Un bouton mort échoue toujours.
+    await expect(async () => {
+      await page.getByRole('button', { name: 'Switch to English' }).click({ timeout: 2_000 });
+      await expect(page).toHaveURL(/\/en\/$/, { timeout: 2_000 });
+    }).toPass({ timeout: 15_000 });
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
   });
 
