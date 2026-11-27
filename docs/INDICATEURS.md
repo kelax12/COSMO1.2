@@ -9,22 +9,20 @@
 > `.github/workflows/indicateurs.yml` le régénère chaque lundi et le pousse sur `main`.
 > Une valeur introuvable s'écrit « non mesuré », avec sa raison : jamais un chiffre de repli.
 
-Régénéré le **2026-11-27 17:19 UTC**, au commit `7b475a4`. Alertes en cours : **1**.
+Régénéré le **2026-11-27 17:44 UTC**, au commit `b4a7e33`. Alertes en cours : **0**.
 
 | # | Indicateur | Valeur | Mesuré le | Source |
 |---|---|---|---|---|
 | 1 | Taux de vert de main (CI noyau) | 94 % (47 verts sur 50 runs) | 2026-11-27 | API GitHub Actions, [ci-noyau.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/ci-noyau.yml), branche main |
 | 2 | Délai de restauration éprouvé (drill mensuel) | 8 s, dernier vert le 2026-11-22 (il y a 5 j) | 2026-11-22 | API GitHub Actions, [restore-drill.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/restore-drill.yml), job drill-auto |
 | 3 | Présence de specs pour les parcours critiques | 10 sur 10 parcours avec une spec présente (100 %, présence, pas verdict) | 2026-11-27 | scripts/indicateurs.config.json et dossier e2e/ du dépôt |
-| 4 | Contrôle des secrets | contrôle des échéances de rotation : rouge, 30 entrées au registre | 2026-11-23 | dernier run de `Secrets age` et .github/secrets-registry.json |
+| 4 | Contrôle des secrets | contrôle des échéances de rotation : vert, 30 entrées au registre | 2026-11-27 | dernier run de `Secrets age` et .github/secrets-registry.json |
 | 5 | Dérive de la production | 3 sondes sur 3 vertes | 2026-11-27 | API GitHub Actions, [deploy-sha-drift.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/deploy-sha-drift.yml), [edge-deploy-drift.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/edge-deploy-drift.yml), [migration-coverage.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/migration-coverage.yml) |
 | 6 | Incidents ouverts | 1 (ci-red 1, incident 0) | 2026-11-27 | API GitHub, issues ouvertes [ci-red](https://github.com/kelax12/COSMO1.2/issues?q=is%3Aissue+is%3Aopen+label%3Aci-red) et [incident](https://github.com/kelax12/COSMO1.2/issues?q=is%3Aissue+is%3Aopen+label%3Aincident) |
 
 ## Alertes
 
-- 🔴 contrôle des échéances de rotation : écart relevé, détail dans le run `Secrets age`
-
-Elles ouvrent ou mettent à jour l'issue `ci-red` (via `ci-alert.yml`), la liste de `workflows:` y contenant `Indicateurs`.
+Aucune alerte au moment de la mesure.
 
 ## Détail
 
@@ -34,7 +32,7 @@ Elles ouvrent ou mettent à jour l'issue `ci-red` (via `ci-alert.yml`), la liste
 - **Mesuré le** : 2026-11-27
 - **Source** : API GitHub Actions, [ci-noyau.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/ci-noyau.yml), branche main
 - Fenêtre : les 50 derniers runs conclus du `CI noyau` sur `main` (du 2026-11-21 au 2026-11-27), annulés et sautés exclus.
-- Dernier run : vert, https://github.com/kelax12/COSMO1.2/actions/runs/45997394367.
+- Dernier run : vert, https://github.com/kelax12/COSMO1.2/actions/runs/46040546480.
 - Seuil d'alerte : moins de 80 %.
 
 ### 2. Délai de restauration éprouvé (drill mensuel)
@@ -56,15 +54,15 @@ Elles ouvrent ou mettent à jour l'issue `ci-red` (via `ci-alert.yml`), la liste
 - Parcours déclarés dans `scripts/indicateurs.config.json`, chacun avec au moins une spec `e2e/` présente dans le dépôt.
 - Aucun parcours déclaré sans spec.
 - 🔴 Couverture de PRÉSENCE : une spec existe, rien ne dit qu'elle est verte. Les e2e sont joués par `CI etendue`, qui ne bloque pas.
-- Dernier run de `CI etendue` sur `main` : rouge le 2026-11-27, https://github.com/kelax12/COSMO1.2/actions/runs/45997394397.
+- Dernier run de `CI etendue` sur `main` : rouge le 2026-11-27, https://github.com/kelax12/COSMO1.2/actions/runs/46040546509.
 
 ### 4. Contrôle des secrets
 
-- **Valeur** : contrôle des échéances de rotation : rouge, 30 entrées au registre
-- **Mesuré le** : 2026-11-23
+- **Valeur** : contrôle des échéances de rotation : vert, 30 entrées au registre
+- **Mesuré le** : 2026-11-27
 - **Source** : dernier run de `Secrets age` et .github/secrets-registry.json
 - 30 entrées de secret au registre `.github/secrets-registry.json` (noms seulement, jamais de valeur).
-- Dernier run de `Secrets age` sur `main` : rouge le 2026-11-23, https://github.com/kelax12/COSMO1.2/actions/runs/45233525682.
+- Dernier run de `Secrets age` sur `main` : vert le 2026-11-27, https://github.com/kelax12/COSMO1.2/actions/runs/46040920775.
 - Seuil d'alerte : le contrôle relève un écart.
 
 ### 5. Dérive de la production
