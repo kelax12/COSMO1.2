@@ -5,7 +5,8 @@ Notes /100 cessées (ADR 0012). Mesures, récits et tableaux : [`archive/SCALABI
 
 ## 1. Cadrage
 
-- ✅ Aucune charge aujourd'hui (base minuscule face au plafond du plan Free) : tout ce qui suit est STRUCTUREL, des coûts invisibles qui deviennent bloquants à volume. Volumétrie : requête du § 8.
+- ✅ Aucune charge applicative aujourd'hui : tout ce qui suit est STRUCTUREL, des coûts invisibles qui deviennent bloquants à volume. Volumétrie : requête du § 8.
+- 🔴 La base n'est PAS minuscule face au plafond du plan Free (500 Mo, lecture seule au-delà) : `net._http_response` (pg_net, corps de la sonde `cosmo-uptime`, mig. `252`) garde l'espace des corps purgés, son TOAST n'est jamais aspiré et pèse l'essentiel de la base. Avant d'affirmer une marge : `pg_database_size` et `pg_total_relation_size('net._http_response')`, jamais le nombre de lignes. Récupérer l'espace : `VACUUM FULL net._http_response` (geste d'Axel, jamais par le MCP).
 - ⚠️ Le frein n'est pas le nombre de comptes mais le volume PAR ORGANISATION et le nombre de requêtes par utilisateur actif.
 
 ## 2. Coût RLS du mode entreprise (mig. `085`, `113`, `117`, `128`)
