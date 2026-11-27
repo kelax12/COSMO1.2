@@ -9,16 +9,16 @@
 > `.github/workflows/indicateurs.yml` le régénère chaque lundi et le pousse sur `main`.
 > Une valeur introuvable s'écrit « non mesuré », avec sa raison : jamais un chiffre de repli.
 
-Régénéré le **2026-11-23 20:56 UTC**, au commit `13737c0`. Alertes en cours : **1**.
+Régénéré le **2026-11-27 17:19 UTC**, au commit `7b475a4`. Alertes en cours : **1**.
 
 | # | Indicateur | Valeur | Mesuré le | Source |
 |---|---|---|---|---|
-| 1 | Taux de vert de main (CI noyau) | 90 % (45 verts sur 50 runs) | 2026-11-23 | API GitHub Actions, [ci-noyau.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/ci-noyau.yml), branche main |
-| 2 | Délai de restauration éprouvé (drill mensuel) | 8 s, dernier vert le 2026-11-22 (il y a 1 j) | 2026-11-22 | API GitHub Actions, [restore-drill.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/restore-drill.yml), job drill-auto |
-| 3 | Présence de specs pour les parcours critiques | 10 sur 10 parcours avec une spec présente (100 %, présence, pas verdict) | 2026-11-23 | scripts/indicateurs.config.json et dossier e2e/ du dépôt |
+| 1 | Taux de vert de main (CI noyau) | 94 % (47 verts sur 50 runs) | 2026-11-27 | API GitHub Actions, [ci-noyau.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/ci-noyau.yml), branche main |
+| 2 | Délai de restauration éprouvé (drill mensuel) | 8 s, dernier vert le 2026-11-22 (il y a 5 j) | 2026-11-22 | API GitHub Actions, [restore-drill.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/restore-drill.yml), job drill-auto |
+| 3 | Présence de specs pour les parcours critiques | 10 sur 10 parcours avec une spec présente (100 %, présence, pas verdict) | 2026-11-27 | scripts/indicateurs.config.json et dossier e2e/ du dépôt |
 | 4 | Contrôle des secrets | contrôle des échéances de rotation : rouge, 30 entrées au registre | 2026-11-23 | dernier run de `Secrets age` et .github/secrets-registry.json |
-| 5 | Dérive de la production | 3 sondes sur 3 vertes | 2026-11-23 | API GitHub Actions, [deploy-sha-drift.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/deploy-sha-drift.yml), [edge-deploy-drift.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/edge-deploy-drift.yml), [migration-coverage.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/migration-coverage.yml) |
-| 6 | Incidents ouverts | 1 (ci-red 1, incident 0) | 2026-11-23 | API GitHub, issues ouvertes [ci-red](https://github.com/kelax12/COSMO1.2/issues?q=is%3Aissue+is%3Aopen+label%3Aci-red) et [incident](https://github.com/kelax12/COSMO1.2/issues?q=is%3Aissue+is%3Aopen+label%3Aincident) |
+| 5 | Dérive de la production | 3 sondes sur 3 vertes | 2026-11-27 | API GitHub Actions, [deploy-sha-drift.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/deploy-sha-drift.yml), [edge-deploy-drift.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/edge-deploy-drift.yml), [migration-coverage.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/migration-coverage.yml) |
+| 6 | Incidents ouverts | 1 (ci-red 1, incident 0) | 2026-11-27 | API GitHub, issues ouvertes [ci-red](https://github.com/kelax12/COSMO1.2/issues?q=is%3Aissue+is%3Aopen+label%3Aci-red) et [incident](https://github.com/kelax12/COSMO1.2/issues?q=is%3Aissue+is%3Aopen+label%3Aincident) |
 
 ## Alertes
 
@@ -30,16 +30,16 @@ Elles ouvrent ou mettent à jour l'issue `ci-red` (via `ci-alert.yml`), la liste
 
 ### 1. Taux de vert de main (CI noyau)
 
-- **Valeur** : 90 % (45 verts sur 50 runs)
-- **Mesuré le** : 2026-11-23
+- **Valeur** : 94 % (47 verts sur 50 runs)
+- **Mesuré le** : 2026-11-27
 - **Source** : API GitHub Actions, [ci-noyau.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/ci-noyau.yml), branche main
-- Fenêtre : les 50 derniers runs conclus du `CI noyau` sur `main` (du 2026-11-20 au 2026-11-23), annulés et sautés exclus.
-- Dernier run : vert, https://github.com/kelax12/COSMO1.2/actions/runs/45133035960.
+- Fenêtre : les 50 derniers runs conclus du `CI noyau` sur `main` (du 2026-11-21 au 2026-11-27), annulés et sautés exclus.
+- Dernier run : vert, https://github.com/kelax12/COSMO1.2/actions/runs/45997394367.
 - Seuil d'alerte : moins de 80 %.
 
 ### 2. Délai de restauration éprouvé (drill mensuel)
 
-- **Valeur** : 8 s, dernier vert le 2026-11-22 (il y a 1 j)
+- **Valeur** : 8 s, dernier vert le 2026-11-22 (il y a 5 j)
 - **Mesuré le** : 2026-11-22
 - **Source** : API GitHub Actions, [restore-drill.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/restore-drill.yml), job drill-auto
 - Durée du job `drill-auto` entier (téléchargement, déchiffrement, restauration, comparaison des comptages) : 1 min 28 s.
@@ -51,12 +51,12 @@ Elles ouvrent ou mettent à jour l'issue `ci-red` (via `ci-alert.yml`), la liste
 ### 3. Présence de specs pour les parcours critiques
 
 - **Valeur** : 10 sur 10 parcours avec une spec présente (100 %, présence, pas verdict)
-- **Mesuré le** : 2026-11-23
+- **Mesuré le** : 2026-11-27
 - **Source** : scripts/indicateurs.config.json et dossier e2e/ du dépôt
 - Parcours déclarés dans `scripts/indicateurs.config.json`, chacun avec au moins une spec `e2e/` présente dans le dépôt.
 - Aucun parcours déclaré sans spec.
 - 🔴 Couverture de PRÉSENCE : une spec existe, rien ne dit qu'elle est verte. Les e2e sont joués par `CI etendue`, qui ne bloque pas.
-- Dernier run de `CI etendue` sur `main` : vert le 2026-11-23, https://github.com/kelax12/COSMO1.2/actions/runs/45133036052.
+- Dernier run de `CI etendue` sur `main` : rouge le 2026-11-27, https://github.com/kelax12/COSMO1.2/actions/runs/45997394397.
 
 ### 4. Contrôle des secrets
 
@@ -70,18 +70,18 @@ Elles ouvrent ou mettent à jour l'issue `ci-red` (via `ci-alert.yml`), la liste
 ### 5. Dérive de la production
 
 - **Valeur** : 3 sondes sur 3 vertes
-- **Mesuré le** : 2026-11-23
+- **Mesuré le** : 2026-11-27
 - **Source** : API GitHub Actions, [deploy-sha-drift.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/deploy-sha-drift.yml), [edge-deploy-drift.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/edge-deploy-drift.yml), [migration-coverage.yml](https://github.com/kelax12/COSMO1.2/actions/workflows/migration-coverage.yml)
-- Deploy SHA drift (le commit servi en production contre le dernier commit vert) : vert le 2026-11-23, https://github.com/kelax12/COSMO1.2/actions/runs/45199986447.
-- Edge deploy drift (le code des Edge Functions deployees contre le depot) : vert le 2026-11-23, https://github.com/kelax12/COSMO1.2/actions/runs/45216729199.
-- Migration coverage (les fichiers de migration contre le ledger de production) : vert le 2026-11-23, https://github.com/kelax12/COSMO1.2/actions/runs/45210557171.
+- Deploy SHA drift (le commit servi en production contre le dernier commit vert) : vert le 2026-11-27, https://github.com/kelax12/COSMO1.2/actions/runs/46001663357.
+- Edge deploy drift (le code des Edge Functions deployees contre le depot) : vert le 2026-11-27, https://github.com/kelax12/COSMO1.2/actions/runs/46025920755.
+- Migration coverage (les fichiers de migration contre le ledger de production) : vert le 2026-11-27, https://github.com/kelax12/COSMO1.2/actions/runs/46020868800.
 - Dernier run conclu de chaque sonde sur `main`. Les trois tournent sans déclencheur humain.
 - Seuil d'alerte : une sonde rouge.
 
 ### 6. Incidents ouverts
 
 - **Valeur** : 1 (ci-red 1, incident 0)
-- **Mesuré le** : 2026-11-23
+- **Mesuré le** : 2026-11-27
 - **Source** : API GitHub, issues ouvertes [ci-red](https://github.com/kelax12/COSMO1.2/issues?q=is%3Aissue+is%3Aopen+label%3Aci-red) et [incident](https://github.com/kelax12/COSMO1.2/issues?q=is%3Aissue+is%3Aopen+label%3Aincident)
 - Issues `ci-red` ouvertes : #199 CI vert d64e430fe55cf776865c40427f767e929c2ad429 (success, noyau/claude-sec13-co (ouverte le 2026-11-21).
 - Aucune issue `incident` ouverte.
@@ -90,7 +90,7 @@ Elles ouvrent ou mettent à jour l'issue `ci-red` (via `ci-alert.yml`), la liste
 ## Audit externe semestriel
 
 - Dernier audit externe : **2026-11-06** (rapport de l'audit du 2026-11-06 pour le premier).
-- Prochain au plus tard : **2027-05-06**, dans 164 jours.
+- Prochain au plus tard : **2027-05-06**, dans 160 jours.
 - Après chaque audit, `auditExterne.dernier` de `scripts/indicateurs.config.json` est recalé sur la date de son rapport.
 
 ## Seuils d'alerte
