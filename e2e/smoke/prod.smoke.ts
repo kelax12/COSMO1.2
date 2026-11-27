@@ -47,16 +47,11 @@ test.use({ userAgent: SMOKE_UA });
 /**
  * Erreurs de console tolérées. Toute entrée doit dire POURQUOI.
  *
- * · Les deux 401 Supabase : `src/main.tsx` (~l.179) préchauffe la connexion par un
- *   `fetch` SANS `apikey` vers `/auth/v1/health` et `/rest/v1/`. GoTrue et PostgREST
- *   répondent 401, c'est leur preuve de vie (docs/DEPLOYMENT.md § 9), et Chrome
- *   journalise tout 4xx de ressource en « error ». Mesuré en production le
- *   2026-11-06. Ancrées sur l'hôte Supabase ET le chemin : un 401 ailleurs échoue.
+ * Vide depuis le 2026-11-27 : les deux 401 Supabase du préchauffage de `src/main.tsx`
+ * ne partent plus pour un robot ni un navigateur sans tête (`isBotUserAgent`), et
+ * `SMOKE_UA` en est un. Un 401 revenu ici dit que cette garde a sauté.
  */
-const CONSOLE_ALLOWLIST: readonly RegExp[] = [
-  /status of 401.*\.supabase\.co\/auth\/v1\/health\)$/,
-  /status of 401.*\.supabase\.co\/rest\/v1\/\)$/,
-];
+const CONSOLE_ALLOWLIST: readonly RegExp[] = [];
 
 interface Probe {
   consoleErrors: string[];

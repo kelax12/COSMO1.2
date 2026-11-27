@@ -336,7 +336,24 @@ export async function lecteurArtefact(a, token, fetchImpl, seuilComplet = TELECH
   return { taille: a.taille, lire };
 }
 
-export async function lireArtefacts({ depot, token, maintenant, fetchImpl = fetch }) {
+/** Reprend une requête sur un échec PASSAGER (réseau, 5xx, 429) : les rouges du 2026-11-23 et du 2026-11-26
+ *  étaient des HTTP 503 du stockage d'artefacts, celui du 2026-11-27 une lecture ratée d'une migration pourtant
+ *  identique au dépôt. Après la dernière reprise, la réponse (ou l'erreur) est rendue telle quelle : échec fermé. */
+export const avecReprises = (fetchImpl, { essais = 3, pause = (ms) => new Promise((r) => setTimeout(r, ms)) } = {}) =>
+  async (url, init) => {
+    for (let i = 1; ; i++) {
+      try {
+        const res = await fetchImpl(url, init);
+        if ((res.status < 500 && res.status !== 429) || i >= essais) return res;
+      } catch (e) {
+        if (i >= essais) throw e;
+      }
+      await pause(2000 * i);
+    }
+  };
+
+export async function lireArtefacts({ depot, token, maintenant, fetchImpl: brut = fetch, pause }) {
+  const fetchImpl = avecReprises(brut, pause ? { pause } : undefined);
   const limite = maintenant.getTime() - FENETRE_ARTEFACTS_H * 3600_000;
   const recents = [];
   let fourches = 0;

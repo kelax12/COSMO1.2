@@ -65,14 +65,14 @@ test.describe('collaboration (demo)', () => {
     // de Playwright vise la position D'AVANT le réajustement et atterrit sous
     // la tab bar mobile fixe (« <nav aria-label="Navigation mobile"> subtree
     // intercepts pointer events »).
-    // Sur desktop, on vise le NOM de la tâche, jamais le centre de la ligne :
-    // le centre tombait sur la cellule « État » (`TaskHealthCell`, qui arrête
-    // la propagation et ouvre son menu), et la modale ne s'ouvrait jamais.
+    // Sur desktop, la fiche s'ouvre par Entrée sur la LIGNE : chaque cellule
+    // est désormais un éditeur en ligne (un clic sur le nom le RENOMME, ce qui
+    // ouvrait un popover `dialog` sans onglet « Partager »), même recette que
+    // `e2e/real/tasks.spec.ts`. Mobile : la carte s'ouvre au clic.
+    await firstTask.scrollIntoViewIfNeeded();
     const isRow = await firstTask.evaluate((el) => el.tagName === 'TR');
-    const rowName = isRow ? await firstTask.getAttribute('aria-label') : null;
-    const target = rowName ? firstTask.getByText(rowName, { exact: true }).first() : firstTask;
-    await target.scrollIntoViewIfNeeded();
-    await target.click();
+    if (isRow) await firstTask.press('Enter');
+    else await firstTask.click();
 
     const modal = demoPage.getByRole('dialog');
     await expect(modal).toBeVisible({ timeout: 10_000 });

@@ -79,8 +79,8 @@ const OKRFilterBar: React.FC<Props> = ({
 
       <DropdownMenu>
         <DropdownMenuTrigger
-          aria-label={t('filters.categoryAria')}
-          className="inline-flex items-center gap-2 h-10 px-3 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm font-medium text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+          aria-label={`${t('filters.categoryAria')} : ${filtered ? selected.name : t('categories.allLong')}`}
+          className="inline-flex items-center gap-2 h-11 md:h-10 px-3 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm font-medium text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
         >
           {filtered && <span className="size-2.5 rounded-full shrink-0" style={{ backgroundColor: resolveColor(selected.color) }} aria-hidden="true" />}
           <span className="truncate max-w-[180px]">{filtered ? selected.name : t('categories.allLong')}</span>
@@ -108,7 +108,7 @@ const OKRFilterBar: React.FC<Props> = ({
               type="button"
               onClick={() => onScope(value)}
               aria-pressed={scope === value}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              className={`inline-flex items-center min-h-11 md:min-h-0 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                 scope === value
                   ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'
                   : 'text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'

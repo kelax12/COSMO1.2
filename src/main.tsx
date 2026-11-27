@@ -11,6 +11,7 @@ import { applyTheme, resolveInitialTheme } from './lib/theme';
 import { captureFirstTouch } from './lib/attribution';
 import { captureAffiliate } from './lib/affiliation';
 import { startTrafficMeasurement } from './lib/traffic';
+import { isBotUserAgent } from './lib/traffic-ua';
 // Import direct du module de locale (et non du barrel `@/i18n`) : le barrel
 // ré-exporte `format.ts`, qui tire les locales `date-fns` — inutile ici et
 // alourdirait le chunk d'entrée.
@@ -154,10 +155,14 @@ if (supabaseUrl) {
   document.head.appendChild(dnsPrefetch);
 
   // Échauffement par requêtes non authentifiées sur /auth/v1 ET /rest/v1 : iOS Safari rejette les 3-4 flux HTTP/2 parallèles suivants s'ils partent trop près du premier paint.
-  fetch(`${supabaseUrl}/auth/v1/health`, { method: 'GET', mode: 'cors', credentials: 'omit' })
-    .catch(() => { /* expected to sometimes fail — we don't care */ });
-  fetch(`${supabaseUrl}/rest/v1/`, { method: 'GET', mode: 'cors', credentials: 'omit' })
-    .catch(() => { /* expected to sometimes fail — we don't care */ });
+  // 🔴 Jamais pour un robot ni un navigateur sans tête : chaque chargement y coûte deux 401 comptés par
+  // `check-prod-errors` (famille `sonde_uptime`), et un robot SEO qui rend les pages l'a fait rougir le 2026-11-27.
+  if (!isBotUserAgent(navigator.userAgent)) {
+    fetch(`${supabaseUrl}/auth/v1/health`, { method: 'GET', mode: 'cors', credentials: 'omit' })
+      .catch(() => { /* expected to sometimes fail — we don't care */ });
+    fetch(`${supabaseUrl}/rest/v1/`, { method: 'GET', mode: 'cors', credentials: 'omit' })
+      .catch(() => { /* expected to sometimes fail — we don't care */ });
+  }
 }
 
 // Mesure d'audience maison (mig. 222), APRÈS l'amorçage i18n (une URL réécrite ne se compte pas deux fois). Le module vérifie avant CHAQUE envoi consentement, page publique et absence de session (src/lib/traffic.ts).

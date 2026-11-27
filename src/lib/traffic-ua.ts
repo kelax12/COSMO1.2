@@ -12,9 +12,14 @@ export interface UaFacts {
 
 const BOT_RE = /bot|crawl|spider|slurp|headless|lighthouse|preview|facebookexternalhit|embedly|monitor|curl|wget|python|node-fetch|axios/i;
 
+/** Robot, sonde ou navigateur sans tête (UA vide compris). Lu aussi par le préchauffage de `src/main.tsx`. */
+export function isBotUserAgent(ua: string): boolean {
+  return ua === '' || BOT_RE.test(ua);
+}
+
 export function parseUserAgent(ua: string): UaFacts {
   const s = ua || '';
-  const bot = s === '' || BOT_RE.test(s);
+  const bot = isBotUserAgent(s);
 
   // L'ordre compte : Edge et Opera se déclarent aussi « Chrome », Chrome se
   // déclare aussi « Safari ».

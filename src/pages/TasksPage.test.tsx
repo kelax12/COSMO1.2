@@ -197,7 +197,7 @@ describe('TasksPage · création et ouverture de la fiche', () => {
 describe('TasksPage · ÉCHÉANCE (vague 13)', () => {
   it('ÉCHÉANCE · la liste « Aujourd\'hui » ne contient que les tâches dues ce jour, et son compteur le dit', async () => {
     await openPage();
-    const chip = screen.getByRole('button', { name: /Aujourd'hui/ });
+    const chip = screen.getByRole('button', { name: /^Aujourd'hui/ });
     expect(chip.textContent).toContain('1');
     fireEvent.click(chip);
     await waitFor(() => expect(rowNames()).toEqual(['Delta budget']));
@@ -207,7 +207,7 @@ describe('TasksPage · ÉCHÉANCE (vague 13)', () => {
     vi.setSystemTime(new Date(`${TODAY_KEY}T23:59:00`));
     await openPage();
     expect(screen.getAllByText(tasksT.tp('header.overdueCount', 1)).length).toBeGreaterThan(0);
-    fireEvent.click(screen.getByRole('button', { name: /Aujourd'hui/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Aujourd'hui/ }));
     await waitFor(() => expect(rowNames()).toEqual(['Delta budget']));
   });
 });

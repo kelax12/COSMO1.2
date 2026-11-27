@@ -9,7 +9,7 @@ import {
   startTrafficMeasurement,
   utmParams,
 } from './traffic';
-import { parseUserAgent } from './traffic-ua';
+import { isBotUserAgent, parseUserAgent } from './traffic-ua';
 
 /**
  * La mesure d'audience remplace un script tiers (Veske). Ce qui compte ici est
@@ -160,5 +160,17 @@ describe('parseUserAgent', () => {
   it('écarte les robots et les user-agents vides', () => {
     expect(parseUserAgent('Googlebot/2.1 (+http://www.google.com/bot.html)').bot).toBe(true);
     expect(parseUserAgent('').bot).toBe(true);
+  });
+});
+
+describe('isBotUserAgent (préchauffage de main.tsx)', () => {
+  it('reconnaît le robot SEO, le Chromium sans tête de la CI et la sonde smoke', () => {
+    expect(isBotUserAgent('Mozilla/5.0 (compatible; AhrefsBot/7.0; +http://ahrefs.com/robot/)')).toBe(true);
+    expect(isBotUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/131.0.0.0 Safari/537.36')).toBe(true);
+    expect(isBotUserAgent('COSMO-smoke-bot/1.0 (+https://github.com/kelax12/COSMO1.2; monitor; headless)')).toBe(true);
+  });
+  it('laisse préchauffer un vrai navigateur, iOS Safari en tête (la raison du préchauffage)', () => {
+    expect(isBotUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1')).toBe(false);
+    expect(isBotUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36')).toBe(false);
   });
 });

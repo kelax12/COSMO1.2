@@ -14,6 +14,8 @@ const submitCls = 'rounded-md px-3 py-1 text-sm font-semibold bg-[rgb(var(--colo
 
 interface InlineShellProps {
   label: string;
+  /** Texte VISIBLE du déclencheur : repris dans le nom accessible (WCAG 2.5.3, axe `label-content-name-mismatch`). */
+  value?: string;
   disabledReason?: string;
   trigger: ReactNode;
   triggerClassName?: string;
@@ -22,11 +24,11 @@ interface InlineShellProps {
 }
 
 /** Déclencheur + panneau : un seul gabarit pour toutes les cellules. */
-export const InlineShell = ({ label, disabledReason, trigger, triggerClassName = '', panelClassName = panel, children }: InlineShellProps) => {
+export const InlineShell = ({ label, value, disabledReason, trigger, triggerClassName = '', panelClassName = panel, children }: InlineShellProps) => {
   const [open, setOpen] = useState(false);
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger disabled={!!disabledReason} title={disabledReason} aria-label={label} className={`${cellBtn} ${triggerClassName}`}>
+      <PopoverTrigger disabled={!!disabledReason} title={disabledReason} aria-label={value ? `${label} : ${value}` : label} className={`${cellBtn} ${triggerClassName}`}>
         {trigger}
       </PopoverTrigger>
       <PopoverContent align="start" className={panelClassName} onClick={(e) => e.stopPropagation()}>

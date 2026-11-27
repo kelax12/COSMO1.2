@@ -12,7 +12,7 @@ import { resolve } from 'node:path';
 import { deflateRawSync } from 'node:zlib';
 import { load } from 'js-yaml';
 import {
-  classer, entreesZip, inspecterZip, lecteurArtefact, lecteurDepot, lireArtefacts, decider, executer, propre, MESURES, CATEGORIES, SQL_JOURNAUX, SQL_TRI,
+  avecReprises, classer, entreesZip, inspecterZip, lecteurArtefact, lecteurDepot, lireArtefacts, decider, executer, propre, MESURES, CATEGORIES, SQL_JOURNAUX, SQL_TRI,
 } from './detection-violation.mjs';
 import * as alerte from './detection-violation-alerte.mjs';
 import { alertesEchues, signature, corps, run as revue } from './gardes-rouges-7j.mjs';
@@ -184,6 +184,28 @@ describe('fichier publié dans le dépôt · preuve par le contenu', () => {
     for (const nom of ['..', '.env', 'a b.sql']) expect(await lire(SHA)(nom)).toBeNull();
     for (const sha of [undefined, 'main']) expect(await lire(sha)('236_affiliation.sql')).toBeNull();
     expect(await lire(SHA, async () => { throw new Error('réseau'); })('236_affiliation.sql')).toBeNull();
+  });
+});
+
+// ═══ Reprises sur un échec passager (rouges des 23, 26 et 27 novembre) ═══
+describe('avecReprises', () => {
+  const sansPause = { pause: async () => {} };
+  it('un 503 puis un 200 : la lecture aboutit', async () => {
+    let n = 0;
+    const f = avecReprises(async () => new Response('ok', { status: ++n === 1 ? 503 : 200 }), sansPause);
+    expect((await f('u')).status).toBe(200);
+    expect(n).toBe(2);
+  });
+  it('TÉMOIN : un 503 qui dure reste un 503 (échec fermé), un 404 et une redirection ne sont pas repris', async () => {
+    let n = 0;
+    expect((await avecReprises(async () => { n++; return new Response('', { status: 503 }); }, sansPause)('u')).status).toBe(503);
+    expect(n).toBe(3);
+    for (const status of [404, 302]) {
+      let m = 0;
+      expect((await avecReprises(async () => { m++; return new Response(null, { status }); }, sansPause)('u')).status).toBe(status);
+      expect(m).toBe(1);
+    }
+    await expect(avecReprises(async () => { throw new Error('réseau'); }, sansPause)('u')).rejects.toThrow('réseau');
   });
 });
 
