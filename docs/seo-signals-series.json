@@ -432,6 +432,66 @@
         "tronque": false
       },
       "rouges": []
+    },
+    {
+      "date": "2026-11-27",
+      "periode": {
+        "debut": "2026-10-28",
+        "fin": "2026-11-24"
+      },
+      "gsc": {
+        "propriete": "sc-domain:thecosmo.app",
+        "toutes": {
+          "clics": 16,
+          "impressions": 315,
+          "ctr": 0.0508,
+          "position": 10.3
+        },
+        "non_marque": {
+          "clics": 0,
+          "impressions": 5,
+          "ctr": 0,
+          "position": 45.6
+        },
+        "requetes_non_marque": [
+          {
+            "requete": "okr template free download",
+            "clics": 0,
+            "impressions": 2,
+            "position": 92
+          },
+          {
+            "requete": "how did the voting work",
+            "clics": 0,
+            "impressions": 1,
+            "position": 5
+          },
+          {
+            "requete": "idntt kpop group",
+            "clics": 0,
+            "impressions": 1,
+            "position": 2
+          },
+          {
+            "requete": "okr en pratique",
+            "clics": 0,
+            "impressions": 1,
+            "position": 37
+          }
+        ]
+      },
+      "backlinks": {
+        "declares_faits": 0,
+        "verifies": []
+      },
+      "autorite": {
+        "source": "bing-webmaster",
+        "liens_entrants": 0,
+        "domaines_referents": 0,
+        "domaines": [],
+        "tronque": false
+      },
+      "rouges": []
     }
   ]
 }
