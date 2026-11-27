@@ -1059,7 +1059,7 @@ export const CATALOGUE = [
       'un cycle pose A BLANC dans un arbre jetable EST vu', 'Un résolveur qui perd les imports relatifs rend un graphe troué, donc « 0 cycle ».'],
     ['cycles-boucle-ignoree', 'detecteur', r('scripts/check-import-cycles.mjs', '      else if (e === 1) {', '      else if (false) {'),
       '`trouverCycles` voit un cycle, et n en invente pas', 'Un parcours qui ne reconnaît plus un nœud en cours ne voit aucun cycle : un `undefined` à l`exécution, jamais signalé.'],
-    ['cycles-tests-comptes', 'detecteur', r('scripts/check-import-cycles.mjs', '        && !/\\.(test|spec)\\.[a-z]+$/.test(entree)', ''),
+    ['cycles-tests-comptes', 'detecteur', r('scripts/check-import-cycles.mjs', '      && !/\\.(test|spec)\\.[a-z]+$/.test(nom)', ''),
       '`listerModules` ecarte les tests et les declarations', 'Un test qui importe son module crée une arête que le produit n`exécute jamais.'],
     ['cycles-graphe-minuscule', 'detecteur', r('scripts/check-import-cycles.mjs', '  if (modules.length < 100) {', '  if (modules.length < 1) {'),
       'la garde REFUSE de conclure sur un graphe minuscule', 'Deux fichiers sans cycle ne décrivent pas `src/` : « aucun cycle » serait un vert sur rien.'],
@@ -1714,7 +1714,7 @@ export const CATALOGUE = [
     id: 'message-commit-attente-aveugle',
     famille: 'detecteur',
     garde: 'scripts/check-fichiers-sensibles.guard.test.mjs',
-    modifs: [r('scripts/check-fichiers-sensibles.mjs', 'const ATTENTE = /', 'const ATTENTE = /(?!)|')],
+    modifs: [r('scripts/check-fichiers-sensibles.mjs', 'ATTENTE.exec(t)?.[0] ?? null', 'null')],
     attendu: [
       'SEC-02 : un message public ne dit pas qu un correctif attend > TÉMOIN : refuse fix(securite): migration 300 pas appliquee',
       'SEC-02 : un message public ne dit pas qu un correctif attend > TÉMOIN : le hook commit-msg refuse un message fautif',
@@ -1731,7 +1731,7 @@ export const CATALOGUE = [
       'Un hook qui laisse passer quand il ne trouve pas sa garde n a rien vérifié : le motif de la garde conditionnelle à la présence de son propre secret, interdit par `CLAUDE.md`.',
   },
   { id: 'preprod-ephemere-cible-prod', famille: 'produit', garde: 'src/preprod-ephemere.test.mjs', // CI-04
-    modifs: [r('.github/workflows/schema-prod.yml', '@127.0.0.1:54322/postgres', '@db.ykeugqfgklejcdbrmawy.supabase.co:5432/postgres')],
+    modifs: [r('.github/workflows/schema-prod.yml', 'SUPABASE_PREPROD_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres', 'SUPABASE_PREPROD_DB_URL: postgresql://postgres:postgres@db.ykeugqfgklejcdbrmawy.supabase.co:5432/postgres')],
     attendu: ['TEMOIN : main seul, preuve APRES la comparaison a la prod, sans secret, sur le Postgres local'],
     pourquoi: 'Une preuve visant la prod, même annulée, est ce que CI-04 interdit.' },
   { id: 'drill-stack-auth-aveugle', famille: 'detecteur', garde: 'scripts/restore-drill.guard.test.mjs', // ROB-01
