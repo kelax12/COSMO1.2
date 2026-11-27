@@ -43,3 +43,4 @@ QueryClientProvider > AuthProvider > ActiveOrgProvider > BillingProvider
 
 - ✅ Toute page passe par `lazyWithRetry(import, [namespaces])` (`@/lib/lazy-with-retry`) sous `AppErrorBoundary` : un chunk périmé est retenté puis la page recharge ; les catalogues i18n de la route sont attendus avant le rendu.
 - ⚠️ Une page qui utilise un nouveau namespace l'ajoute à SA liste dans `App.tsx` : `lazy-namespaces.guard.test.ts` lit ces appels.
+- ✅ Onglets `/dashboard` `/tasks` `/agenda` `/habits` `/okr` `/statistics` gardés montés par `KeepAliveOutlet` (`<Activity>`, liste `KEPT_ALIVE_PATHS`) : une page quittée est masquée, garde son état et son URL, perd ses effets, relancés à son retour. ❌ Déclencher une action d'arrivée sur la page (`location.state`, ouverture de modale) ailleurs que dans un effet.

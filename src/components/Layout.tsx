@@ -1,5 +1,6 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
-import { Outlet, useLocation, useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
+import { KeepAliveOutlet } from '@/components/layout/KeepAliveOutlet';
 import { useLastVisitedPage } from '@/modules/ui-states';
 import { useTasks } from '@/modules/tasks';
 import { PREMIUM_ENFORCED } from '@/modules/billing/premium-config';
@@ -404,7 +405,7 @@ const NavItems = () =>
           }`}
           style={{ backgroundColor: 'rgb(var(--color-background))' }}
         >
-          <Outlet />
+          <KeepAliveOutlet />
         </main>
         {/* FAB de capture rapide global (#43) — au-dessus de la tab bar.
             Maquette 83 : LISTE BLANCHE, plus liste noire. */}
@@ -494,7 +495,7 @@ const NavItems = () =>
           className="flex-1 overflow-y-auto overflow-x-hidden relative focus:outline-none"
           style={{ backgroundColor: 'rgb(var(--color-background))' }}>
 
-          <Outlet />
+          <KeepAliveOutlet />
         </main>
       </div>
 
