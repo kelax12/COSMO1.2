@@ -75,5 +75,9 @@
   "pomodoroTool": {
     "title": "Minuteur Pomodoro en ligne : gratuit et sans inscription | Cosmo",
     "description": "Minuteur Pomodoro en ligne : sessions de travail concentré, pauses courtes et pause longue après chaque cycle. Gratuit, sans inscription, avec la tâche en cours."
+  },
+  "blogTemplate": {
+    "pitch": "Ce modèle s'ouvre déjà rempli dans Cosmo, démo sans inscription.",
+    "open": "Ouvrir ce modèle dans Cosmo"
   }
 }

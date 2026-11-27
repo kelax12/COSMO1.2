@@ -75,5 +75,9 @@
   "pomodoroTool": {
     "title": "Online Pomodoro timer: free, no sign-up | Cosmo",
     "description": "Online Pomodoro timer: focused work sessions, short breaks and a long break after each cycle. Free, no sign-up, with your current task."
+  },
+  "blogTemplate": {
+    "pitch": "This template opens pre-filled in Cosmo, demo with no sign-up.",
+    "open": "Open this template in Cosmo"
   }
 }

@@ -1,9 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from 'vitest';
-import { article as etudiant } from '@/content/blog/modele-okr-etudiant.mjs';
-import { article as startup } from '@/content/blog/modele-okr-startup.mjs';
-import { article as marketing } from '@/content/blog/modele-okr-equipe-marketing.mjs';
-import { article as freelance } from '@/content/blog/modele-okr-freelance.mjs';
+import { getArticle } from '@/content/blog/index.mjs';
 import { createOKRSchema } from '@/modules/okrs/okr.schema';
 import {
   OKR_IMPORT_KEY,
@@ -15,6 +12,7 @@ import {
   versCreateInput,
 } from './okr-import';
 
+const htmlDe = (slug: string) => getArticle(slug, 'fr')!.html;
 const tableauDe = (html: string) => {
   const div = document.createElement('div');
   div.innerHTML = html;
@@ -36,8 +34,8 @@ describe('nombreAbsolu', () => {
 });
 
 describe('modèles de la galerie → OKR', () => {
-  it.each([etudiant, startup, marketing, freelance])('$slug : 3 objectifs valides au schéma de création', (a) => {
-    const okrs = tableauDe(a.locales.fr!.html);
+  it.each(['modele-okr-etudiant', 'modele-okr-startup', 'modele-okr-equipe-marketing', 'modele-okr-freelance'])('%s : 3 objectifs valides au schéma de création', (slug) => {
+    const okrs = tableauDe(htmlDe(slug));
     expect(okrs).toHaveLength(3);
     for (const o of okrs) {
       expect(o.krs.length).toBeGreaterThanOrEqual(1);
@@ -46,7 +44,7 @@ describe('modèles de la galerie → OKR', () => {
   });
 
   it('forme « départ → cible » : valeurs lues dans la 4e colonne', () => {
-    const [premier] = tableauDe(startup.locales.fr!.html);
+    const [premier] = tableauDe(htmlDe('modele-okr-startup'));
     const input = versCreateInput(premier);
     expect(input.title).toBe('Prouver que le marché veut le produit');
     expect(input.keyResults[0]).toMatchObject({ title: 'Clients payants actifs', currentValue: 12, targetValue: 30 });
@@ -54,7 +52,7 @@ describe('modèles de la galerie → OKR', () => {
   });
 
   it('cible relative : gardée lisible dans le titre, cible 0', () => {
-    const okrs = tableauDe(freelance.locales.fr!.html);
+    const okrs = tableauDe(htmlDe('modele-okr-freelance'));
     const kr = versCreateInput(okrs[1]).keyResults[0];
     expect(kr.title).toContain('+20 %');
     expect(kr.targetValue).toBe(0);

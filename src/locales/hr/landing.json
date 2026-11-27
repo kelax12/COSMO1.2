@@ -232,9 +232,7 @@
     "ctaPitch": "Zadaci, navike, kalendar i OKR-ovi u jednoj aplikaciji. Trenutačni demo, bez registracije.",
     "indexIntro": "Praktični vodiči o OKR-ovima, navikama, blokiranju vremena i produktivnosti. Bez praznih riječi.",
     "readingTime": "{{minutes}} min čitanja",
-    "startFree": "Započnite besplatno",
-    "templatePitch": "Ovaj predložak otvara se već ispunjen u Cosmu, demo bez registracije.",
-    "openTemplate": "Otvori ovaj predložak u Cosmu"
+    "startFree": "Započnite besplatno"
   },
   "enterprise": {
     "gateway": {

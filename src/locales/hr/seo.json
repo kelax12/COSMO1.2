@@ -75,5 +75,9 @@
   "pomodoroTool": {
     "title": "Pomodoro mjerač vremena online: besplatno | Cosmo",
     "description": "Pomodoro mjerač vremena online: sesije usredotočenog rada, kratke pauze i duga pauza nakon svakog ciklusa. Besplatno, bez registracije."
+  },
+  "blogTemplate": {
+    "pitch": "Ovaj predložak otvara se već ispunjen u Cosmu, demo bez registracije.",
+    "open": "Otvori ovaj predložak u Cosmu"
   }
 }

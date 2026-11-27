@@ -159,7 +159,8 @@
     "pickPlaceholder": "Odaberite…"
   },
   "import": {
-    "done_one": "Dodan {{count}} cilj iz predloška, spreman za prilagodbu",
-    "done_other": "Dodano ciljeva iz predloška: {{count}}, spremni za prilagodbu"
+    "done_one": "Dodan je {{count}} cilj iz predloška, spreman za prilagodbu",
+    "done_other": "Dodano je {{count}} ciljeva iz predloška, spremnih za prilagodbu",
+    "done_few": "Dodana su {{count}} cilja iz predloška, spremna za prilagodbu"
   }
 }

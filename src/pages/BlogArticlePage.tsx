@@ -18,6 +18,7 @@ const formatArticleDate = (iso: string) =>
 const BlogArticlePage: React.FC = () => {
   useForcedLightTheme();
   const { t, locale } = useT('landing');
+  const { t: tSeo } = useT('seo');
   const { slug } = useParams<{ slug: string }>();
   const aboutPath = useLocalizedPath();
   const auth = useOptionalAuth();
@@ -94,14 +95,14 @@ const BlogArticlePage: React.FC = () => {
               </span>
             </div>
             <p className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-blue-600/15 bg-blue-50/60 px-4 py-3 text-sm text-slate-600">
-              <span>{t(modeleOkr ? 'blog.templatePitch' : 'blog.demoPitch')}</span>
+              <span>{modeleOkr ? tSeo('blogTemplate.pitch') : t('blog.demoPitch')}</span>
               <button
                 type="button"
                 data-cta={modeleOkr ? 'modele-ouvrir-haut' : 'article-demo-haut'}
                 onClick={modeleOkr ? openTemplate : () => openDemo()}
                 className="inline-flex items-center gap-1.5 font-semibold text-blue-700 hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
               >
-                {t(modeleOkr ? 'blog.openTemplate' : 'blog.demoCta')}
+                {modeleOkr ? tSeo('blogTemplate.open') : t('blog.demoCta')}
                 <ArrowRight size={14} aria-hidden="true" />
               </button>
             </p>

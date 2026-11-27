@@ -160,6 +160,7 @@
   },
   "import": {
     "done_one": "{{count}} objectif du modèle ajouté, prêt à ajuster",
-    "done_other": "{{count}} objectifs du modèle ajoutés, prêts à ajuster"
+    "done_other": "{{count}} objectifs du modèle ajoutés, prêts à ajuster",
+    "done_many": "{{count}} objectifs du modèle ajoutés, prêts à ajuster"
   }
 }
