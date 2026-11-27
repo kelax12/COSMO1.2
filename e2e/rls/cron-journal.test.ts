@@ -60,13 +60,14 @@ afterAll(async () => {
   await db.end();
 });
 
-describe('supabase/proofs : preuves 245, 246, 252, 257 et 261 rejouées sur la base fraîche', () => {
+describe('supabase/proofs : preuves 245, 246, 252, 257, 261 et 267 rejouées sur la base fraîche', () => {
   const PREUVES = [
     { preuve: '245.proof.sql', migration: '245_cron_journal.sql' },
     { preuve: '246.proof.sql', migration: '246_cron_planification.sql' },
     { preuve: '252.proof.sql', migration: '252_sonde_disponibilite.sql' },
     { preuve: '257.proof.sql', migration: '257_sonde_auth_apikey.sql' },
     { preuve: '261.proof.sql', migration: '261_sonde_alerte_pg_cron.sql' },
+    { preuve: '267.proof.sql', migration: '267_sonde_sans_corps.sql' },
   ];
   for (const { preuve, migration } of PREUVES) {
     it(`${preuve} embarque le texte exact de ${migration}`, () => {
@@ -114,6 +115,22 @@ describe('supabase/proofs : preuves 245, 246, 252, 257 et 261 rejouées sur la b
       expect(verdict).toContain('ok cloture sonde : passage reussi');
     }, 60_000);
   }
+
+  // 267 : la clôture simulée doit tourner ici (rôle postgres de la pile
+  // locale) et effacer les réponses jugées, pas tomber dans sa branche `info`.
+  it('267.proof.sql : PREUVE-ANNULEE 0 ECHEC, réponses jugées effacées de net._http_response', async () => {
+    let verdict: string;
+    try {
+      await db.query(lire('supabase/proofs/267.proof.sql'));
+      verdict = 'le bloc DO a VALIDÉ au lieu de lever : la preuve ne s’annule pas';
+    } catch (e) {
+      verdict = (e as Error).message;
+    }
+    console.log(`PREUVE 267\n  ${verdict.split(' | ').join('\n  ')}`);
+    expect(verdict).toMatch(/^PREUVE-ANNULEE 0 ECHEC \|/);
+    expect(verdict).toContain('ok effacement : reponses jugees retirees');
+    expect(verdict).not.toContain('info cloture');
+  }, 60_000);
 
   // 257 se joue sans et avec Vault ; les en-têtes de la file pg_net doivent être
   // lus ici (rôle postgres de la pile locale), pas tomber dans leur branche `info`.
