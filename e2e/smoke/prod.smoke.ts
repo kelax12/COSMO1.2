@@ -47,7 +47,7 @@ test.use({ userAgent: SMOKE_UA });
 /**
  * Erreurs de console tolérées. Toute entrée doit dire POURQUOI.
  *
- * Vide depuis le 2026-11-27 : les deux 401 Supabase du préchauffage de `src/main.tsx`
+ * Vide : les deux 401 Supabase du préchauffage de `src/main.tsx`
  * ne partent plus pour un robot ni un navigateur sans tête (`isBotUserAgent`), et
  * `SMOKE_UA` en est un. Un 401 revenu ici dit que cette garde a sauté.
  */

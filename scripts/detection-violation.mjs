@@ -6,31 +6,17 @@
 // `docs/OBSERVABILITE.md` AM-5. 🔴 BK-1 (dumps en clair dans les artefacts) a été trouvée par un
 // audit, par aucune garde : le délai CNIL court depuis la prise de connaissance.
 //
-// CE QU'IL LIT, chaque jour :
-//   1 · les alertes de SECRET SCANNING ouvertes (`SECURITY_ALERTS_TOKEN`,
-//       jeton fin en lecture seule : le jeton du run ne les lit pas) ;
-//   2 · le CONTENU des artefacts déposés depuis 26 h (le dépôt est public) :
-//       un dump, un export SQL, une base en clair, lus dans le zip lui-même ;
-//   3 · les journaux Supabase (`edge_logs`, GET sur l'API Management,
-//       24 h) : échecs d'authentification, échecs concentrés sur une IP,
-//       réinitialisations, volume DISTINCT lu par un même compte, requêtes
-//       d'un même compte, lignes rendues sans session.
-//
-// 🔴 LIGNES DISTINCTES, PAS LIGNES RENDUES (l'application relit sans cesse les
-// mêmes pages) : `lignes_sujet_max` somme, par compte et par FORME de requête
-// (chemin, paramètres, début de plage), la plus grande réponse. Limite : une RPC
-// paginée par son corps se replie sur une forme (`requetes_sujet_max` la couvre en partie).
-//
-// ⚠️ AUCUN IDENTIFIANT NE SORT DE SUPABASE : des MAXIMA et des COMPTES, jamais un compte ni une
-// IP ; le résumé (public) ne porte que nombres, types d'alerte et noms d'artefact. Identifier un
-// compte : Axel rejoue `SQL_TRI` sur la fenêtre imprimée, jamais un workflow.
-//
-// SORTIE : 0 = toutes les sources lues, aucun signal ; 1 = un signal, ou une
-// source illisible. ❌ Jamais de vert sur une source non lue.
-// ⚠️ Un signal n'est PAS une violation : le job `alerter` ouvre l'issue (propriétaire, échéance 72 h).
-//
-// 🔴 PAS DE SHEBANG : le témoin importe ce module (cf. `scripts/CLAUDE.md`).
-// Témoin : `scripts/detection-violation.guard.test.mjs`.
+// CE QU'IL LIT, chaque jour : 1 · les alertes de SECRET SCANNING ouvertes (`SECURITY_ALERTS_TOKEN`, lecture
+// seule : le jeton du run ne les lit pas) ; 2 · le CONTENU des artefacts des dernières 26 h (dépôt public : dump,
+// export SQL, base en clair, lus dans le zip) ; 3 · les journaux Supabase (`edge_logs`, API Management, 24 h) :
+// échecs d'authentification (dont par IP), réinitialisations, volume DISTINCT et requêtes par compte, lignes sans session.
+// 🔴 LIGNES DISTINCTES, PAS LIGNES RENDUES : `lignes_sujet_max` somme, par compte et par FORME de requête, la plus
+// grande réponse. Limite : une RPC paginée par son corps se replie sur une forme (`requetes_sujet_max` la couvre en partie).
+// ⚠️ AUCUN IDENTIFIANT NE SORT DE SUPABASE : maxima et comptes seulement ; résumé public = nombres, types, noms
+// d'artefact. Identifier un compte : Axel rejoue `SQL_TRI` sur la fenêtre imprimée, jamais un workflow.
+// SORTIE : 0 = toutes les sources lues, aucun signal ; 1 = un signal ou une source illisible (jamais de vert sur une
+// source non lue). ⚠️ Un signal n'est PAS une violation : le job `alerter` ouvre l'issue (échéance 72 h).
+// 🔴 PAS DE SHEBANG : le témoin importe ce module (`scripts/CLAUDE.md`). Témoin : `scripts/detection-violation.guard.test.mjs`.
 // ═══════════════════════════════════════════════════════════════════
 import { inflateRawSync, constants as zc } from 'node:zlib';
 import { appendFileSync } from 'node:fs';
@@ -336,21 +322,14 @@ export async function lecteurArtefact(a, token, fetchImpl, seuilComplet = TELECH
   return { taille: a.taille, lire };
 }
 
-/** Reprend une requête sur un échec PASSAGER (réseau, 5xx, 429) : les rouges du 2026-11-23 et du 2026-11-26
- *  étaient des HTTP 503 du stockage d'artefacts, celui du 2026-11-27 une lecture ratée d'une migration pourtant
- *  identique au dépôt. Après la dernière reprise, la réponse (ou l'erreur) est rendue telle quelle : échec fermé. */
-export const avecReprises = (fetchImpl, { essais = 3, pause = (ms) => new Promise((r) => setTimeout(r, ms)) } = {}) =>
-  async (url, init) => {
-    for (let i = 1; ; i++) {
-      try {
-        const res = await fetchImpl(url, init);
-        if ((res.status < 500 && res.status !== 429) || i >= essais) return res;
-      } catch (e) {
-        if (i >= essais) throw e;
-      }
-      await pause(2000 * i);
-    }
-  };
+/** Reprend un échec PASSAGER (réseau, 5xx, 429 : rouges des 23, 26 et 27/11) ; au dernier essai, rendu tel quel (échec fermé). */
+export const avecReprises = (f, { essais = 3, pause = (ms) => new Promise((r) => setTimeout(r, ms)) } = {}) => async (url, init) => {
+  for (let i = 1; ; i++) {
+    const res = await f(url, init).catch((e) => { if (i >= essais) throw e; return null; });
+    if (res && ((res.status < 500 && res.status !== 429) || i >= essais)) return res;
+    await pause(2000 * i);
+  }
+};
 
 export async function lireArtefacts({ depot, token, maintenant, fetchImpl: brut = fetch, pause }) {
   const fetchImpl = avecReprises(brut, pause ? { pause } : undefined);

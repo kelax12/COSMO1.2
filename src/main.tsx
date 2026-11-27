@@ -156,7 +156,7 @@ if (supabaseUrl) {
 
   // Échauffement par requêtes non authentifiées sur /auth/v1 ET /rest/v1 : iOS Safari rejette les 3-4 flux HTTP/2 parallèles suivants s'ils partent trop près du premier paint.
   // 🔴 Jamais pour un robot ni un navigateur sans tête : chaque chargement y coûte deux 401 comptés par
-  // `check-prod-errors` (famille `sonde_uptime`), et un robot SEO qui rend les pages l'a fait rougir le 2026-11-27.
+  // `check-prod-errors` (famille `sonde_uptime`), et un robot SEO qui rend les pages suffit à la faire rougir.
   if (!isBotUserAgent(navigator.userAgent)) {
     fetch(`${supabaseUrl}/auth/v1/health`, { method: 'GET', mode: 'cors', credentials: 'omit' })
       .catch(() => { /* expected to sometimes fail — we don't care */ });

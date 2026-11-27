@@ -187,28 +187,10 @@ describe('fichier publié dans le dépôt · preuve par le contenu', () => {
   });
 });
 
-// ═══ Reprises sur un échec passager (rouges des 23, 26 et 27 novembre) ═══
-describe('avecReprises', () => {
-  const sansPause = { pause: async () => {} };
-  it('un 503 puis un 200 : la lecture aboutit', async () => {
-    let n = 0;
-    const f = avecReprises(async () => new Response('ok', { status: ++n === 1 ? 503 : 200 }), sansPause);
-    expect((await f('u')).status).toBe(200);
-    expect(n).toBe(2);
-  });
-  it('TÉMOIN : un 503 qui dure reste un 503 (échec fermé), un 404 et une redirection ne sont pas repris', async () => {
-    let n = 0;
-    expect((await avecReprises(async () => { n++; return new Response('', { status: 503 }); }, sansPause)('u')).status).toBe(503);
-    expect(n).toBe(3);
-    for (const status of [404, 302]) {
-      let m = 0;
-      expect((await avecReprises(async () => { m++; return new Response(null, { status }); }, sansPause)('u')).status).toBe(status);
-      expect(m).toBe(1);
-    }
-    await expect(avecReprises(async () => { throw new Error('réseau'); }, sansPause)('u')).rejects.toThrow('réseau');
-  });
+describe('avecReprises · échec passager repris, durable rendu tel quel (TÉMOIN)', () => {
+  const rep = (statuts, n = { v: 0 }) => [avecReprises(async () => { const s = statuts[Math.min(n.v++, statuts.length - 1)]; if (s === 0) throw new Error('réseau'); return new Response(null, { status: s }); }, { pause: async () => {} }), n];
+  it.each([[[503, 200], 200, 2], [[503], 503, 3], [[404], 404, 1], [[302], 302, 1], [[429, 200], 200, 2], [[0], 'réseau', 3]])('%j → %s en %i essai(s)', async (statuts, attendu, essais) => { const [f, n] = rep(statuts), p = f('u'); if (attendu === 'réseau') await expect(p).rejects.toThrow('réseau'); else expect((await p).status).toBe(attendu); expect(n.v).toBe(essais); });
 });
-
 // ═══ Décision ═══════════════════════════════════════════════════════
 
 /** Une journée ordinaire : beaucoup de lignes RENDUES (pages relues), peu de
