@@ -2242,6 +2242,12 @@ BEGIN
    WHERE status = 'started'
      AND started_at < now() - interval '1 hour';
 
+  -- Réponses déjà jugées : leur corps ne sert plus à rien (mig. 267).
+  DELETE FROM net._http_response x
+   USING public.cron_runs r
+   WHERE x.id = r.request_id
+     AND r.status <> 'started';
+
   DELETE FROM public.cron_runs WHERE started_at < now() - interval '90 days';
 
   RETURN v_sondes + v_closed;
@@ -22168,3 +22174,4 @@ SELECT cron.schedule('cosmo-renewal-notice', '12 7 * * *', 'SELECT public.cron_i
 SELECT cron.schedule('cosmo-seat-alert', '14 7 * * *', 'SELECT public.cron_invoke(''seat-alert'');');
 SELECT cron.schedule('cosmo-sonde-alerte', '6-59/5 * * * *', 'SELECT public.cron_sonde_alerte();');
 SELECT cron.schedule('cosmo-uptime', '2-59/5 * * * *', 'SELECT public.cron_probe();');
+SELECT cron.schedule('cosmo-vacuum-pg-net', '29 * * * *', 'VACUUM net._http_response');
