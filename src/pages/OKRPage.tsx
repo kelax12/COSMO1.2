@@ -30,6 +30,7 @@ import OKRFilterBar from './okr/OKRFilterBar';
 import { useOKRFilters } from './okr/useOKRFilters';
 import { useT } from '@/i18n/useT';
 import { useDeadlineReview } from './okr/useDeadlineReview';
+import { useImportOkrEnAttente } from './okr/useImportOkrEnAttente';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { formatDurationMinutes } from '@/lib/duration';
 
@@ -49,9 +50,9 @@ const OKRPage: React.FC = () => {
   const location = useLocation();
   // Le check-in hebdo peut aussi être ouvert manuellement (bouton), en plus de
   // l'auto-déclenchement lundi/mardi depuis le Dashboard.
-  // Use new OKR module hooks
   const { data: objectives = [], isLoading: isLoadingOkrs, isError: isOkrsError, error: okrsError, refetch: refetchOkrs } = useOkrs();
   const createOkrMutation = useCreateOkr();
+  useImportOkrEnAttente();
   const updateOkrMutation = useUpdateOkr();
   const deleteOkrMutation = useDeleteOkr();
   // « Annuler » d'une suppression : rend l'objectif ET son journal (C-01).
@@ -149,8 +150,7 @@ const OKRPage: React.FC = () => {
   const getCategoryById = (id: string) => categories.find((cat: { id: string }) => cat.id === id);
 
   // Résout une couleur : accepte un hex (#3B82F6) ou un nom ('blue')
-  const resolveColor = (color: string) =>
-    color.startsWith('#') ? color : getColorHex(color);
+  const resolveColor = (color: string) => (color.startsWith('#') ? color : getColorHex(color));
 
   // Maquette 139 : une seule écriture des durées (`@/lib/duration`).
   const formatTime = formatDurationMinutes;

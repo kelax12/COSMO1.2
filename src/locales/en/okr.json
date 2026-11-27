@@ -151,5 +151,9 @@
   "modalSheet": {
     "titlePlaceholder": "e.g. Launch product v2",
     "pickPlaceholder": "Pick one…"
+  },
+  "import": {
+    "done_one": "{{count}} objective from the template added, ready to adjust",
+    "done_other": "{{count}} objectives from the template added, ready to adjust"
   }
 }

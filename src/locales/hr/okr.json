@@ -157,5 +157,9 @@
   "modalSheet": {
     "titlePlaceholder": "npr. Pokrenuti proizvod v2",
     "pickPlaceholder": "Odaberite…"
+  },
+  "import": {
+    "done_one": "Dodan {{count}} cilj iz predloška, spreman za prilagodbu",
+    "done_other": "Dodano ciljeva iz predloška: {{count}}, spremni za prilagodbu"
   }
 }

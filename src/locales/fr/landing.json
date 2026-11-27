@@ -232,7 +232,9 @@
     "ctaPitch": "Tâches, habitudes, agenda et OKR dans une seule application. Démo instantanée, sans inscription.",
     "indexIntro": "Guides pratiques sur la méthode OKR, les habitudes, le time-blocking et la productivité, sans bullshit.",
     "readingTime": "{{minutes}} min de lecture",
-    "startFree": "Commencer gratuitement"
+    "startFree": "Commencer gratuitement",
+    "templatePitch": "Ce modèle s'ouvre déjà rempli dans Cosmo, démo sans inscription.",
+    "openTemplate": "Ouvrir ce modèle dans Cosmo"
   },
   "enterprise": {
     "gateway": {

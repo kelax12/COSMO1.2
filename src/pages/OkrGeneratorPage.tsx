@@ -9,6 +9,7 @@ import { useForcedLightTheme } from '@/hooks/use-forced-light-theme';
 import { useOptionalAuth } from '@/modules/auth/AuthContext';
 import { enterWithTheme } from '@/lib/theme';
 import { OKR_DOMAINES } from '@/content/okr-generator.mjs';
+import { mettreDeCote } from '@/lib/okr-import';
 
 // Outil gratuit sans inscription (plan SEO C7) : générateur d'OKR. Les
 // propositions viennent d'une banque rédigée à la main (src/content/
@@ -88,9 +89,11 @@ const OkrGeneratorPage: React.FC = () => {
       setCopie(false);
     }
   };
+  // L'OKR composé suit dans l'app (`src/lib/okr-import.ts`) ; un compte connecté garde sa session.
   const ouvrirDemo = () => {
+    if (etat.objectif.trim() && etat.krs.length > 0) mettreDeCote([{ objectif: etat.objectif.trim(), krs: etat.krs }]);
     enterWithTheme('light');
-    auth?.loginDemo();
+    if (!auth?.isAuthenticated) auth?.loginDemo();
     setTimeout(() => navigate('/okr'), 0);
   };
 

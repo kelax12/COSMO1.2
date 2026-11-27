@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router';
 import { ArrowRight, ChevronRight, Clock } from 'lucide-react';
 import { useSeoMeta } from '@/lib/useSeoMeta';
@@ -7,6 +7,7 @@ import { BLOG_AUTHOR, getArticle, relatedArticles } from '@/content/blog/index.m
 import { useLocalizedPath } from '@/i18n/useLocalizedPath';
 import { useOptionalAuth } from '@/modules/auth/AuthContext';
 import { enterWithTheme } from '@/lib/theme';
+import { brouillonsDepuisLignes, lignesDuTableau, mettreDeCote } from '@/lib/okr-import';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import { useForcedLightTheme } from '@/hooks/use-forced-light-theme';
@@ -22,10 +23,18 @@ const BlogArticlePage: React.FC = () => {
   const auth = useOptionalAuth();
   const navigate = useNavigate();
   // Même geste que la landing : la démo s'ouvre en clair, sur le tableau de bord.
-  const openDemo = () => {
+  const openDemo = (vers = '/dashboard') => {
     enterWithTheme('light');
-    auth?.loginDemo();
-    setTimeout(() => navigate('/dashboard'), 0);
+    // Un compte connecté garde sa session : le modèle s'ajoute à ses OKR.
+    if (vers === '/dashboard' || !auth?.isAuthenticated) auth?.loginDemo();
+    setTimeout(() => navigate(vers), 0);
+  };
+  // Modèle OKR (plan SEO C5) : le tableau rendu devient des OKR dans l'app,
+  // créés par la page OKR (`src/lib/okr-import.ts`).
+  const proseRef = useRef<HTMLDivElement>(null);
+  const openTemplate = () => {
+    if (proseRef.current) mettreDeCote(brouillonsDepuisLignes(lignesDuTableau(proseRef.current)));
+    openDemo('/okr');
   };
   // Le slug peut être traduit (article-slugs.json) : on revient au slug canonique. MÊME
   // article. `getArticle` sert la langue demandée, ou le français si l'article
@@ -41,6 +50,7 @@ const BlogArticlePage: React.FC = () => {
   });
 
   if (!article) return <Navigate to="/blog" replace />;
+  const modeleOkr = article.kind === 'modele' && article.categorie === 'okr';
 
   return (
     <div className="min-h-[100dvh] bg-white text-slate-900">
@@ -84,14 +94,14 @@ const BlogArticlePage: React.FC = () => {
               </span>
             </div>
             <p className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-blue-600/15 bg-blue-50/60 px-4 py-3 text-sm text-slate-600">
-              <span>{t('blog.demoPitch')}</span>
+              <span>{t(modeleOkr ? 'blog.templatePitch' : 'blog.demoPitch')}</span>
               <button
                 type="button"
-                data-cta="article-demo-haut"
-                onClick={openDemo}
+                data-cta={modeleOkr ? 'modele-ouvrir-haut' : 'article-demo-haut'}
+                onClick={modeleOkr ? openTemplate : () => openDemo()}
                 className="inline-flex items-center gap-1.5 font-semibold text-blue-700 hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
               >
-                {t('blog.demoCta')}
+                {t(modeleOkr ? 'blog.openTemplate' : 'blog.demoCta')}
                 <ArrowRight size={14} aria-hidden="true" />
               </button>
             </p>
@@ -102,6 +112,7 @@ const BlogArticlePage: React.FC = () => {
               acceptable, le déclarer anglais ne l'est pas (lecteurs d'écran,
               moteurs). */}
           <div
+            ref={proseRef}
             className="blog-prose"
             lang={article.contentLocale}
             dangerouslySetInnerHTML={{ __html: article.html }}
