@@ -246,10 +246,6 @@
       "complexity": [22],
       "max-lines-per-function": [218]
     },
-    "src/components/organization/TeamProjectsTab.tsx": {
-      "complexity": [57],
-      "max-lines-per-function": [397]
-    },
     "src/components/organization/TeamProjectsTimeline.tsx": {
       "max-lines-per-function": [395, 202]
     },
