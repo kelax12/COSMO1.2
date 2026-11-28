@@ -259,10 +259,6 @@
     "src/components/organization/TeamTaskFields.tsx": {
       "max-lines-per-function": [254]
     },
-    "src/components/organization/TeamTaskModal.tsx": {
-      "complexity": [99, 23],
-      "max-lines-per-function": [433]
-    },
     "src/components/organization/TeamTasksTab.tsx": {
       "complexity": [43],
       "max-lines-per-function": [416]
