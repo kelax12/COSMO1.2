@@ -1,6 +1,6 @@
 // task-table/TaskCard : carte tâche mobile mémoïsée. Identité stable au niveau module (pas de `useMotionValue` recréé), pilotée par props, aucune logique métier.
 import React, { useState, useEffect, useRef } from "react";
-import { motion, useMotionValue, useTransform, animate } from "framer-motion";
+import { motion, useMotionValue, useTransform, animate, type MotionValue } from "framer-motion";
 import { Bookmark, MoreHorizontal, AlertTriangle, Hourglass, CheckCircle2 } from "lucide-react";
 import { OverdueQuickActions } from "./OverdueQuickActions";
 import TaskActionsSheet from "./TaskActionsSheet";
@@ -62,7 +62,6 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   // Fallback gris neutre (pas bleu = couleur Travail par défaut) pour
   // signaler une catégorie manquante au lieu de la masquer.
   const categoryColor = category?.color || NO_CATEGORY_COLOR;
-  const { t } = useT('tasks');
 
   const [actionsVisible, setActionsVisible] = useState(false);
   // Maquette 16 — « Choisir » : le calendrier COSMO, jamais celui du
@@ -70,77 +69,27 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   const [rescheduleOpen, setRescheduleOpen] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isLongPress = useRef(false);
-  const isDragging = useRef(false);
 
   // Swipe gestures — x must be in the SAME style object as other style props
   const x = useMotionValue(0);
-  const greenOpacity = useTransform(x, [0, 8, 80], [0, 1, 1]);
-  const grayOpacity = useTransform(x, [-80, -8, 0], [1, 1, 0]);
-  const greenIconOpacity = useTransform(x, [0, 24, 80], [0, 0.6, 1]);
-  const grayIconOpacity = useTransform(x, [-80, -24, 0], [1, 0.6, 0]);
 
-  // Hint de geste animé : UNE fois par device, sur la 1ʳᵉ carte (nudge gauche « Options » puis droite « Valider »). Le drag reprend la main à tout moment ; respecte prefers-reduced-motion.
-  useEffect(() => {
-    if (!isFirst || addToListMode) return;
-    let alreadyPlayed = false;
-    try { alreadyPlayed = localStorage.getItem('cosmo_swipe_hint_anim_seen') === '1'; } catch { /* ignore */ }
-    if (alreadyPlayed) return;
-    const prefersReduced =
-      typeof window !== 'undefined' &&
-      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    // On marque comme vu dans tous les cas pour ne jamais rejouer.
-    try { localStorage.setItem('cosmo_swipe_hint_anim_seen', '1'); } catch { /* ignore */ }
-    if (prefersReduced) return;
-    let controls: ReturnType<typeof animate> | undefined;
-    const startTimer = setTimeout(() => {
-      controls = animate(x, [0, -52, 0, 44, 0], {
-        duration: 1.7,
-        times: [0, 0.28, 0.5, 0.78, 1],
-        ease: 'easeInOut',
-      });
-    }, 650);
-    return () => {
-      clearTimeout(startTimer);
-      controls?.stop();
-    };
-    /* eslint-disable-next-line react-hooks/exhaustive-deps --
-    `x` est une MotionValue, stable pour la vie du composant. Seul le passage
-       en mode « ajouter a une liste » sur la PREMIERE carte doit rejouer
-       l indice gestuel ; dependre de `x` le relancerait a chaque frame. */
-  }, [isFirst, addToListMode]);
+  useSwipeHint(x, isFirst, addToListMode);
 
-  const startLongPress = (e: React.PointerEvent) => {
-    if (addToListMode) return;
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
-    isLongPress.current = false;
-    longPressTimer.current = setTimeout(() => {
-      isLongPress.current = true;
-      setActionsVisible(true);
-      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
-    }, 500);
-  };
-  const cancelLongPress = () => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
-      longPressTimer.current = null;
-    }
-  };
-  const handleCardClick = () => {
-    if (isDragging.current) {
-      isDragging.current = false;
-      return;
-    }
-    if (isLongPress.current) {
-      isLongPress.current = false;
-      return;
-    }
-    if (addToListMode) return;
-    onSelectTask(task.id);
-  };
+  const gestures = useCardGestures({
+    addToListMode,
+    onOpen: () => onSelectTask(task.id),
+    onOpenActions: () => setActionsVisible(true),
+    // Glissé à droite : la carte sort, puis la tâche est validée.
+    onSwipeRight: () => {
+      setIsValidating(true);
+      setIsExiting(true);
+      setTimeout(() => onToggleComplete(task.id), 300);
+    },
+  });
+  const { cancelLongPress } = gestures;
 
   const isOverdue = isTaskOverdue(task.deadline, task.completed);
+  const surface = cardSurface(addToListMode, task.completed, selectedForListIds.includes(task.id));
 
   // Maquette 16 — « Le retard porte sa solution ». `OverdueQuickActions` rend
   // une clé de jour ; la conversion en instant reste ici, sur le chemin
@@ -149,12 +98,6 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
     setRescheduleOpen(false);
     onSnooze(task.id, dayKey);
   };
-
-  // Deux initiales pour le rond de la maquette 15. `sharedBy` est un nom
-  // affichable, pas un UUID — il vient déjà résolu du repository.
-  const sharedByInitials = task.sharedBy
-    ? task.sharedBy.trim().split(/\s+/).map(part => part[0]).join('').slice(0, 2).toUpperCase()
-    : '';
 
   return (
     <motion.div
@@ -172,158 +115,51 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
     {/* Swipe wrapper — isolates card + reveal layers from the action row below */}
     <div className="relative overflow-hidden">
     {/* Reveal layers BEHIND the card — full size, full color */}
-    {!addToListMode && (
-      <>
-        {/* Right swipe → green bg behind */}
-        <motion.div
-          style={{ opacity: greenOpacity }}
-          animate={isValidating ? { scale: [1, 1.04, 1] } : {}}
-          transition={{ duration: 0.35, ease: 'easeOut' }}
-          className="absolute inset-0 bg-green-500 pointer-events-none flex items-center justify-start pl-5"
-        >
-          <motion.div
-            style={{ opacity: greenIconOpacity }}
-            className="flex items-center gap-2 text-white whitespace-nowrap"
-          >
-            <CheckCircle2 size={22} />
-            <span className="text-label font-bold">{task.completed ? t('card.cancel') : t('card.validate')}</span>
-          </motion.div>
-        </motion.div>
-        {/* Left swipe → gray bg behind */}
-        <motion.div
-          style={{ opacity: grayOpacity }}
-          className="absolute inset-0 bg-slate-500 dark:bg-slate-600 pointer-events-none flex items-center justify-end pr-5"
-        >
-          <motion.div
-            style={{ opacity: grayIconOpacity }}
-            className="flex items-center gap-2 text-white whitespace-nowrap"
-          >
-            <MoreHorizontal size={22} />
-            <span className="text-label font-bold">{t('card.options')}</span>
-          </motion.div>
-        </motion.div>
-      </>
-    )}
+    {!addToListMode && <SwipeRevealLayers x={x} isValidating={isValidating} completed={task.completed} />}
     {/* Draggable card — x MotionValue merged into the single style object */}
     <motion.div
       drag={addToListMode ? false : 'x'}
       dragConstraints={{ left: 0, right: 0 }}
       dragElastic={0.5}
       dragDirectionLock
-      onDragStart={() => {
-        isDragging.current = true;
-        cancelLongPress();
-      }}
-      onDragEnd={(_, info) => {
-        if (info.offset.x > 80) {
-          setIsValidating(true);
-          setIsExiting(true);
-          setTimeout(() => onToggleComplete(task.id), 300);
-          if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
-        } else if (info.offset.x < -80) {
-          setActionsVisible(true);
-          if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
-        }
-        setTimeout(() => { isDragging.current = false; }, 50);
-      }}
+      onDragStart={gestures.onDragStart}
+      onDragEnd={(_, info) => gestures.onDragEnd(info.offset.x)}
       whileTap={addToListMode ? undefined : { scale: 0.98 }}
       transition={{ duration: 0.1 }}
       // Ni bordure ni arrondi : la séparation est le filet du parent.
       // ⚠️ Le fond reste OPAQUE : les calques vert et gris du swipe sont dessinés DERRIÈRE cette ligne.
-      className={`relative flex items-stretch gap-3 px-3 py-2.5 transition-colors ${addToListMode ? 'cursor-default' : 'cursor-pointer'} ${task.completed && !addToListMode ? 'opacity-50' : ''}`}
-      onClick={handleCardClick}
-      onPointerDown={startLongPress}
+      className={surface.className}
+      onClick={gestures.onClick}
+      onPointerDown={gestures.onPointerDown}
       onPointerUp={cancelLongPress}
       onPointerCancel={cancelLongPress}
       // ═══ C-111 : LE SEUL CHEMIN CLAVIER VERS LES ACTIONS ═══
       // 🔴 Appui long, glissement et menu desktop (`hidden md:block`) sont des gestes de POINTEUR : sans cette ligne, les actions d'une tâche sont inatteignables au clavier sur mobile (WCAG 2.1.1, A). Elle ouvre la feuille (clic droit ET clavier, la carte porte `tabIndex={0}`).
       // ✅ Aucun pixel ajouté : l'arbitrage de la maquette 86 (« plus de ⋯ au repos ») tient.
-      onContextMenu={(e) => {
-        e.preventDefault();
-        if (addToListMode) return;
-        cancelLongPress();
-        setActionsVisible(true);
-      }}
+      onContextMenu={gestures.onContextMenu}
       // ═══ C-118 : SAFARI N'ÉMET PAS `contextmenu` AU CLAVIER ═══
       // 🔴 `Shift+F10` et `Menu` arrivent en `keydown` sans `contextmenu` : on lit les deux touches en `keydown`, `preventDefault` évite le menu natif là où il est synthétisé quand même.
       // ⚠️ Même garde qu'`onContextMenu` : rien en mode « ajout à une liste ».
-      onKeyDown={(e) => {
-        if (e.key !== 'ContextMenu' && !(e.key === 'F10' && e.shiftKey)) return;
-        e.preventDefault();
-        if (addToListMode) return;
-        cancelLongPress();
-        setActionsVisible(true);
-      }}
+      onKeyDown={gestures.onKeyDown}
       // Annonce le raccourci aux technologies d'assistance : sans lui, le
       // chemin existe mais rien ne le dit.
       aria-keyshortcuts="Shift+F10"
       style={{
         x,
-        backgroundColor: addToListMode && selectedForListIds.includes(task.id)
-          ? 'rgba(59, 130, 246, 0.1)'
-          : 'rgb(var(--color-background))',
+        backgroundColor: surface.backgroundColor,
         minHeight: '60px',
         touchAction: 'pan-y',
       }}
     >
       {/* Checkbox */}
-      {addToListMode ? (
-        <button
-          onClick={(e) => { e.stopPropagation(); onToggleTaskForList?.(task.id); }}
-          className="min-w-11 min-h-11 -my-1 -ml-1 p-2 flex items-center justify-center shrink-0"
-          aria-label={
-            selectionKind === 'select'
-              ? t(
-                  selectedForListIds.includes(task.id)
-                    ? 'table.deselectTaskAria'
-                    : 'table.selectTaskAria',
-                  { name: task.name },
-                )
-              : t(selectedForListIds.includes(task.id) ? 'card.removeFromList' : 'card.addToListShort')
-          }
-          aria-pressed={selectedForListIds.includes(task.id)}
-        >
-          <span
-            className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
-              selectedForListIds.includes(task.id)
-                ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))]'
-                : 'border-slate-400 dark:border-slate-500'
-            }`}
-          >
-            {selectedForListIds.includes(task.id) && (
-              <svg className="w-4 h-4 text-[rgb(var(--color-accent-solid-foreground))]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            )}
-          </span>
-        </button>
-      ) : (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            cancelLongPress();
-            onToggleComplete(task.id);
-          }}
-          onPointerDown={(e) => { e.stopPropagation(); }}
-          className="min-w-11 min-h-11 -my-1 -ml-1 p-2 flex items-center justify-center shrink-0"
-          aria-label={task.completed ? t('card.markUndone') : t('card.markDone')}
-          aria-pressed={task.completed}
-        >
-          <span
-            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-              task.completed
-                ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))]'
-                : 'border-[rgb(var(--color-text-muted))]'
-            }`}
-          >
-            {task.completed && (
-              <svg className="w-4 h-4 text-[rgb(var(--color-accent-solid-foreground))]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            )}
-          </span>
-        </button>
-      )}
+      <TaskCardCheckbox
+        task={task}
+        addToListMode={addToListMode}
+        selectionKind={selectionKind}
+        selected={selectedForListIds.includes(task.id)}
+        onToggleForList={() => onToggleTaskForList?.(task.id)}
+        onToggleComplete={() => { cancelLongPress(); onToggleComplete(task.id); }}
+      />
 
       {/* Title + meta */}
       <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
@@ -366,50 +202,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
         {/* Méta : catégorie · échéance · durée, sur une ligne propre à taille normale.
             `flex-wrap` : à 200 % de police (WCAG 1.4.4), la rangée sortait de
             l'écran de 218 px, durée comprise, sans défilement pour l'atteindre. */}
-        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-caption" style={{ color: 'rgb(var(--color-text-muted))' }}>
-          {!addToListMode && category && (
-            <>
-              <span className="inline-flex min-w-0 items-center gap-1">
-                <span
-                  className="size-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: categoryColor }}
-                  aria-hidden="true"
-                />
-                <span className="truncate">{category.name}</span>
-              </span>
-              <span aria-hidden="true">·</span>
-            </>
-          )}
-          {/* Maquette 87 — l'échéance en français, pas en chiffres.
-              `formatDate` rendait « 26/09/2026 » : dix caractères pour dire
-              « vendredi », dont quatre d'année que TOUTES les tâches
-              partagent. `formatDeadlineSmart` existait déjà et servait
-              partout ailleurs (ligne desktop, onglet équipe) — cette carte
-              était la seule à ne pas l'utiliser.
-              En retard, le calcul est fait pour le lecteur : « en retard de
-              2 j » au lieu d'une date rouge à soustraire soi-même. */}
-          {/* Maquette 146 : `--color-danger-text`, lisible en 11 px
-              (`text-red-500` mesurait 3,9:1 sur le fond Gris). */}
-          <span className={isOverdue ? 'text-[rgb(var(--color-danger-text))] font-semibold inline-flex items-center gap-0.5' : ''}>
-            {isOverdue && <AlertTriangle size={12} aria-hidden="true" />}
-            {task.deadline
-              ? (isOverdue ? formatOverdueSince(task.deadline) : formatDeadlineSmart(task.deadline))
-              : t('card.noDeadline')}
-            {isOverdue && <span className="sr-only"> {t('card.overdue')}</span>}
-          </span>
-          <span aria-hidden="true">·</span>
-          <span>{formatDuration(task.estimatedTime)}</span>
-          <TaskStateBadges task={task} />
-          {/* Compteur sous-tâches (#12) */}
-          {(task.subtasks?.length ?? 0) > 0 && (
-            <>
-              <span aria-hidden="true">·</span>
-              <span title={t('card.subtasksDone')}>
-                ☑ {task.subtasks!.filter(s => s.completed).length}/{task.subtasks!.length}
-              </span>
-            </>
-          )}
-        </div>
+        <TaskCardMeta task={task} category={addToListMode ? undefined : category} categoryColor={categoryColor} isOverdue={isOverdue} />
 
         {isOverdue && !addToListMode && (
           <OverdueQuickActions
@@ -429,6 +222,355 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
           seules P1 et P2 gardent leur teinte. P3 à P5 passent en gris : quatre
           couleurs pour quatre crans faisaient de chaque ligne un nuancier, et
           la chaleur ne signalait plus rien. */}
+      <TaskCardTrailing
+        task={task}
+        collaboratorIds={collaboratorsByTask.get(task.id)}
+        pendingInvite={pendingCollaboratorTaskIds.has(task.id)}
+        friends={friends}
+      />
+      {/* ── Maquette 86 : plus de « ⋯ » au repos ──────────────────────────
+          Les trois chemins vers `TaskActionsSheet` subsistent : appui long,
+          glissement vers la gauche, et le menu de la ligne desktop
+          (`TaskTableDesktop`), où la souris n'a pas d'appui long.
+          ❌ Ne pas le réintroduire « pour la découvrabilité » sans retirer
+          d'abord quelque chose d'autre de cette colonne. */}
+    </motion.div>
+    </div>
+
+    {/* Feuille d'actions — design Spotify (en-tête + liste verticale icône +
+        libellé), déclenchée par long-press, swipe gauche ou le bouton « ⋯ ». */}
+    <TaskActionsSheet
+      open={actionsVisible && !addToListMode}
+      task={task}
+      categoryName={category?.name}
+      categoryColor={categoryColor}
+      onClose={() => setActionsVisible(false)}
+      onEdit={onSelectTask}
+      onToggleBookmark={onToggleBookmark}
+      onOpenCollaborator={onOpenCollaborator}
+      onScheduleTask={() => onScheduleTask(task)}
+      onAddToList={onAddToList}
+      onDeleteTask={onDeleteTask}
+    />
+  </motion.div>
+  );
+});
+TaskCardInner.displayName = 'TaskCard';
+
+/**
+ * Hint de geste animé : UNE fois par device, sur la 1ʳᵉ carte (nudge gauche
+ * « Options » puis droite « Valider »). Le drag reprend la main à tout
+ * moment ; respecte prefers-reduced-motion.
+ */
+function useSwipeHint(x: MotionValue<number>, isFirst: boolean, addToListMode: boolean) {
+  useEffect(() => {
+    if (!isFirst || addToListMode) return;
+    let alreadyPlayed = false;
+    try { alreadyPlayed = localStorage.getItem('cosmo_swipe_hint_anim_seen') === '1'; } catch { /* ignore */ }
+    if (alreadyPlayed) return;
+    const prefersReduced =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    // On marque comme vu dans tous les cas pour ne jamais rejouer.
+    try { localStorage.setItem('cosmo_swipe_hint_anim_seen', '1'); } catch { /* ignore */ }
+    if (prefersReduced) return;
+    let controls: ReturnType<typeof animate> | undefined;
+    const startTimer = setTimeout(() => {
+      controls = animate(x, [0, -52, 0, 44, 0], {
+        duration: 1.7,
+        times: [0, 0.28, 0.5, 0.78, 1],
+        ease: 'easeInOut',
+      });
+    }, 650);
+    return () => {
+      clearTimeout(startTimer);
+      controls?.stop();
+    };
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    `x` est une MotionValue, stable pour la vie du composant. Seul le passage
+       en mode « ajouter a une liste » sur la PREMIERE carte doit rejouer
+       l indice gestuel ; dependre de `x` le relancerait a chaque frame. */
+  }, [isFirst, addToListMode]);
+}
+
+/**
+ * Gestes de pointeur et de clavier de la carte : appui long (500 ms) et
+ * glissement ouvrent les actions sans ouvrir la tâche ; clic droit, `Menu` et
+ * `Shift+F10` ouvrent les actions (C-111, C-118). Rien en mode « ajout à une
+ * liste ».
+ */
+function useCardGestures({ addToListMode, onOpen, onOpenActions, onSwipeRight }: {
+  addToListMode: boolean;
+  onOpen: () => void;
+  onOpenActions: () => void;
+  onSwipeRight: () => void;
+}) {
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isLongPress = useRef(false);
+  const isDragging = useRef(false);
+
+  const cancelLongPress = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (addToListMode) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    isLongPress.current = false;
+    longPressTimer.current = setTimeout(() => {
+      isLongPress.current = true;
+      onOpenActions();
+      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
+    }, 500);
+  };
+  const onClick = () => {
+    if (isDragging.current) {
+      isDragging.current = false;
+      return;
+    }
+    if (isLongPress.current) {
+      isLongPress.current = false;
+      return;
+    }
+    if (addToListMode) return;
+    onOpen();
+  };
+  const onDragStart = () => {
+    isDragging.current = true;
+    cancelLongPress();
+  };
+  /** Au-delà de 80 px : à droite valide, à gauche ouvre les actions. */
+  const onDragEnd = (offsetX: number) => {
+    if (offsetX > 80) {
+      onSwipeRight();
+      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
+    } else if (offsetX < -80) {
+      onOpenActions();
+      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
+    }
+    setTimeout(() => { isDragging.current = false; }, 50);
+  };
+  // ═══ C-111 : LE SEUL CHEMIN CLAVIER VERS LES ACTIONS ═══
+  // 🔴 Appui long, glissement et menu desktop (`hidden md:block`) sont des gestes de POINTEUR : sans ce chemin, les actions d'une tâche sont inatteignables au clavier sur mobile (WCAG 2.1.1, A). Il ouvre la feuille (clic droit ET clavier, la carte porte `tabIndex={0}`).
+  // ✅ Aucun pixel ajouté : l'arbitrage de la maquette 86 (« plus de ⋯ au repos ») tient.
+  const onContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (addToListMode) return;
+    cancelLongPress();
+    onOpenActions();
+  };
+  // ═══ C-118 : SAFARI N'ÉMET PAS `contextmenu` AU CLAVIER ═══
+  // 🔴 `Shift+F10` et `Menu` arrivent en `keydown` sans `contextmenu` : on lit les deux touches en `keydown`, `preventDefault` évite le menu natif là où il est synthétisé quand même.
+  // ⚠️ Même garde qu'`onContextMenu` : rien en mode « ajout à une liste ».
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== 'ContextMenu' && !(e.key === 'F10' && e.shiftKey)) return;
+    e.preventDefault();
+    if (addToListMode) return;
+    cancelLongPress();
+    onOpenActions();
+  };
+  return { cancelLongPress, onPointerDown, onClick, onDragStart, onDragEnd, onContextMenu, onKeyDown };
+}
+
+/**
+ * Classe et fond de la ligne glissable. Le fond reste OPAQUE : les calques
+ * vert et gris du swipe sont dessinés DERRIÈRE cette ligne.
+ */
+function cardSurface(addToListMode: boolean, completed: boolean, selectedForList: boolean) {
+  return {
+    className: `relative flex items-stretch gap-3 px-3 py-2.5 transition-colors ${addToListMode ? 'cursor-default' : 'cursor-pointer'} ${completed && !addToListMode ? 'opacity-50' : ''}`,
+    backgroundColor: addToListMode && selectedForList ? 'rgba(59, 130, 246, 0.1)' : 'rgb(var(--color-background))',
+  };
+}
+
+/** Calques révélés DERRIÈRE la carte au glissement : vert (valider) à droite, gris (options) à gauche. */
+function SwipeRevealLayers({ x, isValidating, completed }: { x: MotionValue<number>; isValidating: boolean; completed: boolean }) {
+  const { t } = useT('tasks');
+  const greenOpacity = useTransform(x, [0, 8, 80], [0, 1, 1]);
+  const grayOpacity = useTransform(x, [-80, -8, 0], [1, 1, 0]);
+  const greenIconOpacity = useTransform(x, [0, 24, 80], [0, 0.6, 1]);
+  const grayIconOpacity = useTransform(x, [-80, -24, 0], [1, 0.6, 0]);
+  return (
+    <>
+      {/* Right swipe → green bg behind */}
+      <motion.div
+        style={{ opacity: greenOpacity }}
+        animate={isValidating ? { scale: [1, 1.04, 1] } : {}}
+        transition={{ duration: 0.35, ease: 'easeOut' }}
+        className="absolute inset-0 bg-green-500 pointer-events-none flex items-center justify-start pl-5"
+      >
+        <motion.div
+          style={{ opacity: greenIconOpacity }}
+          className="flex items-center gap-2 text-white whitespace-nowrap"
+        >
+          <CheckCircle2 size={22} />
+          <span className="text-label font-bold">{completed ? t('card.cancel') : t('card.validate')}</span>
+        </motion.div>
+      </motion.div>
+      {/* Left swipe → gray bg behind */}
+      <motion.div
+        style={{ opacity: grayOpacity }}
+        className="absolute inset-0 bg-slate-500 dark:bg-slate-600 pointer-events-none flex items-center justify-end pr-5"
+      >
+        <motion.div
+          style={{ opacity: grayIconOpacity }}
+          className="flex items-center gap-2 text-white whitespace-nowrap"
+        >
+          <MoreHorizontal size={22} />
+          <span className="text-label font-bold">{t('card.options')}</span>
+        </motion.div>
+      </motion.div>
+    </>
+  );
+}
+
+/** Case de gauche : cocher pour la liste (ou la sélection), sinon valider la tâche. */
+function TaskCardCheckbox({ task, addToListMode, selectionKind, selected, onToggleForList, onToggleComplete }: {
+  task: Task;
+  addToListMode: boolean;
+  selectionKind: 'list' | 'select';
+  selected: boolean;
+  onToggleForList: () => void;
+  onToggleComplete: () => void;
+}) {
+  const { t } = useT('tasks');
+  if (addToListMode) {
+    const label = selectionKind === 'select'
+      ? t(selected ? 'table.deselectTaskAria' : 'table.selectTaskAria', { name: task.name })
+      : t(selected ? 'card.removeFromList' : 'card.addToListShort');
+    return (
+      <button
+        onClick={(e) => { e.stopPropagation(); onToggleForList(); }}
+        className="min-w-11 min-h-11 -my-1 -ml-1 p-2 flex items-center justify-center shrink-0"
+        aria-label={label}
+        aria-pressed={selected}
+      >
+        <span
+          className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
+            selected
+              ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))]'
+              : 'border-slate-400 dark:border-slate-500'
+          }`}
+        >
+          {selected && <CheckMark />}
+        </span>
+      </button>
+    );
+  }
+  return (
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        onToggleComplete();
+      }}
+      onPointerDown={(e) => { e.stopPropagation(); }}
+      className="min-w-11 min-h-11 -my-1 -ml-1 p-2 flex items-center justify-center shrink-0"
+      aria-label={task.completed ? t('card.markUndone') : t('card.markDone')}
+      aria-pressed={task.completed}
+    >
+      <span
+        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+          task.completed
+            ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))]'
+            : 'border-[rgb(var(--color-text-muted))]'
+        }`}
+      >
+        {task.completed && <CheckMark />}
+      </span>
+    </button>
+  );
+}
+
+const CheckMark = () => (
+  <svg className="w-4 h-4 text-[rgb(var(--color-accent-solid-foreground))]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+  </svg>
+);
+
+/**
+ * Méta : catégorie · échéance · durée, sur une ligne propre à taille normale.
+ * `flex-wrap` : à 200 % de police (WCAG 1.4.4), la rangée sortait de l'écran
+ * de 218 px, durée comprise, sans défilement pour l'atteindre. La catégorie
+ * est absente en mode « ajout à une liste ».
+ */
+function TaskCardMeta({ task, category, categoryColor, isOverdue }: {
+  task: Task;
+  category?: { name: string } | null;
+  categoryColor: string;
+  isOverdue: boolean;
+}) {
+  const { t } = useT('tasks');
+  const subtasks = task.subtasks ?? [];
+  return (
+    <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-caption" style={{ color: 'rgb(var(--color-text-muted))' }}>
+      {category && (
+        <>
+          <span className="inline-flex min-w-0 items-center gap-1">
+            <span
+              className="size-2 shrink-0 rounded-full"
+              style={{ backgroundColor: categoryColor }}
+              aria-hidden="true"
+            />
+            <span className="truncate">{category.name}</span>
+          </span>
+          <span aria-hidden="true">·</span>
+        </>
+      )}
+      {/* Maquette 87 — l'échéance en français, pas en chiffres.
+          `formatDate` rendait « 26/09/2026 » : dix caractères pour dire
+          « vendredi », dont quatre d'année que TOUTES les tâches
+          partagent. `formatDeadlineSmart` existait déjà et servait
+          partout ailleurs (ligne desktop, onglet équipe) — cette carte
+          était la seule à ne pas l'utiliser.
+          En retard, le calcul est fait pour le lecteur : « en retard de
+          2 j » au lieu d'une date rouge à soustraire soi-même. */}
+      {/* Maquette 146 : `--color-danger-text`, lisible en 11 px
+          (`text-red-500` mesurait 3,9:1 sur le fond Gris). */}
+      <span className={isOverdue ? 'text-[rgb(var(--color-danger-text))] font-semibold inline-flex items-center gap-0.5' : ''}>
+        {isOverdue && <AlertTriangle size={12} aria-hidden="true" />}
+        {task.deadline
+          ? (isOverdue ? formatOverdueSince(task.deadline) : formatDeadlineSmart(task.deadline))
+          : t('card.noDeadline')}
+        {isOverdue && <span className="sr-only"> {t('card.overdue')}</span>}
+      </span>
+      <span aria-hidden="true">·</span>
+      <span>{formatDuration(task.estimatedTime)}</span>
+      <TaskStateBadges task={task} />
+      {/* Compteur sous-tâches (#12) */}
+      {subtasks.length > 0 && (
+        <>
+          <span aria-hidden="true">·</span>
+          <span title={t('card.subtasksDone')}>
+            ☑ {subtasks.filter(s => s.completed).length}/{subtasks.length}
+          </span>
+        </>
+      )}
+    </div>
+
+  );
+}
+
+/**
+ * Colonne de droite : priorité (P1 et P2 seules teintées, maquette 145),
+ * favori, puis le partage dit par un seul signe (maquette 85) : l'avatar de
+ * qui l'a envoyée, ou les collaborateurs et une invitation en attente.
+ */
+function TaskCardTrailing({ task, collaboratorIds, pendingInvite, friends }: {
+  task: Task;
+  collaboratorIds: string[] | undefined;
+  pendingInvite: boolean;
+  friends: Friend[];
+}) {
+  const { t } = useT('tasks');
+  // Deux initiales pour le rond de la maquette 15. `sharedBy` est un nom
+  // affichable, pas un UUID — il vient déjà résolu du repository.
+  const sharedByInitials = task.sharedBy
+    ? task.sharedBy.trim().split(/\s+/).map(part => part[0]).join('').slice(0, 2).toUpperCase()
+    : '';
+  return (
+    <>
       {task.priority > 0 && (
         <div
           className={`self-center shrink-0 px-1.5 py-0.5 rounded-md font-bold text-caption ${priorityPillClass(task.priority)}`}
@@ -461,15 +603,15 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
       {task.sharedBy && (
         <span className="sr-only">{t('card.receivedFrom', { name: task.sharedBy })}</span>
       )}
-      {!task.sharedBy && task.isCollaborative && (collaboratorsByTask.get(task.id)?.length ?? 0) > 0 && (
+      {!task.sharedBy && task.isCollaborative && (collaboratorIds?.length ?? 0) > 0 && (
         <span className="self-center shrink-0 inline-flex items-center gap-1.5">
           <CollaboratorAvatars
-            collaboratorIds={collaboratorsByTask.get(task.id)}
+            collaboratorIds={collaboratorIds}
             friends={friends}
             size="lg"
             maxVisible={3}
           />
-          {pendingCollaboratorTaskIds.has(task.id) && (
+          {pendingInvite && (
             <span title={t('card.pendingInvite')} className="inline-flex shrink-0">
               <Hourglass
                 size={13}
@@ -480,39 +622,9 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
           )}
         </span>
       )}
-
-      {/* ── Maquette 86 : plus de « ⋯ » au repos ──────────────────────────
-          Il était présent sur CHAQUE ligne — onze cibles permanentes pour
-          une action rare — et occupait la colonne la plus précieuse, celle
-          du pouce droit, en doublant un geste que l'app enseigne elle-même
-          dans son bandeau d'astuce.
-          Les trois chemins vers `TaskActionsSheet` subsistent : appui long,
-          glissement vers la gauche, et le menu de la ligne desktop
-          (`TaskTableDesktop`), où la souris n'a pas d'appui long.
-          ❌ Ne pas le réintroduire « pour la découvrabilité » sans retirer
-          d'abord quelque chose d'autre de cette colonne. */}
-    </motion.div>
-    </div>
-
-    {/* Feuille d'actions — design Spotify (en-tête + liste verticale icône +
-        libellé), déclenchée par long-press, swipe gauche ou le bouton « ⋯ ». */}
-    <TaskActionsSheet
-      open={actionsVisible && !addToListMode}
-      task={task}
-      categoryName={category?.name}
-      categoryColor={categoryColor}
-      onClose={() => setActionsVisible(false)}
-      onEdit={onSelectTask}
-      onToggleBookmark={onToggleBookmark}
-      onOpenCollaborator={onOpenCollaborator}
-      onScheduleTask={() => onScheduleTask(task)}
-      onAddToList={onAddToList}
-      onDeleteTask={onDeleteTask}
-    />
-  </motion.div>
+    </>
   );
-});
-TaskCardInner.displayName = 'TaskCard';
+}
 
 export const TaskCard = React.memo(TaskCardInner, (prevProps, nextProps) => {
   return (
