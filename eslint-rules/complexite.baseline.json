@@ -384,10 +384,6 @@
       "complexity": [27],
       "max-lines-per-function": [340]
     },
-    "src/pages/OrganizationPage.tsx": {
-      "complexity": [107],
-      "max-lines-per-function": [306]
-    },
     "src/pages/SettingsPage.tsx": {
       "complexity": [58],
       "max-lines-per-function": [415]
