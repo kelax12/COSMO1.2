@@ -22,6 +22,9 @@ const input = (over: Partial<CreateTaskInput> = {}): CreateTaskInput => ({
   ...over,
 });
 
+/** La démo horodate à la milliseconde : un écart garantit un ordre de création lisible. */
+const pause = () => new Promise((r) => setTimeout(r, 5));
+
 export function tasksContract(side: string, make: () => Promise<TasksContractContext>, opts?: ContractOptions): void {
   describe(`contrat ITasksRepository · ${side}`, () => {
     let repo: ITasksRepository;
@@ -102,6 +105,67 @@ export function tasksContract(side: string, make: () => Promise<TasksContractCon
       const ghost = crypto.randomUUID();
       expect(await repo.getById(ghost)).toBeNull();
       expect(await rejects(repo.update(ghost, { name: 'fantôme' }))).toBe(true);
+    });
+
+    contractCase(opts, 'un identifiant inconnu : suppression sans effet, cochage et favori refusés', async () => {
+      const ghost = crypto.randomUUID();
+      expect(await rejects(repo.delete(ghost))).toBe(false);
+      expect(await rejects(repo.toggleComplete(ghost))).toBe(true);
+      expect(await rejects(repo.toggleBookmark(ghost))).toBe(true);
+    });
+
+    // Défauts de colonne de `tasks` : `recurrence` 'none', `subtasks` '[]',
+    // `description` NULL. Une tâche créée sans eux se relit pareil des deux côtés.
+    contractCase(opts, 'champs facultatifs absents au create : valeurs par défaut de la base', async () => {
+      const created = await repo.create(input());
+      const read = await repo.getById(created.id);
+      expect({
+        description: read!.description ?? undefined,
+        recurrence: read!.recurrence,
+        subtasks: read!.subtasks,
+        krId: read!.krId ?? undefined,
+        status: read!.status,
+      }).toEqual({ description: undefined, recurrence: 'none', subtasks: [], krId: undefined, status: 'todo' });
+    });
+
+    contractCase(opts, 'getAll et getFiltered rendent la plus récente d’abord', async () => {
+      const ids: string[] = [];
+      for (let i = 0; i < 3; i++) {
+        ids.push((await repo.create(input({ bookmarked: true, priority: 5 }))).id);
+        await pause();
+      }
+      const mine = (list: { id: string }[]) => list.map((t) => t.id).filter((id) => ids.includes(id));
+      const expected = [...ids].reverse();
+      expect(mine(await repo.getAll())).toEqual(expected);
+      expect(mine(await repo.getFiltered({ bookmarked: true }))).toEqual(expected);
+    });
+
+    contractCase(opts, 'getFiltered : favori, état et bornes de priorité, bornes incluses', async () => {
+      const low = await repo.create(input({ priority: 1 }));
+      const high = await repo.create(input({ priority: 4, bookmarked: true }));
+      const done = await repo.create(input({ priority: 4, completed: true }));
+      const has = async (f: Parameters<ITasksRepository['getFiltered']>[0]) => {
+        const got = new Set((await repo.getFiltered(f)).map((t) => t.id));
+        return [low.id, high.id, done.id].map((id) => got.has(id));
+      };
+      expect(await has({ priorityMin: 4 })).toEqual([false, true, true]);
+      expect(await has({ priorityMax: 1 })).toEqual([true, false, false]);
+      expect(await has({ priorityMin: 2, priorityMax: 4, completed: false })).toEqual([false, true, false]);
+      expect(await has({ bookmarked: true })).toEqual([false, true, false]);
+      expect(await has({ completed: true })).toEqual([false, false, true]);
+    });
+
+    contractCase(opts, 'une mise à jour partielle ne touche pas aux autres champs', async () => {
+      const created = await repo.create(input({ priority: 3, estimatedTime: 25, description: 'Garder' }));
+      await repo.update(created.id, { name: 'Seul le nom change' });
+      const read = await repo.getById(created.id);
+      expect([read!.name, read!.priority, read!.estimatedTime, read!.description, deadlineDayKey(read!.deadline)]).toEqual([
+        'Seul le nom change',
+        3,
+        25,
+        'Garder',
+        dayKey(3),
+      ]);
     });
 
     contractCase(opts, 'une priorité au-delà de 5 ou négative est refusée', async () => {

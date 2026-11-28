@@ -62,8 +62,11 @@ export class LocalStorageTasksRepository implements ITasksRepository {
   // READ OPERATIONS (Phase 1)
   // ═══════════════════════════════════════════════════════════════════
 
+  // Ordre de la base (`created_at` puis `id` décroissants), pas celui du
+  // tableau stocké : un « Annuler » remet la tâche en tête du tableau alors
+  // que la base la range à sa date (contrat ARC-01).
   async getAll(): Promise<Task[]> {
-    return this.getTasks();
+    return sortByTaskKeyset(this.getTasks());
   }
 
   /**
@@ -120,7 +123,7 @@ export class LocalStorageTasksRepository implements ITasksRepository {
       tasks = tasks.filter(t => !!t.deadline && deadlineDayKey(t.deadline) >= filters.deadlineAfter!);
     }
 
-    return tasks;
+    return sortByTaskKeyset(tasks);
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -146,6 +149,10 @@ export class LocalStorageTasksRepository implements ITasksRepository {
       completed: synced.completed ?? false,
       isCollaborative: input.isCollaborative ?? false,
       pendingInvites: input.pendingInvites ?? [],
+      // Défauts de colonne de `tasks` (`recurrence` 'none', `subtasks` '[]') :
+      // une tâche créée sans eux se relit pareil des deux côtés.
+      recurrence: input.recurrence ?? 'none',
+      subtasks: input.subtasks ?? [],
     };
     this.saveTasks([newTask, ...tasks]);
     return newTask;
@@ -170,11 +177,10 @@ export class LocalStorageTasksRepository implements ITasksRepository {
   async delete(id: string): Promise<void> {
     const tasks = this.getTasks();
     const filtered = tasks.filter(t => t.id !== id);
-    
-    if (filtered.length === tasks.length) {
-      throw makeApiError('not_found');
-    }
-    
+    // Idempotent, comme le DELETE de la base (0 ligne, pas d'erreur) :
+    // un double clic ou un id déjà supprimé ne lève rien (contrat ARC-01).
+    if (filtered.length === tasks.length) return;
+
     this.saveTasks(filtered);
     // Parité avec le `ON DELETE CASCADE` de la mig. 132 : sans ça, une arête
     // survit à sa tâche et le graphe compte une dépendance qui n'existe plus.

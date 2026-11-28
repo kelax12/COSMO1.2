@@ -79,14 +79,14 @@ describe('lecture & seed', () => {
     expect((await repo.getFiltered({ endBefore: '2026-07-01' })).map((o) => o.id)).toEqual(['o1']);
   });
 
-  it('getPage pagine avec curseur et hasMore', async () => {
+  it('getPage pagine du plus récent au plus ancien (ordre de la base), curseur et hasMore', async () => {
     seedOkrs([okr({ id: 'o1' }), okr({ id: 'o2' }), okr({ id: 'o3' })]);
     const p1 = await repo.getPage({ limit: 2 });
-    expect(p1.data.map((o) => o.id)).toEqual(['o1', 'o2']);
+    expect(p1.data.map((o) => o.id)).toEqual(['o3', 'o2']);
     expect(p1.hasMore).toBe(true);
     expect(p1.nextCursor).toBe('o2');
     const p2 = await repo.getPage({ limit: 2, cursor: 'o2' });
-    expect(p2.data.map((o) => o.id)).toEqual(['o3']);
+    expect(p2.data.map((o) => o.id)).toEqual(['o1']);
     expect(p2.hasMore).toBe(false);
   });
 });
@@ -135,9 +135,10 @@ describe('delete', () => {
     await repo.delete('o1');
     expect((await repo.getAll()).map((o) => o.id)).toEqual(['o2']);
   });
-  it('throw si OKR introuvable', async () => {
+  it('sans effet si OKR introuvable (comme le DELETE de la base)', async () => {
     seedOkrs([okr({ id: 'o1' })]);
-    await expect(repo.delete('absent')).rejects.toThrow();
+    await expect(repo.delete('absent')).resolves.toBeUndefined();
+    expect((await repo.getAll()).map((o) => o.id)).toEqual(['o1']);
   });
 });
 

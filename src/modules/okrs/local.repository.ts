@@ -272,10 +272,8 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
   async delete(id: string): Promise<void> {
     const okrs = this.getOKRs();
     const filtered = okrs.filter(o => o.id !== id);
-
-    if (filtered.length === okrs.length) {
-      throw makeApiError('not_found');
-    }
+    // Idempotent, comme le DELETE de la base (0 ligne, pas d'erreur), contrat ARC-01.
+    if (filtered.length === okrs.length) return;
 
     this.saveOKRs(filtered);
     // En base, `kr_completions.okr_id` cascade depuis `okrs` (mig. 009) : sans
@@ -297,7 +295,8 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
   // ═══════════════════════════════════════════════════════════════════
 
   async getPage(params: PaginationParams = {}): Promise<PaginatedResult<OKR>> {
-    const okrs = this.getOKRs();
+    // Même ordre que la base et que `getAll` : le plus récent d'abord (contrat ARC-01).
+    const okrs = this.newestFirst(this.getOKRs());
     const limit = params.limit ?? DEFAULT_PAGE_SIZE;
     let startIndex = 0;
     if (params.cursor) {

@@ -37,6 +37,7 @@ src/modules/{module}/
   - Démo tenue par les hooks : `notifications` (`organizations/`, lit `localStorage` dans `notifications.ts`, deux fonctions de marquage « lu »).
   - Pas un dépôt : `inbox` (`organizations/inbox.repository.ts`, mapping de la RPC `get_my_org_inbox`).
 - 🔴 Un baril importé pour un TYPE s'importe en `import type` (`npm run check:cycles`, C-103).
+- 🔴 Un nouveau repository à deux modes entre dans la suite de contrat (`src/test/contracts/`, jouée contre la démo ET la base locale sous RLS) : une divergence se corrige, jamais un test par côté → [`docs/TESTING.md`](../../docs/TESTING.md) § Suites de contrat.
 - ✅ Import par zone : Tâches `tasks` `categories` `lists` · Agenda `events` `tasks` · Habitudes `habits` `categories` · OKR `okrs` `kr-completions` · Amis `friends` · Entreprise `organizations` `org-teams` `org-config` `org-reports` `team-projects` `team-okrs` `team-categories` `team-lists` · UI `ui-states` · Dashboard `tasks` `habits` `events` `kr-completions` `okrs` `auth`.
 
 ## Auth

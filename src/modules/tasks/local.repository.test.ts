@@ -65,11 +65,11 @@ describe('écriture', () => {
     await expect(repo.update('absent', { name: 'x' })).rejects.toThrow();
   });
 
-  it('delete supprime / throw si introuvable', async () => {
+  it('delete supprime / sans effet si introuvable (comme le DELETE de la base)', async () => {
     await repo.getAll();
     await repo.delete('t010');
     expect(await repo.getById('t010')).toBeNull();
-    await expect(repo.delete('absent')).rejects.toThrow();
+    await expect(repo.delete('absent')).resolves.toBeUndefined();
   });
 
   it('toggleComplete bascule completed + completedAt', async () => {

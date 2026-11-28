@@ -161,6 +161,28 @@ export function okrsContract(side: string, make: () => Promise<OkrsContractConte
       expect(read && { title: read.title, description: read.description, startDate: read.startDate, endDate: read.endDate }).toEqual(patch);
     });
 
+    contractCase(opts, 'supprimer un objectif inconnu est sans effet', async () => {
+      const kept = await ctx.okrs.create(okrInput([kr()]));
+      expect(await rejects(ctx.okrs.delete(crypto.randomUUID()))).toBe(false);
+      expect(await ctx.okrs.getById(kept.id)).not.toBeNull();
+    });
+
+    contractCase(opts, 'getPage pagine du plus récent au plus ancien, comme getAll', async () => {
+      const a = await ctx.okrs.create(okrInput([kr()]));
+      const b = await ctx.okrs.create(okrInput([kr()]));
+      const c = await ctx.okrs.create(okrInput([kr()]));
+      const first = await ctx.okrs.getPage({ limit: 2 });
+      expect(first.data.map((o) => o.id)).toEqual([c.id, b.id]);
+      expect(first.hasMore).toBe(true);
+      const second = await ctx.okrs.getPage({
+        limit: 2,
+        cursor: first.nextCursor ?? undefined,
+        cursorDate: first.nextCursorDate ?? undefined,
+      });
+      expect(second.data[0]?.id).toBe(a.id);
+      expect((await ctx.okrs.getAll()).slice(0, 3).map((o) => o.id)).toEqual([c.id, b.id, a.id]);
+    });
+
     contractCase(opts, 'modifier un objectif inconnu est refusé', async () => {
       expect(await rejects(ctx.okrs.update(crypto.randomUUID(), { title: 'Fantôme' }))).toBe(true);
     });

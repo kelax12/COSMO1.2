@@ -255,6 +255,37 @@ export function habitsContract(side: string, make: () => Promise<HabitsContractC
       expect(await rejects(repo.deleteHabit(ghost))).toBe(false);
     });
 
+    contractCase(opts, 'une description absente au create se relit absente', async () => {
+      const { description: _omise, ...sans } = input();
+      const created = await repo.createHabit(sans);
+      const read = await find(created.id);
+      expect([read!.description ?? undefined, read!.scheduledDays, read!.completions]).toEqual([undefined, undefined, {}]);
+    });
+
+    contractCase(opts, 'une mise à jour partielle ne touche pas aux autres champs', async () => {
+      const created = await repo.createHabit(input({ estimatedTime: 20, color: '#3B82F6' }));
+      await repo.toggleCompletion(created.id, dayKey(-1));
+      await repo.updateHabit(created.id, { name: 'Seul le nom change' });
+      const read = await find(created.id);
+      expect({
+        name: read!.name,
+        description: read!.description,
+        frequency: read!.frequency,
+        estimatedTime: read!.estimatedTime,
+        color: read!.color,
+        icon: read!.icon,
+        completions: read!.completions,
+      }).toEqual({
+        name: 'Seul le nom change',
+        description: 'Courir autour du parc',
+        frequency: 'daily',
+        estimatedTime: 20,
+        color: '#3B82F6',
+        icon: '🏃',
+        completions: { [dayKey(-1)]: true },
+      });
+    });
+
     contractCase(opts, 'fetchHabits rend la plus récente d’abord', async () => {
       const a = await repo.createHabit(input());
       const b = await repo.createHabit(input());
