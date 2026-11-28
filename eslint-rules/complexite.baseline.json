@@ -290,10 +290,6 @@
     "src/components/task-modal/DesktopCollaboratorsStep.tsx": {
       "max-lines-per-function": [212]
     },
-    "src/components/task-modal/DesktopDetailsStep.tsx": {
-      "complexity": [54],
-      "max-lines-per-function": [431]
-    },
     "src/components/task-modal/TaskDependencyPicker.tsx": {
       "max-lines-per-function": [414]
     },

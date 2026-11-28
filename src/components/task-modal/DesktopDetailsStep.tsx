@@ -3,16 +3,18 @@
 // ═══════════════════════════════════════════════════════════════════
 // Extrait verbatim de TaskModalDesktopBody (bloc `step === 1`). Possède ses
 // propres états locaux de création inline catégorie/liste (propres à cette
-// étape). Tout le reste vient des props.
+// étape). Tout le reste vient des props. Un composant par onglet ; les champs
+// de l'onglet Détails vivent dans `DesktopDetailsFields`.
 import React, { useEffect, useState } from 'react';
-import { X, AlertCircle, Bookmark, Check, ChevronDown, Plus, Minus } from 'lucide-react';
-import { DatePicker } from '@/components/ui/date-picker';
+import { X, Check, ChevronDown, Plus } from 'lucide-react';
 import CategoryField from './CategoryField';
 import SubtaskChecklist from './SubtaskChecklist';
 import TaskStateFields from './TaskStateFields';
 import TaskDependenciesSection from './TaskDependenciesSection';
 import { CreateStateFields, CreateDependenciesField } from './CreateTaskPendingFields';
-import DescriptionField from '@/components/DescriptionField';
+import {
+  TaskNameField, PriorityField, DeadlineField, DurationField, DescriptionSection, BookmarkToggle,
+} from './DesktopDetailsFields';
 import type { useCreateCategory, Category } from '@/modules/categories';
 import type { useCreateList } from '@/modules/lists';
 import { useT } from '@/i18n/useT';
@@ -64,19 +66,231 @@ export interface DesktopDetailsStepProps {
   /** Onglet affiché. « Partager » est rendu par le parent : ici, rien. */
   tab?: DetailsTab;
 }
+/**
+ * Création inline d'une liste (onglet Avancé). L'état vit dans l'étape, pas
+ * dans l'onglet : un nom commencé survit à un changement d'onglet.
+ */
+function useNewListDraft({ listColorOptions, createListMutation, setSelectedListIds, setHasChanges }: Pick<
+  DesktopDetailsStepProps, 'listColorOptions' | 'createListMutation' | 'setSelectedListIds' | 'setHasChanges'
+>) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState('');
+  const [color, setColor] = useState('blue');
+  const reset = () => { setOpen(false); setName(''); setColor('blue'); };
+  const submit = () => {
+    if (!name.trim()) return;
+    createListMutation.mutate(
+      { name: name.trim(), color },
+      {
+        onSuccess: (created) => {
+          setSelectedListIds(prev => [...prev, created.id]);
+          setHasChanges(true);
+          reset();
+        }
+      }
+    );
+  };
+  const cycleColor = () => {
+    const idx = listColorOptions.findIndex(c => c.value === color);
+    setColor(listColorOptions[(idx + 1) % listColorOptions.length].value);
+  };
+  const start = () => { setOpen(true); setName(''); };
+  return { open, name, setName, color, start, submit, reset, cycleColor, pending: createListMutation.isPending };
+}
 
-const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
-  formData, setFormData, handleInputChange,
-  errors, setErrors, okrFields, setHasChanges,
-  dRegister, dClear, dInvalid,
-  categories, createCategoryMutation, listColorOptions,
-  lists, selectedListIds, setSelectedListIds, createListMutation,
-  isCreating, task,
-  showDescription, setShowDescription,
-  tab = 'details',
-}) => {
+type NewListDraft = ReturnType<typeof useNewListDraft>;
+
+/** Champ de création d'une liste : pastille de couleur, nom, Créer, annuler. */
+function NewListInput({ draft, listColorOptions }: { draft: NewListDraft; listColorOptions: DesktopDetailsStepProps['listColorOptions'] }) {
   const { t } = useT('taskModal');
   const { t: tCommon } = useT('common');
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={draft.cycleColor}
+        className="w-6 h-6 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110"
+        style={{ backgroundColor: listColorOptions.find(c => c.value === draft.color)?.color || '#3B82F6' }}
+        title={tCommon('actions.changeColor')}
+      />
+      <input
+        type="text"
+        autoFocus
+        value={draft.name}
+        onChange={(e) => draft.setName(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            draft.submit();
+          } else if (e.key === 'Escape') {
+            draft.reset();
+          }
+        }}
+        placeholder={t('desktop.listNamePlaceholder')}
+        className="flex-1 px-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:border-[rgb(var(--color-accent))] border-[rgb(var(--color-border))]"
+        style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
+      />
+      <button
+        type="button"
+        disabled={!draft.name.trim() || draft.pending}
+        onClick={draft.submit}
+        className="px-3 py-1.5 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-medium disabled:opacity-40 transition-all"
+      >
+        {draft.pending ? t('common.creating') : t('common.create')}
+      </button>
+      <button
+        type="button"
+        onClick={draft.reset}
+        className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+        style={{ color: 'rgb(var(--color-text-secondary))' }}
+      >
+        <X size={14} />
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Onglet Avancé : statut et état (mig. 214), puis les listes affichées
+ * d'emblée, trois par ligne : un clic coche ou décoche, sans menu déroulant à
+ * ouvrir d'abord. Les listes intelligentes se remplissent seules : elles n'y
+ * figurent pas.
+ */
+function AdvancedTab({
+  formData, setFormData, setHasChanges, isCreating, task,
+  lists, listColorOptions, selectedListIds, setSelectedListIds, draft,
+}: Pick<DesktopDetailsStepProps,
+  'formData' | 'setFormData' | 'setHasChanges' | 'isCreating' | 'task'
+  | 'lists' | 'listColorOptions' | 'selectedListIds' | 'setSelectedListIds'
+> & { draft: NewListDraft }) {
+  const { t } = useT('taskModal');
+  return (
+    <div className="space-y-5">
+      {/* Statut et État (mig. 214) — édition : enregistrés à chaque choix. */}
+      {!isCreating && task
+        ? <TaskStateFields taskId={task.id} />
+        : <CreateStateFields form={formData} setForm={setFormData} setHasChanges={setHasChanges} />}
+      <div>
+        <p className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+          {t('fields.addToList')}
+        </p>
+        <div className="grid grid-cols-3 gap-2">
+          {lists.filter(l => l.type !== 'smart').map(list => {
+            const listColorHex = listColorOptions.find(c => c.value === list.color)?.color || list.color || '#3B82F6';
+            const checked = selectedListIds.includes(list.id);
+            return (
+              <button
+                key={list.id}
+                type="button"
+                aria-pressed={checked}
+                onClick={() => {
+                  setSelectedListIds(checked
+                    ? selectedListIds.filter(id => id !== list.id)
+                    : [...selectedListIds, list.id]);
+                  setHasChanges(true);
+                }}
+                className={`flex items-center gap-2 min-w-0 px-3 py-2 rounded-lg border text-sm font-medium text-left transition-all ${
+                  checked
+                    ? 'border-[rgb(var(--color-accent))] bg-[rgb(var(--color-accent-solid))]/10'
+                    : 'border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-border-strong))] bg-[rgb(var(--color-surface))]'
+                }`}
+                style={{ color: 'rgb(var(--color-text-primary))' }}
+              >
+                <span
+                  className="w-4 h-4 rounded-full flex items-center justify-center shrink-0"
+                  style={{ backgroundColor: listColorHex }}
+                >
+                  {checked && <Check size={10} className="text-white" strokeWidth={3} aria-hidden="true" />}
+                </span>
+                <span className="truncate">{list.name}</span>
+              </button>
+            );
+          })}
+          {!draft.open && (
+            <button
+              type="button"
+              onClick={draft.start}
+              className="flex items-center gap-2 min-w-0 px-3 py-2 rounded-lg border border-dashed text-sm font-medium text-blue-600 dark:text-blue-300 border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-border-strong))] hover:bg-[rgb(var(--color-accent-solid))]/10 transition-colors"
+            >
+              <Plus size={15} className="shrink-0" />
+              <span className="truncate">{t('fields.createList')}</span>
+            </button>
+          )}
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2 sm:gap-4 items-center">
+        {draft.open && <NewListInput draft={draft} listColorOptions={listColorOptions} />}
+      </div>
+    </div>
+  );
+}
+
+/** Onglet Détails : le nom, puis les champs facultatifs, repliés en création (#2). */
+function DetailsTab({ showAllFields, onShowAllFields, ...p }: Omit<DesktopDetailsStepProps, 'tab'> & {
+  showAllFields: boolean;
+  onShowAllFields: () => void;
+}) {
+  const { t } = useT('taskModal');
+  return (
+    <div className="space-y-5">
+      <TaskNameField {...p} />
+
+      {/* Formulaire minimal (#2) : en création, seuls le nom + ce
+          toggle sont visibles. Les champs facultatifs (priorité,
+          catégorie, échéance, durée…) se déplient à la demande —
+          seul le nom est requis (cf. validation.ts). */}
+      {p.isCreating && !showAllFields && (
+        <button
+          type="button"
+          data-guide-id="perso-task-form-more"
+          onClick={onShowAllFields}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-dashed text-sm font-medium transition-all hover:border-[rgb(var(--color-border-strong))] hover:bg-[rgb(var(--color-accent-solid-hover))]/5 border-[rgb(var(--color-border))]"
+          style={{ color: 'rgb(var(--color-text-secondary))' }}
+        >
+          <ChevronDown size={16} aria-hidden="true" />
+          {t('fields.moreOptions')}
+        </button>
+      )}
+
+      {showAllFields && (<>
+        {/* Priority and Category */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <PriorityField {...p} />
+          <div ref={p.dRegister('category')}>
+            <CategoryField
+              value={p.formData.category}
+              onChange={(id) => p.handleInputChange('category', id)}
+              categories={p.categories}
+              colorOptions={p.listColorOptions}
+              createCategory={(input, options) => p.createCategoryMutation.mutate(input, options)}
+              isCreating={p.createCategoryMutation.isPending}
+              error={p.errors.category}
+              shaking={p.dInvalid('category')}
+              fromOkr={!!p.okrFields.category}
+            />
+          </div>
+        </div>
+
+        {/* Deadline and Estimated Time */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <DeadlineField {...p} />
+          <DurationField {...p} />
+        </div>
+
+        {/* Sélecteur « Contribue à un résultat clé » retiré à la
+            demande utilisateur — le lien tâche↔KR reste géré via
+            l'auto-liaison depuis la page OKR (formData.krId préservé). */}
+
+        <DescriptionSection {...p} />
+
+        <BookmarkToggle bookmarked={p.formData.bookmarked} onToggle={() => p.handleInputChange('bookmarked', !p.formData.bookmarked)} />
+      </>)}
+    </div>
+  );
+}
+
+const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({ tab = 'details', ...props }) => {
+  const { formData, setFormData, setHasChanges, isCreating, task } = props;
   // Formulaire minimal (#2) : replié en création, toujours déplié en édition.
   const [showAllFields, setShowAllFields] = useState(!isCreating);
 
@@ -89,150 +303,11 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
   useEffect(() => {
     if (!isCreating) setShowAllFields(true);
   }, [isCreating]);
-  const [showNewListInput, setShowNewListInput] = useState(false);
-  const [newListName, setNewListName] = useState('');
-  const [newListColor, setNewListColor] = useState('blue');
+  const newListDraft = useNewListDraft(props);
 
   if (tab === 'share') return null;
 
-  if (tab === 'advanced') {
-    return (
-      <div className="space-y-5">
-        {/* Statut et État (mig. 214) — édition : enregistrés à chaque choix. */}
-        {!isCreating && task
-          ? <TaskStateFields taskId={task.id} />
-          : <CreateStateFields form={formData} setForm={setFormData} setHasChanges={setHasChanges} />}
-        {/* Listes affichées d'emblée, trois par ligne : un clic coche ou
-            décoche, sans menu déroulant à ouvrir d'abord. Les listes
-            intelligentes se remplissent seules : elles n'y figurent pas. */}
-        <div>
-          <p className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-            {t('fields.addToList')}
-          </p>
-          <div className="grid grid-cols-3 gap-2">
-            {lists.filter(l => l.type !== 'smart').map(list => {
-              const listColorHex = listColorOptions.find(c => c.value === list.color)?.color || list.color || '#3B82F6';
-              const checked = selectedListIds.includes(list.id);
-              return (
-                <button
-                  key={list.id}
-                  type="button"
-                  aria-pressed={checked}
-                  onClick={() => {
-                    setSelectedListIds(checked
-                      ? selectedListIds.filter(id => id !== list.id)
-                      : [...selectedListIds, list.id]);
-                    setHasChanges(true);
-                  }}
-                  className={`flex items-center gap-2 min-w-0 px-3 py-2 rounded-lg border text-sm font-medium text-left transition-all ${
-                    checked
-                      ? 'border-[rgb(var(--color-accent))] bg-[rgb(var(--color-accent-solid))]/10'
-                      : 'border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-border-strong))] bg-[rgb(var(--color-surface))]'
-                  }`}
-                  style={{ color: 'rgb(var(--color-text-primary))' }}
-                >
-                  <span
-                    className="w-4 h-4 rounded-full flex items-center justify-center shrink-0"
-                    style={{ backgroundColor: listColorHex }}
-                  >
-                    {checked && <Check size={10} className="text-white" strokeWidth={3} aria-hidden="true" />}
-                  </span>
-                  <span className="truncate">{list.name}</span>
-                </button>
-              );
-            })}
-            {!showNewListInput && (
-              <button
-                type="button"
-                onClick={() => { setShowNewListInput(true); setNewListName(''); }}
-                className="flex items-center gap-2 min-w-0 px-3 py-2 rounded-lg border border-dashed text-sm font-medium text-blue-600 dark:text-blue-300 border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-border-strong))] hover:bg-[rgb(var(--color-accent-solid))]/10 transition-colors"
-              >
-                <Plus size={15} className="shrink-0" />
-                <span className="truncate">{t('fields.createList')}</span>
-              </button>
-            )}
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2 sm:gap-4 items-center">
-                      {showNewListInput && (
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const idx = listColorOptions.findIndex(c => c.value === newListColor);
-                              setNewListColor(listColorOptions[(idx + 1) % listColorOptions.length].value);
-                            }}
-                            className="w-6 h-6 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110"
-                            style={{ backgroundColor: listColorOptions.find(c => c.value === newListColor)?.color || '#3B82F6' }}
-                            title={tCommon('actions.changeColor')}
-                          />
-                          <input
-                            type="text"
-                            autoFocus
-                            value={newListName}
-                            onChange={(e) => setNewListName(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                if (!newListName.trim()) return;
-                                createListMutation.mutate(
-                                  { name: newListName.trim(), color: newListColor },
-                                  {
-                                    onSuccess: (created) => {
-                                      setSelectedListIds(prev => [...prev, created.id]);
-                                      setHasChanges(true);
-                                      setShowNewListInput(false);
-                                      setNewListName('');
-                                      setNewListColor('blue');
-                                    }
-                                  }
-                                );
-                              } else if (e.key === 'Escape') {
-                                setShowNewListInput(false);
-                                setNewListName('');
-                                setNewListColor('blue');
-                              }
-                            }}
-                            placeholder={t('desktop.listNamePlaceholder')}
-                            className="flex-1 px-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:border-[rgb(var(--color-accent))] border-[rgb(var(--color-border))]"
-                            style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
-                          />
-                          <button
-                            type="button"
-                            disabled={!newListName.trim() || createListMutation.isPending}
-                            onClick={() => {
-                              if (!newListName.trim()) return;
-                              createListMutation.mutate(
-                                { name: newListName.trim(), color: newListColor },
-                                {
-                                  onSuccess: (created) => {
-                                    setSelectedListIds(prev => [...prev, created.id]);
-                                    setHasChanges(true);
-                                    setShowNewListInput(false);
-                                    setNewListName('');
-                                    setNewListColor('blue');
-                                  }
-                                }
-                              );
-                            }}
-                            className="px-3 py-1.5 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-medium disabled:opacity-40 transition-all"
-                          >
-                            {createListMutation.isPending ? t('common.creating') : t('common.create')}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => { setShowNewListInput(false); setNewListName(''); setNewListColor('blue'); }}
-                            className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                            style={{ color: 'rgb(var(--color-text-secondary))' }}
-                          >
-                            <X size={14} />
-                          </button>
-                        </div>
-                      )}
-        </div>
-      </div>
-    );
-  }
+  if (tab === 'advanced') return <AdvancedTab {...props} draft={newListDraft} />;
 
   if (tab === 'subtasks') {
     return (
@@ -260,275 +335,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
     );
   }
 
-  return (
-                <div className="space-y-5">
-
-                  {/* Task Name */}
-                  <div ref={dRegister('name')} data-guide-id="perso-task-form-name">
-                    <label htmlFor="task-name" className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                      {t('form.nameRequired')}
-                    </label>
-                    <input
-                      id="task-name"
-                      type="text"
-                      value={formData.name}
-                      onChange={(e) => { handleInputChange('name', e.target.value); dClear('name'); }}
-                      className={`w-full px-[0.875425rem] h-[2.626275rem] border rounded-lg focus:outline-none hover:border-[rgb(var(--color-border-strong))] focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] transition-all text-[0.875425rem] ${
-                        errors.name || dInvalid('name') ? 'border-[rgb(var(--color-error))]' : 'border-[rgb(var(--color-border))]'
-                      } ${okrFields.name ? 'bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : ''}`}
-                      style={{
-                        backgroundColor: okrFields.name ? undefined : 'rgb(var(--color-surface))',
-                        color: 'rgb(var(--color-text-primary))',
-                        borderColor: errors.name || dInvalid('name') ? '#ef4444' : (okrFields.name ? undefined : undefined)
-                      }}
-                      placeholder={t('desktop.namePlaceholder')}
-                      aria-describedby={errors.name ? 'name-error' : undefined}
-                      aria-invalid={!!errors.name}
-                    />
-
-                    {errors.name &&
-                      <div id="name-error" className="flex items-center gap-2 mt-1 text-red-600 dark:text-red-400 text-sm" role="alert">
-                        <AlertCircle size={14} aria-hidden="true" />
-                        {errors.name}
-                      </div>
-                    }
-                  </div>
-
-                  {/* Formulaire minimal (#2) : en création, seuls le nom + ce
-                      toggle sont visibles. Les champs facultatifs (priorité,
-                      catégorie, échéance, durée…) se déplient à la demande —
-                      seul le nom est requis (cf. validation.ts). */}
-                  {isCreating && !showAllFields && (
-                    <button
-                      type="button"
-                      data-guide-id="perso-task-form-more"
-                      onClick={() => setShowAllFields(true)}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-dashed text-sm font-medium transition-all hover:border-[rgb(var(--color-border-strong))] hover:bg-[rgb(var(--color-accent-solid-hover))]/5 border-[rgb(var(--color-border))]"
-                      style={{ color: 'rgb(var(--color-text-secondary))' }}
-                    >
-                      <ChevronDown size={16} aria-hidden="true" />
-                      {t('fields.moreOptions')}
-                    </button>
-                  )}
-
-                  {showAllFields && (<>
-                  {/* Priority and Category */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div ref={dRegister('priority')} data-guide-id="perso-task-form-priority">
-                        <label htmlFor="task-priority" className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                          {t('fields.priority')}
-                        </label>
-                        <div className="relative">
-                          <select
-                            id="task-priority"
-                            value={formData.priority}
-                            onChange={(e) => { handleInputChange('priority', Number(e.target.value)); dClear('priority'); }}
-                            className={`w-full px-[0.875425rem] pr-12 h-[2.626275rem] border rounded-lg focus:outline-none hover:border-[rgb(var(--color-border-strong))] focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] transition-all text-[0.875425rem] appearance-none cursor-pointer ${
-                              dInvalid('priority') ? 'border-[rgb(var(--color-error))]' : 'border-[rgb(var(--color-border))]'
-                            }`}
-                            style={{
-                              backgroundColor: 'rgb(var(--color-surface))',
-                              color: formData.priority === 0 ? 'rgb(var(--color-text-muted))' : 'rgb(var(--color-text-primary))',
-                              borderColor: dInvalid('priority') ? '#ef4444' : undefined,
-                            }}
-                            aria-label={t('fields.prioritySelect')}
-                          >
-                            <option value="0" disabled hidden>{t('fields.priorityPlaceholder')}</option>
-                            <option value="1" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('fields.priority1')}</option>
-                            <option value="2" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('fields.priority2')}</option>
-                            <option value="3" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('fields.priority3')}</option>
-                            <option value="4" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('fields.priority4')}</option>
-                            <option value="5" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('fields.priority5')}</option>
-                          </select>
-                          <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-blue-500 pointer-events-none" />
-                        </div>
-                        {errors.priority &&
-                          <div className="flex items-center gap-2 mt-1 text-red-600 dark:text-red-400 text-sm" role="alert">
-                            <AlertCircle size={14} aria-hidden="true" />
-                            {errors.priority}
-                          </div>
-                        }
-                    </div>
-
-                    <div ref={dRegister('category')}>
-                      <CategoryField
-                        value={formData.category}
-                        onChange={(id) => handleInputChange('category', id)}
-                        categories={categories}
-                        colorOptions={listColorOptions}
-                        createCategory={(input, options) => createCategoryMutation.mutate(input, options)}
-                        isCreating={createCategoryMutation.isPending}
-                        error={errors.category}
-                        shaking={dInvalid('category')}
-                        fromOkr={!!okrFields.category}
-                      />
-                      </div>
-                  </div>
-
-                  {/* Deadline and Estimated Time */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div ref={dRegister('deadline')} data-guide-id="perso-task-form-deadline">
-                        <label htmlFor="task-deadline" className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                          {t('fields.deadline')} <span className="normal-case font-normal opacity-60">{t('common.optional')}</span>
-                        </label>
-                        <DatePicker
-                          value={formData.deadline}
-                          onChange={(date) => handleInputChange('deadline', date)}
-                          placeholder={t('fields.deadlinePlaceholder')}
-                          className={`h-[2.626275rem] w-full ${errors.deadline || dInvalid('deadline') ? 'border-[rgb(var(--color-error))]' : ''}`}
-                        />
-
-                        {errors.deadline &&
-                          <div id="deadline-error" className="flex items-center gap-2 mt-1 text-red-600 dark:text-red-400 text-sm" role="alert">
-                            <AlertCircle size={14} aria-hidden="true" />
-                            {errors.deadline}
-                          </div>
-                        }
-
-                        {/* Récurrence (#26) — visible dès qu'une échéance est posée */}
-                        {formData.deadline && (
-                          <div className="mt-2">
-                            <label htmlFor="task-recurrence" className="sr-only">{t('fields.recurrence')}</label>
-                            <select
-                              id="task-recurrence"
-                              value={formData.recurrence}
-                              onChange={(e) => handleInputChange('recurrence', e.target.value)}
-                              className="w-full h-10 px-3 border rounded-lg text-sm focus:outline-none hover:border-[rgb(var(--color-border-strong))] focus:border-[rgb(var(--color-accent))] transition-all"
-                              style={{
-                                backgroundColor: 'rgb(var(--color-surface))',
-                                color: 'rgb(var(--color-text-primary))',
-                                borderColor: 'rgb(var(--color-border))',
-                              }}
-                            >
-                              <option value="none">{t('fields.recurrenceNone')}</option>
-                              <option value="daily">{t('fields.recurrenceDaily')}</option>
-                              <option value="weekly">{t('fields.recurrenceWeekly')}</option>
-                              <option value="monthly">{t('fields.recurrenceMonthly')}</option>
-                            </select>
-                          </div>
-                        )}
-                      </div>
-
-                      <div>
-                        <label htmlFor="task-time" className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                          {t('fields.durationMin')} <span className="normal-case font-normal opacity-60">{t('common.optional')}</span>
-                        </label>
-                          <div className="flex items-stretch gap-2">
-                            <input
-                              id="task-time"
-                              type="number"
-                              value={formData.estimatedTime === 0 ? '' : formData.estimatedTime}
-                              onChange={(e) => handleInputChange('estimatedTime', e.target.value === '' ? '' : Number(e.target.value))}
-                              placeholder={t('desktop.minuteEstimate')}
-                              className={`flex-1 min-w-0 px-[0.875425rem] h-[2.626275rem] border rounded-lg focus:outline-none hover:border-[rgb(var(--color-border-strong))] focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] transition-all text-[0.875425rem] ${
-                                errors.estimatedTime ? 'border-[rgb(var(--color-error))]' : 'border-[rgb(var(--color-border))]'
-                              } ${okrFields.estimatedTime ? 'bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : ''}`}
-                              style={{
-                                backgroundColor: okrFields.estimatedTime ? undefined : 'rgb(var(--color-surface))',
-                                color: 'rgb(var(--color-text-primary))',
-                                borderColor: errors.estimatedTime ? 'rgb(var(--color-error))' : (okrFields.estimatedTime ? undefined : undefined)
-                              }}
-                              aria-describedby={errors.estimatedTime ? 'time-error' : undefined}
-                              aria-invalid={!!errors.estimatedTime}
-                            />
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setFormData((prev) => {
-                                  const cur = typeof prev.estimatedTime === 'number' ? prev.estimatedTime : 0;
-                                  return { ...prev, estimatedTime: Math.max(0, cur - 5) };
-                                });
-                                if (errors.estimatedTime) setErrors((prev) => ({ ...prev, estimatedTime: '' }));
-                              }}
-                              className="w-12 h-12 flex items-center justify-center border rounded-lg hover:border-[rgb(var(--color-border-strong))] transition-colors shrink-0"
-                              style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))', backgroundColor: 'rgb(var(--color-surface))' }}
-                              aria-label={t('fields.decrease5')}
-                            >
-                              <Minus size={18} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setFormData((prev) => {
-                                  const cur = typeof prev.estimatedTime === 'number' ? prev.estimatedTime : 0;
-                                  return { ...prev, estimatedTime: cur + 5 };
-                                });
-                                if (errors.estimatedTime) setErrors((prev) => ({ ...prev, estimatedTime: '' }));
-                              }}
-                              className="w-12 h-12 flex items-center justify-center border rounded-lg hover:border-[rgb(var(--color-border-strong))] transition-colors shrink-0"
-                              style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))', backgroundColor: 'rgb(var(--color-surface))' }}
-                              aria-label={t('fields.increase5')}
-                            >
-                              <Plus size={18} />
-                            </button>
-                          </div>
-
-                      {errors.estimatedTime &&
-                        <div id="time-error" className="flex items-center gap-2 mt-1 text-red-600 dark:text-red-400 text-sm" role="alert">
-                          <AlertCircle size={14} aria-hidden="true" />
-                          {errors.estimatedTime}
-                        </div>
-                      }
-                    </div>
-                  </div>
-
-                  {/* Sélecteur « Contribue à un résultat clé » retiré à la
-                      demande utilisateur — le lien tâche↔KR reste géré via
-                      l'auto-liaison depuis la page OKR (formData.krId préservé). */}
-
-                  {/* Description — masquée par défaut pour épurer l'UI (même
-                      système que EventModal, cf. docs/UI-PATTERNS.md). Visible
-                      d'emblée seulement si la tâche a déjà une description. */}
-                  {showDescription ? (
-                    <div>
-                      <label htmlFor="task-description" className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                        {t('fields.description')} <span className="normal-case font-normal opacity-60">{t('common.optional')}</span>
-                      </label>
-                      <DescriptionField
-                        id="task-description"
-                        value={formData.description}
-                        onChange={(value) => handleInputChange('description', value)}
-                        rows={3}
-                        autoFocus={!formData.description}
-                        placeholder={t('fields.descriptionPlaceholder')}
-                        className="w-full px-[0.875425rem] py-3 border rounded-lg focus:outline-none hover:border-[rgb(var(--color-border-strong))] focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] transition-all text-[0.875425rem] resize-none border-[rgb(var(--color-border))]"
-                        style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
-                      />
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setShowDescription(true)}
-                      className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded px-1 -mx-1"
-                    >
-                      {t('form.addDescription')}
-                    </button>
-                  )}
-
-                  {/* Favori — les listes sont dans « Options avancées ». */}
-                  <div className="flex flex-wrap gap-2 sm:gap-4 items-center">
-                      <button
-                        type="button"
-                        onClick={() => handleInputChange('bookmarked', !formData.bookmarked)}
-                        aria-label={formData.bookmarked ? t('form.bookmarkRemove') : t('form.bookmarkAdd')}
-                        className={`p-2.5 rounded-lg border transition-all ${
-                          formData.bookmarked
-                            ? 'bg-yellow-500/15 border-yellow-500/40'
-                            : 'border-[rgb(var(--color-border))] hover:border-yellow-400/50 hover:bg-yellow-500/10'
-                        }`}
-                        style={!formData.bookmarked ? { backgroundColor: 'rgb(var(--color-hover))' } : {}}
-                      >
-                        <Bookmark
-                          size={20}
-                          className={formData.bookmarked ? 'text-yellow-500' : 'text-yellow-500/60'}
-                          fill={formData.bookmarked ? 'currentColor' : 'none'}
-                        />
-                      </button>
-
-                  </div>
-                  </>)}
-                </div>
-  );
+  return <DetailsTab {...props} showAllFields={showAllFields} onShowAllFields={() => setShowAllFields(true)} />;
 };
 
 export default DesktopDetailsStep;
