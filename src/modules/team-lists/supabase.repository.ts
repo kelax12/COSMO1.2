@@ -14,6 +14,7 @@ import { warnIfTruncated } from '@/lib/pagination.warning';
 import type { SmartRulePreset } from '@/modules/lists/types';
 import type { ITeamListsRepository } from './repository';
 import type { TeamList, CreateTeamListInput, UpdateTeamListInput } from './types';
+import type { DbPatch } from '@/lib/db-contract';
 
 interface ListRow {
   id: string;
@@ -98,7 +99,7 @@ export class SupabaseTeamListsRepository implements ITeamListsRepository {
 
   async updateList(listId: string, input: UpdateTeamListInput): Promise<void> {
     // Whitelist explicite : jamais org_id ni created_by depuis le client.
-    const patch: Record<string, unknown> = {};
+    const patch: DbPatch<'team_lists'> = {};
     if (input.name !== undefined) patch.name = input.name.trim();
     if (input.color !== undefined) patch.color = input.color;
     if (input.position !== undefined) patch.position = input.position;

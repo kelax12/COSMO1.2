@@ -3,16 +3,14 @@ import { getCurrentUser } from '@/lib/auth-user';
 import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { ITasksRepository, ToggleCompleteResult, type TaskPageParams } from './repository';
 import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskDependency } from './types';
-import { TaskRow, TaskDbInput, mapTaskFromDb, mapTaskToDb, nextOccurrenceInstant } from './mappers';
+import { TaskRow, mapTaskFromDb, mapTaskToDb, nextOccurrenceInstant } from './mappers';
+import { asInsert, fromJson, type DbInsert } from '@/lib/db-contract';
 import { PaginatedResult, DEFAULT_PAGE_SIZE, assertValidCursor } from '@/lib/pagination.types';
 import { fetchAllByCursor } from '@/lib/fetch-all-pages';
 import {
   type TaskQuery, type TaskCursor, isEmptyTaskQuery, wantsCompleted, escapeLikePattern, assertSupportedTaskQuery,
 } from './task-query';
 import type { CreateOptions } from '@/lib/restore-id';
-
-/** Fields the client is allowed to set on insert (user_id is added server-side from auth.uid()). */
-type TaskDbCreateInput = Omit<TaskDbInput, 'user_id'> & { user_id: string };
 
 /**
  * Colonnes minimales pour les lectures de LISTE (audit scalabilité — réduction
@@ -298,11 +296,11 @@ export class SupabaseTasksRepository implements ITasksRepository {
     // c'est un second argument, reserve aux « Annuler » (R-08). La
     // whitelist `mapToDb` et le `user_id` pose depuis la session sont
     // inchanges.
-    const dbInput: TaskDbCreateInput = {
+    const dbInput = asInsert<'tasks'>({
       ...mapTaskToDb(input),
       user_id: user.id,
       ...(options?.restoreId ? { id: options.restoreId } : {}),
-    };
+    });
 
     const { data, error } = await supabase
       .from('tasks')
@@ -356,10 +354,11 @@ export class SupabaseTasksRepository implements ITasksRepository {
     // (mig. 251) ramène au même jour quel que soit le fuseau réglé.
     const { data, error } = await supabase.rpc('toggle_task_complete_v2', {
       p_task_id: id,
-      p_next_deadline: nextDeadline ? nextOccurrenceInstant(nextDeadline) : null,
+      // Sans échéance suivante, l'argument est omis : `DEFAULT NULL` côté SQL.
+      ...(nextDeadline ? { p_next_deadline: nextOccurrenceInstant(nextDeadline) } : {}),
     });
     if (error) throw normalizeApiError(error);
-    const payload = data as { task: TaskRow; spawned: TaskRow | null };
+    const payload = fromJson<{ task: TaskRow; spawned: TaskRow | null }>(data);
     return {
       task: mapTaskFromDb(payload.task),
       spawned: payload.spawned ? mapTaskFromDb(payload.spawned) : null,
@@ -372,7 +371,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
       p_task_id: id,
     });
     if (error) throw normalizeApiError(error);
-    return mapTaskFromDb(data as TaskRow);
+    return mapTaskFromDb(data);
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -414,7 +413,9 @@ export class SupabaseTasksRepository implements ITasksRepository {
     if (!supabase) throw new Error('Supabase not configured');
     const { error } = await supabase
       .from('task_dependencies')
-      .insert([{ task_id: taskId, depends_on_id: dependsOnId }]);
+      // `user_id` est obligatoire au schéma mais posé par le trigger
+      // `validate_task_dependency` : la ligne envoyée ne le porte jamais.
+      .insert([{ task_id: taskId, depends_on_id: dependsOnId } as DbInsert<'task_dependencies'>]);
 
     if (error) throw normalizeApiError(error);
   }

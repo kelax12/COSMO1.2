@@ -19,6 +19,7 @@ import {
   SyncTeamKRInput,
   TrashedTeamOKR,
 } from './types';
+import type { DbPatch } from '@/lib/db-contract';
 
 interface OkrRow {
   id: string;
@@ -270,7 +271,7 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
 
   async update(okrId: string, input: UpdateTeamOKRInput): Promise<void> {
     if (!supabase) throw new Error('Supabase not configured');
-    const patch: Record<string, unknown> = {};
+    const patch: DbPatch<'team_okrs'> = {};
     if (input.title !== undefined) patch.title = input.title;
     if (input.description !== undefined) patch.description = input.description || null;
     if (input.categoryId !== undefined) patch.category_id = input.categoryId;
@@ -340,7 +341,7 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
 
   async updateKeyResult(krId: string, input: UpdateTeamKRInput): Promise<void> {
     if (!supabase) throw new Error('Supabase not configured');
-    const patch: Record<string, unknown> = {};
+    const patch: DbPatch<'team_key_results'> = {};
     if (input.title !== undefined) patch.title = input.title;
     if (input.currentValue !== undefined) patch.current_value = input.currentValue;
     if (input.targetValue !== undefined && input.targetValue > 0) patch.target_value = input.targetValue;

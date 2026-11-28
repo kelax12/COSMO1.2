@@ -53,6 +53,7 @@ import {
   type SubtaskRow,
   type ActivityRow,
 } from './supabase.mappers';
+import type { DbPatch } from '@/lib/db-contract';
 
 export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
   // ─── Projets ───────────────────────────────────────────────────────
@@ -174,7 +175,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
   async updateProject(projectId: string, input: UpdateTeamProjectInput): Promise<TeamProject> {
     if (!supabase) throw new Error('Supabase not configured');
     // Whitelist explicite — jamais org_id/created_by (mass-assignment V1).
-    const patch: Record<string, unknown> = {};
+    const patch: DbPatch<'team_projects'> = {};
     if (input.name !== undefined) patch.name = input.name;
     if (input.color !== undefined) patch.color = input.color;
     if (input.teamId !== undefined) patch.team_id = input.teamId;
@@ -278,7 +279,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
   async updateTask(taskId: string, input: UpdateTeamTaskInput): Promise<TeamTask> {
     if (!supabase) throw new Error('Supabase not configured');
     // Whitelist champ-par-champ — jamais org_id/created_by (mass-assignment V1).
-    const patch: Record<string, unknown> = {};
+    const patch: DbPatch<'team_tasks'> = {};
     if (input.name !== undefined) patch.name = input.name;
     if (input.description !== undefined) patch.description = input.description || null;
     if (input.priority !== undefined) patch.priority = input.priority;
@@ -442,7 +443,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
   async updateSubtask(subtaskId: string, input: UpdateTeamSubtaskInput): Promise<TeamSubtask> {
     if (!supabase) throw new Error('Supabase not configured');
     // Whitelist champ-par-champ — jamais task_id ni created_by (mass-assignment).
-    const patch: Record<string, unknown> = {};
+    const patch: DbPatch<'team_task_subtasks'> = {};
     if (input.title !== undefined) patch.title = input.title;
     if (input.completed !== undefined) patch.completed = input.completed;
     if (input.position !== undefined) patch.position = input.position;

@@ -5,59 +5,46 @@
 // added server-side in the repository from `auth.getUser()`.
 // ═══════════════════════════════════════════════════════════════════
 import { Task, Subtask, TaskRecurrence, TaskStatus, TaskHealth } from './types';
-import type { ColumnsExist, DbInsert, DbRow, Verified } from '@/lib/db-contract';
+import { fromJson, toJson } from '@/lib/db-contract';
+import type { ColumnsExist, DbPatch, DbRow, Json, Verified } from '@/lib/db-contract';
 import { deadlineDayKey } from '@/lib/deadline';
 
 /** Supabase DB row type for the `tasks` table (snake_case). */
 export interface TaskRow {
   id: string;
   name: string;
-  description?: string;
+  description?: string | null;
   priority: number;
   // Depuis la mig. 145 : NULL en base = aucune categorie.
   category: string | null;
   /** Échéance : un jour (mig. 251), NULL = aucune. Seule colonne d'échéance lue et écrite (DAT-01). */
   due_date?: string | null;
   estimated_time: number;
-  created_at?: string;
-  updated_at?: string;
+  created_at?: string | null;
+  updated_at?: string | null;
   bookmarked?: boolean;
   completed?: boolean;
-  completed_at?: string;
-  subtasks?: Subtask[];
+  completed_at?: string | null;
+  /** jsonb : `Subtask[]`, lu par `fromJson`. */
+  subtasks?: Json;
   kr_id?: string | null;
   recurrence?: string | null;
   recurrence_parent_id?: string | null;
   is_collaborative?: boolean;
-  pending_invites?: string[];
-  collaborator_validations?: Record<string, boolean>;
+  pending_invites?: string[] | null;
+  /** jsonb : `Record<string, boolean>`, lu par `fromJson`. */
+  collaborator_validations?: Json | null;
   user_id?: string;
   // Mig. 214 : absents d'une ligne servie avant la migration.
   status?: string | null;
   health?: string | null;
 }
 
-/** DB input type for insert/update operations (snake_case). */
-export interface TaskDbInput {
-  name?: string;
-  description?: string;
-  priority?: number;
-  category?: string | null;
-  due_date?: string | null;
-  estimated_time?: number;
-  bookmarked?: boolean;
-  completed?: boolean;
-  completed_at?: string;
-  subtasks?: Subtask[];
-  kr_id?: string | null;
-  recurrence?: string;
-  is_collaborative?: boolean;
-  pending_invites?: string[];
-  collaborator_validations?: Record<string, boolean>;
-  user_id?: string;
-  status?: string;
-  health?: string | null;
-}
+/**
+ * Ce que `mapTaskToDb` émet : les colonnes du schéma, sans `id` ni `user_id`
+ * (faille V1, rendue impossible à la compilation par `DbPatch`).
+ */
+export type TaskDbInput = DbPatch<'tasks'>;
 
 export function mapTaskFromDb(row: TaskRow): Task {
   return {
@@ -72,12 +59,12 @@ export function mapTaskFromDb(row: TaskRow): Task {
     category: row.category ?? '',
     deadline: row.due_date ?? '',
     estimatedTime: row.estimated_time,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    createdAt: row.created_at ?? undefined,
+    updatedAt: row.updated_at ?? undefined,
     bookmarked: row.bookmarked ?? false,
     completed: row.completed ?? false,
     completedAt: row.completed_at ?? undefined,
-    subtasks: row.subtasks || [],
+    subtasks: fromJson<Subtask[] | null>(row.subtasks) || [],
     krId: row.kr_id ?? undefined,
     recurrence: (row.recurrence as TaskRecurrence | null) ?? 'none',
     // Écrit par le serveur uniquement (mig. 086) — `mapTaskToDb` étant une
@@ -86,7 +73,7 @@ export function mapTaskFromDb(row: TaskRow): Task {
     recurrenceParentId: row.recurrence_parent_id ?? undefined,
     isCollaborative: row.is_collaborative ?? false,
     pendingInvites: row.pending_invites || [],
-    collaboratorValidations: row.collaborator_validations || {},
+    collaboratorValidations: fromJson<Record<string, boolean> | null>(row.collaborator_validations) || {},
     userId: row.user_id,
     // Mig. 214. 🔴 On ne DÉDUIT PAS le statut ici, on rend ce que la base a
     // servi. Une tâche lue repart entière dans plusieurs écritures (« Annuler »
@@ -130,14 +117,14 @@ export function mapTaskToDb(input: Partial<Task>): TaskDbInput {
   if (input.bookmarked !== undefined) result.bookmarked = input.bookmarked;
   if (input.completed !== undefined) result.completed = input.completed;
   if (input.completedAt !== undefined) result.completed_at = input.completedAt;
-  if (input.subtasks !== undefined) result.subtasks = input.subtasks;
+  if (input.subtasks !== undefined) result.subtasks = toJson(input.subtasks);
   // Lien KR (#28) : chaîne vide = « délié » → NULL en base.
   if (input.krId !== undefined) result.kr_id = input.krId ? input.krId : null;
   // Récurrence (#26).
   if (input.recurrence !== undefined) result.recurrence = input.recurrence;
   if (input.isCollaborative !== undefined) result.is_collaborative = input.isCollaborative;
   if (input.pendingInvites !== undefined) result.pending_invites = input.pendingInvites;
-  if (input.collaboratorValidations !== undefined) result.collaborator_validations = input.collaboratorValidations;
+  if (input.collaboratorValidations !== undefined) result.collaborator_validations = toJson(input.collaboratorValidations);
   // Statut et État (mig. 214). Un état effacé (`null`) part en NULL : c'est
   // « aucun état déclaré », pas « ne touche pas à la colonne ».
   if (input.status !== undefined) result.status = input.status;
@@ -147,4 +134,3 @@ export function mapTaskToDb(input: Partial<Task>): TaskDbInput {
 
 // ARC-07 : une colonne renommée en base casse `tsc` ici, pas en production.
 export type TaskRowContract = Verified<ColumnsExist<TaskRow, DbRow<'tasks'>>>;
-export type TaskDbInputContract = Verified<ColumnsExist<TaskDbInput, DbInsert<'tasks'>>>;

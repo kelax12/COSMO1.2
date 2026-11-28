@@ -6,17 +6,12 @@
 // abonnements (RLS `user_id = moi`).
 
 import { supabase } from '@/lib/supabase';
-import { getCurrentUserId } from '@/lib/auth-user';
+import { requireCurrentUserId } from '@/lib/auth-user';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import type { FollowTarget, IProjectFollowsRepository, MyFollows } from './follows.repository';
 
 /** Un membre ne suit pas dix mille tâches ; la borne évite une lecture sans fin. */
 const FOLLOWS_LIMIT = 2000;
-
-const TABLE: Record<FollowTarget, { table: string; column: string }> = {
-  task: { table: 'team_task_followers', column: 'task_id' },
-  project: { table: 'team_project_followers', column: 'project_id' },
-};
 
 export class SupabaseProjectFollowsRepository implements IProjectFollowsRepository {
   async getMyFollows(orgId: string): Promise<MyFollows> {
@@ -37,17 +32,27 @@ export class SupabaseProjectFollowsRepository implements IProjectFollowsReposito
 
   async setFollow(orgId: string, target: FollowTarget, id: string, follow: boolean): Promise<void> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { table, column } = TABLE[target];
+    // Une branche par table : le client typé vérifie chaque colonne, ce qu'un
+    // nom de table calculé ne permettait pas.
     if (follow) {
-      const uid = await getCurrentUserId();
-      // Whitelist : `user_id` est vérifié par la policy INSERT (= auth.uid()).
-      const { error } = await supabase.from(table).upsert(
-        { [column]: id, user_id: uid, org_id: orgId },
-        { onConflict: `${column},user_id`, ignoreDuplicates: true },
-      );
+      // Chemin d'écriture : sans session, on lève (un `user_id` NULL partait
+      // à la policy). `user_id` est vérifié par la policy INSERT (= auth.uid()).
+      const uid = await requireCurrentUserId();
+      const options = { ignoreDuplicates: true } as const;
+      const { error } = target === 'task'
+        ? await supabase.from('team_task_followers').upsert(
+          { task_id: id, user_id: uid, org_id: orgId },
+          { ...options, onConflict: 'task_id,user_id' },
+        )
+        : await supabase.from('team_project_followers').upsert(
+          { project_id: id, user_id: uid, org_id: orgId },
+          { ...options, onConflict: 'project_id,user_id' },
+        );
       if (error) throw normalizeApiError(error);
     } else {
-      const { error } = await supabase.from(table).delete().eq(column, id);
+      const { error } = target === 'task'
+        ? await supabase.from('team_task_followers').delete().eq('task_id', id)
+        : await supabase.from('team_project_followers').delete().eq('project_id', id);
       if (error) throw normalizeApiError(error);
     }
   }

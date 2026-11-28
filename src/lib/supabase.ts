@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import type { ClientDatabase } from '@/lib/db-contract';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -50,8 +51,8 @@ const timeoutFetch: typeof fetch = (input, init) => {
   return fetch(input, { ...init, signal: ctrl.signal }).finally(() => clearTimeout(timer));
 };
 
-export const supabase: SupabaseClient = hasSupabaseConfig
-  ? createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase: SupabaseClient<ClientDatabase> = hasSupabaseConfig
+  ? createClient<ClientDatabase>(supabaseUrl, supabaseAnonKey, {
       global: { fetch: timeoutFetch },
       auth: {
         // AUD-01 — PKCE obligatoire. Le défaut de @supabase/auth-js est
@@ -70,7 +71,7 @@ export const supabase: SupabaseClient = hasSupabaseConfig
         detectSessionInUrl: true,
       },
     })
-  : createClient('https://placeholder.supabase.co', 'placeholder-key');
+  : createClient<ClientDatabase>('https://placeholder.supabase.co', 'placeholder-key');
 
 export const isSupabaseConfigured = hasSupabaseConfig;
 

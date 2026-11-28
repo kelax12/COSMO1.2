@@ -9,6 +9,7 @@ import { IListsRepository } from './repository';
 import { TaskList, CreateListInput, UpdateListInput } from './types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
 import type { CreateOptions } from '@/lib/restore-id';
+import { asInsert, type DbPatch } from '@/lib/db-contract';
 
 // ═══════════════════════════════════════════════════════════════════
 // DB ROW TYPES (snake_case - matches Supabase table schema)
@@ -23,29 +24,17 @@ interface ListRow {
   color: string;
   task_ids: string[];
   user_id?: string;
-  created_at?: string;
+  created_at?: string | null;
   // Nouveaux champs migration 021 (rétro-compat : peuvent être absents
   // si la migration n'a pas encore tourné côté Supabase)
-  type?: 'manual' | 'smart' | null;
+  type?: string | null;
   smart_rule?: string | null;
   is_default?: boolean | null;
   position?: number | null;
 }
 
-/**
- * DB input type for insert/update operations
- */
-interface ListDbInput {
-  id?: string;
-  name?: string;
-  color?: string;
-  task_ids?: string[];
-  user_id?: string;
-  type?: 'manual' | 'smart';
-  smart_rule?: string | null;
-  is_default?: boolean;
-  position?: number | null;
-}
+/** Ce que `mapToDb` émet : sans `id` ni `user_id` (whitelist, faille V1). */
+type ListDbInput = DbPatch<'lists'>;
 
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY IMPLEMENTATION
@@ -114,14 +103,14 @@ export class SupabaseListsRepository implements IListsRepository {
       );
     }
 
-    const dbInput: ListDbInput = {
+    const dbInput = asInsert<'lists'>({
       ...this.mapToDb(input),
       position: nextPosition,
       task_ids: [],
       user_id: user.id,
       // Second argument, jamais un champ du payload (R-08).
       ...(options?.restoreId ? { id: options.restoreId } : {}),
-    };
+    });
 
     const { data, error } = await supabase
       .from('lists')
@@ -177,7 +166,7 @@ export class SupabaseListsRepository implements IListsRepository {
       p_list_id: listId,
     });
     if (error) throw normalizeApiError(error);
-    return this.mapFromDb(data as ListRow);
+    return this.mapFromDb(data);
   }
 
   async removeTaskFromList(taskId: string, listId: string): Promise<TaskList> {
@@ -186,7 +175,7 @@ export class SupabaseListsRepository implements IListsRepository {
       p_list_id: listId,
     });
     if (error) throw normalizeApiError(error);
-    return this.mapFromDb(data as ListRow);
+    return this.mapFromDb(data);
   }
 
   // ═══════════════════════════════════════════════════════════════════

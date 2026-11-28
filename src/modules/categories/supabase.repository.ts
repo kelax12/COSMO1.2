@@ -9,6 +9,7 @@ import { ICategoriesRepository } from './repository';
 import { Category, CreateCategoryInput, UpdateCategoryInput } from './types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
 import type { CreateOptions } from '@/lib/restore-id';
+import { asInsert, type DbPatch } from '@/lib/db-contract';
 
 // ═══════════════════════════════════════════════════════════════════
 // DB ROW TYPES (snake_case - matches Supabase table schema)
@@ -24,19 +25,11 @@ interface CategoryRow {
   parent_id: string | null;
   position: number;
   user_id?: string;
-  created_at?: string;
+  created_at?: string | null;
 }
 
-/**
- * DB input type for insert/update operations
- */
-interface CategoryDbInput {
-  name?: string;
-  color?: string;
-  parent_id?: string | null;
-  position?: number;
-  user_id?: string;
-}
+/** Ce que `mapToDb` émet : sans `id` ni `user_id` (whitelist, faille V1). */
+type CategoryDbInput = DbPatch<'categories'>;
 
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY IMPLEMENTATION
@@ -75,11 +68,11 @@ export class SupabaseCategoriesRepository implements ICategoriesRepository {
     // c'est un second argument, reserve aux « Annuler » (R-08). La
     // whitelist `mapToDb` et le `user_id` pose depuis la session sont
     // inchanges.
-    const dbInput = {
+    const dbInput = asInsert<'categories'>({
       ...this.mapToDb(input),
       user_id: user.id,
       ...(options?.restoreId ? { id: options.restoreId } : {}),
-    };
+    });
 
     const { data, error } = await supabase
       .from('categories')

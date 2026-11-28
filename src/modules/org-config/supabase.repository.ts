@@ -19,6 +19,7 @@ import {
   type OrgDomain, type OrgSettings, type OrgSettingsPatch, type OrgWebhook, type ProjectStatus,
   type WebhookEvent, type WebhookFormat,
 } from './types';
+import type { DbInsert, DbPatch } from '@/lib/db-contract';
 
 const client = () => {
   if (!supabase) throw new Error('Supabase not configured');
@@ -84,7 +85,7 @@ export class SupabaseOrgConfigRepository implements IOrgConfigRepository {
   }
 
   async saveSettings(orgId: string, patch: OrgSettingsPatch): Promise<OrgSettings> {
-    const row: Record<string, unknown> = { org_id: orgId };
+    const row: DbInsert<'org_settings'> = { org_id: orgId };
     if (patch.locale !== undefined) row.locale = patch.locale;
     if (patch.timezone !== undefined) row.timezone = patch.timezone;
     if (patch.weekStart !== undefined) row.week_start = patch.weekStart;
@@ -193,7 +194,7 @@ export class SupabaseOrgConfigRepository implements IOrgConfigRepository {
   }
 
   async updateWebhook(webhookId: string, patch: { enabled?: boolean; events?: WebhookEvent[] }): Promise<void> {
-    const row: Record<string, unknown> = {};
+    const row: DbPatch<'org_webhooks'> = {};
     if (patch.enabled !== undefined) row.enabled = patch.enabled;
     if (patch.events !== undefined) row.events = patch.events;
     const { error } = await client().from('org_webhooks').update(row).eq('id', webhookId);

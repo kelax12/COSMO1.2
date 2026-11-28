@@ -9,6 +9,7 @@ import { warnIfTruncated } from '@/lib/pagination.warning';
 import { fetchAllPages, MAX_ROWS } from '@/lib/fetch-all-pages';
 import type { KeyResult } from './types';
 import { OKRRow, KRRow, mapKRFromDb, mapKRToDb } from './mappers';
+import { fromJson } from '@/lib/db-contract';
 
 // ─── Fetch KRs from dedicated table, fallback to JSONB ──────────────────
 
@@ -43,7 +44,7 @@ export async function fetchKRsForOkrs(okrRows: OKRRow[]): Promise<Map<string, Ke
   if (!data || data.length === 0) {
     // Fallback: use JSONB data from okrs table
     for (const row of okrRows) {
-      krMap.set(row.id, row.key_results || []);
+      krMap.set(row.id, fromJson<KeyResult[] | null>(row.key_results) || []);
     }
     return krMap;
   }
@@ -59,12 +60,13 @@ export async function fetchKRsForOkrs(okrRows: OKRRow[]): Promise<Map<string, Ke
   // est aléatoire, l'ordre saisi est celui du JSONB `okrs.key_results`.
   for (const row of okrRows) {
     const list = krMap.get(row.id);
-    if (list && row.key_results?.length) {
-      const pos = new Map(row.key_results.map((k, i) => [k.id, i]));
+    const jsonbKRs = fromJson<KeyResult[] | null>(row.key_results);
+    if (list && jsonbKRs?.length) {
+      const pos = new Map(jsonbKRs.map((k, i) => [k.id, i]));
       list.sort((x, y) => (pos.get(x.id) ?? Infinity) - (pos.get(y.id) ?? Infinity));
     }
     if (!krMap.has(row.id)) {
-      krMap.set(row.id, row.key_results || []);
+      krMap.set(row.id, fromJson<KeyResult[] | null>(row.key_results) || []);
     }
   }
 

@@ -9,6 +9,7 @@ import { checkedDays } from './completion-days';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE, assertValidCursor } from '@/lib/pagination.types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
 import { fetchAllPages, MAX_ROWS } from '@/lib/fetch-all-pages';
+import { asInsert } from '@/lib/db-contract';
 
 /**
  * Profondeur d'historique demandée à `get_my_habits()` (mig. 119).
@@ -132,11 +133,11 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
     // `options.restoreId` ne vient JAMAIS d'un payload de formulaire : c'est un
     // second argument, reserve aux « Annuler » (R-08). La whitelist
     // `mapHabitToDb` et le `user_id` pose depuis la session sont inchanges.
-    const dbInput = {
+    const dbInput = asInsert<'habits'>({
       ...mapHabitToDb(input),
       user_id: user.id,
       ...(options?.restoreId ? { id: options.restoreId } : {}),
-    };
+    });
 
     const { data, error } = await supabase
       .from('habits')

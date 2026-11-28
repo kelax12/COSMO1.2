@@ -15,6 +15,7 @@ import { fetchAllByCursor, fetchAllPages, PAGE_SIZE } from '@/lib/fetch-all-page
 const UNCAPPED = Number.POSITIVE_INFINITY;
 import { buildWindowOrFilter } from './window';
 import type { CreateOptions } from '@/lib/restore-id';
+import { asInsert } from '@/lib/db-contract';
 
 export class SupabaseEventsRepository implements IEventsRepository {
   // Id de l'utilisateur courant, lu depuis la session (pas de round-trip).
@@ -230,11 +231,11 @@ export class SupabaseEventsRepository implements IEventsRepository {
     // c'est un second argument, reserve aux « Annuler » (R-08). La
     // whitelist `mapToDb` et le `user_id` pose depuis la session sont
     // inchanges.
-    const dbInput = {
+    const dbInput = asInsert<'events'>({
       ...mapEventToDb(input),
       user_id: user.id,
       ...(options?.restoreId ? { id: options.restoreId } : {}),
-    };
+    });
 
     const { data, error } = await supabase
       .from('events')
@@ -251,7 +252,7 @@ export class SupabaseEventsRepository implements IEventsRepository {
     // user_id = le subordonné ciblé ; la RLS `events_manager_insert` (mig. 077)
     // valide que l'appelant gère bien cette personne. mapEventToDb n'émet
     // jamais user_id (frontière anti-mass-assignment) — on le pose ici.
-    const dbInput = { ...mapEventToDb(input), user_id: userId };
+    const dbInput = asInsert<'events'>({ ...mapEventToDb(input), user_id: userId });
     const { data, error } = await supabase
       .from('events')
       .insert([dbInput])

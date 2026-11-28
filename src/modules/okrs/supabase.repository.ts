@@ -15,6 +15,7 @@ import { fetchAllPages, MAX_ROWS } from '@/lib/fetch-all-pages';
 // Source unique du calcul de progression OKR — fonction pure testable.
 import { recalcProgress } from './progress';
 import type { CreateOptions } from '@/lib/restore-id';
+import { asInsert, toJson } from '@/lib/db-contract';
 import {
   OKRRow,
   KRRow,
@@ -164,11 +165,11 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
     // c'est un second argument, reserve aux « Annuler » (R-08). La
     // whitelist `mapToDb` et le `user_id` pose depuis la session sont
     // inchanges.
-    const dbInput = {
+    const dbInput = asInsert<'okrs'>({
       ...mapOkrToDb(input),
       user_id: user.id,
       ...(options?.restoreId ? { id: options.restoreId } : {}),
-    };
+    });
 
     const { data, error } = await supabase
       .from('okrs')
@@ -326,7 +327,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
     // Update OKR progress + JSONB for backward compat
     const { data, error } = await supabase
       .from('okrs')
-      .update({ progress, completed, key_results: keyResults })
+      .update({ progress, completed, key_results: toJson(keyResults) })
       .eq('id', okrId)
       .select()
       .single();
@@ -384,7 +385,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
 
     const { data, error } = await supabase
       .from('okrs')
-      .update({ key_results: okr.keyResults, progress, completed })
+      .update({ key_results: toJson(okr.keyResults), progress, completed })
       .eq('id', okrId)
       .select()
       .single();

@@ -15,6 +15,7 @@ import type {
   DraftProjectTask,
   TeamProjectDependency,
 } from './types';
+import { toJson } from '@/lib/db-contract';
 
 const client = () => {
   if (!supabase) throw new Error('Supabase not configured');
@@ -36,7 +37,7 @@ export async function createProjectWithTasks(
 ): Promise<string> {
   const { data, error } = await client().rpc('create_team_project_with_tasks', {
     p_org: orgId,
-    p_project: {
+    p_project: toJson({
       name: input.name,
       color: input.color ?? 'blue',
       team_id: input.teamId ?? null,
@@ -48,8 +49,8 @@ export async function createProjectWithTasks(
       due_date: input.dueDate || null,
       is_template: input.isTemplate ?? false,
       template_payload: input.isTemplate ? input.templatePayload ?? null : null,
-    },
-    p_tasks: tasks.map((t) => ({
+    }),
+    p_tasks: toJson(tasks.map((t) => ({
       name: t.name,
       description: t.description ?? null,
       priority: t.priority ?? 3,
@@ -57,7 +58,7 @@ export async function createProjectWithTasks(
       start_date: t.startDate || null,
       deadline: t.deadline || null,
       assignee_ids: t.assigneeIds ?? [],
-    })),
+    }))),
   });
   if (error) throw normalizeApiError(error);
   return data as string;

@@ -8,6 +8,7 @@ import { getCurrentUserId } from '@/lib/auth-user';
 import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { IOrgTeamsRepository } from './repository';
 import { OrgTeam, OrgTeamMember, CreateOrgTeamInput, UpdateOrgTeamInput, TeamDeletionImpact, DeleteTeamInput } from './types';
+import type { DbPatch } from '@/lib/db-contract';
 
 interface TeamRow {
   id: string;
@@ -85,7 +86,7 @@ export class SupabaseOrgTeamsRepository implements IOrgTeamsRepository {
     if (!supabase) throw new Error('Supabase not configured');
     // Whitelist explicite : jamais org_id ni created_by (figés par
     // `org_team_before_update`, mig. 163), jamais un champ absent de l'input.
-    const patch: Record<string, unknown> = {};
+    const patch: DbPatch<'org_teams'> = {};
     if (input.name !== undefined) patch.name = input.name.trim();
     if (input.color !== undefined) patch.color = input.color;
     if (input.description !== undefined) patch.description = input.description?.trim() || null;

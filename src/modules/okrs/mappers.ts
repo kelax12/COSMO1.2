@@ -5,7 +5,8 @@
 // ═══════════════════════════════════════════════════════════════════
 import { OKR, KeyResult } from './types';
 import { krWeight } from './progress';
-import type { ColumnsExist, DbInsert, DbRow, Verified } from '@/lib/db-contract';
+import { toJson } from '@/lib/db-contract';
+import type { ColumnsExist, DbPatch, DbRow, Json, Verified } from '@/lib/db-contract';
 
 // ─── DB row types ────────────────────────────────────────────────────────────
 
@@ -13,14 +14,16 @@ export interface OKRRow {
   id: string;
   title: string;
   description: string;
-  category: string;
+  /** UUID de catégorie, NULL = aucune (mig. 145). */
+  category: string | null;
   progress: number;
   completed: boolean;
-  key_results: KeyResult[]; // JSONB — kept for backward compat
+  /** JSONB — kept for backward compat ; la source est la table `key_results`. */
+  key_results: Json;
   start_date: string;
   end_date: string;
   user_id?: string;
-  created_at?: string;
+  created_at?: string | null;
 }
 
 export interface KRRow {
@@ -37,17 +40,8 @@ export interface KRRow {
   weight?: number;
 }
 
-export interface OKRDbInput {
-  title?: string;
-  description?: string;
-  category?: string | null;
-  progress?: number;
-  completed?: boolean;
-  key_results?: KeyResult[];
-  start_date?: string;
-  end_date?: string;
-  user_id?: string;
-}
+/** Ce que `mapOkrToDb` émet : sans `id` ni `user_id` (faille V1, garantie par `DbPatch`). */
+export type OKRDbInput = DbPatch<'okrs'>;
 
 // ─── Mappers ───────────────────────────────────────────────────────────────
 
@@ -105,7 +99,7 @@ export const mapOkrToDb = (input: Partial<OKR>): OKRDbInput => {
   if (input.category !== undefined) result.category = input.category === '' ? null : input.category;
   if (input.progress !== undefined) result.progress = input.progress;
   if (input.completed !== undefined) result.completed = input.completed;
-  if (input.keyResults !== undefined) result.key_results = input.keyResults;
+  if (input.keyResults !== undefined) result.key_results = toJson(input.keyResults);
   if (input.startDate !== undefined) result.start_date = input.startDate;
   if (input.endDate !== undefined) result.end_date = input.endDate;
   return result;
@@ -114,4 +108,3 @@ export const mapOkrToDb = (input: Partial<OKR>): OKRDbInput => {
 // ARC-07 : une colonne renommée en base casse `tsc` ici, pas en production.
 export type OKRRowContract = Verified<ColumnsExist<OKRRow, DbRow<'okrs'>>>;
 export type KRRowContract = Verified<ColumnsExist<KRRow, DbRow<'key_results'>>>;
-export type OKRDbInputContract = Verified<ColumnsExist<OKRDbInput, DbInsert<'okrs'>>>;

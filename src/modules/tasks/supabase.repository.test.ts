@@ -181,7 +181,7 @@ describe('SupabaseTasksRepository — écriture', () => {
     await repo.toggleBookmark('t1');
 
     expect(supabaseMock.rpcCalls).toEqual([
-      { fn: 'toggle_task_complete_v2', args: { p_task_id: 't1', p_next_deadline: null } },
+      { fn: 'toggle_task_complete_v2', args: { p_task_id: 't1' } },
       { fn: 'toggle_task_bookmark', args: { p_task_id: 't1' } },
     ]);
     expect(supabaseMock.queries.filter((q) => q.table === 'tasks')).toHaveLength(0);

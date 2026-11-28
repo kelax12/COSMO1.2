@@ -7,6 +7,7 @@ import { getCurrentUserId } from '@/lib/auth-user';
 import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { ITeamCategoriesRepository } from './repository';
 import { TeamCategory, CreateTeamCategoryInput, UpdateTeamCategoryInput } from './types';
+import type { DbPatch } from '@/lib/db-contract';
 
 interface CategoryRow {
   id: string;
@@ -67,7 +68,7 @@ export class SupabaseTeamCategoriesRepository implements ITeamCategoriesReposito
   async updateCategory(categoryId: string, input: UpdateTeamCategoryInput): Promise<TeamCategory> {
     if (!supabase) throw new Error('Supabase not configured');
     // Whitelist explicite — jamais org_id/created_by.
-    const patch: Record<string, unknown> = {};
+    const patch: DbPatch<'team_categories'> = {};
     if (input.name !== undefined) patch.name = input.name;
     if (input.color !== undefined) patch.color = input.color;
     if (input.parentId !== undefined) patch.parent_id = input.parentId;

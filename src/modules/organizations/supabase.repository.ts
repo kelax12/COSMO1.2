@@ -19,6 +19,7 @@ import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, Updat
 import { mapOrgInbox, type OrgInboxRow } from './inbox.repository';
 import type { OrgMemberPermissions, SetOrgPermissionsInput } from './permissions';
 import * as memberPermissions from './permissions.supabase.repository';
+import type { DbPatch } from '@/lib/db-contract';
 
 interface OrgRow {
   id: string;
@@ -392,7 +393,7 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
     if (!supabase) throw new Error('Supabase not configured');
     // Whitelist explicite — jamais joinCode/ownerId (trigger d'immutabilité
     // en défense-en-profondeur côté DB).
-    const patch: Record<string, unknown> = {};
+    const patch: DbPatch<'organizations'> = {};
     if (input.name !== undefined) patch.name = input.name;
     if (input.description !== undefined) patch.description = input.description || null;
     if (input.industry !== undefined) patch.industry = input.industry || null;

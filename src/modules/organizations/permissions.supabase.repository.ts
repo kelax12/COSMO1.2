@@ -19,8 +19,12 @@ import {
   type OrgPermissionKey,
   type SetOrgPermissionsInput,
 } from './permissions';
+import type { DbInsert, DbRow } from '@/lib/db-contract';
 
-const PERMISSION_COLUMNS: Record<OrgPermissionKey, string> = {
+/** Une colonne de droit de `org_member_permissions` : une faute de frappe ne compile plus. */
+type PermissionColumn = Extract<keyof DbRow<'org_member_permissions'>, `can_${string}`>;
+
+const PERMISSION_COLUMNS: Record<OrgPermissionKey, PermissionColumn> = {
   'task.create': 'can_create_task',
   'task.editAny': 'can_edit_any_task',
   'task.deleteAny': 'can_delete_task',
@@ -70,7 +74,7 @@ export async function setMemberPermissions(
 ): Promise<void> {
   if (!supabase) throw new Error('Supabase not configured');
   // Whitelist stricte : on part des clés connues, jamais de l'objet reçu.
-  const row: Record<string, unknown> = { org_id: orgId, user_id: userId };
+  const row: DbInsert<'org_member_permissions'> = { org_id: orgId, user_id: userId };
   for (const key of ORG_PERMISSION_KEYS) {
     row[PERMISSION_COLUMNS[key]] = input.overrides[key] ?? null;
   }

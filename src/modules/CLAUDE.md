@@ -37,6 +37,7 @@ src/modules/{module}/
   - Démo tenue par les hooks : `notifications` (`organizations/`, lit `localStorage` dans `notifications.ts`, deux fonctions de marquage « lu »).
   - Pas un dépôt : `inbox` (`organizations/inbox.repository.ts`, mapping de la RPC `get_my_org_inbox`).
 - 🔴 Un baril importé pour un TYPE s'importe en `import type` (`npm run check:cycles`, C-103).
+- ✅ Client typé (`src/lib/db-contract.ts`) : un `mapToDb` rend `DbPatch<'table'>` (sans `id` ni `user_id`), une création passe par `asInsert<'table'>()`, une colonne `jsonb` par `toJson` / `fromJson`. ❌ `as unknown as` ou une interface d'écriture à la main pour faire taire `tsc` : l'erreur est souvent un `NULL` non traité.
 - ✅ Import par zone : Tâches `tasks` `categories` `lists` · Agenda `events` `tasks` · Habitudes `habits` `categories` · OKR `okrs` `kr-completions` · Amis `friends` · Entreprise `organizations` `org-teams` `org-config` `org-reports` `team-projects` `team-okrs` `team-categories` `team-lists` · UI `ui-states` · Dashboard `tasks` `habits` `events` `kr-completions` `okrs` `auth`.
 
 ## Auth

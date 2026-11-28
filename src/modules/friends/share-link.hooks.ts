@@ -8,6 +8,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { fromJson } from '@/lib/db-contract';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { friendKeys } from './constants';
 import { getOrCreateShareLink } from './share-link.repository';
@@ -67,7 +68,10 @@ export const usePreviewShareLink = (token: string | undefined, enabled: boolean)
   return useQuery({
     queryKey: [...friendKeys.all, 'shareLinkPreview', token],
     queryFn: async (): Promise<PreviewShareLinkResult> => {
-      const { data, error } = await supabase.rpc('preview_share_link', { p_token: token });
+      const { data, error } = await supabase.rpc('preview_share_link', {
+        // `enabled` n'arme la requête qu'avec un jeton valide (`isValidInviteToken`).
+        p_token: token ?? '',
+      });
       if (error) throw normalizeApiError(error);
       const result = data as Partial<PreviewShareLinkResult> | null;
       return {
@@ -105,7 +109,7 @@ export const useClaimShareLink = () => {
     mutationFn: async (token: string): Promise<ClaimShareLinkResult> => {
       const { data, error } = await supabase.rpc('claim_share_link', { p_token: token });
       if (error) throw normalizeApiError(error);
-      return data as ClaimShareLinkResult;
+      return fromJson<ClaimShareLinkResult>(data);
     },
   });
 };

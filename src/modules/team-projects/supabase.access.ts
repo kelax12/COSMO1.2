@@ -14,6 +14,7 @@ import type {
   TeamProjectRole,
   TeamProjectTaskStats,
 } from './types';
+import type { DbInsert } from '@/lib/db-contract';
 
 const client = () => {
   if (!supabase) throw new Error('Supabase not configured');
@@ -62,7 +63,8 @@ export async function getProjectMembers(orgId: string): Promise<TeamProjectMembe
 export async function setProjectMember(projectId: string, userId: string, role: TeamProjectRole): Promise<void> {
   const { error } = await client()
     .from('team_project_members')
-    .upsert({ project_id: projectId, user_id: userId, role }, { onConflict: 'project_id,user_id' });
+    // `org_id` est obligatoire au schéma mais posé par le trigger (mig. 190).
+    .upsert({ project_id: projectId, user_id: userId, role } as DbInsert<'team_project_members'>, { onConflict: 'project_id,user_id' });
   if (error) throw normalizeApiError(error);
 }
 

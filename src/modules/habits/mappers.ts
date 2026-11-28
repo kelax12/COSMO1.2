@@ -5,7 +5,8 @@
 // (Record<string,boolean>), never `completedDates` (faille B5).
 // ═══════════════════════════════════════════════════════════════════
 import type { Habit, HabitScheduleChange } from './types';
-import type { ColumnsExist, DbInsert, DbRow, RpcRow, Verified } from '@/lib/db-contract';
+import { toJson } from '@/lib/db-contract';
+import type { ColumnsExist, DbPatch, DbRow, RpcRow, Verified } from '@/lib/db-contract';
 import { normalizeScheduledDays } from './schedule';
 
 /** Supabase DB row type for the `habits` table (snake_case). */
@@ -31,18 +32,11 @@ export interface HabitRow {
   window_days?: number;
 }
 
-/** DB input type for insert/update operations (snake_case). */
-export interface HabitDbInput {
-  name?: string;
-  description?: string;
-  frequency?: 'daily' | 'weekly' | 'monthly';
-  estimated_time?: number;
-  color?: string;
-  icon?: string;
-  scheduled_days?: number[] | null;
-  schedule_history?: HabitScheduleChange[];
-  user_id?: string;
-}
+/**
+ * Ce que `mapHabitToDb` émet : sans `id` ni `user_id` (faille V1) ni
+ * `completions` (DAT-02), deux interdits que la compilation tient désormais.
+ */
+export type HabitDbInput = Omit<DbPatch<'habits'>, 'completions'>;
 
 export function mapHabitFromDb(row: HabitRow): Habit {
   return {
@@ -86,10 +80,10 @@ export function mapHabitToDb(input: Partial<Habit>): HabitDbInput {
     result.scheduled_days = days.length === 0 || days.length === 7 ? null : days;
   }
   if (input.scheduleHistory !== undefined) {
-    result.schedule_history = input.scheduleHistory.map((e) => ({
+    result.schedule_history = toJson<HabitScheduleChange[]>(input.scheduleHistory.map((e) => ({
       from: e.from,
       days: normalizeScheduledDays(e.days),
-    }));
+    })));
   }
   // 🔴 `completions` n'est JAMAIS émis (DAT-02) : l'historique vit dans
   // `habit_completions` (mig. 248), écrit par `toggle_habit_completion_v2` et,
@@ -101,4 +95,3 @@ export function mapHabitToDb(input: Partial<Habit>): HabitDbInput {
 // ARC-07 : une colonne renommée en base casse `tsc` ici, pas en production.
 // `HabitRow` lit aussi les colonnes calculées de `get_my_habits()` (mig. 119).
 export type HabitRowContract = Verified<ColumnsExist<HabitRow, DbRow<'habits'> & RpcRow<'get_my_habits'>>>;
-export type HabitDbInputContract = Verified<ColumnsExist<HabitDbInput, DbInsert<'habits'>>>;

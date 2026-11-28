@@ -10,6 +10,7 @@
 | Les lectures de liste de `tasks` passent par `get_my_tasks()` ; `.from('tasks')` seulement pour `getById`, `insert`, `update`, `delete` | `src/modules/tasks/supabase.repository.test.ts`, `src/modules/CLAUDE.md` |
 | Les lectures de liste entreprise passent par une RPC indexable (`get_my_team_projects`, `get_my_team_tasks`, `get_my_team_task_dependencies`) | `team-projects/supabase.repository.test.ts` |
 | Aucun `supabase.from()` hors d'un `*.repository.ts` | `src/architecture.guard.test.ts` (§ 2) |
+| Le client Supabase est typé par le schéma (`createClient<ClientDatabase>`) ; colonnes, arguments de RPC et `mapToDb` sont vérifiés par `tsc` | `src/lib/db-contract.guard.test.ts` (seconde moitié) |
 | Imports toujours par l'alias `@/` | ESLint `no-restricted-imports` (§ 2) |
 | `gsap` seulement par `@/lib/gsap`, dans la landing | `src/pages/landing/CLAUDE.md` |
 | `useAuth` vient de `@/modules/auth/AuthContext` | `src/CLAUDE.md` |

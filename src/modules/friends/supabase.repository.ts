@@ -9,6 +9,7 @@ import { translator } from '@/i18n/useT';
 import { IFriendsRepository } from './repository';
 import { Friend, FriendRequestInput, ShareTaskInput, PendingFriendRequest, FriendRequestStatus, TaskShare, RelatedTaskShare, ShareListInput, SharedListGrant, TaskSnapshot } from './types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
+import { fromJson, toJson, type ColumnsExist, type DbRow, type Verified } from '@/lib/db-contract';
 
 // ═══════════════════════════════════════════════════════════════════
 // DB ROW TYPES (snake_case - matches Supabase table schema)
@@ -21,14 +22,13 @@ interface FriendRow {
   id: string;
   name: string;
   email: string;
-  avatar?: string;
+  avatar?: string | null;
   user_id?: string;
   /** auth.users.id de l'ami (rempli par accept_friend_request_v2 / migration 034).
    *  Source canonique du `userId` côté UI — utilisée pour matcher les
    *  collaborateurs (shared_tasks.friend_id) et résoudre les avatars. */
-  friend_user_id?: string;
-  created_at?: string;
-  [key: string]: unknown;
+  friend_user_id?: string | null;
+  created_at?: string | null;
 }
 
 /**
@@ -37,13 +37,18 @@ interface FriendRow {
 interface FriendRequestRow {
   id: string;
   email: string;
-  status: FriendRequestStatus;
-  sent_at: string;
+  /** `FriendRequestStatus` : contrainte CHECK côté SQL, `string` au schéma. */
+  status: string;
+  sent_at: string | null;
+  created_at?: string | null;
   sender_id?: string;
-  sender_email?: string;
-  receiver_id?: string;
-  user_id?: string;
+  sender_email?: string | null;
+  receiver_id?: string | null;
 }
+
+// ARC-07 : une colonne renommée en base casse `tsc` ici, pas en production.
+export type FriendRowContract = Verified<ColumnsExist<FriendRow, DbRow<'friends'>>>;
+export type FriendRequestRowContract = Verified<ColumnsExist<FriendRequestRow, DbRow<'friend_requests'>>>;
 
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY IMPLEMENTATION
@@ -484,7 +489,7 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
         friend_id: friendUserId,
         name: input.name,
         color: input.color,
-        tasks: input.tasks,
+        tasks: toJson(input.tasks),
       }]);
 
     if (error) {
@@ -515,7 +520,7 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
       id: r.id as string,
       name: r.name as string,
       color: (r.color as string) || 'blue',
-      tasks: (r.tasks as TaskSnapshot[]) || [],
+      tasks: fromJson<TaskSnapshot[] | null>(r.tasks) || [],
       sharedBy: r.shared_by as string,
       friendId: user.id,
       accepted: false,
@@ -554,11 +559,11 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
       id: row.id,
       name: row.name,
       email: row.email,
-      avatar: row.avatar,
+      avatar: row.avatar ?? undefined,
       // `friend_user_id` = auth.uid de l'ami (canonique). Sert à matcher les
       // collaborateurs et résoudre les avatars sans dépendre uniquement de
       // l'enrichissement `profiles` (qui peut être bloqué par la RLS).
-      userId: row.friend_user_id,
+      userId: row.friend_user_id ?? undefined,
     };
   }
 
@@ -566,11 +571,11 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
     return {
       id: row.id,
       email: row.email,
-      status: row.status,
-      sentAt: row.sent_at,
+      status: row.status as FriendRequestStatus,
+      sentAt: row.sent_at ?? row.created_at ?? '',
       senderId: row.sender_id,
-      senderEmail: row.sender_email,
-      receiverId: row.receiver_id,
+      senderEmail: row.sender_email ?? undefined,
+      receiverId: row.receiver_id ?? undefined,
     };
   }
 }
