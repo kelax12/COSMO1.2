@@ -36,7 +36,6 @@ import {
   resolveOrgRoute,
   resolveOrgTab,
   visibleOrgSections,
-  type OrgNavBadgeCounts,
 } from '@/components/organization/org-page.helpers';
 import { canSeeStats } from '@/components/organization/stats-scope.helpers';
 import { canSeeReports, reportAccess } from '@/components/organization/report-access.helpers';
@@ -44,7 +43,7 @@ import { useOrgTeams, useOrgTeamMembers } from '@/modules/org-teams';
 import MyWorkTab from '@/components/organization/MyWorkTab';
 import { MyWorkSkeleton, TeamTasksSkeleton, TeamOverviewSkeleton, OrgTabSkeleton } from '@/components/organization/OrgLoadingSkeletons';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
-import { useT, type Translator } from '@/i18n/useT';
+import { useT } from '@/i18n/useT';
 import { useIsDemo } from '@/lib/app-mode.store';
 import { joinedSinceWelcome, markMemberWelcomeSeen, readMemberWelcomeSeen } from '@/components/onboarding/enterprise/ent-onboarding';
 import type { KeyOf } from '@/i18n/catalog';
@@ -127,13 +126,14 @@ function useSideNavMode(): [OrgNavMode, (mode: OrgNavMode) => void] {
  * et pastille construite. Projets et Membres ont un compteur dérivé ; les
  * autres comptent les notifications non lues de la boîte de réception.
  */
-function buildOrgNavItems(
-  { t, tOrgAdmin, tpOrgAdmin }: OrgTranslators,
-  badges: OrgNavBadgeCounts,
+function useOrgNavItems(
   orgNotifications: OrgNotification[],
   viewer: { canStats: boolean; isAdmin: boolean; isOwner: boolean; overQuota: boolean },
   tab: OrgTab,
 ): OrgNavItem[] {
+  const { t } = useT('org');
+  const { t: tOrgAdmin, tp: tpOrgAdmin } = useT('orgAdmin');
+  const badges = useOrgBadges();
   const sectionBadges = sectionNotificationBadges(orgNotifications);
   const kindLabel = (k: string) => tOrgAdmin(`notifSettings.kind.${k}` as KeyOf<'orgAdmin'>);
   return visibleOrgSections(ORG_SECTIONS, viewer).map(({ id, labelKey, Icon, group }) => {
@@ -158,12 +158,6 @@ function buildOrgNavItems(
       ) : undefined,
     };
   });
-}
-
-interface OrgTranslators {
-  t: Translator<'org'>['t'];
-  tOrgAdmin: Translator<'orgAdmin'>['t'];
-  tpOrgAdmin: Translator<'orgAdmin'>['tp'];
 }
 
 /** En-tête desktop (rendu historique, inchangé). */
@@ -451,26 +445,25 @@ interface OrgWorkspaceProps {
   setTab: (id: OrgTab) => void;
   isDemo: boolean;
   /** Décidés à l'arrivée sur la page, une fois. */
-  arrival: { arrivedBare: boolean; guideOpenSignal: number | undefined };
+  arrivedBare: boolean;
+  guideOpenSignal: number | undefined;
   hasEntityParam: boolean;
 }
 
 /** L'espace d'un membre : en-têtes, bannières, section servie, navigation, accueil, fiches. */
-function OrgWorkspace({ org: myOrg, user, urlTab, teamId, setTab, isDemo, arrival, hasEntityParam }: OrgWorkspaceProps) {
+function OrgWorkspace({ org: myOrg, user, urlTab, teamId, setTab, isDemo, arrivedBare, guideOpenSignal, hasEntityParam }: OrgWorkspaceProps) {
   const { t } = useT('org');
   const { t: tOrgAdmin, tp: tpOrgAdmin } = useT('orgAdmin');
   const userId = user?.id;
   const [searchParams] = useSearchParams();
-  const badges = useOrgBadges();
   const [sideNavMode, setNavMode] = useSideNavMode();
   const { shortcuts, togglePin } = useOrgShortcuts(myOrg.id, userId, urlTab, searchParams);
-  const { arrivedBare, guideOpenSignal } = arrival;
   // Fermé pendant cette visite ; le drapeau, lui, est posé par entreprise.
   const [welcomeClosed, setWelcomeClosed] = useState(false);
   const isOwner = user?.id === myOrg.ownerId;
   const w = useOrgWorkspace({ org: myOrg, userId, isOwner, urlTab, teamId, isDemo });
   const { members, isAdmin, canStats, tab, overQuota, sectionLocked, seatsFull, seatsQuota, pastDue, subscription } = w;
-  const navItems = buildOrgNavItems({ t, tOrgAdmin, tpOrgAdmin }, badges, w.orgNotifications, { canStats, isAdmin, isOwner, overQuota }, tab);
+  const navItems = useOrgNavItems(w.orgNotifications, { canStats, isAdmin, isOwner, overQuota }, tab);
   const activeSection = ORG_SECTIONS.find((x) => x.id === tab);
   const guideViewer: GuideViewer = {
     can: w.myPermissions.can,
@@ -626,7 +619,8 @@ const OrganizationPage = () => {
       teamId={route.teamId}
       setTab={setTab}
       isDemo={isDemo}
-      arrival={{ arrivedBare, guideOpenSignal }}
+      arrivedBare={arrivedBare}
+      guideOpenSignal={guideOpenSignal}
       hasEntityParam={['task', 'member', 'project', 'okr', 'team'].some((k) => searchParams.has(k))}
     />
   );
