@@ -4,7 +4,7 @@ import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { ITasksRepository, ToggleCompleteResult, type TaskPageParams } from './repository';
 import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskDependency } from './types';
 import { TaskRow, mapTaskFromDb, mapTaskToDb, nextOccurrenceInstant } from './mappers';
-import { asInsert, fromJson, type DbInsert } from '@/lib/db-contract';
+import { asInsert, fromJson, type DbInsert, type RpcRow } from '@/lib/db-contract';
 import { PaginatedResult, DEFAULT_PAGE_SIZE, assertValidCursor } from '@/lib/pagination.types';
 import { fetchAllByCursor } from '@/lib/fetch-all-pages';
 import {
@@ -26,15 +26,18 @@ const TASK_LIST_COLUMNS =
 /** Taille d'une page de clé quand on enchaîne tout un sous-ensemble (listAll). */
 const LIST_ALL_PAGE_SIZE = 1000;
 
+/** Une colonne rendue par `get_my_tasks()` : un filtre sur un nom absent ne compile plus. */
+type TaskColumn = keyof RpcRow<'get_my_tasks'>;
+
 /** Ce que `applyQuery` appelle sur un constructeur PostgREST. */
 interface TaskFilterBuilder {
-  eq(column: string, value: unknown): TaskFilterBuilder;
-  gte(column: string, value: unknown): TaskFilterBuilder;
-  lt(column: string, value: unknown): TaskFilterBuilder;
-  lte(column: string, value: unknown): TaskFilterBuilder;
-  ilike(column: string, pattern: string): TaskFilterBuilder;
-  in(column: string, values: readonly unknown[]): TaskFilterBuilder;
-  is(column: string, value: null): TaskFilterBuilder;
+  eq(column: TaskColumn, value: unknown): TaskFilterBuilder;
+  gte(column: TaskColumn, value: unknown): TaskFilterBuilder;
+  lt(column: TaskColumn, value: unknown): TaskFilterBuilder;
+  lte(column: TaskColumn, value: unknown): TaskFilterBuilder;
+  ilike(column: TaskColumn, pattern: string): TaskFilterBuilder;
+  in(column: TaskColumn, values: readonly unknown[]): TaskFilterBuilder;
+  is(column: TaskColumn, value: null): TaskFilterBuilder;
 }
 
 export class SupabaseTasksRepository implements ITasksRepository {
@@ -110,7 +113,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
 
     const { data, error } = await query;
     if (error) throw normalizeApiError(error);
-    const rows = (data || []) as unknown as TaskRow[];
+    const rows: TaskRow[] = data || [];
     const hasMore = rows.length > limit;
     return { rows: hasMore ? rows.slice(0, limit) : rows, hasMore };
   }
@@ -212,7 +215,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
       .order('created_at', { ascending: false })
       .limit(200);
     if (error) throw normalizeApiError(error);
-    return this.enrichSharedBy(((data || []) as unknown as TaskRow[]).map(mapTaskFromDb));
+    return this.enrichSharedBy((data || []).map(mapTaskFromDb));
   }
 
   async getById(id: string): Promise<Task | null> {
@@ -239,7 +242,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
     const { data, error } = await query;
 
     if (error) throw normalizeApiError(error);
-    return this.enrichSharedBy(((data || []) as unknown as TaskRow[]).map(mapTaskFromDb));
+    return this.enrichSharedBy((data || []).map(mapTaskFromDb));
   }
 
   async getFiltered(filters: TaskFilters): Promise<Task[]> {
@@ -281,7 +284,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
     const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) throw normalizeApiError(error);
-    return this.enrichSharedBy(((data || []) as unknown as TaskRow[]).map(mapTaskFromDb));
+    return this.enrichSharedBy((data || []).map(mapTaskFromDb));
   }
 
   // ═══════════════════════════════════════════════════════════════════

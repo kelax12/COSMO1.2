@@ -7,7 +7,8 @@ export interface TeamProject {
   orgId: string;
   name: string;
   color: string;
-  createdBy: string;
+  /** NULL quand le créateur a supprimé son compte (`ON DELETE SET NULL`). */
+  createdBy: string | null;
   archivedAt?: string | null;
   createdAt: string;
   /** Équipe propriétaire (cloisonnement) — null = projet d'org, visible par tous. */
@@ -192,7 +193,8 @@ export interface TeamTask {
   estimatedTime?: number;
   /** auth.users.id des assignés — [] si non assignée (multi-assignation, mig. 072). */
   assigneeIds: string[];
-  createdBy: string;
+  /** NULL quand le créateur a supprimé son compte (`ON DELETE SET NULL`). */
+  createdBy: string | null;
   completed: boolean;
   /** Statut de flux (mig. 091) — synchronisé serveur avec `completed`. */
   status: TeamTaskStatus;

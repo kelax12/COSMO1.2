@@ -23,14 +23,15 @@ import {
   TeamProjectHealth,
   TeamProjectTemplatePayload,
 } from './types';
-import type { ColumnsExist, DbRow, Verified } from '@/lib/db-contract';
+import { fromJson } from '@/lib/db-contract';
+import type { ColumnsExist, DbRow, Json, Verified } from '@/lib/db-contract';
 
 export interface ProjectRow {
   id: string;
   org_id: string;
   name: string;
   color: string;
-  created_by: string;
+  created_by: string | null;
   archived_at: string | null;
   created_at: string;
   team_id: string | null;
@@ -42,7 +43,8 @@ export interface ProjectRow {
   start_date?: string | null;
   due_date?: string | null;
   is_template?: boolean | null;
-  template_payload?: TeamProjectTemplatePayload | null;
+  /** jsonb : `TeamProjectTemplatePayload`, lu par `fromJson`. */
+  template_payload?: Json | null;
   health?: string | null;
   health_note?: string | null;
   health_updated_at?: string | null;
@@ -59,7 +61,7 @@ export interface TaskRow {
   deadline: string | null;
   estimated_time: number | null;
   assignee_ids: string[] | null;
-  created_by: string;
+  created_by: string | null;
   completed: boolean;
   status: string | null;
   completed_at: string | null;
@@ -91,7 +93,7 @@ export const mapProject = (r: ProjectRow): TeamProject => ({
   startDate: r.start_date ?? null,
   dueDate: r.due_date ?? null,
   isTemplate: r.is_template ?? false,
-  templatePayload: r.template_payload ?? null,
+  templatePayload: fromJson<TeamProjectTemplatePayload | null>(r.template_payload) ?? null,
   health: (r.health as TeamProjectHealth | null | undefined) ?? null,
   healthNote: r.health_note ?? null,
   healthUpdatedAt: r.health_updated_at ?? null,

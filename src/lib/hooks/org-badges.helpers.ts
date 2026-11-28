@@ -17,7 +17,7 @@ export interface BadgeSourceTask {
   name: string;
   completed: boolean;
   assigneeIds: string[];
-  createdBy: string;
+  createdBy: string | null;
   createdAt: string;
 }
 

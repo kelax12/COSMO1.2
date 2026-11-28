@@ -5,24 +5,27 @@
 // (Record<string,boolean>), never `completedDates` (faille B5).
 // ═══════════════════════════════════════════════════════════════════
 import type { Habit, HabitScheduleChange } from './types';
-import { toJson } from '@/lib/db-contract';
-import type { ColumnsExist, DbPatch, DbRow, RpcRow, Verified } from '@/lib/db-contract';
+import { fromJson, toJson } from '@/lib/db-contract';
+import type { ColumnsExist, DbPatch, DbRow, Json, RpcRow, Verified } from '@/lib/db-contract';
 import { normalizeScheduledDays } from './schedule';
 
 /** Supabase DB row type for the `habits` table (snake_case). */
 export interface HabitRow {
   id: string;
   name: string;
-  description?: string;
-  frequency: 'daily' | 'weekly' | 'monthly';
+  description?: string | null;
+  /** `Habit['frequency']` : contrainte CHECK côté SQL, `string` au schéma. */
+  frequency: string;
   estimated_time: number;
   color: string;
   icon: string;
-  completions?: Record<string, boolean>;
-  created_at?: string;
+  /** jsonb : jours cochés de la fenêtre (`Record<string, boolean>`), lu par `fromJson`. */
+  completions?: Json;
+  created_at?: string | null;
   user_id?: string;
   scheduled_days?: number[] | null;
-  schedule_history?: HabitScheduleChange[] | null;
+  /** jsonb : `HabitScheduleChange[]`, lu par `fromJson`. */
+  schedule_history?: Json | null;
   // Colonnes supplementaires de `get_my_habits()` (mig. 119) — absentes d'un
   // SELECT direct sur la table, d'ou l'optionnalite.
   streak_current?: number;
@@ -39,22 +42,23 @@ export interface HabitRow {
 export type HabitDbInput = Omit<DbPatch<'habits'>, 'completions'>;
 
 export function mapHabitFromDb(row: HabitRow): Habit {
+  const scheduleHistory = fromJson<HabitScheduleChange[] | null>(row.schedule_history);
   return {
     id: row.id,
     name: row.name,
-    description: row.description,
-    frequency: row.frequency,
+    description: row.description ?? undefined,
+    frequency: row.frequency as Habit['frequency'],
     estimatedTime: row.estimated_time,
     color: row.color,
     icon: row.icon,
-    completions: row.completions || {},
-    createdAt: row.created_at,
+    completions: fromJson<Record<string, boolean> | null>(row.completions) || {},
+    createdAt: row.created_at ?? undefined,
     userId: row.user_id,
     ...(row.scheduled_days && row.scheduled_days.length > 0
       ? { scheduledDays: [...row.scheduled_days] }
       : {}),
-    ...(row.schedule_history && row.schedule_history.length > 0
-      ? { scheduleHistory: row.schedule_history }
+    ...(scheduleHistory && scheduleHistory.length > 0
+      ? { scheduleHistory }
       : {}),
     streakCurrent: row.streak_current,
     streakBest: row.streak_best,

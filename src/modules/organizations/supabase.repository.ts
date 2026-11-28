@@ -91,12 +91,13 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
       .limit(50);
     if (mErr) throw normalizeApiError(mErr);
 
-    type JoinedRow = { role: OrgRole; organizations: OrgRow | null };
+    type JoinedRow = { role: string; organizations: OrgRow | null };
     // Onzieme lecture bornee en dur, meme classe que les dix du point 13 :
     // au-dela de 50 organisations, la liste etait coupee sans un mot.
-    return warnIfTruncated((memberships ?? []) as unknown as JoinedRow[], 50, 'organizations')
+    const joined: JoinedRow[] = memberships ?? [];
+    return warnIfTruncated(joined, 50, 'organizations')
       .filter((r): r is JoinedRow & { organizations: OrgRow } => r.organizations != null)
-      .map((r) => ({ ...this.mapOrg(r.organizations), myRole: r.role ?? 'member' }))
+      .map((r) => ({ ...this.mapOrg(r.organizations), myRole: (r.role as OrgRole | null) ?? 'member' }))
       // Le tri portait sur `organizations.created_at` : un `order` sur une
       // table embarquée trierait les lignes DANS chaque parent (il y en a une),
       // pas la liste. Il se fait donc ici, sur au plus 50 éléments.

@@ -88,7 +88,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
         .order('created_at', { ascending: false })
         .range(from, from + TEAM_PROJECTS_PAGE - 1);
       if (error) throw normalizeApiError(error);
-      const page = (data ?? []) as unknown as ProjectRow[];
+      const page: ProjectRow[] = data ?? [];
       rows.push(...page);
       if (page.length < TEAM_PROJECTS_PAGE) break;
     }
@@ -243,7 +243,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     // (console dev + toast une fois par session) au lieu de tronquer sans bruit.
     // Une lecture à plafond propre (« les 20 prochaines échéances ») est
     // tronquée PAR CONSTRUCTION : elle ne doit pas déclencher l'avertissement.
-    const rows = (data ?? []) as unknown as TaskRow[];
+    const rows: TaskRow[] = data ?? [];
     return (filters?.limit ? rows : warnIfTruncated(rows, TEAM_TASKS_READ_LIMIT, 'team_tasks')).map(mapTask);
   }
 
@@ -502,7 +502,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
       .limit(5000);
     if (error) throw normalizeApiError(error);
     return warnIfTruncated(
-      (data ?? []) as unknown as { task_id: string; depends_on_id: string }[],
+      data ?? [],
       5000,
       'team_task_dependencies',
     ).map((r) => ({

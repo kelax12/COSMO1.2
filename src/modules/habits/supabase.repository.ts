@@ -46,7 +46,7 @@ const localToday = (): string => new Date().toLocaleDateString('en-CA');
  * que comme miroir de transition, retirée par la 256).
  */
 const HABIT_COLUMNS =
-  'id, name, description, frequency, estimated_time, color, icon, created_at, user_id, scheduled_days, schedule_history';
+  'id, name, description, frequency, estimated_time, color, icon, created_at, user_id, scheduled_days, schedule_history' as const;
 
 /** Lignes par INSERT dans `habit_completions` : un « Annuler » rejoue au plus ~400 jours. */
 const COMPLETION_INSERT_CHUNK = 500;
@@ -77,7 +77,8 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
         .order('id', { ascending: false })
         .range(from, to);
       if (error) throw normalizeApiError(error);
-      return (data || []) as unknown as HabitRow[];
+      const page: HabitRow[] = data || [];
+      return page;
     });
 
     // Map snake_case to camelCase
@@ -111,7 +112,7 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
       .limit(limit + 1);
     if (error) throw normalizeApiError(error);
 
-    const rows = (data || []) as unknown as HabitRow[];
+    const rows: HabitRow[] = data || [];
     const hasMore = rows.length > limit;
     const items = hasMore ? rows.slice(0, limit) : rows;
     const lastItem = items[items.length - 1];
@@ -161,7 +162,7 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
     }
 
     return mapHabitFromDb({
-      ...(data as unknown as HabitRow),
+      ...data,
       completions: Object.fromEntries(days.map((day) => [day, true])),
     });
   }
@@ -179,7 +180,7 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
     if (error) throw normalizeApiError(error);
     // Sans `completions` : la ligne rendue n'en porte pas (l'historique est dans
     // `habit_completions`). Le hook invalide la liste, qui relit la RPC bornée.
-    return mapHabitFromDb(data as unknown as HabitRow);
+    return mapHabitFromDb(data);
   }
 
   async deleteHabit(id: string): Promise<void> {

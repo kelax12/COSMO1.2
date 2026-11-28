@@ -73,7 +73,7 @@ export async function getProjectDependencies(orgId: string): Promise<TeamProject
     .limit(2000);
   if (error) throw normalizeApiError(error);
   return warnIfTruncated(
-    (data ?? []) as unknown as { project_id: string; depends_on_id: string }[],
+    data ?? [],
     2000,
     'team_project_dependencies',
   ).map((r) => ({ projectId: r.project_id, dependsOnId: r.depends_on_id }));
