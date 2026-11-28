@@ -6,7 +6,7 @@ import { tabMotion } from './tab-motion';
 
 interface GuideTabProps {
   reduced: boolean | null;
-  /** Allowlist `admin_users` (affichage) ; le vrai gate reste la RPC `get_admin_stats`. */
+  /** Allowlist `admin_users` (affichage) ; le vrai gate reste la RPC serveur de la console. */
   isAdmin: boolean;
   onOpenGuide: () => void;
   onOpenAdmin: () => void;

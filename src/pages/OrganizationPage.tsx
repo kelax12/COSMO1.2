@@ -28,7 +28,8 @@ import { useOrgNavMode, type OrgNavMode } from '@/components/organization/use-or
 import OrgSectionSwitcher from '@/components/organization/OrgSectionSwitcher';
 import { ORG_SECTIONS, type OrgSection, type OrgNavItem } from '@/components/organization/org-sections';
 import { sectionNotificationBadges } from '@/components/organization/org-section-badges';
-import { isOrgSectionSegment, orgSectionPath } from '@/components/organization/deep-link.helpers';
+import { isOrgSectionSegment, legacyOrgTabRedirect, orgSectionPath } from '@/components/organization/deep-link.helpers';
+import { safeRedirectPath } from '@/lib/safe-redirect';
 import {
   badgePreviewKey,
   orgSectionBadge,
@@ -119,37 +120,6 @@ function useSideNavMode(): [OrgNavMode, (mode: OrgNavMode) => void] {
     : guidePhase === 'nav' && navMode === 'collapsed' ? 'peek'
     : navMode;
   return [sideNavMode, setNavMode];
-}
-
-/**
- * Données de la page, lues avant les early returns `isLoading` / `!myOrg` :
- * un hook placé plus bas ne serait pas monté sur tous les rendus.
- */
-function useOrgPageData(orgId: string | undefined) {
-  const { data: orgNotifications = [] } = useOrgNotifications(orgId);
-  // Badge nav (reco #7) : « vu » est marqué en QUITTANT la page ; au montage, `lastSeen` repasserait à `now` et les badges naîtraient à zéro.
-  useEffect(() => {
-    if (!orgId) return;
-    return () => markOrgSeen(orgId);
-  }, [orgId]);
-  // `live` : c'est LA page où l'on attend de voir un membre arriver.
-  const { data: members = [], isPending: membersPending } = useOrgMembers(orgId, { live: true });
-  // Droits explicites de l'utilisateur courant (mig. 115). Monté ici parce que
-  // plusieurs onglets s'en servent — le hook ne déclenche qu'une requête,
-  // partagée par React Query avec celles des composants enfants.
-  const myPermissions = useMyOrgPermissions(orgId);
-  // Guide entreprise : les rôles personnalisés (mig. 219) n'existent que si
-  // leur lecture réussit. Même requête que `useMyOrgPermissions`, partagée.
-  const { isError: rolesUnavailable } = useOrgRoles(orgId);
-  const { data: orgSubscription, isPending: subscriptionPending } = useOrgSubscription(orgId);
-  // Statistiques (M3) : ouvertes aussi aux responsables d'équipe, qui n'ont
-  // pas forcément de subordonné dans la pyramide.
-  const { data: teams = [], isLoading: teamsLoading } = useOrgTeams(orgId);
-  const { data: teamMembers = [] } = useOrgTeamMembers(orgId);
-  return {
-    orgNotifications, members, membersPending, myPermissions, rolesUnavailable,
-    orgSubscription, subscriptionPending, teams, teamsLoading, teamMembers,
-  };
 }
 
 /**
@@ -278,6 +248,9 @@ function OrgSubscriptionBanners({ orgId, memberCount, showPastDue, showSeatsFull
 
 /** Ce que la page sait du visiteur et de l'abonnement, transmis aux sections. */
 interface OrgSectionContext {
+  tab: OrgTab;
+  overQuota: boolean;
+  sectionLocked: boolean;
   org: MyOrganization;
   members: OrgMember[];
   currentUserId: string | undefined;
@@ -387,17 +360,36 @@ function shouldShowWelcome(o: {
  * Ce que le visiteur peut voir et faire, et ce que l'abonnement impose : la
  * section servie, le verrou de quota, le contexte passé aux sections.
  */
-function deriveOrgWorkspace(o: {
+function useOrgWorkspace(o: {
   org: MyOrganization;
   userId: string | undefined;
   isOwner: boolean;
-  data: ReturnType<typeof useOrgPageData>;
   urlTab: OrgTab;
   teamId: string | null;
   isDemo: boolean;
 }) {
   const { org: myOrg, isOwner, urlTab, teamId, isDemo } = o;
-  const { members, membersPending, myPermissions, orgSubscription, subscriptionPending, teams, teamsLoading, teamMembers } = o.data;
+  const orgId = myOrg.id;
+  const { data: orgNotifications = [] } = useOrgNotifications(orgId);
+  // Badge nav (reco #7) : « vu » est marqué en QUITTANT la page ; au montage, `lastSeen` repasserait à `now` et les badges naîtraient à zéro.
+  useEffect(() => {
+    if (!orgId) return;
+    return () => markOrgSeen(orgId);
+  }, [orgId]);
+  // `live` : c'est LA page où l'on attend de voir un membre arriver.
+  const { data: members = [], isPending: membersPending } = useOrgMembers(orgId, { live: true });
+  // Droits explicites de l'utilisateur courant (mig. 115). Monté ici parce que
+  // plusieurs onglets s'en servent — le hook ne déclenche qu'une requête,
+  // partagée par React Query avec celles des composants enfants.
+  const myPermissions = useMyOrgPermissions(orgId);
+  // Guide entreprise : les rôles personnalisés (mig. 219) n'existent que si
+  // leur lecture réussit. Même requête que `useMyOrgPermissions`, partagée.
+  const { isError: rolesUnavailable } = useOrgRoles(orgId);
+  const { data: orgSubscription, isPending: subscriptionPending } = useOrgSubscription(orgId);
+  // Statistiques (M3) : ouvertes aussi aux responsables d'équipe, qui n'ont
+  // pas forcément de subordonné dans la pyramide.
+  const { data: teams = [], isLoading: teamsLoading } = useOrgTeams(orgId);
+  const { data: teamMembers = [] } = useOrgTeamMembers(orgId);
   const isAdmin = myOrg.myRole === 'admin';
   // La pyramide dit qui encadre qui, l'équipe qui travaille ensemble (M3). Rapports : droit `report.org` / `report.allTeams`, ou responsable d'une équipe ; tant que les équipes chargent, pas de renvoi vers l'aperçu (droit inconnu).
   const canReports = teamsLoading || myPermissions.isLoading
@@ -419,7 +411,14 @@ function deriveOrgWorkspace(o: {
   const seatsFull = billingLive && isQuotaReached(members.length, subscription);
   const pastDue = needsPaymentAttention(subscription);
 
-  const sectionCtx: OrgSectionContext = {
+  return {
+    tab,
+    overQuota,
+    sectionLocked,
+    orgNotifications,
+    myPermissions,
+    rolesUnavailable,
+    subscription,
     org: myOrg,
     members,
     currentUserId: o.userId,
@@ -441,52 +440,43 @@ function deriveOrgWorkspace(o: {
     teamId,
     urlTab,
   };
-  return { isAdmin, canStats, tab, overQuota, sectionLocked, sectionCtx };
 }
 
-/** Ce que la page a lu avant ses early returns, transmis à l'espace. */
+/** Ce que la page a résolu (adresse, arrivée) avant ses early returns, transmis à l'espace. */
 interface OrgWorkspaceProps {
   org: MyOrganization;
   user: User | null;
-  data: ReturnType<typeof useOrgPageData>;
-  badges: OrgNavBadgeCounts;
   urlTab: OrgTab;
   teamId: string | null;
   setTab: (id: OrgTab) => void;
   isDemo: boolean;
-  nav: {
-    sideNavMode: OrgNavMode;
-    setNavMode: (mode: OrgNavMode) => void;
-    shortcuts: ReturnType<typeof useOrgShortcuts>['shortcuts'];
-    togglePin: ReturnType<typeof useOrgShortcuts>['togglePin'];
-  };
   /** Décidés à l'arrivée sur la page, une fois. */
   arrival: { arrivedBare: boolean; guideOpenSignal: number | undefined };
   hasEntityParam: boolean;
 }
 
 /** L'espace d'un membre : en-têtes, bannières, section servie, navigation, accueil, fiches. */
-function OrgWorkspace({ org: myOrg, user, data, badges, urlTab, teamId, setTab, isDemo, nav, arrival, hasEntityParam }: OrgWorkspaceProps) {
+function OrgWorkspace({ org: myOrg, user, urlTab, teamId, setTab, isDemo, arrival, hasEntityParam }: OrgWorkspaceProps) {
   const { t } = useT('org');
   const { t: tOrgAdmin, tp: tpOrgAdmin } = useT('orgAdmin');
-  const { members } = data;
-  const { sideNavMode, setNavMode, shortcuts, togglePin } = nav;
+  const userId = user?.id;
+  const [searchParams] = useSearchParams();
+  const badges = useOrgBadges();
+  const [sideNavMode, setNavMode] = useSideNavMode();
+  const { shortcuts, togglePin } = useOrgShortcuts(myOrg.id, userId, urlTab, searchParams);
   const { arrivedBare, guideOpenSignal } = arrival;
   // Fermé pendant cette visite ; le drapeau, lui, est posé par entreprise.
   const [welcomeClosed, setWelcomeClosed] = useState(false);
   const isOwner = user?.id === myOrg.ownerId;
-  const { isAdmin, canStats, tab, overQuota, sectionLocked, sectionCtx } = deriveOrgWorkspace({
-    org: myOrg, userId: user?.id, isOwner, data, urlTab, teamId, isDemo,
-  });
-  const { seatsFull, seatsQuota, pastDue } = sectionCtx;
-  const subscription = data.orgSubscription ?? null;
-  const navItems = buildOrgNavItems({ t, tOrgAdmin, tpOrgAdmin }, badges, data.orgNotifications, { canStats, isAdmin, isOwner, overQuota }, tab);
+  const w = useOrgWorkspace({ org: myOrg, userId, isOwner, urlTab, teamId, isDemo });
+  const { members, isAdmin, canStats, tab, overQuota, sectionLocked, seatsFull, seatsQuota, pastDue, subscription } = w;
+  const navItems = buildOrgNavItems({ t, tOrgAdmin, tpOrgAdmin }, badges, w.orgNotifications, { canStats, isAdmin, isOwner, overQuota }, tab);
   const activeSection = ORG_SECTIONS.find((x) => x.id === tab);
   const guideViewer: GuideViewer = {
-    can: data.myPermissions.can,
+    can: w.myPermissions.can,
     isAdmin,
     isOwner,
-    customRolesAvailable: !data.rolesUnavailable,
+    customRolesAvailable: !w.rolesUnavailable,
   };
 
   return (
@@ -546,7 +536,7 @@ function OrgWorkspace({ org: myOrg, user, data, badges, urlTab, teamId, setTab, 
           onChangePlan={() => setTab('billing')}
         />
       ) : (
-        <OrgSectionContent tab={tab} ctx={sectionCtx} setTab={setTab} />
+        <OrgSectionContent tab={tab} ctx={w} setTab={setTab} />
       )}
       </Suspense>
 
@@ -569,12 +559,12 @@ function OrgWorkspace({ org: myOrg, user, data, badges, urlTab, teamId, setTab, 
       />
 
       {/* Accueil membre : cf. `shouldShowWelcome`. */}
-      {user?.id && shouldShowWelcome({ arrivedBare, welcomeClosed, hasEntityParam, isDemo, members, orgId: myOrg.id, userId: user.id }) && (
+      {userId && shouldShowWelcome({ arrivedBare, welcomeClosed, hasEntityParam, isDemo, members, orgId: myOrg.id, userId }) && (
         <Suspense fallback={null}>
           <OrgWelcomeVideo
             orgName={myOrg.name}
             onClose={() => {
-              markMemberWelcomeSeen(myOrg.id, user.id);
+              markMemberWelcomeSeen(myOrg.id, userId);
               setWelcomeClosed(true);
             }}
           />
@@ -586,7 +576,7 @@ function OrgWorkspace({ org: myOrg, user, data, badges, urlTab, teamId, setTab, 
       {hasEntityParam && !overQuota && (
         <Suspense fallback={null}>
           <OrgPageOverlays
-            deepLink={{ orgId: myOrg.id, section: teamId ? 'teams' : tab, members, currentUserId: user?.id, isAdmin, canEditDependencies: sectionCtx.canEditDependencies }}
+            deepLink={{ orgId: myOrg.id, section: teamId ? 'teams' : tab, members, currentUserId: userId, isAdmin, canEditDependencies: w.canEditDependencies }}
           />
         </Suspense>
       )}
@@ -601,21 +591,17 @@ const OrganizationPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const urlTab: OrgTab = isOrgSectionSegment(section) ? section : 'overview';
-  // Sans `replace` : chaque section est une page, le bouton précédent y revient.
-  const setTab = (id: OrgTab) => navigate(orgSectionPath(id));
   const isDemo = useIsDemo();
   // Décidé À L'ARRIVÉE, une fois : l'accueil membre ne s'ouvre que si l'on ARRIVE sans paramètre d'adresse (relue à chaque rendu, elle s'ouvrirait par-dessus l'écran voulu). Même règle que `FirstRunSetup`.
   const [arrivedBare] = useState(() => searchParams.toString() === '');
   const guideOpenSignal = useGuideOpenSignal(searchParams, setSearchParams);
   const { activeOrg: myOrg, isLoading } = useActiveOrganization();
-  const badges = useOrgBadges();
-  const [sideNavMode, setNavMode] = useSideNavMode();
-  // Appelés avant les early returns, comme tous les hooks de la page.
-  const data = useOrgPageData(myOrg?.id);
-  const { shortcuts, togglePin } = useOrgShortcuts(myOrg?.id, user?.id, urlTab, searchParams);
 
-  // `/entreprise?tab=X` → `/entreprise/X` (⚠️ À GARDER POUR TOUJOURS, retour Stripe), segment inconnu → aperçu, second segment hors équipe → la section. Avant l'attente de l'organisation.
-  const route = resolveOrgRoute(searchParams, section, entityId);
+  // `/entreprise?tab=X` → `/entreprise/X`, autres paramètres conservés. ⚠️ À GARDER POUR TOUJOURS : Stripe renvoie sur `?tab=billing&checkout=success`, les e-mails `renewal-notice` portent `?tab=billing`. Avant l'attente de l'organisation. Passe par `safeRedirectPath` (no-open-redirect.test.ts).
+  const legacyTarget = safeRedirectPath(legacyOrgTabRedirect(searchParams));
+  if (legacyTarget) return <Navigate to={legacyTarget} replace />;
+  // Segment inconnu → aperçu ; second segment hors équipe → la section (segments de chemin seulement).
+  const route = resolveOrgRoute(section, entityId);
   if (route.redirect !== null) return <Navigate to={route.redirect} replace />;
 
   if (isLoading) {
@@ -629,17 +615,17 @@ const OrganizationPage = () => {
   // Non-membre : pas d'espace entreprise → dashboard.
   if (!myOrg) return <Navigate to="/dashboard" replace />;
 
+  // Sans `replace` : chaque section est une page, le bouton précédent y revient.
+  const setTab = (id: OrgTab) => navigate(orgSectionPath(id));
+
   return (
     <OrgWorkspace
       org={myOrg}
       user={user}
-      data={data}
-      badges={badges}
       urlTab={urlTab}
       teamId={route.teamId}
       setTab={setTab}
       isDemo={isDemo}
-      nav={{ sideNavMode, setNavMode, shortcuts, togglePin }}
       arrival={{ arrivedBare, guideOpenSignal }}
       hasEntityParam={['task', 'member', 'project', 'okr', 'team'].some((k) => searchParams.has(k))}
     />

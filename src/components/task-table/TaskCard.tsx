@@ -133,13 +133,8 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
       onPointerDown={gestures.onPointerDown}
       onPointerUp={cancelLongPress}
       onPointerCancel={cancelLongPress}
-      // ═══ C-111 : LE SEUL CHEMIN CLAVIER VERS LES ACTIONS ═══
-      // 🔴 Appui long, glissement et menu desktop (`hidden md:block`) sont des gestes de POINTEUR : sans cette ligne, les actions d'une tâche sont inatteignables au clavier sur mobile (WCAG 2.1.1, A). Elle ouvre la feuille (clic droit ET clavier, la carte porte `tabIndex={0}`).
-      // ✅ Aucun pixel ajouté : l'arbitrage de la maquette 86 (« plus de ⋯ au repos ») tient.
+      // C-111 et C-118 : le chemin clavier vers les actions (clic droit, `Menu`, `Shift+F10`), cf. `useCardGestures`.
       onContextMenu={gestures.onContextMenu}
-      // ═══ C-118 : SAFARI N'ÉMET PAS `contextmenu` AU CLAVIER ═══
-      // 🔴 `Shift+F10` et `Menu` arrivent en `keydown` sans `contextmenu` : on lit les deux touches en `keydown`, `preventDefault` évite le menu natif là où il est synthétisé quand même.
-      // ⚠️ Même garde qu'`onContextMenu` : rien en mode « ajout à une liste ».
       onKeyDown={gestures.onKeyDown}
       // Annonce le raccourci aux technologies d'assistance : sans lui, le
       // chemin existe mais rien ne le dit.

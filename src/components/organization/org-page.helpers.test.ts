@@ -9,31 +9,24 @@ import {
 import { ORG_SECTIONS } from './org-sections';
 
 const UUID = '11111111-2222-4333-8444-555555555555';
-const params = (q = '') => new URLSearchParams(q);
 
 describe('resolveOrgRoute', () => {
-  it('ancienne adresse ?tab= : redirection conservée, autres paramètres compris', () => {
-    const r = resolveOrgRoute(params('tab=billing&checkout=success'), undefined, undefined);
-    expect(r.redirect).toMatch(/^\/entreprise\/billing/);
-    expect(r.redirect).toContain('checkout=success');
-  });
-
   it('segment inconnu → aperçu', () => {
-    expect(resolveOrgRoute(params(), 'xyz', undefined)).toEqual({ redirect: '/entreprise' });
+    expect(resolveOrgRoute('xyz', undefined)).toEqual({ redirect: '/entreprise' });
   });
 
   it('second segment hors teams ou sans forme d id → la section', () => {
-    expect(resolveOrgRoute(params(), 'members', UUID).redirect).toBe('/entreprise/members');
-    expect(resolveOrgRoute(params(), 'teams', 'pas un id').redirect).toBe('/entreprise/teams');
+    expect(resolveOrgRoute('members', UUID).redirect).toBe('/entreprise/members');
+    expect(resolveOrgRoute('teams', 'pas un id').redirect).toBe('/entreprise/teams');
   });
 
   it('page d une équipe : pas de redirection, id lu', () => {
-    expect(resolveOrgRoute(params(), 'teams', UUID)).toEqual({ redirect: null, teamId: UUID });
+    expect(resolveOrgRoute('teams', UUID)).toEqual({ redirect: null, teamId: UUID });
   });
 
   it('section simple : pas de redirection, pas d équipe', () => {
-    expect(resolveOrgRoute(params(), 'tasks', undefined)).toEqual({ redirect: null, teamId: null });
-    expect(resolveOrgRoute(params(), undefined, undefined)).toEqual({ redirect: null, teamId: null });
+    expect(resolveOrgRoute('tasks', undefined)).toEqual({ redirect: null, teamId: null });
+    expect(resolveOrgRoute(undefined, undefined)).toEqual({ redirect: null, teamId: null });
   });
 });
 

@@ -2,35 +2,22 @@
 // demandée → section servie, sections visibles, badge d'une entrée. Sorties de
 // la page pour être testées seules (ARCHITECTURE § 3).
 import { sectionOpenWhileOverQuota } from '@/modules/billing/org-billing.logic';
-import { safeRedirectPath } from '@/lib/safe-redirect';
 import type { OrgSection, OrgSectionDef } from './org-sections';
 import type { BadgeSection, sectionNotificationBadges } from './org-section-badges';
-import {
-  isOrgSectionSegment,
-  legacyOrgTabRedirect,
-  orgSectionPath,
-  readTeamIdSegment,
-} from './deep-link.helpers';
+import { isOrgSectionSegment, orgSectionPath, readTeamIdSegment } from './deep-link.helpers';
 
 export type OrgRoute =
   | { redirect: string; teamId?: undefined }
   | { redirect: null; teamId: string | null };
 
 /**
- * Adresse de l'espace entreprise → redirection éventuelle, sinon l'équipe
- * ouverte. Ordre voulu : `?tab=` d'abord (⚠️ À GARDER POUR TOUJOURS : retour
- * Stripe `?tab=billing&checkout=success`, e-mails `renewal-notice`), passé par
- * `safeRedirectPath` (no-open-redirect.test.ts) ; puis un segment inconnu vers
- * l'aperçu ; puis un second segment hors `teams` ou sans forme d'id vers la
- * section elle-même.
+ * Segments de chemin de l'espace entreprise → redirection éventuelle, sinon
+ * l'équipe ouverte : un segment inconnu vers l'aperçu, puis un second segment
+ * hors `teams` ou sans forme d'id vers la section elle-même. Ne lit jamais la
+ * query string : l'ancienne adresse `?tab=` est redirigée par la page, à
+ * travers `safeRedirectPath` (no-open-redirect.test.ts).
  */
-export function resolveOrgRoute(
-  searchParams: URLSearchParams,
-  section: string | undefined,
-  entityId: string | undefined,
-): OrgRoute {
-  const legacyTarget = safeRedirectPath(legacyOrgTabRedirect(searchParams));
-  if (legacyTarget) return { redirect: legacyTarget };
+export function resolveOrgRoute(section: string | undefined, entityId: string | undefined): OrgRoute {
   if (section !== undefined && !isOrgSectionSegment(section)) return { redirect: '/entreprise' };
   const teamId = section === 'teams' ? readTeamIdSegment(entityId) : null;
   if (entityId !== undefined && !teamId) return { redirect: orgSectionPath(section) };
