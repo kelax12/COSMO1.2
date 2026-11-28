@@ -41,7 +41,7 @@ export function SettingsSidebar({ user, initials, fileInputRef, onAvatarUpload, 
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))] truncate leading-tight">{user.name}</p>
-            <p className="text-[11px] text-[rgb(var(--color-text-secondary))] truncate mt-0.5">{user.email}</p>
+            <p className="text-caption leading-normal text-[rgb(var(--color-text-secondary))] truncate mt-0.5">{user.email}</p>
           </div>
         </div>
         <input type="file" ref={fileInputRef} onChange={onAvatarUpload} className="hidden" accept="image/*" />
