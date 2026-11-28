@@ -380,10 +380,6 @@
       "complexity": [27],
       "max-lines-per-function": [340]
     },
-    "src/pages/SettingsPage.tsx": {
-      "complexity": [58],
-      "max-lines-per-function": [415]
-    },
     "src/pages/StatisticsPage.tsx": {
       "complexity": [22],
       "max-lines-per-function": [403]

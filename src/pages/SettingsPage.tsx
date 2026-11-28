@@ -1,19 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import {
-  User, LogOut,
-  HelpCircle, Camera,
-  Mail, ChevronRight, BarChart3,
-} from 'lucide-react';
-import { ShortcutsList } from '@/components/keyboard-shortcuts';
+import { AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useIsAdmin } from '@/modules/admin';
 import { useNavigate } from 'react-router';
-import { useAuth } from '@/modules/auth/AuthContext';
-import ThemeToggle from '@/components/ThemeToggle';
-import LocaleToggle from '@/components/LocaleToggle';
-import { SUPPORTED_LOCALES } from '@/i18n/locale';
+import { useAuth, type User } from '@/modules/auth/AuthContext';
 import { useT } from '@/i18n/useT';
-import { TAP_AREA_44_Y, TAP_AREA_44_ANCRE } from '@/components/mobile/tap-area';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import {
   AlertDialog,
@@ -26,31 +16,30 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-// Atomes présentationnels + nav extraits dans ./settings/primitives.
-// Onglet « Mes données » extrait dans ./settings/DataTab.
-import {
-  type SettingsTab,
-  NAV_GROUPS,
-  LabeledInput,
-  PrimaryButton,
-  SectionCard,
-} from './settings/primitives';
+// Atomes présentationnels + nav dans ./settings/primitives ; un fichier par
+// onglet (./settings/*Tab) et pour la navigation (./settings/SettingsNav).
+import { type SettingsTab, SectionCard } from './settings/primitives';
 import { DataTab } from './settings/DataTab';
+import ProfileTab, { type ProfileDraft } from './settings/ProfileTab';
+import SecurityTab, { type PasswordsDraft } from './settings/SecurityTab';
+import AppearanceTab from './settings/AppearanceTab';
+import GuideTab from './settings/GuideTab';
+import { SettingsSidebar, SettingsTabPills } from './settings/SettingsNav';
 import TimezoneSection from './settings/TimezoneSection';
-import MobileSettingsHome, { MobileSettingsBack, MobileThemeList, type MobileSettingsPage } from './settings/MobileSettingsHome';
-import ReplayTutorialsCard from './settings/ReplayTutorialsCard';
+import MobileSettingsHome, { MobileSettingsBack, type MobileSettingsPage } from './settings/MobileSettingsHome';
 import { useAvatarActions } from './settings/useAvatarUpload';
-import { useAccountActions } from './settings/useAccountActions';
+import { useAccountActions, type ConfirmConfig } from './settings/useAccountActions';
 import OrganizationSettingsCard from '@/components/organization/OrganizationSettingsCard';
 import { PageHeading } from '@/components/ui/typography';
 import { MobileHeader } from '@/components/mobile';
 import { CONTACT_EMAIL } from '@/lib/contact.mjs';
 
+/** Compte OAuth (fournisseur autre que l'email), hors démo. */
+const isThirdPartyAccount = (user: User | null, isDemo: boolean) =>
+  !isDemo && !!user?.provider && user.provider !== 'email';
+
 /* ─── main component ───────────────────────────────────────────── */
 const SettingsPage: React.FC = () => {
-  // `tCommon` et non `t` : le reste de cette page n'est pas encore extrait,
-  // le nom explicite évite toute ambiguïté quand elle le sera.
-  const { t: tCommon } = useT('common');
   const { t } = useT('settings');
   const { user, logout, isDemo, updateDemoProfile } = useAuth();
   const isAdmin = useIsAdmin();
@@ -83,7 +72,7 @@ const SettingsPage: React.FC = () => {
   // Third-party (OAuth) accounts manage their email upstream (e.g. Google) —
   // editing it here is locked. Native email/password (and demo) accounts can
   // change their email inline. `provider` comes from Supabase app_metadata.
-  const isThirdParty = !isDemo && !!user?.provider && user.provider !== 'email';
+  const isThirdParty = isThirdPartyAccount(user, isDemo);
 
   // Les cinq gestes qui touchent au compte, et l'unique boîte de confirmation
   // qu'ils partagent — cf. `useAccountActions` pour les deux règles de sécurité
@@ -113,7 +102,7 @@ const SettingsPage: React.FC = () => {
     t,
   });
 
-  const [passwords, setPasswords] = useState({ current: '', new: '', confirm: '' });
+  const [passwords, setPasswords] = useState<PasswordsDraft>({ current: '', new: '', confirm: '' });
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,7 +114,7 @@ const SettingsPage: React.FC = () => {
   // typing has a visible effect, and we push the change to Supabase on save
   // rather than to a localStorage key the production identity never reads.
   // Faille B7.
-  const [profileDraft, setProfileDraft] = useState({ name: '', email: '' });
+  const [profileDraft, setProfileDraft] = useState<ProfileDraft>({ name: '', email: '' });
   useEffect(() => {
     if (user) setProfileDraft({ name: user.name, email: user.email });
     // Deps primitives volontaires (plus précises que l'objet user entier).
@@ -143,6 +132,7 @@ const SettingsPage: React.FC = () => {
   };
 
   const initials = user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+  const pickPhoto = () => fileInputRef.current?.click();
 
   return (
     // pb mobile : 64px tab bar + 88px pour que le FAB quick-add ne masque
@@ -151,112 +141,27 @@ const SettingsPage: React.FC = () => {
       className="min-h-[100dvh] lg:h-full lg:min-h-0 bg-[rgb(var(--color-background))] transition-colors duration-300 flex pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-0">
 
       {/* ──────── SIDEBAR ──────── */}
-      <motion.aside
-        className="hidden lg:flex w-72 shrink-0 border-r border-[rgb(var(--color-border))] flex-col sticky top-0"
-        style={{ background: 'rgb(var(--color-surface))' }}
-        initial={{ x: -20, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        transition={{ duration: 0.35, ease: 'easeOut' }}
-      >
-        <div className="p-5 border-b border-[rgb(var(--color-border))]">
-          <div className="flex items-center gap-3">
-            <div className="relative shrink-0 group/av cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-              <div className="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-br bg-[rgb(var(--color-accent-solid))] to-violet-600 flex items-center justify-center text-[rgb(var(--color-accent-solid-foreground))] text-sm font-bold select-none">
-                {user.avatar ? <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-                  : <span>{initials}</span>}
-              </div>
-              <div className="absolute inset-0 rounded-xl bg-black/40 opacity-0 group-hover/av:opacity-100 transition-opacity flex items-center justify-center">
-                <Camera size={12} className="text-white" />
-              </div>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))] truncate leading-tight">{user.name}</p>
-              <p className="text-[11px] text-[rgb(var(--color-text-secondary))] truncate mt-0.5">{user.email}</p>
-            </div>
-          </div>
-          <input type="file" ref={fileInputRef} onChange={handleAvatarUpload} className="hidden" accept="image/*" />
-        </div>
-
-        <nav className="flex-1 p-3 flex flex-col gap-5">
-          {NAV_GROUPS.map((group) => (
-            <div key={group.labelKey}>
-              <p className="px-3 mb-1.5 text-caption font-bold uppercase tracking-[0.18em] text-[rgb(var(--color-text-secondary))]">{t(group.labelKey)}</p>
-              <div className="flex flex-col gap-0.5">
-                {group.items.map((item) => {
-                  const Icon = item.icon;
-                  const active = activeTab === item.id;
-                  return (
-                    <button key={item.id} onClick={() => setActiveTab(item.id)} style={{ minHeight: '44px' }}
-                      className={`relative w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 text-left ${
-                        active ? 'bg-[rgb(var(--color-accent))]/10 text-[rgb(var(--color-accent-text))]'
-                          : 'text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] hover:text-[rgb(var(--color-text-primary))]'}`}>
-                      <Icon size={15} className={active ? 'text-[rgb(var(--color-accent))]' : ''} strokeWidth={active ? 2.5 : 2} />
-                      {t(item.labelKey)}
-                      {active && (
-                        <motion.span layoutId="pill"
-                          className="absolute inset-0 rounded-xl bg-[rgb(var(--color-accent))]/10"
-                          style={{ zIndex: -1 }} transition={{ duration: 0.18, ease: 'easeOut' }} />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </nav>
-
-        <div className="p-3 border-t border-[rgb(var(--color-border))]">
-          <button onClick={confirmLogout} style={{ minHeight: '44px' }}
-            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-[rgb(var(--color-text-secondary))] hover:bg-red-500/8 hover:text-red-500 transition-all duration-150 group">
-            <LogOut size={15} className="group-hover:-translate-x-0.5 transition-transform" />
-            {t('page.logout')}
-          </button>
-        </div>
-      </motion.aside>
+      <SettingsSidebar
+        user={user}
+        initials={initials}
+        fileInputRef={fileInputRef}
+        onAvatarUpload={handleAvatarUpload}
+        activeTab={activeTab}
+        onSelect={setActiveTab}
+        onLogout={confirmLogout}
+      />
 
       {/* ──────── MAIN CONTENT ──────── */}
       <main className="flex-1 min-w-0 pt-4 pb-10 md:py-10 px-gutter sm:px-8 lg:px-12">
-        {/* Maquette 206 : plus de sous-titre générique sur mobile. */}
-        {(!isMobile || mobilePage === null) && <MobileHeader title={t('page.title')} />}
-        {isMobile && mobilePage === null && (
-          <MobileSettingsHome user={user} initials={initials} hasOrganization onOpen={openMobile} onLogout={confirmLogout} />
-        )}
-        {isMobile && mobilePage !== null && <MobileSettingsBack onBack={() => openMobile(null)} />}
-        {isMobile && mobilePage === 'timezone' && <TimezoneSection />}
-        {isMobile && mobilePage === 'org' && <SectionCard><OrganizationSettingsCard /></SectionCard>}
+        <SettingsMobileShell isMobile={isMobile} page={mobilePage} user={user} initials={initials} onOpen={openMobile} onLogout={confirmLogout} />
         <div className="mb-8 max-w-3xl hidden md:block">
           <PageHeading variant="standard" className="tracking-tight">
             {t('page.title')}
           </PageHeading>
         </div>
 
-        {/* mobile nav tabs */}
-        {/* ── Maquette 83 : la bande de pilules commune ─────────────────
-            Les onglets vivaient dans une boîte bordée qui défile, dont le
-            quatrième élément (« Mes données ») était coupé net par le bord de
-            l'écran, sans rien pour dire qu'il y en avait d'autres. Ils
-            reprennent la forme utilisée par /tasks, /okr, /statistics et
-            l'espace entreprise : des pilules pleines, hauteur 36 px, cible
-            tactile 44 portée par `TAP_AREA_44_Y`.
-            ❌ Ne pas remettre de conteneur bordé : c'est lui qui donnait
-            l'impression d'un cadre dont le contenu dépasse. */}
-        {!isMobile && <div className="lg:hidden flex gap-2 mb-6 overflow-x-auto hide-scrollbar -mx-gutter px-gutter">
-          {NAV_GROUPS.flatMap(g => g.items).map((item) => {
-            const Icon = item.icon;
-            const active = activeTab === item.id;
-            return (
-              <button key={item.id} onClick={() => setActiveTab(item.id)}
-                aria-current={active ? 'page' : undefined}
-                className={`${TAP_AREA_44_Y} shrink-0 flex items-center gap-1.5 px-3.5 h-9 rounded-full border text-label font-medium transition-colors ${
-                  active
-                    ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'
-                    : 'bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))]'}`}>
-                <Icon size={14} aria-hidden="true" />
-                {t(item.labelKey)}
-              </button>
-            );
-          })}
-        </div>}
+        {/* Entre `md` et `lg` : la bande de pilules commune (maquette 83). */}
+        {!isMobile && <SettingsTabPills activeTab={activeTab} onSelect={setActiveTab} />}
 
         {/* `mode="wait"` retiré : sous prefers-reduced-motion, l'exit de
             l'onglet sortant ne signale jamais sa fin à AnimatePresence (bug
@@ -269,197 +174,30 @@ const SettingsPage: React.FC = () => {
 
           {/* ── PROFIL ── */}
           {activeTab === 'profile' && (
-            <motion.div key="profile" initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={prefersReducedMotion ? undefined : { opacity: 0, y: -8 }} transition={{ duration: 0.2 }}
-              // Deux colonnes à partir de `lg` : le groupe Entreprise vit à
-              // DROITE des cartes d'identité, pas empilé sous le fuseau
-              // horaire où il fallait scroller pour le trouver. `items-start`
-              // pour que la colonne courte ne s'étire pas à la hauteur de
-              // l'autre. Une seule colonne sous `lg` (ordre inchangé).
-              className="max-w-2xl lg:max-w-5xl grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] gap-5 items-start">
-              <div className="flex flex-col gap-5">
-              <SectionCard>
-                {/* ── Maquette 83 : le profil en une rangée sur mobile ───────
-                    Le bloc faisait ~155 px : un carré d'avatar de 80, le nom,
-                    l'email et un bouton « Changer la photo », tous CENTRÉS,
-                    pour trois informations qu'on ne vient pas lire. Sur mobile
-                    il redevient une rangée : avatar 48, nom et email à gauche,
-                    la photo se change par l'avatar lui-même (la pastille
-                    d'appareil photo, désormais toujours visible au doigt).
-                    `sm:` rend le bloc centré d'origine. */}
-                <div className="flex flex-row sm:flex-col md:flex-row items-center sm:items-start gap-3.5 sm:gap-5">
-                  <div className="relative group/av shrink-0">
-                    <div className="w-12 h-12 sm:w-20 sm:h-20 rounded-2xl overflow-hidden bg-gradient-to-br bg-[rgb(var(--color-accent-solid))] to-violet-600 flex items-center justify-center text-[rgb(var(--color-accent-solid-foreground))] text-headline sm:text-2xl font-bold shadow-sm select-none">
-                      {user.avatar ? <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-                        : <span>{initials}</span>}
-                    </div>
-                    {/* Overlay icon-only : sans aria-label, axe-core le remonte
-                        en violation `button-name` d'impact CRITICAL (WCAG 4.1.2)
-                        et le guard a11y CI casse. */}
-                    <button onClick={() => fileInputRef.current?.click()}
-                      aria-label={t('profile.changePhotoAria')}
-                      // Sur mobile il n'y a pas de survol : la pastille est
-                      // toujours là, en bas à droite de l'avatar. Au-delà de
-                      // `sm`, le voile au survol reprend la main, inchangé.
-                      // C-111 · la pastille MESURAIT 24 x 24 px, soit la plus
-                      // petite commande des huit routes protégées. Le dessin
-                      // ne peut pas grandir — une pastille de 44 px avalerait
-                      // l'avatar de 48 —, donc la zone tactile passe par un
-                      // pseudo-élément, qui ne prend aucune place dans le flux.
-                      // ⚠️ `TAP_AREA_44_ANCRE` et non `TAP_AREA_44` : ce
-                      // dernier porte `relative`, qui écraserait l'`absolute`
-                      // ci-dessous et décrocherait la pastille du coin.
-                      className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[rgb(var(--color-accent-solid))] border-2 border-[rgb(var(--color-surface))] flex items-center justify-center ${TAP_AREA_44_ANCRE} sm:inset-0 sm:w-auto sm:h-auto sm:rounded-2xl sm:border-0 sm:bg-black/45 sm:opacity-0 sm:group-hover/av:opacity-100 sm:transition-opacity`}>
-                      <Camera size={12} className="text-white sm:hidden" aria-hidden="true" />
-                      <Camera size={18} className="text-white hidden sm:block" aria-hidden="true" />
-                    </button>
-                  </div>
-                  <div className="flex-1 min-w-0 text-left sm:text-center md:text-left">
-                    <h2 className="text-body sm:text-lg font-bold text-[rgb(var(--color-text-primary))] truncate">{user.name}</h2>
-                    <p className="text-caption sm:text-sm text-[rgb(var(--color-text-secondary))] mt-0.5 truncate">{user.email}</p>
-                    <div className="flex flex-wrap justify-start sm:justify-center md:justify-start gap-2 mt-3">
-                      {/* Le bouton « Changer la photo » disparaît sous `sm` :
-                          la pastille sur l'avatar fait la même chose, à deux
-                          centimètres du regard. */}
-                      <button onClick={() => fileInputRef.current?.click()}
-                        className="hidden sm:inline-flex items-center gap-1.5 px-4 min-h-touch sm:min-h-[36px] border border-[rgb(var(--color-border))] rounded-lg text-xs font-semibold text-[rgb(var(--color-text-secondary))] hover:border-[rgb(var(--color-accent))] hover:text-[rgb(var(--color-accent))] transition-all duration-150">
-                        <Camera size={12} /> {t('profile.changePhoto')}
-                      </button>
-                      {user.avatar && (
-                        <button onClick={removeAvatar}
-                          className="inline-flex items-center gap-1.5 px-4 min-h-touch sm:min-h-[36px] border border-red-200 rounded-lg text-xs font-semibold text-red-500 hover:bg-red-500 hover:border-red-500 hover:text-white transition-all duration-150">
-                          {tCommon('actions.delete')}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </SectionCard>
-              <SectionCard>
-                <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-5">{t('profile.heading')}</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <LabeledInput label={t('profile.fullName')} icon={User} value={profileDraft.name} onChange={(e) => setProfileDraft(p => ({ ...p, name: e.target.value }))} placeholder={t('profile.yourNamePlaceholder')} />
-                  <LabeledInput label={t('profile.emailLabel')} type="email" icon={Mail} value={profileDraft.email} onChange={(e) => setProfileDraft(p => ({ ...p, email: e.target.value }))} placeholder={t('profile.emailPlaceholder')} disabled={isThirdParty} hint={isThirdParty ? t('profile.emailManaged') : undefined} />
-                </div>
-                {/* Maquette 83 : pleine largeur sur mobile. C'est l'action
-                    principale de l'écran, et c'est elle que le FAB recouvrait
-                    avant d'être retiré de cette route — un bouton aligné à
-                    droite sur 390 px est exactement ce qu'un bouton flottant
-                    vient masquer. */}
-                {/* Maquette 208 : le bouton n'apparaît que si quelque chose a changé. */}
-                {(profileDraft.name !== user.name || profileDraft.email !== user.email) && <div className="flex justify-stretch sm:justify-end mt-5 [&>button]:w-full [&>button]:sm:w-auto">
-                  <PrimaryButton onClick={() => saveProfile(profileDraft)} loading={savingProfile}>{savingProfile ? t('profile.saving') : t('profile.save')}</PrimaryButton>
-                </div>}
-              </SectionCard>
-
-              {/* ── Fuseau horaire d'affichage (sa propre ligne sur mobile) ── */}
-              {!isMobile && <TimezoneSection />}
-
-              </div>
-
-              {/* Mode entreprise : carte info (membre) ou conversion (particulier). */}
-              {!isMobile && <div className="flex flex-col gap-5">
-                <SectionCard>
-                  <OrganizationSettingsCard />
-                </SectionCard>
-              </div>}
-            </motion.div>
+            <ProfileTab
+              key="profile"
+              reduced={prefersReducedMotion}
+              user={user}
+              initials={initials}
+              onPickPhoto={pickPhoto}
+              onRemoveAvatar={removeAvatar}
+              draft={profileDraft}
+              onDraftChange={setProfileDraft}
+              isThirdParty={isThirdParty}
+              onSave={() => saveProfile(profileDraft)}
+              saving={savingProfile}
+              isMobile={isMobile}
+            />
           )}
 
           {/* ── SÉCURITÉ ── */}
           {activeTab === 'security' && (
-            <motion.div key="security" initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={prefersReducedMotion ? undefined : { opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="max-w-2xl flex flex-col gap-5">
-              <SectionCard>
-                <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">{t('security.heading')}</h2>
-                <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-5">{t('security.hint')}</p>
-                <form onSubmit={handleUpdatePassword} className="flex flex-col gap-4">
-                  <LabeledInput label="Mot de passe actuel" showToggle showPasswordLabel={tCommon('auth.showPassword')} hidePasswordLabel={tCommon('auth.hidePassword')} value={passwords.current} onChange={(e) => setPasswords(p => ({ ...p, current: e.target.value }))} placeholder="••••••••••••" />
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <LabeledInput label={t('security.newPasswordLabel')} showToggle showPasswordLabel={tCommon('auth.showPassword')} hidePasswordLabel={tCommon('auth.hidePassword')} value={passwords.new} onChange={(e) => setPasswords(p => ({ ...p, new: e.target.value }))} placeholder="••••••••••••" />
-                    <LabeledInput label="Confirmer" showToggle showPasswordLabel={tCommon('auth.showPassword')} hidePasswordLabel={tCommon('auth.hidePassword')} value={passwords.confirm} onChange={(e) => setPasswords(p => ({ ...p, confirm: e.target.value }))} placeholder="••••••••••••" />
-                  </div>
-                  <div className="flex justify-end pt-1">
-                    <PrimaryButton type="submit" loading={savingPassword}>{savingPassword ? t('security.updating') : t('security.update')}</PrimaryButton>
-                  </div>
-                </form>
-              </SectionCard>
-              {/* Maquette 212 : sur mobile, une ligne en texte rouge ; la
-                  confirmation (saisie du mot) porte le poids. */}
-              <button type="button" onClick={deleteAccount} className="md:hidden w-full min-h-touch rounded-2xl bg-[rgb(var(--color-surface))] text-body text-[rgb(var(--color-danger-text))]">
-                {t('security.deleteAccount')}
-              </button>
-              <div className="hidden md:block bg-red-50 dark:bg-red-500/5 border border-red-200 dark:border-red-500/20 rounded-2xl p-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div>
-                    <h2 className="text-sm font-bold text-red-600 dark:text-red-500">{t('security.dangerZone')}</h2>
-                    <p className="text-xs text-red-500/70 mt-1">{t('security.dangerHint')}</p>
-                  </div>
-                  <button onClick={deleteAccount} style={{ minHeight: '44px' }}
-                    className="shrink-0 inline-flex items-center justify-center px-5 py-2.5 bg-red-500 text-white rounded-xl text-sm font-semibold hover:bg-red-600 active:scale-[0.97] transition-all duration-150">
-                    {t('security.deleteAccount')}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
+            <SecurityTab key="security" reduced={prefersReducedMotion} passwords={passwords} onPasswordsChange={setPasswords} onSubmit={handleUpdatePassword} saving={savingPassword} onDeleteAccount={deleteAccount} />
           )}
 
           {/* ── APPARENCE ── */}
           {activeTab === 'appearance' && (
-            <motion.div key="appearance" initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={prefersReducedMotion ? undefined : { opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="max-w-2xl">
-              {isMobile && <MobileThemeList />}
-              <SectionCard className="hidden md:flex">
-                <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">{t('appearance.heading')}</h2>
-                <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-5">{t('appearance.hint')}</p>
-                <div style={{ minHeight: '72px' }}
-                  className="flex items-center justify-between px-4 py-3.5 bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl hover:border-[rgb(var(--color-accent))]/40 transition-colors">
-                  <div>
-                    <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('appearance.displayMode')}</p>
-                    <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">{user?.email?.endsWith('@thecosmo.app') ? t('appearance.themeListTest') : t('appearance.themeList')}</p>
-                  </div>
-                  <ThemeToggle showLabel />
-                </div>
-              </SectionCard>
-
-              {/* ── Langue ──────────────────────────────────────────────
-                  Section à part entière, et non une ligne de la carte
-                  « Thème » : la langue n'est pas un réglage d'apparence, et
-                  elle y était introuvable.
-
-                  Masquée tant qu'une seule langue est servie — un radiogroup
-                  à une option n'est pas un choix. La condition porte sur la
-                  SECTION et pas seulement sur `LocaleToggle` (qui rend `null`
-                  seul), sinon on afficherait un titre au-dessus du vide. */}
-              {SUPPORTED_LOCALES.length > 1 && (
-                <SectionCard className="mt-4">
-                  <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">{tCommon('language.label')}</h2>
-                  <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-3">
-                    {tCommon('language.sectionSubtitle')}
-                  </p>
-                  <div style={{ minHeight: '72px' }}
-                    className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl hover:border-[rgb(var(--color-accent))]/40 transition-colors">
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{tCommon('language.description')}</p>
-                      <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">{tCommon('language.reloadNotice')}</p>
-                    </div>
-                    <LocaleToggle />
-                  </div>
-                </SectionCard>
-              )}
-
-              {/* Raccourcis clavier — copie du contenu du popup « ? »,
-                  consultable sans avoir à ouvrir la palette. Source partagée
-                  (components/keyboard-shortcuts) pour ne jamais diverger.
-                  Masqué en mobile : une liste de raccourcis clavier sur un
-                  écran sans clavier n'est que du remplissage. */}
-              {!isMobile && (
-                <SectionCard className="mt-4">
-                  <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">{t('appearance.shortcuts')}</h2>
-                  <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-3">
-                    {t('appearance.shortcutsHint')} <kbd className="px-1.5 py-0.5 rounded border text-caption" style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-hover))' }}>?</kbd>.
-                  </p>
-                  <ShortcutsList compact />
-                </SectionCard>
-              )}
-            </motion.div>
+            <AppearanceTab key="appearance" reduced={prefersReducedMotion} isMobile={isMobile} email={user.email} />
           )}
 
           {/* ── DONNÉES ── */}
@@ -467,110 +205,90 @@ const SettingsPage: React.FC = () => {
 
           {/* ── GUIDE ── */}
           {activeTab === 'guide' && (
-            <motion.div key="guide" initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={prefersReducedMotion ? undefined : { opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="max-w-3xl flex flex-col gap-4">
-
-              <div>
-                <h2 className="text-xl font-extrabold text-[rgb(var(--color-text-primary))] mb-1">
-                  {t('help.heading')}
-                </h2>
-                <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-                  {t('help.intro')}
-                </p>
-              </div>
-
-              <div
-                className="flex flex-col gap-6 p-6 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]"
-                style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.06) 0%, transparent 60%)' }}
-              >
-                <div>
-                  <p className="text-base font-bold text-[rgb(var(--color-text-primary))]">{t('help.guideTitle')}</p>
-                  <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-0.5">{t('help.guideHint')}</p>
-                </div>
-                <button
-                  onClick={() => navigate('/guide')}
-                  style={{ minHeight: '48px' }}
-                  className="inline-flex items-center justify-center gap-2 w-full px-6 py-3 bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] rounded-xl text-sm font-semibold active:scale-[0.97] transition-all duration-150"
-                >
-                  {t('help.openGuide')} <ChevronRight size={15} />
-                </button>
-              </div>
-
-              <ReplayTutorialsCard />
-
-              {/* support card */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-[rgb(var(--color-accent-solid))] flex items-center justify-center shrink-0">
-                    <HelpCircle size={15} className="text-[rgb(var(--color-accent-solid-foreground))]" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{t('help.supportTitle')}</p>
-                    <p className="text-xs text-[rgb(var(--color-text-secondary))]">{t('help.supportHint')}</p>
-                  </div>
-                </div>
-                <button onClick={handleOpenSupport}
-                  className="inline-flex items-center justify-center gap-1.5 px-4 min-h-touch sm:min-h-[40px] rounded-xl text-xs font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] active:scale-[0.97] transition-all duration-150 shrink-0">
-                  {t('help.contactSupport')} <ChevronRight size={12} />
-                </button>
-              </div>
-
-              {/* admin card — visible uniquement pour l'allowlist admin_users
-                  (useIsAdmin). Le vrai gate reste la RPC get_admin_stats. */}
-              {isAdmin && (
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shrink-0">
-                      <BarChart3 size={15} className="text-white" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{t('help.adminTitle')}</p>
-                      <p className="text-xs text-[rgb(var(--color-text-secondary))]">{t('help.adminHint')}</p>
-                    </div>
-                  </div>
-                  <button onClick={() => navigate('/admin')}
-                    className="inline-flex items-center justify-center gap-1.5 px-4 min-h-touch sm:min-h-[40px] rounded-xl text-xs font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] active:scale-[0.97] transition-all duration-150 shrink-0">
-                    {t('help.openDashboard')} <ChevronRight size={12} />
-                  </button>
-                </div>
-              )}
-            </motion.div>
+            <GuideTab key="guide" reduced={prefersReducedMotion} isAdmin={isAdmin} onOpenGuide={() => navigate('/guide')} onOpenAdmin={() => navigate('/admin')} onOpenSupport={handleOpenSupport} />
           )}
         </AnimatePresence>}
       </main>
 
-      {/* ── confirm dialog ── */}
-      <AlertDialog open={confirmConfig.isOpen} onOpenChange={(open) => { if (!open) closeConfirm(); }}>
-        <AlertDialogContent
-          className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl text-[rgb(var(--color-text-primary))] shadow-xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-xl font-bold">{confirmConfig.title}</AlertDialogTitle>
-            <AlertDialogDescription className="text-[rgb(var(--color-text-secondary))] text-sm leading-relaxed">{confirmConfig.description}</AlertDialogDescription>
-          </AlertDialogHeader>
-          {confirmConfig.showInput && (
-            <div className="py-2">
-              <input type="text" value={confirmInput} onChange={(e) => setConfirmInput(e.target.value)}
-                placeholder={`Tapez "${confirmConfig.confirmationText}"`}
-                style={{ minHeight: '48px' }}
-                className="w-full px-4 py-3 bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl font-semibold text-[rgb(var(--color-text-primary))] text-sm focus:outline-none focus:ring-2 focus:ring-red-500/30 outline-none" />
-            </div>
-          )}
-          <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel className="rounded-xl border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] hover:bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))] font-semibold text-sm">{t('page.cancel')}</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={
-                deletingAccount ||
-                (confirmConfig.showInput && confirmInput !== confirmConfig.confirmationText)
-              }
-              onClick={() => { confirmConfig.onConfirm(); closeConfirm(); }}
-              className="rounded-xl font-semibold text-sm bg-red-500 hover:bg-red-600 text-white disabled:opacity-50">
-              {deletingAccount ? 'Suppression…' : 'Confirmer'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <SettingsConfirmDialog
+        config={confirmConfig}
+        onClose={closeConfirm}
+        input={confirmInput}
+        onInputChange={setConfirmInput}
+        deletingAccount={deletingAccount}
+      />
     </div>
   );
 };
+
+/**
+ * Accueil mobile (maquette 205) et pages qui ne sont pas des onglets :
+ * `null` = l'accueil en liste groupée, sinon un retour au-dessus de la page.
+ */
+function SettingsMobileShell({ isMobile, page, user, initials, onOpen, onLogout }: {
+  isMobile: boolean;
+  page: MobileSettingsPage | null;
+  user: User;
+  initials: string;
+  onOpen: (page: MobileSettingsPage | null) => void;
+  onLogout: () => void;
+}) {
+  const { t } = useT('settings');
+  return (
+    <>
+      {/* Maquette 206 : plus de sous-titre générique sur mobile. */}
+      {(!isMobile || page === null) && <MobileHeader title={t('page.title')} />}
+      {isMobile && page === null && (
+        <MobileSettingsHome user={user} initials={initials} hasOrganization onOpen={onOpen} onLogout={onLogout} />
+      )}
+      {isMobile && page !== null && <MobileSettingsBack onBack={() => onOpen(null)} />}
+      {isMobile && page === 'timezone' && <TimezoneSection />}
+      {isMobile && page === 'org' && <SectionCard><OrganizationSettingsCard /></SectionCard>}
+    </>
+  );
+}
+
+/** L'unique boîte de confirmation des gestes du compte (cf. `useAccountActions`). */
+function SettingsConfirmDialog({ config: confirmConfig, onClose: closeConfirm, input: confirmInput, onInputChange: setConfirmInput, deletingAccount }: {
+  config: ConfirmConfig;
+  onClose: () => void;
+  input: string;
+  onInputChange: (value: string) => void;
+  deletingAccount: boolean;
+}) {
+  const { t } = useT('settings');
+  return (
+    <AlertDialog open={confirmConfig.isOpen} onOpenChange={(open) => { if (!open) closeConfirm(); }}>
+      <AlertDialogContent
+        className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl text-[rgb(var(--color-text-primary))] shadow-xl">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="text-xl font-bold">{confirmConfig.title}</AlertDialogTitle>
+          <AlertDialogDescription className="text-[rgb(var(--color-text-secondary))] text-sm leading-relaxed">{confirmConfig.description}</AlertDialogDescription>
+        </AlertDialogHeader>
+        {confirmConfig.showInput && (
+          <div className="py-2">
+            <input type="text" value={confirmInput} onChange={(e) => setConfirmInput(e.target.value)}
+              placeholder={`Tapez "${confirmConfig.confirmationText}"`}
+              style={{ minHeight: '48px' }}
+              className="w-full px-4 py-3 bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl font-semibold text-[rgb(var(--color-text-primary))] text-sm focus:outline-none focus:ring-2 focus:ring-red-500/30 outline-none" />
+          </div>
+        )}
+        <AlertDialogFooter className="gap-2">
+          <AlertDialogCancel className="rounded-xl border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] hover:bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))] font-semibold text-sm">{t('page.cancel')}</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={
+              deletingAccount ||
+              (confirmConfig.showInput && confirmInput !== confirmConfig.confirmationText)
+            }
+            onClick={() => { confirmConfig.onConfirm(); closeConfirm(); }}
+            className="rounded-xl font-semibold text-sm bg-red-500 hover:bg-red-600 text-white disabled:opacity-50">
+            {deletingAccount ? 'Suppression…' : 'Confirmer'}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
 
 export default SettingsPage;
 
